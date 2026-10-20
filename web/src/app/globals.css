@@ -1,0 +1,137 @@
+@import "tailwindcss";
+
+:root {
+  --marca: #0b2820;
+  --destaque: #e2c17e;
+  --destaque-escuro: #8a6a2a;
+  --fundo: #f6f4ee;
+  --superficie: #ffffff;
+  --borda: #e4e0d4;
+  --texto: #1c2420;
+  --texto-suave: #5d6661;
+  --perigo: #b42318;
+  --alerta: #b54708;
+  --sucesso: #067647;
+}
+
+@theme inline {
+  --color-marca: var(--marca);
+  --color-destaque: var(--destaque);
+  --color-fundo: var(--fundo);
+  --font-sans: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+}
+
+html,
+body {
+  background: var(--fundo);
+  color: var(--texto);
+  font-family: var(--font-sans);
+}
+
+@layer components {
+  .cartao {
+    background: var(--superficie);
+    border: 1px solid var(--borda);
+    border-radius: 12px;
+  }
+  .campo {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 13px;
+    color: var(--texto-suave);
+  }
+  .campo input,
+  .campo select,
+  .campo textarea,
+  .entrada {
+    border: 1px solid var(--borda);
+    background: #fff;
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 14px;
+    color: var(--texto);
+    outline: none;
+    min-height: 38px;
+  }
+  .campo input:focus,
+  .campo select:focus,
+  .campo textarea:focus,
+  .entrada:focus {
+    border-color: var(--destaque-escuro);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--destaque) 35%, transparent);
+  }
+  .btn,
+  .btn-primario {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 14px;
+    font-weight: 500;
+    min-height: 38px;
+    border: 1px solid var(--borda);
+    background: #fff;
+    color: var(--texto);
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .btn:hover {
+    border-color: var(--destaque-escuro);
+  }
+  .btn-primario {
+    background: var(--marca);
+    border-color: var(--marca);
+    color: #fff;
+  }
+  .btn-primario:hover {
+    filter: brightness(1.25);
+  }
+  .btn-primario:disabled,
+  .btn:disabled {
+    opacity: 0.55;
+    cursor: default;
+  }
+  .btn-link {
+    font-size: 13px;
+    color: var(--texto-suave);
+    text-decoration: underline;
+    background: none;
+    border: 0;
+    cursor: pointer;
+  }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border-radius: 999px;
+    padding: 2px 10px;
+    font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  .tabela {
+    width: 100%;
+    font-size: 14px;
+    border-collapse: collapse;
+  }
+  .tabela th {
+    text-align: left;
+    font-weight: 500;
+    font-size: 12px;
+    color: var(--texto-suave);
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--borda);
+    white-space: nowrap;
+  }
+  .tabela td {
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--borda);
+    vertical-align: middle;
+  }
+  .tabela tr:last-child td {
+    border-bottom: 0;
+  }
+}

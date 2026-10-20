@@ -1,0 +1,11 @@
+{
+  "name": "MDC Tarefas",
+  "short_name": "Tarefas",
+  "start_url": "/tarefas",
+  "display": "standalone",
+  "background_color": "#F6F4EE",
+  "theme_color": "#0B2820",
+  "icons": [
+    { "src": "/icone.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}
