@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase, supabaseConfigurado } from "@/lib/supabase";
+import { traduzirErro } from "@/lib/erros";
 
 type Modo = "entrar" | "criar" | "recuperar" | "nova";
 
@@ -58,11 +59,7 @@ export default function Login() {
         setMsg({ tipo: "ok", texto: "Se o e-mail existir, você receberá um link para redefinir a senha." });
       }
     } catch (err) {
-      const m = (err as Error).message;
-      setMsg({
-        tipo: "erro",
-        texto: m.includes("Invalid login") ? "E-mail ou senha incorretos." : m,
-      });
+      setMsg({ tipo: "erro", texto: traduzirErro(err) });
     } finally {
       setEnviando(false);
     }
