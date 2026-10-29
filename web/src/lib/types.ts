@@ -40,6 +40,10 @@ export interface Cliente {
   cnpj: string | null;
   regime: string | null;
   ativo: boolean;
+  codigo_dominio?: string | null;
+  cidade?: string | null;
+  uf?: string | null;
+  inicio_em?: string | null;
 }
 
 export interface Tarefa {
