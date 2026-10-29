@@ -390,8 +390,31 @@ function AbaClientes() {
   const [aberto, setAberto] = useState<string | null>(null);
   const [novo, setNovo] = useState({ razao_social: "", nome_fantasia: "", cnpj: "", regime: "simples" });
   const [csv, setCsv] = useState<string | null>(null);
+  const [situacao, setSituacao] = useState<"ativos" | "inativos" | "todos">("ativos");
+  const [inativando, setInativando] = useState<{ id: string; data: string; motivo: string; outro: string } | null>(null);
   const { mostrar, el } = useMensagem();
   const pessoas = membros.filter((m) => m.ativo && m.papel !== "tv");
+  const hojeISO = () => new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+
+  async function confirmarInativacao() {
+    if (!inativando) return;
+    if (!inativando.data) return mostrar("Informe a data em que o cliente passou a ser inativo.", true);
+    const motivo = inativando.motivo === "Outro" ? inativando.outro : inativando.motivo;
+    const { data, error } = await supabase().rpc("inativar_cliente", {
+      p_cliente: inativando.id, p_data: inativando.data, p_motivo: motivo || null,
+    });
+    if (error) return mostrar(traduzirErro(error), true);
+    setInativando(null);
+    mostrar(`Cliente inativado desde ${fmtData(inativando.data)}. ${data?.tarefas_canceladas ?? 0} tarefa(s) de competência posterior à saída cancelada(s).`);
+    recarregar();
+  }
+
+  async function reativar(id: string) {
+    const { data, error } = await supabase().rpc("reativar_cliente", { p_cliente: id });
+    if (error) return mostrar(traduzirErro(error), true);
+    mostrar(`Cliente reativado. ${data?.tarefas_restauradas ?? 0} tarefa(s) cancelada(s) pela inativação voltaram para "a fazer".`);
+    recarregar();
+  }
 
   const carregarResps = async () => {
     const { data } = await supabase().from("cliente_responsaveis").select("cliente_id,setor_id,user_id").eq("org_id", org.id);
@@ -404,8 +427,11 @@ function AbaClientes() {
 
   const lista = useMemo(() => {
     const q = busca.trim().toLowerCase();
-    return clientes.filter((c) => !q || `${c.razao_social} ${c.nome_fantasia ?? ""} ${c.cnpj ?? ""}`.toLowerCase().includes(q));
-  }, [clientes, busca]);
+    return clientes
+      .filter((c) => situacao === "todos" || (situacao === "ativos" ? c.ativo : !c.ativo))
+      .filter((c) => !q || `${c.razao_social} ${c.nome_fantasia ?? ""} ${c.cnpj ?? ""} ${c.codigo_dominio ?? ""} ${c.cidade ?? ""} ${c.uf ?? ""}`.toLowerCase().includes(q));
+  }, [clientes, busca, situacao]);
+  const nAtivos = clientes.filter((c) => c.ativo).length;
 
   async function adicionar(e: React.FormEvent) {
     e.preventDefault();
@@ -485,7 +511,17 @@ function AbaClientes() {
       </form>
 
       <div className="flex flex-wrap gap-2">
-        <input className="entrada flex-1" placeholder="Buscar cliente ou CNPJ" value={busca} onChange={(e) => setBusca(e.target.value)} />
+        <div className="flex overflow-hidden rounded-md border border-[var(--borda)] text-sm">
+          {([
+            ["ativos", `Ativos (${nAtivos})`],
+            ["inativos", `Inativos (${clientes.length - nAtivos})`],
+            ["todos", `Todos (${clientes.length})`],
+          ] as const).map(([id, nome]) => (
+            <button key={id} onClick={() => setSituacao(id)}
+              className={`px-3 py-1.5 ${situacao === id ? "bg-[var(--marca)] text-white" : "bg-white"}`}>{nome}</button>
+          ))}
+        </div>
+        <input className="entrada flex-1" placeholder="Buscar cliente, CNPJ, código, cidade ou UF" value={busca} onChange={(e) => setBusca(e.target.value)} />
         <Link className="btn-primario" href="/clientes/importar">
           Importar do Domínio / planilha
         </Link>
@@ -512,9 +548,10 @@ function AbaClientes() {
             <tr>
               <th>Cliente</th>
               <th>CNPJ</th>
+              <th>UF</th>
               <th>Regime</th>
               <th>Responsáveis</th>
-              <th>Ativo</th>
+              <th>Situação</th>
             </tr>
           </thead>
           <tbody>
@@ -532,6 +569,7 @@ function AbaClientes() {
                       )}
                     </td>
                     <td className="whitespace-nowrap text-[var(--texto-suave)]">{c.cnpj}</td>
+                    <td className="text-[var(--texto-suave)]">{c.uf ?? "—"}</td>
                     <td>
                       <select className="entrada" value={c.regime ?? ""} onChange={(e) => alterar(c.id, { regime: e.target.value || null })}>
                         <option value="">—</option>
@@ -547,18 +585,63 @@ function AbaClientes() {
                         {rs.length ? `${rs.length} definido(s)` : "Definir"}
                       </button>
                     </td>
-                    <td>
-                      <input
-                        type="checkbox"
-                        className="h-5 w-5 accent-[var(--marca)]"
-                        checked={c.ativo}
-                        onChange={(e) => alterar(c.id, { ativo: e.target.checked })}
-                      />
+                    <td className="whitespace-nowrap">
+                      {c.ativo ? (
+                        <div className="flex items-center gap-2">
+                          <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs text-emerald-800">Ativo</span>
+                          <button className="btn-link text-xs"
+                            onClick={() => setInativando({ id: c.id, data: hojeISO(), motivo: "Saiu do escritório", outro: "" })}>
+                            Inativar
+                          </button>
+                        </div>
+                      ) : (
+                        <div>
+                          <span className="rounded-full bg-red-50 px-2 py-0.5 text-xs text-red-800">
+                            Inativo{c.inativo_em ? ` desde ${fmtData(c.inativo_em)}` : ""}
+                          </span>
+                          {c.motivo_inativacao && <div className="mt-0.5 text-xs text-[var(--texto-suave)]">{c.motivo_inativacao}</div>}
+                          <button className="btn-link text-xs" onClick={() => reativar(c.id)}>Reativar</button>
+                        </div>
+                      )}
                     </td>
                   </tr>
+                  {inativando?.id === c.id && (
+                    <tr>
+                      <td colSpan={6} className="bg-red-50/40">
+                        <div className="grid gap-3 py-2 sm:grid-cols-[auto_auto_1fr_auto_auto] sm:items-end">
+                          <label className="campo">
+                            <span>Inativo a partir de *</span>
+                            <input type="date" required value={inativando.data}
+                              onChange={(e) => setInativando({ ...inativando, data: e.target.value })} />
+                          </label>
+                          <label className="campo">
+                            <span>Motivo</span>
+                            <select value={inativando.motivo} onChange={(e) => setInativando({ ...inativando, motivo: e.target.value })}>
+                              {["Saiu do escritório", "Transferida para outro escritório", "Baixada / encerrada", "Inadimplência", "Outro"].map((m) => (
+                                <option key={m}>{m}</option>
+                              ))}
+                            </select>
+                          </label>
+                          {inativando.motivo === "Outro" ? (
+                            <label className="campo">
+                              <span>Descreva</span>
+                              <input value={inativando.outro} maxLength={300}
+                                onChange={(e) => setInativando({ ...inativando, outro: e.target.value })} />
+                            </label>
+                          ) : <span />}
+                          <button className="btn-primario" onClick={confirmarInativacao}>Confirmar inativação</button>
+                          <button className="btn" onClick={() => setInativando(null)}>Cancelar</button>
+                        </div>
+                        <p className="pb-2 text-xs text-[var(--texto-suave)]">
+                          As competências até o mês da data informada continuam com o escritório. Tarefas abertas de competências
+                          posteriores (e avulsas que vencem depois da data) são canceladas e deixam de ser geradas. Ao reativar, voltam.
+                        </p>
+                      </td>
+                    </tr>
+                  )}
                   {aberto === c.id && (
                     <tr>
-                      <td colSpan={5} className="bg-[var(--fundo)]">
+                      <td colSpan={6} className="bg-[var(--fundo)]">
                         <div className="grid gap-3 py-2 sm:grid-cols-2 lg:grid-cols-4">
                           {setores
                             .filter((s) => s.ativo)
