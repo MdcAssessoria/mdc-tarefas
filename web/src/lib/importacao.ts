@@ -20,7 +20,7 @@ export const CAMPOS: { id: Campo; nome: string; obrigatorio?: boolean; dica: str
 const SINONIMOS: Record<Campo, string[]> = {
   codigo_dominio: ["codigo dominio", "codigo", "cod", "cod empresa", "codigo empresa", "codigo da empresa", "codi emp", "n empresa", "numero empresa", "empresa n", "nro", "id empresa"],
   razao_social: ["razao social", "razao", "nome empresarial", "nome da empresa", "nome empresa", "nome emp", "empresa", "nome", "cliente"],
-  nome_fantasia: ["nome fantasia", "fantasia", "apelido", "apel emp", "nome curto", "nome reduzido", "abreviado"],
+  nome_fantasia: ["apelido", "apel emp", "nome curto", "nome reduzido", "abreviado", "nome fantasia", "fantasia"],
   cnpj: ["cnpj cpf", "cpf cnpj", "cnpj", "cpf", "cgc", "cgce emp", "inscricao federal", "inscricao", "documento", "cnpj cei cpf", "cnpj cpf cei"],
   regime: ["regime de tributacao", "regime tributario", "regime federal", "regime", "tributacao", "forma de tributacao", "tipo de tributacao", "enquadramento", "regime de apuracao"],
   cidade: ["cidade", "municipio", "nome municipio"],
