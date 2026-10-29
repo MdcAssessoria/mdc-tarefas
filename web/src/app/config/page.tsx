@@ -1,6 +1,7 @@
 "use client";
 
 import { Fragment, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { AppShell } from "@/components/AppShell";
 import { useOrg } from "@/lib/org";
 import { supabase } from "@/lib/supabase";
@@ -485,8 +486,11 @@ function AbaClientes() {
 
       <div className="flex flex-wrap gap-2">
         <input className="entrada flex-1" placeholder="Buscar cliente ou CNPJ" value={busca} onChange={(e) => setBusca(e.target.value)} />
+        <Link className="btn-primario" href="/clientes/importar">
+          Importar do Domínio / planilha
+        </Link>
         <button className="btn" onClick={() => setCsv(csv === null ? "" : null)}>
-          Importar lista
+          Colar lista
         </button>
       </div>
       {csv !== null && (
@@ -521,7 +525,11 @@ function AbaClientes() {
                   <tr className={c.ativo ? "" : "opacity-50"}>
                     <td>
                       <div className="font-medium">{c.razao_social}</div>
-                      {c.nome_fantasia && <div className="text-xs text-[var(--texto-suave)]">{c.nome_fantasia}</div>}
+                      {(c.nome_fantasia || c.codigo_dominio) && (
+                        <div className="text-xs text-[var(--texto-suave)]">
+                          {[c.codigo_dominio && `Domínio ${c.codigo_dominio}`, c.nome_fantasia, [c.cidade, c.uf].filter(Boolean).join("/")].filter(Boolean).join(" · ")}
+                        </div>
+                      )}
                     </td>
                     <td className="whitespace-nowrap text-[var(--texto-suave)]">{c.cnpj}</td>
                     <td>
