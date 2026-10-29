@@ -220,8 +220,8 @@ function Importar() {
         <details className="mt-2 max-w-2xl text-left text-sm text-[var(--texto-suave)]">
           <summary className="cursor-pointer text-[var(--marca)]">Como tirar a lista do Domínio</summary>
           <ol className="mt-2 list-decimal space-y-1 pl-5">
-            <li>No Domínio, gere o relatório de relação/cadastro de empresas com as colunas código, nome, apelido, CNPJ/CPF, regime de tributação, município, UF e situação (as que estiverem disponíveis).</li>
-            <li>Exporte em Excel (.xls/.xlsx) ou texto/CSV e salve no computador.</li>
+            <li>No Domínio, acesse <b>Relatórios › Cadastrais › Empresas</b>, escolha o modelo <b>Simples</b> e, nos filtros, a situação cadastral desejada (ex.: ativas). Clique em OK.</li>
+            <li>Na visualização do relatório, exporte em Excel (.xls/.xlsx) ou texto/CSV e salve no computador.</li>
             <li>Envie o arquivo aqui. A tela acha o cabeçalho sozinha, mesmo com título e data no topo do relatório; se alguma coluna não for reconhecida, escolha abaixo.</li>
             <li>O código da empresa no Domínio fica gravado: na próxima importação os clientes são atualizados, não duplicados.</li>
           </ol>
