@@ -2,10 +2,19 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "MDC Tarefas",
+  title: "HUB-MDC · Tarefas",
+  applicationName: "HUB-MDC",
   description: "Controle de tarefas e obrigações da equipe, com painel em tempo real para TV.",
   manifest: "/manifest.webmanifest",
-  appleWebApp: { capable: true, title: "MDC Tarefas", statusBarStyle: "black-translucent" },
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "16x16 32x32 48x48" },
+      { url: "/icone-hub-mdc.svg", type: "image/svg+xml" },
+      { url: "/icone-hub-mdc-192.png", sizes: "192x192", type: "image/png" },
+    ],
+    apple: [{ url: "/icone-hub-mdc-180.png", sizes: "180x180" }],
+  },
+  appleWebApp: { capable: true, title: "HUB-MDC", statusBarStyle: "black-translucent" },
 };
 
 export const viewport: Viewport = {
