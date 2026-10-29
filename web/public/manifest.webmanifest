@@ -1,11 +1,19 @@
 {
-  "name": "MDC Tarefas",
-  "short_name": "Tarefas",
+  "id": "/",
+  "name": "HUB-MDC",
+  "short_name": "HUB-MDC",
+  "description": "Ferramentas da MDC Assessoria: tarefas, societário e portal do cliente.",
+  "lang": "pt-BR",
   "start_url": "/tarefas",
+  "scope": "/",
   "display": "standalone",
-  "background_color": "#F6F4EE",
+  "background_color": "#0B2820",
   "theme_color": "#0B2820",
   "icons": [
-    { "src": "/icone.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+    { "src": "/icone-hub-mdc-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icone-hub-mdc-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icone-hub-mdc-maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "/icone-hub-mdc-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "/icone-hub-mdc.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
   ]
 }
