@@ -9,6 +9,7 @@ import { useTarefas } from "@/lib/useTarefas";
 import { diasAte, fmtCompetencia } from "@/lib/datas";
 import { STATUS } from "@/lib/types";
 import type { Status, Tarefa } from "@/lib/types";
+import { traduzirErro } from "@/lib/erros";
 
 export default function PaginaTarefas() {
   return (
@@ -112,7 +113,7 @@ function Tarefas() {
     try {
       await atualizar(t.id, { status });
     } catch (e) {
-      setAviso((e as Error).message);
+      setAviso(traduzirErro(e));
       setTimeout(() => setAviso(null), 5000);
     }
   }
