@@ -169,7 +169,7 @@ function AbaEquipe() {
 
   async function adicionar(e: React.FormEvent) {
     e.preventDefault();
-    const { error } = await supabase().rpc("adicionar_membro", {
+    const { data, error } = await supabase().rpc("adicionar_membro", {
       p_org: org.id,
       p_email: novo.email,
       p_nome: novo.nome,
@@ -178,7 +178,7 @@ function AbaEquipe() {
     });
     if (error) return mostrar(traduzirErro(error), true);
     setNovo({ email: "", nome: "", papel: "analista", setor: "" });
-    mostrar("Membro adicionado.");
+    mostrar(data ? "Membro adicionado." : "Convite registrado. A pessoa entra na equipe automaticamente ao criar a conta com esse e-mail.");
     recarregar();
   }
 
