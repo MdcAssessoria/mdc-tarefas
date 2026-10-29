@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabase";
 import { fmtData, fmtDataHora } from "@/lib/datas";
 import { PRIORIDADES, STATUS, nomePrioridade, nomeStatus } from "@/lib/types";
 import type { Prioridade, Status, Tarefa } from "@/lib/types";
+import { traduzirErro } from "@/lib/erros";
 
 interface Comentario {
   id: string;
@@ -104,7 +105,7 @@ export function TarefaEditor({
       ? await sb.from("tarefas").update(dados).eq("id", tarefa.id).select("id")
       : await sb.from("tarefas").insert({ ...dados, org_id: org.id }).select("id");
     setSalvando(false);
-    if (r.error) return setErro(r.error.message);
+    if (r.error) return setErro(traduzirErro(r.error));
     if (!r.data?.length) return setErro("Você não tem permissão para alterar esta tarefa.");
     aoSalvar();
     aoFechar();
@@ -113,7 +114,7 @@ export function TarefaEditor({
   async function excluir() {
     if (!tarefa || !confirm("Excluir esta tarefa? Essa ação não pode ser desfeita.")) return;
     const { error } = await supabase().from("tarefas").delete().eq("id", tarefa.id);
-    if (error) return setErro(error.message);
+    if (error) return setErro(traduzirErro(error));
     aoSalvar();
     aoFechar();
   }
@@ -126,7 +127,7 @@ export function TarefaEditor({
       .insert({ org_id: org.id, tarefa_id: tarefa.id, texto: novoComentario.trim() })
       .select("id,autor_id,texto,criado_em")
       .single();
-    if (error) return setErro(error.message);
+    if (error) return setErro(traduzirErro(error));
     setComentarios((c) => [...c, data as Comentario]);
     setNovoComentario("");
   }
