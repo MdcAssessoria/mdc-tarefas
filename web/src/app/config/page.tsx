@@ -7,6 +7,7 @@ import { supabase } from "@/lib/supabase";
 import { fmtData } from "@/lib/datas";
 import { PAPEIS, PRIORIDADES, REGIMES } from "@/lib/types";
 import type { Cliente, Modelo, Papel, Prioridade } from "@/lib/types";
+import { traduzirErro } from "@/lib/erros";
 
 type Aba = "organizacao" | "equipe" | "setores" | "clientes" | "obrigacoes" | "feriados";
 
@@ -101,7 +102,7 @@ function AbaOrganizacao() {
         fuso: f.fuso,
       })
       .eq("id", org.id);
-    if (error) return mostrar(error.message, true);
+    if (error) return mostrar(traduzirErro(error), true);
     mostrar("Dados salvos.");
     recarregar();
   }
@@ -175,7 +176,7 @@ function AbaEquipe() {
       p_papel: novo.papel,
       p_setor: novo.setor || null,
     });
-    if (error) return mostrar(error.message, true);
+    if (error) return mostrar(traduzirErro(error), true);
     setNovo({ email: "", nome: "", papel: "analista", setor: "" });
     mostrar("Membro adicionado.");
     recarregar();
@@ -183,7 +184,7 @@ function AbaEquipe() {
 
   async function alterar(userId: string, campos: Record<string, unknown>) {
     const { error } = await supabase().from("membros").update(campos).eq("org_id", org.id).eq("user_id", userId);
-    if (error) return mostrar(error.message, true);
+    if (error) return mostrar(traduzirErro(error), true);
     recarregar();
   }
 
@@ -302,13 +303,13 @@ function AbaSetores() {
     const { error } = await supabase()
       .from("setores")
       .insert({ org_id: org.id, nome, cor, ordem: setores.length + 1 });
-    if (error) return mostrar(error.message, true);
+    if (error) return mostrar(traduzirErro(error), true);
     setNome("");
     recarregar();
   }
   async function alterar(id: string, campos: Record<string, unknown>) {
     const { error } = await supabase().from("setores").update(campos).eq("id", id);
-    if (error) return mostrar(error.message, true);
+    if (error) return mostrar(traduzirErro(error), true);
     recarregar();
   }
 
@@ -410,14 +411,14 @@ function AbaClientes() {
     const { error } = await supabase()
       .from("clientes")
       .insert({ ...novo, org_id: org.id, nome_fantasia: novo.nome_fantasia || null, cnpj: novo.cnpj || null });
-    if (error) return mostrar(error.message.includes("clientes_org_cnpj_uk") ? "CNPJ já cadastrado." : error.message, true);
+    if (error) return mostrar(error.message.includes("clientes_org_cnpj_uk") ? "CNPJ já cadastrado." : traduzirErro(error), true);
     setNovo({ razao_social: "", nome_fantasia: "", cnpj: "", regime: novo.regime });
     recarregar();
   }
 
   async function alterar(id: string, campos: Partial<Cliente>) {
     const { error } = await supabase().from("clientes").update(campos).eq("id", id);
-    if (error) return mostrar(error.message, true);
+    if (error) return mostrar(traduzirErro(error), true);
     recarregar();
   }
 
@@ -428,7 +429,7 @@ function AbaClientes() {
           .from("cliente_responsaveis")
           .upsert({ org_id: org.id, cliente_id: clienteId, setor_id: setorId, user_id: userId })
       : await sb.from("cliente_responsaveis").delete().eq("cliente_id", clienteId).eq("setor_id", setorId);
-    if (error) return mostrar(error.message, true);
+    if (error) return mostrar(traduzirErro(error), true);
     carregarResps();
   }
 
@@ -448,7 +449,7 @@ function AbaClientes() {
     }));
     if (!registros.length) return mostrar("Nenhuma linha válida encontrada.", true);
     const { error } = await supabase().from("clientes").insert(registros);
-    if (error) return mostrar(error.message, true);
+    if (error) return mostrar(traduzirErro(error), true);
     mostrar(`${registros.length} clientes importados.`);
     setCsv(null);
     recarregar();
@@ -632,14 +633,14 @@ function AbaObrigacoes() {
     const { error } = id
       ? await sb.from("modelos_recorrentes").update(dados).eq("id", id)
       : await sb.from("modelos_recorrentes").insert({ ...dados, org_id: org.id });
-    if (error) return mostrar(error.message, true);
+    if (error) return mostrar(traduzirErro(error), true);
     setEditando(null);
     carregar();
   }
 
   async function gerar() {
     const { data, error } = await supabase().rpc("gerar_competencia", { p_org: org.id, p_competencia: comp + "-01" });
-    if (error) return mostrar(error.message, true);
+    if (error) return mostrar(traduzirErro(error), true);
     mostrar(data ? `${data} tarefas criadas para ${comp.split("-").reverse().join("/")}.` : "Nenhuma tarefa nova: a competência já estava gerada.");
   }
 
@@ -867,7 +868,7 @@ function AbaFeriados() {
   async function adicionar(e: React.FormEvent) {
     e.preventDefault();
     const { error } = await supabase().from("feriados").insert({ ...novo, org_id: org.id });
-    if (error) return mostrar(error.message, true);
+    if (error) return mostrar(traduzirErro(error), true);
     setNovo({ data: "", descricao: "" });
     carregar();
   }
