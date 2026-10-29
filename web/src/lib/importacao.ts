@@ -172,8 +172,14 @@ export function montarLinhas(linhas: string[][], cabecalho: number, mapa: Partia
     const razao = pega(l, "razao_social").replace(/\s+/g, " ");
     const codigoBruto = pega(l, "codigo_dominio");
     // linhas de total/rodapé de relatório
-    if (!razao && !codigoBruto) continue;
+    // linhas de título/rodapé do relatório ("Empresa:", "Sistema licenciado…")
+    if (!razao && !/^\d/.test(codigoBruto)) continue;
     if (/^(total|pagina|p[aá]gina|emitido|usu[aá]rio)/i.test(razao)) continue;
+    // cabeçalho repetido a cada página do relatório do Domínio
+    const cabRazao = mapa.razao_social === undefined ? "" : normalizar(linhas[cabecalho]?.[mapa.razao_social]);
+    if (cabRazao && normalizar(razao) === cabRazao) continue;
+    // empresas-modelo do próprio Domínio (códigos 9990–9999: padrão, escritório contábil, 3º setor, partido)
+    if (/^99(9\d)$/.test(codigoBruto.replace(/\.0+$/, "")) || /^empresa padr|^empresa 3\.? setor|^empresa partido/i.test(razao)) continue;
     const doc = tratarDocumento(pega(l, "cnpj"));
     const regimeOrig = pega(l, "regime");
     const ufBruta = pega(l, "uf").toUpperCase();
