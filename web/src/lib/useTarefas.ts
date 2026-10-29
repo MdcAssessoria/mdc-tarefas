@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "./supabase";
 import { hojeISO } from "./datas";
 import type { Tarefa } from "./types";
+import { traduzirErro } from "@/lib/erros";
 
 /**
  * Carrega as tarefas visíveis da organização e mantém a lista viva via Supabase Realtime.
@@ -26,7 +27,7 @@ export function useTarefas(orgId: string, fuso: string) {
       .or(`status.in.(a_fazer,em_andamento,aguardando),atualizado_em.gte.${corte.toISOString()}`)
       .order("prazo", { ascending: true, nullsFirst: false })
       .limit(3000);
-    if (error) setErro(error.message);
+    if (error) setErro(traduzirErro(error));
     else {
       setErro(null);
       setTarefas(data as Tarefa[]);

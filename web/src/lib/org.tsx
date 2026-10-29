@@ -4,6 +4,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import type { Session } from "@supabase/supabase-js";
 import { supabase, supabaseConfigurado } from "./supabase";
 import type { Cliente, Membro, Organizacao, Papel, Setor } from "./types";
+import { traduzirErro } from "@/lib/erros";
 
 interface OrgCtx {
   session: Session;
@@ -86,7 +87,7 @@ export function OrgProvider({ children }: { children: React.ReactNode }) {
       sb.from("organizacoes").select("*").eq("ativo", true).order("nome"),
     ]);
     if (m.error || o.error) {
-      setErro((m.error ?? o.error)!.message);
+      setErro(traduzirErro(m.error ?? o.error));
       return;
     }
     setMinhas(m.data as Membro[]);
@@ -112,7 +113,7 @@ export function OrgProvider({ children }: { children: React.ReactNode }) {
       sb.from("membros").select("*").eq("org_id", orgId).order("nome"),
     ]);
     if (s.error || c.error || m.error) {
-      setErro((s.error ?? c.error ?? m.error)!.message);
+      setErro(traduzirErro(s.error ?? c.error ?? m.error));
       return;
     }
     setSetores(s.data as Setor[]);
@@ -207,7 +208,7 @@ function CriarOrganizacao({ aoCriar, email }: { aoCriar: () => void; email: stri
       p_nome_usuario: seuNome,
     });
     setEnviando(false);
-    if (error) setErro(error.message.includes("duplicate") ? "Esse identificador já está em uso." : error.message);
+    if (error) setErro(error.message.includes("duplicate") ? "Esse identificador já está em uso." : traduzirErro(error));
     else aoCriar();
   }
 
