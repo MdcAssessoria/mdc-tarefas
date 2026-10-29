@@ -8,7 +8,7 @@ import { supabase } from "@/lib/supabase";
 import { REGIMES } from "@/lib/types";
 import { traduzirErro } from "@/lib/erros";
 import {
-  CAMPOS, MODELO_CSV, detectarCabecalho, montarLinhas, soDigitos,
+  CAMPOS, MODELO_CSV, detectarCabecalho, fichasParaTabela, montarLinhas, soDigitos,
   type Campo, type LinhaImport,
 } from "@/lib/importacao";
 
@@ -51,7 +51,9 @@ async function lerArquivo(arq: File): Promise<{ abas: string[]; dados: Record<st
   const dados: Record<string, string[][]> = {};
   for (const nome of wb.SheetNames) {
     const linhas = XLSX.utils.sheet_to_json(wb.Sheets[nome], { header: 1, raw: false, defval: "", blankrows: false }) as unknown[][];
-    dados[nome] = linhas.map((l) => l.map((c) => String(c ?? "")));
+    const tabela = linhas.map((l) => l.map((c) => String(c ?? "")));
+    // relatório "Completo" do Domínio (fichas rótulo: valor) vira tabela
+    dados[nome] = fichasParaTabela(tabela) ?? tabela;
   }
   return { abas: wb.SheetNames, dados };
 }
@@ -89,7 +91,7 @@ function Importar() {
   const [lendo, setLendo] = useState(false);
   const [enviando, setEnviando] = useState(false);
   const [msg, setMsg] = useState<{ tipo: "ok" | "erro"; texto: string } | null>(null);
-  const [resultado, setResultado] = useState<{ inseridos: number; atualizados: number; ignorados: number; erros: { razao_social: string; erro: string }[] } | null>(null);
+  const [resultado, setResultado] = useState<{ inseridos: number; atualizados: number; ignorados: number; inativos: number; erros: { razao_social: string; erro: string }[] } | null>(null);
   const [filtro, setFiltro] = useState<"todos" | "novo" | "atualizar" | "aviso" | "fora">("todos");
   const [arrastando, setArrastando] = useState(false);
 
@@ -117,7 +119,7 @@ function Importar() {
       let situacao: "novo" | "atualizar" | "duplicado" | "fora" | "erro";
       if (l.erro) situacao = "erro";
       else if (vistos.has(chave)) situacao = "duplicado";
-      else if (soAtivos && l.ativo === false) situacao = "fora";
+      else if (soAtivos && l.ativo === false && !existentes.porCodigo.has(l.codigo_dominio ?? "") && !(l.cnpj && existentes.porDoc.has(soDigitos(l.cnpj)))) situacao = "fora";
       else if ((l.codigo_dominio && existentes.porCodigo.has(l.codigo_dominio)) || (l.cnpj && existentes.porDoc.has(soDigitos(l.cnpj))))
         situacao = "atualizar";
       else situacao = "novo";
@@ -166,17 +168,18 @@ function Importar() {
     const enviar = linhas.filter((l) => l.situacao === "novo" || (atualizar && l.situacao === "atualizar"));
     if (!enviar.length) return setMsg({ tipo: "erro", texto: "Nenhuma linha para importar com as opções escolhidas." });
     setEnviando(true); setMsg(null);
-    const total = { inseridos: 0, atualizados: 0, ignorados: 0, erros: [] as { razao_social: string; erro: string }[] };
+    const total = { inseridos: 0, atualizados: 0, ignorados: 0, inativos: 0, erros: [] as { razao_social: string; erro: string }[] };
     try {
       for (let i = 0; i < enviar.length; i += 300) {
         const lote = enviar.slice(i, i + 300).map((l) => ({
           codigo_dominio: l.codigo_dominio, razao_social: l.razao_social, nome_fantasia: l.nome_fantasia,
           cnpj: l.cnpj, regime: l.regime, cidade: l.cidade, uf: l.uf, inicio_em: l.inicio_em,
-          ativo: l.ativo ?? true,
+          cliente_desde: l.cliente_desde, ativo: l.ativo, inativo_em: l.inativo_em,
+          motivo_inativacao: l.motivo_inativacao,
         }));
         const { data, error } = await supabase().rpc("importar_clientes", { p_org: org.id, p_linhas: lote, p_atualizar: atualizar });
         if (error) throw error;
-        total.inseridos += data.inseridos; total.atualizados += data.atualizados; total.ignorados += data.ignorados;
+        total.inseridos += data.inseridos; total.atualizados += data.atualizados; total.ignorados += data.ignorados; total.inativos += data.inativos ?? 0;
         total.erros.push(...(data.erros ?? []));
       }
       setResultado(total);
@@ -220,7 +223,7 @@ function Importar() {
         <details className="mt-2 max-w-2xl text-left text-sm text-[var(--texto-suave)]">
           <summary className="cursor-pointer text-[var(--marca)]">Como tirar a lista do Domínio</summary>
           <ol className="mt-2 list-decimal space-y-1 pl-5">
-            <li>No Domínio, acesse <b>Relatórios › Cadastrais › Empresas</b>, escolha o modelo <b>Simples</b> e, nos filtros, a situação cadastral desejada (ex.: ativas). Clique em OK.</li>
+            <li>No Domínio, acesse <b>Relatórios › Cadastrais › Empresas</b>, escolha o modelo <b>Completo</b> (traz município, UF, situação, data da situação e motivo) e clique em OK.</li>
             <li>Na visualização do relatório, exporte em Excel (.xls/.xlsx) ou texto/CSV e salve no computador.</li>
             <li>Envie o arquivo aqui. A tela acha o cabeçalho sozinha, mesmo com título e data no topo do relatório; se alguma coluna não for reconhecida, escolha abaixo.</li>
             <li>O código da empresa no Domínio fica gravado: na próxima importação os clientes são atualizados, não duplicados.</li>
@@ -235,6 +238,7 @@ function Importar() {
           <h2 className="font-semibold text-[var(--marca)]">Importação concluída</h2>
           <p className="text-sm">
             <b>{resultado.inseridos}</b> novo(s) · <b>{resultado.atualizados}</b> atualizado(s) · <b>{resultado.ignorados}</b> ignorado(s)
+            {resultado.inativos > 0 && <> · <b>{resultado.inativos}</b> marcado(s) como inativo(s), com as tarefas posteriores à saída canceladas</>}
             {resultado.erros.length > 0 && <> · <b className="text-red-700">{resultado.erros.length}</b> com erro</>}
           </p>
           {resultado.erros.length > 0 && (
@@ -313,7 +317,7 @@ function Importar() {
               <div className="max-h-[55vh] overflow-auto rounded-md border border-[var(--borda)]">
                 <table className="tabela">
                   <thead className="sticky top-0 bg-white">
-                    <tr><th>Linha</th><th>Situação</th><th>Cód.</th><th>Razão social</th><th>CNPJ/CPF</th><th>Regime</th><th>Cidade/UF</th><th>Avisos</th></tr>
+                    <tr><th>Linha</th><th>Situação</th><th>Cód.</th><th>Razão social</th><th>CNPJ/CPF</th><th>Regime</th><th>Cidade/UF</th><th>Situação</th><th>Avisos</th></tr>
                   </thead>
                   <tbody>
                     {visiveis.slice(0, 1000).map((l) => (
@@ -328,6 +332,11 @@ function Importar() {
                         <td className="whitespace-nowrap">{l.cnpj ?? "—"}</td>
                         <td title={l.regime_original}>{nomeRegime(l.regime)}</td>
                         <td>{[l.cidade, l.uf].filter(Boolean).join("/") || "—"}</td>
+                        <td className="whitespace-nowrap text-xs">
+                          {l.ativo === false
+                            ? <span className="text-red-700">Inativa{l.inativo_em ? ` desde ${l.inativo_em.split("-").reverse().join("/")}` : ""}{l.motivo_inativacao ? ` · ${l.motivo_inativacao}` : ""}</span>
+                            : l.ativo === true ? "Ativa" : "—"}
+                        </td>
                         <td className="text-xs text-amber-800">{[l.erro, ...l.avisos].filter(Boolean).join("; ")}</td>
                       </tr>
                     ))}
@@ -344,7 +353,7 @@ function Importar() {
                 {mapa.situacao !== undefined && (
                   <label className="flex items-center gap-2 text-sm">
                     <input type="checkbox" className="h-4 w-4 accent-[var(--marca)]" checked={soAtivos} onChange={(e) => setSoAtivos(e.target.checked)} />
-                    Deixar de fora empresas inativas/baixadas
+                    Não cadastrar empresas que já chegam inativas (as já cadastradas são marcadas como inativas)
                   </label>
                 )}
                 <button className="btn-primario ml-auto" disabled={enviando || cont.novo + (atualizar ? cont.atualizar : 0) === 0} onClick={importar}>
