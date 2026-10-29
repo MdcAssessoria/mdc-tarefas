@@ -216,6 +216,7 @@ function Tarefas() {
           {clientes.map((c) => (
             <option key={c.id} value={c.id}>
               {c.nome_fantasia || c.razao_social}
+              {c.ativo ? "" : " (inativo)"}
             </option>
           ))}
         </select>
