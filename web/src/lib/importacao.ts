@@ -2,7 +2,7 @@
 
 export type Campo =
   | "codigo_dominio" | "razao_social" | "nome_fantasia" | "cnpj"
-  | "regime" | "cidade" | "uf" | "situacao" | "inicio_em";
+  | "regime" | "cidade" | "uf" | "situacao" | "inativo_em" | "motivo_inativacao" | "cliente_desde" | "inicio_em";
 
 export const CAMPOS: { id: Campo; nome: string; obrigatorio?: boolean; dica: string }[] = [
   { id: "codigo_dominio", nome: "Código no Domínio", dica: "Número da empresa no Domínio. Garante que a próxima importação atualize em vez de duplicar." },
@@ -13,7 +13,10 @@ export const CAMPOS: { id: Campo; nome: string; obrigatorio?: boolean; dica: str
   { id: "cidade", nome: "Cidade", dica: "" },
   { id: "uf", nome: "UF", dica: "" },
   { id: "situacao", nome: "Situação", dica: "Ativa / Inativa / Baixada." },
-  { id: "inicio_em", nome: "Cliente desde", dica: "Data de início ou de cadastro." },
+  { id: "inativo_em", nome: "Inativo desde", dica: "Data em que o cliente saiu do escritório (Data da situação no Domínio)." },
+  { id: "motivo_inativacao", nome: "Motivo da inativação", dica: "Transferida, Baixada, etc." },
+  { id: "cliente_desde", nome: "Cliente desde", dica: "Data em que passou a ser cliente; não gera tarefas antes dela." },
+  { id: "inicio_em", nome: "Início das atividades", dica: "" },
 ];
 
 // Nomes de coluna aceitos para cada campo (comparados sem acento, minúsculos, sem pontuação).
@@ -26,13 +29,51 @@ const SINONIMOS: Record<Campo, string[]> = {
   cidade: ["cidade", "municipio", "nome municipio"],
   uf: ["uf", "estado", "sigla uf"],
   situacao: ["situacao", "status", "ativa", "ativo", "situacao empresa", "stat emp"],
-  inicio_em: ["cliente desde", "data inicio", "inicio", "data de inicio", "inicio atividades", "data cadastro", "data de cadastro", "dt inicio"],
+  inativo_em: ["data da situacao", "inativo desde", "data inativacao", "data de inativacao", "data de saida", "data saida", "saiu em"],
+  motivo_inativacao: ["motivo", "motivo da inativacao", "motivo inativacao", "motivo da situacao"],
+  cliente_desde: ["cliente desde", "data cadastro", "data de cadastro", "inicio contrato", "data inicio contrato"],
+  inicio_em: ["inicio atividades", "inicio das atividades", "data inicio", "data de inicio", "dt inicio"],
 };
 
 export function normalizar(t: unknown): string {
   return String(t ?? "")
     .normalize("NFD").replace(/[̀-ͯ]/g, "")
     .toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+/**
+ * Relatório "Completo" do Domínio vem em fichas (rótulo: valor), uma empresa por bloco.
+ * Converte para tabela (cabeçalho + uma linha por empresa). Devolve null se não for esse formato.
+ */
+export function fichasParaTabela(linhas: string[][]): string[][] | null {
+  const ehRotulo = (s: string) => /^[^\d].{0,40}:$/.test(s.trim());
+  const blocos = linhas.filter((l) => l.some((c) => normalizar(c) === "codigo" && String(c).trim().endsWith(":"))).length;
+  if (blocos < 2) return null;
+  const regs: Record<string, string>[] = [];
+  const ordem: string[] = [];
+  let cur: Record<string, string> | null = null;
+  for (const l of linhas) {
+    for (let i = 0; i < l.length; i++) {
+      const cel = String(l[i] ?? "").trim();
+      if (!cel || !ehRotulo(cel)) continue;
+      let chave = cel.slice(0, -1).trim();
+      let valor = "";
+      for (let j = i + 1; j < l.length; j++) {
+        const v = String(l[j] ?? "").trim();
+        if (!v) continue;
+        if (ehRotulo(v)) break;
+        valor = v; break;
+      }
+      if (normalizar(chave) === "codigo") { cur = {}; regs.push(cur); }
+      if (!cur) continue;
+      if (normalizar(chave) === "data" && cur["Duração do contrato"] !== undefined && cur["Data do contrato"] === undefined) chave = "Data do contrato";
+      if (cur[chave] !== undefined) continue;
+      cur[chave] = valor;
+      if (!ordem.includes(chave)) ordem.push(chave);
+    }
+  }
+  const cab = ordem.filter((k) => !/^(empresa|c n p j|pagina|emissao|hora|data)$/.test(normalizar(k)));
+  return [cab, ...regs.map((r) => cab.map((k) => r[k] ?? ""))];
 }
 
 /** Acha a linha de cabeçalho (relatórios costumam ter título antes) e sugere o mapeamento. */
@@ -158,6 +199,9 @@ export interface LinhaImport {
   cidade: string | null;
   uf: string | null;
   ativo: boolean | null;
+  inativo_em: string | null;
+  motivo_inativacao: string | null;
+  cliente_desde: string | null;
   inicio_em: string | null;
   avisos: string[];
   erro?: string;
@@ -186,6 +230,9 @@ export function montarLinhas(linhas: string[][], cabecalho: number, mapa: Partia
     const avisos: string[] = [];
     if (doc.aviso) avisos.push(doc.aviso);
     if (regimeOrig && mapearRegime(regimeOrig) === "outro") avisos.push(`Regime "${regimeOrig}" entra como Outro`);
+    const ativo = mapa.situacao === undefined ? null : mapearSituacao(pega(l, "situacao"));
+    const inativoEm = ativo === false ? tratarData(pega(l, "inativo_em")) : null;
+    if (ativo === false && !inativoEm) avisos.push("Inativa sem data: será usada a data de hoje");
     out.push({
       n: i + 1,
       codigo_dominio: codigoBruto ? codigoBruto.replace(/\.0+$/, "") : null,
@@ -196,7 +243,10 @@ export function montarLinhas(linhas: string[][], cabecalho: number, mapa: Partia
       regime_original: regimeOrig,
       cidade: pega(l, "cidade") || null,
       uf: /^[A-Z]{2}$/.test(ufBruta) ? ufBruta : null,
-      ativo: mapa.situacao === undefined ? null : mapearSituacao(pega(l, "situacao")),
+      ativo,
+      inativo_em: inativoEm,
+      motivo_inativacao: ativo === false ? pega(l, "motivo_inativacao") || null : null,
+      cliente_desde: tratarData(pega(l, "cliente_desde")),
       inicio_em: tratarData(pega(l, "inicio_em")),
       avisos,
       erro: razao ? undefined : "Sem razão social",
@@ -206,6 +256,6 @@ export function montarLinhas(linhas: string[][], cabecalho: number, mapa: Partia
 }
 
 export const MODELO_CSV =
-  "﻿Código Domínio;Razão social;Nome curto;CNPJ/CPF;Regime;Cidade;UF;Situação;Cliente desde\r\n" +
-  "101;EMPRESA EXEMPLO COMERCIO LTDA;Exemplo Comércio;11.222.333/0001-81;Simples Nacional;Bragança Paulista;SP;Ativa;01/02/2020\r\n" +
-  "102;EXEMPLO SERVICOS TECNICOS LTDA;Exemplo Serviços;;Lucro Presumido;Atibaia;SP;Ativa;15/06/2022\r\n";
+  "﻿Código Domínio;Razão social;Nome curto;CNPJ/CPF;Regime;Cidade;UF;Situação;Inativo desde;Motivo;Cliente desde\r\n" +
+  "101;EMPRESA EXEMPLO COMERCIO LTDA;Exemplo Comércio;11.222.333/0001-81;Simples Nacional;Bragança Paulista;SP;Ativa;;;01/02/2020\r\n" +
+  "102;EXEMPLO SERVICOS TECNICOS LTDA;Exemplo Serviços;;Lucro Presumido;Atibaia;SP;Inativa;30/09/2026;Saiu do escritório;15/06/2022\r\n";

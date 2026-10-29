@@ -44,6 +44,10 @@ export interface Cliente {
   cidade?: string | null;
   uf?: string | null;
   inicio_em?: string | null;
+  inativo_em?: string | null;
+  motivo_inativacao?: string | null;
+  cliente_desde?: string | null;
+  situacao_dominio?: string | null;
 }
 
 export interface Tarefa {
