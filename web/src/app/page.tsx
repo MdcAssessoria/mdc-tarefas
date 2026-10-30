@@ -1,17 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { Icone } from "@/components/Icone";
 import { PrazoBadge, PrioridadeDot } from "@/components/Badges";
+import { CORES_RITMO, RitmoSemanal } from "@/components/RitmoSemanal";
+import type { SemanaRitmo } from "@/components/RitmoSemanal";
 import { useOrg } from "@/lib/org";
 import { supabase } from "@/lib/supabase";
-import { hojeISO } from "@/lib/datas";
+import { hojeISO, fmtData } from "@/lib/datas";
 import { caminho } from "@/lib/caminho";
 import { traduzirErro } from "@/lib/erros";
-import { PAPEIS_APP } from "@/lib/types";
-import type { HubApp, Prioridade, Status } from "@/lib/types";
+import type { Prioridade, Status } from "@/lib/types";
 
 export default function Inicio() {
   return (
@@ -21,16 +22,6 @@ export default function Inicio() {
   );
 }
 
-interface Resumo {
-  tarefasAtrasadas?: number;
-  tarefasHoje?: number;
-  tarefasSemana?: number;
-  processosParados?: number;
-  atendimentosNovos?: number;
-  vencimentos30?: number;
-  balancetesRascunho?: number;
-}
-
 interface MinhaTarefa {
   id: string;
   titulo: string;
@@ -38,108 +29,160 @@ interface MinhaTarefa {
   status: Status;
   prioridade: Prioridade;
   cliente_id: string | null;
+  concluida_em: string | null;
 }
+
+const ABERTAS: Status[] = ["a_fazer", "em_andamento", "aguardando"];
 
 function saudacao(fuso: string) {
   const h = Number(new Date().toLocaleString("en-US", { hour: "numeric", hour12: false, timeZone: fuso }));
   return h < 12 ? "Bom dia" : h < 18 ? "Boa tarde" : "Boa noite";
 }
 
+const somaDias = (iso: string, n: number) => new Date(Date.parse(iso + "T12:00:00Z") + n * 864e5).toISOString().slice(0, 10);
+const segunda = (iso: string) => {
+  const d = new Date(iso + "T12:00:00Z").getUTCDay(); // 0 = domingo
+  return somaDias(iso, d === 0 ? -6 : 1 - d);
+};
+
 function Hub() {
-  const { org, eu, apps, pode, papel, clientePorId } = useOrg();
-  const [r, setR] = useState<Resumo>({});
-  const [fila, setFila] = useState<MinhaTarefa[] | null>(null);
-  const [aviso, setAviso] = useState<string | null>(null);
+  const { org, eu, pode, papel, clientePorId } = useOrg();
   const hoje = hojeISO(org.fuso);
+  const [abertas, setAbertas] = useState<MinhaTarefa[] | null>(null);
+  const [feitas, setFeitas] = useState<MinhaTarefa[]>([]);
+  const [semanasAtras, setSemanasAtras] = useState(8);
+  const [semanaSel, setSemanaSel] = useState<string | null>(null);
+  const [aviso, setAviso] = useState<string | null>(null);
+  const temTarefas = pode("tarefas");
 
   useEffect(() => {
     if (papel === "tv") window.location.replace(caminho("/tv"));
   }, [papel]);
 
-  // indicadores do dia (só do que a pessoa pode ver), todos em paralelo
-  useEffect(() => {
+  const inicioJanela = useMemo(() => somaDias(segunda(hoje), -7 * (semanasAtras - 1)), [hoje, semanasAtras]);
+
+  const carregar = useCallback(async () => {
+    if (!temTarefas) return setAbertas([]);
     const sb = supabase();
-    const em7 = new Date(Date.parse(hoje) + 7 * 864e5).toISOString().slice(0, 10);
-    const em30 = new Date(Date.parse(hoje) + 30 * 864e5).toISOString().slice(0, 10);
-    const parado = new Date(Date.now() - 5 * 864e5).toISOString();
-    const conta = async (q: PromiseLike<{ count: number | null }>) => (await q).count ?? 0;
-    (async () => {
-      const novo: Resumo = {};
-      const pedidos: Promise<void>[] = [];
-      const add = (k: keyof Resumo, q: PromiseLike<{ count: number | null }>) => pedidos.push(conta(q).then((n) => void (novo[k] = n)));
-      const abertas = () =>
-        sb.from("tarefas").select("id", { count: "exact", head: true }).eq("org_id", org.id).in("status", ["a_fazer", "em_andamento", "aguardando"]);
-      if (pode("tarefas")) {
-        add("tarefasAtrasadas", abertas().lt("prazo", hoje));
-        add("tarefasHoje", abertas().eq("prazo", hoje));
-        add("tarefasSemana", abertas().gt("prazo", hoje).lte("prazo", em7));
-      }
-      if (pode("societario"))
-        add(
-          "processosParados",
-          sb.from("soc_fases").select("id", { count: "exact", head: true }).eq("org_id", org.id)
-            .in("status", ["em_andamento", "aguardando_cliente", "aguardando_orgao"]).lt("mudou_em", parado),
-        );
-      if (pode("atendimento"))
-        add("atendimentosNovos", sb.from("portal_conversas").select("id", { count: "exact", head: true }).eq("org_id", org.id).eq("status", "novo"));
-      if (pode("vencimentos"))
-        add("vencimentos30", sb.from("venc_itens").select("id", { count: "exact", head: true }).eq("org_id", org.id).eq("status", "ativo").lte("vence_em", em30));
-      if (pode("demonstrativos"))
-        add("balancetesRascunho", sb.from("portal_balancetes").select("id", { count: "exact", head: true }).eq("org_id", org.id).eq("status", "rascunho"));
-      await Promise.all(pedidos);
-      setR(novo);
-    })();
-  }, [org.id, hoje, pode]);
-
-  // a fila da pessoa: atrasadas e as dos próximos 7 dias
-  const carregarFila = useCallback(async () => {
-    if (!pode("tarefas")) return setFila([]);
-    const em7 = new Date(Date.parse(hoje) + 7 * 864e5).toISOString().slice(0, 10);
-    const { data } = await supabase()
-      .from("tarefas")
-      .select("id,titulo,prazo,status,prioridade,cliente_id")
-      .eq("org_id", org.id)
-      .eq("responsavel_id", eu.user_id)
-      .in("status", ["a_fazer", "em_andamento", "aguardando"])
-      .lte("prazo", em7)
-      .order("prazo")
-      .limit(8);
-    setFila((data as MinhaTarefa[]) ?? []);
-  }, [org.id, eu.user_id, hoje, pode]);
+    const campos = "id,titulo,prazo,status,prioridade,cliente_id,concluida_em";
+    const [a, f] = await Promise.all([
+      sb.from("tarefas").select(campos).eq("org_id", org.id).eq("responsavel_id", eu.user_id).in("status", ABERTAS).order("prazo", { nullsFirst: false }).limit(1000),
+      sb
+        .from("tarefas")
+        .select(campos)
+        .eq("org_id", org.id)
+        .eq("responsavel_id", eu.user_id)
+        .eq("status", "concluida")
+        .gte("concluida_em", inicioJanela + "T03:00:00Z")
+        .order("concluida_em", { ascending: false })
+        .limit(2000),
+    ]);
+    if (a.error) return setAviso(traduzirErro(a.error));
+    setAbertas((a.data as MinhaTarefa[]) ?? []);
+    setFeitas((f.data as MinhaTarefa[]) ?? []);
+  }, [temTarefas, org.id, eu.user_id, inicioJanela]);
 
   useEffect(() => {
-    carregarFila();
-  }, [carregarFila]);
+    carregar();
+  }, [carregar]);
+
+  const diaLocal = useCallback((iso: string) => new Date(iso).toLocaleDateString("en-CA", { timeZone: org.fuso }), [org.fuso]);
+  const noPrazo = useCallback((t: MinhaTarefa) => !t.prazo || !t.concluida_em || diaLocal(t.concluida_em) <= t.prazo, [diaLocal]);
+
+  // números do dia, só da pessoa
+  const n = useMemo(() => {
+    const l = abertas ?? [];
+    const em7 = somaDias(hoje, 7);
+    const mes = hoje.slice(0, 7);
+    const doMes = feitas.filter((t) => t.concluida_em && diaLocal(t.concluida_em).slice(0, 7) === mes);
+    const doMesPrazo = doMes.filter((t) => t.prazo);
+    return {
+      atrasadas: l.filter((t) => t.prazo && t.prazo < hoje).length,
+      hoje: l.filter((t) => t.prazo === hoje).length,
+      semana: l.filter((t) => t.prazo && t.prazo > hoje && t.prazo <= em7).length,
+      abertas: l.length,
+      concluidasMes: doMes.length,
+      pctPrazo: doMesPrazo.length ? Math.round((doMesPrazo.filter(noPrazo).length / doMesPrazo.length) * 100) : null,
+    };
+  }, [abertas, feitas, hoje, diaLocal, noPrazo]);
+
+  // semanas: passadas (concluídas) + 4 à frente (previstas)
+  const semanas = useMemo<SemanaRitmo[]>(() => {
+    const atual = segunda(hoje);
+    const lista: SemanaRitmo[] = [];
+    for (let k = -(semanasAtras - 1); k <= 4; k++) {
+      const ini = somaDias(atual, 7 * k);
+      const fim = somaDias(ini, 6);
+      const feitasSem = feitas.filter((t) => t.concluida_em && diaLocal(t.concluida_em) >= ini && diaLocal(t.concluida_em) <= fim);
+      lista.push({
+        inicio: ini,
+        noPrazo: feitasSem.filter(noPrazo).length,
+        atrasadas: feitasSem.filter((t) => !noPrazo(t)).length,
+        previstas: (abertas ?? []).filter((t) => t.prazo && t.prazo >= (k === 0 ? hoje : ini) && t.prazo <= fim).length,
+        atual: k === 0,
+        futura: k > 0,
+      });
+    }
+    return lista;
+  }, [hoje, semanasAtras, feitas, abertas, diaLocal, noPrazo]);
+
+  // abertas por cliente (onde está o meu trabalho)
+  const porCliente = useMemo(() => {
+    const m = new Map<string, { id: string | null; total: number; atrasadas: number }>();
+    for (const t of abertas ?? []) {
+      const k = t.cliente_id ?? "_interna";
+      const v = m.get(k) ?? { id: t.cliente_id, total: 0, atrasadas: 0 };
+      v.total++;
+      if (t.prazo && t.prazo < hoje) v.atrasadas++;
+      m.set(k, v);
+    }
+    return [...m.values()].sort((a, b) => b.atrasadas - a.atrasadas || b.total - a.total).slice(0, 7);
+  }, [abertas, hoje]);
+
+  // lista abaixo do gráfico: a semana clicada ou a fila (atrasadas + próximos 7 dias)
+  const lista = useMemo(() => {
+    if (semanaSel) {
+      const fim = somaDias(semanaSel, 6);
+      const sem = semanas.find((s) => s.inicio === semanaSel);
+      const concl = feitas.filter((t) => t.concluida_em && diaLocal(t.concluida_em) >= semanaSel && diaLocal(t.concluida_em) <= fim);
+      const prev = (abertas ?? []).filter((t) => t.prazo && t.prazo >= semanaSel && t.prazo <= fim);
+      return sem?.futura ? prev : [...prev, ...concl];
+    }
+    const em7 = somaDias(hoje, 7);
+    return (abertas ?? []).filter((t) => t.prazo && t.prazo <= em7).slice(0, 12);
+  }, [semanaSel, semanas, feitas, abertas, hoje, diaLocal]);
 
   async function concluir(t: MinhaTarefa) {
-    setFila((f) => f?.filter((x) => x.id !== t.id) ?? f);
+    setAbertas((l) => l?.filter((x) => x.id !== t.id) ?? l);
     const { error } = await supabase().from("tarefas").update({ status: "concluida" }).eq("id", t.id);
-    if (error) {
-      setAviso(traduzirErro(error));
-      carregarFila();
-    } else {
-      setAviso(`Concluída: ${t.titulo}`);
-      setTimeout(() => setAviso(null), 4000);
-    }
+    if (error) setAviso(traduzirErro(error));
+    else setAviso(`Concluída: ${t.titulo}`);
+    carregar();
+    setTimeout(() => setAviso(null), 4000);
   }
 
-  const liberadas = apps.filter((a) => a.papel && a.status !== "em_breve");
-  const embreve = papel === "admin" ? apps.filter((a) => a.status === "em_breve") : [];
   const primeiroNome = eu.nome.split(" ")[0];
   const data = new Date(hoje + "T12:00:00Z").toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" });
+  const maxCli = Math.max(1, ...porCliente.map((c) => c.total));
+  const nomeCli = (id: string | null) => {
+    const c = clientePorId(id);
+    return c ? c.nome_fantasia || c.razao_social : "Internas";
+  };
 
-  const livro: { rotulo: string; valor?: number; href: string; alerta?: boolean }[] = [
-    { rotulo: "tarefas atrasadas", valor: r.tarefasAtrasadas, href: "/tarefas", alerta: true },
-    { rotulo: "vencem hoje", valor: r.tarefasHoje, href: "/tarefas" },
-    { rotulo: "nos próximos 7 dias", valor: r.tarefasSemana, href: "/tarefas" },
-    { rotulo: "atendimentos novos", valor: r.atendimentosNovos, href: "/atendimento", alerta: true },
-    { rotulo: "vencimentos em 30 dias", valor: r.vencimentos30, href: "/vencimentos", alerta: true },
-    { rotulo: "fases paradas há 5 dias", valor: r.processosParados, href: "/societario", alerta: true },
-    { rotulo: "balancetes a publicar", valor: r.balancetesRascunho, href: "/demonstrativos" },
-  ].filter((i) => i.valor !== undefined);
+  const livro: { rotulo: string; valor: string; href: string; quente?: boolean }[] = [
+    { rotulo: "atrasadas", valor: String(n.atrasadas), href: "/tarefas", quente: n.atrasadas > 0 },
+    { rotulo: "vencem hoje", valor: String(n.hoje), href: "/tarefas" },
+    { rotulo: "nos próximos 7 dias", valor: String(n.semana), href: "/tarefas" },
+    { rotulo: "abertas com você", valor: String(n.abertas), href: "/tarefas" },
+    {
+      rotulo: n.pctPrazo === null ? "concluídas no mês" : `concluídas no mês · ${n.pctPrazo}% no prazo`,
+      valor: String(n.concluidasMes),
+      href: "/tarefas/relatorio",
+    },
+  ];
 
   return (
-    <div className="space-y-9">
+    <div className="space-y-8">
       <header className="flex flex-wrap items-end justify-between gap-4 pt-2">
         <div>
           <p className="text-[14px] text-[var(--texto-suave)]">{data.charAt(0).toUpperCase() + data.slice(1)}</p>
@@ -147,73 +190,158 @@ function Hub() {
             {saudacao(org.fuso)}, {primeiroNome}
           </h1>
         </div>
-        {pode("tarefas") && (
+        {temTarefas && (
           <Link href="/tarefas?nova=1" className="btn-primario">
             <Icone nome="mais" className="h-4 w-4" /> Nova tarefa
           </Link>
         )}
       </header>
 
-      {/* livro do dia: os números que pedem ação, lado a lado como colunas de um razão */}
-      {livro.length > 0 && (
-        <section aria-label="Resumo do dia" className="overflow-hidden rounded-2xl border border-[var(--borda)] bg-white">
-          <div className="grid grid-cols-2 divide-x divide-y divide-[var(--borda)] sm:grid-cols-3 lg:flex lg:divide-y-0">
-            {livro.map((i) => {
-              const quente = i.alerta && (i.valor ?? 0) > 0;
-              return (
+      {!temTarefas ? (
+        <p className="max-w-xl rounded-2xl border border-[var(--borda)] bg-white p-6 text-[14px] text-[var(--texto-suave)]">
+          Suas ferramentas estão no menu ao lado. Quando o módulo de Tarefas for liberado para você, o resumo do seu dia aparece aqui.
+        </p>
+      ) : (
+        <>
+          <section aria-label="Seu resumo" className="overflow-hidden rounded-2xl border border-[var(--borda)] bg-white">
+            <div className="grid grid-cols-2 divide-x divide-y divide-[var(--borda)] sm:grid-cols-3 lg:flex lg:divide-y-0">
+              {livro.map((i) => (
                 <Link key={i.rotulo} href={i.href} className="group relative min-w-0 flex-1 px-5 py-4 transition-colors hover:bg-[var(--fundo)]">
-                  {quente && <span className="absolute inset-x-0 top-0 h-[3px] bg-[var(--perigo)]" aria-hidden="true" />}
-                  <div className={`font-display num text-[38px] font-medium leading-none ${quente ? "text-[var(--perigo)]" : "text-[var(--marca)]"}`}>{i.valor}</div>
+                  {i.quente && <span className="absolute inset-x-0 top-0 h-[3px] bg-[var(--perigo)]" aria-hidden="true" />}
+                  <div className={`font-display num text-[38px] font-medium leading-none ${i.quente ? "text-[var(--perigo)]" : "text-[var(--marca)]"}`}>
+                    {abertas === null ? "·" : i.valor}
+                  </div>
                   <div className="mt-2 text-[13px] leading-snug text-[var(--texto-suave)] group-hover:text-[var(--marca)]">{i.rotulo}</div>
                 </Link>
-              );
-            })}
-          </div>
-        </section>
-      )}
+              ))}
+            </div>
+          </section>
 
-      <div className={`grid grid-cols-1 gap-8 ${pode("tarefas") ? "lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]" : ""}`}>
-        {pode("tarefas") && (
-          <section aria-labelledby="fila" className="min-w-0">
-            <div className="mb-3 flex items-baseline justify-between">
-              <h2 id="fila" className="text-[17px] font-semibold text-[var(--marca)]">
-                Sua fila
+          <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
+            <section aria-labelledby="ritmo" className="min-w-0 rounded-2xl border border-[var(--borda)] bg-white p-5">
+              <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <h2 id="ritmo" className="text-[17px] font-semibold text-[var(--marca)]">
+                    Seu ritmo por semana
+                  </h2>
+                  <p className="text-[13px] text-[var(--texto-suave)]">Concluídas nas últimas semanas e o que vence nas próximas. Clique numa semana.</p>
+                </div>
+                <div className="flex overflow-hidden rounded-lg border border-[var(--borda)] text-[13px]">
+                  {[8, 16].map((k) => (
+                    <button key={k} onClick={() => setSemanasAtras(k)} className={`px-3 py-1 ${semanasAtras === k ? "bg-[var(--marca)] text-white" : "bg-white"}`}>
+                      {k} semanas
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <RitmoSemanal semanas={semanas} selecionada={semanaSel} aoSelecionar={setSemanaSel} />
+              <div className="mt-1 flex flex-wrap gap-4 text-[12px] text-[var(--texto-suave)]">
+                <span className="flex items-center gap-1.5">
+                  <span className="h-2.5 w-2.5 rounded-sm" style={{ background: CORES_RITMO.OK }} /> concluídas no prazo
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="h-2.5 w-2.5 rounded-sm" style={{ background: CORES_RITMO.ATRASO }} /> concluídas com atraso
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="h-2.5 w-2.5 rounded-sm" style={{ border: `1.5px dashed ${CORES_RITMO.PREVISTA}` }} /> abertas que vencem
+                </span>
+              </div>
+            </section>
+
+            <section aria-labelledby="clientes" className="min-w-0 rounded-2xl border border-[var(--borda)] bg-white p-5">
+              <h2 id="clientes" className="text-[17px] font-semibold text-[var(--marca)]">
+                Onde está seu trabalho
               </h2>
-              <Link href="/tarefas" className="text-[13px] text-[var(--destaque-escuro)] hover:underline">
-                Ver todas as suas tarefas
-              </Link>
+              <p className="mb-3 text-[13px] text-[var(--texto-suave)]">Abertas com você por cliente. Vermelho = atrasadas.</p>
+              {abertas === null ? (
+                <p className="text-sm text-[var(--texto-suave)]">Carregando…</p>
+              ) : porCliente.length === 0 ? (
+                <p className="text-sm text-[var(--texto-suave)]">Nenhuma tarefa aberta com você.</p>
+              ) : (
+                <ul className="space-y-1">
+                  {porCliente.map((c) => (
+                    <li key={c.id ?? "_interna"}>
+                      <Link
+                        href={c.id ? `/tarefas?cliente=${c.id}` : "/tarefas"}
+                        className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-1 rounded-lg px-2 py-1.5 hover:bg-[var(--fundo)]"
+                        title={`${nomeCli(c.id)}: ${c.total} aberta(s), ${c.atrasadas} atrasada(s)`}
+                      >
+                        <span className="truncate text-[14px]">{nomeCli(c.id)}</span>
+                        <span className="num text-[13px] text-[var(--texto-suave)]">
+                          {c.atrasadas > 0 && <b className="text-[var(--perigo)]">{c.atrasadas} · </b>}
+                          {c.total}
+                        </span>
+                        <span className="col-span-2 flex h-1.5 overflow-hidden rounded-full bg-[var(--fundo)]">
+                          <span className="h-full bg-[var(--perigo)]" style={{ width: `${(c.atrasadas / maxCli) * 100}%` }} />
+                          <span className="h-full bg-[var(--marca)]" style={{ width: `${((c.total - c.atrasadas) / maxCli) * 100}%` }} />
+                        </span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          </div>
+
+          <section aria-labelledby="fila">
+            <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
+              <h2 id="fila" className="text-[17px] font-semibold text-[var(--marca)]">
+                {semanaSel ? `Semana de ${fmtData(semanaSel)}` : "Sua fila"}
+              </h2>
+              <div className="flex gap-4 text-[13px]">
+                {semanaSel && (
+                  <button className="text-[var(--destaque-escuro)] hover:underline" onClick={() => setSemanaSel(null)}>
+                    Voltar para a fila
+                  </button>
+                )}
+                <Link href="/tarefas" className="text-[var(--destaque-escuro)] hover:underline">
+                  Ver todas as suas tarefas
+                </Link>
+              </div>
             </div>
             {aviso && <p className="mb-2 rounded-lg bg-emerald-50 px-3 py-2 text-[13px] text-emerald-900">{aviso}</p>}
             <div className="overflow-hidden rounded-2xl border border-[var(--borda)] bg-white">
-              {fila === null ? (
-                <p className="px-5 py-8 text-[14px] text-[var(--texto-suave)]">Carregando sua fila…</p>
-              ) : fila.length === 0 ? (
+              {abertas === null ? (
+                <p className="px-5 py-8 text-[14px] text-[var(--texto-suave)]">Carregando…</p>
+              ) : lista.length === 0 ? (
                 <div className="px-5 py-10 text-center">
-                  <p className="font-display text-[22px] text-[var(--marca)]">Fila em dia</p>
-                  <p className="mt-1 text-[14px] text-[var(--texto-suave)]">Nada atrasado nem vencendo nos próximos 7 dias com você.</p>
+                  <p className="font-display text-[22px] text-[var(--marca)]">{semanaSel ? "Nada nesta semana" : "Fila em dia"}</p>
+                  <p className="mt-1 text-[14px] text-[var(--texto-suave)]">
+                    {semanaSel ? "Nenhuma tarefa sua concluída ou vencendo nesta semana." : "Nada atrasado nem vencendo nos próximos 7 dias com você."}
+                  </p>
                 </div>
               ) : (
                 <ul className="divide-y divide-[var(--borda)]">
-                  {fila.map((t) => {
+                  {lista.map((t) => {
                     const c = clientePorId(t.cliente_id);
+                    const feita = t.status === "concluida";
                     return (
-                      <li key={t.id} className="group flex items-center gap-3 px-4 py-3 hover:bg-[var(--fundo)]/60">
-                        <button
-                          onClick={() => concluir(t)}
-                          className="grid h-6 w-6 shrink-0 place-items-center rounded-full border-2 border-[var(--borda)] text-transparent transition-colors hover:border-[var(--sucesso)] hover:text-[var(--sucesso)]"
-                          aria-label={`Concluir ${t.titulo}`}
-                          title="Concluir"
-                        >
-                          <Icone nome="check" className="h-3.5 w-3.5" />
-                        </button>
+                      <li key={t.id} className="flex items-center gap-3 px-4 py-3 hover:bg-[var(--fundo)]/60">
+                        {feita ? (
+                          <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-[var(--sucesso)] text-white" title="Concluída">
+                            <Icone nome="check" className="h-3.5 w-3.5" />
+                          </span>
+                        ) : (
+                          <button
+                            onClick={() => concluir(t)}
+                            className="grid h-6 w-6 shrink-0 place-items-center rounded-full border-2 border-[var(--borda)] text-transparent transition-colors hover:border-[var(--sucesso)] hover:text-[var(--sucesso)]"
+                            aria-label={`Concluir ${t.titulo}`}
+                            title="Concluir"
+                          >
+                            <Icone nome="check" className="h-3.5 w-3.5" />
+                          </button>
+                        )}
                         <Link href={c ? `/tarefas?cliente=${c.id}` : "/tarefas"} className="min-w-0 flex-1">
                           <div className="flex items-center gap-2">
                             <PrioridadeDot p={t.prioridade} />
-                            <span className="truncate text-[14px] font-medium">{t.titulo}</span>
+                            <span className={`truncate text-[14px] font-medium ${feita ? "text-[var(--texto-suave)] line-through" : ""}`}>{t.titulo}</span>
                           </div>
-                          <div className="truncate pl-[18px] text-[12px] text-[var(--texto-suave)]">{c ? c.nome_fantasia || c.razao_social : "Interna"}</div>
+                          <div className="truncate pl-[18px] text-[12px] text-[var(--texto-suave)]">
+                            {c ? c.nome_fantasia || c.razao_social : "Interna"}
+                            {feita && t.concluida_em && ` · concluída em ${fmtData(diaLocal(t.concluida_em))}${noPrazo(t) ? "" : " (com atraso)"}`}
+                          </div>
                         </Link>
-                        <PrazoBadge prazo={t.prazo} status={t.status} fuso={org.fuso} />
+                        {!feita && <PrazoBadge prazo={t.prazo} status={t.status} fuso={org.fuso} />}
                       </li>
                     );
                   })}
@@ -221,72 +349,8 @@ function Hub() {
               )}
             </div>
           </section>
-        )}
-
-        <section aria-labelledby="ferramentas" className="min-w-0">
-          <h2 id="ferramentas" className="mb-3 text-[17px] font-semibold text-[var(--marca)]">
-            Ferramentas
-          </h2>
-          {liberadas.length === 0 ? (
-            <p className="rounded-2xl border border-[var(--borda)] bg-white p-6 text-[14px] text-[var(--texto-suave)]">
-              Nenhuma ferramenta liberada para você ainda. Fale com o administrador do Hub.
-            </p>
-          ) : (
-            <ul className={`grid grid-cols-1 gap-2 ${pode("tarefas") ? "" : "sm:grid-cols-2 lg:grid-cols-3"}`}>
-              {liberadas.map((a) => (
-                <li key={a.slug}>
-                  <Ferramenta app={a} />
-                </li>
-              ))}
-            </ul>
-          )}
-          {embreve.length > 0 && (
-            <div className="mt-6">
-              <h3 className="mb-2 text-[13px] text-[var(--texto-suave)]">Em construção (visível só para administradores)</h3>
-              <ul className="flex flex-wrap gap-2">
-                {embreve.map((a) => (
-                  <li key={a.slug} className="flex items-center gap-2 rounded-full border border-dashed border-[var(--borda)] bg-white px-3 py-1.5 text-[13px] text-[var(--texto-suave)]">
-                    <Icone nome={a.icone} className="h-4 w-4" />
-                    {a.nome}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </section>
-      </div>
-    </div>
-  );
-}
-
-function Ferramenta({ app }: { app: HubApp }) {
-  const corpo = (
-    <>
-      <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-[var(--marca)] text-[var(--destaque)] transition-transform group-hover:scale-[1.04]">
-        <Icone nome={app.icone} className="h-[22px] w-[22px]" />
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="flex items-center gap-2">
-          <span className="font-semibold text-[var(--texto)] group-hover:text-[var(--marca)]">{app.slug === "comercial" ? "CRM Comercial" : app.nome}</span>
-          {app.externo && <Icone nome="externo" className="h-3.5 w-3.5 text-[var(--texto-suave)]" />}
-        </span>
-        <span className="block truncate text-[13px] text-[var(--texto-suave)]">{app.descricao}</span>
-      </span>
-      {app.papel && (
-        <span className="shrink-0 rounded-full bg-[var(--fundo)] px-2.5 py-0.5 text-[12px] text-[var(--texto-suave)]" title="Seu nível nesta ferramenta">
-          {PAPEIS_APP.find((p) => p.id === app.papel)?.nome}
-        </span>
+        </>
       )}
-    </>
-  );
-  const cls = "group flex items-center gap-4 rounded-2xl border border-[var(--borda)] bg-white px-4 py-3 transition-colors hover:border-[var(--destaque-escuro)]";
-  return app.externo ? (
-    <a href={app.rota} target="_blank" rel="noopener" className={cls}>
-      {corpo}
-    </a>
-  ) : (
-    <Link href={app.rota} className={cls}>
-      {corpo}
-    </Link>
+    </div>
   );
 }
