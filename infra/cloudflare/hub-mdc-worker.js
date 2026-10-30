@@ -14,6 +14,7 @@ export default {
 
     const destino = new URL(url.pathname + url.search, ORIGEM);
     const cab = new Headers(req.headers);
+    cab.delete("host"); // a Vercel identifica o projeto pelo host do destino
     cab.set("X-Forwarded-Host", url.host);
     cab.set("X-Forwarded-Proto", "https");
     const resp = await fetch(destino, {
