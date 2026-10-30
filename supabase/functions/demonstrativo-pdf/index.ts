@@ -82,10 +82,11 @@ Deno.serve(async (req) => {
     : null;
 
   // 2. certificado: só assina o que está publicado
-  let cert: { pfx: string; senha: string; titular: string; emissor: string; valido_ate: string } | null = null;
+  type Cert = { pfx: string; senha: string; titular: string; emissor: string; valido_ate: string };
+  let cert: Cert | null = null;
   if (b.status === "publicado") {
     const { data } = await servico.rpc("cert_obter", { p_org: b.org_id });
-    const c = (data as typeof cert[] | null)?.[0] ?? null;
+    const c = (data as Cert[] | null)?.[0] ?? null;
     if (c && new Date(c.valido_ate) > new Date()) cert = c;
   }
 
@@ -142,7 +143,7 @@ Deno.serve(async (req) => {
   const nome = `MDC-${cliente.razao_social.split(" ").slice(0, 2).join("-")}-${String(b.competencia).slice(0, 7)}${assinado ? "-assinado" : ""}.pdf`
     .normalize("NFD")
     .replace(/[^\w.-]/g, "");
-  return new Response(bytes, {
+  return new Response(bytes as unknown as BodyInit, {
     headers: { ...CORS, "Content-Type": "application/pdf", "Content-Disposition": `attachment; filename="${nome}"`, "x-assinado": assinado ? "1" : "0" },
   });
 });

@@ -24,9 +24,9 @@ export function lerCertificado(pfx: Uint8Array, senha: string): InfoCertificado 
     ...(p12.getBags({ bagType: forge.pki.oids.keyBag })[forge.pki.oids.keyBag] ?? []),
   ];
   if (!chaves.length) throw new Error("O arquivo não contém a chave privada (precisa ser um certificado A1 exportado com a chave).");
-  const certs = (p12.getBags({ bagType: forge.pki.oids.certBag })[forge.pki.oids.certBag] ?? []).map((b) => b.cert!).filter(Boolean);
+  const certs = (p12.getBags({ bagType: forge.pki.oids.certBag })[forge.pki.oids.certBag] ?? []).map((b: forge.pkcs12.Bag) => b.cert!).filter(Boolean) as forge.pki.Certificate[];
   const chave = chaves[0].key as forge.pki.rsa.PrivateKey;
-  const cert = certs.find((c) => {
+  const cert = certs.find((c: forge.pki.Certificate) => {
     const pub = c.publicKey as forge.pki.rsa.PublicKey;
     return pub.n && chave.n && pub.n.equals(chave.n);
   }) ?? certs[0];
@@ -34,7 +34,7 @@ export function lerCertificado(pfx: Uint8Array, senha: string): InfoCertificado 
   const cn = String(cert.subject.getField("CN")?.value ?? "");
   const [nome, doc] = cn.split(":");
   const emissorCn = String(cert.issuer.getField("CN")?.value ?? "");
-  const org = cert.issuer.attributes.map((a) => String(a.value)).join(" ");
+  const org = cert.issuer.attributes.map((a: { value?: unknown }) => String(a.value)).join(" ");
   return {
     titular: (nome || cn).trim(),
     documento_final: doc ? doc.replace(/\D/g, "").slice(-4) : null,
