@@ -9,6 +9,7 @@ import { PAPEIS } from "@/lib/types";
 import type { PapelApp } from "@/lib/types";
 import { Icone } from "./Icone";
 import { fmtDataHora } from "@/lib/datas";
+import { caminho } from "@/lib/caminho";
 
 type Modulo = "hub" | "tarefas" | "societario" | "demonstrativos" | "atendimento" | "vencimentos" | "comercial";
 
@@ -68,8 +69,9 @@ export function AppShell({ children, modulo = "tarefas" }: { children: React.Rea
 
 /** Bloqueia a tela de um módulo que não foi liberado para a pessoa. */
 function Guarda({ modulo, children }: { modulo: Modulo; children: React.ReactNode }) {
-  const { pode, apps } = useOrg();
-  if (modulo === "hub" || !apps.length) return <>{children}</>;
+  const { pode, appsCarregados } = useOrg();
+  if (modulo === "hub") return <>{children}</>;
+  if (!appsCarregados) return <p className="p-10 text-center text-sm text-neutral-500">Carregando…</p>;
   if (!pode(modulo))
     return (
       <>
@@ -99,7 +101,7 @@ function Cabecalho({ modulo }: { modulo: Modulo }) {
     <header className="bg-[var(--marca)] text-[#C6D3CC] print:hidden">
       <div className="mx-auto flex max-w-[1400px] flex-wrap items-center gap-x-5 gap-y-2 px-4 py-3 sm:px-6">
         <Link href="/" className="flex items-center gap-2" title="Início do HUB-MDC">
-          <img src="/icone-hub-mdc.svg" alt="" className="h-8 w-8 rounded-md" />
+          <img src={caminho("/icone-hub-mdc.svg")} alt="" className="h-8 w-8 rounded-md" />
           <span className="font-semibold text-[var(--destaque)]">{nav.titulo}</span>
         </Link>
         {links.length > 0 && (
@@ -141,7 +143,7 @@ function Cabecalho({ modulo }: { modulo: Modulo }) {
             className="rounded-md border border-white/20 px-2.5 py-1 hover:text-white"
             onClick={async () => {
               await supabase().auth.signOut();
-              window.location.replace("/login");
+              window.location.replace(caminho("/login"));
             }}
           >
             Sair
@@ -187,7 +189,7 @@ function Ferramentas() {
             {minhas.map((a) => (
               <a
                 key={a.slug}
-                href={a.rota}
+                href={caminho(a.rota)}
                 target={a.externo ? "_blank" : undefined}
                 rel={a.externo ? "noopener" : undefined}
                 className="flex flex-col items-center gap-1 rounded-lg p-2 text-center text-xs hover:bg-[var(--fundo)]"
@@ -281,7 +283,7 @@ function Sino() {
             {lista.map((n) => (
               <a
                 key={n.id}
-                href={n.link ?? "#"}
+                href={n.link ? caminho(n.link) : "#"}
                 onClick={() =>
                   !n.lida_em &&
                   supabase().from("hub_notificacoes").update({ lida_em: new Date().toISOString() }).eq("id", n.id)

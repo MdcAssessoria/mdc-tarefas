@@ -7,6 +7,7 @@ import { supabase } from "@/lib/supabase";
 import { diasAte, hojeISO } from "@/lib/datas";
 import { COLUNAS, diasParado } from "@/lib/societario";
 import type { SocFase, SocProcesso, SocTipo } from "@/lib/societario";
+import { caminho } from "@/lib/caminho";
 
 export default function PaginaPainelSocietario() {
   return (
@@ -113,7 +114,7 @@ function Painel() {
           <ul className="space-y-2 text-sm">
             {d.parados.map(({ p, f }) => (
               <li key={p.id} className="flex justify-between gap-2">
-                <a href={`/societario/${p.id}`} className="hover:underline">
+                <a href={caminho(`/societario/${p.id}`)} className="hover:underline">
                   #{p.numero} {nome(p)} · <span className="text-neutral-500">{f!.nome}</span>
                 </a>
                 <span className="chip bg-amber-50 text-amber-800">{diasParado(f!.mudou_em)} dias</span>

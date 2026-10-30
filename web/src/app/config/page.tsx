@@ -9,6 +9,7 @@ import { fmtData } from "@/lib/datas";
 import { PAPEIS, PRIORIDADES, REGIMES } from "@/lib/types";
 import type { Cliente, Modelo, Papel, Prioridade } from "@/lib/types";
 import { traduzirErro } from "@/lib/erros";
+import { caminho, enderecoHub } from "@/lib/caminho";
 
 type Aba = "organizacao" | "equipe" | "setores" | "clientes" | "obrigacoes" | "feriados";
 
@@ -88,7 +89,7 @@ function AbaOrganizacao() {
   const { org, recarregar } = useOrg();
   const [f, setF] = useState(org);
   const { mostrar, el } = useMensagem();
-  const link = typeof window !== "undefined" ? `${window.location.origin}/tv?org=${org.slug}` : "";
+  const link = typeof window !== "undefined" ? enderecoHub(`/tv?org=${org.slug}`) : "";
 
   async function salvar(e: React.FormEvent) {
     e.preventDefault();
@@ -165,23 +166,7 @@ function AbaOrganizacao() {
 /* ---------------------------------------------------------------- Equipe */
 function AbaEquipe() {
   const { org, membros, setores, recarregar, eu } = useOrg();
-  const [novo, setNovo] = useState({ email: "", nome: "", papel: "analista" as Papel, setor: "" });
   const { mostrar, el } = useMensagem();
-
-  async function adicionar(e: React.FormEvent) {
-    e.preventDefault();
-    const { data, error } = await supabase().rpc("adicionar_membro", {
-      p_org: org.id,
-      p_email: novo.email,
-      p_nome: novo.nome,
-      p_papel: novo.papel,
-      p_setor: novo.setor || null,
-    });
-    if (error) return mostrar(traduzirErro(error), true);
-    setNovo({ email: "", nome: "", papel: "analista", setor: "" });
-    mostrar(data ? "Membro adicionado." : "Convite registrado. A pessoa entra na equipe automaticamente ao criar a conta com esse e-mail.");
-    recarregar();
-  }
 
   async function alterar(userId: string, campos: Record<string, unknown>) {
     const { error } = await supabase().from("membros").update(campos).eq("org_id", org.id).eq("user_id", userId);
@@ -191,38 +176,15 @@ function AbaEquipe() {
 
   return (
     <div className="space-y-4">
-      <form onSubmit={adicionar} className="cartao grid gap-3 p-4 md:grid-cols-[2fr_2fr_1.3fr_1.3fr_auto] md:items-end">
-        <label className="campo">
-          <span>E-mail (a pessoa cria a conta antes, na tela de login)</span>
-          <input type="email" required value={novo.email} onChange={(e) => setNovo({ ...novo, email: e.target.value })} />
-        </label>
-        <label className="campo">
-          <span>Nome</span>
-          <input required value={novo.nome} onChange={(e) => setNovo({ ...novo, nome: e.target.value })} />
-        </label>
-        <label className="campo">
-          <span>Papel</span>
-          <select value={novo.papel} onChange={(e) => setNovo({ ...novo, papel: e.target.value as Papel })}>
-            {PAPEIS.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.nome}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="campo">
-          <span>Setor</span>
-          <select value={novo.setor} onChange={(e) => setNovo({ ...novo, setor: e.target.value })}>
-            <option value="">—</option>
-            {setores.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.nome}
-              </option>
-            ))}
-          </select>
-        </label>
-        <button className="btn-primario">Adicionar</button>
-      </form>
+      <div className="cartao flex flex-wrap items-center justify-between gap-3 p-4 text-sm">
+        <p className="text-neutral-600">
+          Novas pessoas são cadastradas em <b>Pessoas e acessos</b>: você escolhe o perfil e a pessoa recebe o convite por e-mail para criar a
+          senha. Aqui você ajusta nome, papel nas tarefas, setor e desativa quem saiu.
+        </p>
+        <Link href="/hub/acessos" className="btn-primario">
+          Cadastrar pessoa
+        </Link>
+      </div>
       {el}
       <div className="cartao overflow-x-auto">
         <table className="tabela">

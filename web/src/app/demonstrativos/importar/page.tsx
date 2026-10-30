@@ -8,6 +8,7 @@ import { lerPlanilha } from "@/lib/planilha";
 import { GRUPOS, brl, classificar, lerBalancete, nomeGrupo } from "@/lib/balancete";
 import type { Grupo, Leitura } from "@/lib/balancete";
 import { analisar, carregarMapa, salvarBalancete } from "@/lib/demonstrativos";
+import { caminho } from "@/lib/caminho";
 
 export default function PaginaImportarBalancete() {
   return (
@@ -79,7 +80,7 @@ function Importar() {
     setErro(null);
     try {
       const id = await salvarBalancete({ org: org.id, cliente, competencia: competencia + "-01", arquivo, linhas: leitura.linhas, inicio: leitura.cabecalho.inicio, fim: leitura.cabecalho.fim });
-      window.location.href = `/demonstrativos/${id}`;
+      window.location.href = caminho(`/demonstrativos/${id}`);
     } catch (e) {
       setErro(traduzirErro(e));
       setProcessando(false);

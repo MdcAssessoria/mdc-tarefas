@@ -5,14 +5,14 @@ export const metadata: Metadata = {
   title: "HUB-MDC",
   applicationName: "HUB-MDC",
   description: "Hub de sistemas da MDC Assessoria Contábil: tarefas, societário, demonstrativos, atendimento e Portal do Cliente.",
-  manifest: "/manifest.webmanifest",
+  manifest: "/hub-mdc/manifest.webmanifest",
   icons: {
     icon: [
-      { url: "/favicon.ico", sizes: "16x16 32x32 48x48" },
-      { url: "/icone-hub-mdc.svg", type: "image/svg+xml" },
-      { url: "/icone-hub-mdc-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/hub-mdc/favicon.ico", sizes: "16x16 32x32 48x48" },
+      { url: "/hub-mdc/icone-hub-mdc.svg", type: "image/svg+xml" },
+      { url: "/hub-mdc/icone-hub-mdc-192.png", sizes: "192x192", type: "image/png" },
     ],
-    apple: [{ url: "/icone-hub-mdc-180.png", sizes: "180x180" }],
+    apple: [{ url: "/hub-mdc/icone-hub-mdc-180.png", sizes: "180x180" }],
   },
   appleWebApp: { capable: true, title: "HUB-MDC", statusBarStyle: "black-translucent" },
 };

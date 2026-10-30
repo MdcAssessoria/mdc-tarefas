@@ -9,6 +9,7 @@ import { traduzirErro } from "@/lib/erros";
 import { fmtDataHora } from "@/lib/datas";
 import { ASSUNTOS, STATUS_CONVERSA, nomeAssunto } from "@/lib/chat";
 import type { Conversa } from "@/lib/chat";
+import { caminho } from "@/lib/caminho";
 
 export default function PaginaAtendimento() {
   return (
@@ -185,7 +186,7 @@ function Caixa() {
                       ))}
                     </select>
                     {atual.tarefa_id ? (
-                      <a href="/tarefas" className="chip bg-sky-50 text-sky-800">
+                      <a href={caminho("/tarefas")} className="chip bg-sky-50 text-sky-800">
                         virou tarefa
                       </a>
                     ) : (
@@ -194,7 +195,7 @@ function Caixa() {
                       </button>
                     )}
                     {atual.assunto === "alteracao_contratual" && pode("societario", "operar") && !atual.processo_id && (
-                      <a href="/societario" className="btn !min-h-8 !py-1">
+                      <a href={caminho("/societario")} className="btn !min-h-8 !py-1">
                         Abrir no Societário
                       </a>
                     )}

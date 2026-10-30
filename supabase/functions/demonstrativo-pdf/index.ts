@@ -87,7 +87,11 @@ Deno.serve(async (req) => {
 
   const { data: orgRow } = await servico.from("organizacoes").select("logo_url").eq("id", b.org_id).single();
   const logoUrl = (orgRow as { logo_url: string | null } | null)?.logo_url ?? "";
-  if (logoUrl && !cacheLogo.has(logoUrl)) {
+  // só a logo da própria organização (Storage) ou do site da MDC
+  const permitida =
+    (logoUrl.startsWith("storage:") && logoUrl.slice(8).startsWith(`${b.org_id}/`) && !logoUrl.includes("..")) ||
+    /^https:\/\/(www\.)?mdcassessoria\.com\//.test(logoUrl);
+  if (logoUrl && permitida && !cacheLogo.has(logoUrl)) {
     if (logoUrl.startsWith("storage:")) {
       const { data: arq } = await servico.storage.from("hub-arquivos").download(logoUrl.slice(8));
       cacheLogo.set(logoUrl, arq ? new Uint8Array(await arq.arrayBuffer()) : null);

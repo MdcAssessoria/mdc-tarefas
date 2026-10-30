@@ -17,6 +17,7 @@ import {
 import type { BalanceteReg, LinhaReg, ParecerReg } from "@/components/demonstrativos/Painel";
 import { AbaDemonstracoes } from "@/components/demonstrativos/Demonstracoes";
 import { BotaoPdf } from "@/components/demonstrativos/BotaoPdf";
+import { caminho } from "@/lib/caminho";
 
 interface Empresa {
   cliente_id: string;
@@ -62,7 +63,7 @@ export default function Portal() {
   }, []);
 
   useEffect(() => {
-    if (session === null) window.location.replace("/login?next=/portal");
+    if (session === null) window.location.replace(caminho("/login?next=/portal"));
     if (!session) return;
     supabase()
       .rpc("portal_minhas_empresas")
@@ -90,7 +91,7 @@ export default function Portal() {
     return (
       <Centro titulo="Nenhuma empresa liberada para você">
         Peça à MDC para liberar o acesso de <b>{session.user.email}</b> no Portal do Cliente.{" "}
-        <a href="/" className="underline">
+        <a href={caminho("/")} className="underline">
           Sou da equipe
         </a>{" "}
         ·{" "}
@@ -105,7 +106,7 @@ export default function Portal() {
     <div className="min-h-screen bg-[var(--fundo)]">
       <header className="bg-[var(--marca)] text-[#C6D3CC] print:hidden">
         <div className="mx-auto flex max-w-[1200px] flex-wrap items-center gap-3 px-4 py-3">
-          <img src="/icone-hub-mdc.svg" alt="" className="h-8 w-8 rounded-md" />
+          <img src={caminho("/icone-hub-mdc.svg")} alt="" className="h-8 w-8 rounded-md" />
           <div className="mr-auto">
             <div className="text-xs">Portal do Cliente · {emp.org_nome}</div>
             {empresas.length > 1 ? (
@@ -134,7 +135,7 @@ export default function Portal() {
             className="rounded-md border border-white/20 px-2.5 py-1 text-sm hover:text-white"
             onClick={async () => {
               await supabase().auth.signOut();
-              window.location.replace("/login");
+              window.location.replace(caminho("/login"));
             }}
           >
             Sair
@@ -171,7 +172,7 @@ function Centro({ titulo, children }: { titulo: string; children?: React.ReactNo
   return (
     <div className="grid min-h-screen place-items-center bg-[var(--fundo)] p-6">
       <div className="max-w-md text-center">
-        <img src="/icone-hub-mdc.svg" alt="" className="mx-auto mb-3 h-12 w-12 rounded-lg" />
+        <img src={caminho("/icone-hub-mdc.svg")} alt="" className="mx-auto mb-3 h-12 w-12 rounded-lg" />
         <h1 className="text-lg font-semibold text-[var(--marca)]">{titulo}</h1>
         {children && <div className="mt-2 text-sm text-neutral-600">{children}</div>}
       </div>
