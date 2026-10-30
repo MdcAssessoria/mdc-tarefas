@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useOrg } from "@/lib/org";
+import { useLogo } from "@/lib/marca";
 import type { Organizacao } from "@/lib/types";
 
 export interface Kpis {
@@ -165,6 +166,7 @@ export function PainelTV({
     .filter((r) => r.abertas + r.concluidas_mes > 0)
     .sort((a, b) => b.atrasadas - a.atrasadas || b.abertas - a.abertas);
 
+  const logoSrc = useLogo(org.logo_url);
   return (
     <div
       className="flex h-screen w-screen flex-col overflow-hidden px-[2vw] py-[1.5vw] text-white"
@@ -172,9 +174,9 @@ export function PainelTV({
     >
       {/* Cabeçalho */}
       <header className="flex items-center gap-[1.2vw] pb-[1.2vw]">
-        {org.logo_url ? (
+        {logoSrc ? (
           <img
-            src={org.logo_url}
+            src={logoSrc}
             alt=""
             style={{ height: "3.2vw" }}
             className="object-contain"

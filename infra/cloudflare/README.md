@@ -20,10 +20,22 @@ que repassa só o caminho `/hub-mdc` para a Vercel com o Worker deste diretório
    (as contas passam a ser criadas só por convite do administrador).
 7. **Site (WordPress):** botão/menu “Área do cliente / HUB-MDC” apontando para `https://mdcassessoria.com/hub-mdc`.
 
-## Convites por e-mail
+## E-mails do Hub (convite e "esqueci a senha"): hub@mdcassessoria.com
 
-O e-mail de convite sai pelo SMTP do Supabase. Sem SMTP próprio, o Supabase só entrega
-para os e-mails da equipe do projeto; por isso a tela de cadastro mostra o link para
-copiar e enviar por WhatsApp quando o e-mail não sai. Para enviar a qualquer pessoa,
-configure o SMTP do Microsoft 365 em **Authentication › Emails › SMTP Settings**
-(host `smtp.office365.com`, porta 587, usuário e senha de app da caixa remetente).
+Remetente: caixa **hub@mdcassessoria.com** no Microsoft 365, usada só para envio.
+
+1. **Microsoft 365 › Admin › Usuários ativos › hub@ › Email › Gerenciar aplicativos de email:** marcar **SMTP autenticado**.
+   Se o locatário usa "Padrões de segurança" (MFA obrigatório), o SMTP autenticado fica bloqueado:
+   desligar os padrões e usar Acesso Condicional, ou usar um serviço de envio (Resend/Brevo) com o domínio.
+2. **Supabase › Authentication › Emails › SMTP Settings › Enable custom SMTP:**
+   - Sender email: `hub@mdcassessoria.com` · Sender name: `MDC Assessoria`
+   - Host: `smtp.office365.com` · Port: `587`
+   - Username: `hub@mdcassessoria.com` · Password: a senha da caixa (**digitada por você no painel**)
+3. **Supabase › Authentication › Emails › Templates:**
+   - *Invite user*: assunto `Seu acesso ao HUB-MDC`, corpo = `supabase/templates/convite.html`
+   - *Reset password*: assunto `HUB-MDC: criar nova senha`, corpo = `supabase/templates/recuperar-senha.html`
+4. **Supabase › Authentication › Rate limits:** subir "emails sent per hour" para 30.
+5. **Cloudflare › DNS:** o SPF do domínio deve conter `include:spf.protection.outlook.com` (já é o padrão do 365).
+
+Enquanto o SMTP não estiver ativo, o Supabase só entrega para os e-mails da equipe do projeto;
+a tela de cadastro mostra o link do convite para copiar e enviar por WhatsApp quando o e-mail não sai.

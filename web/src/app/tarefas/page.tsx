@@ -38,6 +38,7 @@ function Tarefas() {
   // filtros por setor (grupo) e por responsável: seleção múltipla, lembrada neste navegador
   const [setorSel, setSetorSel] = useState<string[]>([]);
   const [respSel, setRespSel] = useState<string[]>(papel === "analista" ? [eu.user_id] : []);
+  const [filtrosProntos, setFiltrosProntos] = useState(false);
   const [cliente, setCliente] = useState("");
   const [editando, setEditando] = useState<Tarefa | null | undefined>(undefined);
   const [aviso, setAviso] = useState<string | null>(null);
@@ -51,18 +52,22 @@ function Tarefas() {
       const v = localStorage.getItem("mdc-tarefas:visao");
       if (v === "lista" || v === "quadro") setVisao(v);
       const f = JSON.parse(localStorage.getItem(`mdc-tarefas:filtros:${org.id}`) ?? "null") as { setores?: string[]; resps?: string[] } | null;
-      if (f && Array.isArray(f.setores) && Array.isArray(f.resps)) {
-        setSetorSel(f.setores);
-        setRespSel(f.resps);
-      }
+      // descarta setores/pessoas que não existem mais
+      const setoresOk = new Set([...setores.map((x) => x.id), "_sem"]);
+      const pessoasOk = new Set([...membros.filter((m) => m.ativo).map((m) => m.user_id), "_sem"]);
+      setSetorSel(Array.isArray(f?.setores) ? f.setores.filter((x) => setoresOk.has(x)) : []);
+      setRespSel(Array.isArray(f?.resps) ? f.resps.filter((x) => pessoasOk.has(x)) : papel === "analista" ? [eu.user_id] : []);
     } catch {}
+    setFiltrosProntos(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [org.id]);
 
   useEffect(() => {
+    if (!filtrosProntos) return;
     try {
       localStorage.setItem(`mdc-tarefas:filtros:${org.id}`, JSON.stringify({ setores: setorSel, resps: respSel }));
     } catch {}
-  }, [org.id, setorSel, respSel]);
+  }, [org.id, setorSel, respSel, filtrosProntos]);
 
   const base = useMemo(() => {
     const q = busca.trim().toLowerCase();

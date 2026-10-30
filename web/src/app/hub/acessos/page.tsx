@@ -73,7 +73,9 @@ function Acessos() {
       sb.from("hub_auditoria").select("*").eq("org_id", org.id).order("em", { ascending: false }).limit(60),
       sb.rpc("hub_situacao_contas", { p_org: org.id }),
     ]);
-    if (a.error) return setErro(traduzirErro(a.error));
+    const falha = a.error ?? p.error ?? h.error ?? c.error;
+    if (falha) setErro(traduzirErro(falha));
+    if (a.error) return;
     setAcessos(a.data as Acesso[]);
     setPerfis((p.data as Perfil[]) ?? []);
     setHistorico((h.data as Auditoria[]) ?? []);

@@ -69,8 +69,9 @@ export function AppShell({ children, modulo = "tarefas" }: { children: React.Rea
 
 /** Bloqueia a tela de um módulo que não foi liberado para a pessoa. */
 function Guarda({ modulo, children }: { modulo: Modulo; children: React.ReactNode }) {
-  const { pode, apps } = useOrg();
-  if (modulo === "hub" || !apps.length) return <>{children}</>;
+  const { pode, appsCarregados } = useOrg();
+  if (modulo === "hub") return <>{children}</>;
+  if (!appsCarregados) return <p className="p-10 text-center text-sm text-neutral-500">Carregando…</p>;
   if (!pode(modulo))
     return (
       <>

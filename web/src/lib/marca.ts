@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { supabase } from "./supabase";
 
 /** Logo da organização em bytes (PNG/JPG) para os PDFs. Guardado no Storage como "storage:<caminho>". */
@@ -14,4 +15,25 @@ export async function carregarLogo(logoUrl: string | null | undefined): Promise<
   } catch {
     return null;
   }
+}
+
+/** Endereço exibível da logo (Storage vira blob local; URL externa passa direto). */
+export function useLogo(logoUrl: string | null | undefined): string | null {
+  const [src, setSrc] = useState<string | null>(null);
+  useEffect(() => {
+    if (!logoUrl) return setSrc(null);
+    if (!logoUrl.startsWith("storage:")) return setSrc(logoUrl);
+    let url: string | null = null;
+    let vivo = true;
+    carregarLogo(logoUrl).then((b) => {
+      if (!vivo || !b) return;
+      url = URL.createObjectURL(new Blob([b as BlobPart]));
+      setSrc(url);
+    });
+    return () => {
+      vivo = false;
+      if (url) URL.revokeObjectURL(url);
+    };
+  }, [logoUrl]);
+  return src;
 }

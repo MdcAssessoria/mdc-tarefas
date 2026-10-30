@@ -38,18 +38,18 @@ Deno.serve(async (req) => {
   const servico = createClient(url, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, { auth: { persistSession: false } });
 
   const { data: pode, error: ePode } = await usuario.rpc("hub_pode_enviar_convite", { p_email: email });
-  if (ePode) return json(401, { erro: "Sessão expirada. Entre de novo." });
-  if (!pode) return json(403, { erro: "Este e-mail não tem convite pendente feito por você." });
+  if (ePode) return json(/limite/i.test(ePode.message) ? 429 : 401, { erro: /limite/i.test(ePode.message) ? ePode.message : "Sessão expirada. Entre de novo." });
+  if (!pode) return json(403, { erro: "Este e-mail não tem convite pendente feito por você, ou a conta já está ativa." });
 
   const nome = String(corpo.nome ?? "").trim().slice(0, 120) || undefined;
   const { error } = await servico.auth.admin.inviteUserByEmail(email, { redirectTo, data: nome ? { nome } : undefined });
   if (!error) return json(200, { enviado: true });
 
-  // conta já existe (reenvio) ou e-mail indisponível: gera o link para repassar
+  // e-mail indisponível (SMTP) ou reenvio: gera só link de CONVITE (nunca de login) para o administrador repassar.
+  // A permissão acima já garante que o e-mail não tem conta ativa.
   console.error("convite por e-mail falhou", error.message);
-  for (const type of ["invite", "magiclink"] as const) {
-    const { data, error: eLink } = await servico.auth.admin.generateLink({ type, email, options: { redirectTo, data: nome ? { nome } : undefined } });
-    if (!eLink && data?.properties?.action_link) return json(200, { enviado: false, link: data.properties.action_link });
-  }
+  const { data, error: eLink } = await servico.auth.admin.generateLink({ type: "invite", email, options: { redirectTo, data: nome ? { nome } : undefined } });
+  if (!eLink && data?.properties?.action_link) return json(200, { enviado: false, link: data.properties.action_link });
+  console.error("link de convite falhou", eLink?.message);
   return json(500, { erro: "Não foi possível gerar o convite. Tente de novo em instantes." });
 });

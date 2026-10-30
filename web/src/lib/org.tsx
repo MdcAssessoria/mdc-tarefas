@@ -24,6 +24,7 @@ interface OrgCtx {
   setorPorId: (id: string | null) => Setor | undefined;
   clientePorId: (id: string | null) => Cliente | undefined;
   apps: HubApp[];
+  appsCarregados: boolean;
   pode: (app: string, minimo?: PapelApp) => boolean;
   recarregarApps: () => Promise<void>;
 }
@@ -61,6 +62,7 @@ export function OrgProvider({ children }: { children: React.ReactNode }) {
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [membros, setMembros] = useState<Membro[]>([]);
   const [apps, setApps] = useState<HubApp[]>([]);
+  const [appsCarregados, setAppsCarregados] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 
   // sessão
@@ -145,6 +147,7 @@ export function OrgProvider({ children }: { children: React.ReactNode }) {
     if (!orgId) return;
     const { data } = await supabase().rpc("hub_meus_apps", { p_org: orgId });
     setApps((data as HubApp[]) ?? []);
+    setAppsCarregados(true);
   }, [orgId]);
 
   useEffect(() => {
@@ -184,6 +187,7 @@ export function OrgProvider({ children }: { children: React.ReactNode }) {
       setorPorId: (id) => (id ? mapS.get(id) : undefined),
       clientePorId: (id) => (id ? mapC.get(id) : undefined),
       apps,
+      appsCarregados,
       pode: (app, minimo = "ver") => {
         if (eu.papel === "admin") return true;
         const a = apps.find((x) => x.slug === app);
@@ -191,7 +195,7 @@ export function OrgProvider({ children }: { children: React.ReactNode }) {
       },
       recarregarApps,
     };
-  }, [session, org, orgs, minhas, membros, setores, clientes, recarregar, apps, recarregarApps]);
+  }, [session, org, orgs, minhas, membros, setores, clientes, recarregar, apps, appsCarregados, recarregarApps]);
 
   if (!supabaseConfigurado) return <SemConfiguracao />;
   if (erro) return <Centro titulo="Não foi possível carregar">{erro}</Centro>;
@@ -222,72 +226,16 @@ function SemConfiguracao() {
   );
 }
 
-function CriarOrganizacao({ aoCriar, email }: { aoCriar: () => void; email: string }) {
-  const [nome, setNome] = useState("");
-  const [slug, setSlug] = useState("");
-  const [seuNome, setSeuNome] = useState("");
-  const [erro, setErro] = useState<string | null>(null);
-  const [enviando, setEnviando] = useState(false);
-
-  async function criar(e: React.FormEvent) {
-    e.preventDefault();
-    setEnviando(true);
-    setErro(null);
-    const { error } = await supabase().rpc("criar_organizacao", {
-      p_nome: nome,
-      p_slug: slug,
-      p_nome_usuario: seuNome,
-    });
-    setEnviando(false);
-    if (error) setErro(error.message.includes("duplicate") ? "Esse identificador já está em uso." : traduzirErro(error));
-    else aoCriar();
-  }
-
+function CriarOrganizacao({ email }: { aoCriar: () => void; email: string }) {
+  // criar organização ficou restrito ao administrador do sistema (auditoria de segurança)
   return (
-    <div className="min-h-screen grid place-items-center bg-[var(--fundo)] p-6">
-      <form onSubmit={criar} className="w-full max-w-md cartao p-6 space-y-4">
-        <div>
-          <h1 className="text-lg font-semibold text-[var(--marca)]">Você ainda não faz parte de uma equipe</h1>
-          <p className="text-sm text-neutral-600 mt-1">
-            Se a sua empresa já usa o sistema, peça ao administrador para adicionar <b>{email}</b>. Ou crie uma nova
-            organização abaixo.
-          </p>
-        </div>
-        <label className="campo">
-          <span>Nome da empresa</span>
-          <input
-            required
-            value={nome}
-            onChange={(e) => {
-              setNome(e.target.value);
-              setSlug(
-                e.target.value
-                  .toLowerCase()
-                  .normalize("NFD")
-                  .replace(/[̀-ͯ]/g, "")
-                  .replace(/[^a-z0-9]+/g, "-")
-                  .replace(/^-|-$/g, "")
-                  .slice(0, 40),
-              );
-            }}
-          />
-        </label>
-        <label className="campo">
-          <span>Identificador (usado no link do painel)</span>
-          <input required pattern="[a-z0-9-]{3,40}" value={slug} onChange={(e) => setSlug(e.target.value)} />
-        </label>
-        <label className="campo">
-          <span>Seu nome</span>
-          <input required value={seuNome} onChange={(e) => setSeuNome(e.target.value)} />
-        </label>
-        {erro && <p className="text-sm text-red-700">{erro}</p>}
-        <button className="btn-primario w-full" disabled={enviando}>
-          {enviando ? "Criando…" : "Criar organização"}
-        </button>
-        <button type="button" className="btn-link w-full" onClick={() => supabase().auth.signOut()}>
-          Sair
-        </button>
-      </form>
-    </div>
+    <Centro titulo="Seu acesso ainda não foi liberado">
+      <p>
+        Peça ao administrador da MDC para cadastrar <b>{email}</b> em Pessoas e acessos. Assim que for liberado, entre de novo.
+      </p>
+      <button className="btn-link mt-4" onClick={() => supabase().auth.signOut()}>
+        Sair
+      </button>
+    </Centro>
   );
 }

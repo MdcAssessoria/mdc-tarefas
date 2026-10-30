@@ -45,37 +45,30 @@ function Hub() {
     const conta = async (q: PromiseLike<{ count: number | null }>) => (await q).count ?? 0;
     (async () => {
       const novo: Resumo = {};
+      const pedidos: Promise<void>[] = [];
+      const add = (k: keyof Resumo, q: PromiseLike<{ count: number | null }>) =>
+        pedidos.push(conta(q).then((n) => void (novo[k] = n)));
+      const abertas = () =>
+        sb.from("tarefas").select("id", { count: "exact", head: true }).eq("org_id", org.id).in("status", ["a_fazer", "em_andamento", "aguardando"]);
       if (pode("tarefas")) {
-        const base = () =>
-          sb.from("tarefas").select("id", { count: "exact", head: true }).eq("org_id", org.id)
-            .in("status", ["a_fazer", "em_andamento", "aguardando"]);
-        novo.tarefasAtrasadas = await conta(base().lt("prazo", hoje));
-        novo.tarefasHoje = await conta(base().eq("prazo", hoje));
+        add("tarefasAtrasadas", abertas().lt("prazo", hoje));
+        add("tarefasHoje", abertas().eq("prazo", hoje));
       }
       if (pode("societario")) {
-        novo.processosAbertos = await conta(
-          sb.from("soc_processos").select("id", { count: "exact", head: true }).eq("org_id", org.id).eq("status", "aberto"),
-        );
-        novo.processosParados = await conta(
+        add("processosAbertos", sb.from("soc_processos").select("id", { count: "exact", head: true }).eq("org_id", org.id).eq("status", "aberto"));
+        add(
+          "processosParados",
           sb.from("soc_fases").select("id", { count: "exact", head: true }).eq("org_id", org.id)
             .in("status", ["em_andamento", "aguardando_cliente", "aguardando_orgao"]).lt("mudou_em", parado),
         );
       }
-      if (pode("atendimento")) {
-        novo.atendimentosNovos = await conta(
-          sb.from("portal_conversas").select("id", { count: "exact", head: true }).eq("org_id", org.id).eq("status", "novo"),
-        );
-      }
-      if (pode("vencimentos")) {
-        novo.vencimentos30 = await conta(
-          sb.from("venc_itens").select("id", { count: "exact", head: true }).eq("org_id", org.id).eq("status", "ativo").lte("vence_em", em30),
-        );
-      }
-      if (pode("demonstrativos")) {
-        novo.balancetesRascunho = await conta(
-          sb.from("portal_balancetes").select("id", { count: "exact", head: true }).eq("org_id", org.id).eq("status", "rascunho"),
-        );
-      }
+      if (pode("atendimento"))
+        add("atendimentosNovos", sb.from("portal_conversas").select("id", { count: "exact", head: true }).eq("org_id", org.id).eq("status", "novo"));
+      if (pode("vencimentos"))
+        add("vencimentos30", sb.from("venc_itens").select("id", { count: "exact", head: true }).eq("org_id", org.id).eq("status", "ativo").lte("vence_em", em30));
+      if (pode("demonstrativos"))
+        add("balancetesRascunho", sb.from("portal_balancetes").select("id", { count: "exact", head: true }).eq("org_id", org.id).eq("status", "rascunho"));
+      await Promise.all(pedidos);
       setR(novo);
     })();
   }, [org.id, org.fuso, pode]);

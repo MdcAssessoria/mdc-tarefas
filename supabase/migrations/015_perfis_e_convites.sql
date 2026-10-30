@@ -35,6 +35,8 @@ create or replace function app.sincronizar_perfil(p_org uuid, p_user uuid)
 returns void language plpgsql security definer set search_path = public as $$
 declare v_apps jsonb;
 begin
+  -- trava a linha da pessoa: troca de perfil e edição do perfil não se cruzam
+  perform 1 from membros where org_id = p_org and user_id = p_user for update;
   select p.apps into v_apps
     from membros m join hub_perfis p on p.id = m.perfil_id
    where m.org_id = p_org and m.user_id = p_user;
@@ -205,22 +207,40 @@ begin
   return new;
 end $$;
 
--- só envia e-mail de convite quem convidou: equipe (admin) ou portal (gestor / atendimento gerir)
+-- envio do e-mail de convite: só para e-mail SEM conta (convite novo) ou conta criada por convite
+-- e nunca confirmada (reenvio), e só por quem pode convidar naquela organização. Limite diário por pessoa.
+create table if not exists app.convite_envios (
+  user_id uuid not null,
+  email   text not null,
+  em      timestamptz not null default now()
+);
+create index if not exists convite_envios_user_em on app.convite_envios (user_id, em desc);
+revoke all on app.convite_envios from public, anon, authenticated;
+
 create or replace function public.hub_pode_enviar_convite(p_email text)
-returns boolean language sql stable security definer set search_path = public as $$
-  select exists (select 1 from app.convites c
-                  where c.email = lower(trim(p_email)) and app.papel(c.org_id) = 'admin')
-      or exists (select 1 from portal_convites c
-                  where c.email = lower(trim(p_email))
-                    and (app.eh_gestor(c.org_id) or app.hub_pode(c.org_id, 'atendimento', 'gerir')))
-      -- reenvio: conta já criada pelo convite e nunca acessada
-      or exists (select 1 from auth.users u join membros m on m.user_id = u.id
-                  where lower(u.email) = lower(trim(p_email)) and u.last_sign_in_at is null
-                    and app.papel(m.org_id) = 'admin')
-      or exists (select 1 from auth.users u join portal_usuarios p on p.user_id = u.id
-                  where lower(u.email) = lower(trim(p_email)) and u.last_sign_in_at is null
-                    and (app.eh_gestor(p.org_id) or app.hub_pode(p.org_id, 'atendimento', 'gerir')))
-$$;
+returns boolean language plpgsql security definer set search_path = public as $$
+declare v_email text := lower(trim(p_email)); v_conta auth.users; v_ok boolean;
+begin
+  if auth.uid() is null then return false; end if;
+  select * into v_conta from auth.users where lower(email) = v_email;
+  if v_conta.id is null then
+    v_ok := exists (select 1 from app.convites c where c.email = v_email and app.papel(c.org_id) = 'admin')
+         or exists (select 1 from portal_convites c where c.email = v_email
+                     and (app.eh_gestor(c.org_id) or app.hub_pode(c.org_id, 'atendimento', 'gerir')));
+  elsif v_conta.invited_at is not null and v_conta.email_confirmed_at is null and v_conta.last_sign_in_at is null then
+    v_ok := exists (select 1 from membros m where m.user_id = v_conta.id and app.papel(m.org_id) = 'admin')
+         or exists (select 1 from portal_usuarios p where p.user_id = v_conta.id
+                     and (app.eh_gestor(p.org_id) or app.hub_pode(p.org_id, 'atendimento', 'gerir')));
+  else
+    v_ok := false;  -- conta já ativa: nunca gera link de acesso para ela
+  end if;
+  if not v_ok then return false; end if;
+  if (select count(*) from app.convite_envios where user_id = auth.uid() and em > now() - interval '1 day') >= 40 then
+    raise exception 'Limite diário de convites atingido. Tente amanhã.';
+  end if;
+  insert into app.convite_envios (user_id, email) values (auth.uid(), v_email);
+  return true;
+end $$;
 revoke all on function public.hub_pode_enviar_convite(text) from public, anon;
 grant execute on function public.hub_pode_enviar_convite(text) to authenticated;
 

@@ -367,12 +367,14 @@ export function GradeIndices({ atual, historico }: { atual: BalanceteReg; histor
   const [tipo, setTipo] = useSeletorPeriodo();
   const ag = agregar(atual, historico, multi ? "mensal" : tipo);
   const i = ag.indices;
+  // série mensal contínua (mês sem balancete = vazio), só balancetes mensais: a reta usa o mês do calendário
+  const serie = serieMensal(ult);
   const tend = new Map<string, Tendencia | null>(
-    INDICES_INFO.map((x) => [x.id, tendenciaLinear(ult.map((b) => b.indices[x.id] as number | null), MAIOR_MELHOR[x.id] ?? true)]),
+    INDICES_INFO.map((x) => [x.id, tendenciaLinear(serie.map((b) => (b ? (b.indices[x.id] as number | null) : null)), MAIOR_MELHOR[x.id] ?? true)]),
   );
   return (
     <div className="space-y-6">
-      <ResumoTendencia tend={tend} meses={ult.length} />
+      <ResumoTendencia tend={tend} meses={serie.length} />
       {!multi && (
         <div className="flex flex-wrap items-center justify-between gap-2">
           <p className="text-sm text-neutral-600">
@@ -403,7 +405,7 @@ export function GradeIndices({ atual, historico }: { atual: BalanceteReg; histor
                       <div className={`text-2xl font-semibold tabular-nums ${ruim ? "text-[var(--perigo)]" : "text-[var(--marca)]"}`}>{fmtIndice(v as number, info.formato)}</div>
                     </div>
                     <Faisca
-                      valores={ult.map((b) => (b.indices[info.id] as number | null) ?? null)}
+                      valores={serie.map((b) => (b ? (b.indices[info.id] as number | null) ?? null : null))}
                       alerta={!!ruim}
                       reta={tend.get(info.id) ? { a: tend.get(info.id)!.intercepto, b: tend.get(info.id)!.inclinacao } : null}
                     />
@@ -419,6 +421,17 @@ export function GradeIndices({ atual, historico }: { atual: BalanceteReg; histor
       ))}
     </div>
   );
+}
+
+/** Coloca os balancetes mensais na linha do tempo, mês a mês, com vazio nos meses sem balancete. */
+function serieMensal(lista: BalanceteReg[]): (BalanceteReg | null)[] {
+  const mensais = lista.filter((b) => (b.demonstracoes?.periodo.dias ?? 31) <= 31);
+  if (!mensais.length) return [];
+  const idx = (c: string) => Number(c.slice(0, 4)) * 12 + Number(c.slice(5, 7)) - 1;
+  const ini = idx(mensais[0].competencia);
+  const out: (BalanceteReg | null)[] = Array(idx(mensais[mensais.length - 1].competencia) - ini + 1).fill(null);
+  for (const b of mensais) out[idx(b.competencia) - ini] = b;
+  return out;
 }
 
 const SENTIDO = {
