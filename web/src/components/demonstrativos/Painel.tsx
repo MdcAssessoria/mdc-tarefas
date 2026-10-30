@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { Barras, COR, Cascata, Evolucao, Faisca } from "./Graficos";
 import { INDICES_INFO, brl, fmtIndice, mdParaHtml, nomeGrupo } from "@/lib/balancete";
-import type { Alerta, Conferencia, Indices, Linha, Resumo } from "@/lib/balancete";
+import type { Alerta, Conferencia, Dre, Indices, Linha, Resumo } from "@/lib/balancete";
 
 export interface BalanceteReg {
   id: string;
@@ -54,12 +54,27 @@ function Kpi({ rotulo, valor, sub, negativo }: { rotulo: string; valor: string; 
   );
 }
 
+/** Soma DREs mensais (acumulado do ano a partir dos meses). */
+export function somarDre(lista: Dre[]): Dre {
+  const campos = ["receita_bruta", "deducoes", "receita_liquida", "custos", "lucro_bruto", "despesas_operacionais", "resultado_operacional",
+    "receitas_financeiras", "despesas_financeiras", "outras", "resultado_antes_ir", "ir_csll", "lucro_liquido"] as const;
+  const out = Object.fromEntries(campos.map((c) => [c, lista.reduce((a, x) => a + (x?.[c] ?? 0), 0)])) as unknown as Dre;
+  const contas = new Map<string, number>();
+  for (const x of lista) for (const c of x?.despesas_por_conta ?? []) contas.set(c.conta, (contas.get(c.conta) ?? 0) + c.valor);
+  out.despesas_por_conta = [...contas.entries()].map(([conta, valor]) => ({ conta, valor })).sort((a, b) => b.valor - a.valor).slice(0, 12);
+  return out;
+}
+
 /** Painel principal: resultado, cascata, evolução, despesas, balanço. */
 export function PainelResumo({ atual, historico }: { atual: BalanceteReg; historico: BalanceteReg[] }) {
   const [periodo, setPeriodo] = useState<"mes" | "ano">("mes");
   const r = atual.resumo;
-  const d = periodo === "mes" ? r.mes : r.ano;
   const i = atual.indices;
+  // acumulado do ano = soma dos meses publicados/gravados do mesmo ano (o balancete pode encerrar o resultado por trimestre)
+  const doAno = historico.filter((b) => b.competencia.slice(0, 4) === atual.competencia.slice(0, 4) && b.competencia <= atual.competencia);
+  const mesesNoAno = Number(atual.competencia.slice(5, 7));
+  const anoSomado = somarDre(doAno.map((b) => b.resumo.mes));
+  const d = periodo === "mes" ? r.mes : doAno.length === mesesNoAno ? anoSomado : r.ano;
   const ult = useMemo(
     () => [...historico].sort((a, b) => a.competencia.localeCompare(b.competencia)).filter((b) => b.competencia <= atual.competencia).slice(-12),
     [historico, atual.competencia],
@@ -78,7 +93,7 @@ export function PainelResumo({ atual, historico }: { atual: BalanceteReg; histor
         <div className="flex rounded-lg border border-[var(--borda)] bg-white p-0.5 text-sm print:hidden">
           {(["mes", "ano"] as const).map((p) => (
             <button key={p} className={`rounded-md px-3 py-1 ${periodo === p ? "bg-[var(--marca)] text-white" : ""}`} onClick={() => setPeriodo(p)}>
-              {p === "mes" ? "Mês" : "Acumulado no ano"}
+              {p === "mes" ? "Mês" : doAno.length === mesesNoAno ? "Acumulado no ano" : "Acumulado do balancete"}
             </button>
           ))}
         </div>
