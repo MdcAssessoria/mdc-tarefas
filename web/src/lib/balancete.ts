@@ -67,6 +67,8 @@ const sem = (s: unknown) =>
     .normalize("NFD")
     .replace(/[̀-ͯ]/g, "")
     .toUpperCase()
+    .replace(/\(\s*-\s*\)/g, "(MENOS)")
+    .replace(/[-–]/g, " ")
     .replace(/\s+/g, " ")
     .trim();
 
@@ -212,7 +214,14 @@ export function lerBalancete(matriz: unknown[][]): Leitura {
   for (const l of linhas) l.analitica = !classes.some((c) => c !== l.classificacao && c.startsWith(l.classificacao + "."));
 
   // sem D/C no arquivo: saldos vêm pela natureza da conta → passivo, PL e receitas viram credores
-  if (!temNatureza) {
+  // Excel do Domínio já grava o sinal (credor negativo) e só formata positivo na tela:
+  // nesse caso a soma das contas de 1º nível fecha em zero (± resultado) e nada é invertido.
+  const topo = linhas.filter((l) => l.nivel === 1);
+  const somaTopo = topo.reduce((a, l) => a + l.saldo_atual, 0);
+  const maiorTopo = Math.max(1, ...topo.map((l) => Math.abs(l.saldo_atual)));
+  const temCredorNegativo = topo.some((l) => /PASSIVO/.test(sem(l.descricao)) && l.saldo_atual < 0);
+  const jaComSinal = temCredorNegativo || Math.abs(somaTopo) <= maiorTopo * 0.005;
+  if (!temNatureza && !jaComSinal) {
     avisos.push("Saldos sem D/C: considerei a natureza normal de cada conta (ativo e despesas devedores; passivo, PL e receitas credores).");
     const credoras = new Set<string>();
     for (const l of linhas) {
@@ -234,34 +243,48 @@ export function lerBalancete(matriz: unknown[][]): Leitura {
 
 // ---------------------------------------------------------------- classificação
 
-const REGRAS: { re: RegExp; grupo: Grupo; dentro?: RegExp }[] = [
+type Bloco = "ativo" | "passivo" | "resultado";
+
+// Regras por bloco (ativo, passivo/PL, resultado), testadas da própria conta para as contas-mãe.
+const REGRAS: { re: RegExp; grupo: Grupo; bloco: Bloco; dentro?: RegExp }[] = [
   // ativo
-  { re: /DISPONI|^CAIXA|BANCOS?\b|APLICAC.*FINANC|NUMERARIO/, grupo: "ac_disponivel", dentro: /ATIVO/ },
-  { re: /CLIENTES|DUPLICATAS A RECEBER|CONTAS A RECEBER|VALORES A RECEBER|CARTOES? A RECEBER/, grupo: "ac_clientes", dentro: /ATIVO CIRCULANTE|^CIRCULANTE/ },
-  { re: /ESTOQUE|MERCADORIAS|MATERIA.? PRIMA|PRODUTOS ACABADOS/, grupo: "ac_estoques", dentro: /ATIVO/ },
-  { re: /REALIZAVEL A LONGO PRAZO/, grupo: "anc_rlp" },
-  { re: /IMOBILIZADO|INTANGIVEL|INVESTIMENTOS|DIFERIDO/, grupo: "anc_permanente", dentro: /ATIVO/ },
-  { re: /MOVEIS|UTENSILIOS|VEICULOS|MAQUINAS|EQUIPAMENTOS|EDIFICACOES|IMOVEIS|TERRENOS|COMPUTADORES|INSTALACOES|BENFEITORIAS|SOFTWARE|MARCAS|DEPRECIACAO|AMORTIZACAO ACUMULADA/, grupo: "anc_permanente", dentro: /ATIVO NAO CIRCULANTE|^ATIVO$|PERMANENTE/ },
-  // passivo
-  { re: /FORNECEDORES/, grupo: "pc_fornecedores", dentro: /PASSIVO CIRCULANTE|^CIRCULANTE/ },
-  { re: /EMPRESTIMOS|FINANCIAMENTOS/, grupo: "pc_emprestimos", dentro: /PASSIVO CIRCULANTE|^CIRCULANTE/ },
-  { re: /EMPRESTIMOS|FINANCIAMENTOS/, grupo: "pnc_emprestimos", dentro: /NAO CIRCULANTE|LONGO PRAZO/ },
-  { re: /OBRIGACOES (TRIBUTARIAS|FISCAIS|TRABALHISTAS|SOCIAIS|PREVIDENCIARIAS)|IMPOSTOS A RECOLHER|TRIBUTOS A RECOLHER|ENCARGOS SOCIAIS|SALARIOS A PAGAR|PROVISOES (TRABALHISTAS|DE FERIAS)|PARCELAMENTO/, grupo: "pc_obrigacoes", dentro: /PASSIVO CIRCULANTE|^CIRCULANTE/ },
-  { re: /PATRIMONIO LIQUIDO/, grupo: "pl" },
+  { bloco: "ativo", re: /REALIZAVEL A LONGO PRAZO/, grupo: "anc_rlp" },
+  { bloco: "ativo", re: /^CONTAS DE COMPENSACAO/, grupo: "ignorar" },
+  { bloco: "ativo", re: /IMOBILIZADO|INTANGIVEL|DIFERIDO/, grupo: "anc_permanente" },
+  { bloco: "ativo", re: /INVESTIMENTOS|PARTICIPACOES SOCIETARIAS/, grupo: "anc_permanente", dentro: /NAO CIRCULANTE|PERMANENTE/ },
+  { bloco: "ativo", re: /MOVEIS|UTENSILIOS|VEICULOS|MAQUINAS|EQUIPAMENTOS|EDIFICACOES|IMOVEIS|TERRENOS|COMPUTADORES|INSTALACOES|BENFEITORIAS|SOFTWARE|MARCAS|DEPRECIAC|AMORTIZAC.*ACUMUL|IMOBILIZAC/, grupo: "anc_permanente", dentro: /NAO CIRCULANTE|PERMANENTE/ },
+  { bloco: "ativo", re: /DISPONI|^CAIXA|BANCOS?\b|APLICAC.*(FINANC|LIQUIDEZ)|NUMERARIO|CARTOES PRE PAGOS/, grupo: "ac_disponivel" },
+  { bloco: "ativo", re: /INVESTIMENTOS|APLIC/, grupo: "ac_disponivel", dentro: /^DISPONIVEL|^ATIVO CIRCULANTE/ },
+  { bloco: "ativo", re: /^CLIENTES|DUPLICATAS A RECEBER|CONTAS A RECEBER DE CLIENTES|CARTOES? (DE CREDITO )?A RECEBER/, grupo: "ac_clientes" },
+  { bloco: "ativo", re: /ESTOQUE|MERCADORIAS|MATERIA.? PRIMA|PRODUTOS ACABADOS|PRODUTOS EM ELABORACAO/, grupo: "ac_estoques" },
+  // passivo e PL
+  { bloco: "passivo", re: /^CONTAS DE COMPENSACAO/, grupo: "ignorar" },
+  { bloco: "passivo", re: /PATRIMONIO LIQUIDO/, grupo: "pl" },
+  { bloco: "passivo", re: /EMPRESTIMOS|FINANCIAMENTOS|JUROS A TRANSCORRER|CAPITAL DE GIRO|LEASING|ARRENDAMENTO MERCANTIL/, grupo: "pnc_emprestimos", dentro: /NAO CIRCULANTE|LONGO PRAZO/ },
+  { bloco: "passivo", re: /EMPRESTIMOS|FINANCIAMENTOS|JUROS A TRANSCORRER|CAPITAL DE GIRO|LEASING|ARRENDAMENTO MERCANTIL/, grupo: "pc_emprestimos" },
+  { bloco: "passivo", re: /FORNECEDORES/, grupo: "pc_fornecedores" },
+  { bloco: "passivo", re: /OBRIGAC.*(TRIBUT|FISCA|TRABALH|SOCIA|PREVID|PESSOAL)|IMPOSTOS|TRIBUTOS|CONTRIBUICOES A RECOLHER|ENCARGOS|SALARIOS|ORDENADOS|FERIAS|13O|PROVIS|PARCELAMENTO|\b(INSS|FGTS|IRRF|PIS|COFINS|ICMS|ISS|ISSQN)\b/, grupo: "pc_obrigacoes", dentro: /^PASSIVO CIRCULANTE|^CIRCULANTE/ },
   // resultado
-  { re: /DEDUC|DEVOLUC|CANCELAMENTO|ABATIMENTO|IMPOSTOS (SOBRE|INCIDENTES)|IMPOSTOS E CONTRIBUICOES SOBRE|SIMPLES NACIONAL|\(-\)/, grupo: "deducoes", dentro: /RECEITA/ },
-  { re: /RECEITAS? FINANCEIRAS|RENDIMENTOS DE APLICAC|JUROS ATIVOS|DESCONTOS OBTIDOS/, grupo: "receitas_financeiras" },
-  { re: /DESPESAS? FINANCEIRAS|JUROS PASSIVOS|TARIFAS BANCARIAS|DESPESAS BANCARIAS|IOF/, grupo: "despesas_financeiras" },
-  { re: /PROVISAO PARA (O )?(IMPOSTO DE RENDA|IR|IRPJ)|CONTRIBUICAO SOCIAL SOBRE O LUCRO|^IRPJ|^CSLL|IMPOSTO DE RENDA E CONTRIBUICAO/, grupo: "ir_csll" },
-  { re: /OUTRAS RECEITAS|RECEITAS NAO OPERACIONAIS|GANHO NA (ALIENACAO|VENDA)/, grupo: "outras_receitas" },
-  { re: /OUTRAS DESPESAS|DESPESAS NAO OPERACIONAIS|PERDA NA (ALIENACAO|VENDA)/, grupo: "outras_despesas" },
-  { re: /CUSTO/, grupo: "custos" },
-  { re: /RECEITA BRUTA|RECEITA OPERACIONAL|VENDAS?|PRESTACAO DE SERVICOS|FATURAMENTO|RECEITA DE SERVICOS|RECEITAS?$/, grupo: "receita_bruta" },
-  { re: /DESPESA/, grupo: "despesas_operacionais" },
-  { re: /APURACAO|ENCERRAMENTO|RESULTADO DO EXERCICIO/, grupo: "ignorar" },
+  { bloco: "resultado", re: /APURACAO|ENCERRAMENTO|RESULTADO DO EXERCICIO/, grupo: "ignorar" },
+  { bloco: "resultado", re: /PROVIS.*(IMPOSTO DE RENDA|\bIR\b|IRPJ|CSLL|CONTRIBUICAO SOCIAL)|\bIRPJ\b|\bCSLL\b|CONTRIBUICAO SOCIAL SOBRE O LUCRO|IMPOSTO DE RENDA (PESSOA JURIDICA|E CONTRIBUICAO)/, grupo: "ir_csll" },
+  { bloco: "resultado", re: /DEDUC|DEVOLUC|\bDEV\b|CANCELAMENTO|ABATIMENTO|IMPOSTOS (SOBRE|INCIDENTES)|IMPOSTOS E CONTRIBUICOES SOBRE|SIMPLES NACIONAL|^\(MENOS\)/, grupo: "deducoes", dentro: /RECEITA/ },
+  { bloco: "resultado", re: /RECEITAS? FINANCEIRAS|RENDIMENTOS DE APLICAC|JUROS ATIVOS|DESCONTOS OBTIDOS|JUROS E DESCONTOS|VARIAC.*ATIVA/, grupo: "receitas_financeiras" },
+  { bloco: "resultado", re: /DESPESAS? FINANCEIRAS|JUROS PASSIVOS|TARIFAS BANCARIAS|DESPESAS BANCARIAS|\bIOF\b|VARIAC.*PASSIVA/, grupo: "despesas_financeiras" },
+  { bloco: "resultado", re: /OUTRAS RECEITAS|RECEITAS NAO OPERACIONAIS|GANHO NA (ALIENACAO|VENDA)/, grupo: "outras_receitas" },
+  { bloco: "resultado", re: /OUTRAS DESPESAS|DESPESAS NAO OPERACIONAIS|PERDA NA (ALIENACAO|VENDA)|RESULTADOS NAO OPERACIONAIS/, grupo: "outras_despesas" },
+  { bloco: "resultado", re: /CUSTO/, grupo: "custos" },
+  { bloco: "resultado", re: /DESPESA/, grupo: "despesas_operacionais" },
+  { bloco: "resultado", re: /RECEITA BRUTA|RECEITA OPERACIONAL|VENDAS?|PRESTACAO DE SERVICOS|FATURAMENTO|RECEITA DE SERVICOS|RECEITAS?/, grupo: "receita_bruta" },
 ];
 
-/** Atribui grupo a cada conta: mapa salvo (prefixo mais longo) → regras pelas descrições dos ancestrais. */
+function blocoDe(topo: string, classificacao: string): Bloco {
+  if (/^ATIVO/.test(topo)) return "ativo";
+  if (/PASSIVO|PATRIMONIO/.test(topo)) return "passivo";
+  if (/RESULTADO|RECEITA|CUSTO|DESPESA/.test(topo)) return "resultado";
+  return classificacao.startsWith("1") ? "ativo" : classificacao.startsWith("2") ? "passivo" : "resultado";
+}
+
+/** Atribui grupo a cada conta: mapa salvo (prefixo mais longo) → regras do bloco pelas descrições, da conta para cima. */
 export function classificar(linhas: Linha[], mapa: { classificacao: string; grupo: Grupo }[] = []) {
   const porClas = new Map(linhas.map((l) => [l.classificacao, l]));
   const ordenado = [...mapa].sort((a, b) => b.classificacao.length - a.classificacao.length);
@@ -280,27 +303,25 @@ export function classificar(linhas: Linha[], mapa: { classificacao: string; grup
       l.grupo = salvo.grupo;
       continue;
     }
-    const anc = ancestrais(l.classificacao);
-    const caminho = anc.map((a) => sem(a.descricao));
-    const topo = caminho[caminho.length - 1] ?? "";
+    const caminho = ancestrais(l.classificacao).map((a) => sem(a.descricao));
+    const tudo = caminho.join("|");
+    const bloco = blocoDe(caminho[caminho.length - 1] ?? "", l.classificacao);
     let g: Grupo | null = null;
     for (const d of caminho) {
-      const r = REGRAS.find((x) => x.re.test(d) && (!x.dentro || caminho.some((c) => x.dentro!.test(c))));
+      const r = REGRAS.find((x) => x.bloco === bloco && x.re.test(d) && (!x.dentro || caminho.some((c) => x.dentro!.test(c))));
       if (r) {
         g = r.grupo;
         break;
       }
     }
-    // padrão pelo bloco quando nenhuma regra específica casou
-    if (!g || (g === "ac_disponivel" && !/ATIVO/.test(caminho.join("|")))) {
-      const tudo = caminho.join("|");
-      if (/ATIVO/.test(topo) || l.classificacao.startsWith("1")) g = /NAO CIRCULANTE|LONGO PRAZO/.test(tudo) ? "anc_rlp" : "ac_outros";
-      else if (/PATRIMONIO/.test(tudo)) g = "pl";
-      else if (/PASSIVO/.test(topo) || l.classificacao.startsWith("2")) g = /NAO CIRCULANTE|LONGO PRAZO|EXIGIVEL A LONGO/.test(tudo) ? "pnc_outros" : "pc_outros";
-      else if (/RECEITA/.test(tudo)) g = "receita_bruta";
-      else if (/CUSTO/.test(tudo)) g = "custos";
-      else g = g ?? "despesas_operacionais";
+    if (!g) {
+      if (bloco === "ativo") g = /NAO CIRCULANTE|LONGO PRAZO/.test(tudo) ? "anc_rlp" : "ac_outros";
+      else if (bloco === "passivo") g = /NAO CIRCULANTE|LONGO PRAZO|EXIGIVEL A LONGO/.test(tudo) ? "pnc_outros" : "pc_outros";
+      else g = /RECEITA/.test(tudo) ? "receita_bruta" : /CUSTO/.test(tudo) ? "custos" : "despesas_operacionais";
     }
+    // dívida de longo prazo que não é empréstimo
+    if (g === "pc_obrigacoes" && /NAO CIRCULANTE|LONGO PRAZO/.test(tudo)) g = "pnc_outros";
+    if ((g === "pc_fornecedores" || g === "pc_outros") && /NAO CIRCULANTE|LONGO PRAZO/.test(tudo)) g = "pnc_outros";
     l.grupo = g;
   }
   return linhas;
@@ -453,8 +474,8 @@ export interface Alerta { area: string; nivel: "alto" | "medio"; texto: string; 
 
 export function conferir(r: Resumo, linhas: Linha[], competencia: string | null): Conferencia[] {
   const dif = Math.abs(r.debitos - r.creditos);
-  const passivoTotal = r.pc + r.pnc + r.pl + r.resultado_exercicio;
-  const difBal = Math.abs(r.ativo_total - passivoTotal);
+  // com sinal (devedor +, credor −), a soma de todas as contas analíticas é zero quando ativo = passivo + PL + resultado
+  const difBal = Math.abs(linhas.filter((l) => l.analitica).reduce((a, l) => a + l.saldo_atual, 0));
   const semGrupo = linhas.filter((l) => l.analitica && !l.grupo).length;
   return [
     { nome: "Balancete fechado (débitos = créditos)", ok: dif < 1, detalhe: dif < 1 ? "ok" : `diferença de ${brl(dif)}` },
