@@ -6,6 +6,7 @@ import { supabase, supabaseConfigurado } from "./supabase";
 import type { Cliente, HubApp, Membro, Organizacao, Papel, PapelApp, Setor } from "./types";
 import { PESO_PAPEL_APP } from "./types";
 import { traduzirErro } from "@/lib/erros";
+import { caminho } from "@/lib/caminho";
 
 interface OrgCtx {
   session: Session;
@@ -77,7 +78,7 @@ export function OrgProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (session === null) {
       const next = encodeURIComponent(window.location.pathname + window.location.search);
-      window.location.replace(`/login?next=${next}`);
+      window.location.replace(caminho(`/login?next=${next}`));
     }
   }, [session]);
 
@@ -99,7 +100,7 @@ export function OrgProvider({ children }: { children: React.ReactNode }) {
     if ((m.data as Membro[]).length === 0) {
       const p = await sb.rpc("portal_minhas_empresas");
       if (!p.error && (p.data as unknown[])?.length) {
-        window.location.replace("/portal");
+        window.location.replace(caminho("/portal"));
         return;
       }
     }

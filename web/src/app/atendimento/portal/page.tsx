@@ -5,6 +5,7 @@ import { AppShell } from "@/components/AppShell";
 import { useOrg } from "@/lib/org";
 import { supabase } from "@/lib/supabase";
 import { traduzirErro } from "@/lib/erros";
+import { enviarConvite } from "@/lib/convite";
 
 export default function PaginaAcessosPortal() {
   return (
@@ -70,11 +71,14 @@ function AcessosPortal() {
     setErro(null);
     const { data, error } = await supabase().rpc("portal_convidar", { p_cliente: cliente, p_email: email, p_nome: nome, p_permissoes: perms });
     if (error) return setErro(traduzirErro(error));
-    setAviso(
-      data === "convite"
-        ? `Convite registrado. Envie a ${email} o endereço ${window.location.origin}/login: ao criar a conta com este e-mail, o portal já abre com a empresa liberada.`
-        : `${email} já tinha conta e recebeu o acesso agora.`,
-    );
+    if (data === "convite") {
+      const r = await enviarConvite(email, nome);
+      setAviso(
+        r.enviado
+          ? `Convite enviado para ${email}. A pessoa recebe um e-mail para criar a senha e o portal já abre com a empresa liberada.`
+          : `Acesso cadastrado, mas o e-mail não pôde ser enviado${r.erro ? ` (${r.erro})` : ""}.${r.link ? ` Repasse este link para a pessoa criar a senha: ${r.link}` : ""}`,
+      );
+    } else setAviso(`${email} já tinha conta e recebeu o acesso agora.`);
     setEmail("");
     setNome("");
     carregar();

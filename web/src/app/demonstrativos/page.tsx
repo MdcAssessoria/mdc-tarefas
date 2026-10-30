@@ -10,6 +10,7 @@ import { brl, fmtIndice } from "@/lib/balancete";
 import { mesAno } from "@/components/demonstrativos/Painel";
 import type { BalanceteReg } from "@/components/demonstrativos/Painel";
 import { reprocessar } from "@/lib/demonstrativos";
+import { caminho } from "@/lib/caminho";
 
 export default function PaginaDemonstrativos() {
   return (
@@ -118,7 +119,7 @@ function Lista() {
               const falhas = (b.conferencias ?? []).filter((x) => !x.ok).length;
               const altos = (b.alertas ?? []).filter((a) => a.nivel === "alto").length;
               return (
-                <tr key={b.id} className="cursor-pointer hover:bg-[var(--fundo)]" onClick={() => (window.location.href = `/demonstrativos/${b.id}`)}>
+                <tr key={b.id} className="cursor-pointer hover:bg-[var(--fundo)]" onClick={() => (window.location.href = caminho(`/demonstrativos/${b.id}`))}>
                   <td className="font-medium">{c ? c.nome_fantasia || c.razao_social : "—"}</td>
                   <td>{mesAno(b.competencia)}</td>
                   <td>

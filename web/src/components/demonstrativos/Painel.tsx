@@ -9,6 +9,9 @@ import { TIPOS_PERIODO, agregar, serieAgrupada } from "@/lib/periodos";
 import type { TipoPeriodo } from "@/lib/periodos";
 export { somarDre };
 import type { Demonstracoes, Dfc } from "@/lib/demonstracoes";
+import { caminho } from "@/lib/caminho";
+import { MAIOR_MELHOR, tendenciaLinear } from "@/lib/tendencia";
+import type { Tendencia } from "@/lib/tendencia";
 
 // paletas validadas (dataviz): composição da receita e do balanço — sempre com rótulo direto
 export const PAL_RECEITA = { impostos: "#6250d6", custos: "#C0892A", despesas: "#D55181", financeiro: "#2a78d6", lucro: "#1B8263" };
@@ -364,8 +367,12 @@ export function GradeIndices({ atual, historico }: { atual: BalanceteReg; histor
   const [tipo, setTipo] = useSeletorPeriodo();
   const ag = agregar(atual, historico, multi ? "mensal" : tipo);
   const i = ag.indices;
+  const tend = new Map<string, Tendencia | null>(
+    INDICES_INFO.map((x) => [x.id, tendenciaLinear(ult.map((b) => b.indices[x.id] as number | null), MAIOR_MELHOR[x.id] ?? true)]),
+  );
   return (
     <div className="space-y-6">
+      <ResumoTendencia tend={tend} meses={ult.length} />
       {!multi && (
         <div className="flex flex-wrap items-center justify-between gap-2">
           <p className="text-sm text-neutral-600">
@@ -395,9 +402,14 @@ export function GradeIndices({ atual, historico }: { atual: BalanceteReg; histor
                       <div className="text-sm font-medium">{info.nome}</div>
                       <div className={`text-2xl font-semibold tabular-nums ${ruim ? "text-[var(--perigo)]" : "text-[var(--marca)]"}`}>{fmtIndice(v as number, info.formato)}</div>
                     </div>
-                    <Faisca valores={ult.map((b) => (b.indices[info.id] as number | null) ?? null)} alerta={!!ruim} />
+                    <Faisca
+                      valores={ult.map((b) => (b.indices[info.id] as number | null) ?? null)}
+                      alerta={!!ruim}
+                      reta={tend.get(info.id) ? { a: tend.get(info.id)!.intercepto, b: tend.get(info.id)!.inclinacao } : null}
+                    />
                   </div>
                   <p className="mt-1 text-xs text-neutral-600">{info.leitura}.</p>
+                  <LinhaTendencia t={tend.get(info.id) ?? null} formato={info.formato} />
                   {ruim && <p className="mt-1 text-xs font-medium text-[var(--perigo)]">⚠ Fora da faixa de referência da MDC</p>}
                 </div>
               );
@@ -406,6 +418,78 @@ export function GradeIndices({ atual, historico }: { atual: BalanceteReg; histor
         </section>
       ))}
     </div>
+  );
+}
+
+const SENTIDO = {
+  melhora: { icone: "▲", cor: "#067647", nome: "melhorando" },
+  piora: { icone: "▼", cor: "#B42318", nome: "piorando" },
+  estavel: { icone: "●", cor: "#5D6661", nome: "sem tendência clara" },
+} as const;
+
+function fmtVariacao(v: number, f: "x" | "%" | "R$" | "dias") {
+  const s = v >= 0 ? "+" : "−";
+  const a = Math.abs(v);
+  if (f === "%") return `${s}${(a * 100).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} p.p.`;
+  if (f === "dias") return `${s}${a.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} dia${a >= 1.95 ? "s" : ""}`;
+  if (f === "R$") return `${s}${brl(a)}`;
+  return `${s}${a.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+/** Tendência linear do índice: sentido, ritmo mensal, aderência (R²) e projeção de 3 meses. */
+function LinhaTendencia({ t, formato }: { t: Tendencia | null; formato: "x" | "%" | "R$" | "dias" }) {
+  if (!t) return <p className="mt-2 text-[11px] text-neutral-400">Tendência linear: precisa de 3 meses com valor.</p>;
+  const s = SENTIDO[t.sentido];
+  return (
+    <p className="mt-2 border-t border-[var(--borda)] pt-2 text-[11px] leading-snug text-neutral-600" title={`Reta de mínimos quadrados sobre ${t.n} meses. R² ${t.r2.toFixed(2)}.`}>
+      <span className="font-semibold" style={{ color: s.cor }}>
+        {s.icone} Tendência linear: {s.nome}
+      </span>{" "}
+      · {fmtVariacao(t.inclinacao, formato)}/mês · R² {t.r2.toLocaleString("pt-BR", { maximumFractionDigits: 2 })} · projeção em 3 meses:{" "}
+      <b>{fmtIndice(t.projecao3, formato)}</b>
+    </p>
+  );
+}
+
+/** Quadro geral: quantos índices melhoram, pioram ou estão estáveis pela reta dos últimos meses. */
+function ResumoTendencia({ tend, meses }: { tend: Map<string, Tendencia | null>; meses: number }) {
+  const itens = INDICES_INFO.map((x) => ({ info: x, t: tend.get(x.id) ?? null })).filter((x) => x.t);
+  if (itens.length === 0) return null;
+  const grupo = (s: Tendencia["sentido"]) => itens.filter((x) => x.t!.sentido === s);
+  const piora = grupo("piora").sort((a, b) => b.t!.r2 - a.t!.r2);
+  const melhora = grupo("melhora").sort((a, b) => b.t!.r2 - a.t!.r2);
+  const nome = (n: string) => n.replace(/^[A-Z]{3} · /, "");
+  return (
+    <section className="cartao p-4">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <h3 className="font-semibold text-[var(--marca)]">Tendência linear dos índices</h3>
+        <span className="text-xs text-neutral-500">reta de mínimos quadrados sobre os últimos {meses} meses · linha tracejada nos minigráficos</span>
+      </div>
+      <div className="mt-3 grid gap-3 sm:grid-cols-3">
+        {(["melhora", "piora", "estavel"] as const).map((k) => (
+          <div key={k} className="rounded-lg border border-[var(--borda)] p-3">
+            <div className="text-2xl font-semibold tabular-nums" style={{ color: SENTIDO[k].cor }}>
+              {SENTIDO[k].icone} {grupo(k).length}
+            </div>
+            <div className="text-xs text-neutral-600">{k === "estavel" ? "sem tendência clara" : `índices ${SENTIDO[k].nome}`}</div>
+          </div>
+        ))}
+      </div>
+      {(piora.length > 0 || melhora.length > 0) && (
+        <div className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
+          {piora.length > 0 && (
+            <p>
+              <b className="text-[#B42318]">Piorando:</b> {piora.slice(0, 5).map((x) => nome(x.info.nome)).join(", ")}.
+            </p>
+          )}
+          {melhora.length > 0 && (
+            <p>
+              <b className="text-[#067647]">Melhorando:</b> {melhora.slice(0, 5).map((x) => nome(x.info.nome)).join(", ")}.
+            </p>
+          )}
+        </div>
+      )}
+    </section>
   );
 }
 
@@ -532,7 +616,7 @@ export function VisaoParecer({ texto, empresa, cnpj }: { texto: string; empresa:
     <article className="parecer cartao p-6 print:border-0 print:p-0">
       <header className="mb-4 flex items-center justify-between gap-3 border-b-2 border-[var(--destaque)] pb-3">
         <div className="flex items-center gap-3">
-          <img src="/icone-hub-mdc.svg" alt="" className="h-10 w-10 rounded-md" />
+          <img src={caminho("/icone-hub-mdc.svg")} alt="" className="h-10 w-10 rounded-md" />
           <div>
             <div className="font-semibold text-[var(--marca)]">MDC Assessoria Contábil</div>
             <div className="text-xs text-neutral-500">Assessoria Contábil, Tributária e Gestão Financeira · mdcassessoria.com</div>

@@ -21,6 +21,7 @@ export interface Membro {
   papel: Papel;
   setor_id: string | null;
   ativo: boolean;
+  perfil_id?: string | null;
 }
 
 export interface Setor {

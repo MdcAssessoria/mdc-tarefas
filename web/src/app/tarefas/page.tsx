@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { TarefaEditor } from "@/components/TarefaEditor";
+import { MultiSelecao } from "@/components/MultiSelecao";
 import { PrazoBadge, PrioridadeDot, SetorChip } from "@/components/Badges";
 import { useOrg } from "@/lib/org";
 import { useTarefas } from "@/lib/useTarefas";
@@ -10,6 +11,7 @@ import { diasAte, fmtCompetencia } from "@/lib/datas";
 import { STATUS } from "@/lib/types";
 import type { Status, Tarefa } from "@/lib/types";
 import { traduzirErro } from "@/lib/erros";
+import { caminho } from "@/lib/caminho";
 
 export default function PaginaTarefas() {
   return (
@@ -33,28 +35,40 @@ function Tarefas() {
   const [visao, setVisao] = useState<Visao>("lista");
   const [busca, setBusca] = useState("");
   const [situacao, setSituacao] = useState<Situacao>("abertas");
-  const [setor, setSetor] = useState("");
-  const [resp, setResp] = useState(papel === "analista" ? eu.user_id : "");
+  // filtros por setor (grupo) e por responsável: seleção múltipla, lembrada neste navegador
+  const [setorSel, setSetorSel] = useState<string[]>([]);
+  const [respSel, setRespSel] = useState<string[]>(papel === "analista" ? [eu.user_id] : []);
   const [cliente, setCliente] = useState("");
   const [editando, setEditando] = useState<Tarefa | null | undefined>(undefined);
   const [aviso, setAviso] = useState<string | null>(null);
 
   useEffect(() => {
-    if (papel === "tv") window.location.replace("/tv");
+    if (papel === "tv") window.location.replace(caminho("/tv"));
   }, [papel]);
 
   useEffect(() => {
     try {
       const v = localStorage.getItem("mdc-tarefas:visao");
       if (v === "lista" || v === "quadro") setVisao(v);
+      const f = JSON.parse(localStorage.getItem(`mdc-tarefas:filtros:${org.id}`) ?? "null") as { setores?: string[]; resps?: string[] } | null;
+      if (f && Array.isArray(f.setores) && Array.isArray(f.resps)) {
+        setSetorSel(f.setores);
+        setRespSel(f.resps);
+      }
     } catch {}
-  }, []);
+  }, [org.id]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(`mdc-tarefas:filtros:${org.id}`, JSON.stringify({ setores: setorSel, resps: respSel }));
+    } catch {}
+  }, [org.id, setorSel, respSel]);
 
   const base = useMemo(() => {
     const q = busca.trim().toLowerCase();
     return tarefas.filter((t) => {
-      if (setor && t.setor_id !== setor) return false;
-      if (resp === "_sem" ? t.responsavel_id : resp && t.responsavel_id !== resp) return false;
+      if (setorSel.length && !setorSel.includes(t.setor_id ?? "_sem")) return false;
+      if (respSel.length && !respSel.includes(t.responsavel_id ?? "_sem")) return false;
       if (cliente && t.cliente_id !== cliente) return false;
       if (q) {
         const c = clientePorId(t.cliente_id);
@@ -63,7 +77,7 @@ function Tarefas() {
       }
       return true;
     });
-  }, [tarefas, busca, setor, resp, cliente, clientePorId]);
+  }, [tarefas, busca, setorSel, respSel, cliente, clientePorId]);
 
   const contagem = useMemo(() => {
     let atrasadas = 0,
@@ -186,26 +200,27 @@ function Tarefas() {
           value={busca}
           onChange={(e) => setBusca(e.target.value)}
         />
-        <select className="entrada" value={setor} onChange={(e) => setSetor(e.target.value)} aria-label="Setor">
-          <option value="">Todos os setores</option>
-          {setores.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.nome}
-            </option>
-          ))}
-        </select>
-        <select className="entrada" value={resp} onChange={(e) => setResp(e.target.value)} aria-label="Responsável">
-          <option value="">Todos os responsáveis</option>
-          <option value={eu.user_id}>Minhas tarefas</option>
-          <option value="_sem">Sem responsável</option>
-          {pessoas
-            .filter((m) => m.user_id !== eu.user_id)
-            .map((m) => (
-              <option key={m.user_id} value={m.user_id}>
-                {m.nome}
-              </option>
-            ))}
-        </select>
+        <MultiSelecao
+          rotulo="Setores"
+          todos="Todos os setores"
+          valor={setorSel}
+          aoMudar={setSetorSel}
+          opcoes={[...setores.map((x) => ({ id: x.id, nome: x.nome, cor: x.cor })), { id: "_sem", nome: "Sem setor" }]}
+        />
+        <MultiSelecao
+          rotulo="Responsáveis"
+          todos="Todos os responsáveis"
+          valor={respSel}
+          aoMudar={setRespSel}
+          opcoes={[
+            { id: eu.user_id, nome: `${eu.nome} (eu)` },
+            { id: "_sem", nome: "Sem responsável" },
+            ...pessoas
+              .filter((m) => m.user_id !== eu.user_id)
+              .map((m) => ({ id: m.user_id, nome: m.nome, grupo: setorPorId(m.setor_id)?.nome ?? "Sem setor" }))
+              .sort((x, y) => x.grupo.localeCompare(y.grupo) || x.nome.localeCompare(y.nome)),
+          ]}
+        />
         <select
           className="entrada col-span-2 md:col-span-1"
           value={cliente}

@@ -224,17 +224,21 @@ export function Barras({ itens, cor = COR.despesa }: { itens: { rotulo: string; 
 }
 
 /** Mini-curva de um índice ao longo dos meses. */
-export function Faisca({ valores, alerta }: { valores: (number | null)[]; alerta?: boolean }) {
+export function Faisca({ valores, alerta, reta }: { valores: (number | null)[]; alerta?: boolean; reta?: { a: number; b: number } | null }) {
   const v = valores.filter((x): x is number => x !== null && Number.isFinite(x));
   if (v.length < 2) return null;
   const W = 120, H = 32;
-  const min = Math.min(...v), max = Math.max(...v);
+  const n = valores.length - 1 || 1;
+  const yReta = reta ? [reta.a, reta.a + reta.b * n] : [];
+  const min = Math.min(...v, ...yReta), max = Math.max(...v, ...yReta);
+  const py = (x: number) => H - 4 - ((x - min) / (max - min || 1)) * (H - 8);
   const pts = valores
-    .map((x, i) => (x === null || !Number.isFinite(x) ? null : `${(i / (valores.length - 1)) * W},${H - 4 - ((x - min) / (max - min || 1)) * (H - 8)}`))
+    .map((x, i) => (x === null || !Number.isFinite(x) ? null : `${(i / n) * W},${py(x)}`))
     .filter(Boolean)
     .join(" ");
   return (
     <svg viewBox={`0 0 ${W} ${H}`} className="h-8 w-28" aria-hidden="true">
+      {reta && <line x1={0} x2={W} y1={py(yReta[0])} y2={py(yReta[1])} stroke={COR.eixo} strokeWidth="1.2" strokeDasharray="3 3" />}
       <polyline points={pts} fill="none" stroke={alerta ? COR.negativo : COR.lucro} strokeWidth="2" strokeLinejoin="round" />
     </svg>
   );

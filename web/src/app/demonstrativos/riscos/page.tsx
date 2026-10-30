@@ -7,6 +7,7 @@ import { supabase } from "@/lib/supabase";
 import { brl, fmtIndice } from "@/lib/balancete";
 import { mesAno } from "@/components/demonstrativos/Painel";
 import type { BalanceteReg } from "@/components/demonstrativos/Painel";
+import { caminho } from "@/lib/caminho";
 
 export default function PaginaRiscos() {
   return (
@@ -76,7 +77,7 @@ function Riscos() {
             {ultimos.map((b) => {
               const c = clientePorId(b.cliente_id);
               return (
-                <tr key={b.id} className="cursor-pointer align-top hover:bg-[var(--fundo)]" onClick={() => (window.location.href = `/demonstrativos/${b.id}`)}>
+                <tr key={b.id} className="cursor-pointer align-top hover:bg-[var(--fundo)]" onClick={() => (window.location.href = caminho(`/demonstrativos/${b.id}`))}>
                   <td className="font-medium">{c ? c.nome_fantasia || c.razao_social : "—"}</td>
                   <td>{mesAno(b.competencia)}</td>
                   <td className={`text-right tabular-nums ${(b.indices.liquidez_corrente ?? 1) < 1 ? "text-[var(--perigo)]" : ""}`}>

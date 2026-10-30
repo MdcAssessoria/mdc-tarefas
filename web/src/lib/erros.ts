@@ -4,7 +4,7 @@ const REGRAS: [RegExp, string][] = [
     "Sem conexão com o servidor. Verifique sua internet e tente novamente."],
   [/invalid login credentials|invalid login/i, "E-mail ou senha incorretos."],
   [/email not confirmed/i, "E-mail ainda não confirmado. Abra o link enviado para seu e-mail antes de entrar."],
-  [/user already registered|already been registered|already exists/i, "Já existe uma conta com este e-mail. Use \"Já tenho conta\" para entrar."],
+  [/user already registered|already been registered|already exists/i, "Já existe uma conta com este e-mail."],
   [/password should be at least (\d+)/i, "A senha precisa ter pelo menos $1 caracteres."],
   [/password.*(weak|pwned|known to be)/i, "Senha fraca ou já vazada na internet. Escolha outra senha."],
   [/new password should be different/i, "A nova senha precisa ser diferente da atual."],
