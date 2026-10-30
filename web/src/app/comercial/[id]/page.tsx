@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { useOrg } from "@/lib/org";
@@ -46,6 +46,8 @@ function Detalhe() {
   const [erro, setErro] = useState<string | null>(null);
   const [aviso, setAviso] = useState<string | null>(null);
   const podeOperar = pode("comercial", "operar");
+  const podeGerir = pode("comercial", "gerir");
+  const router = useRouter();
 
   const carregar = useCallback(async () => {
     const sb = supabase();
@@ -94,6 +96,22 @@ function Detalhe() {
     carregar();
   }
 
+  async function arquivar(sim: boolean) {
+    const motivo = sim ? prompt(`Arquivar ${o!.empresa}? Motivo (opcional):`, "Sem retorno") : null;
+    if (sim && motivo === null) return;
+    const { error } = await supabase().rpc("crm_arquivar", { p_ids: [o!.id], p_motivo: motivo, p_arquivar: sim });
+    if (error) return setErro(traduzirErro(error));
+    setAviso(sim ? "Arquivada: saiu do funil e fica em Arquivados." : "De volta ao funil.");
+    carregar();
+  }
+
+  async function excluir() {
+    if (!confirm(`Excluir ${o!.empresa} de vez? Atividades e contratos em rascunho também são apagados.`)) return;
+    const { error } = await supabase().from("crm_oportunidades").delete().eq("id", o!.id);
+    if (error) return setErro(traduzirErro(error));
+    router.push("/comercial");
+  }
+
   const zap = o.whatsapp ? `https://wa.me/${o.whatsapp.replace(/\D/g, "").replace(/^(?!55)/, "55")}` : null;
   const etapaIdx = ETAPAS.findIndex((e) => e.id === o.etapa);
 
@@ -108,6 +126,7 @@ function Detalhe() {
           <p className="text-sm text-neutral-600">
             {ORIGENS.find((x) => x.id === o.origem)?.nome} · entrou em {new Date(o.criado_em).toLocaleDateString("pt-BR")}
             {o.cliente_id && " · já é cliente da carteira"}
+            {o.arquivado_em && ` · arquivada em ${new Date(o.arquivado_em).toLocaleDateString("pt-BR")}${o.motivo_arquivo ? ` (${o.motivo_arquivo})` : ""}`}
           </p>
         </div>
         {zap && (
@@ -119,6 +138,16 @@ function Detalhe() {
           <a className="btn" href={`mailto:${o.email}`}>
             E-mail
           </a>
+        )}
+        {podeOperar && (
+          <button className="btn" onClick={() => arquivar(!o.arquivado_em)}>
+            {o.arquivado_em ? "Restaurar ao funil" : "Arquivar"}
+          </button>
+        )}
+        {podeGerir && !o.cliente_id && (
+          <button className="btn !border-red-200 !text-[var(--perigo)]" onClick={excluir}>
+            Excluir
+          </button>
         )}
         {podeOperar && !o.cliente_id && (
           <button className="btn-primario" onClick={converter}>

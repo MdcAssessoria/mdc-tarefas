@@ -58,6 +58,8 @@ export interface Oportunidade {
   cliente_id: string | null;
   criado_em: string;
   atualizado_em: string;
+  arquivado_em?: string | null;
+  motivo_arquivo?: string | null;
 }
 
 export interface Atividade {

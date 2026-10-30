@@ -50,6 +50,7 @@ const NAV: Record<Modulo, { titulo: string; links: { href: string; nome: string;
     titulo: "CRM Comercial",
     links: [
       { href: "/comercial", nome: "Funil" },
+      { href: "/comercial/leads", nome: "Leads" },
       { href: "/comercial/contratos", nome: "Contratos" },
       { href: "/comercial/modelo", nome: "Modelo de contrato", minimo: "gerir" },
     ],
