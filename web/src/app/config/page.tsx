@@ -6,7 +6,8 @@ import { AppShell } from "@/components/AppShell";
 import { useOrg } from "@/lib/org";
 import { supabase } from "@/lib/supabase";
 import { fmtData } from "@/lib/datas";
-import { PAPEIS, PRIORIDADES, REGIMES } from "@/lib/types";
+import { PAPEIS, PRIORIDADES, REGIMES, SEGMENTOS, nomeSegmento } from "@/lib/types";
+import { Etiquetas } from "@/components/Etiquetas";
 import type { Cliente, Modelo, Papel, Prioridade } from "@/lib/types";
 import { traduzirErro } from "@/lib/erros";
 import { caminho, enderecoHub } from "@/lib/caminho";
@@ -355,6 +356,11 @@ function AbaClientes() {
   const [situacao, setSituacao] = useState<"ativos" | "inativos" | "todos">("ativos");
   const [inativando, setInativando] = useState<{ id: string; data: string; motivo: string; outro: string } | null>(null);
   const { mostrar, el } = useMensagem();
+  const [sel, setSel] = useState<Set<string>>(new Set());
+  const [lote, setLote] = useState<{ segmento: string; grupos: string[] }>({ segmento: "", grupos: [] });
+  const [filtroSeg, setFiltroSeg] = useState("");
+  const [filtroGrupo, setFiltroGrupo] = useState("");
+  const todosGrupos = useMemo(() => [...new Set(clientes.flatMap((c) => c.grupos ?? []))].sort((a, b) => a.localeCompare(b)), [clientes]);
   const pessoas = membros.filter((m) => m.ativo && m.papel !== "tv");
   const hojeISO = () => new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
 
@@ -391,8 +397,10 @@ function AbaClientes() {
     const q = busca.trim().toLowerCase();
     return clientes
       .filter((c) => situacao === "todos" || (situacao === "ativos" ? c.ativo : !c.ativo))
+      .filter((c) => !filtroSeg || (filtroSeg === "_sem" ? !c.segmento : c.segmento === filtroSeg))
+      .filter((c) => !filtroGrupo || (c.grupos ?? []).includes(filtroGrupo))
       .filter((c) => !q || `${c.razao_social} ${c.nome_fantasia ?? ""} ${c.cnpj ?? ""} ${c.codigo_dominio ?? ""} ${c.cidade ?? ""} ${c.uf ?? ""}`.toLowerCase().includes(q));
-  }, [clientes, busca, situacao]);
+  }, [clientes, busca, situacao, filtroSeg, filtroGrupo]);
   const nAtivos = clientes.filter((c) => c.ativo).length;
 
   async function adicionar(e: React.FormEvent) {
@@ -408,6 +416,25 @@ function AbaClientes() {
   async function alterar(id: string, campos: Partial<Cliente>) {
     const { error } = await supabase().from("clientes").update(campos).eq("id", id);
     if (error) return mostrar(traduzirErro(error), true);
+    recarregar();
+  }
+
+  async function aplicarLote() {
+    const ids = [...sel];
+    if (!ids.length) return;
+    if (!lote.segmento && !lote.grupos.length) return mostrar("Escolha um segmento ou um grupo para aplicar.", true);
+    const sb = supabase();
+    for (const id of ids) {
+      const c = clientes.find((x) => x.id === id);
+      const campos: Partial<Cliente> = {};
+      if (lote.segmento) campos.segmento = lote.segmento === "_limpar" ? null : lote.segmento;
+      if (lote.grupos.length) campos.grupos = [...new Set([...(c?.grupos ?? []), ...lote.grupos])];
+      const { error } = await sb.from("clientes").update(campos).eq("id", id);
+      if (error) return mostrar(traduzirErro(error), true);
+    }
+    mostrar(`${ids.length} cliente(s) atualizado(s).`);
+    setSel(new Set());
+    setLote({ segmento: "", grupos: [] });
     recarregar();
   }
 
@@ -484,6 +511,23 @@ function AbaClientes() {
           ))}
         </div>
         <input className="entrada flex-1" placeholder="Buscar cliente, CNPJ, código, cidade ou UF" value={busca} onChange={(e) => setBusca(e.target.value)} />
+        <select className="entrada w-44" value={filtroSeg} onChange={(e) => setFiltroSeg(e.target.value)} aria-label="Segmento">
+          <option value="">Todos os segmentos</option>
+          <option value="_sem">Sem segmento</option>
+          {SEGMENTOS.map((x) => (
+            <option key={x.id} value={x.id}>
+              {x.nome}
+            </option>
+          ))}
+        </select>
+        <select className="entrada w-44" value={filtroGrupo} onChange={(e) => setFiltroGrupo(e.target.value)} aria-label="Grupo">
+          <option value="">Todos os grupos</option>
+          {todosGrupos.map((g) => (
+            <option key={g} value={g}>
+              {g}
+            </option>
+          ))}
+        </select>
         <Link className="btn-primario" href="/clientes/importar">
           Importar do Domínio / planilha
         </Link>
@@ -504,14 +548,47 @@ function AbaClientes() {
         </div>
       )}
       {el}
+      {sel.size > 0 && (
+        <div className="cartao sticky top-2 z-20 flex flex-wrap items-center gap-3 border-[var(--destaque-escuro)] p-3">
+          <b className="text-sm text-[var(--marca)]">{sel.size} selecionado(s)</b>
+          <select className="entrada w-48" value={lote.segmento} onChange={(e) => setLote({ ...lote, segmento: e.target.value })} aria-label="Segmento em lote">
+            <option value="">Segmento: manter</option>
+            {SEGMENTOS.map((x) => (
+              <option key={x.id} value={x.id}>
+                Segmento: {x.nome}
+              </option>
+            ))}
+            <option value="_limpar">Segmento: limpar</option>
+          </select>
+          <div className="min-w-64 flex-1">
+            <Etiquetas valor={lote.grupos} aoMudar={(g) => setLote({ ...lote, grupos: g })} sugestoes={todosGrupos} placeholder="Incluir grupos (Enter)…" compacto />
+          </div>
+          <button className="btn-primario" onClick={aplicarLote}>
+            Aplicar
+          </button>
+          <button className="btn-link" onClick={() => setSel(new Set())}>
+            Limpar seleção
+          </button>
+        </div>
+      )}
       <div className="cartao overflow-x-auto">
         <table className="tabela">
           <thead>
             <tr>
+              <th className="w-8">
+                <input
+                  type="checkbox"
+                  className="h-4 w-4 accent-[var(--marca)]"
+                  aria-label="Selecionar todos"
+                  checked={lista.length > 0 && lista.every((c) => sel.has(c.id))}
+                  onChange={(e) => setSel(e.target.checked ? new Set(lista.map((c) => c.id)) : new Set())}
+                />
+              </th>
               <th>Cliente</th>
               <th>CNPJ</th>
               <th>UF</th>
               <th>Regime</th>
+              <th>Segmento e grupos</th>
               <th>Responsáveis</th>
               <th>Situação</th>
             </tr>
@@ -522,6 +599,22 @@ function AbaClientes() {
               return (
                 <Fragment key={c.id}>
                   <tr className={c.ativo ? "" : "opacity-50"}>
+                    <td>
+                      <input
+                        type="checkbox"
+                        className="h-4 w-4 accent-[var(--marca)]"
+                        aria-label={`Selecionar ${c.razao_social}`}
+                        checked={sel.has(c.id)}
+                        onChange={(e) =>
+                          setSel((x) => {
+                            const n = new Set(x);
+                            if (e.target.checked) n.add(c.id);
+                            else n.delete(c.id);
+                            return n;
+                          })
+                        }
+                      />
+                    </td>
                     <td>
                       <div className="font-medium">{c.razao_social}</div>
                       {(c.nome_fantasia || c.codigo_dominio) && (
@@ -541,6 +634,17 @@ function AbaClientes() {
                           </option>
                         ))}
                       </select>
+                    </td>
+                    <td className="min-w-56">
+                      <select className="entrada mb-1 w-full" value={c.segmento ?? ""} onChange={(e) => alterar(c.id, { segmento: e.target.value || null })} aria-label="Segmento">
+                        <option value="">Segmento…</option>
+                        {SEGMENTOS.map((x) => (
+                          <option key={x.id} value={x.id}>
+                            {x.nome}
+                          </option>
+                        ))}
+                      </select>
+                      <Etiquetas valor={c.grupos ?? []} aoMudar={(g) => alterar(c.id, { grupos: g })} sugestoes={todosGrupos} compacto />
                     </td>
                     <td>
                       <button className="btn-link" onClick={() => setAberto(aberto === c.id ? null : c.id)}>
@@ -569,7 +673,7 @@ function AbaClientes() {
                   </tr>
                   {inativando?.id === c.id && (
                     <tr>
-                      <td colSpan={6} className="bg-red-50/40">
+                      <td colSpan={8} className="bg-red-50/40">
                         <div className="grid gap-3 py-2 sm:grid-cols-[auto_auto_1fr_auto_auto] sm:items-end">
                           <label className="campo">
                             <span>Inativo a partir de *</span>
@@ -603,7 +707,7 @@ function AbaClientes() {
                   )}
                   {aberto === c.id && (
                     <tr>
-                      <td colSpan={6} className="bg-[var(--fundo)]">
+                      <td colSpan={8} className="bg-[var(--fundo)]">
                         <div className="grid gap-3 py-2 sm:grid-cols-2 lg:grid-cols-4">
                           {setores
                             .filter((s) => s.ativo)
@@ -651,6 +755,8 @@ const MODELO_VAZIO: Omit<Modelo, "id" | "org_id"> = {
   prioridade: "media",
   por_cliente: true,
   regimes: null,
+  segmentos: null,
+  grupos: null,
   meses: null,
   dia_vencimento: 20,
   meses_apos_competencia: 1,
@@ -659,7 +765,9 @@ const MODELO_VAZIO: Omit<Modelo, "id" | "org_id"> = {
 };
 
 function AbaObrigacoes() {
-  const { org, setores, setorPorId } = useOrg();
+  const { org, setores, setorPorId, clientes } = useOrg();
+  const todosGrupos = useMemo(() => [...new Set(clientes.flatMap((c) => c.grupos ?? []))].sort((a, b) => a.localeCompare(b)), [clientes]);
+  const [alcance, setAlcance] = useState<number | null>(null);
   const [modelos, setModelos] = useState<Modelo[]>([]);
   const [editando, setEditando] = useState<(Partial<Modelo> & typeof MODELO_VAZIO) | null>(null);
   const [comp, setComp] = useState(() => {
@@ -691,6 +799,18 @@ function AbaObrigacoes() {
     carregar();
   }
 
+  // prévia: quantos clientes ativos a obrigação vai pegar com os filtros
+  useEffect(() => {
+    if (!editando?.por_cliente) return setAlcance(null);
+    let vivo = true;
+    supabase()
+      .rpc("prever_rotina", { p_org: org.id, p_regimes: editando.regimes ?? null, p_segmentos: editando.segmentos ?? null, p_grupos: editando.grupos ?? null })
+      .then(({ data }) => vivo && setAlcance((data as number) ?? null));
+    return () => {
+      vivo = false;
+    };
+  }, [org.id, editando?.por_cliente, editando?.regimes, editando?.segmentos, editando?.grupos]);
+
   async function gerar() {
     const { data, error } = await supabase().rpc("gerar_competencia", { p_org: org.id, p_competencia: comp + "-01" });
     if (error) return mostrar(traduzirErro(error), true);
@@ -708,7 +828,7 @@ function AbaObrigacoes() {
       <div className="cartao flex flex-wrap items-end gap-3 p-4">
         <div className="mr-auto max-w-xl text-sm text-[var(--texto-suave)]">
           As tarefas são criadas automaticamente todo dia às 06:05 para a competência anterior, uma por cliente ativo
-          do regime indicado. Para antecipar ou refazer uma competência, gere manualmente:
+          que se encaixe no regime, segmento e grupo indicados. Para antecipar ou refazer uma competência, gere manualmente:
         </div>
         <label className="campo">
           <span>Competência</span>
@@ -822,6 +942,41 @@ function AbaObrigacoes() {
             </div>
           </fieldset>
           <fieldset className="campo md:col-span-2">
+            <span>Segmentos (nenhum marcado = todos)</span>
+            <div className="flex flex-wrap gap-3 pt-1 text-sm text-[var(--texto)]">
+              {SEGMENTOS.map((r) => (
+                <label key={r.id} className="flex items-center gap-1.5">
+                  <input
+                    type="checkbox"
+                    className="accent-[var(--marca)]"
+                    checked={editando.segmentos?.includes(r.id) ?? false}
+                    onChange={(e) => {
+                      const atual = new Set(editando.segmentos ?? []);
+                      if (e.target.checked) atual.add(r.id);
+                      else atual.delete(r.id);
+                      setEditando({ ...editando, segmentos: atual.size ? [...atual] : null });
+                    }}
+                  />
+                  {r.nome}
+                </label>
+              ))}
+            </div>
+          </fieldset>
+          <div className="campo md:col-span-2">
+            <span>Grupos de clientes (vazio = todos; vale para quem tiver qualquer um)</span>
+            <Etiquetas
+              valor={editando.grupos ?? []}
+              aoMudar={(g) => setEditando({ ...editando, grupos: g.length ? g : null })}
+              sugestoes={todosGrupos}
+              placeholder="Ex.: Com empregados, Grupo Clara… (Enter)"
+            />
+          </div>
+          {editando.por_cliente && (
+            <p className="rounded-lg bg-[var(--fundo)] px-3 py-2 text-sm md:col-span-4">
+              Alcance: <b className="text-[var(--marca)]">{alcance ?? "…"}</b> cliente(s) ativo(s) recebem esta tarefa a cada competência com os filtros acima.
+            </p>
+          )}
+          <fieldset className="campo md:col-span-2">
             <span>Meses de competência (nenhum marcado = todo mês)</span>
             <div className="flex flex-wrap gap-2 pt-1 text-sm text-[var(--texto)]">
               {MESES.map((m, i) => (
@@ -863,7 +1018,7 @@ function AbaObrigacoes() {
               <th>Setor</th>
               <th>Periodicidade</th>
               <th>Prazo</th>
-              <th>Regimes</th>
+              <th>Alcance</th>
               <th>Ativa</th>
             </tr>
           </thead>
@@ -878,7 +1033,15 @@ function AbaObrigacoes() {
                   {m.meses_apos_competencia === 0 ? " do mês" : m.meses_apos_competencia === 1 ? " do mês seguinte" : ` (+${m.meses_apos_competencia} meses)`}
                 </td>
                 <td className="text-[var(--texto-suave)]">
-                  {m.regimes ? m.regimes.map((r) => REGIMES.find((x) => x.id === r)?.nome ?? r).join(", ") : "Todos"}
+                  {!m.regimes && !m.segmentos?.length && !m.grupos?.length
+                    ? "Todos os clientes"
+                    : [
+                        m.regimes && m.regimes.map((r) => REGIMES.find((x) => x.id === r)?.nome ?? r).join(", "),
+                        m.segmentos?.length && m.segmentos.map((x) => nomeSegmento(x)).join(", "),
+                        m.grupos?.length && `grupos: ${m.grupos.join(", ")}`,
+                      ]
+                        .filter(Boolean)
+                        .join(" · ")}
                 </td>
                 <td onClick={(e) => e.stopPropagation()}>
                   <input

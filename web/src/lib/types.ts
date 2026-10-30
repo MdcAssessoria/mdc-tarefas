@@ -49,6 +49,8 @@ export interface Cliente {
   motivo_inativacao?: string | null;
   cliente_desde?: string | null;
   situacao_dominio?: string | null;
+  segmento?: string | null;
+  grupos?: string[];
 }
 
 export interface Tarefa {
@@ -87,6 +89,8 @@ export interface Modelo {
   ajuste: "antecipa" | "posterga" | "nenhum";
   ativo: boolean;
   visivel_cliente?: boolean;
+  segmentos?: string[] | null;
+  grupos?: string[] | null;
 }
 
 export const STATUS: { id: Status; nome: string }[] = [
@@ -113,6 +117,21 @@ export const REGIMES: { id: string; nome: string }[] = [
   { id: "pf", nome: "Pessoa física" },
   { id: "outro", nome: "Outro" },
 ];
+
+export const SEGMENTOS: { id: string; nome: string }[] = [
+  { id: "comercio", nome: "Comércio" },
+  { id: "industria", nome: "Indústria" },
+  { id: "servicos", nome: "Serviços" },
+  { id: "construcao", nome: "Construção" },
+  { id: "agro", nome: "Agronegócio" },
+  { id: "saude", nome: "Saúde" },
+  { id: "educacao", nome: "Educação" },
+  { id: "transporte", nome: "Transporte" },
+  { id: "holding", nome: "Holding" },
+  { id: "terceiro_setor", nome: "Terceiro setor" },
+  { id: "outro", nome: "Outro" },
+];
+export const nomeSegmento = (s: string | null | undefined) => SEGMENTOS.find((x) => x.id === s)?.nome ?? "—";
 
 export const PAPEIS: { id: Papel; nome: string }[] = [
   { id: "admin", nome: "Administrador" },
