@@ -42,17 +42,18 @@ interface Auditoria {
   depois: unknown;
   em: string;
 }
-type Aba = "pessoas" | "perfis" | "historico";
+type Aba = "pessoas" | "clientes" | "perfis" | "historico";
 
 const COR_NIVEL: Record<PapelApp, string> = {
   ver: "bg-neutral-100 text-neutral-700",
   operar: "bg-sky-50 text-sky-800",
   gerir: "bg-[#F6EEDC] text-[#6B5220]",
 };
+const ADMIN = "__admin";
 const nomeNivel = (p: PapelApp) => PAPEIS_APP.find((x) => x.id === p)?.nome ?? p;
 
 function Acessos() {
-  const { org, papel, membros, setores, apps, nomeMembro, recarregar, recarregarApps } = useOrg();
+  const { org, papel, eu, membros, setores, apps, nomeMembro, recarregar, recarregarApps } = useOrg();
   const [aba, setAba] = useState<Aba>("pessoas");
   const [acessos, setAcessos] = useState<Acesso[]>([]);
   const [perfis, setPerfis] = useState<Perfil[]>([]);
@@ -61,6 +62,7 @@ function Acessos() {
   const [erro, setErro] = useState<string | null>(null);
   const [aviso, setAviso] = useState<{ texto: string; link?: string } | null>(null);
   const [convite, setConvite] = useState(false);
+  const [editando, setEditando] = useState<Membro | null>(null);
 
   // ferramentas que um perfil pode liberar (o catálogo, menos as desligadas)
   const ferramentas = useMemo(() => apps.filter((a) => a.status !== "desligado"), [apps]);
@@ -101,11 +103,40 @@ function Acessos() {
     recarregarApps();
   };
 
-  async function vincular(m: Membro, perfil: string) {
-    const { error } = await supabase().rpc("hub_definir_perfil", { p_org: org.id, p_user: m.user_id, p_perfil: perfil || null });
+  async function salvarMembro(m: Membro, campos: { nome?: string; papel?: Papel; setor?: string | null; perfil?: string | null; ativo?: boolean }, texto: string) {
+    const papelNovo = campos.papel ?? m.papel;
+    const { error } = await supabase().rpc("hub_editar_membro", {
+      p_org: org.id,
+      p_user: m.user_id,
+      p_nome: campos.nome ?? m.nome,
+      p_papel: papelNovo,
+      p_setor: campos.setor !== undefined ? campos.setor : m.setor_id,
+      p_perfil: papelNovo === "admin" ? null : campos.perfil !== undefined ? campos.perfil : m.perfil_id ?? null,
+      p_ativo: campos.ativo ?? m.ativo,
+    });
     if (error) return falhar(error);
-    avisar(perfil ? `${m.nome} agora segue o perfil ${perfis.find((p) => p.id === perfil)?.nome}.` : `${m.nome} passou a ter acesso manual.`);
+    avisar(texto);
     await depois();
+  }
+
+  async function vincular(m: Membro, valor: string) {
+    if (valor === ADMIN) {
+      if (!window.confirm(`${m.nome} passará a ser Administrador, com acesso total ao Hub, inclusive a esta tela. Confirmar?`)) return;
+      return salvarMembro(m, { papel: "admin" }, `${m.nome} agora é Administrador.`);
+    }
+    if (m.papel === "admin") return salvarMembro(m, { papel: "analista", perfil: valor || null }, `${m.nome} deixou de ser Administrador e segue o perfil ${perfis.find((p) => p.id === valor)?.nome}.`);
+    const { error } = await supabase().rpc("hub_definir_perfil", { p_org: org.id, p_user: m.user_id, p_perfil: valor || null });
+    if (error) return falhar(error);
+    avisar(valor ? `${m.nome} agora segue o perfil ${perfis.find((p) => p.id === valor)?.nome}.` : `${m.nome} passou a ter acesso manual.`);
+    await depois();
+  }
+
+  async function inativar(m: Membro, pendente: boolean) {
+    const txt = pendente
+      ? `Cancelar o convite de ${m.nome}? O link enviado deixa de dar acesso.`
+      : `Inativar ${m.nome}? A pessoa perde o acesso ao Hub na hora. O histórico e as tarefas dela são mantidos.`;
+    if (!window.confirm(txt)) return;
+    await salvarMembro(m, { ativo: false }, pendente ? `Convite de ${m.nome} cancelado.` : `${m.nome} foi inativado.`);
   }
 
   async function definirManual(m: Membro, app: string, valor: string) {
@@ -122,6 +153,7 @@ function Acessos() {
   }
 
   const ativos = membros.filter((m) => m.ativo);
+  const inativos = membros.filter((m) => !m.ativo && m.papel !== "tv");
   const usoPerfil = (id: string) => ativos.filter((m) => m.perfil_id === id).length;
 
   return (
@@ -142,7 +174,8 @@ function Acessos() {
       <div className="flex gap-1 border-b border-[var(--borda)] text-sm">
         {(
           [
-            ["pessoas", `Pessoas (${ativos.length})`],
+            ["pessoas", `Equipe MDC (${ativos.length})`],
+            ["clientes", "Clientes (portal)"],
             ["perfis", `Perfis (${perfis.length})`],
             ["historico", "Histórico"],
           ] as [Aba, string][]
@@ -174,6 +207,7 @@ function Acessos() {
                 <th>Perfil</th>
                 <th>Ferramentas liberadas</th>
                 <th>Conta</th>
+                <th></th>
               </tr>
             </thead>
             <tbody>
@@ -188,12 +222,34 @@ function Acessos() {
                   aoVincular={(p) => vincular(m, p)}
                   aoDefinir={(app, v) => definirManual(m, app, v)}
                   aoReenviar={() => reenviar(m)}
+                  aoEditar={() => setEditando(m)}
+                  aoInativar={(pendente) => inativar(m, pendente)}
+                  souEu={m.user_id === eu.user_id}
                 />
               ))}
             </tbody>
           </table>
+          {inativos.length > 0 && (
+            <details className="border-t border-[var(--borda)] px-4 py-3 text-sm">
+              <summary className="cursor-pointer text-neutral-600">Inativos ({inativos.length})</summary>
+              <ul className="mt-2 divide-y divide-[var(--borda)]">
+                {inativos.map((m) => (
+                  <li key={m.user_id} className="flex items-center justify-between gap-3 py-2">
+                    <span>
+                      <span className="font-medium text-neutral-700">{m.nome}</span> <span className="text-xs text-neutral-500">{m.email}</span>
+                    </span>
+                    <button className="btn !min-h-8" onClick={() => setEditando(m)}>
+                      Reativar
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </details>
+          )}
         </div>
       )}
+
+      {aba === "clientes" && <AcessosClientes aoAviso={avisar} aoErro={falhar} />}
 
       {aba === "perfis" && (
         <Perfis
@@ -219,6 +275,21 @@ function Acessos() {
             ))}
           </ul>
         </section>
+      )}
+
+      {editando && (
+        <EditarPessoa
+          m={editando}
+          perfis={perfis}
+          setores={setores}
+          souEu={editando.user_id === eu.user_id}
+          aoFechar={() => setEditando(null)}
+          aoSalvar={async (campos) => {
+            const m = editando;
+            setEditando(null);
+            await salvarMembro(m, campos, m.ativo ? `Dados de ${campos.nome ?? m.nome} salvos.` : `${m.nome} foi reativado.`);
+          }}
+        />
       )}
 
       {convite && (
@@ -248,6 +319,9 @@ function descrever(h: Auditoria, apps: { slug: string; nome: string }[], perfis:
   if (h.acao === "vincular_perfil") return `colocou ${nomeMembro(h.alvo)} em ${nomePerfil(h.depois)}`;
   if (h.acao === "perfil") return `alterou o perfil ${h.alvo}`;
   if (h.acao === "convite") return `convidou ${h.alvo}`;
+  if (h.acao === "inativar") return `inativou ${nomeMembro(h.alvo)}`;
+  if (h.acao === "reativar") return `reativou ${nomeMembro(h.alvo)}`;
+  if (h.acao === "editar_pessoa") return `editou os dados de ${nomeMembro(h.alvo)}`;
   return `${h.acao} ${h.alvo ?? ""}`;
 }
 
@@ -294,6 +368,9 @@ function LinhaPessoa({
   aoVincular,
   aoDefinir,
   aoReenviar,
+  aoEditar,
+  aoInativar,
+  souEu,
 }: {
   m: Membro;
   perfis: Perfil[];
@@ -303,6 +380,9 @@ function LinhaPessoa({
   aoVincular: (perfil: string) => void;
   aoDefinir: (app: string, valor: string) => void;
   aoReenviar: () => void;
+  aoEditar: () => void;
+  aoInativar: (pendente: boolean) => void;
+  souEu: boolean;
 }) {
   const [ajustar, setAjustar] = useState(false);
   const admin = m.papel === "admin";
@@ -316,11 +396,19 @@ function LinhaPessoa({
         </div>
       </td>
       <td>
-        {admin ? (
-          <span className="chip bg-[var(--marca)] text-[var(--destaque)]">Administrador</span>
+        {souEu ? (
+          <span className="chip bg-[var(--marca)] text-[var(--destaque)]" title="Você não pode mudar o seu próprio perfil">
+            Administrador (você)
+          </span>
         ) : (
-          <select className="entrada !min-h-8 !py-1 text-sm" value={m.perfil_id ?? ""} onChange={(e) => aoVincular(e.target.value)} aria-label={`Perfil de ${m.nome}`}>
-            <option value="">Manual (sem perfil)</option>
+          <select
+            className={`entrada !min-h-8 !py-1 text-sm ${admin ? "font-semibold text-[var(--marca)]" : ""}`}
+            value={admin ? ADMIN : m.perfil_id ?? ""}
+            onChange={(e) => aoVincular(e.target.value)}
+            aria-label={`Perfil de ${m.nome}`}
+          >
+            <option value={ADMIN}>Administrador (acesso total)</option>
+            {!admin && <option value="">Manual (sem perfil)</option>}
             {perfis.map((p) => (
               <option key={p.id} value={p.id}>
                 {p.nome}
@@ -374,6 +462,16 @@ function LinhaPessoa({
               Reenviar convite
             </button>
           </div>
+        )}
+      </td>
+      <td className="whitespace-nowrap text-right">
+        <button className="btn-link mr-3 text-sm" onClick={aoEditar}>
+          Editar
+        </button>
+        {!souEu && (
+          <button className="btn-link text-sm !text-[var(--perigo)]" onClick={() => aoInativar(!!conta && !conta.confirmado)}>
+            {conta && !conta.confirmado ? "Cancelar convite" : "Inativar"}
+          </button>
         )}
       </td>
     </tr>
@@ -629,6 +727,412 @@ function Cadastro({
           </button>
           <button className="btn-primario" disabled={enviando}>
             {enviando ? "Enviando…" : "Cadastrar e enviar convite"}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+function EditarPessoa({
+  m,
+  perfis,
+  setores,
+  souEu,
+  aoFechar,
+  aoSalvar,
+}: {
+  m: Membro;
+  perfis: Perfil[];
+  setores: { id: string; nome: string }[];
+  souEu: boolean;
+  aoFechar: () => void;
+  aoSalvar: (c: { nome: string; papel: Papel; setor: string | null; perfil: string | null; ativo: boolean }) => void;
+}) {
+  const [nome, setNome] = useState(m.nome);
+  const [papel, setPapel] = useState<Papel>(m.papel);
+  const [setor, setSetor] = useState(m.setor_id ?? "");
+  const [perfil, setPerfil] = useState(m.perfil_id ?? "");
+  const reativando = !m.ativo;
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4" onClick={aoFechar}>
+      <form
+        onClick={(e) => e.stopPropagation()}
+        onSubmit={(e) => {
+          e.preventDefault();
+          aoSalvar({ nome, papel, setor: setor || null, perfil: papel === "admin" ? null : perfil || null, ativo: true });
+        }}
+        className="cartao w-full max-w-md space-y-3 p-5"
+      >
+        <div>
+          <h2 className="text-lg font-semibold text-[var(--marca)]">{reativando ? `Reativar ${m.nome}` : `Editar ${m.nome}`}</h2>
+          <p className="text-xs text-neutral-500">{m.email}</p>
+        </div>
+        <label className="campo">
+          <span>Nome</span>
+          <input required value={nome} onChange={(e) => setNome(e.target.value)} />
+        </label>
+        <div className="grid grid-cols-2 gap-3">
+          <label className="campo">
+            <span>Papel nas tarefas</span>
+            <select value={papel} disabled={souEu} onChange={(e) => setPapel(e.target.value as Papel)}>
+              {PAPEIS.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.nome}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="campo">
+            <span>Setor</span>
+            <select value={setor} onChange={(e) => setSetor(e.target.value)}>
+              <option value="">—</option>
+              {setores.map((x) => (
+                <option key={x.id} value={x.id}>
+                  {x.nome}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+        {papel === "admin" ? (
+          <p className="rounded-md bg-[var(--fundo)] p-2 text-xs text-neutral-600">Administrador acessa todas as ferramentas e esta tela de acessos.</p>
+        ) : (
+          <label className="campo">
+            <span>Perfil de acesso</span>
+            <select required value={perfil} onChange={(e) => setPerfil(e.target.value)}>
+              <option value="" disabled>
+                Escolha…
+              </option>
+              {perfis.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.nome}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
+        <div className="flex justify-end gap-2 pt-2">
+          <button type="button" className="btn" onClick={aoFechar}>
+            Cancelar
+          </button>
+          <button className="btn-primario">{reativando ? "Reativar" : "Salvar"}</button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------- clientes (Portal do Cliente)
+const PERMISSOES_PORTAL = [
+  { id: "demonstrativos", nome: "Demonstrativos e parecer" },
+  { id: "rotinas", nome: "Rotinas do mês" },
+  { id: "chat", nome: "Chat com a MDC" },
+  { id: "documentos", nome: "Documentos e vencimentos" },
+  { id: "societario", nome: "Processos societários" },
+  { id: "folha", nome: "Folha (DP)" },
+];
+// perfis de cliente prontos: o que cada função costuma ver no portal
+const PERFIS_CLIENTE: { id: string; nome: string; perms: string[] }[] = [
+  { id: "socio", nome: "Sócio / diretor (tudo)", perms: PERMISSOES_PORTAL.map((p) => p.id) },
+  { id: "financeiro", nome: "Financeiro", perms: ["demonstrativos", "rotinas", "chat", "documentos"] },
+  { id: "rh", nome: "RH / Departamento Pessoal", perms: ["folha", "rotinas", "chat", "documentos"] },
+  { id: "consulta", nome: "Só consulta de demonstrativos", perms: ["demonstrativos"] },
+];
+const perfilDasPerms = (perms: string[]) =>
+  PERFIS_CLIENTE.find((p) => p.perms.length === perms.length && p.perms.every((x) => perms.includes(x)))?.nome ?? "Personalizado";
+
+interface VinculoCliente {
+  user_id: string | null; // null = convite ainda não aceito
+  cliente_id: string;
+  nome: string | null;
+  email: string;
+  permissoes: string[];
+  ativo: boolean;
+}
+
+function AcessosClientes({ aoAviso, aoErro }: { aoAviso: (t: string, link?: string) => void; aoErro: (e: unknown) => void }) {
+  const { org, clientes, clientePorId } = useOrg();
+  const [vinculos, setVinculos] = useState<VinculoCliente[]>([]);
+  const [novo, setNovo] = useState(false);
+  const [editar, setEditar] = useState<string | null>(null); // e-mail
+  const [busca, setBusca] = useState("");
+  const [erroLista, setErroLista] = useState<string | null>(null);
+
+  const carregar = useCallback(async () => {
+    const sb = supabase();
+    const [u, c] = await Promise.all([
+      sb.from("portal_usuarios").select("user_id,cliente_id,nome,email,permissoes,ativo").eq("org_id", org.id),
+      sb.from("portal_convites").select("cliente_id,nome,email,permissoes").eq("org_id", org.id),
+    ]);
+    if (u.error) return setErroLista(traduzirErro(u.error));
+    setErroLista(null);
+    setVinculos([
+      ...((u.data as VinculoCliente[]) ?? []),
+      ...(((c.data as Omit<VinculoCliente, "user_id" | "ativo">[]) ?? []).map((x) => ({ ...x, user_id: null, ativo: true }))),
+    ]);
+  }, [org.id]);
+
+  useEffect(() => {
+    carregar();
+  }, [carregar]);
+
+  const nomeCli = (id: string) => {
+    const c = clientePorId(id);
+    return c ? c.nome_fantasia || c.razao_social : "—";
+  };
+  const pessoas = useMemo(() => {
+    const m = new Map<string, VinculoCliente[]>();
+    for (const v of vinculos) m.set(v.email, [...(m.get(v.email) ?? []), v]);
+    const q = busca.trim().toLowerCase();
+    return [...m.entries()]
+      .map(([email, vs]) => ({ email, nome: vs.find((x) => x.nome)?.nome ?? email, vs }))
+      .filter((p) => !q || `${p.nome} ${p.email} ${p.vs.map((v) => nomeCli(v.cliente_id)).join(" ")}`.toLowerCase().includes(q))
+      .sort((a, b) => a.nome.localeCompare(b.nome));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [vinculos, busca]);
+
+  const pessoaEditada = pessoas.find((p) => p.email === editar) ?? null;
+
+  return (
+    <div className="space-y-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="max-w-3xl text-sm text-neutral-600">
+          Cada pessoa do cliente entra com o próprio e-mail e vê <b>só as empresas vinculadas</b> a ela, com o perfil de cliente escolhido (o que pode ver no
+          portal). Um sócio de um grupo pode ter várias empresas.
+        </p>
+        <div className="flex gap-2">
+          <input className="entrada w-56" placeholder="Buscar pessoa ou empresa" value={busca} onChange={(e) => setBusca(e.target.value)} />
+          <button className="btn-primario" onClick={() => setNovo(true)}>
+            + Acesso de cliente
+          </button>
+        </div>
+      </div>
+      {erroLista && <p className="rounded-md bg-red-50 p-3 text-sm text-red-800">{erroLista}</p>}
+      <div className="cartao overflow-x-auto">
+        <table className="tabela">
+          <thead>
+            <tr>
+              <th>Pessoa do cliente</th>
+              <th>Empresas vinculadas</th>
+              <th>Perfil de cliente</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {pessoas.length === 0 && (
+              <tr>
+                <td colSpan={4} className="py-6 text-center text-sm text-neutral-500">
+                  Nenhum acesso de cliente ainda.
+                </td>
+              </tr>
+            )}
+            {pessoas.map((p) => {
+              const ativos = p.vs.filter((v) => v.ativo);
+              const pendente = p.vs.every((v) => !v.user_id);
+              return (
+                <tr key={p.email} className={`align-top ${ativos.length ? "" : "opacity-50"}`}>
+                  <td>
+                    <div className="font-medium">{p.nome}</div>
+                    <div className="text-xs text-neutral-500">{p.email}</div>
+                    {pendente && <span className="chip mt-1 bg-amber-50 text-amber-900">Aguardando criar a senha</span>}
+                  </td>
+                  <td>
+                    <div className="flex flex-wrap gap-1">
+                      {p.vs.map((v) => (
+                        <span key={v.cliente_id} className={`chip ${v.ativo ? "bg-[var(--fundo)] text-neutral-700" : "bg-neutral-100 text-neutral-400 line-through"}`}>
+                          {nomeCli(v.cliente_id)}
+                        </span>
+                      ))}
+                    </div>
+                  </td>
+                  <td className="text-sm">{perfilDasPerms(p.vs[0]?.permissoes ?? [])}</td>
+                  <td className="whitespace-nowrap text-right">
+                    <button className="btn-link text-sm" onClick={() => setEditar(p.email)}>
+                      Editar
+                    </button>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+      {(novo || pessoaEditada) && (
+        <EditorCliente
+          pessoa={pessoaEditada}
+          clientes={clientes.filter((c) => c.ativo)}
+          nomeCli={nomeCli}
+          aoFechar={() => {
+            setNovo(false);
+            setEditar(null);
+          }}
+          aoSalvar={async (t, link) => {
+            setNovo(false);
+            setEditar(null);
+            aoAviso(t, link);
+            await carregar();
+          }}
+          aoErro={aoErro}
+          orgId={org.id}
+        />
+      )}
+    </div>
+  );
+}
+
+function EditorCliente({
+  pessoa,
+  clientes,
+  nomeCli,
+  aoFechar,
+  aoSalvar,
+  aoErro,
+  orgId,
+}: {
+  pessoa: { email: string; nome: string; vs: VinculoCliente[] } | null;
+  clientes: { id: string; razao_social: string; nome_fantasia: string | null; cnpj: string | null }[];
+  nomeCli: (id: string) => string;
+  aoFechar: () => void;
+  aoSalvar: (t: string, link?: string) => void;
+  aoErro: (e: unknown) => void;
+  orgId: string;
+}) {
+  const [nome, setNome] = useState(pessoa?.nome ?? "");
+  const [email, setEmail] = useState(pessoa?.email ?? "");
+  const [empresas, setEmpresas] = useState<string[]>(pessoa ? pessoa.vs.filter((v) => v.ativo).map((v) => v.cliente_id) : []);
+  const [perms, setPerms] = useState<string[]>(pessoa?.vs[0]?.permissoes ?? PERFIS_CLIENTE[0].perms);
+  const [busca, setBusca] = useState("");
+  const [enviando, setEnviando] = useState(false);
+
+  const q = busca.trim().toLowerCase();
+  const lista = clientes
+    .filter((c) => !q || `${c.razao_social} ${c.nome_fantasia ?? ""} ${c.cnpj ?? ""}`.toLowerCase().includes(q))
+    .slice(0, 80);
+
+  async function salvar(e: React.FormEvent) {
+    e.preventDefault();
+    if (!empresas.length && !pessoa) return aoErro("Escolha ao menos uma empresa.");
+    if (!perms.length) return aoErro("Marque ao menos uma área do portal.");
+    setEnviando(true);
+    const sb = supabase();
+    try {
+      const antes = new Map((pessoa?.vs ?? []).map((v) => [v.cliente_id, v]));
+      // novas empresas ou reativadas: portal_convidar cria o vínculo (ou o convite, se a pessoa ainda não tem conta)
+      let houveConvite = false;
+      for (const cli of empresas) {
+        const v = antes.get(cli);
+        if (v && v.ativo && v.permissoes.join() === perms.join() && (v.nome ?? "") === nome) continue;
+        const { data, error } = await sb.rpc("portal_convidar", { p_cliente: cli, p_email: email, p_nome: nome, p_permissoes: perms });
+        if (error) throw error;
+        if (data === "convite") houveConvite = true;
+      }
+      // empresas desmarcadas: vínculo inativado (conta) ou convite cancelado
+      for (const [cli, v] of antes) {
+        if (empresas.includes(cli)) continue;
+        if (v.user_id) {
+          const { error } = await sb.from("portal_usuarios").update({ ativo: false }).eq("user_id", v.user_id).eq("cliente_id", cli).eq("org_id", orgId);
+          if (error) throw error;
+        } else {
+          const { error } = await sb.from("portal_convites").delete().eq("email", v.email).eq("cliente_id", cli).eq("org_id", orgId);
+          if (error) throw error;
+        }
+      }
+      const novaConta = houveConvite && !(pessoa?.vs.some((v) => v.user_id) ?? false);
+      if (novaConta) {
+        const r = await enviarConvite(email, nome);
+        setEnviando(false);
+        if (r.enviado) return aoSalvar(`Convite enviado para ${email}. A pessoa cria a senha pelo e-mail e já entra vendo ${empresas.length} empresa(s).`);
+        return aoSalvar(`Acesso cadastrado, mas o e-mail não pôde ser enviado${r.erro ? ` (${r.erro})` : ""}. Repasse este link:`, r.link);
+      }
+      setEnviando(false);
+      aoSalvar(empresas.length ? `Acesso de ${nome || email} salvo: ${empresas.length} empresa(s).` : `Acesso de ${nome || email} removido de todas as empresas.`);
+    } catch (err) {
+      setEnviando(false);
+      aoErro(err);
+    }
+  }
+
+  const alternar = (id: string) => setEmpresas((x) => (x.includes(id) ? x.filter((y) => y !== id) : [...x, id]));
+
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4" onClick={aoFechar}>
+      <form onSubmit={salvar} onClick={(e) => e.stopPropagation()} className="cartao max-h-[92vh] w-full max-w-2xl space-y-3 overflow-y-auto p-5">
+        <h2 className="text-lg font-semibold text-[var(--marca)]">{pessoa ? `Acesso de ${pessoa.nome}` : "Novo acesso de cliente"}</h2>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className="campo">
+            <span>Nome</span>
+            <input required value={nome} onChange={(e) => setNome(e.target.value)} />
+          </label>
+          <label className="campo">
+            <span>E-mail</span>
+            <input type="email" required disabled={!!pessoa} value={email} onChange={(e) => setEmail(e.target.value)} />
+          </label>
+        </div>
+
+        <div>
+          <div className="mb-1 text-sm font-medium">Perfil de cliente</div>
+          <div className="flex flex-wrap gap-1">
+            {PERFIS_CLIENTE.map((p) => {
+              const ativo = perfilDasPerms(perms) === p.nome;
+              return (
+                <button
+                  type="button"
+                  key={p.id}
+                  onClick={() => setPerms(p.perms)}
+                  className={`chip border py-1.5 text-sm ${ativo ? "border-[var(--marca)] bg-[var(--marca)] text-white" : "border-[var(--borda)] bg-white"}`}
+                >
+                  {p.nome}
+                </button>
+              );
+            })}
+          </div>
+          <div className="mt-2 grid gap-1 sm:grid-cols-3">
+            {PERMISSOES_PORTAL.map((p) => (
+              <label key={p.id} className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  className="h-4 w-4 accent-[var(--marca)]"
+                  checked={perms.includes(p.id)}
+                  onChange={(e) => setPerms((x) => (e.target.checked ? [...x, p.id] : x.filter((y) => y !== p.id)))}
+                />
+                {p.nome}
+              </label>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <div className="mb-1 flex items-center justify-between gap-2">
+            <span className="text-sm font-medium">Empresas vinculadas ({empresas.length})</span>
+            <input className="entrada !min-h-8 w-56 text-sm" placeholder="Buscar empresa ou CNPJ" value={busca} onChange={(e) => setBusca(e.target.value)} />
+          </div>
+          {empresas.length > 0 && (
+            <div className="mb-2 flex flex-wrap gap-1">
+              {empresas.map((id) => (
+                <button type="button" key={id} className="chip bg-[var(--fundo)] text-neutral-700" onClick={() => alternar(id)} title="Remover">
+                  {nomeCli(id)} ✕
+                </button>
+              ))}
+            </div>
+          )}
+          <div className="max-h-56 overflow-y-auto rounded-lg border border-[var(--borda)]">
+            {lista.map((c) => (
+              <label key={c.id} className="flex cursor-pointer items-center gap-2 border-b border-[var(--borda)] px-3 py-1.5 text-sm last:border-0 hover:bg-[var(--fundo)]">
+                <input type="checkbox" className="h-4 w-4 accent-[var(--marca)]" checked={empresas.includes(c.id)} onChange={() => alternar(c.id)} />
+                <span className="truncate">{c.nome_fantasia || c.razao_social}</span>
+                {c.cnpj && <span className="ml-auto shrink-0 text-xs text-neutral-400">{c.cnpj}</span>}
+              </label>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex justify-end gap-2 pt-2">
+          <button type="button" className="btn" onClick={aoFechar}>
+            Cancelar
+          </button>
+          <button className="btn-primario" disabled={enviando}>
+            {enviando ? "Salvando…" : pessoa ? "Salvar" : "Cadastrar e enviar convite"}
           </button>
         </div>
       </form>
