@@ -65,7 +65,7 @@ export interface Cabecalho {
 export const sem = (s: unknown) =>
   String(s ?? "")
     .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
+    .replace(/[\u0300-\u036f]/g, "")
     .toUpperCase()
     .replace(/\(\s*-\s*\)/g, "(MENOS)")
     .replace(/[-–]/g, " ")

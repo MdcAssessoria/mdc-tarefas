@@ -1,7 +1,7 @@
 // Edge Function: cadastro do certificado digital A1 da organização (só administradores).
 // O arquivo .pfx e a senha ficam criptografados no Supabase Vault; nunca voltam para o navegador.
 import { createClient } from "@supabase/supabase-js";
-import { lerCertificado } from "./assinatura.ts";
+import { lerCertificado } from "./cert.ts";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",

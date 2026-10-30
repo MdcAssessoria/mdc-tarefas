@@ -1,7 +1,6 @@
 // PDF das demonstrações no padrão visual MDC (pdf-lib, sem dependência de navegador).
 // Usado pela Edge Function demonstrativo-pdf; testável em Node.
 import { PDFDocument, PDFFont, PDFImage, PDFPage, StandardFonts, rgb } from "pdf-lib";
-import fontkit from "@pdf-lib/fontkit";
 import { INDICES_INFO, brl, fmtIndice } from "./balancete.ts";
 import type { Alerta, Dre, Indices, Linha, Resumo } from "./balancete.ts";
 import { linhasDre } from "./demonstracoes.ts";
@@ -21,7 +20,6 @@ export interface DadosPdf {
   comentario?: string | null;
   parecer?: { texto: string; contador_nome: string | null; contador_crc: string | null } | null;
   assinatura?: { titular: string; emissor: string; validade: string } | null;
-  fontes?: { regular: Uint8Array; negrito: Uint8Array } | null;
   logo?: Uint8Array | null; // PNG branco com fundo transparente
 }
 
@@ -51,7 +49,6 @@ class Doc {
   logo: PDFImage | null = null;
   page!: PDFPage;
   y = 0;
-  padrao = true; // fonte padrão (sem TTF): troca caracteres fora do WinAnsi
   cabecalho = "";
 
   static async criar(d: DadosPdf) {
@@ -62,26 +59,14 @@ class Doc {
     o.pdf.setCreator("HUB-MDC");
     o.pdf.setProducer("HUB-MDC");
     o.pdf.setLanguage("pt-BR");
-    if (d.fontes) {
-      try {
-        o.pdf.registerFontkit(fontkit);
-        o.f = await o.pdf.embedFont(d.fontes.regular, { subset: false });
-        o.b = await o.pdf.embedFont(d.fontes.negrito, { subset: false });
-        o.padrao = false;
-      } catch {
-        /* cai para Helvetica */
-      }
-    }
-    if (o.padrao) {
-      o.f = await o.pdf.embedFont(StandardFonts.Helvetica);
-      o.b = await o.pdf.embedFont(StandardFonts.HelveticaBold);
-    }
+    // Helvetica: fontes TTF estouram o limite de processamento da Edge Function
+    o.f = await o.pdf.embedFont(StandardFonts.Helvetica);
+    o.b = await o.pdf.embedFont(StandardFonts.HelveticaBold);
     if (d.logo) o.logo = await o.pdf.embedPng(d.logo).catch(() => null);
     return o;
   }
 
   t(s: string) {
-    if (!this.padrao) return s;
     return s
       .replace(/[−‒]/g, "-")
       .replace(/✔/g, "OK")
@@ -92,10 +77,27 @@ class Doc {
       .replace(/≥/g, ">=")
       .replace(/≤/g, "<=")
       .replace(/×/g, "x")
-      .replace(/[^\x20-\x7E -ÿ—–…“”‘’•€]/g, "");
+      .replace(/[^\x20-\x7E\u00A0-\u00FF—–…“”‘’•€]/g, "");
   }
+  // largura por caractere em cache: medir com a fonte TTF a cada chamada custa muito processamento
+  private larguras = [new Map<string, number>(), new Map<string, number>()];
   w(s: string, size: number, bold = false) {
-    return (bold ? this.b : this.f).widthOfTextAtSize(this.t(s), size);
+    const fonte = bold ? this.b : this.f;
+    const cache = this.larguras[bold ? 1 : 0];
+    let total = 0;
+    for (const ch of this.t(s)) {
+      let lw = cache.get(ch);
+      if (lw === undefined) {
+        try {
+          lw = fonte.widthOfTextAtSize(ch, 1000);
+        } catch {
+          lw = 500;
+        }
+        cache.set(ch, lw);
+      }
+      total += lw;
+    }
+    return (total * size) / 1000;
   }
   text(s: string, x: number, y: number, size = 9, o: { bold?: boolean; cor?: ReturnType<typeof rgb>; alinhar?: "esq" | "dir" | "centro" } = {}) {
     const tx = this.t(s);

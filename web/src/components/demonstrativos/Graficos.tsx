@@ -32,6 +32,21 @@ function escala(min: number, max: number, passos = 4) {
   return { ini, fim, ticks };
 }
 
+/** Quebra o rótulo em até 2 linhas que cabem na largura da coluna. */
+function quebrar(t: string, max: number) {
+  const linhas: string[] = [];
+  let atual = "";
+  for (const p of t.split(" ")) {
+    if (atual && (atual + " " + p).length > max) {
+      linhas.push(atual);
+      atual = p;
+    } else atual = atual ? atual + " " + p : p;
+  }
+  if (atual) linhas.push(atual);
+  if (linhas.length > 2) linhas.splice(1, linhas.length - 1, linhas.slice(1).join(" ").slice(0, max - 1) + "…");
+  return linhas;
+}
+
 function Dica({ x, y, linhas }: { x: number | string; y: number; linhas: string[] }) {
   return (
     <div
@@ -90,12 +105,11 @@ export function Cascata({ passos }: { passos: { rotulo: string; valor: number; t
               {i < barras.length - 1 && (
                 <line x1={x + w} x2={x + bw} y1={y(b.ate)} y2={y(b.ate)} stroke={COR.eixo} strokeDasharray="2 3" />
               )}
-              <text x={ml + i * bw + bw / 2} y={H - mb + 16} textAnchor="middle" fontSize="11" fill="#1c2420">
-                {b.rotulo.split(" ").slice(0, 2).join(" ")}
-              </text>
-              <text x={ml + i * bw + bw / 2} y={H - mb + 30} textAnchor="middle" fontSize="11" fill={COR.eixo}>
-                {b.rotulo.split(" ").slice(2).join(" ")}
-              </text>
+              {quebrar(b.rotulo, Math.max(8, Math.floor(bw / 6.5))).map((ln, k) => (
+                <text key={k} x={ml + i * bw + bw / 2} y={H - mb + 16 + k * 14} textAnchor="middle" fontSize="11" fill={k ? COR.eixo : "#1c2420"}>
+                  {ln}
+                </text>
+              ))}
             </g>
           );
         })}
@@ -120,7 +134,7 @@ export function Evolucao({
   series: { nome: string; cor: string; valores: (number | null)[] }[];
 }) {
   const [hover, setHover] = useState<number | null>(null);
-  const W = 720, H = 240, ml = 56, mr = 12, mt = 12, mb = 28;
+  const W = 720, H = 240, ml = 56, mr = 24, mt = 12, mb = 28;
   const todos = series.flatMap((s) => s.valores.filter((v): v is number => v !== null));
   const { ini, fim, ticks } = escala(Math.min(0, ...todos), Math.max(0, ...todos));
   const n = Math.max(1, meses.length - 1);
@@ -330,7 +344,9 @@ export function CicloCaixa({ pme, pmr, pmp }: { pme: number | null; pmr: number 
       <p className={`rounded-md p-2 ${cf > 0 ? "bg-amber-50 text-amber-900" : "bg-emerald-50 text-emerald-900"}`}>
         {cf > 0
           ? `Ciclo financeiro de ${cf} dias: a empresa paga antes de receber e precisa financiar esse intervalo com caixa próprio ou de banco.`
-          : `A empresa recebe ${-cf} dia(s) antes de pagar — os fornecedores financiam a operação.`}
+          : cf === 0
+            ? "A empresa recebe dos clientes e paga os fornecedores em prazos equivalentes: o ciclo de caixa está zerado."
+            : `A empresa recebe ${-cf} dia(s) antes de pagar — os fornecedores financiam a operação.`}
       </p>
     </div>
   );

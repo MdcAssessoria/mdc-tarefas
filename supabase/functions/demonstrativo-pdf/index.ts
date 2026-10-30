@@ -15,13 +15,8 @@ const CORS = {
   "Access-Control-Expose-Headers": "content-disposition, x-assinado",
 };
 
-const FONTES = {
-  regular: "https://cdn.jsdelivr.net/npm/@expo-google-fonts/inter@0.4.2/400Regular/Inter_400Regular.ttf",
-  negrito: "https://cdn.jsdelivr.net/npm/@expo-google-fonts/inter@0.4.2/600SemiBold/Inter_600SemiBold.ttf",
-};
 const LOGO = "https://mdcassessoria.com/wp-content/uploads/2024/07/Logo-MDC5.png";
 
-let cacheFontes: { regular: Uint8Array; negrito: Uint8Array } | null = null;
 let cacheLogo: Uint8Array | null | undefined;
 
 async function baixar(url: string): Promise<Uint8Array | null> {
@@ -90,10 +85,6 @@ Deno.serve(async (req) => {
     if (c && new Date(c.valido_ate) > new Date()) cert = c;
   }
 
-  if (!cacheFontes) {
-    const [regular, negrito] = await Promise.all([baixar(FONTES.regular), baixar(FONTES.negrito)]);
-    if (regular && negrito) cacheFontes = { regular, negrito };
-  }
   if (cacheLogo === undefined) cacheLogo = await baixar(LOGO);
 
   const cliente = (cli.data ?? { razao_social: "Empresa", cnpj: null }) as { razao_social: string; cnpj: string | null };
@@ -118,7 +109,6 @@ Deno.serve(async (req) => {
     comentario: b.comentario,
     parecer,
     assinatura: cert ? { titular: cert.titular, emissor: cert.emissor, validade: cert.valido_ate.slice(0, 10).split("-").reverse().join("/") } : null,
-    fontes: cacheFontes,
     logo: cacheLogo,
   });
 
