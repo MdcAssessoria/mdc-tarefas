@@ -828,6 +828,16 @@ function AbaObrigacoes() {
               <option value="0">Uma só (interna)</option>
             </select>
           </label>
+          <label className="campo">
+            <span>Portal do Cliente</span>
+            <select
+              value={editando.visivel_cliente === false ? "0" : "1"}
+              onChange={(e) => setEditando({ ...editando, visivel_cliente: e.target.value === "1" })}
+            >
+              <option value="1">Visível ao cliente</option>
+              <option value="0">Só interna</option>
+            </select>
+          </label>
           <fieldset className="campo md:col-span-2">
             <span>Regimes (nenhum marcado = todos)</span>
             <div className="flex flex-wrap gap-3 pt-1 text-sm text-[var(--texto)]">

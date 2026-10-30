@@ -67,6 +67,8 @@ export interface Tarefa {
   concluida_em: string | null;
   criado_em: string;
   atualizado_em: string;
+  visivel_cliente?: boolean | null;
+  pendencia_cliente?: string | null;
 }
 
 export interface Modelo {
@@ -83,6 +85,7 @@ export interface Modelo {
   meses_apos_competencia: number;
   ajuste: "antecipa" | "posterga" | "nenhum";
   ativo: boolean;
+  visivel_cliente?: boolean;
 }
 
 export const STATUS: { id: Status; nome: string }[] = [
@@ -119,3 +122,26 @@ export const PAPEIS: { id: Papel; nome: string }[] = [
 
 export const nomeStatus = (s: Status) => STATUS.find((x) => x.id === s)?.nome ?? s;
 export const nomePrioridade = (p: Prioridade) => PRIORIDADES.find((x) => x.id === p)?.nome ?? p;
+
+// ---------------------------------------------------------------- HUB
+export type PapelApp = "ver" | "operar" | "gerir";
+
+export interface HubApp {
+  slug: string;
+  nome: string;
+  descricao: string;
+  icone: string;
+  rota: string;
+  status: "ativo" | "beta" | "em_breve" | "desligado";
+  externo: boolean;
+  ordem: number;
+  papel: PapelApp | null;
+}
+
+export const PAPEIS_APP: { id: PapelApp; nome: string; ajuda: string }[] = [
+  { id: "ver", nome: "Ver", ajuda: "consulta, sem alterar" },
+  { id: "operar", nome: "Operar", ajuda: "trabalha no dia a dia" },
+  { id: "gerir", nome: "Gerir", ajuda: "configura, publica e exclui" },
+];
+
+export const PESO_PAPEL_APP: Record<PapelApp, number> = { ver: 1, operar: 2, gerir: 3 };

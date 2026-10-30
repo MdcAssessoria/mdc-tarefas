@@ -2,9 +2,9 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "HUB-MDC · Tarefas",
+  title: "HUB-MDC",
   applicationName: "HUB-MDC",
-  description: "Controle de tarefas e obrigações da equipe, com painel em tempo real para TV.",
+  description: "Hub de sistemas da MDC Assessoria Contábil: tarefas, societário, demonstrativos, atendimento e Portal do Cliente.",
   manifest: "/manifest.webmanifest",
   icons: {
     icon: [

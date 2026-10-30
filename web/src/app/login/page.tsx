@@ -20,7 +20,7 @@ export default function Login() {
 
   function destino() {
     const n = new URLSearchParams(window.location.search).get("next");
-    return n && n.startsWith("/") && !n.startsWith("//") ? n : "/tarefas";
+    return n && n.startsWith("/") && !n.startsWith("//") ? n : "/";
   }
 
   async function enviar(e: React.FormEvent) {
@@ -39,7 +39,7 @@ export default function Login() {
         const { data, error } = await sb.auth.signUp({
           email,
           password: senha,
-          options: { data: { nome }, emailRedirectTo: window.location.origin + "/tarefas" },
+          options: { data: { nome }, emailRedirectTo: window.location.origin + "/" },
         });
         if (error) throw error;
         if (data.session) window.location.replace(destino());
@@ -48,7 +48,7 @@ export default function Login() {
       if (modo === "nova") {
         const { error } = await sb.auth.updateUser({ password: senha });
         if (error) throw error;
-        window.location.replace("/tarefas");
+        window.location.replace("/");
         return;
       }
       if (modo === "recuperar") {

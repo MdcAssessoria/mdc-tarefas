@@ -3,7 +3,8 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase, supabaseConfigurado } from "./supabase";
-import type { Cliente, Membro, Organizacao, Papel, Setor } from "./types";
+import type { Cliente, HubApp, Membro, Organizacao, Papel, PapelApp, Setor } from "./types";
+import { PESO_PAPEL_APP } from "./types";
 import { traduzirErro } from "@/lib/erros";
 
 interface OrgCtx {
@@ -21,6 +22,9 @@ interface OrgCtx {
   nomeMembro: (id: string | null) => string;
   setorPorId: (id: string | null) => Setor | undefined;
   clientePorId: (id: string | null) => Cliente | undefined;
+  apps: HubApp[];
+  pode: (app: string, minimo?: PapelApp) => boolean;
+  recarregarApps: () => Promise<void>;
 }
 
 const Ctx = createContext<OrgCtx | null>(null);
@@ -55,6 +59,7 @@ export function OrgProvider({ children }: { children: React.ReactNode }) {
   const [setores, setSetores] = useState<Setor[]>([]);
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [membros, setMembros] = useState<Membro[]>([]);
+  const [apps, setApps] = useState<HubApp[]>([]);
   const [erro, setErro] = useState<string | null>(null);
 
   // sessão
@@ -89,6 +94,14 @@ export function OrgProvider({ children }: { children: React.ReactNode }) {
     if (m.error || o.error) {
       setErro(traduzirErro(m.error ?? o.error));
       return;
+    }
+    // quem não é da equipe mas tem acesso de cliente vai para o Portal
+    if ((m.data as Membro[]).length === 0) {
+      const p = await sb.rpc("portal_minhas_empresas");
+      if (!p.error && (p.data as unknown[])?.length) {
+        window.location.replace("/portal");
+        return;
+      }
     }
     setMinhas(m.data as Membro[]);
     setOrgs(o.data as Organizacao[]);
@@ -127,6 +140,16 @@ export function OrgProvider({ children }: { children: React.ReactNode }) {
     recarregar();
   }, [recarregar]);
 
+  const recarregarApps = useCallback(async () => {
+    if (!orgId) return;
+    const { data } = await supabase().rpc("hub_meus_apps", { p_org: orgId });
+    setApps((data as HubApp[]) ?? []);
+  }, [orgId]);
+
+  useEffect(() => {
+    recarregarApps();
+  }, [recarregarApps]);
+
   const org = orgs?.find((o) => o.id === orgId);
   useEffect(() => {
     if (org) aplicarCores(org);
@@ -159,8 +182,15 @@ export function OrgProvider({ children }: { children: React.ReactNode }) {
       nomeMembro: (id) => (id ? mapM.get(id)?.nome ?? "—" : "—"),
       setorPorId: (id) => (id ? mapS.get(id) : undefined),
       clientePorId: (id) => (id ? mapC.get(id) : undefined),
+      apps,
+      pode: (app, minimo = "ver") => {
+        if (eu.papel === "admin") return true;
+        const a = apps.find((x) => x.slug === app);
+        return !!a?.papel && PESO_PAPEL_APP[a.papel] >= PESO_PAPEL_APP[minimo];
+      },
+      recarregarApps,
     };
-  }, [session, org, orgs, minhas, membros, setores, clientes, recarregar]);
+  }, [session, org, orgs, minhas, membros, setores, clientes, recarregar, apps, recarregarApps]);
 
   if (!supabaseConfigurado) return <SemConfiguracao />;
   if (erro) return <Centro titulo="Não foi possível carregar">{erro}</Centro>;

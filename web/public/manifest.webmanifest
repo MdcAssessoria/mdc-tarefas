@@ -4,7 +4,7 @@
   "short_name": "HUB-MDC",
   "description": "Ferramentas da MDC Assessoria: tarefas, societário e portal do cliente.",
   "lang": "pt-BR",
-  "start_url": "/tarefas",
+  "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "background_color": "#0B2820",

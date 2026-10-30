@@ -7,6 +7,8 @@ import { fmtData, fmtDataHora } from "@/lib/datas";
 import { PRIORIDADES, STATUS, nomePrioridade, nomeStatus } from "@/lib/types";
 import type { Prioridade, Status, Tarefa } from "@/lib/types";
 import { traduzirErro } from "@/lib/erros";
+import { abrirArquivo, enviarArquivo, fmtTamanho } from "@/lib/arquivos";
+import type { Arquivo } from "@/lib/arquivos";
 
 interface Comentario {
   id: string;
@@ -32,6 +34,8 @@ type Form = {
   competencia: string;
   prioridade: Prioridade;
   status: Status;
+  visivel_cliente: "" | "sim" | "nao";
+  pendencia_cliente: string;
 };
 
 export function TarefaEditor({
@@ -54,7 +58,10 @@ export function TarefaEditor({
     competencia: tarefa?.competencia?.slice(0, 7) ?? "",
     prioridade: tarefa?.prioridade ?? "media",
     status: tarefa?.status ?? "a_fazer",
+    visivel_cliente: tarefa?.visivel_cliente === true ? "sim" : tarefa?.visivel_cliente === false ? "nao" : "",
+    pendencia_cliente: tarefa?.pendencia_cliente ?? "",
   }));
+  const [arquivos, setArquivos] = useState<Arquivo[]>([]);
   const [erro, setErro] = useState<string | null>(null);
   const [salvando, setSalvando] = useState(false);
   const [comentarios, setComentarios] = useState<Comentario[]>([]);
@@ -77,6 +84,11 @@ export function TarefaEditor({
       .order("em", { ascending: false })
       .limit(30)
       .then(({ data }) => setHistorico((data as Historico[]) ?? []));
+    sb.from("hub_arquivos")
+      .select("*")
+      .eq("ref_id", tarefa.id)
+      .order("enviado_em")
+      .then(({ data }) => setArquivos((data as Arquivo[]) ?? []));
   }, [tarefa]);
 
   useEffect(() => {
@@ -99,6 +111,8 @@ export function TarefaEditor({
       competencia: f.competencia ? f.competencia + "-01" : null,
       prioridade: f.prioridade,
       status: f.status,
+      visivel_cliente: f.visivel_cliente === "" ? null : f.visivel_cliente === "sim",
+      pendencia_cliente: f.pendencia_cliente.trim() || null,
     };
     const sb = supabase();
     const r = tarefa
@@ -225,6 +239,23 @@ export function TarefaEditor({
               </select>
             </label>
           </div>
+          {f.cliente_id && (
+            <fieldset className="space-y-3 rounded-lg border border-[var(--borda)] p-3">
+              <legend className="px-1 text-xs text-[var(--texto-suave)]">Portal do Cliente</legend>
+              <label className="campo">
+                <span>Aparece para o cliente?</span>
+                <select value={f.visivel_cliente} onChange={(e) => set("visivel_cliente", e.target.value as Form["visivel_cliente"])}>
+                  <option value="">Conforme o modelo recorrente (avulsa: não)</option>
+                  <option value="sim">Sim</option>
+                  <option value="nao">Não, só interna</option>
+                </select>
+              </label>
+              <label className="campo">
+                <span>O que o cliente precisa enviar (com status “Aguardando”, vira “Aguardando você” no portal)</span>
+                <input value={f.pendencia_cliente} onChange={(e) => set("pendencia_cliente", e.target.value)} placeholder="Ex.: extratos bancários de outubro" />
+              </label>
+            </fieldset>
+          )}
           {erro && <p className="text-sm text-[var(--perigo)]">{erro}</p>}
           <div className="flex items-center gap-2">
             <button className="btn-primario" disabled={salvando}>
@@ -247,6 +278,54 @@ export function TarefaEditor({
             </p>
           )}
         </form>
+
+        {tarefa && (
+          <section className="space-y-2 border-t border-[var(--borda)] p-5">
+            <h3 className="text-sm font-semibold text-[var(--marca)]">Anexos e entregáveis</h3>
+            {arquivos.length === 0 && <p className="text-sm text-[var(--texto-suave)]">Nenhum anexo.</p>}
+            <ul className="space-y-1 text-sm">
+              {arquivos.map((a) => (
+                <li key={a.id} className="flex items-center justify-between gap-2">
+                  <button className="truncate text-left hover:underline" onClick={() => abrirArquivo(a.caminho, a.nome).catch((e) => setErro(traduzirErro(e)))}>
+                    {a.nome} <span className="text-xs text-[var(--texto-suave)]">{fmtTamanho(a.tamanho)}{a.app === "portal" ? " · enviado pelo cliente" : ""}</span>
+                  </button>
+                  {a.app !== "portal" && tarefa.cliente_id && (
+                    <label className="flex shrink-0 items-center gap-1 text-xs text-[var(--texto-suave)]">
+                      <input
+                        type="checkbox"
+                        checked={a.visivel_cliente}
+                        onChange={async () => {
+                          await supabase().from("hub_arquivos").update({ visivel_cliente: !a.visivel_cliente }).eq("id", a.id);
+                          setArquivos((l) => l.map((x) => (x.id === a.id ? { ...x, visivel_cliente: !x.visivel_cliente } : x)));
+                        }}
+                      />
+                      no portal
+                    </label>
+                  )}
+                </li>
+              ))}
+            </ul>
+            <label className="btn cursor-pointer">
+              Anexar (guia, recibo, holerite…)
+              <input
+                type="file"
+                multiple
+                className="hidden"
+                onChange={async (e) => {
+                  try {
+                    for (const arq of Array.from(e.target.files ?? [])) {
+                      const a = await enviarArquivo(arq, { org: org.id, app: "tarefas", ref: tarefa.id, cliente: tarefa.cliente_id, visivelCliente: !!tarefa.cliente_id });
+                      setArquivos((l) => [...l, a]);
+                    }
+                  } catch (er) {
+                    setErro(traduzirErro(er));
+                  }
+                }}
+              />
+            </label>
+            {tarefa.cliente_id && <p className="text-xs text-[var(--texto-suave)]">Anexos de tarefas de cliente ficam disponíveis no portal (desmarque “no portal” para manter interno).</p>}
+          </section>
+        )}
 
         {tarefa && (
           <section className="space-y-3 border-t border-[var(--borda)] p-5">
