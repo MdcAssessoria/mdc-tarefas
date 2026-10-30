@@ -19,6 +19,7 @@ const NAV: Record<Modulo, { titulo: string; links: { href: string; nome: string;
     titulo: "Tarefas",
     links: [
       { href: "/tarefas", nome: "Tarefas" },
+      { href: "/tarefas/relatorio", nome: "Relatórios" },
       { href: "/tv", nome: "Painel TV" },
       { href: "/config", nome: "Configurações", gestor: true },
     ],
