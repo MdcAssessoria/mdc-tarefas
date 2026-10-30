@@ -69,12 +69,12 @@ export default function Login() {
     <div className="min-h-screen grid lg:grid-cols-2">
       <div className="hidden lg:flex flex-col justify-between bg-[var(--marca)] p-12 text-[#C6D3CC]">
         <div className="flex items-center gap-3">
-          <img src="/icone.svg" alt="" className="h-10 w-10" />
-          <span className="text-[var(--destaque)] text-xl font-semibold tracking-wide">MDC Tarefas</span>
+          <img src="/icone-hub-mdc.svg" alt="" className="h-10 w-10 rounded-lg" />
+          <span className="text-[var(--destaque)] text-xl font-semibold tracking-wide">HUB-MDC</span>
         </div>
         <div>
           <p className="text-3xl leading-snug text-white font-light max-w-md">
-            Prazos, obrigações e rotinas da equipe em um só lugar, com o painel da TV atualizando sozinho.
+            Tarefas, societário, demonstrativos, atendimento e o Portal do Cliente da MDC em um só lugar.
           </p>
         </div>
         <p className="text-sm">MDC Assessoria · Assessoria Contábil, Tributária e Gestão Financeira</p>
@@ -83,8 +83,8 @@ export default function Login() {
       <div className="grid place-items-center p-6">
         <form onSubmit={enviar} className="w-full max-w-sm space-y-4">
           <div className="lg:hidden flex items-center gap-2 mb-6">
-            <img src="/icone.svg" alt="" className="h-8 w-8" />
-            <span className="font-semibold text-[var(--marca)]">MDC Tarefas</span>
+            <img src="/icone-hub-mdc.svg" alt="" className="h-8 w-8 rounded-md" />
+            <span className="font-semibold text-[var(--marca)]">HUB-MDC</span>
           </div>
           <h1 className="text-2xl font-semibold text-[var(--marca)]">
             {
