@@ -7,7 +7,6 @@ const DOURADO_ESC = rgb(138 / 255, 106 / 255, 42 / 255);
 const CLARO = rgb(198 / 255, 211 / 255, 204 / 255);
 const TEXTO = rgb(28 / 255, 36 / 255, 32 / 255);
 const SUAVE = rgb(93 / 255, 102 / 255, 97 / 255);
-const BORDA = rgb(228 / 255, 224 / 255, 212 / 255);
 const W = 595.28, H = 841.89, ME = 62, MD = 56;
 
 const limpar = (s: string) =>
@@ -63,21 +62,29 @@ export async function gerarContratoPdf(d: DadosContratoPdf): Promise<Uint8Array>
     text("Assessoria Contábil", x + w("MDC", alt * 0.62, b) + 6, yy + alt * 0.3, alt * 0.3, f, CLARO);
   };
 
+  // papel timbrado MDC: faixa verde com logo e dados, filete dourado; rodapé com empresa e responsável técnico
+  const BANDA = 80;
   const novaPagina = () => {
     page = pdf.addPage([W, H]);
-    page.drawRectangle({ x: 0, y: H - 52, width: W, height: 52, color: VERDE });
-    page.drawRectangle({ x: 0, y: H - 55, width: W, height: 3, color: DOURADO });
-    marca(ME, H - 42, 32);
-    const dir = `Contrato nº ${d.numero}`;
-    text(dir, W - MD - w(dir, 8.5, f), H - 30, 8.5, f, CLARO);
-    if (d.rascunho) {
-      const r = "MINUTA PARA CONFERÊNCIA";
-      text(r, W - MD - w(r, 7.5, b), H - 42, 7.5, b, DOURADO);
+    page.drawRectangle({ x: 0, y: H - BANDA, width: W, height: BANDA, color: VERDE });
+    page.drawRectangle({ x: 0, y: H - BANDA - 3.4, width: W, height: 3.4, color: DOURADO });
+    marca(ME - 10, H - BANDA + 16, 46);
+    const linhasCab: [string, number, PDFFont, ReturnType<typeof rgb>][] = [
+      ["ASSESSORIA CONTÁBIL, TRIBUTÁRIA E GESTÃO FINANCEIRA", 9.2, b, DOURADO],
+      ["MDC Assessoria Ltda  ·  CNPJ 48.140.121/0001-65", 8, f, CLARO],
+      ["Bragança Paulista/SP  ·  (11) 98859-8041  ·  mdcassessoria.com", 7.4, f, CLARO],
+    ];
+    let yy = H - 30;
+    for (const [t, sz, fo, cor] of linhasCab) {
+      text(t, W - MD - w(t, sz, fo), yy, sz, fo, cor);
+      yy -= sz + 6;
     }
-    y = H - 88;
+    const num = `Contrato nº ${d.numero}${d.rascunho ? "  ·  MINUTA PARA CONFERÊNCIA" : ""}`;
+    text(num, W - MD - w(num, 7.5, d.rascunho ? b : f), H - BANDA - 16, 7.5, d.rascunho ? b : f, d.rascunho ? DOURADO_ESC : SUAVE);
+    y = H - BANDA - 34;
   };
   const garantir = (h: number) => {
-    if (y - h < 70) novaPagina();
+    if (y - h < 84) novaPagina();
   };
 
   // parágrafo justificado com trechos em **negrito**
@@ -160,14 +167,19 @@ export async function gerarContratoPdf(d: DadosContratoPdf): Promise<Uint8Array>
   const paginas = pdf.getPages();
   paginas.forEach((p, k) => {
     page = p;
-    p.drawLine({ start: { x: ME, y: 46 }, end: { x: W - MD, y: 46 }, thickness: 0.5, color: BORDA });
-    text("MDC Assessoria Ltda · CNPJ 48.140.121/0001-65 · Bragança Paulista/SP · (11) 98859-8041 · mdcassessoria.com", ME, 32, 7.2, f, SUAVE);
+    p.drawLine({ start: { x: ME, y: 62 }, end: { x: W - MD, y: 62 }, thickness: 0.8, color: DOURADO });
+    text("MDC Assessoria Ltda", ME, 50, 7.2, b, VERDE);
+    text("  ·  CNPJ 48.140.121/0001-65  ·  Bragança Paulista/SP  ·  mdcassessoria.com  ·  @mdcassessoria_", ME + w("MDC Assessoria Ltda", 7.2, b), 50, 7.2, f, VERDE);
+    text("Responsável técnico: ", ME, 39, 7.2, b, DOURADO_ESC);
+    text("Edvaldo Ribeiro de Carvalho  ·  Contador CRC 1SP346098-O/0  ·  edvaldo@mdcassessoria.com  ·  (11) 98859-8041", ME + w("Responsável técnico: ", 7.2, b), 39, 7.2, f, VERDE);
     const pg = `Página ${k + 1} de ${paginas.length}`;
-    text(pg, W - MD - w(pg, 7.2, f), 32, 7.2, f, SUAVE);
+    text(pg, W - MD - w(pg, 7.2, f), 50, 7.2, f, SUAVE);
     if (k < paginas.length - 1) {
       const rub = "Rubricas: ________  ________";
-      text(rub, W - MD - w(rub, 7.2, f), 56, 7.2, f, SUAVE);
+      text(rub, W - MD - w(rub, 7.2, f), 72, 7.2, f, SUAVE);
     }
+    p.drawRectangle({ x: 0, y: 0, width: W, height: 14, color: VERDE });
+    p.drawRectangle({ x: 0, y: 14, width: W, height: 2, color: DOURADO });
   });
   return pdf.save();
 }

@@ -15,9 +15,9 @@ const CORS = {
   "Access-Control-Expose-Headers": "content-disposition, x-assinado",
 };
 
-const LOGO = "https://mdcassessoria.com/wp-content/uploads/2024/07/Logo-MDC5.png";
 
-let cacheLogo: Uint8Array | null | undefined;
+// logo da organização (enviada no Hub e guardada no Storage); cache por caminho
+const cacheLogo = new Map<string, Uint8Array | null>();
 
 async function baixar(url: string): Promise<Uint8Array | null> {
   try {
@@ -85,7 +85,15 @@ Deno.serve(async (req) => {
     if (c && new Date(c.valido_ate) > new Date()) cert = c;
   }
 
-  if (cacheLogo === undefined) cacheLogo = await baixar(LOGO);
+  const { data: orgRow } = await servico.from("organizacoes").select("logo_url").eq("id", b.org_id).single();
+  const logoUrl = (orgRow as { logo_url: string | null } | null)?.logo_url ?? "";
+  if (logoUrl && !cacheLogo.has(logoUrl)) {
+    if (logoUrl.startsWith("storage:")) {
+      const { data: arq } = await servico.storage.from("hub-arquivos").download(logoUrl.slice(8));
+      cacheLogo.set(logoUrl, arq ? new Uint8Array(await arq.arrayBuffer()) : null);
+    } else cacheLogo.set(logoUrl, await baixar(logoUrl));
+  }
+  const logo = cacheLogo.get(logoUrl) ?? null;
 
   const cliente = (cli.data ?? { razao_social: "Empresa", cnpj: null }) as { razao_social: string; cnpj: string | null };
   const num = (x: Record<string, unknown>) => ({
@@ -109,7 +117,7 @@ Deno.serve(async (req) => {
     comentario: b.comentario,
     parecer,
     assinatura: cert ? { titular: cert.titular, emissor: cert.emissor, validade: cert.valido_ate.slice(0, 10).split("-").reverse().join("/") } : null,
-    logo: cacheLogo,
+    logo,
   });
 
   let bytes: Uint8Array;
