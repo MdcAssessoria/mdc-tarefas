@@ -9,6 +9,7 @@ import { traduzirErro } from "@/lib/erros";
 import { brl, fmtIndice } from "@/lib/balancete";
 import { mesAno } from "@/components/demonstrativos/Painel";
 import type { BalanceteReg } from "@/components/demonstrativos/Painel";
+import { reprocessar } from "@/lib/demonstrativos";
 
 export default function PaginaDemonstrativos() {
   return (
@@ -24,6 +25,26 @@ function Lista() {
   const [erro, setErro] = useState<string | null>(null);
   const [busca, setBusca] = useState("");
   const [status, setStatus] = useState("");
+  const [progresso, setProgresso] = useState<string | null>(null);
+  const [recarga, setRecarga] = useState(0);
+
+  async function reprocessarRascunhos() {
+    const alvo = [...lista].filter((b) => b.status === "rascunho").sort((a, b) => a.competencia.localeCompare(b.competencia));
+    if (!alvo.length || !confirm(`Reprocessar ${alvo.length} balancete(s) em rascunho com as regras atuais do leitor?`)) return;
+    setErro(null);
+    for (let i = 0; i < alvo.length; i++) {
+      const c = clientePorId(alvo[i].cliente_id);
+      setProgresso(`Reprocessando ${i + 1} de ${alvo.length}: ${c?.nome_fantasia || c?.razao_social || ""} ${alvo[i].competencia.slice(0, 7)}`);
+      try {
+        await reprocessar(alvo[i].id);
+      } catch (e) {
+        setErro(traduzirErro(e));
+        break;
+      }
+    }
+    setProgresso(null);
+    setRecarga((x) => x + 1);
+  }
 
   useEffect(() => {
     supabase()
@@ -33,7 +54,7 @@ function Lista() {
       .order("competencia", { ascending: false })
       .limit(2000)
       .then(({ data, error }) => (error ? setErro(traduzirErro(error)) : setLista(data as BalanceteReg[])));
-  }, [org.id]);
+  }, [org.id, recarga]);
 
   const filtrada = useMemo(() => {
     const q = busca.trim().toLowerCase();
@@ -51,6 +72,11 @@ function Lista() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
         <h1 className="mr-auto text-xl font-semibold text-[var(--marca)]">Balancetes e demonstrativos</h1>
+        {pode("demonstrativos", "operar") && lista.some((b) => b.status === "rascunho") && (
+          <button className="btn" onClick={reprocessarRascunhos} disabled={!!progresso} title="Relê as contas gravadas com as regras atuais: sinal, grupos e cálculos">
+            Reprocessar rascunhos
+          </button>
+        )}
         {pode("demonstrativos", "operar") && (
           <Link href="/demonstrativos/importar" className="btn-primario">
             Importar balancete
@@ -66,6 +92,7 @@ function Lista() {
         </select>
       </div>
       {erro && <p className="rounded-md bg-red-50 p-3 text-sm text-red-800">{erro}</p>}
+      {progresso && <p className="rounded-md bg-amber-50 p-3 text-sm text-amber-900">{progresso}</p>}
       <div className="cartao overflow-x-auto">
         <table className="tabela">
           <thead>

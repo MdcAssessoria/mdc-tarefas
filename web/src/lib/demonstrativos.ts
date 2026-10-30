@@ -1,5 +1,5 @@
 import { supabase } from "./supabase";
-import { calcularIndices, classificar, conferir, fragilidades, resumir } from "./balancete";
+import { calcularIndices, classificar, conferir, fragilidades, normalizarSinal, resumir } from "./balancete";
 import type { Grupo, Linha, Resumo } from "./balancete";
 
 /** Regras de conta → grupo salvas (padrão da organização + específicas do cliente). */
@@ -114,6 +114,45 @@ export async function definirGrupo(o: {
     .or(`classificacao.eq.${o.classificacao},classificacao.like.${o.classificacao}.*`);
   if (up.error) throw up.error;
   await recalcular(o.balanceteId);
+}
+
+
+
+/**
+ * Reprocessa um balancete já gravado com as regras atuais do leitor:
+ * corrige o sinal (devedor +, credor −), reclassifica as contas (respeitando o mapa salvo) e refaz os cálculos.
+ */
+export async function reprocessar(balanceteId: string) {
+  const sb = supabase();
+  const b = await sb.from("portal_balancetes").select("org_id,cliente_id,competencia,status").eq("id", balanceteId).single();
+  if (b.error) throw b.error;
+  const { org_id, cliente_id, competencia, status } = b.data as { org_id: string; cliente_id: string; competencia: string; status: string };
+  if (status === "publicado") throw new Error("Despublique o balancete antes de reprocessar.");
+  const l = await sb.from("portal_balancete_linhas").select("*").eq("balancete_id", balanceteId).order("classificacao").limit(20000);
+  if (l.error) throw l.error;
+  const linhas = (l.data as (Linha & { id: number })[]).map(({ id: _id, ...x }) => ({
+    ...x,
+    saldo_anterior: Number(x.saldo_anterior),
+    debitos: Number(x.debitos),
+    creditos: Number(x.creditos),
+    saldo_atual: Number(x.saldo_atual),
+    grupo: null,
+  })) as Linha[];
+  normalizarSinal(linhas);
+  classificar(linhas, (await carregarMapa(org_id, cliente_id)) as { classificacao: string; grupo: Grupo }[]);
+  const d = await sb.from("portal_balancete_linhas").delete().eq("balancete_id", balanceteId);
+  if (d.error) throw d.error;
+  const rows = linhas.map((x) => {
+    const { balancete_id: _b, org_id: _o, ...resto } = x as Linha & { balancete_id?: string; org_id?: string };
+    return { ...resto, balancete_id: balanceteId, org_id };
+  });
+  for (let k = 0; k < rows.length; k += 500) {
+    const r = await sb.from("portal_balancete_linhas").insert(rows.slice(k, k + 500));
+    if (r.error) throw r.error;
+  }
+  const a = analisar(linhas, competencia, await resumoAnterior(cliente_id, competencia));
+  const u = await sb.from("portal_balancetes").update(a).eq("id", balanceteId);
+  if (u.error) throw u.error;
 }
 
 export { classificar };

@@ -214,31 +214,37 @@ export function lerBalancete(matriz: unknown[][]): Leitura {
   for (const l of linhas) l.analitica = !classes.some((c) => c !== l.classificacao && c.startsWith(l.classificacao + "."));
 
   // sem D/C no arquivo: saldos vêm pela natureza da conta → passivo, PL e receitas viram credores
-  // Excel do Domínio já grava o sinal (credor negativo) e só formata positivo na tela:
-  // nesse caso a soma das contas de 1º nível fecha em zero (± resultado) e nada é invertido.
+  if (!temNatureza && normalizarSinal(linhas))
+    avisos.push("Saldos sem D/C: considerei a natureza normal de cada conta (ativo e despesas devedores; passivo, PL e receitas credores).");
+
+  return { cabecalho: cab, linhas, avisos };
+}
+
+/**
+ * Garante a convenção devedor +, credor −. O Excel do Domínio já grava assim (e só formata positivo):
+ * a soma das contas de 1º nível fecha em zero e nada muda. Se os saldos vierem todos positivos
+ * (relatório sem D/C), passivo, PL e receitas são invertidos. Devolve true quando inverteu.
+ */
+export function normalizarSinal(linhas: Linha[]): boolean {
   const topo = linhas.filter((l) => l.nivel === 1);
   const somaTopo = topo.reduce((a, l) => a + l.saldo_atual, 0);
   const maiorTopo = Math.max(1, ...topo.map((l) => Math.abs(l.saldo_atual)));
   const temCredorNegativo = topo.some((l) => /PASSIVO/.test(sem(l.descricao)) && l.saldo_atual < 0);
-  const jaComSinal = temCredorNegativo || Math.abs(somaTopo) <= maiorTopo * 0.005;
-  if (!temNatureza && !jaComSinal) {
-    avisos.push("Saldos sem D/C: considerei a natureza normal de cada conta (ativo e despesas devedores; passivo, PL e receitas credores).");
-    const credoras = new Set<string>();
-    for (const l of linhas) {
-      const d = sem(l.descricao);
-      if (l.nivel === 1 && /PASSIVO|RECEITA/.test(d)) credoras.add(l.classificacao);
-      if (l.nivel <= 2 && /PATRIMONIO LIQUIDO|RECEITA/.test(d)) credoras.add(l.classificacao);
-    }
-    for (const l of linhas) {
-      const credora = [...credoras].some((c) => l.classificacao === c || l.classificacao.startsWith(c + "."));
-      if (credora) {
-        l.saldo_anterior = -l.saldo_anterior;
-        l.saldo_atual = -l.saldo_atual;
-      }
+  if (temCredorNegativo || Math.abs(somaTopo) <= maiorTopo * 0.005) return false;
+  const credoras = new Set<string>();
+  for (const l of linhas) {
+    const d = sem(l.descricao);
+    if (l.nivel === 1 && /PASSIVO|RECEITA/.test(d)) credoras.add(l.classificacao);
+    if (l.nivel <= 2 && /PATRIMONIO LIQUIDO|RECEITA/.test(d)) credoras.add(l.classificacao);
+  }
+  if (!credoras.size) return false;
+  for (const l of linhas) {
+    if ([...credoras].some((c) => l.classificacao === c || l.classificacao.startsWith(c + "."))) {
+      l.saldo_anterior = -l.saldo_anterior;
+      l.saldo_atual = -l.saldo_atual;
     }
   }
-
-  return { cabecalho: cab, linhas, avisos };
+  return true;
 }
 
 // ---------------------------------------------------------------- classificação
