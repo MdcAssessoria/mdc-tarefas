@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { brl, fmtIndice } from "@/lib/balancete";
 import type { Dre } from "@/lib/balancete";
 import { cruzar, linhasDre } from "@/lib/demonstracoes";
 import type { Balanco, Dfc, LinhaBp } from "@/lib/demonstracoes";
-import { acumulado, mesExtenso } from "./Painel";
+import { SeletorPeriodo, mesExtenso, useSeletorPeriodo } from "./Painel";
+import { agregar } from "@/lib/periodos";
+import type { TipoPeriodo } from "@/lib/periodos";
 import type { BalanceteReg } from "./Painel";
 
 const dataBr = (s: string) => s.slice(0, 10).split("-").reverse().join("/");
@@ -16,47 +18,53 @@ type Sub = "bp" | "dre" | "dfc" | "cruzamento";
 
 export function AbaDemonstracoes({ atual, historico }: { atual: BalanceteReg; historico: BalanceteReg[] }) {
   const [sub, setSub] = useState<Sub>("bp");
+  const [tipo, setTipo] = useSeletorPeriodo();
   const demo = atual.demonstracoes;
+  const multi = (demo?.periodo.dias ?? 31) > 31;
+  const t: TipoPeriodo = multi ? "mensal" : tipo;
+  const ag = useMemo(() => agregar(atual, historico, t), [atual, historico, t]);
+  const anoAnterior = useMemo(() => {
+    const c = `${Number(atual.competencia.slice(0, 4)) - 1}${atual.competencia.slice(4)}`;
+    const reg = historico.find((b) => b.competencia === c);
+    return reg ? agregar(reg, historico, t) : null;
+  }, [historico, atual.competencia, t]);
   if (!demo)
     return <p className="cartao p-6 text-center text-sm text-neutral-600">As demonstrações deste balancete ainda não foram geradas. Use “Reprocessar rascunhos” na lista de balancetes.</p>;
-  const ac = acumulado(atual, historico);
-  const multi = demo.periodo.dias > 31;
+  const titulo = multi ? "Período" : t === "mensal" ? mesExtenso(atual.competencia) : ag.rotulo;
   const SUBS: { id: Sub; nome: string }[] = [
     { id: "bp", nome: "Balanço Patrimonial" },
     { id: "dre", nome: "DRE" },
     { id: "dfc", nome: "Fluxo de caixa (DFC)" },
     { id: "cruzamento", nome: "DRE × DFC" },
   ];
+  const inicioBp = t === "mensal" || !ag.meses.length ? demo.periodo.inicio : `${ag.meses[0].slice(0, 7)}-01`;
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap gap-1 print:hidden">
-        {SUBS.map((s) => (
-          <button key={s.id} onClick={() => setSub(s.id)} className={`rounded-full border px-3 py-1 text-sm ${sub === s.id ? "border-[var(--marca)] bg-[var(--marca)] text-white" : "border-[var(--borda)] bg-white"}`}>
-            {s.nome}
-          </button>
-        ))}
+      <div className="flex flex-wrap items-center justify-between gap-2 print:hidden">
+        <div className="flex flex-wrap gap-1">
+          {SUBS.map((s) => (
+            <button key={s.id} onClick={() => setSub(s.id)} className={`rounded-full border px-3 py-1 text-sm ${sub === s.id ? "border-[var(--marca)] bg-[var(--marca)] text-white" : "border-[var(--borda)] bg-white"}`}>
+              {s.nome}
+            </button>
+          ))}
+        </div>
+        {!multi && <SeletorPeriodo tipo={tipo} aoMudar={setTipo} />}
       </div>
       <p className="text-xs text-neutral-500">
-        Elaboradas a partir do balancete de {dataBr(demo.periodo.inicio)} a {dataBr(demo.periodo.fim)} (Lei nº 6.404/1976, arts. 176 a 188; NBC TG 26 e NBC TG 03). Valores em R$; entre parênteses, negativos.
+        {t === "mensal" ? `Elaboradas a partir do balancete de ${dataBr(demo.periodo.inicio)} a ${dataBr(demo.periodo.fim)}` : `${ag.rotulo}: soma de ${ag.meses.length} balancete(s) mensal(is)${ag.completo ? "" : " — faltam meses do período no Hub"}`}{" "}
+        (Lei nº 6.404/1976, arts. 176 a 188; NBC TG 26 e NBC TG 03). Valores em R$; entre parênteses, negativos.
       </p>
-      {sub === "bp" && <TabelaBalanco b={demo.balanco} inicio={demo.periodo.inicio} fim={demo.periodo.fim} />}
+      {sub === "bp" && ag.balanco && <TabelaBalanco b={ag.balanco} inicio={inicioBp} fim={demo.periodo.fim} />}
       {sub === "dre" && (
-        <TabelaDre
-          colunas={[
-            { titulo: multi ? "Período" : mesExtenso(atual.competencia), d: atual.resumo.mes },
-            ...(!multi ? [{ titulo: ac.completo ? `Acumulado ${atual.competencia.slice(0, 4)}` : "Acumulado do balancete", d: ac.dre }] : []),
-          ]}
-        />
+        <TabelaDre colunas={[{ titulo, d: ag.dre }, ...(anoAnterior ? [{ titulo: anoAnterior.rotulo, d: anoAnterior.dre }] : [])]} />
       )}
-      {sub === "dfc" && (
-        <TabelaDfc
-          colunas={[
-            { titulo: multi ? "Período" : mesExtenso(atual.competencia), f: demo.dfc },
-            ...(!multi && ac.completo && ac.dfc ? [{ titulo: `Acumulado ${atual.competencia.slice(0, 4)}`, f: ac.dfc }] : []),
-          ]}
-        />
-      )}
-      {sub === "cruzamento" && <Cruzamento d={atual.resumo.mes} f={demo.dfc} dAno={!multi && ac.completo ? ac.dre : null} fAno={!multi && ac.completo ? ac.dfc : null} />}
+      {sub === "dfc" &&
+        (ag.dfc ? (
+          <TabelaDfc colunas={[{ titulo, f: ag.dfc }, ...(anoAnterior?.dfc ? [{ titulo: anoAnterior.rotulo, f: anoAnterior.dfc }] : [])]} />
+        ) : (
+          <p className="text-sm text-neutral-600">Algum mês do período está sem DFC gerada. Reprocesse os balancetes do período.</p>
+        ))}
+      {sub === "cruzamento" && ag.dfc && <Cruzamento d={ag.dre} f={ag.dfc} titulo={titulo} />}
     </div>
   );
 }
@@ -223,8 +231,8 @@ function FragmentoSecao({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-function Cruzamento({ d, f, dAno, fAno }: { d: Dre; f: Dfc; dAno: Dre | null; fAno: Dfc | null }) {
-  const blocos = [{ titulo: "No período", c: cruzar(d, f), d }, ...(dAno && fAno ? [{ titulo: "No acumulado do ano", c: cruzar(dAno, fAno), d: dAno }] : [])];
+function Cruzamento({ d, f, titulo }: { d: Dre; f: Dfc; titulo: string }) {
+  const blocos = [{ titulo, c: cruzar(d, f), d }];
   return (
     <div className="space-y-5">
       {blocos.map((b) => (

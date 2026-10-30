@@ -144,7 +144,45 @@ const ROTULOS: Record<string, [keyof Pick<Dfc, "operacional" | "investimento" | 
   lucros: ["financiamento", "Lucros distribuídos e ajustes de lucros acumulados"],
 };
 
-export function dfc(linhas: Linha[], resumo: Resumo): Dfc {
+/** Linhas da DFC que o contador pode escolher para uma conta (além do caixa e do resultado). */
+export const LINHAS_DFC: { id: string; nome: string }[] = [
+  { id: "caixa", nome: "Caixa e equivalentes (não entra nos fluxos)" },
+  { id: "resultado", nome: "Conta de resultado (vai no lucro do período)" },
+  ...Object.entries(ROTULOS).filter(([k]) => k !== "lucro").map(([id, [sec, nome]]) => ({ id, nome: `${sec === "operacional" ? "Operacional" : sec === "investimento" ? "Investimento" : "Financiamento"} · ${nome}` })),
+];
+
+/** Linha automática da DFC para uma conta analítica, pelas regras do Hub. */
+export function linhaDfcAuto(l: Linha): string {
+  const d = sem(l.descricao);
+  const socio = /SOCIO|MUTUO|PARTES RELACIONADAS|COLIGAD|CONTROLAD|EMPRESAS LIGADAS/.test(d);
+  switch (l.grupo) {
+    case "ac_disponivel": return "caixa";
+    case "ac_clientes": return "clientes";
+    case "ac_estoques": return "estoques";
+    case "ac_outros": return socio ? "emprestimos_concedidos" : "outros_ativos";
+    case "anc_rlp": return socio || /EMPRESTIMO/.test(d) ? "emprestimos_concedidos" : "outros_ativos";
+    case "anc_permanente": return /DEPRECIAC|AMORTIZAC|EXAUST/.test(d) ? "depreciacao" : "imobilizado";
+    case "pc_fornecedores": return "fornecedores";
+    case "pc_obrigacoes": return "obrigacoes";
+    case "pc_outros": case "pnc_outros": return socio ? "socios" : "outros_passivos";
+    case "pc_emprestimos": case "pnc_emprestimos": return "emprestimos";
+    case "pl": return /LUCRO|PREJUIZO|RESULTADO|DIVIDENDO|DISTRIBUI/.test(d) ? "lucros" : "capital";
+    default: return isResultado(l) ? "resultado" : "lucros";
+  }
+}
+
+export type MapaDfc = { classificacao: string; linha: string }[];
+
+/** Linha da DFC de uma conta: escolha salva (prefixo mais longo, cliente antes do padrão) ou regra automática. */
+export function linhaDfc(l: Linha, mapa: MapaDfc = []): string {
+  let melhor: { classificacao: string; linha: string } | undefined;
+  for (const m of mapa)
+    if ((l.classificacao === m.classificacao || l.classificacao.startsWith(m.classificacao + ".")) && (!melhor || m.classificacao.length >= melhor.classificacao.length))
+      melhor = m;
+  return melhor?.linha ?? linhaDfcAuto(l);
+}
+
+export function dfc(linhas: Linha[], resumo: Resumo, mapa: MapaDfc = []): Dfc {
   const an = linhas.filter((l) => l.analitica);
   const acc = new Map<string, number>();
   const add = (k: string, v: number) => acc.set(k, (acc.get(k) ?? 0) + v);
@@ -153,24 +191,12 @@ export function dfc(linhas: Linha[], resumo: Resumo): Dfc {
   let fluxoResultado = 0;
   for (const l of an) {
     const f = -(l.saldo_atual - l.saldo_anterior); // diminuição de ativo / aumento de passivo = entrada de caixa
-    const d = sem(l.descricao);
-    const socio = /SOCIO|MUTUO|PARTES RELACIONADAS|COLIGAD|CONTROLAD|EMPRESAS LIGADAS/.test(d);
-    switch (l.grupo) {
-      case "ac_disponivel": caixaIni += l.saldo_anterior; caixaFim += l.saldo_atual; break;
-      case "ac_clientes": add("clientes", f); break;
-      case "ac_estoques": add("estoques", f); break;
-      case "ac_outros": add(socio ? "emprestimos_concedidos" : "outros_ativos", f); break;
-      case "anc_rlp": add(socio || /EMPRESTIMO/.test(d) ? "emprestimos_concedidos" : "outros_ativos", f); break;
-      case "anc_permanente": add(/DEPRECIAC|AMORTIZAC|EXAUST/.test(d) ? "depreciacao" : "imobilizado", f); break;
-      case "pc_fornecedores": add("fornecedores", f); break;
-      case "pc_obrigacoes": add("obrigacoes", f); break;
-      case "pc_outros": case "pnc_outros": add(socio ? "socios" : "outros_passivos", f); break;
-      case "pc_emprestimos": case "pnc_emprestimos": add("emprestimos", f); break;
-      case "pl": add(/LUCRO|PREJUIZO|RESULTADO|DIVIDENDO|DISTRIBUI/.test(d) ? "lucros" : "capital", f); break;
-      default:
-        if (isResultado(l)) fluxoResultado += f;
-        else add("lucros", f); // contas de apuração/compensação e sem grupo
-    }
+    const k = linhaDfc(l, mapa);
+    if (k === "caixa") {
+      caixaIni += l.saldo_anterior;
+      caixaFim += l.saldo_atual;
+    } else if (k === "resultado") fluxoResultado += f;
+    else add(k, f);
   }
   add("lucro", lucro);
   add("lucros", fluxoResultado - lucro); // encerramentos do resultado dentro do período
@@ -325,9 +351,9 @@ export function saude(r: Resumo, i: Indices, f: Dfc): Saude {
   return { nota, faixa: nota >= 75 ? "Saudável" : nota >= 50 ? "Atenção" : "Crítica", pilares: P };
 }
 
-export function montar(linhas: Linha[], resumo: Resumo, indices: Indices, periodo: Periodo): Demonstracoes {
+export function montar(linhas: Linha[], resumo: Resumo, indices: Indices, periodo: Periodo, mapaDfc: MapaDfc = []): Demonstracoes {
   const b = balanco(linhas, resumo);
-  const f = dfc(linhas, resumo);
+  const f = dfc(linhas, resumo, mapaDfc);
   return { periodo, balanco: b, dfc: f, cruzamento: cruzar(resumo.mes, f), saude: saude(resumo, indices, f) };
 }
 

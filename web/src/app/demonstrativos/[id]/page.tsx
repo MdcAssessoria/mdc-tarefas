@@ -12,7 +12,9 @@ import { rascunhoParecer } from "@/lib/parecer";
 import { AbaDemonstracoes } from "@/components/demonstrativos/Demonstracoes";
 import { BotaoPdf } from "@/components/demonstrativos/BotaoPdf";
 import type { Grupo } from "@/lib/balancete";
-import { definirGrupo, recalcular } from "@/lib/demonstrativos";
+import { carregarMapaDfc, definirGrupo, definirLinhaDfc, recalcular } from "@/lib/demonstrativos";
+import { LINHAS_DFC, linhaDfc, linhaDfcAuto } from "@/lib/demonstracoes";
+import type { MapaDfc } from "@/lib/demonstracoes";
 import { REGIMES } from "@/lib/types";
 import {
   ArvoreBalancete, GradeIndices, ListaAlertas, PainelResumo, VisaoParecer, mesExtenso,
@@ -41,6 +43,8 @@ function Detalhe() {
   const [erro, setErro] = useState<string | null>(null);
   const [aviso, setAviso] = useState<string | null>(null);
   const [comentario, setComentario] = useState("");
+  const [mapaDfc, setMapaDfc] = useState<MapaDfc>([]);
+  const [dfcCliente, setDfcCliente] = useState<Set<string>>(new Set());
   const podeOperar = pode("demonstrativos", "operar");
   const podeGerir = pode("demonstrativos", "gerir");
 
@@ -57,6 +61,10 @@ function Detalhe() {
       sb.from("portal_pareceres").select("*").eq("balancete_id", id).order("versao", { ascending: false }),
     ]);
     const hist = (h.data as BalanceteReg[]) ?? [];
+    const md = await carregarMapaDfc(atual.org_id, atual.cliente_id);
+    setMapaDfc(md);
+    const cli = await sb.from("portal_mapa_dfc").select("classificacao").eq("cliente_id", atual.cliente_id);
+    setDfcCliente(new Set(((cli.data as { classificacao: string }[]) ?? []).map((x) => x.classificacao)));
     setHistorico(hist);
     setLinhas((l.data as LinhaReg[]) ?? []);
     setPareceres((p.data as ParecerReg[]) ?? []);
@@ -99,6 +107,25 @@ function Detalhe() {
     setErro(null);
     try {
       await definirGrupo({ org: org.id, cliente: escopo === "cliente" ? b!.cliente_id : null, balanceteId: b!.id, classificacao: l.classificacao, grupo });
+      await carregar();
+    } catch (e) {
+      setErro(traduzirErro(e));
+    }
+  }
+
+  async function mudarLinhaDfc(l: LinhaReg, linha: string) {
+    setErro(null);
+    const auto = linhaDfcAuto(l);
+    const padrao = linha !== "" && confirm(`Usar esta linha da DFC para a conta ${l.classificacao} em TODAS as empresas?\n\nOK = regra padrão da MDC · Cancelar = só para ${nome}`);
+    try {
+      await definirLinhaDfc({
+        org: org.id,
+        cliente: padrao ? null : b!.cliente_id,
+        balanceteId: b!.id,
+        classificacao: l.classificacao,
+        linha: linha === "" || linha === auto ? null : linha,
+      });
+      setAviso("DFC recalculada com a nova linha. Os demais meses usam a regra ao serem reprocessados.");
       await carregar();
     } catch (e) {
       setErro(traduzirErro(e));
@@ -247,6 +274,30 @@ function Detalhe() {
                     ))}
                   </select>
                 )
+              : undefined
+          }
+          editarDfc={
+            podeOperar
+              ? (l) => {
+                  const atualLinha = linhaDfc(l, mapaDfc);
+                  const auto = linhaDfcAuto(l);
+                  const manual = atualLinha !== auto || dfcCliente.has(l.classificacao);
+                  return (
+                    <select
+                      className={`entrada !min-h-7 !py-0.5 text-xs ${manual ? "!border-[var(--destaque-escuro)] font-medium" : ""}`}
+                      value={manual ? atualLinha : ""}
+                      title={manual ? "Linha escolhida manualmente" : "Linha automática"}
+                      onChange={(e) => mudarLinhaDfc(l, e.target.value)}
+                    >
+                      <option value="">Automático · {LINHAS_DFC.find((x) => x.id === auto)?.nome ?? auto}</option>
+                      {LINHAS_DFC.map((x) => (
+                        <option key={x.id} value={x.id}>
+                          {x.nome}
+                        </option>
+                      ))}
+                    </select>
+                  );
+                }
               : undefined
           }
         />

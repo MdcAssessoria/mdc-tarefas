@@ -167,7 +167,6 @@ function CartaoApp({ app, bloqueado }: { app: HubApp; bloqueado?: boolean }) {
       <div className="min-w-0">
         <div className="flex items-center gap-2">
           <span className="font-semibold">{app.nome}</span>
-          {app.status === "beta" && <span className="chip bg-amber-50 text-amber-800">beta</span>}
           {app.status === "em_breve" && <span className="chip bg-neutral-100 text-neutral-600">em breve</span>}
           {app.externo && !bloqueado && <Icone nome="externo" className="h-3.5 w-3.5 text-neutral-400" />}
         </div>

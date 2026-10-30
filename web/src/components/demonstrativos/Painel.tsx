@@ -1,10 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Barras, COR, Cascata, CicloCaixa, ColunasPareadas, Composicao, Evolucao, Faisca, Pilha100, STATUS, Termometro } from "./Graficos";
 import { INDICES_INFO, brl, fmtIndice, mdParaHtml, nomeGrupo } from "@/lib/balancete";
 import type { Alerta, Conferencia, Dre, Indices, Linha, Resumo } from "@/lib/balancete";
-import { cruzar, somarDfc, somarDre } from "@/lib/demonstracoes";
+import { somarDfc, somarDre } from "@/lib/demonstracoes";
+import { TIPOS_PERIODO, agregar, serieAgrupada } from "@/lib/periodos";
+import type { TipoPeriodo } from "@/lib/periodos";
 export { somarDre };
 import type { Demonstracoes, Dfc } from "@/lib/demonstracoes";
 
@@ -80,59 +82,94 @@ export function acumulado(atual: BalanceteReg, historico: BalanceteReg[]) {
   };
 }
 
+/** Período escolhido (lembrado neste navegador). */
+export function useSeletorPeriodo(): [TipoPeriodo, (t: TipoPeriodo) => void] {
+  const [tipo, setTipo] = useState<TipoPeriodo>("mensal");
+  useEffect(() => {
+    try {
+      const v = localStorage.getItem("mdc-periodo-demonstrativos") as TipoPeriodo | null;
+      if (v && TIPOS_PERIODO.some((x) => x.id === v)) setTipo(v);
+    } catch {
+      /* sem armazenamento */
+    }
+  }, []);
+  const mudar = (t: TipoPeriodo) => {
+    setTipo(t);
+    try {
+      localStorage.setItem("mdc-periodo-demonstrativos", t);
+    } catch {
+      /* sem armazenamento */
+    }
+  };
+  return [tipo, mudar];
+}
+
+export function SeletorPeriodo({ tipo, aoMudar }: { tipo: TipoPeriodo; aoMudar: (t: TipoPeriodo) => void }) {
+  return (
+    <div className="flex rounded-lg border border-[var(--borda)] bg-white p-0.5 text-sm print:hidden" role="group" aria-label="Período">
+      {TIPOS_PERIODO.map((p) => (
+        <button key={p.id} className={`rounded-md px-3 py-1 ${tipo === p.id ? "bg-[var(--marca)] text-white" : ""}`} onClick={() => aoMudar(p.id)}>
+          {p.nome}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 /** Painel principal para leigo: termômetro, KPIs, composição da receita, cascatas da DRE e do caixa, evolução, ciclo e balanço. */
 export function PainelResumo({ atual, historico }: { atual: BalanceteReg; historico: BalanceteReg[] }) {
-  const [periodo, setPeriodo] = useState<"mes" | "ano">("mes");
-  const r = atual.resumo;
-  const i = atual.indices;
   const demo = atual.demonstracoes ?? null;
-  const ac = acumulado(atual, historico);
-  const d = periodo === "mes" ? r.mes : ac.dre;
-  const f = periodo === "mes" ? (demo?.dfc ?? null) : ac.dfc;
   const multi = (demo?.periodo.dias ?? 31) > 31;
-  const ult = useMemo(
-    () => [...historico].sort((a, b) => a.competencia.localeCompare(b.competencia)).filter((b) => b.competencia <= atual.competencia).slice(-12),
-    [historico, atual.competencia],
-  );
-  const mesmoMesAnoAnterior = historico.find(
-    (b) => b.competencia === `${Number(atual.competencia.slice(0, 4)) - 1}${atual.competencia.slice(4)}`,
-  );
-  const anterior = ult.length > 1 ? ult[ult.length - 2] : null;
-  const variacao = (a: number, b?: number) =>
-    b ? `${a >= b ? "▲" : "▼"} ${Math.abs(((a - b) / Math.abs(b)) * 100).toFixed(1).replace(".", ",")}% sobre ${anterior ? mesAno(anterior.competencia) : ""}` : undefined;
-  const serie = (fn: (b: BalanceteReg) => number | null | undefined) => (ult.length > 1 ? ult.map((b) => fn(b) ?? null) : undefined);
-  const rotuloPeriodo = periodo === "mes" ? (multi ? "período do balancete" : "mês") : ac.completo ? "acumulado no ano" : "acumulado do balancete";
+  const [tipo, setTipo] = useSeletorPeriodo();
+  const t: TipoPeriodo = multi ? "mensal" : tipo;
+  const ag = useMemo(() => agregar(atual, historico, t), [atual, historico, t]);
+  const r = ag.resumo;
+  const i = ag.indices;
+  const d = ag.dre;
+  const f = ag.dfc;
+  const saudeP = ag.saude;
+  const comentarios = ag.cruzamento?.comentarios ?? demo?.cruzamento.comentarios ?? [];
+  const grupos = useMemo(() => serieAgrupada(historico, t, atual.competencia), [historico, t, atual.competencia]);
+  const mesmoPeriodoAnoAnterior = useMemo(() => {
+    const c = `${Number(atual.competencia.slice(0, 4)) - 1}${atual.competencia.slice(4)}`;
+    const reg = historico.find((b) => b.competencia === c);
+    return reg ? agregar(reg, historico, t) : null;
+  }, [historico, atual.competencia, t]);
+  const anteriorGrupo = grupos.length > 1 ? grupos[grupos.length - 2] : null;
+  const variacao = (a: number, b?: number | null) =>
+    b ? `${a >= b ? "▲" : "▼"} ${Math.abs(((a - b) / Math.abs(b)) * 100).toFixed(1).replace(".", ",")}% sobre ${anteriorGrupo?.rotulo ?? ""}` : undefined;
+  const serie = (fn: (g: (typeof grupos)[number]) => number | null | undefined) => (grupos.length > 1 ? grupos.map((g) => fn(g) ?? null) : undefined);
+  const rotuloPeriodo = multi ? "período do balancete" : t === "mensal" ? "mês" : ag.rotulo;
   const fin = d.despesas_financeiras - d.receitas_financeiras - d.outras;
+  const ult = grupos;
 
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-lg font-semibold text-[var(--marca)]">
-          Como está a empresa · {multi && demo ? `${demo.periodo.inicio.split("-").reverse().join("/")} a ${demo.periodo.fim.split("-").reverse().join("/")}` : mesExtenso(atual.competencia)}
+          Como está a empresa · {multi && demo ? `${demo.periodo.inicio.split("-").reverse().join("/")} a ${demo.periodo.fim.split("-").reverse().join("/")}` : t === "mensal" ? mesExtenso(atual.competencia) : ag.rotulo}
         </h2>
-        {!multi && (
-          <div className="flex rounded-lg border border-[var(--borda)] bg-white p-0.5 text-sm print:hidden">
-            {(["mes", "ano"] as const).map((p) => (
-              <button key={p} className={`rounded-md px-3 py-1 ${periodo === p ? "bg-[var(--marca)] text-white" : ""}`} onClick={() => setPeriodo(p)}>
-                {p === "mes" ? "Mês" : ac.completo ? "Acumulado no ano" : "Acumulado do balancete"}
-              </button>
-            ))}
-          </div>
-        )}
+        {!multi && <SeletorPeriodo tipo={tipo} aoMudar={setTipo} />}
       </div>
+      {!multi && t !== "mensal" && (!ag.completo || ag.parcial) && (
+        <p className="-mt-3 text-xs text-amber-800">
+          {!ag.completo ? `Faltam meses deste período no Hub: somados ${ag.meses.length} mês(es). ` : ""}
+          {ag.parcial ? "Período ainda em andamento: os números vão até o mês selecionado." : ""}
+        </p>
+      )}
 
-      {demo && (
+      {saudeP && (
         <section className="cartao grid gap-4 p-4 lg:grid-cols-[260px_1fr]">
           <div className="text-center">
             <h3 className="font-semibold">Termômetro de saúde financeira</h3>
-            <Termometro nota={demo.saude.nota} faixa={demo.saude.faixa} />
-            <div className="text-sm font-semibold" style={{ color: demo.saude.nota >= 75 ? STATUS.bom.cor : demo.saude.nota >= 50 ? STATUS.atencao.cor : STATUS.critico.cor }}>
-              {demo.saude.faixa}
+            <Termometro nota={saudeP.nota} faixa={saudeP.faixa} />
+            <div className="text-sm font-semibold" style={{ color: saudeP.nota >= 75 ? STATUS.bom.cor : saudeP.nota >= 50 ? STATUS.atencao.cor : STATUS.critico.cor }}>
+              {saudeP.faixa}
             </div>
             <p className="mt-1 text-[11px] text-neutral-500">Média de cinco pilares, avaliados pela MDC a cada fechamento.</p>
           </div>
           <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
-            {demo.saude.pilares.map((p) => {
+            {saudeP.pilares.map((p) => {
               const st = STATUS[p.status];
               return (
                 <div key={p.id} className="rounded-lg border p-3" style={{ background: st.fundo, borderColor: st.cor + "33" }}>
@@ -151,13 +188,13 @@ export function PainelResumo({ atual, historico }: { atual: BalanceteReg; histor
       )}
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Kpi rotulo={`Receita bruta (${rotuloPeriodo})`} valor={brl(d.receita_bruta)} serie={serie((b) => b.resumo.mes.receita_bruta)}
-          sub={periodo === "mes" && !multi ? variacao(r.mes.receita_bruta, anterior?.resumo.mes.receita_bruta) : undefined} />
-        <Kpi rotulo={d.lucro_liquido >= 0 ? "Lucro líquido" : "Prejuízo"} valor={brl(d.lucro_liquido)} negativo={d.lucro_liquido < 0} serie={serie((b) => b.resumo.mes.lucro_liquido)}
+        <Kpi rotulo={`Receita bruta (${t === "mensal" ? "mês" : TIPOS_PERIODO.find((x) => x.id === t)!.nome.toLowerCase()})`} valor={brl(d.receita_bruta)} serie={serie((g) => g.dre.receita_bruta)}
+          sub={!multi ? variacao(d.receita_bruta, anteriorGrupo?.dre.receita_bruta) : undefined} />
+        <Kpi rotulo={d.lucro_liquido >= 0 ? "Lucro líquido" : "Prejuízo"} valor={brl(d.lucro_liquido)} negativo={d.lucro_liquido < 0} serie={serie((g) => g.dre.lucro_liquido)}
           sub={d.receita_liquida ? `margem de ${fmtIndice(d.lucro_liquido / d.receita_liquida, "%")}` : undefined} />
-        <Kpi rotulo="Dinheiro em caixa, bancos e aplicações" valor={brl(r.disponivel)} negativo={r.disponivel < 0} serie={serie((b) => b.resumo.disponivel)}
+        <Kpi rotulo="Dinheiro em caixa, bancos e aplicações" valor={brl(r.disponivel)} negativo={r.disponivel < 0} serie={serie((g) => g.disponivel)}
           sub={f ? `${f.variacao >= 0 ? "▲ entrou" : "▼ saiu"} ${brl(Math.abs(f.variacao))} no período` : undefined} />
-        <Kpi rotulo="Caixa gerado pela operação" valor={f ? brl(f.fco) : "—"} negativo={!!f && f.fco < 0} serie={serie((b) => b.demonstracoes?.dfc.fco)}
+        <Kpi rotulo="Caixa gerado pela operação" valor={f ? brl(f.fco) : "—"} negativo={!!f && f.fco < 0} serie={serie((g) => g.fco)}
           sub={f && d.lucro_liquido > 0 ? `${fmtIndice(f.fco / d.lucro_liquido, "%")} do lucro virou caixa` : "dinheiro que a atividade principal colocou (ou tirou) do caixa"} />
       </div>
 
@@ -224,11 +261,11 @@ export function PainelResumo({ atual, historico }: { atual: BalanceteReg; histor
         </section>
       </div>
 
-      {demo && (
+      {comentarios.length > 0 && (
         <section className="cartao p-4">
-          <h3 className="mb-3 font-semibold">Lucro × caixa: o que explica a diferença</h3>
+          <h3 className="mb-3 font-semibold">Lucro × caixa: o que explica a diferença ({rotuloPeriodo})</h3>
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-            {(periodo === "mes" ? demo.cruzamento.comentarios : (ac.dfc ? cruzar(ac.dre, ac.dfc).comentarios : demo.cruzamento.comentarios)).map((c, k) => (
+            {comentarios.map((c, k) => (
               <div key={k} className={`rounded-lg border p-3 text-sm ${c.tom === "positivo" ? "border-emerald-200 bg-emerald-50" : c.tom === "atencao" ? "border-amber-200 bg-amber-50" : "border-[var(--borda)] bg-[var(--fundo)]"}`}>
                 <div className="font-semibold">{c.titulo}</div>
                 <p className="mt-1 text-xs leading-relaxed text-neutral-700">{c.texto}</p>
@@ -240,35 +277,35 @@ export function PainelResumo({ atual, historico }: { atual: BalanceteReg; histor
 
       <div className="grid gap-5 lg:grid-cols-2">
         <section className="cartao p-4">
-          <h3 className="mb-2 font-semibold">Evolução mensal do resultado</h3>
+          <h3 className="mb-2 font-semibold">Evolução {t === "mensal" ? "mensal" : t === "anual" ? "anual" : t} do resultado</h3>
           {ult.length < 2 ? (
             <p className="py-10 text-center text-sm text-neutral-500">A curva aparece a partir do segundo mês.</p>
           ) : (
             <Evolucao
-              meses={ult.map((b) => mesAno(b.competencia))}
+              meses={ult.map((g) => g.rotulo)}
               series={[
-                { nome: "Receita bruta", cor: COR.receita, valores: ult.map((b) => b.resumo.mes.receita_bruta) },
-                { nome: "Custos e despesas", cor: COR.despesa, valores: ult.map((b) => b.resumo.mes.custos + b.resumo.mes.despesas_operacionais) },
-                { nome: "Lucro líquido", cor: COR.lucro, valores: ult.map((b) => b.resumo.mes.lucro_liquido) },
+                { nome: "Receita bruta", cor: COR.receita, valores: ult.map((g) => g.dre.receita_bruta) },
+                { nome: "Custos e despesas", cor: COR.despesa, valores: ult.map((g) => g.dre.custos + g.dre.despesas_operacionais) },
+                { nome: "Lucro líquido", cor: COR.lucro, valores: ult.map((g) => g.dre.lucro_liquido) },
               ]}
             />
           )}
-          {mesmoMesAnoAnterior && (
+          {mesmoPeriodoAnoAnterior && (
             <p className="mt-2 text-xs text-neutral-500">
-              Mesmo mês do ano anterior: receita {brl(mesmoMesAnoAnterior.resumo.mes.receita_bruta)}, lucro {brl(mesmoMesAnoAnterior.resumo.mes.lucro_liquido)}.
+              Mesmo período do ano anterior ({mesmoPeriodoAnoAnterior.rotulo}): receita {brl(mesmoPeriodoAnoAnterior.dre.receita_bruta)}, lucro {brl(mesmoPeriodoAnoAnterior.dre.lucro_liquido)}.
             </p>
           )}
         </section>
         <section className="cartao p-4">
-          <h3 className="mb-2 font-semibold">Lucro × caixa da operação, mês a mês</h3>
-          {ult.length < 2 || !ult.some((b) => b.demonstracoes) ? (
+          <h3 className="mb-2 font-semibold">Lucro × caixa da operação, {t === "mensal" ? "mês a mês" : "por período"}</h3>
+          {ult.length < 2 || !ult.some((g) => g.fco !== null) ? (
             <p className="py-10 text-center text-sm text-neutral-500">A comparação aparece a partir do segundo mês.</p>
           ) : (
             <ColunasPareadas
-              meses={ult.map((b) => mesAno(b.competencia))}
+              meses={ult.map((g) => g.rotulo)}
               series={[
-                { nome: "Lucro líquido (DRE)", cor: COR.lucro, valores: ult.map((b) => b.resumo.mes.lucro_liquido) },
-                { nome: "Caixa da operação (DFC)", cor: COR.receita, valores: ult.map((b) => b.demonstracoes?.dfc.fco ?? null) },
+                { nome: "Lucro líquido (DRE)", cor: COR.lucro, valores: ult.map((g) => g.dre.lucro_liquido) },
+                { nome: "Caixa da operação (DFC)", cor: COR.receita, valores: ult.map((g) => g.fco) },
               ]}
             />
           )}
@@ -323,9 +360,20 @@ export function GradeIndices({ atual, historico }: { atual: BalanceteReg; histor
     { titulo: "Rentabilidade", sub: "quanto sobra do que vende", ids: ["margem_bruta", "margem_operacional", "margem_liquida", "roe", "carga_tributaria"] },
     { titulo: "Prazos médios e ciclo", sub: "quanto tempo o dinheiro fica preso", ids: ["pmr", "pmp", "pme", "pmv", "ciclo_operacional", "ciclo_financeiro"] },
   ];
-  const i = atual.indices;
+  const multi = (atual.demonstracoes?.periodo.dias ?? 31) > 31;
+  const [tipo, setTipo] = useSeletorPeriodo();
+  const ag = agregar(atual, historico, multi ? "mensal" : tipo);
+  const i = ag.indices;
   return (
     <div className="space-y-6">
+      {!multi && (
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="text-sm text-neutral-600">
+            {tipo === "mensal" ? "Índices do mês." : `Índices de ${ag.rotulo}: margens sobre a DRE do período, liquidez e endividamento no fechamento, prazos pela média dos meses.`}
+          </p>
+          <SeletorPeriodo tipo={tipo} aoMudar={setTipo} />
+        </div>
+      )}
       {SECOES.map((sec) => (
         <section key={sec.titulo}>
           <h3 className="mb-2 font-semibold text-[var(--marca)]">
@@ -338,7 +386,7 @@ export function GradeIndices({ atual, historico }: { atual: BalanceteReg; histor
           )}
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {INDICES_INFO.filter((x) => sec.ids.includes(x.id)).map((info) => {
-              const v = atual.indices[info.id];
+              const v = i[info.id];
               const ruim = v !== null && v !== undefined && info.alerta?.(v as number);
               return (
                 <div key={info.id} className={`cartao p-4 ${ruim ? "!border-red-200" : ""}`}>
@@ -366,10 +414,12 @@ export function ArvoreBalancete({
   linhas,
   anteriores,
   editarGrupo,
+  editarDfc,
 }: {
   linhas: LinhaReg[];
   anteriores?: Map<string, number>;
   editarGrupo?: (l: LinhaReg) => React.ReactNode;
+  editarDfc?: (l: LinhaReg) => React.ReactNode;
 }) {
   const [busca, setBusca] = useState("");
   const [fechados, setFechados] = useState<Set<string>>(new Set());
@@ -405,6 +455,7 @@ export function ArvoreBalancete({
               <th className="text-right">Saldo atual</th>
               {anteriores && <th className="text-right">Variação</th>}
               {editarGrupo && <th>Grupo gerencial</th>}
+              {editarDfc && <th>Linha na DFC</th>}
             </tr>
           </thead>
           <tbody>
@@ -444,6 +495,7 @@ export function ArvoreBalancete({
                     </td>
                   )}
                   {editarGrupo && <td>{l.analitica ? editarGrupo(l) : <span className="text-xs text-neutral-400">{nomeGrupo(l.grupo)}</span>}</td>}
+                  {editarDfc && <td>{l.analitica ? editarDfc(l) : null}</td>}
                 </tr>
               );
             })}

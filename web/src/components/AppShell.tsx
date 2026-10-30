@@ -10,7 +10,7 @@ import type { PapelApp } from "@/lib/types";
 import { Icone } from "./Icone";
 import { fmtDataHora } from "@/lib/datas";
 
-type Modulo = "hub" | "tarefas" | "societario" | "demonstrativos" | "atendimento" | "vencimentos";
+type Modulo = "hub" | "tarefas" | "societario" | "demonstrativos" | "atendimento" | "vencimentos" | "comercial";
 
 const NAV: Record<Modulo, { titulo: string; links: { href: string; nome: string; minimo?: PapelApp; gestor?: boolean }[] }> = {
   hub: { titulo: "HUB-MDC", links: [] },
@@ -45,6 +45,14 @@ const NAV: Record<Modulo, { titulo: string; links: { href: string; nome: string;
     ],
   },
   vencimentos: { titulo: "Vencimentos", links: [{ href: "/vencimentos", nome: "Vencimentos" }] },
+  comercial: {
+    titulo: "CRM Comercial",
+    links: [
+      { href: "/comercial", nome: "Funil" },
+      { href: "/comercial/contratos", nome: "Contratos" },
+      { href: "/comercial/modelo", nome: "Modelo de contrato", minimo: "gerir" },
+    ],
+  },
 };
 
 export function AppShell({ children, modulo = "tarefas" }: { children: React.ReactNode; modulo?: Modulo }) {
