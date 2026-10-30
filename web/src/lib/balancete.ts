@@ -241,6 +241,7 @@ const REGRAS: { re: RegExp; grupo: Grupo; dentro?: RegExp }[] = [
   { re: /ESTOQUE|MERCADORIAS|MATERIA.? PRIMA|PRODUTOS ACABADOS/, grupo: "ac_estoques", dentro: /ATIVO/ },
   { re: /REALIZAVEL A LONGO PRAZO/, grupo: "anc_rlp" },
   { re: /IMOBILIZADO|INTANGIVEL|INVESTIMENTOS|DIFERIDO/, grupo: "anc_permanente", dentro: /ATIVO/ },
+  { re: /MOVEIS|UTENSILIOS|VEICULOS|MAQUINAS|EQUIPAMENTOS|EDIFICACOES|IMOVEIS|TERRENOS|COMPUTADORES|INSTALACOES|BENFEITORIAS|SOFTWARE|MARCAS|DEPRECIACAO|AMORTIZACAO ACUMULADA/, grupo: "anc_permanente", dentro: /ATIVO NAO CIRCULANTE|^ATIVO$|PERMANENTE/ },
   // passivo
   { re: /FORNECEDORES/, grupo: "pc_fornecedores", dentro: /PASSIVO CIRCULANTE|^CIRCULANTE/ },
   { re: /EMPRESTIMOS|FINANCIAMENTOS/, grupo: "pc_emprestimos", dentro: /PASSIVO CIRCULANTE|^CIRCULANTE/ },
