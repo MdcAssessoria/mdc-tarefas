@@ -142,7 +142,7 @@ function Hub() {
     <div className="space-y-9">
       <header className="flex flex-wrap items-end justify-between gap-4 pt-2">
         <div>
-          <p className="text-[14px] capitalize text-[var(--texto-suave)]">{data}</p>
+          <p className="text-[14px] text-[var(--texto-suave)]">{data.charAt(0).toUpperCase() + data.slice(1)}</p>
           <h1 className="font-display mt-1 text-[40px] font-medium leading-[1.05] text-[var(--marca)] sm:text-[48px]">
             {saudacao(org.fuso)}, {primeiroNome}
           </h1>
@@ -172,9 +172,9 @@ function Hub() {
         </section>
       )}
 
-      <div className={`grid gap-8 ${pode("tarefas") ? "lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]" : ""}`}>
+      <div className={`grid grid-cols-1 gap-8 ${pode("tarefas") ? "lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]" : ""}`}>
         {pode("tarefas") && (
-          <section aria-labelledby="fila">
+          <section aria-labelledby="fila" className="min-w-0">
             <div className="mb-3 flex items-baseline justify-between">
               <h2 id="fila" className="text-[17px] font-semibold text-[var(--marca)]">
                 Sua fila
@@ -223,7 +223,7 @@ function Hub() {
           </section>
         )}
 
-        <section aria-labelledby="ferramentas">
+        <section aria-labelledby="ferramentas" className="min-w-0">
           <h2 id="ferramentas" className="mb-3 text-[17px] font-semibold text-[var(--marca)]">
             Ferramentas
           </h2>
@@ -232,7 +232,7 @@ function Hub() {
               Nenhuma ferramenta liberada para você ainda. Fale com o administrador do Hub.
             </p>
           ) : (
-            <ul className={`grid gap-2 ${pode("tarefas") ? "" : "sm:grid-cols-2 lg:grid-cols-3"}`}>
+            <ul className={`grid grid-cols-1 gap-2 ${pode("tarefas") ? "" : "sm:grid-cols-2 lg:grid-cols-3"}`}>
               {liberadas.map((a) => (
                 <li key={a.slug}>
                   <Ferramenta app={a} />

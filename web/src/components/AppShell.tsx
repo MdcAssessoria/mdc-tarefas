@@ -446,7 +446,7 @@ function BuscaRapida({ aoFechar }: { aoFechar: () => void }) {
               } else if (e.key === "Enter") abrir(resultado[i]);
             }}
             placeholder="Ferramenta, página ou cliente (nome, CNPJ, código)"
-            className="h-14 flex-1 bg-transparent text-[15px] outline-none"
+            className="h-14 flex-1 bg-transparent text-[15px] outline-none focus-visible:outline-none"
             role="combobox"
             aria-expanded="true"
             aria-controls="busca-rapida-lista"
