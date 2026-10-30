@@ -8,6 +8,8 @@
     "start": "next start"
   },
   "dependencies": {
+    "@fontsource-variable/hanken-grotesk": "^5.3.0",
+    "@fontsource/bodoni-moda": "^5.3.0",
     "@supabase/supabase-js": "^2.118.0",
     "next": "16.4.2",
     "pdf-lib": "^1.17.1",

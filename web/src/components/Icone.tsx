@@ -1,5 +1,29 @@
 // Ícones de traço simples (24×24) usados no Hub.
 const P: Record<string, React.ReactNode> = {
+  casa: <path d="M4 11l8-6.5 8 6.5V19a1.5 1.5 0 0 1-1.5 1.5H15v-6h-6v6H5.5A1.5 1.5 0 0 1 4 19z" />,
+  busca: (
+    <>
+      <circle cx="11" cy="11" r="6.5" />
+      <path d="M16 16l4 4" />
+    </>
+  ),
+  engrenagem: (
+    <>
+      <circle cx="12" cy="12" r="3" />
+      <path d="M12 2.8v2.4M12 18.8v2.4M4.6 4.6l1.7 1.7M17.7 17.7l1.7 1.7M2.8 12h2.4M18.8 12h2.4M4.6 19.4l1.7-1.7M17.7 6.3l1.7-1.7" />
+    </>
+  ),
+  menu: <path d="M4 7h16M4 12h16M4 17h16" />,
+  sair: <path d="M14 4h4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-4M10 16l4-4-4-4M14 12H4" />,
+  recolher: <path d="M15 6l-6 6 6 6" />,
+  expandir: <path d="M9 6l6 6-6 6" />,
+  tv: (
+    <>
+      <rect x="3" y="5" width="18" height="12" rx="2" />
+      <path d="M8 20h8" />
+    </>
+  ),
+  mais: <path d="M12 5v14M5 12h14" />,
   check: <path d="M4 12.5l5 5L20 6.5" />,
   pasta: <path d="M3 7.5a2 2 0 0 1 2-2h4l2 2.5h8a2 2 0 0 1 2 2V17a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />,
   grafico: (

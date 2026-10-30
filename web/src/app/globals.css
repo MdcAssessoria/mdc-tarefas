@@ -4,10 +4,12 @@
   --marca: #0b2820;
   --destaque: #e2c17e;
   --destaque-escuro: #8a6a2a;
-  --fundo: #f6f4ee;
+  --fundo: #eef2ef;
   --superficie: #ffffff;
-  --borda: #e4e0d4;
-  --texto: #1c2420;
+  --borda: #dce3de;
+  --texto: #18211d;
+  --musgo: #12352a;
+  --nevoa: #c6d3cc;
   --texto-suave: #5d6661;
   --perigo: #b42318;
   --alerta: #b54708;
@@ -18,7 +20,8 @@
   --color-marca: var(--marca);
   --color-destaque: var(--destaque);
   --color-fundo: var(--fundo);
-  --font-sans: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-sans: "Hanken Grotesk Variable", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-display: "Bodoni Moda", "Didot", "Bodoni 72", Georgia, serif;
 }
 
 html,
@@ -26,7 +29,36 @@ body {
   background: var(--fundo);
   color: var(--texto);
   font-family: var(--font-sans);
+  font-feature-settings: "tnum" 0;
 }
+
+.font-display {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+}
+.num {
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+:focus-visible {
+  outline: 2px solid var(--destaque-escuro);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
+
+@keyframes surgir {
+  from { opacity: 0; transform: translateY(-6px) scale(0.985); }
+  to { opacity: 1; transform: none; }
+}
+.surgir { animation: surgir 140ms ease-out; }
 
 @layer components {
   .cartao {

@@ -1,4 +1,7 @@
 import type { Metadata, Viewport } from "next";
+import "@fontsource-variable/hanken-grotesk";
+import "@fontsource/bodoni-moda/500.css";
+import "@fontsource/bodoni-moda/600.css";
 import "./globals.css";
 
 export const metadata: Metadata = {

@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
 import { TarefaEditor } from "@/components/TarefaEditor";
 import { MultiSelecao } from "@/components/MultiSelecao";
@@ -16,7 +17,9 @@ import { caminho } from "@/lib/caminho";
 export default function PaginaTarefas() {
   return (
     <AppShell>
-      <Tarefas />
+      <Suspense>
+        <Tarefas />
+      </Suspense>
     </AppShell>
   );
 }
@@ -47,6 +50,19 @@ function Tarefas() {
     if (papel === "tv") window.location.replace(caminho("/tv"));
   }, [papel]);
 
+  // atalhos vindos da busca rápida: ?cliente=<id> filtra, ?nova=1 abre o editor
+  const params = useSearchParams();
+  useEffect(() => {
+    const cli = params.get("cliente");
+    if (cli) {
+      setCliente(cli);
+      setSituacao("todas");
+      setRespSel([]);
+    }
+    if (params.get("nova")) setEditando(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [params]);
+
   useEffect(() => {
     try {
       const v = localStorage.getItem("mdc-tarefas:visao");
@@ -57,6 +73,10 @@ function Tarefas() {
       const pessoasOk = new Set([...membros.filter((m) => m.ativo).map((m) => m.user_id), "_sem"]);
       setSetorSel(Array.isArray(f?.setores) ? f.setores.filter((x) => setoresOk.has(x)) : []);
       setRespSel(Array.isArray(f?.resps) ? f.resps.filter((x) => pessoasOk.has(x)) : papel === "analista" ? [eu.user_id] : []);
+      if (new URLSearchParams(window.location.search).get("cliente")) {
+        setRespSel([]);
+        setSetorSel([]);
+      }
     } catch {}
     setFiltrosProntos(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
