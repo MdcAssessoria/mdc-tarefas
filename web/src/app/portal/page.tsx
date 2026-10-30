@@ -15,6 +15,8 @@ import {
   ArvoreBalancete, GradeIndices, PainelResumo, VisaoParecer, mesAno, mesExtenso,
 } from "@/components/demonstrativos/Painel";
 import type { BalanceteReg, LinhaReg, ParecerReg } from "@/components/demonstrativos/Painel";
+import { AbaDemonstracoes } from "@/components/demonstrativos/Demonstracoes";
+import { BotaoPdf } from "@/components/demonstrativos/BotaoPdf";
 
 interface Empresa {
   cliente_id: string;
@@ -31,12 +33,13 @@ interface Empresa {
   permissoes: string[];
 }
 
-type Aba = "inicio" | "balancete" | "indices" | "parecer" | "rotinas" | "processos" | "chat" | "documentos";
+type Aba = "inicio" | "demonstracoes" | "balancete" | "indices" | "parecer" | "rotinas" | "processos" | "chat" | "documentos";
 
 const ABAS: { id: Aba; nome: string; perm: string; icone: string }[] = [
   { id: "inicio", nome: "Resumo", perm: "demonstrativos", icone: "grafico" },
   { id: "rotinas", nome: "Rotinas do mês", perm: "rotinas", icone: "check" },
   { id: "chat", nome: "Fale com a MDC", perm: "chat", icone: "chat" },
+  { id: "demonstracoes", nome: "Balanço, DRE e DFC", perm: "demonstrativos", icone: "grafico" },
   { id: "balancete", nome: "Balancete", perm: "demonstrativos", icone: "documento" },
   { id: "indices", nome: "Índices", perm: "demonstrativos", icone: "alvo" },
   { id: "parecer", nome: "Parecer técnico", perm: "demonstrativos", icone: "escudo" },
@@ -151,7 +154,7 @@ export default function Portal() {
         </nav>
       </header>
       <main className="mx-auto max-w-[1200px] px-4 py-5">
-        {(aba === "inicio" || aba === "balancete" || aba === "indices" || aba === "parecer") && <Demonstrativos emp={emp} aba={aba} />}
+        {(aba === "inicio" || aba === "demonstracoes" || aba === "balancete" || aba === "indices" || aba === "parecer") && <Demonstrativos emp={emp} aba={aba} />}
         {aba === "rotinas" && <Rotinas emp={emp} />}
         {aba === "processos" && <Processos emp={emp} />}
         {aba === "chat" && <Chat emp={emp} />}
@@ -275,11 +278,12 @@ function Demonstrativos({ emp, aba }: { emp: Empresa; aba: Aba }) {
             </option>
           ))}
         </select>
-        <button className="btn ml-auto" onClick={() => window.print()}>
-          Baixar PDF
-        </button>
+        <div className="ml-auto">
+          <BotaoPdf balanceteId={atual.id} />
+        </div>
       </div>
       {aba === "inicio" && <PainelResumo atual={atual} historico={lista} />}
+      {aba === "demonstracoes" && <AbaDemonstracoes atual={atual} historico={lista} />}
       {aba === "balancete" && <ArvoreBalancete linhas={linhas} anteriores={anteriores} />}
       {aba === "indices" && <GradeIndices atual={atual} historico={lista} />}
       {aba === "parecer" &&

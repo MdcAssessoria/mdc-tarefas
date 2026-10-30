@@ -225,3 +225,203 @@ export function Faisca({ valores, alerta }: { valores: (number | null)[]; alerta
     </svg>
   );
 }
+
+// ---------------------------------------------------------------- painel de saúde e composições
+
+export const STATUS = {
+  bom: { cor: "#067647", fundo: "#ECFDF3", icone: "✔", rotulo: "Bom" },
+  atencao: { cor: "#B54708", fundo: "#FFFAEB", icone: "!", rotulo: "Atenção" },
+  critico: { cor: "#B42318", fundo: "#FEF3F2", icone: "✖", rotulo: "Crítico" },
+} as const;
+
+/** Termômetro (meio círculo) de 0 a 100 com três faixas. */
+export function Termometro({ nota, faixa }: { nota: number; faixa: string }) {
+  const W = 240, H = 140, cx = 120, cy = 120, R = 96, esp = 18;
+  const pt = (v: number, r = R) => {
+    const a = Math.PI * (1 - v / 100);
+    return [cx + r * Math.cos(a), cy - r * Math.sin(a)];
+  };
+  const arco = (de: number, ate: number) => {
+    const [x1, y1] = pt(de), [x2, y2] = pt(ate);
+    return `M ${x1} ${y1} A ${R} ${R} 0 0 1 ${x2} ${y2}`;
+  };
+  const cor = nota >= 75 ? STATUS.bom.cor : nota >= 50 ? STATUS.atencao.cor : STATUS.critico.cor;
+  const [px, py] = pt(nota, R - esp / 2 - 14);
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} className="mx-auto w-full max-w-[260px]" role="img" aria-label={`Termômetro de saúde: ${nota} de 100, ${faixa}`}>
+      <path d={arco(0, 49.5)} stroke={STATUS.critico.cor} strokeOpacity={0.22} strokeWidth={esp} fill="none" />
+      <path d={arco(50.5, 74.5)} stroke={STATUS.atencao.cor} strokeOpacity={0.22} strokeWidth={esp} fill="none" />
+      <path d={arco(75.5, 100)} stroke={STATUS.bom.cor} strokeOpacity={0.22} strokeWidth={esp} fill="none" />
+      <path d={arco(0, Math.max(0.5, nota))} stroke={cor} strokeWidth={esp} fill="none" strokeLinecap="round" />
+      <line x1={cx} y1={cy} x2={px} y2={py} stroke="#1c2420" strokeWidth="3" strokeLinecap="round" />
+      <circle cx={cx} cy={cy} r="6" fill="#1c2420" />
+      <text x={cx} y={cy - 34} textAnchor="middle" fontSize="30" fontWeight="700" fill="#1c2420">{nota}</text>
+      <text x={14} y={H - 2} fontSize="10" fill={COR.eixo}>0</text>
+      <text x={W - 14} y={H - 2} textAnchor="end" fontSize="10" fill={COR.eixo}>100</text>
+    </svg>
+  );
+}
+
+/** Barra 100% com rótulos diretos: para onde vai cada R$ 100 de receita. */
+export function Pilha100({ partes }: { partes: { rotulo: string; valor: number; cor: string }[] }) {
+  const [hover, setHover] = useState<number | null>(null);
+  const pos = partes.filter((p) => p.valor > 0);
+  const total = pos.reduce((a, p) => a + p.valor, 0) || 1;
+  return (
+    <div>
+      <div className="flex h-10 w-full gap-[2px] overflow-hidden rounded-md" role="img" aria-label="Composição de cada R$ 100 de receita">
+        {pos.map((p, i) => {
+          const w = (p.valor / total) * 100;
+          return (
+            <div
+              key={p.rotulo}
+              className="relative flex items-center justify-center text-xs font-semibold text-white"
+              style={{ width: `${w}%`, background: p.cor, opacity: hover === null || hover === i ? 1 : 0.6 }}
+              onMouseEnter={() => setHover(i)}
+              onMouseLeave={() => setHover(null)}
+              title={`${p.rotulo}: R$ ${w.toFixed(1).replace(".", ",")} de cada R$ 100 (${brl(p.valor)})`}
+            >
+              {w >= 7 ? `R$ ${Math.round(w)}` : ""}
+            </div>
+          );
+        })}
+      </div>
+      <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-neutral-700">
+        {pos.map((p) => (
+          <span key={p.rotulo} className="flex items-center gap-1.5">
+            <span className="h-2.5 w-2.5 rounded-sm" style={{ background: p.cor }} />
+            {p.rotulo} <b className="tabular-nums">R$ {((p.valor / total) * 100).toFixed(1).replace(".", ",")}</b>
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/** Linha do tempo do ciclo: estoque + recebimento × pagamento. */
+export function CicloCaixa({ pme, pmr, pmp }: { pme: number | null; pmr: number | null; pmp: number | null }) {
+  const e = Math.max(0, pme ?? 0), r = Math.max(0, pmr ?? 0), p = Math.max(0, pmp ?? 0);
+  const total = Math.max(e + r, p, 1);
+  const pctW = (v: number) => `${(v / total) * 100}%`;
+  const cf = e + r - p;
+  return (
+    <div className="space-y-3 text-xs">
+      <div>
+        <div className="mb-1 text-neutral-600">Do estoque ao dinheiro na conta (ciclo operacional: {e + r} dias)</div>
+        <div className="flex h-8 gap-[2px]">
+          {e > 0 && (
+            <div className="flex items-center justify-center rounded-l-md text-white" style={{ width: pctW(e), background: COR.despesa }} title={`PME ${e} dias`}>
+              Estoque {e}d
+            </div>
+          )}
+          <div className={`flex items-center justify-center text-white ${e > 0 ? "rounded-r-md" : "rounded-md"}`} style={{ width: pctW(r), background: COR.receita }} title={`PMR ${r} dias`}>
+            Recebimento {r}d
+          </div>
+        </div>
+      </div>
+      <div>
+        <div className="mb-1 text-neutral-600">Prazo que os fornecedores dão (PMP)</div>
+        <div className="flex h-8">
+          <div className="flex items-center justify-center rounded-md text-white" style={{ width: pctW(p), background: COR.lucro }} title={`PMP ${p} dias`}>
+            Pagamento {p}d
+          </div>
+        </div>
+      </div>
+      <p className={`rounded-md p-2 ${cf > 0 ? "bg-amber-50 text-amber-900" : "bg-emerald-50 text-emerald-900"}`}>
+        {cf > 0
+          ? `Ciclo financeiro de ${cf} dias: a empresa paga antes de receber e precisa financiar esse intervalo com caixa próprio ou de banco.`
+          : `A empresa recebe ${-cf} dia(s) antes de pagar — os fornecedores financiam a operação.`}
+      </p>
+    </div>
+  );
+}
+
+/** Duas colunas empilhadas: o que a empresa tem × quem financia. */
+export function Composicao({
+  ativo,
+  passivo,
+}: {
+  ativo: { rotulo: string; valor: number; cor: string }[];
+  passivo: { rotulo: string; valor: number; cor: string }[];
+}) {
+  const tot = Math.max(1, ativo.reduce((a, x) => a + Math.max(0, x.valor), 0), passivo.reduce((a, x) => a + Math.max(0, x.valor), 0));
+  const Col = ({ titulo, itens }: { titulo: string; itens: { rotulo: string; valor: number; cor: string }[] }) => (
+    <div className="flex min-w-0 flex-1 flex-col">
+      <div className="mb-1 text-center text-xs font-semibold text-neutral-700">{titulo}</div>
+      <div className="flex h-56 flex-col-reverse gap-[2px]">
+        {itens.filter((x) => x.valor > 0).map((x) => {
+          const h = (x.valor / tot) * 100;
+          return (
+            <div key={x.rotulo} className="flex items-center justify-center rounded-sm px-1 text-center text-[11px] font-semibold leading-tight text-white" style={{ height: `${h}%`, background: x.cor }} title={`${x.rotulo}: ${brl(x.valor)} (${h.toFixed(0)}%)`}>
+              {h >= 8 ? `${h.toFixed(0)}%` : ""}
+            </div>
+          );
+        })}
+      </div>
+      <div className="mt-2 space-y-0.5 text-[11px] text-neutral-700">
+        {[...itens].reverse().map((x) => (
+          <div key={x.rotulo} className="flex items-center gap-1.5">
+            <span className="h-2.5 w-2.5 shrink-0 rounded-sm" style={{ background: x.cor }} />
+            <span className="truncate">{x.rotulo}</span>
+            <b className={`ml-auto whitespace-nowrap tabular-nums ${x.valor < 0 ? "text-[var(--perigo)]" : ""}`}>{brl(x.valor)}</b>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+  return (
+    <div className="flex gap-5">
+      <Col titulo="O que a empresa tem" itens={ativo} />
+      <Col titulo="Quem financia" itens={passivo} />
+    </div>
+  );
+}
+
+/** Colunas agrupadas por mês (até 2 séries, mesma escala). */
+export function ColunasPareadas({ meses, series }: { meses: string[]; series: { nome: string; cor: string; valores: (number | null)[] }[] }) {
+  const [hover, setHover] = useState<number | null>(null);
+  const W = 720, H = 240, ml = 56, mr = 12, mt = 12, mb = 28;
+  const todos = series.flatMap((s) => s.valores.filter((v): v is number => v !== null));
+  const { ini, fim, ticks } = escala(Math.min(0, ...todos), Math.max(0, ...todos));
+  const y = (v: number) => mt + (1 - (v - ini) / (fim - ini)) * (H - mt - mb);
+  const gw = (W - ml - mr) / Math.max(1, meses.length);
+  const bw = Math.min(22, (gw * 0.7) / series.length);
+  return (
+    <div className="relative">
+      <div className="mb-2 flex flex-wrap gap-4 text-xs text-neutral-600">
+        {series.map((s) => (
+          <span key={s.nome} className="flex items-center gap-1.5">
+            <span className="h-2.5 w-2.5 rounded-sm" style={{ background: s.cor }} />
+            {s.nome}
+          </span>
+        ))}
+      </div>
+      <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img" aria-label="Comparação mensal" onMouseLeave={() => setHover(null)}>
+        {ticks.map((t) => (
+          <g key={t}>
+            <line x1={ml} x2={W - mr} y1={y(t)} y2={y(t)} stroke={COR.grade} strokeWidth={t === 0 ? 1.5 : 1} />
+            <text x={ml - 6} y={y(t) + 4} textAnchor="end" fontSize="11" fill={COR.eixo}>{curto(t)}</text>
+          </g>
+        ))}
+        {meses.map((m, i) => {
+          const x0 = ml + i * gw + (gw - bw * series.length - 2 * (series.length - 1)) / 2;
+          return (
+            <g key={m} onMouseEnter={() => setHover(i)}>
+              <rect x={ml + i * gw} y={mt} width={gw} height={H - mt - mb} fill="transparent" />
+              {series.map((s, k) => {
+                const v = s.valores[i];
+                if (v === null) return null;
+                const top = y(Math.max(0, v)), alt = Math.max(1.5, Math.abs(y(v) - y(0)));
+                return <rect key={s.nome} x={x0 + k * (bw + 2)} y={top} width={bw} height={alt} rx="3" fill={v < 0 && series.length === 1 ? COR.negativo : s.cor} opacity={hover === null || hover === i ? 1 : 0.55} />;
+              })}
+              <text x={ml + i * gw + gw / 2} y={H - 8} textAnchor="middle" fontSize="11" fill={COR.eixo}>{m}</text>
+            </g>
+          );
+        })}
+      </svg>
+      {hover !== null && (
+        <Dica x={`${((ml + hover * gw + gw / 2) / W) * 100}%`} y={0} linhas={[meses[hover], ...series.map((s) => `${s.nome}: ${brl(s.valores[hover])}`)]} />
+      )}
+    </div>
+  );
+}

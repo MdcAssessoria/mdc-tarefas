@@ -62,7 +62,7 @@ export interface Cabecalho {
 
 // ---------------------------------------------------------------- leitura
 
-const sem = (s: unknown) =>
+export const sem = (s: unknown) =>
   String(s ?? "")
     .normalize("NFD")
     .replace(/[̀-ͯ]/g, "")
@@ -283,7 +283,7 @@ const REGRAS: { re: RegExp; grupo: Grupo; bloco: Bloco; dentro?: RegExp }[] = [
   { bloco: "resultado", re: /RECEITA BRUTA|RECEITA OPERACIONAL|VENDAS?|PRESTACAO DE SERVICOS|FATURAMENTO|RECEITA DE SERVICOS|RECEITAS?/, grupo: "receita_bruta" },
 ];
 
-function blocoDe(topo: string, classificacao: string): Bloco {
+export function blocoDe(topo: string, classificacao: string): Bloco {
   if (/^ATIVO/.test(topo)) return "ativo";
   if (/PASSIVO|PATRIMONIO/.test(topo)) return "passivo";
   if (/RESULTADO|RECEITA|CUSTO|DESPESA/.test(topo)) return "resultado";
@@ -421,13 +421,46 @@ export interface Indices {
   margem_operacional: number | null;
   margem_liquida: number | null;
   roe: number | null;
-  pmr: number | null; // dias
+  pmr: number | null; // dias — prazo médio de recebimento
+  pmp?: number | null; // prazo médio de pagamento
+  pme?: number | null; // prazo médio de estocagem (estoque total)
+  pmv?: number | null; // prazo médio de venda (produto pronto/mercadoria até a venda)
+  ciclo_operacional?: number | null;
+  ciclo_financeiro?: number | null;
   carga_tributaria: number | null;
+}
+
+/** Saldos médios e bases para os prazos médios (calculados com o saldo anterior e o atual do balancete). */
+export interface BasePrazos {
+  dias: number;
+  clientes_medio: number;
+  estoques_medio: number;
+  acabados_medio: number | null; // produtos acabados/mercadorias; null = sem separação no plano de contas
+  fornecedores_medio: number;
+  compras_fornecedores?: number; // créditos lançados em fornecedores no período = compras a prazo
+  estoque_inicial: number;
+  estoque_final: number;
 }
 
 const div = (a: number, b: number) => (b ? a / b : null);
 
-export function calcularIndices(r: Resumo, diasPeriodo = 30): Indices {
+export function calcularIndices(r: Resumo, diasPeriodo = 30, b?: BasePrazos): Indices {
+  const dias = b?.dias ?? diasPeriodo;
+  const d = r.mes;
+  const cmv = d.custos;
+  const temEstoque = !!b && b.estoques_medio > 1 && cmv > 0;
+  // compras = CMV + estoque final − estoque inicial; sem estoque (serviços), a base de pagamento são custos + despesas operacionais
+  const compras = !b ? 0
+    : (b.compras_fornecedores ?? 0) > 0 ? b.compras_fornecedores!
+    : temEstoque ? cmv + b.estoque_final - b.estoque_inicial : cmv + d.despesas_operacionais;
+  const dd = (v: number | null) => (v === null || !Number.isFinite(v) ? null : Math.round(v));
+  const pmr = b ? (d.receita_bruta > 0 ? dd((b.clientes_medio / d.receita_bruta) * dias) : null)
+    : r.mes.receita_bruta > 0 ? Math.round((r.clientes / r.mes.receita_bruta) * diasPeriodo) : null;
+  const pme = temEstoque ? dd((b!.estoques_medio / cmv) * dias) : null;
+  const pmv = temEstoque ? dd(((b!.acabados_medio ?? b!.estoques_medio) / cmv) * dias) : null;
+  const pmp = b && compras > 0 && b.fornecedores_medio > 0 ? dd((b.fornecedores_medio / compras) * dias) : null;
+  const ciclo_operacional = pmr === null ? null : (pme ?? 0) + pmr;
+  const ciclo_financeiro = ciclo_operacional === null ? null : ciclo_operacional - (pmp ?? 0);
   const plAjustado = r.pl + r.resultado_exercicio; // PL antes do encerramento + resultado do ano
   return {
     liquidez_corrente: div(r.ac, r.pc),
@@ -441,7 +474,7 @@ export function calcularIndices(r: Resumo, diasPeriodo = 30): Indices {
     margem_operacional: div(r.ano.resultado_operacional, r.ano.receita_liquida),
     margem_liquida: div(r.ano.lucro_liquido, r.ano.receita_liquida),
     roe: plAjustado > 0 ? div(r.ano.lucro_liquido, plAjustado) : null,
-    pmr: r.mes.receita_bruta > 0 ? Math.round((r.clientes / r.mes.receita_bruta) * diasPeriodo) : null,
+    pmr, pmp, pme, pmv, ciclo_operacional, ciclo_financeiro,
     carga_tributaria: div(r.ano.deducoes + r.ano.ir_csll, r.ano.receita_bruta),
   };
 }
@@ -458,7 +491,12 @@ export const INDICES_INFO: { id: keyof Indices; nome: string; formato: "x" | "%"
   { id: "margem_operacional", nome: "Margem operacional", formato: "%", leitura: "quanto sobra depois das despesas da operação", alerta: (v) => v < 0 },
   { id: "margem_liquida", nome: "Margem líquida", formato: "%", leitura: "lucro final de cada R$ 100 vendidos", alerta: (v) => v < 0 },
   { id: "roe", nome: "Retorno sobre o patrimônio", formato: "%", leitura: "quanto o capital dos sócios rendeu no ano" },
-  { id: "pmr", nome: "Prazo médio de recebimento", formato: "dias", leitura: "em quantos dias, em média, a empresa recebe", alerta: (v) => v > 60 },
+  { id: "pmr", nome: "PMR · Prazo médio de recebimento", formato: "dias", leitura: "em quantos dias, em média, a empresa recebe dos clientes depois de vender", alerta: (v) => v > 60 },
+  { id: "pmp", nome: "PMP · Prazo médio de pagamento", formato: "dias", leitura: "em quantos dias, em média, a empresa paga fornecedores (base: compras lançadas em fornecedores no período)" },
+  { id: "pme", nome: "PME · Prazo médio de estocagem", formato: "dias", leitura: "quantos dias o estoque (matéria-prima a produto) fica parado até sair; vazio quando não há estoque", alerta: (v) => v > 120 },
+  { id: "pmv", nome: "PMV · Prazo médio de venda", formato: "dias", leitura: "quantos dias o produto pronto ou a mercadoria espera até ser vendido; vazio quando não há estoque", alerta: (v) => v > 90 },
+  { id: "ciclo_operacional", nome: "Ciclo operacional", formato: "dias", leitura: "do estoque ao dinheiro na conta: PME + PMR" },
+  { id: "ciclo_financeiro", nome: "Ciclo financeiro (de caixa)", formato: "dias", leitura: "quantos dias a empresa banca a operação com dinheiro próprio ou de banco: ciclo operacional − PMP", alerta: (v) => v > 60 },
   { id: "carga_tributaria", nome: "Carga tributária efetiva", formato: "%", leitura: "quanto da receita bruta vai para impostos (vendas + IRPJ/CSLL)" },
 ];
 
@@ -514,6 +552,8 @@ export function fragilidades(r: Resumo, i: Indices, linhas: Linha[], anterior?: 
     out.push({ area: "Contas com sócios", nivel: "medio", texto: "Valores a receber de sócios elevados", evidencia: `${socios.length} conta(s) · ${brl(totSocios)}`, recomendacao: "Regularizar por distribuição de lucros ou devolução; mútuo com sócio tem efeito tributário (IOF)." });
   if (i.pmr !== null && i.pmr > 60)
     out.push({ area: "Recebimento", nivel: "medio", texto: "Prazo médio de recebimento alto", evidencia: `${i.pmr} dias`, recomendacao: "Revisar a carteira de clientes vencidos e a política de crédito." });
+  if (i.ciclo_financeiro != null && i.ciclo_financeiro > 60 && (i.pmr ?? 0) > 0)
+    out.push({ area: "Capital de giro", nivel: "medio", texto: "Ciclo financeiro longo", evidencia: `${i.ciclo_financeiro} dias (PMR ${i.pmr ?? "—"}${i.pme != null ? `, PME ${i.pme}` : ""}, PMP ${i.pmp ?? "—"})`, recomendacao: "Encurtar o prazo de recebimento ou alongar o de pagamento reduz a necessidade de capital de giro." });
   if (anterior && r.pc_obrigacoes > anterior.pc_obrigacoes * 1.15 && r.pc_obrigacoes - anterior.pc_obrigacoes > 5000)
     out.push({ area: "Obrigações fiscais e trabalhistas", nivel: "alto", texto: "Tributos e encargos a recolher acumulando", evidencia: `${brl(anterior.pc_obrigacoes)} → ${brl(r.pc_obrigacoes)}`, recomendacao: "Verificar guias não pagas e parcelamentos em atraso antes que virem dívida ativa." });
   const temFolha = an.some((x) => /SALARIO|ORDENADO|PRO.?LABORE/.test(d(x)) && x.grupo === "despesas_operacionais" && x.saldo_atual > 0);
@@ -544,77 +584,7 @@ export function fragilidades(r: Resumo, i: Indices, linhas: Linha[], anterior?: 
   return out;
 }
 
-// ---------------------------------------------------------------- parecer
-
-export function rascunhoParecer(o: {
-  empresa: string;
-  competencia: string; // YYYY-MM-01
-  regime: string | null;
-  r: Resumo;
-  i: Indices;
-  alertas: Alerta[];
-  anterior?: Resumo | null;
-  contador: string;
-  crc: string;
-}): string {
-  const { r, i, alertas, anterior } = o;
-  const mes = new Date(o.competencia + "T12:00:00Z").toLocaleDateString("pt-BR", { month: "long", year: "numeric", timeZone: "UTC" });
-  const varPct = (a: number, b: number | undefined) => (b ? ` (${a >= b ? "+" : ""}${(((a - b) / Math.abs(b)) * 100).toFixed(1).replace(".", ",")}% sobre o mês anterior)` : "");
-  const altos = alertas.filter((a) => a.nivel === "alto");
-  const pontoPrincipal = altos[0]?.texto ?? alertas[0]?.texto;
-  const lucroOuPrej = r.ano.lucro_liquido >= 0 ? `lucro de ${brl(r.ano.lucro_liquido)}` : `prejuízo de ${brl(-r.ano.lucro_liquido)}`;
-
-  const L: string[] = [];
-  L.push(`# Parecer técnico contábil — ${mes}`);
-  L.push(`**${o.empresa}**${o.regime ? ` · regime ${o.regime}` : ""}`);
-  L.push("");
-  L.push("## 1. Resumo executivo");
-  L.push(
-    `No acumulado do ano até ${mes}, a empresa registrou receita bruta de ${brl(r.ano.receita_bruta)} e ${lucroOuPrej}` +
-      (i.margem_liquida !== null ? `, margem líquida de ${fmtIndice(i.margem_liquida, "%")}` : "") +
-      `. A liquidez corrente está em ${fmtIndice(i.liquidez_corrente, "x")} e o capital de giro em ${brl(i.capital_giro)}.` +
-      (pontoPrincipal ? ` O ponto que mais pede atenção é: ${pontoPrincipal.toLowerCase()}.` : " Não foram identificadas fragilidades relevantes no período."),
-  );
-  L.push("");
-  L.push("## 2. Evolução");
-  L.push(`- Receita bruta do mês: ${brl(r.mes.receita_bruta)}${varPct(r.mes.receita_bruta, anterior?.mes.receita_bruta)}.`);
-  L.push(`- Resultado do mês: ${brl(r.mes.lucro_liquido)}; acumulado no ano: ${brl(r.ano.lucro_liquido)}.`);
-  L.push(`- Margem bruta ${fmtIndice(i.margem_bruta, "%")}, margem operacional ${fmtIndice(i.margem_operacional, "%")}.`);
-  L.push(`- Disponível (caixa, bancos e aplicações): ${brl(r.disponivel)}${anterior ? ` (era ${brl(anterior.disponivel)} no mês anterior)` : ""}.`);
-  if (r.mes.despesas_por_conta.length)
-    L.push(`- Maiores custos e despesas do mês: ${r.mes.despesas_por_conta.slice(0, 3).map((d) => `${d.conta} (${brl(d.valor)})`).join(", ")}.`);
-  L.push("");
-  L.push("## 3. Liquidez e endividamento");
-  L.push(`- Liquidez corrente ${fmtIndice(i.liquidez_corrente, "x")}, seca ${fmtIndice(i.liquidez_seca, "x")}, imediata ${fmtIndice(i.liquidez_imediata, "x")} e geral ${fmtIndice(i.liquidez_geral, "x")}.`);
-  L.push(`- Endividamento geral de ${fmtIndice(i.endividamento_geral, "%")}, com ${fmtIndice(i.composicao_endividamento, "%")} vencendo no curto prazo.`);
-  L.push(
-    i.liquidez_corrente !== null && i.liquidez_corrente >= 1
-      ? "- A empresa tem recursos de curto prazo suficientes para honrar as dívidas que vencem nos próximos meses."
-      : "- Os recursos de curto prazo não cobrem as dívidas que vencem nos próximos meses; é preciso acompanhar o caixa de perto.",
-  );
-  L.push("");
-  L.push("## 4. Fragilidades encontradas");
-  if (!alertas.length) L.push("Nenhuma fragilidade relevante identificada nas verificações do período.");
-  for (const a of alertas) L.push(`- **${a.texto}** (${a.area}). Evidência: ${a.evidencia}. Risco ${a.nivel}. Recomendação: ${a.recomendacao}`);
-  L.push("");
-  L.push("## 5. Aspectos tributários");
-  L.push(`- Carga tributária efetiva no ano: ${fmtIndice(i.carga_tributaria, "%")} da receita bruta (tributos sobre vendas e IRPJ/CSLL).`);
-  L.push("- [Revisar: regime atual × alternativas, parcelamentos e pendências fiscais.]");
-  L.push("- Reforma tributária: a partir de 2027 a CBS substitui PIS e COFINS; a MDC avaliará o efeito no preço e no regime da empresa.");
-  L.push("");
-  L.push("## 6. Recomendações e próximos passos");
-  const recs = [...new Set(alertas.map((a) => a.recomendacao))].slice(0, 5);
-  if (!recs.length) L.push("- Manter a rotina atual e acompanhar os indicadores no próximo fechamento.");
-  for (const rr of recs) L.push(`- ${rr}`);
-  L.push("- A MDC acompanhará estes pontos no próximo fechamento.");
-  L.push("");
-  L.push("## 7. Assinatura técnica");
-  L.push(`${o.contador} — Contador, CRC ${o.crc}`);
-  L.push("MDC Assessoria Contábil · Bragança Paulista/SP");
-  L.push("");
-  L.push("_Este parecer se baseia nos registros contábeis do período e nas informações fornecidas pela empresa._");
-  return L.join("\n");
-}
+// ---------------------------------------------------------------- parecer (ver parecer.ts)
 
 /** Markdown simples (títulos, listas, negrito, itálico) → HTML para tela e impressão. */
 export function mdParaHtml(md: string): string {
@@ -634,7 +604,8 @@ export function mdParaHtml(md: string): string {
       out.push("</ul>");
       lista = false;
     }
-    if (/^# /.test(l)) out.push(`<h1>${inline(l.slice(2))}</h1>`);
+    if (/^> /.test(l)) out.push(`<blockquote>${inline(l.slice(2))}</blockquote>`);
+    else if (/^# /.test(l)) out.push(`<h1>${inline(l.slice(2))}</h1>`);
     else if (/^## /.test(l)) out.push(`<h2>${inline(l.slice(3))}</h2>`);
     else if (l) out.push(`<p>${inline(l)}</p>`);
   }

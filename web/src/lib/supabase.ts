@@ -11,6 +11,8 @@ const url = process.env.NEXT_PUBLIC_MDC_SUPABASE_URL || PROJETO_URL;
 const key = process.env.NEXT_PUBLIC_MDC_SUPABASE_KEY || PROJETO_KEY;
 
 export const supabaseConfigurado = Boolean(url && key);
+export const SUPABASE_URL = url;
+export const SUPABASE_KEY = key;
 
 let client: SupabaseClient | null = null;
 

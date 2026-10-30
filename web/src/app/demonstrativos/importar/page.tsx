@@ -69,7 +69,7 @@ function Importar() {
   }
 
   const analise = useMemo(
-    () => (leitura ? analisar(leitura.linhas, competencia ? competencia + "-01" : null, null) : null),
+    () => (leitura ? analisar(leitura.linhas, competencia ? competencia + "-01" : null, null, leitura.cabecalho.inicio, leitura.cabecalho.fim) : null),
     [leitura, competencia],
   );
 
@@ -78,7 +78,7 @@ function Importar() {
     setProcessando(true);
     setErro(null);
     try {
-      const id = await salvarBalancete({ org: org.id, cliente, competencia: competencia + "-01", arquivo, linhas: leitura.linhas });
+      const id = await salvarBalancete({ org: org.id, cliente, competencia: competencia + "-01", arquivo, linhas: leitura.linhas, inicio: leitura.cabecalho.inicio, fim: leitura.cabecalho.fim });
       window.location.href = `/demonstrativos/${id}`;
     } catch (e) {
       setErro(traduzirErro(e));

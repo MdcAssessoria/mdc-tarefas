@@ -7,7 +7,10 @@ import { AppShell } from "@/components/AppShell";
 import { useOrg } from "@/lib/org";
 import { supabase } from "@/lib/supabase";
 import { traduzirErro } from "@/lib/erros";
-import { GRUPOS, rascunhoParecer } from "@/lib/balancete";
+import { GRUPOS } from "@/lib/balancete";
+import { rascunhoParecer } from "@/lib/parecer";
+import { AbaDemonstracoes } from "@/components/demonstrativos/Demonstracoes";
+import { BotaoPdf } from "@/components/demonstrativos/BotaoPdf";
 import type { Grupo } from "@/lib/balancete";
 import { definirGrupo, recalcular } from "@/lib/demonstrativos";
 import { REGIMES } from "@/lib/types";
@@ -24,7 +27,7 @@ export default function PaginaBalancete() {
   );
 }
 
-type Aba = "painel" | "balancete" | "indices" | "fragilidades" | "parecer";
+type Aba = "painel" | "demonstracoes" | "balancete" | "indices" | "fragilidades" | "parecer";
 
 function Detalhe() {
   const { id } = useParams<{ id: string }>();
@@ -105,7 +108,9 @@ function Detalhe() {
   async function novoParecer() {
     const texto = rascunhoParecer({
       empresa: cliente?.razao_social ?? nome,
+      cnpj: cliente?.cnpj ?? null,
       competencia: b!.competencia,
+      demo: b!.demonstracoes ?? null,
       regime: REGIMES.find((r) => r.id === cliente?.regime)?.nome ?? null,
       r: b!.resumo,
       i: b!.indices,
@@ -130,6 +135,7 @@ function Detalhe() {
 
   const ABAS: { id: Aba; nome: string }[] = [
     { id: "painel", nome: "Painel" },
+    { id: "demonstracoes", nome: "Balanço, DRE e DFC" },
     { id: "balancete", nome: "Balancete" },
     { id: "indices", nome: "Índices" },
     { id: "fragilidades", nome: `Fragilidades (${b.alertas.length})` },
@@ -151,6 +157,7 @@ function Detalhe() {
             {b.publicado_em && ` · publicado em ${new Date(b.publicado_em).toLocaleString("pt-BR")}`}
           </p>
         </div>
+        <BotaoPdf balanceteId={b.id} rascunho={b.status !== "publicado"} />
         {b.status === "publicado" ? (
           <>
             <span className="chip bg-emerald-50 text-emerald-800">Publicado para o cliente</span>
@@ -210,6 +217,8 @@ function Detalhe() {
           <PainelResumo atual={b} historico={historico} />
         </div>
       )}
+
+      {aba === "demonstracoes" && <AbaDemonstracoes atual={b} historico={historico} />}
 
       {aba === "balancete" && (
         <ArvoreBalancete

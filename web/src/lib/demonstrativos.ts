@@ -1,6 +1,7 @@
 import { supabase } from "./supabase";
 import { calcularIndices, classificar, conferir, fragilidades, normalizarSinal, resumir } from "./balancete";
 import type { Grupo, Linha, Resumo } from "./balancete";
+import { basePrazos, montar, periodoDe } from "./demonstracoes";
 
 /** Regras de conta → grupo salvas (padrão da organização + específicas do cliente). */
 export async function carregarMapa(org: string, cliente: string) {
@@ -25,12 +26,22 @@ async function resumoAnterior(cliente: string, competencia: string): Promise<Res
   return ((data?.[0] as { resumo: Resumo } | undefined)?.resumo ?? null) as Resumo | null;
 }
 
-export function analisar(linhas: Linha[], competencia: string | null, anterior: Resumo | null) {
+export function analisar(
+  linhas: Linha[],
+  competencia: string | null,
+  anterior: Resumo | null,
+  inicio?: string | null,
+  fim?: string | null,
+) {
   const resumo = resumir(linhas);
-  const indices = calcularIndices(resumo);
+  const periodo = periodoDe(competencia ?? new Date().toISOString().slice(0, 10), inicio, fim);
+  const indices = calcularIndices(resumo, periodo.dias, basePrazos(linhas, periodo.dias));
   const alertas = fragilidades(resumo, indices, linhas, anterior);
   const conferencias = conferir(resumo, linhas, competencia);
-  return { resumo, indices, alertas, conferencias };
+  const demonstracoes = montar(linhas, resumo, indices, periodo);
+  if (!demonstracoes.dfc.fechado)
+    conferencias.push({ nome: "DFC fecha com a variação do caixa", ok: false, detalhe: "revise os grupos das contas" });
+  return { resumo, indices, alertas, conferencias, demonstracoes, periodo_inicio: periodo.inicio, periodo_fim: periodo.fim };
 }
 
 /** Grava (ou substitui, se ainda for rascunho) o balancete do cliente na competência. */
@@ -40,6 +51,8 @@ export async function salvarBalancete(o: {
   competencia: string; // YYYY-MM-01
   arquivo: string;
   linhas: Linha[];
+  inicio?: string | null;
+  fim?: string | null;
 }): Promise<string> {
   const sb = supabase();
   const existe = await sb
@@ -51,7 +64,7 @@ export async function salvarBalancete(o: {
   if (existe.data?.status === "publicado")
     throw new Error("Este mês já está publicado para o cliente. Despublique na tela do balancete antes de importar de novo.");
   const anterior = await resumoAnterior(o.cliente, o.competencia);
-  const a = analisar(o.linhas, o.competencia, anterior);
+  const a = analisar(o.linhas, o.competencia, anterior, o.inicio, o.fim);
   const reg = {
     org_id: o.org,
     cliente_id: o.cliente,
@@ -84,12 +97,13 @@ export async function salvarBalancete(o: {
 /** Recalcula resumo, índices e alertas de um balancete já gravado (depois de ajustar grupos). */
 export async function recalcular(balanceteId: string) {
   const sb = supabase();
-  const b = await sb.from("portal_balancetes").select("cliente_id,competencia").eq("id", balanceteId).single();
+  const b = await sb.from("portal_balancetes").select("cliente_id,competencia,periodo_inicio,periodo_fim").eq("id", balanceteId).single();
   if (b.error) throw b.error;
   const l = await sb.from("portal_balancete_linhas").select("*").eq("balancete_id", balanceteId).order("classificacao").limit(20000);
   if (l.error) throw l.error;
-  const { cliente_id, competencia } = b.data as { cliente_id: string; competencia: string };
-  const a = analisar(l.data as Linha[], competencia, await resumoAnterior(cliente_id, competencia));
+  const { cliente_id, competencia, periodo_inicio, periodo_fim } = b.data as { cliente_id: string; competencia: string; periodo_inicio: string | null; periodo_fim: string | null };
+  const num = (l.data as Linha[]).map((x) => ({ ...x, saldo_anterior: Number(x.saldo_anterior), debitos: Number(x.debitos), creditos: Number(x.creditos), saldo_atual: Number(x.saldo_atual) }));
+  const a = analisar(num, competencia, await resumoAnterior(cliente_id, competencia), periodo_inicio, periodo_fim);
   const u = await sb.from("portal_balancetes").update(a).eq("id", balanceteId);
   if (u.error) throw u.error;
 }
@@ -124,9 +138,11 @@ export async function definirGrupo(o: {
  */
 export async function reprocessar(balanceteId: string) {
   const sb = supabase();
-  const b = await sb.from("portal_balancetes").select("org_id,cliente_id,competencia,status").eq("id", balanceteId).single();
+  const b = await sb.from("portal_balancetes").select("org_id,cliente_id,competencia,status,periodo_inicio,periodo_fim").eq("id", balanceteId).single();
   if (b.error) throw b.error;
-  const { org_id, cliente_id, competencia, status } = b.data as { org_id: string; cliente_id: string; competencia: string; status: string };
+  const { org_id, cliente_id, competencia, status, periodo_inicio, periodo_fim } = b.data as {
+    org_id: string; cliente_id: string; competencia: string; status: string; periodo_inicio: string | null; periodo_fim: string | null;
+  };
   if (status === "publicado") throw new Error("Despublique o balancete antes de reprocessar.");
   const l = await sb.from("portal_balancete_linhas").select("*").eq("balancete_id", balanceteId).order("classificacao").limit(20000);
   if (l.error) throw l.error;
@@ -150,7 +166,7 @@ export async function reprocessar(balanceteId: string) {
     const r = await sb.from("portal_balancete_linhas").insert(rows.slice(k, k + 500));
     if (r.error) throw r.error;
   }
-  const a = analisar(linhas, competencia, await resumoAnterior(cliente_id, competencia));
+  const a = analisar(linhas, competencia, await resumoAnterior(cliente_id, competencia), periodo_inicio, periodo_fim);
   const u = await sb.from("portal_balancetes").update(a).eq("id", balanceteId);
   if (u.error) throw u.error;
 }

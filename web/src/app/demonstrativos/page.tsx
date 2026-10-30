@@ -20,7 +20,7 @@ export default function PaginaDemonstrativos() {
 }
 
 function Lista() {
-  const { org, clientePorId, pode } = useOrg();
+  const { org, eu, clientePorId, pode } = useOrg();
   const [lista, setLista] = useState<BalanceteReg[]>([]);
   const [erro, setErro] = useState<string | null>(null);
   const [busca, setBusca] = useState("");
@@ -76,6 +76,11 @@ function Lista() {
           <button className="btn" onClick={reprocessarRascunhos} disabled={!!progresso} title="Relê as contas gravadas com as regras atuais: sinal, grupos e cálculos">
             Reprocessar rascunhos
           </button>
+        )}
+        {eu.papel === "admin" && (
+          <Link href="/demonstrativos/certificado" className="btn" title="Certificado digital usado para assinar os PDFs">
+            Certificado digital
+          </Link>
         )}
         {pode("demonstrativos", "operar") && (
           <Link href="/demonstrativos/importar" className="btn-primario">

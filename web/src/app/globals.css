@@ -142,6 +142,7 @@ body {
 .prosa p { font-size: 14px; line-height: 1.6; margin: 0 0 8px; }
 .prosa ul { list-style: disc; padding-left: 20px; margin: 0 0 8px; }
 .prosa li { font-size: 14px; line-height: 1.55; margin-bottom: 4px; }
+.prosa blockquote { font-size: 13.5px; line-height: 1.55; margin: 2px 0 12px; padding: 8px 12px; background: #F6F4EE; border-left: 3px solid #E2C17E; border-radius: 6px; color: #1c2420; }
 
 @media print {
   body { background: #fff; }
