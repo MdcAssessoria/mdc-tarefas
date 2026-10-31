@@ -70,5 +70,14 @@ baixa o título e contabiliza. Mesmo cadastro de pessoas, plano e categorias.
   fin_titulos.nota_id.
 - Fases 5 (Entradas) e 6 (Saídas).
 
-## Decisões em aberto
-- Serviço fiscal: contêiner na nuvem (recomendado: Render/Railway/Fly.io, ~US$ 5–10/mês) ou servidor da MDC.
+## Serviço fiscal — onde roda
+Escolhido: Google Cloud Run, região São Paulo (southamerica-east1). Liga só quando o HUB chama; cota gratuita
+mensal por conta de faturamento: 180 mil vCPU-s, 360 mil GiB-s, 2 milhões de requisições (São Paulo é
+"Tier 2", a cota é aplicada como desconto a preço Tier 1). Acesso restrito ao HUB; alerta de orçamento.
+Alternativas avaliadas: Fly.io (sem grátis; US$ 3,54/mês a menor máquina em gru) e Oracle Always Free
+(grátis, mas recolhe instâncias ociosas e exige administrar o servidor).
+Fontes: https://cloud.google.com/run/pricing · https://fly.io/pricing.md ·
+https://docs.oracle.com/en-us/iaas/Content/FreeTier/resourceref.htm
+
+## Pendência para iniciar
+- MDC criar a conta do Google Cloud (cartão no faturamento) e um projeto "hub-mdc-fiscal"; dar acesso para a implantação.
