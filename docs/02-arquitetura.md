@@ -67,7 +67,7 @@ Duas formas de falar com o banco:
 | decide quem vê ou altera um dado | RLS e funções `app.*` no banco | `app.hub_pode`, `app.portal_pode` |
 | muda várias tabelas ou estados | Função RPC `public.*` | `soc_mudar_fase`, `portal_publicar_balancete` |
 | não pode ser quebrada por nenhuma tela | Gatilho no banco | Último administrador, balancete publicado travado |
-| calcula para mostrar (gráficos, índices) | TypeScript em `web/src/lib/` | `balancete.ts`, `demonstracoes.ts` |
+| calcula para mostrar (gráficos, índices) | TypeScript em `web/src/dominios/<módulo>/` | `demonstrativos/balancete/`, `calculosDemonstracoes.ts` |
 | usa segredo (chave de serviço, certificado) | Função Edge | `convite`, `demonstrativo-pdf` |
 | lê arquivo de terceiro (Excel do Domínio) | TypeScript, função pura testável | `lerBalancete`, `importacao.ts` |
 

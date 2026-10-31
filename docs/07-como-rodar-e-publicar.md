@@ -57,7 +57,7 @@ npx supabase functions deploy convite --project-ref bulqqdgfrrpqquqvjjfa --impor
 ```
 
 - `demonstrativo-pdf` usa cópias de `balancete.ts` e `demonstracoes.ts` geradas por `scripts/sync-funcoes.sh` a
-  partir de `web/src/lib/`. **Rode o script antes de publicar** sempre que mexer nesses cálculos.
+  partir de `web/src/dominios/demonstrativos/`. **Rode o script antes de publicar** sempre que mexer nesses cálculos.
 - Segredos das funções (chave de serviço etc.) ficam no painel: Edge Functions › Secrets. Nunca no código.
 - As origens permitidas (CORS e link de convite) são `mdcassessoria.com`, `www.mdcassessoria.com` e
   `mdc-tarefas.vercel.app`. Para testar convite rodando local, publique uma versão de teste com `localhost`.
