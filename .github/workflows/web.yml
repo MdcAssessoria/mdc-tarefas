@@ -1,0 +1,23 @@
+# Verificação automática do site: roda a cada push e pull request que mexe em web/.
+# Se ficar vermelho, não publique: corrija primeiro (tipos, lint, testes ou build).
+name: Verificar site
+on:
+  push:
+    paths: ["web/**", ".github/workflows/web.yml"]
+  pull_request:
+    paths: ["web/**", ".github/workflows/web.yml"]
+jobs:
+  verificar:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci
+      - run: npm run verificar
