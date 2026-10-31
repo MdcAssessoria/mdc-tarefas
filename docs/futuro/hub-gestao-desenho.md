@@ -119,7 +119,7 @@ Base: lib/excel.ts e lib/relatorioPdf.ts viram um componente único de relatóri
   provisões (Fiscal), lançamentos manuais MDC, folha importada do Domínio. Origem clicável.
 - Diário, razão, balancete de qualquer período (molde de relatórios).
 - Cópia integral do desenho do balancete atual: o balancete gerado sai no mesmo formato de linhas do
-  importado (lib/balancete.ts Linha), então reaproveita grupos, conferências, painel, BP/DRE/DFC, índices
+  importado (web/src/dominios/demonstrativos/balancete, tipo Linha), então reaproveita grupos, conferências, painel, BP/DRE/DFC, índices
   (liquidez, endividamento, margens, PMR/PMP/PME/PMV, ciclos, carga tributária) com tendência linear,
   fragilidades, saúde por pilares, parecer, PDF assinado e publicação no Portal.
 - Conferência HUB × Domínio conta a conta (balancete do Domínio segue importado); fechamento trava origens.

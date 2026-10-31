@@ -10,7 +10,7 @@
 sequenceDiagram
     actor A as Analista
     participant T as Tela Importar balancete
-    participant L as lib/balancete.ts (navegador)
+    participant L as dominios/demonstrativos/balancete (navegador)
     participant DB as Banco
     participant EF as Função demonstrativo-pdf
     actor C as Cliente
