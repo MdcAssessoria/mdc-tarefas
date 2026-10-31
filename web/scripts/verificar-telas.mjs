@@ -57,14 +57,18 @@ function descobrirRotas() {
       if (statSync(caminho).isDirectory()) {
         if (!nome.startsWith("_")) andar(caminho);
       } else if (nome === "page.tsx") {
-        const chave = relative(app, pasta).split(sep).join("/");
+        // a chave é o caminho sem os grupos "(x)", que não entram no endereço (ex.: "(hub)/societario/[id]" → "societario/[id]")
+        const chave = relative(app, pasta)
+          .split(sep)
+          .filter((p) => p && !/^\(.*\)$/.test(p))
+          .join("/");
         rotas.push(chave);
       }
     }
   };
   andar(app);
   return rotas.sort().map((chave) => {
-    const partes = chave.split("/").filter((p) => p && !/^\(.*\)$/.test(p));
+    const partes = chave.split("/").filter(Boolean);
     const temParametro = partes.some((p) => p.startsWith("["));
     if (temParametro && !IDS_EXEMPLO[chave])
       throw new Error(
