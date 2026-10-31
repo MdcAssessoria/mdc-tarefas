@@ -1,0 +1,57 @@
+erDiagram
+    organizacoes ||--o{ membros : "tem"
+    organizacoes ||--o{ setores : "tem"
+    organizacoes ||--o{ clientes : "atende"
+    organizacoes ||--o{ hub_perfis : "define"
+    hub_perfis ||--o{ membros : "perfil de"
+    membros ||--o{ hub_acessos : "recebe"
+    hub_apps ||--o{ hub_acessos : "libera"
+    clientes ||--o{ cliente_responsaveis : "tem"
+    setores ||--o{ cliente_responsaveis : "por setor"
+    membros ||--o{ cliente_responsaveis : "é responsável"
+
+    organizacoes {
+        uuid id PK
+        text nome
+        text slug
+        text cor_primaria
+    }
+    membros {
+        uuid org_id FK
+        uuid user_id
+        text nome
+        papel_membro papel
+        uuid setor_id
+        uuid perfil_id
+        bool ativo
+    }
+    hub_perfis {
+        uuid id PK
+        uuid org_id
+        text nome
+        jsonb apps
+    }
+    hub_apps {
+        text slug PK
+        text nome
+        text rota
+        text status
+    }
+    hub_acessos {
+        uuid org_id
+        uuid user_id
+        text app
+        text papel
+        date expira_em
+    }
+    clientes {
+        uuid id PK
+        uuid org_id
+        text razao_social
+        text cnpj
+        text regime
+        text codigo_dominio
+        text segmento
+        text_arr grupos
+        bool ativo
+    }

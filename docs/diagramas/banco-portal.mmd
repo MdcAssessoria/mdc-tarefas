@@ -1,0 +1,35 @@
+erDiagram
+    clientes ||--o{ portal_usuarios : "acesso do cliente"
+    clientes ||--o{ portal_balancetes : "por competência"
+    portal_balancetes ||--o{ portal_balancete_linhas : "linhas"
+    portal_balancetes ||--o{ portal_pareceres : "parecer"
+    clientes ||--o{ portal_mapa_contas : "classificação → grupo"
+    clientes ||--o{ portal_mapa_dfc : "classificação → linha DFC"
+    clientes ||--o{ portal_conversas : "chat"
+    portal_conversas ||--o{ portal_mensagens : "mensagens"
+
+    portal_balancetes {
+        uuid id PK
+        uuid cliente_id
+        date competencia
+        text status
+        jsonb resumo
+        jsonb indices
+        jsonb demonstracoes
+    }
+    portal_balancete_linhas {
+        bigint id PK
+        text classificacao
+        text descricao
+        numeric saldo_anterior
+        numeric debitos
+        numeric creditos
+        numeric saldo_atual
+        text grupo
+    }
+    portal_usuarios {
+        uuid user_id
+        uuid cliente_id
+        text_arr permissoes
+        bool ativo
+    }

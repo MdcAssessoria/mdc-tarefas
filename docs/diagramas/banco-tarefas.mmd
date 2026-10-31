@@ -1,0 +1,34 @@
+erDiagram
+    modelos_recorrentes ||--o{ tarefas : "gera todo mês"
+    clientes ||--o{ tarefas : "de"
+    setores ||--o{ tarefas : "do setor"
+    tarefas ||--o{ comentarios : "tem"
+    tarefas ||--o{ historico : "registra"
+
+    modelos_recorrentes {
+        uuid id PK
+        text titulo
+        text_arr regimes
+        text_arr segmentos
+        text_arr grupos
+        int dia_vencimento
+        bool por_cliente
+    }
+    tarefas {
+        uuid id PK
+        uuid org_id
+        text titulo
+        uuid cliente_id
+        uuid setor_id
+        uuid responsavel_id
+        status_tarefa status
+        date prazo
+        date competencia
+        uuid modelo_id
+    }
+    historico {
+        bigint id PK
+        uuid tarefa_id
+        text acao
+        jsonb detalhe
+    }

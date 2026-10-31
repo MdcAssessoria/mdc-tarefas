@@ -1,0 +1,12 @@
+erDiagram
+    soc_tipos ||--o{ soc_processos : "tipo"
+    soc_processos ||--o{ soc_fases : "fases"
+    soc_processos ||--o{ soc_exigencias : "exigências"
+    soc_processos ||--o{ soc_protocolos : "protocolos"
+    soc_processos ||--o{ soc_taxas : "taxas"
+    soc_fases ||--o| tarefas : "vira tarefa"
+    clientes ||--o{ venc_itens : "vencimentos"
+    crm_oportunidades ||--o{ crm_atividades : "atividades"
+    crm_oportunidades ||--o{ crm_contratos : "contratos"
+    crm_modelos ||--o{ crm_contratos : "modelo"
+    crm_oportunidades }o--o| clientes : "vira cliente"
