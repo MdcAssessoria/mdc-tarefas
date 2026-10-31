@@ -1,4 +1,4 @@
-# HUB-MDC Financeiro — desenho do módulo (a iniciar)
+# HUB-MDC Gestão — desenho dos módulos (a iniciar)
 
 Registrado em 30/10/2026. Documento completo (com diagrama do fluxo):
 https://claude.ai/artifact/Cu9hzs8eU74YeaVaaKmw5B
@@ -85,6 +85,45 @@ Catálogo:
 - Saídas: faturamento por cliente/produto (curva ABC), notas emitidas/canceladas, faturado x recebido,
   impostos destacados.
 Base: lib/excel.ts e lib/relatorioPdf.ts viram um componente único de relatório. Entram com cada módulo (fases 4–6).
+
+## Pacotes e contratação
+- Tela nova "Pacotes": nome, descrição, módulos incluídos, valor mensal, ativo. Partida: pacote Gestão =
+  Financeiro + Entradas + Saídas + Fiscal (Fiscal vem no pacote de quem compra os três).
+- Cadastro do cliente: seção "Módulos contratados" — Pacote ou Módulos avulsos, valor negociado, início/fim.
+- Portal mostra só o contratado; contrato encerrado bloqueia acesso e mantém dados. Valor alimenta honorário/CRM.
+- Tabelas: hub_pacotes, hub_pacote_modulos, cliente_contratos, cliente_contrato_modulos.
+
+## Módulo Fiscal
+- Enquadramento lido do cadastro (clientes.regime) + histórico por ano (cliente_enquadramentos): anexos/atividades
+  do Simples, sublimite, opção IBS/CBS fora do DAS (semestral), ST/monofásico, município do ISS, IE.
+- Motor de regras com vigência (fis_regras_tributos: tributo, regime, base, alíquota, condições, fonte legal,
+  início/fim). Lei nova = linha nova; reprocessar mês antigo usa regra da época.
+- Simples: RBT12, anexo, fator R, alíquota efetiva, segregação (ST, monofásico, ISS retido, exportação).
+  Presumido: PIS 0,65%/COFINS 3%; IRPJ/CSLL trimestral com presunção, adicional e acréscimo LC 224/2025
+  (parcela da receita anual > R$ 5 mi). Real: PIS/COFINS não cumulativo com créditos das Entradas; IRPJ/CSLL
+  com LALUR vindo da Contabilidade. ICMS, IPI, ISS.
+- Reforma: 2026 apuração paralela IBS/CBS informativa; crédito ligado ao pagamento (split payment);
+  importar e comparar a apuração assistida (RFB/Comitê Gestor); relatório "Dentro ou fora do DAS?" para o
+  Simples (usa o Simulador de Regime); 2029–2032 ICMS/ISS e IBS lado a lado; 2033 só IBS/CBS/IS.
+- Guias: rascunho com memória de cálculo em linguagem simples → MDC fecha → v1 guia anexada (lê linha
+  digitável, valor, vencimento) → depois Integra Contador (Serpro, pago por uso) para PGDAS-D/DAS, DARF,
+  DCTFWeb. Guia → conta a pagar no Financeiro + cumpre item em Vencimentos. Provisão D despesa/C tributo
+  a recolher; pagamento na conciliação.
+- Tabelas: cliente_enquadramentos, fis_regras_tributos, fis_apuracoes, fis_guias.
+
+## Módulo Contabilidade
+- Consolida pelo plano de contas: conciliações (Financeiro), notas por competência (Entradas/Saídas),
+  provisões (Fiscal), lançamentos manuais MDC, folha importada do Domínio. Origem clicável.
+- Diário, razão, balancete de qualquer período (molde de relatórios).
+- Cópia integral do desenho do balancete atual: o balancete gerado sai no mesmo formato de linhas do
+  importado (lib/balancete.ts Linha), então reaproveita grupos, conferências, painel, BP/DRE/DFC, índices
+  (liquidez, endividamento, margens, PMR/PMP/PME/PMV, ciclos, carga tributária) com tendência linear,
+  fragilidades, saúde por pilares, parecer, PDF assinado e publicação no Portal.
+- Conferência HUB × Domínio conta a conta (balancete do Domínio segue importado); fechamento trava origens.
+
+## Fases (revisadas)
+1 Pacotes · 2 Base contábil · 3 Bancos e extratos · 4 Conciliação e contabilização · 5 Gestão do cliente ·
+6 Entradas · 7 Saídas · 8 Fiscal · 9 Contabilidade.
 
 ## Serviço fiscal — onde roda
 Escolhido: Google Cloud Run, região São Paulo (southamerica-east1). Liga só quando o HUB chama; cota gratuita
