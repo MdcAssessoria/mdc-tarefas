@@ -80,4 +80,8 @@ Fontes: https://cloud.google.com/run/pricing · https://fly.io/pricing.md ·
 https://docs.oracle.com/en-us/iaas/Content/FreeTier/resourceref.htm
 
 ## Pendência para iniciar
-- MDC criar a conta do Google Cloud (cartão no faturamento) e um projeto "hub-mdc-fiscal"; dar acesso para a implantação.
+- Conta do Google Cloud (fazer quando iniciar os módulos de notas):
+  1. Claude abre console.cloud.google.com no Chrome.
+  2. Edvaldo cria a conta e faz o login (cartão e senha digitados por ele).
+  3. Claude cria o projeto "hub-mdc-fiscal", alerta de orçamento, ativa Cloud Run/Secret Manager
+     na região southamerica-east1 e conecta o serviço fiscal ao HUB.
