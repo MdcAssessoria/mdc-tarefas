@@ -48,6 +48,9 @@ desconciliação auditada.
 - PDF: bancos de primeira linha e cooperativas (Sicoob, Sicredi); OFX é o formato principal.
 - Plano de contas sai do Domínio em Excel.
 - Piloto: a própria MDC.
+- Entradas e Saídas também entram na cobrança ao cliente.
+- Notas (XML, PDF, protocolos) ficam no Supabase do HUB (fis_notas + Storage), sem exclusão (guarda pelo prazo decadencial);
+  o serviço fiscal só assina e transmite, não armazena.
 - Clientes do Simples podem usar os módulos como gestão.
 - Notas: integração própria com SEFAZ e ambiente nacional da NFS-e (sem API paga), bibliotecas validadas
   (ex.: sped-nfe/NFePHP, PyNFe) num serviço fiscal separado (mTLS + assinatura XML), testes em homologação.
@@ -68,5 +71,4 @@ baixa o título e contabiliza. Mesmo cadastro de pessoas, plano e categorias.
 - Fases 5 (Entradas) e 6 (Saídas).
 
 ## Decisões em aberto
-- Entradas/Saídas no mesmo honorário do Financeiro ou faixa acima.
-- Onde roda o serviço fiscal (servidor próprio da MDC ou nuvem) e quem mantém.
+- Serviço fiscal: contêiner na nuvem (recomendado: Render/Railway/Fly.io, ~US$ 5–10/mês) ou servidor da MDC.
