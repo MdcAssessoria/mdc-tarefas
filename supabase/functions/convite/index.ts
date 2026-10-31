@@ -1,23 +1,31 @@
 // Edge Function: envia o convite de acesso por e-mail (a pessoa cria a própria senha pelo link).
 // O cadastro e a permissão ficam no banco (hub_convidar / portal_convidar); aqui só se dispara o e-mail,
 // e apenas para quem foi convidado por alguém com permissão (hub_pode_enviar_convite).
-// Se o e-mail não puder ser enviado (SMTP), devolve o link para o administrador repassar.
+// Se o e-mail não puder ser enviado (SMTP), devolve o link SÓ para administrador que convidou a pessoa
+// para a equipe (hub_pode_ver_link_convite) — auditoria de 31/10/2026, achado A-1.
 import { createClient } from "@supabase/supabase-js";
 
+// endereços onde o Hub roda; o link do convite só pode voltar para um deles
+const ORIGENS = ["https://mdcassessoria.com", "https://www.mdcassessoria.com", "https://mdc-tarefas.vercel.app"];
+const BASE = "/hub-mdc";
+
 const CORS = {
-  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Origin": "https://mdc-tarefas.vercel.app",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
-const json = (status: number, corpo: unknown) =>
-  new Response(JSON.stringify(corpo), { status, headers: { ...CORS, "Content-Type": "application/json" } });
 
-// endereços onde o Hub roda; o link do convite só pode voltar para um deles
-const ORIGENS = ["https://mdcassessoria.com", "https://www.mdcassessoria.com", "https://mdc-tarefas.vercel.app", "http://localhost:3000"];
-const BASE = "/hub-mdc";
+// CORS: responde com a origem do pedido quando ela é uma das do Hub
+const cors = (req: Request) => {
+  const o = req.headers.get("Origin") ?? "";
+  return ORIGENS.includes(o) ? { ...CORS, "Access-Control-Allow-Origin": o } : CORS;
+};
 
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
+  const cabecalhos = cors(req);
+  const json = (status: number, corpo: unknown) =>
+    new Response(JSON.stringify(corpo), { status, headers: { ...cabecalhos, "Content-Type": "application/json" } });
+  if (req.method === "OPTIONS") return new Response("ok", { headers: cabecalhos });
   if (req.method !== "POST") return json(405, { erro: "Use POST." });
   const auth = req.headers.get("Authorization");
   if (!auth) return json(401, { erro: "Faça login." });
@@ -45,9 +53,13 @@ Deno.serve(async (req) => {
   const { error } = await servico.auth.admin.inviteUserByEmail(email, { redirectTo, data: nome ? { nome } : undefined });
   if (!error) return json(200, { enviado: true });
 
-  // e-mail indisponível (SMTP) ou reenvio: gera só link de CONVITE (nunca de login) para o administrador repassar.
-  // A permissão acima já garante que o e-mail não tem conta ativa.
+  // e-mail indisponível (SMTP) ou reenvio: gera só link de CONVITE (nunca de login), e só para administrador
+  // da organização que convidou a pessoa para a equipe. Para os demais, avisa que o e-mail não saiu.
   console.error("convite por e-mail falhou", error.message);
+  const { data: verLink, error: eVer } = await usuario.rpc("hub_pode_ver_link_convite", { p_email: email });
+  if (eVer || !verLink) {
+    return json(502, { erro: "O e-mail de convite não pôde ser enviado agora. Tente de novo mais tarde ou peça ao administrador." });
+  }
   const { data, error: eLink } = await servico.auth.admin.generateLink({ type: "invite", email, options: { redirectTo, data: nome ? { nome } : undefined } });
   if (!eLink && data?.properties?.action_link) return json(200, { enviado: false, link: data.properties.action_link });
   console.error("link de convite falhou", eLink?.message);
