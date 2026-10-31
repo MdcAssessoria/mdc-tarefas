@@ -42,8 +42,28 @@ desconciliação auditada.
 3. Conciliação + lançamentos + exportação Domínio + fechamento.
 4. Gestão do cliente (a pagar/receber, painel, relatórios, PDF dos principais bancos).
 
+## Decisões tomadas (30/10/2026)
+- Exportação no leiaute de importação de lançamentos contábeis do Domínio, em Excel e TXT.
+- O módulo entra no honorário pago pelo cliente.
+- PDF: bancos de primeira linha e cooperativas (Sicoob, Sicredi); OFX é o formato principal.
+
+## Módulos Entradas (compras) e Saídas (vendas)
+Módulos à parte que descarregam no Financeiro: cada nota vira título a pagar/receber; a conciliação
+baixa o título e contabiliza. Mesmo cadastro de pessoas, plano e categorias.
+- Entradas: Distribuição DF-e com certificado A1 do cliente, manifestação do destinatário, NFS-e
+  tomada pelo ambiente nacional, XML avulso (NF-e, CT-e), de-para fornecedor/produto/CFOP →
+  categoria e centro, títulos a pagar pelas parcelas, XML para o Domínio.
+- Saídas: emissão de NF-e e NFS-e padrão nacional (NFC-e depois), cadastros com NCM/CFOP/CST/CSOSN e
+  IBS/CBS, regras fiscais por operação travadas pela MDC, cancelamento/CC-e/inutilização,
+  DANFE/DANFSe por e-mail (hub@), títulos a receber, XML para o Domínio.
+- Emissão via API homologada (não falar direto com cada SEFAZ/prefeitura).
+- Tabelas: fis_pessoas, fis_produtos, fis_regras_fiscais, fis_notas, fis_nota_itens, fis_eventos;
+  fin_titulos.nota_id.
+- Fases 5 (Entradas) e 6 (Saídas).
+
 ## Decisões em aberto
-- Leiaute de importação de lançamentos do Domínio usado pela MDC.
 - Formato de saída do plano de contas do Domínio (Excel, TXT ou consulta direta).
-- Módulo incluso no honorário ou cobrado à parte.
-- Bancos prioritários para PDF; clientes piloto; uso por clientes do Simples só como gestão.
+- Clientes piloto; uso por clientes do Simples só como gestão.
+- API de emissão/recebimento de notas e custo por nota no honorário.
+- Entradas/Saídas no mesmo honorário ou faixa acima.
+- Guarda e renovação do certificado A1 de cada cliente.
