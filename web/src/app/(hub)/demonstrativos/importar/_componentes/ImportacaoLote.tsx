@@ -78,7 +78,10 @@ export function ImportacaoLote({ inicial, aoRecomecar }: { inicial: ItemLote[]; 
   const mudar = (chave: string, o: Partial<ItemLote>) => setItens((l) => l.map((x) => (x.chave === chave ? { ...x, ...o } : x)));
 
   async function importarTodos() {
-    const fila = itens.map((it, k) => ({ it, av: avaliacoes[k] }));
+    // grava em ordem de empresa e mês: os alertas comparam com o mês anterior, que precisa já estar gravado
+    const fila = itens
+      .map((it, k) => ({ it, av: avaliacoes[k] }))
+      .sort((a, b) => (a.it.clienteId ?? "").localeCompare(b.it.clienteId ?? "") || a.it.competencia.localeCompare(b.it.competencia));
     const gravar = fila.filter((x) => vaiGravar(x.av));
     const saida: ResultadoLote[] = [];
     setProgresso({ feitos: 0, total: gravar.length, atual: "" });
