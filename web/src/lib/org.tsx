@@ -2,7 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
-import { supabase, supabaseConfigurado } from "./supabase";
+import { supabase } from "./supabase";
 import type { Cliente, HubApp, Membro, Organizacao, Papel, PapelApp, Setor } from "./types";
 import { PESO_PAPEL_APP } from "./types";
 import { traduzirErro } from "@/lib/erros";
@@ -37,6 +37,11 @@ export function useOrg(): OrgCtx {
   return c;
 }
 
+/** Igual a useOrg, mas devolve null fora do OrgProvider (ex.: painel da TV aberto sem login de membro). */
+export function useOrgOpcional(): OrgCtx | null {
+  return useContext(Ctx);
+}
+
 const CHAVE_ORG = "mdc-tarefas:org";
 
 function lerOrgSalva(): string | null {
@@ -67,10 +72,6 @@ export function OrgProvider({ children }: { children: React.ReactNode }) {
 
   // sessão
   useEffect(() => {
-    if (!supabaseConfigurado) {
-      setSession(null);
-      return;
-    }
     const sb = supabase();
     sb.auth.getSession().then(({ data }) => setSession(data.session));
     const { data } = sb.auth.onAuthStateChange((_e, s) => setSession(s));
@@ -197,10 +198,9 @@ export function OrgProvider({ children }: { children: React.ReactNode }) {
     };
   }, [session, org, orgs, minhas, membros, setores, clientes, recarregar, apps, appsCarregados, recarregarApps]);
 
-  if (!supabaseConfigurado) return <SemConfiguracao />;
   if (erro) return <Centro titulo="Não foi possível carregar">{erro}</Centro>;
   if (session === undefined || (session && orgs === null)) return <Centro titulo="Carregando…" />;
-  if (session && orgs && orgs.length === 0) return <CriarOrganizacao aoCriar={carregarOrgs} email={session.user.email ?? ""} />;
+  if (session && orgs && orgs.length === 0) return <AcessoNaoLiberado email={session.user.email ?? ""} />;
   if (!valor) return <Centro titulo="Carregando…" />;
   return <Ctx.Provider value={valor}>{children}</Ctx.Provider>;
 }
@@ -216,23 +216,15 @@ export function Centro({ titulo, children }: { titulo: string; children?: React.
   );
 }
 
-function SemConfiguracao() {
-  return (
-    <Centro titulo="Supabase não configurado">
-      Defina <code>NEXT_PUBLIC_SUPABASE_URL</code> e <code>NEXT_PUBLIC_SUPABASE_KEY</code> nas variáveis de ambiente (arquivo{" "}
-      <code>.env.local</code> ou painel da Vercel) e publique novamente.
-    </Centro>
-  );
-}
-
-function CriarOrganizacao({ email }: { aoCriar: () => void; email: string }) {
+/** Conta que entrou mas não é membro de nenhuma organização: o administrador precisa liberar. */
+function AcessoNaoLiberado({ email }: { email: string }) {
   // criar organização ficou restrito ao administrador do sistema (auditoria de segurança)
   return (
     <Centro titulo="Seu acesso ainda não foi liberado">
       <p>
         Peça ao administrador da MDC para cadastrar <b>{email}</b> em Pessoas e acessos. Assim que for liberado, entre de novo.
       </p>
-      <button className="btn-link mt-4" onClick={() => supabase().auth.signOut()}>
+      <button className="btn-link mt-4" onClick={() => void supabase().auth.signOut()}>
         Sair
       </button>
     </Centro>

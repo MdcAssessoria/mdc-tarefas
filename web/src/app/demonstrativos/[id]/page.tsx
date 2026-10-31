@@ -18,6 +18,7 @@ import type { MapaDfc } from "@/lib/demonstracoes";
 import { REGIMES } from "@/lib/types";
 import { ArvoreBalancete, GradeIndices, ListaAlertas, PainelResumo, VisaoParecer, mesExtenso } from "@/components/demonstrativos/Painel";
 import type { BalanceteReg, LinhaReg, ParecerReg } from "@/components/demonstrativos/Painel";
+import { hojeISO, somarDias } from "@/lib/datas";
 
 export default function PaginaBalancete() {
   return (
@@ -350,7 +351,7 @@ function Detalhe() {
                           .limit(1)
                       ).data?.[0]?.user_id
                     : null) ?? eu.user_id;
-                const prazo = new Date(Date.now() + 7 * 864e5).toISOString().slice(0, 10);
+                const prazo = somarDias(hojeISO(org.fuso), 7);
                 const { error } = await sb.from("tarefas").insert(
                   b.alertas.map((a) => ({
                     org_id: org.id,

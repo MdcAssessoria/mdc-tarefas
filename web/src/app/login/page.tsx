@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase, supabaseConfigurado } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase";
 import { traduzirErro } from "@/lib/erros";
 import { caminho, enderecoHub } from "@/lib/caminho";
 
@@ -115,9 +115,6 @@ export default function Login() {
               <p className="mt-1 text-sm text-neutral-600">Você foi convidado pela MDC. Defina a senha que vai usar para entrar.</p>
             )}
           </div>
-          {!supabaseConfigurado && (
-            <p className="text-sm text-[var(--alerta)]">Configure NEXT_PUBLIC_SUPABASE_URL e NEXT_PUBLIC_SUPABASE_KEY antes de usar.</p>
-          )}
           {definindoSenha && semSessao && (
             <p className="rounded-md bg-amber-50 p-3 text-sm text-amber-900">
               Este link expirou ou já foi usado.{" "}
@@ -157,7 +154,7 @@ export default function Login() {
             </label>
           )}
           {msg && <p className={`text-sm ${msg.tipo === "erro" ? "text-[var(--perigo)]" : "text-[var(--sucesso)]"}`}>{msg.texto}</p>}
-          <button className="btn-primario w-full" disabled={enviando || !supabaseConfigurado || (definindoSenha && semSessao)}>
+          <button className="btn-primario w-full" disabled={enviando || (definindoSenha && semSessao)}>
             {enviando
               ? "Aguarde…"
               : { entrar: "Entrar", recuperar: "Enviar link", nova: "Salvar senha", convite: "Criar senha e entrar" }[modo]}

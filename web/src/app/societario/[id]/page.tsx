@@ -7,7 +7,7 @@ import { AppShell } from "@/components/AppShell";
 import { useOrg } from "@/lib/org";
 import { supabase } from "@/lib/supabase";
 import { traduzirErro } from "@/lib/erros";
-import { diasAte, fmtData, fmtDataHora } from "@/lib/datas";
+import { diasAte, fmtData, fmtDataHora, hojeISO } from "@/lib/datas";
 import { abrirArquivo, enviarArquivo, fmtTamanho } from "@/lib/arquivos";
 import type { Arquivo } from "@/lib/arquivos";
 import { ORGAOS, STATUS_FASE, corStatusFase, diasParado, nomeStatusFase } from "@/lib/societario";
@@ -129,10 +129,11 @@ function Ficha() {
     const sb = supabase();
     const { error } = await sb.from(tabela).insert({ ...dados, org_id: org.id, processo_id: id });
     if (error) return setErro(traduzirErro(error));
-    await sb
+    const ev = await sb
       .from("soc_eventos")
       .insert({ org_id: org.id, processo_id: id, tipo: tabela.replace("soc_", ""), texto: evento, visivel_cliente: visivel });
-    carregar();
+    if (ev.error) setErro(`Registro salvo, mas o histórico não foi atualizado: ${traduzirErro(ev.error)}`);
+    void carregar();
   }
 
   async function comentar(e: React.FormEvent) {
@@ -151,7 +152,7 @@ function Ficha() {
     try {
       for (const a of Array.from(arqs)) {
         await enviarArquivo(a, { org: org.id, app: "societario", ref: id, cliente: p!.cliente_id, visivelCliente: false });
-        await supabase()
+        const { error } = await supabase()
           .from("soc_eventos")
           .insert({
             org_id: org.id,
@@ -159,6 +160,7 @@ function Ficha() {
             tipo: "documento",
             texto: `Documento anexado${faseNome ? ` (${faseNome})` : ""}: ${a.name}`,
           });
+        if (error) throw error;
       }
     } catch (e) {
       setErro(traduzirErro(e));
@@ -167,8 +169,9 @@ function Ficha() {
   }
 
   async function visivelArquivo(a: Arquivo) {
-    await supabase().from("hub_arquivos").update({ visivel_cliente: !a.visivel_cliente }).eq("id", a.id);
-    carregar();
+    const { error } = await supabase().from("hub_arquivos").update({ visivel_cliente: !a.visivel_cliente }).eq("id", a.id);
+    if (error) return setErro(traduzirErro(error));
+    void carregar();
   }
 
   const totalTaxas = taxas.reduce((s, t) => s + (t.valor ?? 0), 0);
@@ -203,8 +206,9 @@ function Ficha() {
                 type="checkbox"
                 checked={p.visivel_cliente}
                 onChange={async (e) => {
-                  await supabase().from("soc_processos").update({ visivel_cliente: e.target.checked }).eq("id", p.id);
-                  carregar();
+                  const { error } = await supabase().from("soc_processos").update({ visivel_cliente: e.target.checked }).eq("id", p.id);
+                  if (error) return setErro(traduzirErro(error));
+                  void carregar();
                 }}
               />
               Cliente acompanha no portal
@@ -382,11 +386,12 @@ function Ficha() {
                         onClick={async () => {
                           const r = prompt("Resposta à exigência:");
                           if (!r) return;
-                          await supabase()
+                          const { error } = await supabase()
                             .from("soc_exigencias")
-                            .update({ resposta: r, reprotocolo_em: new Date().toISOString().slice(0, 10) })
+                            .update({ resposta: r, reprotocolo_em: hojeISO(org.fuso) })
                             .eq("id", x.id);
-                          carregar();
+                          if (error) return setErro(traduzirErro(error));
+                          void carregar();
                         }}
                       >
                         registrar resposta
@@ -421,11 +426,12 @@ function Ficha() {
                       <button
                         className="btn-link"
                         onClick={async () => {
-                          await supabase()
+                          const { error } = await supabase()
                             .from("soc_taxas")
-                            .update({ pago_em: new Date().toISOString().slice(0, 10) })
+                            .update({ pago_em: hojeISO(org.fuso) })
                             .eq("id", x.id);
-                          carregar();
+                          if (error) return setErro(traduzirErro(error));
+                          void carregar();
                         }}
                       >
                         marcar paga
@@ -533,11 +539,10 @@ function Bloco({ titulo, children }: { titulo: string; children: React.ReactNode
 type Campo = { nome: string; rotulo: string; tipo?: string; opcoes?: string[]; area?: boolean; opcional?: boolean };
 
 function FormLinha({ campos, botao, aoEnviar }: { campos: Campo[]; botao: string; aoEnviar: (v: Record<string, string>) => void }) {
+  const { org } = useOrg();
   const [aberto, setAberto] = useState(false);
   const inicial = () =>
-    Object.fromEntries(
-      campos.map((c) => [c.nome, c.tipo === "date" && !c.opcional ? new Date().toISOString().slice(0, 10) : (c.opcoes?.[0] ?? "")]),
-    );
+    Object.fromEntries(campos.map((c) => [c.nome, c.tipo === "date" && !c.opcional ? hojeISO(org.fuso) : (c.opcoes?.[0] ?? "")]));
   const [v, setV] = useState<Record<string, string>>(inicial);
   if (!aberto)
     return (

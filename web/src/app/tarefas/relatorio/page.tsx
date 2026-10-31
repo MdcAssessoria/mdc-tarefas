@@ -61,7 +61,7 @@ function intervalo(p: Periodo, hoje: string): [string, string] {
 }
 
 function Relatorio() {
-  const { org, eu, papel, membros, setores, clientePorId, setorPorId, podeEditarCadastros } = useOrg();
+  const { org, eu, membros, setores, clientePorId, setorPorId, podeEditarCadastros } = useOrg();
   const hoje = hojeISO(org.fuso);
   const [periodo, setPeriodo] = useState<Periodo>("mes");
   const [de, setDe] = useState(() => intervalo("mes", hoje)[0]);

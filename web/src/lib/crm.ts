@@ -1,4 +1,5 @@
 // CRM Comercial: tipos, etapas do funil, valores negociados e montagem do contrato a partir do modelo.
+import { hojeISO, primeiroDiaDoProximoMes } from "./datas";
 
 export type Etapa = "novo" | "contato" | "reuniao" | "proposta" | "negociacao" | "ganho" | "perdido";
 
@@ -135,10 +136,8 @@ export const SERVICOS_PADRAO = [
   "Consultoria tributária e planejamento do regime de tributação",
 ];
 
-export function valoresIniciais(o: Oportunidade): Valores {
-  const hoje = new Date().toISOString().slice(0, 10);
-  const prox = new Date();
-  prox.setMonth(prox.getMonth() + 1, 1);
+/** Valores sugeridos para um contrato novo; "hoje" vem no fuso da organização (padrão: horário de Brasília). */
+export function valoresIniciais(o: Oportunidade, hoje = hojeISO()): Valores {
   return {
     razao_social: o.razao_social ?? o.empresa,
     cnpj: o.cnpj ?? "",
@@ -148,7 +147,7 @@ export function valoresIniciais(o: Oportunidade): Valores {
     representante_qualificacao: "sócio administrador",
     honorario_mensal: o.valor_mensal ?? 0,
     vencimento_dia: 10,
-    inicio: prox.toISOString().slice(0, 10),
+    inicio: primeiroDiaDoProximoMes(hoje),
     funcionarios_incluidos: 0,
     valor_funcionario_adicional: 0,
     taxa_implantacao: 0,

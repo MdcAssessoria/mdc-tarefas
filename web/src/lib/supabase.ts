@@ -10,7 +10,6 @@ const PROJETO_KEY = "sb_publishable_PZ8K_Udj-1cbUEAaTnkgYA_AmtuSLqU";
 const url = process.env.NEXT_PUBLIC_MDC_SUPABASE_URL || PROJETO_URL;
 const key = process.env.NEXT_PUBLIC_MDC_SUPABASE_KEY || PROJETO_KEY;
 
-export const supabaseConfigurado = Boolean(url && key);
 export const SUPABASE_URL = url;
 export const SUPABASE_KEY = key;
 

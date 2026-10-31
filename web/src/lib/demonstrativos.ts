@@ -3,6 +3,7 @@ import { calcularIndices, classificar, conferir, fragilidades, normalizarSinal, 
 import type { Grupo, Linha, Resumo } from "./balancete";
 import { basePrazos, montar, periodoDe } from "./demonstracoes";
 import type { MapaDfc } from "./demonstracoes";
+import { hojeISO } from "./datas";
 
 /** Regras de conta → grupo salvas (padrão da organização + específicas do cliente). */
 export async function carregarMapa(org: string, cliente: string) {
@@ -48,7 +49,7 @@ export function analisar(
   mapaDfc: MapaDfc = [],
 ) {
   const resumo = resumir(linhas);
-  const periodo = periodoDe(competencia ?? new Date().toISOString().slice(0, 10), inicio, fim);
+  const periodo = periodoDe(competencia ?? hojeISO(), inicio, fim);
   const indices = calcularIndices(resumo, periodo.dias, basePrazos(linhas, periodo.dias));
   const alertas = fragilidades(resumo, indices, linhas, anterior);
   const conferencias = conferir(resumo, linhas, competencia);
@@ -238,5 +239,3 @@ export async function definirLinhaDfc(o: {
   }
   await recalcular(o.balanceteId);
 }
-
-export { classificar };

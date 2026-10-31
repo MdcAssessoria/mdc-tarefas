@@ -309,7 +309,11 @@ export function TarefaEditor({
                         type="checkbox"
                         checked={a.visivel_cliente}
                         onChange={async () => {
-                          await supabase().from("hub_arquivos").update({ visivel_cliente: !a.visivel_cliente }).eq("id", a.id);
+                          const { error } = await supabase()
+                            .from("hub_arquivos")
+                            .update({ visivel_cliente: !a.visivel_cliente })
+                            .eq("id", a.id);
+                          if (error) return setErro(traduzirErro(error));
                           setArquivos((l) => l.map((x) => (x.id === a.id ? { ...x, visivel_cliente: !x.visivel_cliente } : x)));
                         }}
                       />

@@ -60,10 +60,13 @@ function Societario() {
 
   const faseAtual = useCallback((p: SocProcesso) => fases.find((f) => f.processo_id === p.id && f.ordem === p.fase_atual), [fases]);
   const nomeTipo = (id: string) => tipos.find((t) => t.id === id)?.nome ?? "";
-  const nomeCliente = (p: SocProcesso) => {
-    const c = clientePorId(p.cliente_id);
-    return c ? c.nome_fantasia || c.razao_social : (p.futuro_cliente ?? "—");
-  };
+  const nomeCliente = useCallback(
+    (p: SocProcesso) => {
+      const c = clientePorId(p.cliente_id);
+      return c ? c.nome_fantasia || c.razao_social : (p.futuro_cliente ?? "—");
+    },
+    [clientePorId],
+  );
 
   const filtrados = useMemo(() => {
     const q = busca.trim().toLowerCase();
@@ -80,8 +83,7 @@ function Societario() {
       }
       return true;
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [processos, situacao, tipo, resp, uf, parado, busca, faseAtual]);
+  }, [processos, situacao, tipo, resp, uf, parado, busca, faseAtual, nomeCliente]);
 
   async function soltar(processoId: string, codigoDestino: string) {
     setArrastando(null);

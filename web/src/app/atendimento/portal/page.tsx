@@ -210,8 +210,13 @@ function AcessosPortal() {
                   <button
                     className="btn-link ml-2"
                     onClick={async () => {
-                      await supabase().from("portal_convites").delete().eq("email", c.email).eq("cliente_id", c.cliente_id);
-                      carregar();
+                      const { error } = await supabase()
+                        .from("portal_convites")
+                        .delete()
+                        .eq("email", c.email)
+                        .eq("cliente_id", c.cliente_id);
+                      if (error) return setErro(traduzirErro(error));
+                      void carregar();
                     }}
                   >
                     cancelar

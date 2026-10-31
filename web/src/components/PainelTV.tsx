@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useOrg } from "@/lib/org";
+import { useOrgOpcional } from "@/lib/org";
 import { useLogo } from "@/lib/marca";
 import type { Organizacao } from "@/lib/types";
 
@@ -356,13 +356,4 @@ export function PainelTV({
       `}</style>
     </div>
   );
-}
-
-function useOrgOpcional() {
-  try {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    return useOrg();
-  } catch {
-    return null;
-  }
 }

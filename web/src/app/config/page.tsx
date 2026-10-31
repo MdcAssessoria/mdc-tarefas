@@ -1,16 +1,16 @@
 "use client";
 
-import { Fragment, useEffect, useMemo, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { AppShell } from "@/components/AppShell";
 import { useOrg } from "@/lib/org";
 import { supabase } from "@/lib/supabase";
-import { fmtData } from "@/lib/datas";
+import { fmtData, hojeISO, mesAnteriorISO } from "@/lib/datas";
 import { PAPEIS, PRIORIDADES, REGIMES, SEGMENTOS, nomeSegmento } from "@/lib/types";
 import { Etiquetas } from "@/components/Etiquetas";
-import type { Cliente, Modelo, Papel, Prioridade } from "@/lib/types";
+import type { Cliente, Modelo, Prioridade } from "@/lib/types";
 import { traduzirErro } from "@/lib/erros";
-import { caminho, enderecoHub } from "@/lib/caminho";
+import { enderecoHub } from "@/lib/caminho";
 
 type Aba = "organizacao" | "equipe" | "setores" | "clientes" | "obrigacoes" | "feriados";
 
@@ -69,10 +69,13 @@ function Config() {
 
 function useMensagem() {
   const [msg, setMsg] = useState<{ erro: boolean; texto: string } | null>(null);
-  const mostrar = (texto: string, erro = false) => {
+  const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  useEffect(() => () => clearTimeout(timer.current), []);
+  const mostrar = useCallback((texto: string, erro = false) => {
     setMsg({ erro, texto });
-    setTimeout(() => setMsg(null), erro ? 8000 : 3500);
-  };
+    clearTimeout(timer.current);
+    timer.current = setTimeout(() => setMsg(null), erro ? 8000 : 3500);
+  }, []);
   const el = msg && (
     <div
       className={`cartao p-3 text-sm ${
@@ -375,7 +378,6 @@ function AbaClientes() {
   const [filtroGrupo, setFiltroGrupo] = useState("");
   const todosGrupos = useMemo(() => [...new Set(clientes.flatMap((c) => c.grupos ?? []))].sort((a, b) => a.localeCompare(b)), [clientes]);
   const pessoas = membros.filter((m) => m.ativo && m.papel !== "tv");
-  const hojeISO = () => new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
 
   async function confirmarInativacao() {
     if (!inativando) return;
@@ -401,14 +403,14 @@ function AbaClientes() {
     recarregar();
   }
 
-  const carregarResps = async () => {
-    const { data } = await supabase().from("cliente_responsaveis").select("cliente_id,setor_id,user_id").eq("org_id", org.id);
+  const carregarResps = useCallback(async () => {
+    const { data, error } = await supabase().from("cliente_responsaveis").select("cliente_id,setor_id,user_id").eq("org_id", org.id);
+    if (error) return mostrar(traduzirErro(error), true);
     setResps((data as Resp[]) ?? []);
-  };
+  }, [org.id, mostrar]);
   useEffect(() => {
-    carregarResps();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [org.id]);
+    void carregarResps();
+  }, [carregarResps]);
 
   const lista = useMemo(() => {
     const q = busca.trim().toLowerCase();
@@ -717,7 +719,7 @@ function AbaClientes() {
                           <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs text-emerald-800">Ativo</span>
                           <button
                             className="btn-link text-xs"
-                            onClick={() => setInativando({ id: c.id, data: hojeISO(), motivo: "Saiu do escritório", outro: "" })}
+                            onClick={() => setInativando({ id: c.id, data: hojeISO(org.fuso), motivo: "Saiu do escritório", outro: "" })}
                           >
                             Inativar
                           </button>
@@ -853,21 +855,17 @@ function AbaObrigacoes() {
   const [alcance, setAlcance] = useState<number | null>(null);
   const [modelos, setModelos] = useState<Modelo[]>([]);
   const [editando, setEditando] = useState<(Partial<Modelo> & typeof MODELO_VAZIO) | null>(null);
-  const [comp, setComp] = useState(() => {
-    const d = new Date();
-    d.setMonth(d.getMonth() - 1);
-    return d.toISOString().slice(0, 7);
-  });
+  const [comp, setComp] = useState(() => mesAnteriorISO(org.fuso));
   const { mostrar, el } = useMensagem();
 
-  const carregar = async () => {
-    const { data } = await supabase().from("modelos_recorrentes").select("*").eq("org_id", org.id).order("titulo");
+  const carregar = useCallback(async () => {
+    const { data, error } = await supabase().from("modelos_recorrentes").select("*").eq("org_id", org.id).order("titulo");
+    if (error) return mostrar(traduzirErro(error), true);
     setModelos((data as Modelo[]) ?? []);
-  };
+  }, [org.id, mostrar]);
   useEffect(() => {
-    carregar();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [org.id]);
+    void carregar();
+  }, [carregar]);
 
   async function salvar(e: React.FormEvent) {
     e.preventDefault();
@@ -1157,8 +1155,9 @@ function AbaObrigacoes() {
                     className="h-5 w-5 accent-[var(--marca)]"
                     checked={m.ativo}
                     onChange={async (e) => {
-                      await supabase().from("modelos_recorrentes").update({ ativo: e.target.checked }).eq("id", m.id);
-                      carregar();
+                      const { error } = await supabase().from("modelos_recorrentes").update({ ativo: e.target.checked }).eq("id", m.id);
+                      if (error) return mostrar(traduzirErro(error), true);
+                      void carregar();
                     }}
                   />
                 </td>
@@ -1186,18 +1185,18 @@ function AbaFeriados() {
   const [novo, setNovo] = useState({ data: "", descricao: "" });
   const { mostrar, el } = useMensagem();
 
-  const carregar = async () => {
-    const { data } = await supabase()
+  const carregar = useCallback(async () => {
+    const { data, error } = await supabase()
       .from("feriados")
       .select("*")
-      .gte("data", new Date().getFullYear() + "-01-01")
+      .gte("data", hojeISO(org.fuso).slice(0, 4) + "-01-01")
       .order("data");
+    if (error) return mostrar(traduzirErro(error), true);
     setLista(((data as Feriado[]) ?? []).filter((f) => !f.org_id || f.org_id === org.id));
-  };
+  }, [org.id, org.fuso, mostrar]);
   useEffect(() => {
-    carregar();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [org.id]);
+    void carregar();
+  }, [carregar]);
 
   async function adicionar(e: React.FormEvent) {
     e.preventDefault();
@@ -1235,8 +1234,9 @@ function AbaFeriados() {
                     <button
                       className="btn-link"
                       onClick={async () => {
-                        await supabase().from("feriados").delete().eq("id", f.id);
-                        carregar();
+                        const { error } = await supabase().from("feriados").delete().eq("id", f.id);
+                        if (error) return mostrar(traduzirErro(error), true);
+                        void carregar();
                       }}
                     >
                       remover

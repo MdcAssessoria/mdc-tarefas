@@ -183,14 +183,15 @@ function Centro({ titulo, children }: { titulo: string; children?: React.ReactNo
 function SinoCliente({ uid }: { uid: string }) {
   const [n, setN] = useState<{ id: string; titulo: string; texto: string | null; lida_em: string | null; criado_em: string }[]>([]);
   const [aberto, setAberto] = useState(false);
+  const [erro, setErro] = useState<string | null>(null);
   useEffect(() => {
-    supabase()
+    void supabase()
       .from("hub_notificacoes")
       .select("id,titulo,texto,lida_em,criado_em")
       .eq("user_id", uid)
       .order("criado_em", { ascending: false })
       .limit(20)
-      .then(({ data }) => setN((data as typeof n) ?? []));
+      .then(({ data, error }) => (error ? setErro(traduzirErro(error)) : setN((data as typeof n) ?? [])));
   }, [uid]);
   const novas = n.filter((x) => !x.lida_em).length;
   return (
@@ -201,13 +202,14 @@ function SinoCliente({ uid }: { uid: string }) {
           setAberto((x) => !x);
           if (novas) {
             const agora = new Date().toISOString();
-            await supabase()
+            const { error } = await supabase()
               .from("hub_notificacoes")
               .update({ lida_em: agora })
               .in(
                 "id",
                 n.filter((x) => !x.lida_em).map((x) => x.id),
               );
+            setErro(error ? traduzirErro(error) : null);
           }
         }}
         aria-label="Avisos"
@@ -217,6 +219,7 @@ function SinoCliente({ uid }: { uid: string }) {
       </button>
       {aberto && (
         <div className="absolute right-0 z-40 mt-2 w-72 rounded-xl border border-[var(--borda)] bg-white p-2 text-[var(--texto)] shadow-lg">
+          {erro && <p className="m-1 rounded-lg bg-red-50 p-2 text-xs text-red-800">{erro}</p>}
           {n.length === 0 && <p className="p-2 text-sm text-neutral-500">Sem avisos.</p>}
           {n.map((x) => (
             <div key={x.id} className="border-b border-[var(--borda)] p-2 text-sm last:border-0">

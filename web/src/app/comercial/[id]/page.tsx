@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { useOrg } from "@/lib/org";
+import { hojeISO } from "@/lib/datas";
 import { supabase } from "@/lib/supabase";
 import { traduzirErro } from "@/lib/erros";
 import { REGIMES } from "@/lib/types";
@@ -371,20 +372,20 @@ function Atividades({
       autor_id: eu,
     });
     if (error) return setErro(traduzirErro(error));
-    if (tipo === "tarefa" && quando) await sb.from("crm_oportunidades").update({ proximo_contato: quando }).eq("id", o.id);
-    else await sb.from("crm_oportunidades").update({ atualizado_em: new Date().toISOString() }).eq("id", o.id);
+    const campos: Record<string, unknown> =
+      tipo === "tarefa" && quando ? { proximo_contato: quando } : { atualizado_em: new Date().toISOString() };
     if (o.etapa === "novo" && ["ligacao", "whatsapp", "email", "reuniao"].includes(tipo))
-      await sb
-        .from("crm_oportunidades")
-        .update({ etapa: tipo === "reuniao" ? "reuniao" : "contato" })
-        .eq("id", o.id);
+      campos.etapa = tipo === "reuniao" ? "reuniao" : "contato";
+    const op = await sb.from("crm_oportunidades").update(campos).eq("id", o.id);
+    if (op.error) setErro(`Registro salvo, mas a oportunidade não foi atualizada: ${traduzirErro(op.error)}`);
     setTexto("");
     setQuando("");
     aoMudar();
   }
 
   async function concluir(a: Atividade) {
-    await supabase().from("crm_atividades").update({ concluida: !a.concluida }).eq("id", a.id);
+    const { error } = await supabase().from("crm_atividades").update({ concluida: !a.concluida }).eq("id", a.id);
+    if (error) return setErro(traduzirErro(error));
     aoMudar();
   }
 
@@ -459,8 +460,9 @@ function ContratoSecao({
   aoMudar: () => void;
   logoUrl: string | null;
 }) {
+  const { org } = useOrg();
   const ultimo = contratos[0];
-  const [v, setV] = useState<Valores>(ultimo?.valores ?? valoresIniciais(o));
+  const [v, setV] = useState<Valores>(ultimo?.valores ?? valoresIniciais(o, hojeISO(org.fuso)));
   const [extra, setExtra] = useState("");
   const [erro, setErro] = useState<string | null>(null);
   const [gerando, setGerando] = useState(false);
@@ -491,20 +493,22 @@ function ContratoSecao({
         setErro(traduzirErro(error));
         return null;
       }
-      await sb
+      const op = await sb
         .from("crm_oportunidades")
         .update({ valor_mensal: v.honorario_mensal || null })
         .eq("id", o.id);
+      if (op.error) setErro(`Contrato salvo, mas o valor do funil não foi atualizado: ${traduzirErro(op.error)}`);
       aoMudar();
       return data as Contrato;
     }
-    const ano = new Date().getFullYear();
+    const hoje = hojeISO(org.fuso);
+    const ano = hoje.slice(0, 4);
     const { count } = await sb
       .from("crm_contratos")
       .select("id", { count: "exact", head: true })
       .eq("org_id", o.org_id)
       .gte("criado_em", `${ano}-01-01`);
-    const numero = numeroContrato((count ?? 0) + 1);
+    const numero = numeroContrato((count ?? 0) + 1, new Date(hoje + "T12:00:00Z"));
     const { data, error } = await sb
       .from("crm_contratos")
       .insert({
@@ -522,19 +526,21 @@ function ContratoSecao({
       setErro(traduzirErro(error));
       return null;
     }
-    await sb
-      .from("crm_oportunidades")
-      .update({ valor_mensal: v.honorario_mensal || null })
-      .eq("id", o.id);
-    await sb
-      .from("crm_atividades")
-      .insert({
+    const [op, at] = await Promise.all([
+      sb
+        .from("crm_oportunidades")
+        .update({ valor_mensal: v.honorario_mensal || null })
+        .eq("id", o.id),
+      sb.from("crm_atividades").insert({
         org_id: o.org_id,
         oportunidade_id: o.id,
         tipo: "contrato",
         texto: `Contrato ${numero} criado (${brl(v.honorario_mensal)}/mês)`,
         concluida: true,
-      });
+      }),
+    ]);
+    const falha = op.error ?? at.error;
+    if (falha) setErro(`Contrato criado, mas o funil ou o histórico não foram atualizados: ${traduzirErro(falha)}`);
     aoMudar();
     return data as Contrato;
   }
@@ -570,13 +576,20 @@ function ContratoSecao({
     const sb = supabase();
     const { error } = await sb.from("crm_contratos").update(campos).eq("id", ultimo.id);
     if (error) return setErro(traduzirErro(error));
-    await sb
+    const falhas: string[] = [];
+    const at = await sb
       .from("crm_atividades")
       .insert({ org_id: o.org_id, oportunidade_id: o.id, tipo: "contrato", texto: `Contrato ${ultimo.numero} ${status}`, concluida: true });
-    if (status === "enviado" && ["novo", "contato", "reuniao"].includes(o.etapa))
-      await sb.from("crm_oportunidades").update({ etapa: "proposta" }).eq("id", o.id);
-    if (status === "assinado" && !o.cliente_id && confirm("Contrato assinado. Cadastrar a empresa como cliente da carteira agora?"))
-      await sb.rpc("crm_converter_cliente", { p_op: o.id });
+    if (at.error) falhas.push(`histórico: ${traduzirErro(at.error)}`);
+    if (status === "enviado" && ["novo", "contato", "reuniao"].includes(o.etapa)) {
+      const op = await sb.from("crm_oportunidades").update({ etapa: "proposta" }).eq("id", o.id);
+      if (op.error) falhas.push(`etapa do funil: ${traduzirErro(op.error)}`);
+    }
+    if (status === "assinado" && !o.cliente_id && confirm("Contrato assinado. Cadastrar a empresa como cliente da carteira agora?")) {
+      const cv = await sb.rpc("crm_converter_cliente", { p_op: o.id });
+      if (cv.error) falhas.push(`cadastro do cliente: ${traduzirErro(cv.error)}`);
+    }
+    if (falhas.length) setErro(`Contrato marcado como ${status}, mas houve falha em: ${falhas.join("; ")}`);
     aoMudar();
   }
 

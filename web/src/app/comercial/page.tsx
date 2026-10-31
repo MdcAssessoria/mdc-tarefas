@@ -9,6 +9,7 @@ import { supabase } from "@/lib/supabase";
 import { traduzirErro } from "@/lib/erros";
 import { ETAPAS, ORIGENS, brl } from "@/lib/crm";
 import type { Etapa, Oportunidade } from "@/lib/crm";
+import { hojeISO } from "@/lib/datas";
 
 export default function PaginaFunil() {
   return (
@@ -73,7 +74,8 @@ function Funil() {
   const kpis = useMemo(() => {
     const todos = lista ?? [];
     const l = todos.filter((o) => !o.arquivado_em);
-    const mes = new Date().toISOString().slice(0, 7);
+    const hoje = hojeISO(org.fuso);
+    const mes = hoje.slice(0, 7);
     const abertos = l.filter((o) => !["ganho", "perdido"].includes(o.etapa));
     const ganhos = todos.filter((o) => o.etapa === "ganho");
     const fechados = todos.filter((o) => ["ganho", "perdido"].includes(o.etapa));
@@ -83,9 +85,9 @@ function Funil() {
       pipeline: abertos.reduce((a, o) => a + (o.valor_mensal ?? 0), 0),
       conversao: fechados.length ? ganhos.length / fechados.length : null,
       ticket: ganhos.length ? ganhos.reduce((a, o) => a + (o.valor_mensal ?? 0), 0) / ganhos.length : null,
-      atrasados: abertos.filter((o) => o.proximo_contato && o.proximo_contato < new Date().toISOString().slice(0, 10)).length,
+      atrasados: abertos.filter((o) => o.proximo_contato && o.proximo_contato < hoje).length,
     };
-  }, [lista]);
+  }, [lista, org.fuso]);
 
   async function mover(id: string, etapa: Etapa) {
     const o = lista?.find((x) => x.id === id);
@@ -294,7 +296,7 @@ function Funil() {
                 <div className="flex min-h-24 flex-col gap-2 px-2 pb-3">
                   {itens.map((o) => {
                     const parado = diasDesde(o.etapa_desde);
-                    const atrasado = o.proximo_contato && o.proximo_contato < new Date().toISOString().slice(0, 10);
+                    const atrasado = o.proximo_contato && o.proximo_contato < hojeISO(org.fuso);
                     return (
                       <article
                         key={o.id}

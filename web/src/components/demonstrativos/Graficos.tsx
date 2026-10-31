@@ -70,8 +70,14 @@ function Dica({ x, y, linhas }: { x: number | string; y: number; linhas: string[
   );
 }
 
+interface CascataPasso {
+  rotulo: string;
+  valor: number;
+  total?: boolean;
+}
+
 /** Cascata da DRE: da receita bruta ao lucro líquido. */
-export function Cascata({ passos }: { passos: { rotulo: string; valor: number; total?: boolean }[] }) {
+export function Cascata({ passos }: { passos: CascataPasso[] }) {
   const [hover, setHover] = useState<number | null>(null);
   const W = 720,
     H = 260,
@@ -79,17 +85,12 @@ export function Cascata({ passos }: { passos: { rotulo: string; valor: number; t
     mr = 12,
     mt = 12,
     mb = 48;
-  let acum = 0;
-  const barras = passos.map((p) => {
-    if (p.total) {
-      const b = { ...p, de: 0, ate: p.valor };
-      acum = p.valor;
-      return b;
-    }
-    const b = { ...p, de: acum, ate: acum + p.valor };
-    acum += p.valor;
-    return b;
-  });
+  // cada passo começa onde o anterior terminou; passos "total" recomeçam do zero
+  const barras: (CascataPasso & { de: number; ate: number })[] = [];
+  for (const p of passos) {
+    const de = p.total ? 0 : (barras.at(-1)?.ate ?? 0);
+    barras.push({ ...p, de, ate: p.total ? p.valor : de + p.valor });
+  }
   const vals = barras.flatMap((b) => [b.de, b.ate]);
   const { ini, fim, ticks } = escala(Math.min(...vals), Math.max(...vals));
   const y = (v: number) => mt + (1 - (v - ini) / (fim - ini)) * (H - mt - mb);
@@ -422,27 +423,24 @@ export function CicloCaixa({ pme, pmr, pmp }: { pme: number | null; pmr: number 
   );
 }
 
-/** Duas colunas empilhadas: o que a empresa tem × quem financia. */
-export function Composicao({
-  ativo,
-  passivo,
+/** Uma coluna empilhada da Composicao; "total" é o maior dos dois lados, para as duas colunas ficarem na mesma escala. */
+function ColunaComposicao({
+  titulo,
+  itens,
+  total,
 }: {
-  ativo: { rotulo: string; valor: number; cor: string }[];
-  passivo: { rotulo: string; valor: number; cor: string }[];
+  titulo: string;
+  itens: { rotulo: string; valor: number; cor: string }[];
+  total: number;
 }) {
-  const tot = Math.max(
-    1,
-    ativo.reduce((a, x) => a + Math.max(0, x.valor), 0),
-    passivo.reduce((a, x) => a + Math.max(0, x.valor), 0),
-  );
-  const Col = ({ titulo, itens }: { titulo: string; itens: { rotulo: string; valor: number; cor: string }[] }) => (
+  return (
     <div className="flex min-w-0 flex-1 flex-col">
       <div className="mb-1 text-center text-xs font-semibold text-neutral-700">{titulo}</div>
       <div className="flex h-56 flex-col-reverse gap-[2px]">
         {itens
           .filter((x) => x.valor > 0)
           .map((x) => {
-            const h = (x.valor / tot) * 100;
+            const h = (x.valor / total) * 100;
             return (
               <div
                 key={x.rotulo}
@@ -466,10 +464,25 @@ export function Composicao({
       </div>
     </div>
   );
+}
+
+/** Duas colunas empilhadas: o que a empresa tem × quem financia. */
+export function Composicao({
+  ativo,
+  passivo,
+}: {
+  ativo: { rotulo: string; valor: number; cor: string }[];
+  passivo: { rotulo: string; valor: number; cor: string }[];
+}) {
+  const tot = Math.max(
+    1,
+    ativo.reduce((a, x) => a + Math.max(0, x.valor), 0),
+    passivo.reduce((a, x) => a + Math.max(0, x.valor), 0),
+  );
   return (
     <div className="flex gap-5">
-      <Col titulo="O que a empresa tem" itens={ativo} />
-      <Col titulo="Quem financia" itens={passivo} />
+      <ColunaComposicao titulo="O que a empresa tem" itens={ativo} total={tot} />
+      <ColunaComposicao titulo="Quem financia" itens={passivo} total={tot} />
     </div>
   );
 }

@@ -60,7 +60,6 @@ function Tarefas() {
       setRespSel([]);
     }
     if (params.get("nova")) setEditando(null);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params]);
 
   useEffect(() => {
@@ -82,6 +81,7 @@ function Tarefas() {
       }
     } catch {}
     setFiltrosProntos(true);
+    // de propósito só ao trocar de organização: os filtros salvos são lidos uma vez, não a cada mudança de setores/membros
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [org.id]);
 

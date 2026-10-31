@@ -81,8 +81,21 @@ export function AbaDemonstracoes({ atual, historico }: { atual: BalanceteReg; hi
   );
 }
 
-function TabelaBalanco({ b, inicio, fim }: { b: Balanco; inicio: string; fim: string }) {
-  const Bloco = ({ titulo, linhas, total }: { titulo: string; linhas: LinhaBp[]; total: { atual: number; anterior: number } }) => (
+/** Um lado do balanço (ativo ou passivo + PL) em tabela, com saldo atual, de abertura e variação. */
+function BlocoBalanco({
+  titulo,
+  linhas,
+  total,
+  inicio,
+  fim,
+}: {
+  titulo: string;
+  linhas: LinhaBp[];
+  total: { atual: number; anterior: number };
+  inicio: string;
+  fim: string;
+}) {
+  return (
     <div className="cartao overflow-x-auto">
       <table className="tabela text-[13px]">
         <thead>
@@ -112,12 +125,15 @@ function TabelaBalanco({ b, inicio, fim }: { b: Balanco; inicio: string; fim: st
       </table>
     </div>
   );
+}
+
+function TabelaBalanco({ b, inicio, fim }: { b: Balanco; inicio: string; fim: string }) {
   const fecha = Math.abs(b.total_ativo.atual - b.total_passivo.atual) < 1;
   return (
     <div className="space-y-3">
       <div className="grid gap-4 xl:grid-cols-2">
-        <Bloco titulo="Ativo" linhas={b.ativo} total={b.total_ativo} />
-        <Bloco titulo="Passivo e patrimônio líquido" linhas={b.passivo} total={b.total_passivo} />
+        <BlocoBalanco titulo="Ativo" linhas={b.ativo} total={b.total_ativo} inicio={inicio} fim={fim} />
+        <BlocoBalanco titulo="Passivo e patrimônio líquido" linhas={b.passivo} total={b.total_passivo} inicio={inicio} fim={fim} />
       </div>
       <p className={`text-xs ${fecha ? "text-emerald-700" : "text-[var(--perigo)]"}`}>
         {fecha

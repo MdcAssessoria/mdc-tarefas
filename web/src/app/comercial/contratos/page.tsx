@@ -7,6 +7,7 @@ import { useOrg } from "@/lib/org";
 import { supabase } from "@/lib/supabase";
 import { brl } from "@/lib/crm";
 import type { Contrato } from "@/lib/crm";
+import { mesAtualISO } from "@/lib/datas";
 
 export default function PaginaContratos() {
   return (
@@ -38,9 +39,7 @@ function Lista() {
       .then(({ data }) => setLista((data as Linha[]) ?? []));
   }, [org.id]);
   const filtrada = useMemo(() => (lista ?? []).filter((c) => !status || c.status === status), [lista, status]);
-  const assinadosMes = (lista ?? []).filter(
-    (c) => c.status === "assinado" && c.assinado_em?.slice(0, 7) === new Date().toISOString().slice(0, 7),
-  );
+  const assinadosMes = (lista ?? []).filter((c) => c.status === "assinado" && c.assinado_em?.slice(0, 7) === mesAtualISO(org.fuso));
 
   return (
     <div className="space-y-4">

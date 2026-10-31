@@ -64,9 +64,10 @@ function Importar() {
     setCliente(id);
     if (!leitura || !id) return;
     const mapa = await carregarMapa(org.id, id);
-    for (const l of leitura.linhas) l.grupo = null;
-    classificar(leitura.linhas, mapa as { classificacao: string; grupo: Grupo }[]);
-    setLeitura({ ...leitura });
+    // classificar() altera as linhas recebidas: trabalha numa cópia para não mexer no estado atual
+    const linhas = leitura.linhas.map((l) => ({ ...l, grupo: null }));
+    classificar(linhas, mapa as { classificacao: string; grupo: Grupo }[]);
+    setLeitura({ ...leitura, linhas });
   }
 
   const analise = useMemo(
@@ -203,8 +204,9 @@ function Importar() {
                           className="entrada !min-h-7 !py-0.5 text-xs"
                           value={l.grupo ?? ""}
                           onChange={(e) => {
-                            l.grupo = (e.target.value || null) as Grupo | null;
-                            setLeitura({ ...leitura });
+                            const grupo = (e.target.value || null) as Grupo | null;
+                            const linhas = leitura.linhas.map((x) => (x.classificacao === l.classificacao ? { ...x, grupo } : x));
+                            setLeitura({ ...leitura, linhas });
                           }}
                         >
                           <option value="">—</option>

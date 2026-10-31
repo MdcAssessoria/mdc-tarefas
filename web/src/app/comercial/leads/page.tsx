@@ -9,6 +9,7 @@ import { traduzirErro } from "@/lib/erros";
 import { ETAPAS, ORIGENS, brl } from "@/lib/crm";
 import type { Oportunidade } from "@/lib/crm";
 import { exportarExcel } from "@/lib/excel";
+import { hojeISO } from "@/lib/datas";
 
 export default function PaginaLeads() {
   return (
@@ -114,7 +115,7 @@ function Leads() {
 
   async function exportar() {
     await exportarExcel(
-      `Leads-MDC-${new Date().toISOString().slice(0, 10)}.xlsx`,
+      `Leads-MDC-${hojeISO(org.fuso)}.xlsx`,
       "Leads do CRM",
       `${filtrada.length} lead(s) · gerado em ${new Date().toLocaleString("pt-BR")}`,
       [

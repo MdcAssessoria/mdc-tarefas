@@ -3,11 +3,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { Barras, COR, Cascata, CicloCaixa, ColunasPareadas, Composicao, Evolucao, Faisca, Pilha100, STATUS, Termometro } from "./Graficos";
 import { INDICES_INFO, brl, fmtIndice, mdParaHtml, nomeGrupo } from "@/lib/balancete";
-import type { Alerta, Conferencia, Dre, Indices, Linha, Resumo } from "@/lib/balancete";
+import type { Alerta, Conferencia, Indices, Linha, Resumo } from "@/lib/balancete";
 import { somarDfc, somarDre } from "@/lib/demonstracoes";
 import { TIPOS_PERIODO, agregar, serieAgrupada } from "@/lib/periodos";
 import type { TipoPeriodo } from "@/lib/periodos";
-export { somarDre };
 import type { Demonstracoes, Dfc } from "@/lib/demonstracoes";
 import { caminho } from "@/lib/caminho";
 import { MAIOR_MELHOR, tendenciaLinear } from "@/lib/tendencia";
@@ -778,5 +777,3 @@ export function VisaoParecer({ texto, empresa, cnpj }: { texto: string; empresa:
     </article>
   );
 }
-
-export { brl };

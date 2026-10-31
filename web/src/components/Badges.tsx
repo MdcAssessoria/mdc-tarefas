@@ -1,6 +1,6 @@
 import { diasAte, fmtData, rotuloPrazo } from "@/lib/datas";
 import type { Prioridade, Setor, Status } from "@/lib/types";
-import { nomePrioridade, nomeStatus } from "@/lib/types";
+import { nomePrioridade } from "@/lib/types";
 
 export function PrazoBadge({ prazo, status, fuso }: { prazo: string | null; status: Status; fuso?: string }) {
   const fechada = status === "concluida" || status === "cancelada";
@@ -16,18 +16,6 @@ export function PrazoBadge({ prazo, status, fuso }: { prazo: string | null; stat
       {fechada ? fmtData(prazo) : rotuloPrazo(d)}
     </span>
   );
-}
-
-const COR_STATUS: Record<Status, string> = {
-  a_fazer: "bg-neutral-100 text-neutral-700",
-  em_andamento: "bg-sky-50 text-sky-800",
-  aguardando: "bg-violet-50 text-violet-800",
-  concluida: "bg-emerald-50 text-emerald-800",
-  cancelada: "bg-neutral-100 text-neutral-500 line-through",
-};
-
-export function StatusChip({ status }: { status: Status }) {
-  return <span className={`chip ${COR_STATUS[status]}`}>{nomeStatus(status)}</span>;
 }
 
 const COR_PRIORIDADE: Record<Prioridade, string> = {

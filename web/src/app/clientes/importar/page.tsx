@@ -94,7 +94,7 @@ function Importar() {
   const [filtro, setFiltro] = useState<"todos" | "novo" | "atualizar" | "aviso" | "fora">("todos");
   const [arrastando, setArrastando] = useState(false);
 
-  const linhasBrutas = dados[aba] ?? [];
+  const linhasBrutas = useMemo(() => dados[aba] ?? [], [dados, aba]);
   const colunas = linhasBrutas[cabecalho] ?? [];
 
   // índice dos clientes já cadastrados, para mostrar o que é novo e o que será atualizado

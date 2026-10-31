@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useEffectEvent, useMemo, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { useOrg } from "@/lib/org";
 import { supabase } from "@/lib/supabase";
@@ -942,10 +942,13 @@ function AcessosClientes({ aoAviso, aoErro }: { aoAviso: (t: string, link?: stri
     carregar();
   }, [carregar]);
 
-  const nomeCli = (id: string) => {
-    const c = clientePorId(id);
-    return c ? c.nome_fantasia || c.razao_social : "—";
-  };
+  const nomeCli = useCallback(
+    (id: string) => {
+      const c = clientePorId(id);
+      return c ? c.nome_fantasia || c.razao_social : "—";
+    },
+    [clientePorId],
+  );
   const pessoas = useMemo(() => {
     const m = new Map<string, VinculoCliente[]>();
     for (const v of vinculos) m.set(v.email, [...(m.get(v.email) ?? []), v]);
@@ -954,8 +957,7 @@ function AcessosClientes({ aoAviso, aoErro }: { aoAviso: (t: string, link?: stri
       .map(([email, vs]) => ({ email, nome: vs.find((x) => x.nome)?.nome ?? email, vs }))
       .filter((p) => !q || `${p.nome} ${p.email} ${p.vs.map((v) => nomeCli(v.cliente_id)).join(" ")}`.toLowerCase().includes(q))
       .sort((a, b) => a.nome.localeCompare(b.nome));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [vinculos, busca]);
+  }, [vinculos, busca, nomeCli]);
 
   const pessoaEditada = pessoas.find((p) => p.email === editar) ?? null;
 
@@ -1274,11 +1276,12 @@ function TransferirTrabalho({
   const [carteira, setCarteira] = useState(true);
   const [enviando, setEnviando] = useState(false);
 
+  // aoErro muda a cada render do pai; useEffectEvent evita refazer a consulta por causa disso
+  const avisarErro = useEffectEvent(aoErro);
   useEffect(() => {
-    supabase()
+    void supabase()
       .rpc("hub_pendencias_membro", { p_org: org.id, p_user: m.user_id })
-      .then(({ data, error }) => (error ? aoErro(error) : setPend(data as Record<string, number>)));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+      .then(({ data, error }) => (error ? avisarErro(error) : setPend(data as Record<string, number>)));
   }, [org.id, m.user_id]);
 
   const total = pend ? Object.values(pend).reduce((a, b) => a + Number(b), 0) : 0;

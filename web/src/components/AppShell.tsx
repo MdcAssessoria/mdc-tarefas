@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { MouseEvent as EventoMouse } from "react";
 import { OrgProvider, useOrg } from "@/lib/org";
 import { supabase } from "@/lib/supabase";
 import { PAPEIS, PAPEIS_APP } from "@/lib/types";
@@ -10,6 +11,7 @@ import type { PapelApp } from "@/lib/types";
 import { Icone } from "./Icone";
 import { fmtDataHora } from "@/lib/datas";
 import { caminho } from "@/lib/caminho";
+import { traduzirErro } from "@/lib/erros";
 
 type Modulo = "hub" | "tarefas" | "societario" | "demonstrativos" | "atendimento" | "vencimentos" | "comercial";
 
@@ -223,7 +225,8 @@ function MenuLateral({ modulo, recolhido, aoRecolher }: { modulo: Modulo; recolh
         {recolhido && <div className="mx-3 my-3 h-px bg-white/10" />}
         {ferramentas.map((a) =>
           item({
-            href: a.externo ? a.rota : a.rota,
+            href: a.rota,
+            // TODO: o nome deveria vir só de hub_apps.nome; mantido fixo para não mudar o menu atual
             nome: a.slug === "comercial" ? "CRM Comercial" : a.nome,
             icone: a.icone,
             ativo: modulo === a.slug,
@@ -548,6 +551,7 @@ function Sino() {
   const { session } = useOrg();
   const [lista, setLista] = useState<Notificacao[]>([]);
   const [aberto, setAberto] = useState(false);
+  const [erro, setErro] = useState<string | null>(null);
   const ref = useFora(aberto, () => setAberto(false));
   const uid = session.user.id;
 
@@ -560,8 +564,11 @@ function Sino() {
         .eq("user_id", uid)
         .order("criado_em", { ascending: false })
         .limit(30)
-        .then(({ data }) => setLista((data as Notificacao[]) ?? []));
-    carregar();
+        .then(({ data, error }) => {
+          if (error) setErro(traduzirErro(error));
+          else setLista((data as Notificacao[]) ?? []);
+        });
+    void carregar();
     const canal = sb
       .channel(`sino-${uid}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "hub_notificacoes", filter: `user_id=eq.${uid}` }, carregar)
@@ -573,12 +580,26 @@ function Sino() {
 
   const novas = lista.filter((n) => !n.lida_em).length;
 
-  async function marcarTodas() {
-    const ids = lista.filter((n) => !n.lida_em).map((n) => n.id);
+  /** Marca como lidas na tela na hora; se o banco recusar, desfaz e mostra o motivo. */
+  async function marcarLidas(ids: string[]) {
     if (!ids.length) return;
     const agora = new Date().toISOString();
-    setLista((l) => l.map((n) => (n.lida_em ? n : { ...n, lida_em: agora })));
-    await supabase().from("hub_notificacoes").update({ lida_em: agora }).in("id", ids);
+    setLista((l) => l.map((n) => (ids.includes(n.id) && !n.lida_em ? { ...n, lida_em: agora } : n)));
+    const { error } = await supabase().from("hub_notificacoes").update({ lida_em: agora }).in("id", ids);
+    if (error) {
+      setErro(traduzirErro(error));
+      setLista((l) => l.map((n) => (ids.includes(n.id) && n.lida_em === agora ? { ...n, lida_em: null } : n)));
+    } else setErro(null);
+  }
+
+  // A gravação precisa terminar antes de sair da página; senão o navegador cancela a requisição.
+  async function abrir(e: EventoMouse, n: Notificacao) {
+    if (n.lida_em) return;
+    // Ctrl/Cmd/Shift-clique abre em outra aba: esta página continua viva e a gravação termina sozinha
+    if (e.ctrlKey || e.metaKey || e.shiftKey) return void marcarLidas([n.id]);
+    e.preventDefault();
+    await marcarLidas([n.id]);
+    if (n.link) window.location.assign(caminho(n.link));
   }
 
   return (
@@ -601,20 +622,19 @@ function Sino() {
           <div className="flex items-center justify-between border-b border-[var(--borda)] px-3 py-2">
             <span className="text-sm font-semibold">Notificações</span>
             {novas > 0 && (
-              <button className="btn-link" onClick={marcarTodas}>
+              <button className="btn-link" onClick={() => void marcarLidas(lista.filter((n) => !n.lida_em).map((n) => n.id))}>
                 Marcar todas como lidas
               </button>
             )}
           </div>
           <div className="max-h-96 overflow-y-auto">
+            {erro && <p className="m-2 rounded-lg bg-red-50 p-2 text-xs text-red-800">{erro}</p>}
             {lista.length === 0 && <p className="p-4 text-sm text-neutral-500">Nada por aqui.</p>}
             {lista.map((n) => (
               <a
                 key={n.id}
                 href={n.link ? caminho(n.link) : "#"}
-                onClick={() =>
-                  !n.lida_em && supabase().from("hub_notificacoes").update({ lida_em: new Date().toISOString() }).eq("id", n.id)
-                }
+                onClick={(e) => void abrir(e, n)}
                 className={`block border-b border-[var(--borda)] px-3 py-2 text-sm last:border-0 hover:bg-[var(--fundo)] ${
                   n.lida_em ? "text-neutral-500" : ""
                 }`}

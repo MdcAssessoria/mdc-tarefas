@@ -69,13 +69,6 @@ export async function abrirArquivo(caminho: string, nome?: string) {
   window.open(data.signedUrl, "_blank", "noopener");
 }
 
-export async function excluirArquivo(a: Pick<Arquivo, "id" | "caminho">) {
-  const sb = supabase();
-  const r = await sb.from("hub_arquivos").delete().eq("id", a.id);
-  if (r.error) throw r.error;
-  await sb.storage.from(BUCKET).remove([a.caminho]);
-}
-
 export function fmtTamanho(n: number | null) {
   if (!n) return "";
   if (n < 1024) return `${n} B`;
