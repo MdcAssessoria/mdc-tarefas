@@ -70,6 +70,22 @@ baixa o título e contabiliza. Mesmo cadastro de pessoas, plano e categorias.
   fin_titulos.nota_id.
 - Fases 5 (Entradas) e 6 (Saídas).
 
+## Relatórios (Financeiro, Entradas e Saídas — mesmo molde)
+Regra permanente: tudo pensado para público leigo, de alta aparência e intuitivo.
+Molde único de tela: período em um clique (Este mês, Mês passado, Últimos 3 meses, Este ano, Escolher datas);
+no máximo 3 filtros à vista + "Mais filtros", etiquetas com X e "Limpar"; frase de resumo gerada pelos números;
+3 indicadores; gráfico que filtra a tabela ao clicar; tabela com busca, ordenação e total; exportar PDF
+(timbrado MDC, período e filtros no cabeçalho) e Excel (formatado, aba com filtros, valores numéricos) exatamente
+o que está na tela; relatórios favoritos; tela vazia que ensina o próximo passo; versão celular.
+Linguagem leiga ("Dinheiro que entrou/saiu"); termo técnico só com explicação ao passar o mouse.
+Catálogo:
+- Financeiro: fluxo realizado, fluxo previsto, a pagar/receber, para onde foi o dinheiro (categoria/centro),
+  de onde veio o dinheiro, resultado do mês (DRE gerencial de caixa), extrato conciliado, pendências de conciliação.
+- Entradas: compras por fornecedor/produto, notas recebidas (manifestação), impostos nas compras.
+- Saídas: faturamento por cliente/produto (curva ABC), notas emitidas/canceladas, faturado x recebido,
+  impostos destacados.
+Base: lib/excel.ts e lib/relatorioPdf.ts viram um componente único de relatório. Entram com cada módulo (fases 4–6).
+
 ## Serviço fiscal — onde roda
 Escolhido: Google Cloud Run, região São Paulo (southamerica-east1). Liga só quando o HUB chama; cota gratuita
 mensal por conta de faturamento: 180 mil vCPU-s, 360 mil GiB-s, 2 milhões de requisições (São Paulo é
