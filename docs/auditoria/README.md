@@ -4,7 +4,7 @@ Rotina descrita em [`../08-convencoes.md`](../08-convencoes.md#86-rotina-de-audi
 
 | Data | Commit auditado | Veredito | Críticos/altos em aberto | Parecer |
 | --- | --- | --- | --- | --- |
-| 31/10/2026 | (preenchido no parecer final desta data) | — | — | — |
+| 31/10/2026 | `b5daf18` (+ migração 020, ainda não aplicada) | Aprovado com ressalvas | 0 críticos · 1 alto (A-2, aberto em produção até aplicar a 020) | [Parecer](2026-10-31-parecer.md) · depois do parecer: corrigida a ordem de gravação do lote (empresa e mês), a confirmar na próxima auditoria |
 
 ## Auditoria inicial de 31/10/2026 (base para a reorganização)
 
