@@ -85,7 +85,5 @@ export function filtrarLinks(
   modulo: Modulo,
   permissoes: { pode: (app: string, minimo?: PapelApp) => boolean; podeEditarCadastros: boolean },
 ): LinkModulo[] {
-  return NAV[modulo].links.filter((l) =>
-    l.gestor ? permissoes.podeEditarCadastros : l.minimo ? permissoes.pode(modulo, l.minimo) : true,
-  );
+  return NAV[modulo].links.filter((l) => (l.gestor ? permissoes.podeEditarCadastros : l.minimo ? permissoes.pode(modulo, l.minimo) : true));
 }
