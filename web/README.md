@@ -29,7 +29,8 @@ Rode sempre de dentro de `web/`.
 
 `npm run telas` não acessa o banco de verdade: toda chamada ao Supabase é respondida com os dados de
 `scripts/telas/dados-exemplo.mjs`. Opções: `ROTAS=/tarefas,/config npm run telas` (só algumas rotas) e
-`FOTOS=/tmp/telas npm run telas` (salva uma captura de cada tela).
+`FOTOS=/tmp/telas npm run telas` (salva uma captura de cada tela e, nas telas com interação, capturas intermediárias)
+e `TELA=celular npm run telas` (abre tudo na largura de um celular).
 
 Se você **mover ou renomear uma página** e o `npm run tipos` acusar erro em `.next/types/...`, são tipos gerados pelo
 build anterior: apague com `rm -rf .next` e rode de novo.
@@ -148,6 +149,8 @@ O ESLint (`eslint.config.mjs`, regra `no-restricted-imports`) **barra** os impor
 | Índices (liquidez, margens, prazos) e a faixa de alerta | `dominios/demonstrativos/balancete/indices.ts` |
 | Fragilidades e conferências do balancete | `dominios/demonstrativos/balancete/fragilidades.ts` |
 | Balanço, DFC, termômetro de saúde | `dominios/demonstrativos/calculosDemonstracoes.ts` |
+| Visão por período (Ano · Visão · Qual período, completude, acumulado, ano anterior) | `dominios/demonstrativos/selecaoPeriodo.ts` e `componentes/SeletorPeriodo.tsx` |
+| Importação de vários balancetes de uma vez (situações, resumo por empresa) | `dominios/demonstrativos/importacaoLote.ts` e `app/(hub)/demonstrativos/importar/_componentes/` |
 | Gravar/recalcular balancete no banco | `dominios/demonstrativos/repositorio.ts` |
 | Gráficos e painel do balancete | `dominios/demonstrativos/componentes/` |
 | Permissões do Portal do Cliente | `dominios/portal/permissoes.ts` (atenção: `app/(hub)/atendimento/portal/page.tsx` ainda tem uma cópia) |

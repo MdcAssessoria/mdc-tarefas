@@ -2,6 +2,9 @@
 
 Pedido do Edvaldo em 31/10/2026. Vem logo depois da reorganização do código (etapa 2).
 
+> **Situação:** seções 2 (lote manual) e 4 (visão por período) construídas no navegador; ver
+> [modulos/demonstrativos.md](../modulos/demonstrativos.md). Seções 1 (processador no servidor) e 3 (SharePoint) a construir.
+
 ## 1. Um só "processador" de balancete, três portas de entrada
 
 ```mermaid

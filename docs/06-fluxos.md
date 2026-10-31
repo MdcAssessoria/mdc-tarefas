@@ -14,10 +14,10 @@ sequenceDiagram
     participant DB as Banco
     participant EF as Função demonstrativo-pdf
     actor C as Cliente
-    A->>T: escolhe cliente, competência e o Excel do Domínio
-    T->>L: lerBalancete → classificar (mapa de contas) → analisar
+    A->>T: um ou vários Excel do Domínio (várias empresas e meses)
+    T->>L: lerBalancete → empresa (CNPJ/código) e competência → classificar (mapa de contas) → analisar
     L-->>T: resumo, índices, alertas, conferências, BP/DRE/DFC
-    T->>DB: grava portal_balancetes (rascunho) + linhas
+    T->>DB: grava portal_balancetes (rascunho) + linhas (lote: um arquivo por vez, mesmo salvarBalancete)
     A->>T: revisa painel, escreve parecer
     A->>DB: portal_publicar_balancete (só quem gere Demonstrativos)
     DB-->>C: aparece no Portal (aviso no sino)
@@ -27,7 +27,12 @@ sequenceDiagram
     EF-->>C: PDF assinado
 ```
 
-Regras: balancete publicado e suas linhas não mudam (gatilhos `publicacao_protegida` e
+Regras: no lote, arquivo de mês já publicado fica de fora (precisa despublicar) e rascunho existente só é trocado
+quando marcado "Substituir"; o resumo por empresa sai em PDF e Excel. Na análise e no Portal, o período (mês,
+trimestre, semestre ou ano do calendário) é escolhido no topo e agrega os balancetes no navegador; o PDF assinado
+continua sendo de um balancete (o do último mês do período). Detalhes em [modulos/demonstrativos.md](modulos/demonstrativos.md).
+
+Balancete publicado e suas linhas não mudam (gatilhos `publicacao_protegida` e
 `linhas_balancete_protegidas`); para corrigir, despublique, ajuste e publique de novo.
 
 ## 6.2 Tarefas recorrentes do mês
