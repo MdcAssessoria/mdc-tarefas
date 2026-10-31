@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useOrg } from "@/lib/org";
 import { supabase } from "@/lib/supabase";
-import type { BalanceteReg } from "@/components/demonstrativos/Painel";
+import type { BalanceteReg } from "@/dominios/demonstrativos/tipos";
 import { caminho } from "@/lib/caminho";
 import { brl } from "@/lib/formato/moeda";
 import { fmtIndice } from "@/lib/formato/numero";

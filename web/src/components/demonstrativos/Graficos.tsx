@@ -3,15 +3,7 @@
 // Gráficos em SVG puro (sem bibliotecas), na paleta validada da MDC.
 import { useState } from "react";
 import { brl } from "@/lib/formato/moeda";
-
-export const COR = {
-  receita: "#1B8263",
-  despesa: "#C0892A",
-  lucro: "#4A78B5",
-  negativo: "#B42318",
-  grade: "#E4E0D4",
-  eixo: "#8C948F",
-};
+import { COR } from "./paletas";
 
 const curto = (v: number) => {
   const a = Math.abs(v);
@@ -287,7 +279,8 @@ export function Faisca({
 
 // ---------------------------------------------------------------- painel de saúde e composições
 
-export const STATUS = {
+/** Cores e rótulos do status de saúde financeira (bom, atenção, crítico). */
+export const STATUS_SAUDE = {
   bom: { cor: "#067647", fundo: "#ECFDF3", icone: "✔", rotulo: "Bom" },
   atencao: { cor: "#B54708", fundo: "#FFFAEB", icone: "!", rotulo: "Atenção" },
   critico: { cor: "#B42318", fundo: "#FEF3F2", icone: "✖", rotulo: "Crítico" },
@@ -310,7 +303,7 @@ export function Termometro({ nota, faixa }: { nota: number; faixa: string }) {
       [x2, y2] = pt(ate);
     return `M ${x1} ${y1} A ${R} ${R} 0 0 1 ${x2} ${y2}`;
   };
-  const cor = nota >= 75 ? STATUS.bom.cor : nota >= 50 ? STATUS.atencao.cor : STATUS.critico.cor;
+  const cor = nota >= 75 ? STATUS_SAUDE.bom.cor : nota >= 50 ? STATUS_SAUDE.atencao.cor : STATUS_SAUDE.critico.cor;
   const [px, py] = pt(nota, R - esp / 2 - 14);
   return (
     <svg
@@ -319,9 +312,9 @@ export function Termometro({ nota, faixa }: { nota: number; faixa: string }) {
       role="img"
       aria-label={`Termômetro de saúde: ${nota} de 100, ${faixa}`}
     >
-      <path d={arco(0, 49.5)} stroke={STATUS.critico.cor} strokeOpacity={0.22} strokeWidth={esp} fill="none" />
-      <path d={arco(50.5, 74.5)} stroke={STATUS.atencao.cor} strokeOpacity={0.22} strokeWidth={esp} fill="none" />
-      <path d={arco(75.5, 100)} stroke={STATUS.bom.cor} strokeOpacity={0.22} strokeWidth={esp} fill="none" />
+      <path d={arco(0, 49.5)} stroke={STATUS_SAUDE.critico.cor} strokeOpacity={0.22} strokeWidth={esp} fill="none" />
+      <path d={arco(50.5, 74.5)} stroke={STATUS_SAUDE.atencao.cor} strokeOpacity={0.22} strokeWidth={esp} fill="none" />
+      <path d={arco(75.5, 100)} stroke={STATUS_SAUDE.bom.cor} strokeOpacity={0.22} strokeWidth={esp} fill="none" />
       <path d={arco(0, Math.max(0.5, nota))} stroke={cor} strokeWidth={esp} fill="none" strokeLinecap="round" />
       <line x1={cx} y1={cy} x2={px} y2={py} stroke="#1c2420" strokeWidth="3" strokeLinecap="round" />
       <circle cx={cx} cy={cy} r="6" fill="#1c2420" />

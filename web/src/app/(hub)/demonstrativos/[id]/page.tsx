@@ -15,8 +15,12 @@ import { carregarMapaDfc, definirGrupo, definirLinhaDfc, recalcular } from "@/li
 import { LINHAS_DFC, linhaDfc, linhaDfcAuto } from "@/lib/demonstracoes";
 import type { MapaDfc } from "@/lib/demonstracoes";
 import { REGIMES } from "@/lib/types";
-import { ArvoreBalancete, GradeIndices, ListaAlertas, PainelResumo, VisaoParecer } from "@/components/demonstrativos/Painel";
-import type { BalanceteReg, LinhaReg, ParecerReg } from "@/components/demonstrativos/Painel";
+import { ArvoreBalancete } from "@/components/demonstrativos/ArvoreBalancete";
+import { GradeIndices } from "@/components/demonstrativos/GradeIndices";
+import { ListaAlertas } from "@/components/demonstrativos/ListaAlertas";
+import { PainelResumo } from "@/components/demonstrativos/PainelResumo";
+import { VisaoParecer } from "@/components/demonstrativos/VisaoParecer";
+import type { BalanceteReg, LinhaReg, ParecerReg } from "@/dominios/demonstrativos/tipos";
 import { hojeISO, somarDias } from "@/lib/datas";
 import { mesExtenso } from "@/lib/formato/datas";
 import { nomeCliente } from "@/lib/clientes";
