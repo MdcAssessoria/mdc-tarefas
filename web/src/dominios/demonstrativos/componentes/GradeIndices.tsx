@@ -4,9 +4,8 @@
 
 import { CicloCaixa, Faisca } from "./Graficos";
 import { SENTIDO } from "./paletas";
-import { SeletorPeriodo, useSeletorPeriodo } from "./SeletorPeriodo";
 import { INDICES_INFO } from "@/dominios/demonstrativos/balancete/indices";
-import { agregar } from "@/dominios/demonstrativos/periodos";
+import type { Selecao } from "@/dominios/demonstrativos/selecaoPeriodo";
 import { MAIOR_MELHOR, tendenciaLinear } from "@/dominios/demonstrativos/tendencia";
 import type { Tendencia } from "@/dominios/demonstrativos/tendencia";
 import { brl } from "@/lib/formato/moeda";
@@ -14,7 +13,8 @@ import { fmtIndice, fmtNumero } from "@/lib/formato/numero";
 import type { BalanceteReg } from "@/dominios/demonstrativos/tipos";
 
 /** Grade de índices com a curva dos últimos meses e a faixa de alerta. */
-export function GradeIndices({ atual, historico }: { atual: BalanceteReg; historico: BalanceteReg[] }) {
+export function GradeIndices({ sel, historico }: { sel: Selecao<BalanceteReg>; historico: BalanceteReg[] }) {
+  const atual = sel.base;
   const ult = [...historico]
     .sort((a, b) => a.competencia.localeCompare(b.competencia))
     .filter((b) => b.competencia <= atual.competencia)
@@ -37,9 +37,7 @@ export function GradeIndices({ atual, historico }: { atual: BalanceteReg; histor
       ids: ["pmr", "pmp", "pme", "pmv", "ciclo_operacional", "ciclo_financeiro"],
     },
   ];
-  const multi = (atual.demonstracoes?.periodo.dias ?? 31) > 31;
-  const [tipo, setTipo] = useSeletorPeriodo();
-  const ag = agregar(atual, historico, multi ? "mensal" : tipo);
+  const ag = sel.ag;
   const i = ag.indices;
   // série mensal contínua (mês sem balancete = vazio), só balancetes mensais: a reta usa o mês do calendário
   const serie = serieMensal(ult);
@@ -55,16 +53,11 @@ export function GradeIndices({ atual, historico }: { atual: BalanceteReg; histor
   return (
     <div className="space-y-6">
       <ResumoTendencia tend={tend} meses={serie.length} />
-      {!multi && (
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <p className="text-sm text-neutral-600">
-            {tipo === "mensal"
-              ? "Índices do mês."
-              : `Índices de ${ag.rotulo}: margens sobre a DRE do período, liquidez e endividamento no fechamento, prazos pela média dos meses.`}
-          </p>
-          <SeletorPeriodo tipo={tipo} aoMudar={setTipo} />
-        </div>
-      )}
+      <p className="text-sm text-neutral-600">
+        {sel.escolha.visao === "mensal" || sel.fonte === "acumulado"
+          ? `Índices de ${sel.rotulo}.`
+          : `Índices de ${sel.rotulo}: margens sobre a DRE do período, liquidez e endividamento no fechamento, prazos pela média dos meses.`}
+      </p>
       {SECOES.map((sec) => (
         <section key={sec.titulo}>
           <h3 className="mb-2 font-semibold text-[var(--marca)]">

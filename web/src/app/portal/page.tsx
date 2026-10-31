@@ -18,6 +18,8 @@ import { VisaoParecer } from "@/dominios/demonstrativos/componentes/VisaoParecer
 import type { BalanceteReg, LinhaReg, ParecerReg } from "@/dominios/demonstrativos/tipos";
 import { AbaDemonstracoes } from "@/dominios/demonstrativos/componentes/Demonstracoes";
 import { BotaoPdf } from "@/dominios/demonstrativos/componentes/BotaoPdf";
+import { ExportarPeriodo } from "@/dominios/demonstrativos/componentes/ExportarPeriodo";
+import { SeletorPeriodo, usePeriodo } from "@/dominios/demonstrativos/componentes/SeletorPeriodo";
 import { caminho } from "@/lib/caminho";
 import { fmtData, fmtDataHora, mesAno, mesExtenso } from "@/lib/formato/datas";
 import { nomeCliente } from "@/dominios/clientes/nome";
@@ -240,7 +242,6 @@ function SinoCliente({ uid }: { uid: string }) {
 
 function Demonstrativos({ emp, aba }: { emp: Empresa; aba: Aba }) {
   const [lista, setLista] = useState<BalanceteReg[] | null>(null);
-  const [comp, setComp] = useState("");
   const [linhas, setLinhas] = useState<LinhaReg[]>([]);
   const [parecer, setParecer] = useState<ParecerReg | null>(null);
 
@@ -253,13 +254,14 @@ function Demonstrativos({ emp, aba }: { emp: Empresa; aba: Aba }) {
       .eq("status", "publicado")
       .order("competencia")
       .then(({ data }) => {
-        const l = (data as BalanceteReg[]) ?? [];
-        setLista(l);
-        setComp(l.at(-1)?.competencia ?? "");
+        setLista((data as BalanceteReg[]) ?? []);
       });
   }, [emp.cliente_id]);
 
-  const atual = lista?.find((b) => b.competencia === comp);
+  const historico = useMemo(() => lista ?? [], [lista]);
+  const periodo = usePeriodo(historico, undefined, emp.cliente_id);
+  // balancete-base do período (o do último mês): dele vêm o balancete detalhado, o parecer e o PDF assinado
+  const atual = periodo.sel?.base;
 
   useEffect(() => {
     if (!atual) return;
@@ -294,23 +296,26 @@ function Demonstrativos({ emp, aba }: { emp: Empresa; aba: Aba }) {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-2 print:hidden">
-        <span className="text-sm text-neutral-600">Mês:</span>
-        <select className="entrada" value={comp} onChange={(e) => setComp(e.target.value)}>
-          {[...lista].reverse().map((b) => (
-            <option key={b.id} value={b.competencia}>
-              {mesExtenso(b.competencia)}
-            </option>
-          ))}
-        </select>
-        <div className="ml-auto">
-          <BotaoPdf balanceteId={atual.id} />
-        </div>
-      </div>
-      {aba === "inicio" && <PainelResumo atual={atual} historico={lista} />}
-      {aba === "demonstracoes" && <AbaDemonstracoes atual={atual} historico={lista} />}
+      <SeletorPeriodo historico={historico} periodo={periodo}>
+        {periodo.sel && (
+          <ExportarPeriodo
+            sel={periodo.sel}
+            anterior={periodo.anterior}
+            empresa={emp.nome_fantasia || emp.razao_social}
+            logoUrl={emp.logo_url}
+          />
+        )}
+        <BotaoPdf balanceteId={atual.id} />
+      </SeletorPeriodo>
+      {(aba === "balancete" || aba === "parecer") && periodo.sel && periodo.sel.escolha.visao !== "mensal" && (
+        <p className="text-xs text-neutral-600">
+          {aba === "balancete" ? "Balancete" : "Parecer"} de {mesExtenso(atual.competencia)}, o último mês de {periodo.sel.rotulo}.
+        </p>
+      )}
+      {aba === "inicio" && periodo.sel && <PainelResumo sel={periodo.sel} anterior={periodo.anterior} historico={historico} />}
+      {aba === "demonstracoes" && periodo.sel && <AbaDemonstracoes sel={periodo.sel} anterior={periodo.anterior} />}
       {aba === "balancete" && <ArvoreBalancete linhas={linhas} anteriores={anteriores} />}
-      {aba === "indices" && <GradeIndices atual={atual} historico={lista} />}
+      {aba === "indices" && periodo.sel && <GradeIndices sel={periodo.sel} historico={historico} />}
       {aba === "parecer" &&
         (parecer ? (
           <VisaoParecer texto={parecer.texto} empresa={emp.razao_social} cnpj={emp.cnpj} />

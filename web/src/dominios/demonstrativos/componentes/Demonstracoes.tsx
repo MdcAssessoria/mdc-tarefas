@@ -1,70 +1,57 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import type { Dre } from "@/dominios/demonstrativos/balancete/resumo";
 import { cruzar, linhasDre } from "@/dominios/demonstrativos/calculosDemonstracoes";
 import type { Balanco, Dfc, LinhaBp } from "@/dominios/demonstrativos/calculosDemonstracoes";
-import { SeletorPeriodo, useSeletorPeriodo } from "./SeletorPeriodo";
-import { agregar } from "@/dominios/demonstrativos/periodos";
-import type { TipoPeriodo } from "@/dominios/demonstrativos/periodos";
+import type { Selecao } from "@/dominios/demonstrativos/selecaoPeriodo";
 import type { BalanceteReg } from "@/dominios/demonstrativos/tipos";
 import { brl } from "@/lib/formato/moeda";
 import { fmtIndice, fmtNumero } from "@/lib/formato/numero";
-import { fmtData, mesExtenso } from "@/lib/formato/datas";
+import { fmtData } from "@/lib/formato/datas";
 
 const fmt = (v: number) => (Math.abs(v) < 0.5 ? "—" : (v < 0 ? "(" : "") + fmtNumero(Math.abs(v)) + (v < 0 ? ")" : ""));
 
 type Sub = "bp" | "dre" | "dfc" | "cruzamento";
 
-export function AbaDemonstracoes({ atual, historico }: { atual: BalanceteReg; historico: BalanceteReg[] }) {
+export function AbaDemonstracoes({ sel, anterior }: { sel: Selecao<BalanceteReg>; anterior: Selecao<BalanceteReg> | null }) {
   const [sub, setSub] = useState<Sub>("bp");
-  const [tipo, setTipo] = useSeletorPeriodo();
-  const demo = atual.demonstracoes;
-  const multi = (demo?.periodo.dias ?? 31) > 31;
-  const t: TipoPeriodo = multi ? "mensal" : tipo;
-  const ag = useMemo(() => agregar(atual, historico, t), [atual, historico, t]);
-  const anoAnterior = useMemo(() => {
-    const c = `${Number(atual.competencia.slice(0, 4)) - 1}${atual.competencia.slice(4)}`;
-    const reg = historico.find((b) => b.competencia === c);
-    return reg ? agregar(reg, historico, t) : null;
-  }, [historico, atual.competencia, t]);
+  const demo = sel.base.demonstracoes;
+  const ag = sel.ag;
+  const anoAnterior = anterior?.ag ?? null;
   if (!demo)
     return (
       <p className="cartao p-6 text-center text-sm text-neutral-600">
         As demonstrações deste balancete ainda não foram geradas. Use “Reprocessar rascunhos” na lista de balancetes.
       </p>
     );
-  const titulo = multi ? "Período" : t === "mensal" ? mesExtenso(atual.competencia) : ag.rotulo;
+  const titulo = sel.rotulo;
   const SUBS: { id: Sub; nome: string }[] = [
     { id: "bp", nome: "Balanço Patrimonial" },
     { id: "dre", nome: "DRE" },
     { id: "dfc", nome: "Fluxo de caixa (DFC)" },
     { id: "cruzamento", nome: "DRE × DFC" },
   ];
-  const inicioBp = t === "mensal" || !ag.meses.length ? demo.periodo.inicio : `${ag.meses[0].slice(0, 7)}-01`;
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-2 print:hidden">
-        <div className="flex flex-wrap gap-1">
-          {SUBS.map((s) => (
-            <button
-              key={s.id}
-              onClick={() => setSub(s.id)}
-              className={`rounded-full border px-3 py-1 text-sm ${sub === s.id ? "border-[var(--marca)] bg-[var(--marca)] text-white" : "border-[var(--borda)] bg-white"}`}
-            >
-              {s.nome}
-            </button>
-          ))}
-        </div>
-        {!multi && <SeletorPeriodo tipo={tipo} aoMudar={setTipo} />}
+      <div className="flex flex-wrap gap-1 print:hidden">
+        {SUBS.map((s) => (
+          <button
+            key={s.id}
+            onClick={() => setSub(s.id)}
+            className={`rounded-full border px-3 py-1 text-sm ${sub === s.id ? "border-[var(--marca)] bg-[var(--marca)] text-white" : "border-[var(--borda)] bg-white"}`}
+          >
+            {s.nome}
+          </button>
+        ))}
       </div>
       <p className="text-xs text-neutral-500">
-        {t === "mensal"
-          ? `Elaboradas a partir do balancete de ${fmtData(demo.periodo.inicio)} a ${fmtData(demo.periodo.fim)}`
-          : `${ag.rotulo}: soma de ${ag.meses.length} balancete(s) mensal(is)${ag.completo ? "" : " — faltam meses do período no Hub"}`}{" "}
+        {sel.fonte === "acumulado" || sel.escolha.visao === "mensal"
+          ? `${sel.rotulo}: elaboradas a partir do balancete de ${fmtData(demo.periodo.inicio)} a ${fmtData(demo.periodo.fim)}`
+          : `${sel.rotulo}: soma de ${ag.meses.length} balancete(s) mensal(is)${sel.completo ? "" : ` (${sel.completude.toLowerCase()})`}`}{" "}
         (Lei nº 6.404/1976, arts. 176 a 188; NBC TG 26 e NBC TG 03). Valores em R$; entre parênteses, negativos.
       </p>
-      {sub === "bp" && ag.balanco && <TabelaBalanco b={ag.balanco} inicio={inicioBp} fim={demo.periodo.fim} />}
+      {sub === "bp" && ag.balanco && <TabelaBalanco b={ag.balanco} inicio={sel.inicio} fim={sel.fim} />}
       {sub === "dre" && (
         <TabelaDre colunas={[{ titulo, d: ag.dre }, ...(anoAnterior ? [{ titulo: anoAnterior.rotulo, d: anoAnterior.dre }] : [])]} />
       )}

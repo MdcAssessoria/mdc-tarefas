@@ -20,6 +20,8 @@ import { GradeIndices } from "@/dominios/demonstrativos/componentes/GradeIndices
 import { ListaAlertas } from "@/dominios/demonstrativos/componentes/ListaAlertas";
 import { PainelResumo } from "@/dominios/demonstrativos/componentes/PainelResumo";
 import { VisaoParecer } from "@/dominios/demonstrativos/componentes/VisaoParecer";
+import { SeletorPeriodo, usePeriodo } from "@/dominios/demonstrativos/componentes/SeletorPeriodo";
+import { ExportarPeriodo } from "@/dominios/demonstrativos/componentes/ExportarPeriodo";
 import type { BalanceteReg, LinhaReg, ParecerReg } from "@/dominios/demonstrativos/tipos";
 import { hojeISO, somarDias } from "@/lib/datas";
 import { mesExtenso } from "@/lib/formato/datas";
@@ -85,6 +87,7 @@ function Detalhe() {
   const nome = nomeCliente(cliente, "");
   const parecer = pareceres[0];
   const anterior = useMemo(() => (b ? historico.filter((x) => x.competencia < b.competencia).at(-1) : undefined), [b, historico]);
+  const periodo = usePeriodo(historico, b?.competencia, id);
 
   if (erro && !b) return <p className="text-sm text-red-700">{erro}</p>;
   if (!b) return <p className="text-sm text-neutral-500">Carregando…</p>;
@@ -251,7 +254,28 @@ function Detalhe() {
         ))}
       </nav>
 
-      {aba === "painel" && (
+      {(aba === "painel" || aba === "demonstracoes" || aba === "indices") && (
+        <SeletorPeriodo historico={historico} periodo={periodo}>
+          {periodo.sel && <ExportarPeriodo sel={periodo.sel} anterior={periodo.anterior} empresa={nome} logoUrl={org.logo_url} />}
+        </SeletorPeriodo>
+      )}
+      {(aba === "painel" || aba === "demonstracoes" || aba === "indices") && periodo.sel && periodo.sel.base.id !== b.id && (
+        <p className="-mt-2 text-xs text-neutral-600 print:hidden">
+          Você está vendo {periodo.sel.rotulo}. As abas Balancete, Fragilidades e Parecer continuam sendo do arquivo de{" "}
+          {mesExtenso(b.competencia)}
+          {periodo.sel.escolha.visao === "mensal" && (
+            <>
+              {" · "}
+              <Link href={`/demonstrativos/${periodo.sel.base.id}`} className="underline">
+                abrir o balancete de {mesExtenso(periodo.sel.base.competencia)}
+              </Link>
+            </>
+          )}
+          .
+        </p>
+      )}
+
+      {aba === "painel" && periodo.sel && (
         <div className="space-y-5">
           {podeOperar && (
             <section className="cartao p-4 print:hidden">
@@ -267,11 +291,11 @@ function Detalhe() {
               </div>
             </section>
           )}
-          <PainelResumo atual={b} historico={historico} />
+          <PainelResumo sel={periodo.sel} anterior={periodo.anterior} historico={historico} />
         </div>
       )}
 
-      {aba === "demonstracoes" && <AbaDemonstracoes atual={b} historico={historico} />}
+      {aba === "demonstracoes" && periodo.sel && <AbaDemonstracoes sel={periodo.sel} anterior={periodo.anterior} />}
 
       {aba === "balancete" && (
         <ArvoreBalancete
@@ -329,7 +353,7 @@ function Detalhe() {
         />
       )}
 
-      {aba === "indices" && <GradeIndices atual={b} historico={historico} />}
+      {aba === "indices" && periodo.sel && <GradeIndices sel={periodo.sel} historico={historico} />}
 
       {aba === "fragilidades" && (
         <div className="space-y-3">

@@ -93,24 +93,60 @@ const tarefa = (k, extra = {}) => ({
   ...extra,
 });
 
-const balanceteReg = (id, competencia, status) => ({
+/** Multiplica os valores do movimento (DRE do mês, DFC) para os meses de exemplo não ficarem todos iguais. */
+const escalar = (obj, f) =>
+  Object.fromEntries(Object.entries(obj).map(([k, v]) => [k, typeof v === "number" ? Math.round(v * f * 100) / 100 : v]));
+
+const balanceteReg = (id, competencia, status, fator = 1, periodoInicio = competencia) => ({
   id,
   org_id: ORG,
   cliente_id: C1,
   competencia,
   status,
   arquivo_nome: "balancete.xlsx",
-  resumo: balancete.resumo,
+  resumo: { ...balancete.resumo, mes: escalar(balancete.resumo.mes, fator), disponivel: balancete.resumo.disponivel * (0.8 + fator / 5) },
   indices: balancete.indices,
   alertas: balancete.alertas,
   conferencias: balancete.conferencias,
   comentario: null,
   importado_em: momento(-5),
   publicado_em: status === "publicado" ? momento(-4) : null,
-  demonstracoes: balancete.demonstracoes,
-  periodo_inicio: competencia,
-  periodo_fim: competencia.slice(0, 8) + "30",
+  demonstracoes: {
+    ...balancete.demonstracoes,
+    periodo: {
+      inicio: periodoInicio,
+      fim: competencia.slice(0, 8) + "28",
+      dias: periodoInicio === competencia ? 30 : 365,
+    },
+    dfc: escalar(balancete.demonstracoes.dfc, fator),
+  },
+  periodo_inicio: periodoInicio,
+  periodo_fim: competencia.slice(0, 8) + "28",
 });
+
+/**
+ * Histórico do cliente C1 para a visão por período: 2024 com um balancete acumulado do ano inteiro (como MDC e
+ * Greencore no banco), 2025 com os 12 meses e 2026 de janeiro a setembro (setembro é o balancete aberto na tela).
+ */
+const historicoBalancetes = [
+  balanceteReg("66666666-6666-4666-8666-666666662412", "2024-12-01", "publicado", 12, "2024-01-01"),
+  ...Array.from({ length: 12 }, (_, k) =>
+    balanceteReg(
+      `66666666-6666-4666-8666-6666666625${String(k + 1).padStart(2, "0")}`,
+      `2025-${String(k + 1).padStart(2, "0")}-01`,
+      "publicado",
+      0.7 + (k % 5) / 10,
+    ),
+  ),
+  ...Array.from({ length: 7 }, (_, k) =>
+    balanceteReg(
+      `66666666-6666-4666-8666-6666666626${String(k + 1).padStart(2, "0")}`,
+      `2026-${String(k + 1).padStart(2, "0")}-01`,
+      "publicado",
+      0.9 + (k % 4) / 10,
+    ),
+  ),
+];
 
 const oportunidade = {
   id: IDS_EXEMPLO["comercial/[id]"],
@@ -281,8 +317,9 @@ export const TABELAS = {
     },
   ],
   portal_balancetes: [
+    ...historicoBalancetes,
+    balanceteReg("66666666-6666-4666-8666-666666666660", "2026-08-01", "rascunho", 1.1),
     balanceteReg(IDS_EXEMPLO["demonstrativos/[id]"], "2026-09-01", "publicado"),
-    balanceteReg("66666666-6666-4666-8666-666666666660", "2026-08-01", "rascunho"),
   ],
   portal_balancete_linhas: balancete.linhas.map((l, i) => ({ ...l, id: i + 1, balancete_id: IDS_EXEMPLO["demonstrativos/[id]"] })),
   portal_pareceres: [

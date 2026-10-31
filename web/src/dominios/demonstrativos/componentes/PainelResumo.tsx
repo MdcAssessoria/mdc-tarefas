@@ -5,12 +5,13 @@
 import { useMemo } from "react";
 import { Barras, Cascata, CicloCaixa, ColunasPareadas, Composicao, Evolucao, Faisca, Pilha100, STATUS_SAUDE, Termometro } from "./Graficos";
 import { COR, PAL_ATIVO, PAL_PASSIVO, PAL_RECEITA } from "./paletas";
-import { SeletorPeriodo, useSeletorPeriodo } from "./SeletorPeriodo";
-import { TIPOS_PERIODO, agregar, serieAgrupada } from "@/dominios/demonstrativos/periodos";
+import { TIPOS_PERIODO } from "@/dominios/demonstrativos/periodos";
 import type { TipoPeriodo } from "@/dominios/demonstrativos/periodos";
+import { serieDaVisao } from "@/dominios/demonstrativos/selecaoPeriodo";
+import type { Selecao } from "@/dominios/demonstrativos/selecaoPeriodo";
 import { brl } from "@/lib/formato/moeda";
 import { fmtIndice } from "@/lib/formato/numero";
-import { fmtData, mesExtenso } from "@/lib/formato/datas";
+import { mesExtenso } from "@/lib/formato/datas";
 import type { BalanceteReg } from "@/dominios/demonstrativos/tipos";
 
 function Kpi({
@@ -42,55 +43,44 @@ function Kpi({
 }
 
 /** Painel principal para leigo: termômetro, KPIs, composição da receita, cascatas da DRE e do caixa, evolução, ciclo e balanço. */
-export function PainelResumo({ atual, historico }: { atual: BalanceteReg; historico: BalanceteReg[] }) {
+export function PainelResumo({
+  sel,
+  anterior,
+  historico,
+}: {
+  sel: Selecao<BalanceteReg>;
+  anterior: Selecao<BalanceteReg> | null;
+  historico: BalanceteReg[];
+}) {
+  const atual = sel.base;
   const demo = atual.demonstracoes ?? null;
-  const multi = (demo?.periodo.dias ?? 31) > 31;
-  const [tipo, setTipo] = useSeletorPeriodo();
-  const t: TipoPeriodo = multi ? "mensal" : tipo;
-  const ag = useMemo(() => agregar(atual, historico, t), [atual, historico, t]);
+  const t: TipoPeriodo = sel.escolha.visao;
+  const ag = sel.ag;
   const resumo = ag.resumo;
   const indices = ag.indices;
   const dre = ag.dre;
   const dfc = ag.dfc;
   const saudeP = ag.saude;
   const comentarios = ag.cruzamento?.comentarios ?? demo?.cruzamento.comentarios ?? [];
-  const grupos = useMemo(() => serieAgrupada(historico, t, atual.competencia), [historico, t, atual.competencia]);
-  const mesmoPeriodoAnoAnterior = useMemo(() => {
-    const c = `${Number(atual.competencia.slice(0, 4)) - 1}${atual.competencia.slice(4)}`;
-    const reg = historico.find((b) => b.competencia === c);
-    return reg ? agregar(reg, historico, t) : null;
-  }, [historico, atual.competencia, t]);
+  const grupos = useMemo(() => serieDaVisao(historico, sel.escolha), [historico, sel.escolha]);
+  const mesmoPeriodoAnoAnterior = anterior?.ag ?? null;
   const anteriorGrupo = grupos.length > 1 ? grupos[grupos.length - 2] : null;
-  const variacao = (a: number, b?: number | null) =>
-    b
-      ? `${a >= b ? "▲" : "▼"} ${Math.abs(((a - b) / Math.abs(b)) * 100)
-          .toFixed(1)
-          .replace(".", ",")}% sobre ${anteriorGrupo?.rotulo ?? ""}`
-      : undefined;
+  const pct = (a: number, b: number) =>
+    `${a >= b ? "▲" : "▼"} ${Math.abs(((a - b) / Math.abs(b)) * 100)
+      .toFixed(1)
+      .replace(".", ",")}%`;
+  // compara com o mesmo período do ano anterior quando existe; senão, com o período imediatamente anterior
+  const variacao = (a: number, ano?: number | null, seq?: number | null) =>
+    ano ? `${pct(a, ano)} sobre ${anterior?.rotulo ?? ""}` : seq ? `${pct(a, seq)} sobre ${anteriorGrupo?.rotulo ?? ""}` : undefined;
   const serie = (fn: (g: (typeof grupos)[number]) => number | null | undefined) =>
     grupos.length > 1 ? grupos.map((g) => fn(g) ?? null) : undefined;
-  const rotuloPeriodo = multi ? "período do balancete" : t === "mensal" ? "mês" : ag.rotulo;
+  const rotuloPeriodo = t === "mensal" && sel.fonte === "mensal" ? "mês" : sel.rotulo;
+  const nomeVisao = sel.fonte === "acumulado" ? "período" : TIPOS_PERIODO.find((x) => x.id === t)!.nome.toLowerCase();
   const fin = dre.despesas_financeiras - dre.receitas_financeiras - dre.outras;
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-lg font-semibold text-[var(--marca)]">
-          Como está a empresa ·{" "}
-          {multi && demo
-            ? `${fmtData(demo.periodo.inicio)} a ${fmtData(demo.periodo.fim)}`
-            : t === "mensal"
-              ? mesExtenso(atual.competencia)
-              : ag.rotulo}
-        </h2>
-        {!multi && <SeletorPeriodo tipo={tipo} aoMudar={setTipo} />}
-      </div>
-      {!multi && t !== "mensal" && (!ag.completo || ag.parcial) && (
-        <p className="-mt-3 text-xs text-amber-800">
-          {!ag.completo ? `Faltam meses deste período no Hub: somados ${ag.meses.length} mês(es). ` : ""}
-          {ag.parcial ? "Período ainda em andamento: os números vão até o mês selecionado." : ""}
-        </p>
-      )}
+      <h2 className="text-lg font-semibold text-[var(--marca)]">Como está a empresa · {sel.rotulo}</h2>
 
       {saudeP && (
         <section className="cartao grid gap-4 p-4 lg:grid-cols-[260px_1fr]">
@@ -132,10 +122,10 @@ export function PainelResumo({ atual, historico }: { atual: BalanceteReg; histor
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Kpi
-          rotulo={`Receita bruta (${t === "mensal" ? "mês" : TIPOS_PERIODO.find((x) => x.id === t)!.nome.toLowerCase()})`}
+          rotulo={`Receita bruta (${t === "mensal" ? "mês" : nomeVisao})`}
           valor={brl(dre.receita_bruta, { centavos: false })}
           serie={serie((g) => g.dre.receita_bruta)}
-          sub={!multi ? variacao(dre.receita_bruta, anteriorGrupo?.dre.receita_bruta) : undefined}
+          sub={variacao(dre.receita_bruta, mesmoPeriodoAnoAnterior?.dre.receita_bruta, anteriorGrupo?.dre.receita_bruta)}
         />
         <Kpi
           rotulo={dre.lucro_liquido >= 0 ? "Lucro líquido" : "Prejuízo"}

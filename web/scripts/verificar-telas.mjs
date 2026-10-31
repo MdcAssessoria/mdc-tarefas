@@ -10,6 +10,7 @@
 //   PORTA_TELAS=3100        primeira porta a tentar (usa a próxima livre)
 //   ROTAS=/tarefas,/tv      verifica só essas rotas (caminho sem o /hub-mdc)
 //   FOTOS=/tmp/telas        salva uma captura de cada tela nessa pasta
+//   TELA=celular            abre as telas na largura de um celular (390 px) em vez de 1280 px
 //
 // Como funciona:
 //   - As rotas saem das pastas de src/app (cada page.tsx). Rotas com [id] usam os ids de IDS_EXEMPLO em
@@ -26,6 +27,7 @@ import { createServer } from "node:net";
 import { join, relative, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { EU, IDS_EXEMPLO, RPCS, TABELAS, USUARIO } from "./telas/dados-exemplo.mjs";
+import { trocarPeriodo } from "./telas/interacoes-periodo.mjs";
 
 const WEB = fileURLToPath(new URL("..", import.meta.url));
 const BASE = "/hub-mdc";
@@ -228,6 +230,8 @@ async function abrirEFecharModal(pagina, botao, titulo) {
 const INTERACOES = {
   "/vencimentos": (p) => abrirEFecharModal(p, "Novo vencimento", "Novo vencimento"),
   "/comercial": (p) => abrirEFecharModal(p, "Limpar funil", "Limpar funil"),
+  [`/demonstrativos/${IDS_EXEMPLO["demonstrativos/[id]"]}`]: trocarPeriodo,
+  "/portal": trocarPeriodo,
   "/config": async (p) => {
     for (const aba of await p.getByRole("tab").all()) {
       await aba.click();
@@ -242,7 +246,14 @@ const INTERACOES = {
 async function verificarTela(navegador, porta, rota, pastaFotos) {
   const problemas = [];
   const avisos = new Set();
-  const contexto = await navegador.newContext({ viewport: { width: 1280, height: 900 }, locale: "pt-BR", timezoneId: "America/Sao_Paulo" });
+  const celular = process.env.TELA === "celular";
+  const contexto = await navegador.newContext({
+    viewport: celular ? { width: 390, height: 844 } : { width: 1280, height: 900 },
+    isMobile: celular,
+    hasTouch: celular,
+    locale: "pt-BR",
+    timezoneId: "America/Sao_Paulo",
+  });
   await contexto.addInitScript(
     ([chave, sessao]) => {
       try {
