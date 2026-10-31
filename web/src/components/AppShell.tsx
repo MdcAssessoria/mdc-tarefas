@@ -574,7 +574,7 @@ function Sino() {
       .on("postgres_changes", { event: "*", schema: "public", table: "hub_notificacoes", filter: `user_id=eq.${uid}` }, carregar)
       .subscribe();
     return () => {
-      sb.removeChannel(canal);
+      void sb.removeChannel(canal);
     };
   }, [uid]);
 

@@ -73,7 +73,7 @@ export function OrgProvider({ children }: { children: React.ReactNode }) {
   // sessão
   useEffect(() => {
     const sb = supabase();
-    sb.auth.getSession().then(({ data }) => setSession(data.session));
+    void sb.auth.getSession().then(({ data }) => setSession(data.session));
     const { data } = sb.auth.onAuthStateChange((_e, s) => setSession(s));
     return () => data.subscription.unsubscribe();
   }, []);
@@ -117,7 +117,7 @@ export function OrgProvider({ children }: { children: React.ReactNode }) {
   }, [userId]);
 
   useEffect(() => {
-    carregarOrgs();
+    void carregarOrgs();
   }, [carregarOrgs]);
 
   // cadastros da organização atual
@@ -141,7 +141,7 @@ export function OrgProvider({ children }: { children: React.ReactNode }) {
   }, [orgId]);
 
   useEffect(() => {
-    recarregar();
+    void recarregar();
   }, [recarregar]);
 
   const recarregarApps = useCallback(async () => {
@@ -152,7 +152,7 @@ export function OrgProvider({ children }: { children: React.ReactNode }) {
   }, [orgId]);
 
   useEffect(() => {
-    recarregarApps();
+    void recarregarApps();
   }, [recarregarApps]);
 
   const org = orgs?.find((o) => o.id === orgId);

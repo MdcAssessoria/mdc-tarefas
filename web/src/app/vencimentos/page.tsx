@@ -66,7 +66,7 @@ function Vencimentos() {
   }, [org.id]);
 
   useEffect(() => {
-    carregar();
+    void carregar();
   }, [carregar]);
 
   const lista = useMemo(() => {
@@ -106,7 +106,7 @@ function Vencimentos() {
     if (!m) return setErro("Data inválida. Use dd/mm/aaaa.");
     const { error } = await supabase().rpc("venc_renovar", { p_item: i.id, p_nova_data: `${m[3]}-${m[2]}-${m[1]}`, p_obs: null });
     if (error) return setErro(traduzirErro(error));
-    carregar();
+    void carregar();
   }
 
   return (
@@ -221,7 +221,7 @@ function Vencimentos() {
           aoFechar={() => setEditando(undefined)}
           aoSalvar={() => {
             setEditando(undefined);
-            carregar();
+            void carregar();
           }}
         />
       )}

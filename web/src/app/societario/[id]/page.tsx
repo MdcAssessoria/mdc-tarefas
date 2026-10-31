@@ -100,7 +100,7 @@ function Ficha() {
   }, [id]);
 
   useEffect(() => {
-    carregar();
+    void carregar();
   }, [carregar]);
 
   if (erro && !p) return <p className="text-sm text-red-700">{erro}</p>;
@@ -121,7 +121,7 @@ function Ficha() {
   async function atualizarFase(f: SocFase, campos: Partial<SocFase>) {
     const { error } = await supabase().from("soc_fases").update(campos).eq("id", f.id);
     if (error) setErro(traduzirErro(error));
-    carregar();
+    void carregar();
   }
 
   async function inserir(tabela: string, dados: Record<string, unknown>, evento: string, visivel = false) {
@@ -144,7 +144,7 @@ function Ficha() {
       .insert({ org_id: org.id, processo_id: id, tipo: "comentario", texto: comentario.trim(), visivel_cliente: comentarioCliente });
     if (error) return setErro(traduzirErro(error));
     setComentario("");
-    carregar();
+    void carregar();
   }
 
   async function anexar(arqs: FileList | null, faseNome?: string) {
@@ -165,7 +165,7 @@ function Ficha() {
     } catch (e) {
       setErro(traduzirErro(e));
     }
-    carregar();
+    void carregar();
   }
 
   async function visivelArquivo(a: Arquivo) {
@@ -230,7 +230,7 @@ function Ficha() {
               className="btn text-[var(--perigo)]"
               onClick={() => {
                 const m = prompt("Motivo do cancelamento:");
-                if (m !== null) rpc("soc_cancelar_processo", { p_proc: p.id, p_motivo: m });
+                if (m !== null) void rpc("soc_cancelar_processo", { p_proc: p.id, p_motivo: m });
               }}
             >
               Cancelar

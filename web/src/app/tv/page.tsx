@@ -57,7 +57,7 @@ function TV() {
   }, [org.id]);
 
   useEffect(() => {
-    carregar();
+    void carregar();
     const sb = supabase();
     const canal = sb
       .channel(`tv-${org.id}`)
@@ -73,7 +73,7 @@ function TV() {
       clearInterval(intervalo);
       clearTimeout(recarga);
       if (debounce.current) clearTimeout(debounce.current);
-      sb.removeChannel(canal);
+      void sb.removeChannel(canal);
     };
   }, [org.id, carregar]);
 
@@ -86,7 +86,7 @@ function TV() {
         lock = (await nav.wakeLock?.request("screen")) ?? null;
       } catch {}
     };
-    pedir();
+    void pedir();
     const vis = () => document.visibilityState === "visible" && pedir();
     document.addEventListener("visibilitychange", vis);
     return () => {

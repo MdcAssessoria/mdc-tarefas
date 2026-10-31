@@ -49,13 +49,13 @@ function Funil() {
   }, [org.id]);
 
   useEffect(() => {
-    carregar();
+    void carregar();
     const canal = supabase()
       .channel("crm-funil")
       .on("postgres_changes", { event: "*", schema: "public", table: "crm_oportunidades", filter: `org_id=eq.${org.id}` }, () => carregar())
       .subscribe();
     return () => {
-      supabase().removeChannel(canal);
+      void supabase().removeChannel(canal);
     };
   }, [carregar, org.id]);
 
@@ -105,7 +105,7 @@ function Funil() {
         ? await sb.rpc("crm_converter_cliente", { p_op: id })
         : await sb.from("crm_oportunidades").update({ etapa, motivo_perda: motivo }).eq("id", id);
     if (r.error) setErro(traduzirErro(r.error));
-    carregar();
+    void carregar();
   }
 
   async function arquivar(ids: string[], motivo: string | null, arquivarSim = true) {
@@ -117,7 +117,7 @@ function Funil() {
         ? `${data} oportunidade(s) arquivada(s). Ficam em "Arquivados" e podem ser restauradas.`
         : `${data} oportunidade(s) de volta ao funil.`,
     );
-    carregar();
+    void carregar();
   }
 
   async function excluir(o: Oportunidade) {
@@ -128,7 +128,7 @@ function Funil() {
     const { error } = await supabase().from("crm_oportunidades").delete().eq("id", o.id);
     if (error) return setErro(traduzirErro(error));
     setAviso(`${o.empresa} excluída.`);
-    carregar();
+    void carregar();
   }
 
   const nArquivados = (lista ?? []).filter((o) => o.arquivado_em).length;
@@ -280,7 +280,7 @@ function Funil() {
                   e.preventDefault();
                   const id = e.dataTransfer.getData("text/plain");
                   setArrastando(null);
-                  if (id) mover(id, col.id);
+                  if (id) void mover(id, col.id);
                 }}
               >
                 <header className="px-3 pb-2 pt-3">
@@ -318,7 +318,7 @@ function Funil() {
                                   `Arquivar ${o.empresa}? Motivo (opcional): sem retorno, sem interesse, duplicado…`,
                                   "Sem retorno",
                                 );
-                                if (m !== null) arquivar([o.id], m);
+                                if (m !== null) void arquivar([o.id], m);
                               }}
                               aoExcluir={podeGerir && !o.cliente_id ? () => excluir(o) : undefined}
                             />

@@ -51,7 +51,7 @@ function Societario() {
   }, [org.id]);
 
   useEffect(() => {
-    carregar();
+    void carregar();
     try {
       const v = localStorage.getItem("mdc-societario:visao");
       if (v === "quadro" || v === "lista") setVisao(v);
@@ -111,7 +111,7 @@ function Societario() {
         break;
       }
     }
-    carregar();
+    void carregar();
   }
 
   const ufs = [...new Set(processos.map((p) => p.uf).filter(Boolean))] as string[];

@@ -145,7 +145,7 @@ export function ChatMensagens({
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey) {
               e.preventDefault();
-              enviar();
+              void enviar();
             }
           }}
         />

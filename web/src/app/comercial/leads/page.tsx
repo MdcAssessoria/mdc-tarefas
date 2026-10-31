@@ -53,7 +53,7 @@ function Leads() {
   }, [org.id]);
 
   useEffect(() => {
-    carregar();
+    void carregar();
   }, [carregar]);
 
   const filtrada = useMemo(() => {
@@ -93,7 +93,7 @@ function Leads() {
     if (error) return setErro(traduzirErro(error));
     setSel(new Set());
     setAviso(arquivarSim ? `${data} lead(s) arquivado(s).` : `${data} lead(s) de volta ao funil.`);
-    carregar();
+    void carregar();
   }
 
   async function excluir(ids: string[]) {
@@ -110,7 +110,7 @@ function Leads() {
     if (error) return setErro(traduzirErro(error));
     setSel(new Set());
     setAviso(`${alvo.length} lead(s) excluído(s).`);
-    carregar();
+    void carregar();
   }
 
   async function exportar() {

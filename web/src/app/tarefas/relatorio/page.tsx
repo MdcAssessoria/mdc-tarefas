@@ -118,7 +118,7 @@ function Relatorio() {
   }, [org.id, de, ate, soEu, eu.user_id]);
 
   useEffect(() => {
-    carregar();
+    void carregar();
   }, [carregar]);
 
   // data local (fuso da organização) em que foi concluída

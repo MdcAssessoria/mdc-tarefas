@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useAgora } from "@/lib/useAgora";
 import { AppShell } from "@/components/AppShell";
 import { ChatMensagens } from "@/components/ChatMensagens";
 import { useOrg } from "@/lib/org";
@@ -21,6 +22,7 @@ export default function PaginaAtendimento() {
 
 function Caixa() {
   const { org, eu, membros, setores, clientePorId, nomeMembro, pode, clientes } = useOrg();
+  const agora = useAgora();
   const [conversas, setConversas] = useState<Conversa[]>([]);
   const [sel, setSel] = useState<string | null>(null);
   const [filtro, setFiltro] = useState<"abertas" | "minhas" | "resolvidas" | "todas">("abertas");
@@ -41,7 +43,7 @@ function Caixa() {
   }, [org.id]);
 
   useEffect(() => {
-    carregar();
+    void carregar();
     const c = new URLSearchParams(window.location.search).get("c");
     if (c) setSel(c);
     const sb = supabase();
@@ -50,7 +52,7 @@ function Caixa() {
       .on("postgres_changes", { event: "*", schema: "public", table: "portal_conversas", filter: `org_id=eq.${org.id}` }, carregar)
       .subscribe();
     return () => {
-      sb.removeChannel(canal);
+      void sb.removeChannel(canal);
     };
   }, [org.id, carregar]);
 
@@ -74,14 +76,14 @@ function Caixa() {
     if (!atual) return;
     const { error } = await supabase().from("portal_conversas").update(campos).eq("id", atual.id);
     if (error) setErro(traduzirErro(error));
-    carregar();
+    void carregar();
   }
 
   async function virarTarefa() {
     if (!atual) return;
     const { error } = await supabase().rpc("portal_conversa_para_tarefa", { p_conversa: atual.id, p_prazo: null });
     if (error) return setErro(traduzirErro(error));
-    carregar();
+    void carregar();
   }
 
   const nomeCli = (id: string) => {
@@ -89,7 +91,7 @@ function Caixa() {
     return c ? c.nome_fantasia || c.razao_social : "—";
   };
   const atrasada = (c: Conversa) =>
-    !c.respondida_em && c.prazo_resposta && Date.parse(c.prazo_resposta) < Date.now() && c.status !== "resolvido";
+    !c.respondida_em && c.prazo_resposta && Date.parse(c.prazo_resposta) < agora && c.status !== "resolvido";
 
   return (
     <div className="space-y-3">
@@ -240,7 +242,7 @@ function Caixa() {
           aoFechar={() => setNova(false)}
           aoCriar={(id) => {
             setNova(false);
-            carregar().then(() => setSel(id));
+            void carregar().then(() => setSel(id));
           }}
         />
       )}

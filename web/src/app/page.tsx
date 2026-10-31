@@ -90,7 +90,7 @@ function Hub() {
   }, [temTarefas, org.id, eu.user_id, inicioJanela]);
 
   useEffect(() => {
-    carregar();
+    void carregar();
   }, [carregar]);
 
   const diaLocal = useCallback((iso: string) => new Date(iso).toLocaleDateString("en-CA", { timeZone: org.fuso }), [org.fuso]);
@@ -164,7 +164,7 @@ function Hub() {
     const { error } = await supabase().from("tarefas").update({ status: "concluida" }).eq("id", t.id);
     if (error) setAviso(traduzirErro(error));
     else setAviso(`Concluída: ${t.titulo}`);
-    carregar();
+    void carregar();
     setTimeout(() => setAviso(null), 4000);
   }
 

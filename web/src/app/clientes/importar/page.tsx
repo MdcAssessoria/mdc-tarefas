@@ -254,7 +254,7 @@ function Importar() {
           e.preventDefault();
           setArrastando(false);
           const f = e.dataTransfer.files?.[0];
-          if (f) abrir(f);
+          if (f) void abrir(f);
         }}
       >
         <p className="font-medium text-[var(--marca)]">
@@ -271,7 +271,7 @@ function Importar() {
           className="hidden"
           onChange={(e) => {
             const f = e.target.files?.[0];
-            if (f) abrir(f);
+            if (f) void abrir(f);
             e.target.value = "";
           }}
         />

@@ -35,7 +35,7 @@ function Painel() {
       setFases((f.data as SocFase[]) ?? []);
       setTipos((t.data as SocTipo[]) ?? []);
     };
-    carregar();
+    void carregar();
     const i = setInterval(carregar, 120_000);
     return () => clearInterval(i);
   }, [org.id]);

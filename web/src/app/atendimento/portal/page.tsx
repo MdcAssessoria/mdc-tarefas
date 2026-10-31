@@ -63,7 +63,7 @@ function AcessosPortal() {
   }, [org.id]);
 
   useEffect(() => {
-    carregar();
+    void carregar();
   }, [carregar]);
 
   async function convidar(e: React.FormEvent) {
@@ -86,13 +86,13 @@ function AcessosPortal() {
     } else setAviso(`${email} já tinha conta e recebeu o acesso agora.`);
     setEmail("");
     setNome("");
-    carregar();
+    void carregar();
   }
 
   async function alterar(u: Usuario, campos: Partial<Usuario>) {
     const { error } = await supabase().from("portal_usuarios").update(campos).eq("user_id", u.user_id).eq("cliente_id", u.cliente_id);
     if (error) setErro(traduzirErro(error));
-    carregar();
+    void carregar();
   }
 
   const nomeCli = (id: string) => {

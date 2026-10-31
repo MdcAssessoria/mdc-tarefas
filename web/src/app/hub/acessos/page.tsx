@@ -86,7 +86,7 @@ function Acessos() {
   }, [org.id]);
 
   useEffect(() => {
-    carregar();
+    void carregar();
   }, [carregar]);
 
   if (papel !== "admin") return <p className="text-sm text-neutral-600">Apenas administradores gerenciam acessos.</p>;
@@ -101,7 +101,7 @@ function Acessos() {
   };
   const depois = async () => {
     await Promise.all([carregar(), recarregar()]);
-    recarregarApps();
+    void recarregarApps();
   };
 
   async function salvarMembro(
@@ -939,7 +939,7 @@ function AcessosClientes({ aoAviso, aoErro }: { aoAviso: (t: string, link?: stri
   }, [org.id]);
 
   useEffect(() => {
-    carregar();
+    void carregar();
   }, [carregar]);
 
   const nomeCli = useCallback(

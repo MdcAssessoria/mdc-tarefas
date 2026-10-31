@@ -56,11 +56,11 @@ function EditorModelo() {
     setTexto(m?.texto ?? "");
   }, [org.id]);
   useEffect(() => {
-    carregar();
+    void carregar();
   }, [carregar]);
   useEffect(() => {
     let url: string | null = null;
-    carregarLogo(org.logo_url).then((b) => {
+    void carregarLogo(org.logo_url).then((b) => {
       if (b) {
         url = URL.createObjectURL(new Blob([b as BlobPart]));
         setLogoPrev(url);
@@ -95,7 +95,7 @@ function EditorModelo() {
       : await sb.from("crm_modelos").insert({ org_id: org.id, nome, texto, atualizado_por: eu.user_id });
     if (r.error) return setErro(traduzirErro(r.error));
     setAviso("Modelo salvo. Contratos novos usam esta versão; os já gerados ficam como estavam.");
-    carregar();
+    void carregar();
   }
 
   async function enviarLogo(arq: File) {
@@ -110,7 +110,7 @@ function EditorModelo() {
       .eq("id", org.id);
     if (error) return setErro(traduzirErro(error));
     setAviso("Logo atualizada. Ela aparece no cabeçalho dos contratos.");
-    recarregar();
+    void recarregar();
   }
 
   async function previa() {

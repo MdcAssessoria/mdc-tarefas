@@ -77,7 +77,7 @@ function Detalhe() {
   }, [id]);
 
   useEffect(() => {
-    carregar();
+    void carregar();
   }, [carregar]);
 
   const cliente = b ? clientePorId(b.cliente_id) : undefined;
@@ -96,7 +96,7 @@ function Detalhe() {
     setAviso(
       sim ? "Publicado. Os usuários do cliente foram avisados no portal." : "Voltou para rascunho; o cliente deixa de ver este mês.",
     );
-    carregar();
+    void carregar();
   }
 
   async function salvarComentario() {
@@ -106,7 +106,7 @@ function Detalhe() {
       .eq("id", b!.id);
     if (error) return setErro(traduzirErro(error));
     setAviso("Comentário salvo.");
-    carregar();
+    void carregar();
   }
 
   async function mudarGrupo(l: LinhaReg, grupo: Grupo, escopo: "cliente" | "padrao") {
@@ -175,7 +175,7 @@ function Detalhe() {
       });
     if (error) return setErro(traduzirErro(error));
     setAba("parecer");
-    carregar();
+    void carregar();
   }
 
   const ABAS: { id: Aba; nome: string }[] = [
@@ -288,7 +288,7 @@ function Detalhe() {
                       const padrao = confirm(
                         `Usar "${GRUPOS.find((x) => x.id === g)?.nome}" para a conta ${l.classificacao} em TODAS as empresas?\n\nOK = regra padrão da MDC · Cancelar = só para ${nome}`,
                       );
-                      mudarGrupo(l, g, padrao ? "padrao" : "cliente");
+                      void mudarGrupo(l, g, padrao ? "padrao" : "cliente");
                     }}
                   >
                     <option value="">—</option>
@@ -379,7 +379,7 @@ function Detalhe() {
               className="btn"
               onClick={async () => {
                 await recalcular(b.id).catch((e) => setErro(traduzirErro(e)));
-                carregar();
+                void carregar();
               }}
             >
               Refazer verificações

@@ -25,7 +25,7 @@ export function useLogo(logoUrl: string | null | undefined): string | null {
     if (!logoUrl.startsWith("storage:")) return setSrc(logoUrl);
     let url: string | null = null;
     let vivo = true;
-    carregarLogo(logoUrl).then((b) => {
+    void carregarLogo(logoUrl).then((b) => {
       if (!vivo || !b) return;
       url = URL.createObjectURL(new Blob([b as BlobPart]));
       setSrc(url);

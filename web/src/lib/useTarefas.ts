@@ -37,7 +37,7 @@ export function useTarefas(orgId: string, fuso: string) {
 
   useEffect(() => {
     setCarregando(true);
-    carregar();
+    void carregar();
     const canal = supabase()
       .channel(`tarefas-${orgId}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "tarefas", filter: `org_id=eq.${orgId}` }, (p) => {
@@ -59,7 +59,7 @@ export function useTarefas(orgId: string, fuso: string) {
     return () => {
       clearInterval(intervalo);
       if (timer.current) clearTimeout(timer.current);
-      supabase().removeChannel(canal);
+      void supabase().removeChannel(canal);
     };
   }, [orgId, carregar]);
 

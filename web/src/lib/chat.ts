@@ -63,7 +63,7 @@ export function useMensagens(conversaId: string | null) {
   }, [conversaId]);
 
   useEffect(() => {
-    carregar();
+    void carregar();
     if (!conversaId) return;
     const sb = supabase();
     const canal = sb
@@ -75,7 +75,7 @@ export function useMensagens(conversaId: string | null) {
       )
       .subscribe();
     return () => {
-      sb.removeChannel(canal);
+      void sb.removeChannel(canal);
     };
   }, [conversaId, carregar]);
 

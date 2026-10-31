@@ -65,7 +65,7 @@ function Detalhe() {
     setModelo(((m.data as Modelo[]) ?? [])[0] ?? null);
   }, [id]);
   useEffect(() => {
-    carregar();
+    void carregar();
   }, [carregar]);
 
   if (erro && !o) return <p className="text-sm text-red-700">{erro}</p>;
@@ -75,7 +75,7 @@ function Detalhe() {
     setErro(null);
     const { error } = await supabase().from("crm_oportunidades").update(campos).eq("id", o!.id);
     if (error) return setErro(traduzirErro(error));
-    carregar();
+    void carregar();
   }
 
   async function mudarEtapa(etapa: Etapa) {
@@ -86,7 +86,7 @@ function Detalhe() {
       motivo = prompt("Motivo da perda:");
       if (motivo === null) return;
     }
-    atualizar({ etapa, motivo_perda: motivo });
+    void atualizar({ etapa, motivo_perda: motivo });
   }
 
   async function converter() {
@@ -94,7 +94,7 @@ function Detalhe() {
     const { error } = await supabase().rpc("crm_converter_cliente", { p_op: o!.id });
     if (error) return setErro(traduzirErro(error));
     setAviso("Cliente cadastrado na carteira. Complete o código do Domínio e os responsáveis em Configurações.");
-    carregar();
+    void carregar();
   }
 
   async function arquivar(sim: boolean) {
@@ -103,7 +103,7 @@ function Detalhe() {
     const { error } = await supabase().rpc("crm_arquivar", { p_ids: [o!.id], p_motivo: motivo, p_arquivar: sim });
     if (error) return setErro(traduzirErro(error));
     setAviso(sim ? "Arquivada: saiu do funil e fica em Arquivados." : "De volta ao funil.");
-    carregar();
+    void carregar();
   }
 
   async function excluir() {

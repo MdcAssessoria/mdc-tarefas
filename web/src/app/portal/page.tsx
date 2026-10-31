@@ -55,7 +55,7 @@ export default function Portal() {
 
   useEffect(() => {
     const sb = supabase();
-    sb.auth.getSession().then(({ data }) => setSession(data.session));
+    void sb.auth.getSession().then(({ data }) => setSession(data.session));
     const { data } = sb.auth.onAuthStateChange((_e, s) => setSession(s));
     return () => data.subscription.unsubscribe();
   }, []);
@@ -342,12 +342,16 @@ function Rotinas({ emp }: { emp: Empresa }) {
 
   const carregar = useCallback(async () => {
     const { data, error } = await supabase().rpc("portal_rotinas", { p_cliente: emp.cliente_id, p_competencia: mes + "-01" });
-    if (error) return setErro(traduzirErro(error));
+    if (error) {
+      setErro(traduzirErro(error));
+      return;
+    }
     setLista(data as Rotina[]);
-  }, [emp.cliente_id, mes]);
+    // setErro é estável, mas o React Compiler o infere como dependência neste componente; listá-lo não muda nada
+  }, [emp.cliente_id, mes, setErro]);
 
   useEffect(() => {
-    carregar();
+    void carregar();
   }, [carregar]);
 
   const meses = Array.from({ length: 6 }, (_, i) => {
@@ -358,7 +362,7 @@ function Rotinas({ emp }: { emp: Empresa }) {
   async function enviar(r: Rotina, arq: File) {
     try {
       await enviarArquivo(arq, { org: emp.org_id, app: "portal", ref: r.tarefa_id, cliente: emp.cliente_id, visivelCliente: true });
-      carregar();
+      void carregar();
     } catch (e) {
       setErro(traduzirErro(e));
     }
@@ -546,7 +550,7 @@ function Chat({ emp }: { emp: Empresa }) {
   }, [emp.cliente_id]);
 
   useEffect(() => {
-    carregar();
+    void carregar();
     const sb = supabase();
     const canal = sb
       .channel(`portal-conv-${emp.cliente_id}`)
@@ -557,7 +561,7 @@ function Chat({ emp }: { emp: Empresa }) {
       )
       .subscribe();
     return () => {
-      sb.removeChannel(canal);
+      void sb.removeChannel(canal);
     };
   }, [emp.cliente_id, carregar]);
 
@@ -582,7 +586,7 @@ function Chat({ emp }: { emp: Empresa }) {
   async function avaliar(nota: number) {
     if (!atual) return;
     await supabase().from("portal_conversas").update({ avaliacao: nota }).eq("id", atual.id);
-    carregar();
+    void carregar();
   }
 
   return (
@@ -666,7 +670,7 @@ function Chat({ emp }: { emp: Empresa }) {
                   className="btn !min-h-8 !py-1"
                   onClick={async () => {
                     await supabase().from("portal_conversas").update({ status: "resolvido" }).eq("id", atual.id);
-                    carregar();
+                    void carregar();
                   }}
                 >
                   Marcar como resolvida
@@ -728,7 +732,7 @@ function Documentos({ emp }: { emp: Empresa }) {
     setVenc((v.data as typeof venc) ?? []);
   }, [emp.cliente_id]);
   useEffect(() => {
-    carregar();
+    void carregar();
   }, [carregar]);
 
   const nomesTipo: Record<string, string> = {
@@ -760,7 +764,7 @@ function Documentos({ emp }: { emp: Empresa }) {
                 try {
                   for (const f of Array.from(e.target.files ?? []))
                     await enviarArquivo(f, { org: emp.org_id, app: "portal", cliente: emp.cliente_id, visivelCliente: true });
-                  carregar();
+                  void carregar();
                 } catch (er) {
                   setErro(traduzirErro(er));
                 }

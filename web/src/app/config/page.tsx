@@ -110,7 +110,7 @@ function AbaOrganizacao() {
       .eq("id", org.id);
     if (error) return mostrar(traduzirErro(error), true);
     mostrar("Dados salvos.");
-    recarregar();
+    void recarregar();
   }
 
   return (
@@ -184,7 +184,7 @@ function AbaEquipe() {
   async function alterar(userId: string, campos: Record<string, unknown>) {
     const { error } = await supabase().from("membros").update(campos).eq("org_id", org.id).eq("user_id", userId);
     if (error) return mostrar(traduzirErro(error), true);
-    recarregar();
+    void recarregar();
   }
 
   return (
@@ -281,12 +281,12 @@ function AbaSetores() {
       .insert({ org_id: org.id, nome, cor, ordem: setores.length + 1 });
     if (error) return mostrar(traduzirErro(error), true);
     setNome("");
-    recarregar();
+    void recarregar();
   }
   async function alterar(id: string, campos: Record<string, unknown>) {
     const { error } = await supabase().from("setores").update(campos).eq("id", id);
     if (error) return mostrar(traduzirErro(error), true);
-    recarregar();
+    void recarregar();
   }
 
   return (
@@ -393,14 +393,14 @@ function AbaClientes() {
     mostrar(
       `Cliente inativado desde ${fmtData(inativando.data)}. ${data?.tarefas_canceladas ?? 0} tarefa(s) de competência posterior à saída cancelada(s).`,
     );
-    recarregar();
+    void recarregar();
   }
 
   async function reativar(id: string) {
     const { data, error } = await supabase().rpc("reativar_cliente", { p_cliente: id });
     if (error) return mostrar(traduzirErro(error), true);
     mostrar(`Cliente reativado. ${data?.tarefas_restauradas ?? 0} tarefa(s) cancelada(s) pela inativação voltaram para "a fazer".`);
-    recarregar();
+    void recarregar();
   }
 
   const carregarResps = useCallback(async () => {
@@ -435,13 +435,13 @@ function AbaClientes() {
       .insert({ ...novo, org_id: org.id, nome_fantasia: novo.nome_fantasia || null, cnpj: novo.cnpj || null });
     if (error) return mostrar(error.message.includes("clientes_org_cnpj_uk") ? "CNPJ já cadastrado." : traduzirErro(error), true);
     setNovo({ razao_social: "", nome_fantasia: "", cnpj: "", regime: novo.regime });
-    recarregar();
+    void recarregar();
   }
 
   async function alterar(id: string, campos: Partial<Cliente>) {
     const { error } = await supabase().from("clientes").update(campos).eq("id", id);
     if (error) return mostrar(traduzirErro(error), true);
-    recarregar();
+    void recarregar();
   }
 
   async function aplicarLote() {
@@ -460,7 +460,7 @@ function AbaClientes() {
     mostrar(`${ids.length} cliente(s) atualizado(s).`);
     setSel(new Set());
     setLote({ segmento: "", grupos: [] });
-    recarregar();
+    void recarregar();
   }
 
   async function definirResp(clienteId: string, setorId: string, userId: string) {
@@ -469,7 +469,7 @@ function AbaClientes() {
       ? await sb.from("cliente_responsaveis").upsert({ org_id: org.id, cliente_id: clienteId, setor_id: setorId, user_id: userId })
       : await sb.from("cliente_responsaveis").delete().eq("cliente_id", clienteId).eq("setor_id", setorId);
     if (error) return mostrar(traduzirErro(error), true);
-    carregarResps();
+    void carregarResps();
   }
 
   async function importar() {
@@ -496,7 +496,7 @@ function AbaClientes() {
     if (error) return mostrar(traduzirErro(error), true);
     mostrar(`${registros.length} clientes importados.`);
     setCsv(null);
-    recarregar();
+    void recarregar();
   }
 
   return (
@@ -877,7 +877,7 @@ function AbaObrigacoes() {
       : await sb.from("modelos_recorrentes").insert({ ...dados, org_id: org.id });
     if (error) return mostrar(traduzirErro(error), true);
     setEditando(null);
-    carregar();
+    void carregar();
   }
 
   // prévia: quantos clientes ativos a obrigação vai pegar com os filtros
@@ -1205,7 +1205,7 @@ function AbaFeriados() {
       .insert({ ...novo, org_id: org.id });
     if (error) return mostrar(traduzirErro(error), true);
     setNovo({ data: "", descricao: "" });
-    carregar();
+    void carregar();
   }
 
   return (

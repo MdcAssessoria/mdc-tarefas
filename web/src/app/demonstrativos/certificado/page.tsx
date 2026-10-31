@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useAgora } from "@/lib/useAgora";
 import { useCallback, useEffect, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { useOrg } from "@/lib/org";
@@ -28,6 +29,7 @@ const dataBr = (s: string | null) => (s ? new Date(s).toLocaleDateString("pt-BR"
 
 function Certificado() {
   const { org, eu } = useOrg();
+  const agora = useAgora();
   const [cert, setCert] = useState<Cert | null | undefined>(undefined);
   const [arquivo, setArquivo] = useState<File | null>(null);
   const [senha, setSenha] = useState("");
@@ -44,7 +46,7 @@ function Certificado() {
     setCert((data as Cert) ?? null);
   }, [org.id]);
   useEffect(() => {
-    carregar();
+    void carregar();
   }, [carregar]);
 
   async function chamar(metodo: "POST" | "DELETE", corpo?: FormData) {
@@ -74,7 +76,7 @@ function Certificado() {
       setSenha("");
       setArquivo(null);
       setAviso("Certificado cadastrado. Os PDFs dos meses publicados passam a sair assinados.");
-      carregar();
+      void carregar();
     } catch (x) {
       setErro((x as Error).message);
     } finally {
@@ -87,14 +89,14 @@ function Certificado() {
     try {
       await chamar("DELETE");
       setAviso("Certificado removido.");
-      carregar();
+      void carregar();
     } catch (x) {
       setErro((x as Error).message);
     }
   }
 
   if (eu.papel !== "admin") return <p className="text-sm text-neutral-600">Só administradores gerenciam o certificado digital.</p>;
-  const vence = cert?.valido_ate ? Math.round((Date.parse(cert.valido_ate) - Date.now()) / 864e5) : null;
+  const vence = cert?.valido_ate ? Math.round((Date.parse(cert.valido_ate) - agora) / 864e5) : null;
 
   return (
     <div className="mx-auto max-w-2xl space-y-5">
