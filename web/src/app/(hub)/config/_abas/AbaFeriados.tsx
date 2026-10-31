@@ -2,7 +2,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { useOrg } from "@/lib/org";
+import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { supabase } from "@/lib/supabase";
 import { hojeISO } from "@/lib/datas";
 import { traduzirErro } from "@/lib/erros";

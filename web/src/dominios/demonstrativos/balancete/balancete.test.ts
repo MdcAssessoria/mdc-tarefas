@@ -1,11 +1,10 @@
-// Testes de caracterização de lib/balancete.ts: leitura do Excel do Domínio, classificação, DRE, índices e Markdown.
+// Testes de caracterização do balancete (pasta balancete/): leitura do Excel do Domínio, classificação, DRE e índices.
 import { describe, expect, it } from "vitest";
 import { MATRIZ_BALANCETE, MATRIZ_SEM_DC } from "@/dominios/demonstrativos/__testes__/balanceteExemplo";
 import { calcularIndices } from "./indices";
 import { classificar } from "./classificacao";
 import { conferir, fragilidades } from "./fragilidades";
 import { lerBalancete, lerValor, sem } from "./leitura";
-import { mdParaHtml } from "@/lib/markdown";
 import { resumir } from "./resumo";
 
 describe("lerValor", () => {
@@ -289,27 +288,5 @@ describe("resumir e calcularIndices", () => {
       ]
     `);
     expect(fragilidades(r, i, linhas).map((a) => a.texto)).toMatchInlineSnapshot(`[]`);
-  });
-});
-
-describe("mdParaHtml", () => {
-  it("converte títulos, listas, citação, negrito e itálico, escapando HTML", () => {
-    const md = "# Título\n## Sub\nTexto com **negrito** e _itálico_ <script>\n- um\n- dois\n> citação\n\nfim";
-    expect(mdParaHtml(md)).toBe(
-      [
-        "<h1>Título</h1>",
-        "<h2>Sub</h2>",
-        "<p>Texto com <b>negrito</b> e <i>itálico</i> &lt;script&gt;</p>",
-        "<ul>",
-        "<li>um</li>",
-        "<li>dois</li>",
-        "</ul>",
-        "<blockquote>citação</blockquote>",
-        "<p>fim</p>",
-      ].join("\n"),
-    );
-  });
-  it("fecha a lista no fim do texto", () => {
-    expect(mdParaHtml("- a")).toBe("<ul>\n<li>a</li>\n</ul>");
   });
 });

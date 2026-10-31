@@ -1,4 +1,4 @@
-// Testes de caracterização de lib/tendencia.ts (reta de tendência dos índices).
+// Testes de caracterização de tendencia.ts (reta de tendência dos índices).
 import { describe, expect, it } from "vitest";
 import { MAIOR_MELHOR, tendenciaLinear } from "./tendencia";
 

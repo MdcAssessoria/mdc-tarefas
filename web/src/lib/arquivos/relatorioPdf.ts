@@ -1,6 +1,6 @@
 // Relatórios em PDF no papel timbrado MDC (tabelas com quebra de página), gerados no navegador.
 import { PDFDocument, PDFFont, PDFImage, PDFPage, StandardFonts, rgb } from "pdf-lib";
-import { IDENTIDADE_MDC, linhaResponsavel } from "./identidade";
+import { IDENTIDADE_MDC, linhaResponsavel } from "@/lib/identidade";
 
 const VERDE = rgb(11 / 255, 40 / 255, 32 / 255);
 const DOURADO = rgb(226 / 255, 193 / 255, 126 / 255);

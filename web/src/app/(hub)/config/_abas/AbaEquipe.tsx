@@ -2,9 +2,9 @@
 "use client";
 
 import Link from "next/link";
-import { useOrg } from "@/lib/org";
+import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { supabase } from "@/lib/supabase";
-import { PAPEIS } from "@/lib/types";
+import { PAPEIS } from "@/dominios/organizacao/tipos";
 import { traduzirErro } from "@/lib/erros";
 import { useMensagem } from "./useMensagem";
 

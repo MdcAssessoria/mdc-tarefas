@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from "react";
-import { useOrg } from "@/lib/org";
+import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { supabase } from "@/lib/supabase";
 import type { Perfil } from "@/dominios/acessos/tipos";
 import { Chips } from "./Chips";

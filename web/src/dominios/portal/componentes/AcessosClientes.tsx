@@ -3,10 +3,10 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useOrg } from "@/lib/org";
+import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { supabase } from "@/lib/supabase";
 import { traduzirErro } from "@/lib/erros";
-import { nomeCliente } from "@/lib/clientes";
+import { nomeCliente } from "@/dominios/clientes/nome";
 import { perfilDasPerms } from "@/dominios/portal/permissoes";
 import type { VinculoCliente } from "@/dominios/portal/tipos";
 import { EditorCliente } from "./EditorCliente";

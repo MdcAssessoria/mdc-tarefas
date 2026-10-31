@@ -2,15 +2,15 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useOrg } from "@/lib/org";
+import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { supabase } from "@/lib/supabase";
 import { traduzirErro } from "@/lib/erros";
 import { diasAte } from "@/lib/datas";
-import { COLUNAS, corStatusFase, diasParado, nomeStatusFase } from "@/lib/societario";
-import type { SocFase, SocProcesso, SocTipo } from "@/lib/societario";
+import { COLUNAS, corStatusFase, diasParado, nomeStatusFase } from "@/dominios/societario/processos";
+import type { SocFase, SocProcesso, SocTipo } from "@/dominios/societario/processos";
 import { caminho } from "@/lib/caminho";
 import { fmtData } from "@/lib/formato/datas";
-import { nomeCliente } from "@/lib/clientes";
+import { nomeCliente } from "@/dominios/clientes/nome";
 import { CHAVES, useEstadoLembrado } from "@/lib/armazenamentoLocal";
 
 export default function PaginaSocietario() {

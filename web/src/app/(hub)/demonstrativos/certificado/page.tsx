@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useAgora } from "@/lib/useAgora";
 import { useCallback, useEffect, useState } from "react";
-import { useOrg } from "@/lib/org";
+import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { SUPABASE_KEY, SUPABASE_URL, supabase } from "@/lib/supabase";
 import { fmtDataLocal } from "@/lib/formato/datas";
 

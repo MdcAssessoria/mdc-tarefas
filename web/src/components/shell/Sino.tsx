@@ -3,12 +3,12 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { MouseEvent as EventoMouse } from "react";
-import { useOrg } from "@/lib/org";
+import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { supabase } from "@/lib/supabase";
 import { caminho } from "@/lib/caminho";
 import { traduzirErro } from "@/lib/erros";
 import { fmtDataHora } from "@/lib/formato/datas";
-import { Icone } from "@/components/Icone";
+import { Icone } from "@/components/ui/Icone";
 
 /** Fecha o painel ao clicar fora dele. */
 function useFora(aberto: boolean, fechar: () => void) {

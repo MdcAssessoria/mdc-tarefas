@@ -2,15 +2,15 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useAgora } from "@/lib/useAgora";
-import { ChatMensagens } from "@/components/ChatMensagens";
-import { useOrg } from "@/lib/org";
+import { ChatMensagens } from "@/dominios/atendimento/componentes/ChatMensagens";
+import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { supabase } from "@/lib/supabase";
 import { traduzirErro } from "@/lib/erros";
-import { ASSUNTOS, STATUS_CONVERSA, nomeAssunto } from "@/lib/chat";
-import type { Conversa } from "@/lib/chat";
+import { ASSUNTOS, STATUS_CONVERSA, nomeAssunto } from "@/dominios/atendimento/chat";
+import type { Conversa } from "@/dominios/atendimento/chat";
 import { caminho } from "@/lib/caminho";
 import { fmtDataHora } from "@/lib/formato/datas";
-import { nomeCliente } from "@/lib/clientes";
+import { nomeCliente } from "@/dominios/clientes/nome";
 
 export default function PaginaAtendimento() {
   return <Caixa />;

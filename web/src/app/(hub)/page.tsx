@@ -2,18 +2,18 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Icone } from "@/components/Icone";
-import { PrazoBadge, PrioridadeDot } from "@/components/Badges";
-import { CORES_RITMO, RitmoSemanal } from "@/components/RitmoSemanal";
-import type { SemanaRitmo } from "@/components/RitmoSemanal";
-import { useOrg } from "@/lib/org";
+import { Icone } from "@/components/ui/Icone";
+import { PrazoBadge, PrioridadeDot } from "@/dominios/tarefas/componentes/Badges";
+import { CORES_RITMO, RitmoSemanal } from "@/dominios/tarefas/componentes/RitmoSemanal";
+import type { SemanaRitmo } from "@/dominios/tarefas/componentes/RitmoSemanal";
+import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { supabase } from "@/lib/supabase";
 import { hojeISO, somarDias } from "@/lib/datas";
 import { caminho } from "@/lib/caminho";
 import { traduzirErro } from "@/lib/erros";
-import type { Prioridade, Status } from "@/lib/types";
+import type { Prioridade, Status } from "@/dominios/tarefas/tipos";
 import { fmtData } from "@/lib/formato/datas";
-import { nomeCliente } from "@/lib/clientes";
+import { nomeCliente } from "@/dominios/clientes/nome";
 
 export default function Inicio() {
   return <Hub />;

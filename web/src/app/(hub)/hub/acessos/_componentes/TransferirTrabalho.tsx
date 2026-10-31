@@ -3,9 +3,9 @@
 "use client";
 
 import { useEffect, useEffectEvent, useState } from "react";
-import { useOrg } from "@/lib/org";
+import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { supabase } from "@/lib/supabase";
-import type { Membro } from "@/lib/types";
+import type { Membro } from "@/dominios/organizacao/tipos";
 
 const ROTULO_PENDENCIA: Record<string, string> = {
   tarefas: "tarefas em aberto",

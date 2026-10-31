@@ -1,6 +1,6 @@
 // "Colar lista" de clientes nas Configurações: transforma o texto colado (uma empresa por linha, colunas separadas
 // por ponto e vírgula ou tabulação) nos registros a inserir na tabela clientes.
-import { REGIMES } from "@/lib/types";
+import { REGIMES } from "./tipos";
 
 /** Colunas: razão social; CNPJ; regime (id ou nome); nome fantasia. Ignora linhas vazias e o cabeçalho "Razão...". */
 export function lerListaColada(texto: string, orgId: string) {

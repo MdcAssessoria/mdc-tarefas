@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { useCallback, useMemo, useState } from "react";
-import { useOrg } from "@/lib/org";
+import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { supabase } from "@/lib/supabase";
-import type { Contrato } from "@/lib/crm";
+import type { Contrato } from "@/dominios/comercial/crm";
 import { mesAtualISO } from "@/lib/datas";
 import { brl } from "@/lib/formato/moeda";
 import { fmtData, fmtDataLocal } from "@/lib/formato/datas";

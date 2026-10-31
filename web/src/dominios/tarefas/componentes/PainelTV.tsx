@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useOrgOpcional } from "@/lib/org";
+import { useOrgOpcional } from "@/dominios/organizacao/OrgProvider";
 import { useLogo } from "@/lib/marca";
-import type { Organizacao } from "@/lib/types";
-import { nomeCliente } from "@/lib/clientes";
+import type { Organizacao } from "@/dominios/organizacao/tipos";
+import { nomeCliente } from "@/dominios/clientes/nome";
 
 export interface Kpis {
   abertas: number;

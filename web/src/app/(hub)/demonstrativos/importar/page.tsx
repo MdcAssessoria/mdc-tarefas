@@ -1,9 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useOrg } from "@/lib/org";
+import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { traduzirErro } from "@/lib/erros";
-import { lerPlanilha } from "@/lib/planilha";
+import { lerPlanilha } from "@/lib/arquivos/planilha";
 import { GRUPOS, classificar, nomeGrupo } from "@/dominios/demonstrativos/balancete/classificacao";
 import { lerBalancete } from "@/dominios/demonstrativos/balancete/leitura";
 import type { Grupo } from "@/dominios/demonstrativos/balancete/tipos";
@@ -12,7 +12,7 @@ import { analisar, carregarMapa, salvarBalancete } from "@/dominios/demonstrativ
 import { caminho } from "@/lib/caminho";
 import { brl } from "@/lib/formato/moeda";
 import { fmtData } from "@/lib/formato/datas";
-import { nomeCliente } from "@/lib/clientes";
+import { nomeCliente } from "@/dominios/clientes/nome";
 
 export default function PaginaImportarBalancete() {
   return <Importar />;

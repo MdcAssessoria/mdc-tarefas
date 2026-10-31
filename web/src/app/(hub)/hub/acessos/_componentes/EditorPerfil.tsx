@@ -2,8 +2,8 @@
 "use client";
 
 import { useState } from "react";
-import { PAPEIS_APP } from "@/lib/types";
-import type { PapelApp } from "@/lib/types";
+import { PAPEIS_APP } from "@/dominios/acessos/tipos";
+import type { PapelApp } from "@/dominios/acessos/tipos";
 import type { Perfil } from "@/dominios/acessos/tipos";
 
 export function EditorPerfil({

@@ -3,9 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { traduzirErro } from "@/lib/erros";
-import { abrirArquivo, enviarArquivo } from "@/lib/arquivos";
-import { useMensagens } from "@/lib/chat";
-import type { Mensagem } from "@/lib/chat";
+import { abrirArquivo, enviarArquivo } from "@/lib/arquivos/armazenamento";
+import { useMensagens } from "@/dominios/atendimento/chat";
+import type { Mensagem } from "@/dominios/atendimento/chat";
 
 /** Conversa (lado equipe ou lado cliente): mensagens em tempo real, anexo e envio. */
 export function ChatMensagens({

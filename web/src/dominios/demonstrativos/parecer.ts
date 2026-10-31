@@ -4,10 +4,10 @@ import type { Alerta } from "@/dominios/demonstrativos/balancete/fragilidades";
 import type { Indices } from "@/dominios/demonstrativos/balancete/indices";
 import type { Resumo } from "@/dominios/demonstrativos/balancete/resumo";
 import type { Demonstracoes } from "@/dominios/demonstrativos/calculosDemonstracoes";
-import { brl } from "./formato/moeda";
-import { fmtIndice } from "./formato/numero";
-import { fmtData } from "./formato/datas";
-import { LINHA_EMPRESA } from "./identidade";
+import { brl } from "@/lib/formato/moeda";
+import { fmtIndice } from "@/lib/formato/numero";
+import { fmtData } from "@/lib/formato/datas";
+import { LINHA_EMPRESA } from "@/lib/identidade";
 
 /** Valores dos textos de análise em reais inteiros, sem centavos. */
 const reais = (v: number | null | undefined) => brl(v, { centavos: false });

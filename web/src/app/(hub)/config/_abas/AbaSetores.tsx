@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from "react";
-import { useOrg } from "@/lib/org";
+import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { supabase } from "@/lib/supabase";
 import { traduzirErro } from "@/lib/erros";
 import { useMensagem } from "./useMensagem";

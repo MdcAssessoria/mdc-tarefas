@@ -1,9 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { OrgProvider, useOrg } from "@/lib/org";
+import { OrgProvider, useOrg } from "@/dominios/organizacao/OrgProvider";
 import { supabase } from "@/lib/supabase";
-import { PainelTV, type DadosPainel } from "@/components/PainelTV";
+import { PainelTV, type DadosPainel } from "@/dominios/tarefas/componentes/PainelTV";
 
 export default function PaginaTV() {
   return (

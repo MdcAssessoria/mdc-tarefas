@@ -1,17 +1,17 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { MultiSelecao } from "@/components/MultiSelecao";
-import { useOrg } from "@/lib/org";
+import { MultiSelecao } from "@/components/ui/MultiSelecao";
+import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { supabase } from "@/lib/supabase";
 import { traduzirErro } from "@/lib/erros";
 import { hojeISO } from "@/lib/datas";
 import { carregarLogo } from "@/lib/marca";
-import { baixarBytes } from "@/lib/contratoPdf";
-import { exportarExcel } from "@/lib/excel";
-import { gerarRelatorioPdf } from "@/lib/relatorioPdf";
+import { baixarBytes } from "@/lib/arquivos/baixar";
+import { exportarExcel } from "@/lib/arquivos/excel";
+import { gerarRelatorioPdf } from "@/lib/arquivos/relatorioPdf";
 import { fmtData } from "@/lib/formato/datas";
-import { nomeCliente } from "@/lib/clientes";
+import { nomeCliente } from "@/dominios/clientes/nome";
 
 export default function PaginaRelatorio() {
   return <Relatorio />;

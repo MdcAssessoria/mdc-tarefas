@@ -1,8 +1,8 @@
 // Seletor de período dos demonstrativos (mês, trimestre, semestre, ano) e o hook que lembra a escolha neste navegador.
 "use client";
 
-import { TIPOS_PERIODO } from "@/lib/periodos";
-import type { TipoPeriodo } from "@/lib/periodos";
+import { TIPOS_PERIODO } from "@/dominios/demonstrativos/periodos";
+import type { TipoPeriodo } from "@/dominios/demonstrativos/periodos";
 import { CHAVES, useEstadoLembrado } from "@/lib/armazenamentoLocal";
 
 /** Período escolhido (lembrado neste navegador). */

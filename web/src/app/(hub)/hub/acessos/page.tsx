@@ -3,11 +3,11 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useOrg } from "@/lib/org";
+import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { supabase } from "@/lib/supabase";
 import { traduzirErro } from "@/lib/erros";
-import { enviarConvite } from "@/lib/convite";
-import type { Membro, Papel } from "@/lib/types";
+import { enviarConvite } from "@/dominios/acessos/convite";
+import type { Membro, Papel } from "@/dominios/organizacao/tipos";
 import { fmtDataHora } from "@/lib/formato/datas";
 import type { Acesso, Auditoria, Conta, Perfil } from "@/dominios/acessos/tipos";
 import { ADMIN } from "./_componentes/niveis";

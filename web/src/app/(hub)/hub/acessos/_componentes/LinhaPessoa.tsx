@@ -2,8 +2,10 @@
 "use client";
 
 import { useState } from "react";
-import { PAPEIS, PAPEIS_APP } from "@/lib/types";
-import type { Membro, PapelApp } from "@/lib/types";
+import { PAPEIS } from "@/dominios/organizacao/tipos";
+import { PAPEIS_APP } from "@/dominios/acessos/tipos";
+import type { Membro } from "@/dominios/organizacao/tipos";
+import type { PapelApp } from "@/dominios/acessos/tipos";
 import { fmtDataHora } from "@/lib/formato/datas";
 import type { Acesso, Conta, Perfil } from "@/dominios/acessos/tipos";
 import { ADMIN } from "./niveis";

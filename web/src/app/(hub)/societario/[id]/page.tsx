@@ -3,17 +3,17 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import { useOrg } from "@/lib/org";
+import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { supabase } from "@/lib/supabase";
 import { traduzirErro } from "@/lib/erros";
 import { diasAte, hojeISO } from "@/lib/datas";
-import { abrirArquivo, enviarArquivo, fmtTamanho } from "@/lib/arquivos";
-import type { Arquivo } from "@/lib/arquivos";
-import { ORGAOS, STATUS_FASE, corStatusFase, diasParado, nomeStatusFase } from "@/lib/societario";
-import type { SocFase, SocProcesso, SocTipo, StatusFase } from "@/lib/societario";
+import { abrirArquivo, enviarArquivo, fmtTamanho } from "@/lib/arquivos/armazenamento";
+import type { Arquivo } from "@/lib/arquivos/armazenamento";
+import { ORGAOS, STATUS_FASE, corStatusFase, diasParado, nomeStatusFase } from "@/dominios/societario/processos";
+import type { SocFase, SocProcesso, SocTipo, StatusFase } from "@/dominios/societario/processos";
 import { brl } from "@/lib/formato/moeda";
 import { fmtData, fmtDataHora } from "@/lib/formato/datas";
-import { nomeCliente } from "@/lib/clientes";
+import { nomeCliente } from "@/dominios/clientes/nome";
 
 export default function PaginaProcesso() {
   return <Ficha />;

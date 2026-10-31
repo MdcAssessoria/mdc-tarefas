@@ -1,7 +1,7 @@
 // Exportação para Excel no padrão MDC (cabeçalho verde e dourado, rodapé com o responsável técnico).
 // exceljs é carregado só quando alguém exporta.
-import { baixarBytes } from "./contratoPdf";
-import { IDENTIDADE_MDC, LINHA_EMPRESA, linhaResponsavel } from "./identidade";
+import { baixarBytes } from "./baixar";
+import { IDENTIDADE_MDC, LINHA_EMPRESA, linhaResponsavel } from "@/lib/identidade";
 
 export interface ColunaExcel {
   titulo: string;

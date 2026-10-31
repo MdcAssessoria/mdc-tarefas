@@ -3,8 +3,8 @@
 
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { enviarConvite } from "@/lib/convite";
-import { nomeCliente } from "@/lib/clientes";
+import { enviarConvite } from "@/dominios/acessos/convite";
+import { nomeCliente } from "@/dominios/clientes/nome";
 import { PERFIS_CLIENTE, PERMISSOES_PORTAL, perfilDasPerms } from "@/dominios/portal/permissoes";
 import type { VinculoCliente } from "@/dominios/portal/tipos";
 

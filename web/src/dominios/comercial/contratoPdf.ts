@@ -1,6 +1,6 @@
 // Contrato em PDF no layout MDC (gerado no navegador com pdf-lib).
 import { PDFDocument, PDFFont, PDFImage, PDFPage, StandardFonts, rgb } from "pdf-lib";
-import { IDENTIDADE_MDC, linhaResponsavel } from "./identidade";
+import { IDENTIDADE_MDC, linhaResponsavel } from "@/lib/identidade";
 
 const VERDE = rgb(11 / 255, 40 / 255, 32 / 255);
 const DOURADO = rgb(226 / 255, 193 / 255, 126 / 255);
@@ -205,16 +205,4 @@ export async function gerarContratoPdf(d: DadosContratoPdf): Promise<Uint8Array>
     p.drawRectangle({ x: 0, y: 14, width: W, height: 2, color: DOURADO });
   });
   return pdf.save();
-}
-
-/** Baixa um arquivo de bytes no navegador. */
-export function baixarBytes(bytes: Uint8Array, nome: string, tipo = "application/pdf") {
-  const url = URL.createObjectURL(new Blob([bytes as BlobPart], { type: tipo }));
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = nome;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 10_000);
 }

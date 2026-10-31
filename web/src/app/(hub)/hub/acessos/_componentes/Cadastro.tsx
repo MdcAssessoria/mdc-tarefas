@@ -2,12 +2,12 @@
 "use client";
 
 import { useState } from "react";
-import { useOrg } from "@/lib/org";
+import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { supabase } from "@/lib/supabase";
 import { traduzirErro } from "@/lib/erros";
-import { enviarConvite } from "@/lib/convite";
-import { PAPEIS } from "@/lib/types";
-import type { Papel } from "@/lib/types";
+import { enviarConvite } from "@/dominios/acessos/convite";
+import { PAPEIS } from "@/dominios/organizacao/tipos";
+import type { Papel } from "@/dominios/organizacao/tipos";
 import type { Perfil } from "@/dominios/acessos/tipos";
 
 export function Cadastro({

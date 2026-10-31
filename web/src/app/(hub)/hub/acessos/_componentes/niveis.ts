@@ -1,7 +1,7 @@
 // Nível de acesso numa ferramenta (ver, operar, gerir): cor do selo, nome e o valor especial de administrador.
 
-import { PAPEIS_APP } from "@/lib/types";
-import type { PapelApp } from "@/lib/types";
+import { PAPEIS_APP } from "@/dominios/acessos/tipos";
+import type { PapelApp } from "@/dominios/acessos/tipos";
 
 export const COR_NIVEL: Record<PapelApp, string> = {
   ver: "bg-neutral-100 text-neutral-700",

@@ -2,18 +2,18 @@
 
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { TarefaEditor } from "@/components/TarefaEditor";
-import { MultiSelecao } from "@/components/MultiSelecao";
-import { PrazoBadge, PrioridadeDot, SetorChip } from "@/components/Badges";
-import { useOrg } from "@/lib/org";
-import { useTarefas } from "@/lib/useTarefas";
+import { TarefaEditor } from "@/dominios/tarefas/componentes/TarefaEditor";
+import { MultiSelecao } from "@/components/ui/MultiSelecao";
+import { PrazoBadge, PrioridadeDot, SetorChip } from "@/dominios/tarefas/componentes/Badges";
+import { useOrg } from "@/dominios/organizacao/OrgProvider";
+import { useTarefas } from "@/dominios/tarefas/useTarefas";
 import { diasAte } from "@/lib/datas";
-import { STATUS } from "@/lib/types";
-import type { Status, Tarefa } from "@/lib/types";
+import { STATUS } from "@/dominios/tarefas/tipos";
+import type { Status, Tarefa } from "@/dominios/tarefas/tipos";
 import { traduzirErro } from "@/lib/erros";
 import { caminho } from "@/lib/caminho";
 import { fmtCompetencia } from "@/lib/formato/datas";
-import { nomeCliente } from "@/lib/clientes";
+import { nomeCliente } from "@/dominios/clientes/nome";
 import { CHAVES, gravarLocal, lerLocal, useEstadoLembrado } from "@/lib/armazenamentoLocal";
 
 export default function PaginaTarefas() {

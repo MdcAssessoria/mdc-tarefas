@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from "react";
-import { useOrg } from "@/lib/org";
+import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { Abas } from "@/components/ui/Abas";
 import { AbaClientes } from "./_abas/AbaClientes";
 import { AbaEquipe } from "./_abas/AbaEquipe";

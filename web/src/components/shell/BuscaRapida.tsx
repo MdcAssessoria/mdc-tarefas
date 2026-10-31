@@ -3,10 +3,10 @@
 
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useOrg } from "@/lib/org";
-import { nomeCliente } from "@/lib/clientes";
+import { useOrg } from "@/dominios/organizacao/OrgProvider";
+import { nomeCliente } from "@/dominios/clientes/nome";
 import { semAcento } from "@/lib/texto";
-import { Icone } from "@/components/Icone";
+import { Icone } from "@/components/ui/Icone";
 import { NAV, filtrarLinks } from "./navegacao";
 import type { Modulo } from "./navegacao";
 

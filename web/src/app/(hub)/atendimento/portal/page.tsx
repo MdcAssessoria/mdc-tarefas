@@ -1,11 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { useOrg } from "@/lib/org";
+import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { supabase } from "@/lib/supabase";
 import { traduzirErro } from "@/lib/erros";
-import { enviarConvite } from "@/lib/convite";
-import { nomeCliente } from "@/lib/clientes";
+import { enviarConvite } from "@/dominios/acessos/convite";
+import { nomeCliente } from "@/dominios/clientes/nome";
 
 export default function PaginaAcessosPortal() {
   return <AcessosPortal />;

@@ -3,12 +3,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useOrg } from "@/lib/org";
+import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { supabase } from "@/lib/supabase";
-import { PAPEIS, PAPEIS_APP } from "@/lib/types";
-import type { PapelApp } from "@/lib/types";
+import { PAPEIS } from "@/dominios/organizacao/tipos";
+import { PAPEIS_APP } from "@/dominios/acessos/tipos";
+import type { PapelApp } from "@/dominios/acessos/tipos";
 import { caminho } from "@/lib/caminho";
-import { Icone } from "@/components/Icone";
+import { Icone } from "@/components/ui/Icone";
 import type { Modulo } from "./navegacao";
 
 function Iniciais({ nome, className = "" }: { nome: string; className?: string }) {

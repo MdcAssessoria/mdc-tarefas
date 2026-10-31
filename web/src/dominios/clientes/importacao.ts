@@ -1,5 +1,5 @@
 // Leitura e normalização de planilhas de clientes (relatório de empresas do Domínio, Excel ou CSV).
-import { semAcento } from "./texto";
+import { semAcento } from "@/lib/texto";
 
 export type Campo =
   | "codigo_dominio"

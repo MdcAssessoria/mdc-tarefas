@@ -1,14 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useOrg } from "@/lib/org";
+import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { supabase } from "@/lib/supabase";
 import type { BalanceteReg } from "@/dominios/demonstrativos/tipos";
 import { caminho } from "@/lib/caminho";
 import { brl } from "@/lib/formato/moeda";
 import { fmtIndice } from "@/lib/formato/numero";
 import { mesAno } from "@/lib/formato/datas";
-import { nomeCliente } from "@/lib/clientes";
+import { nomeCliente } from "@/dominios/clientes/nome";
 
 export default function PaginaRiscos() {
   return <Riscos />;

@@ -1,9 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { supabase } from "./supabase";
-import { hojeISO } from "./datas";
-import type { Tarefa } from "./types";
+import { supabase } from "@/lib/supabase";
+import { hojeISO } from "@/lib/datas";
+import type { Tarefa } from "./tipos";
 import { traduzirErro } from "@/lib/erros";
 
 /**

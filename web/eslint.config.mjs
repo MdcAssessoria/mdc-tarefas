@@ -20,6 +20,55 @@ const config = [
       "@next/next/no-img-element": "off",
     },
   },
+  // Regra de dependência entre pastas (web/README.md): app → dominios → lib; components/ui → lib.
+  {
+    files: ["src/lib/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["@/dominios/**", "**/dominios/**", "@/components/**", "**/components/**", "@/app/**"],
+              message: "lib/ é só infraestrutura: não importa de dominios/, components/ nem app/ (veja web/README.md).",
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    files: ["src/components/ui/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["@/dominios/**", "**/dominios/**", "@/components/shell/**", "@/app/**"],
+              message: "components/ui/ não conhece domínio: recebe tudo por props e só usa lib/ (veja web/README.md).",
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    files: ["src/dominios/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["@/app/**", "@/components/shell/**"],
+              message: "dominios/ não importa telas (app/) nem a moldura (veja web/README.md).",
+            },
+          ],
+        },
+      ],
+    },
+  },
   { ignores: [".next/**", "node_modules/**", "next-env.d.ts", "src/lib/database.types.ts"] },
 ];
 

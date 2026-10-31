@@ -1,4 +1,4 @@
-import { SUPABASE_URL, SUPABASE_KEY, supabase } from "./supabase";
+import { SUPABASE_URL, SUPABASE_KEY, supabase } from "@/lib/supabase";
 
 export interface RespostaConvite {
   enviado: boolean;

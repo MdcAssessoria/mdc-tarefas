@@ -2,12 +2,12 @@
 
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useOrg } from "@/lib/org";
+import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { supabase } from "@/lib/supabase";
 import { traduzirErro } from "@/lib/erros";
-import { ETAPAS, ORIGENS } from "@/lib/crm";
-import type { Oportunidade } from "@/lib/crm";
-import { exportarExcel } from "@/lib/excel";
+import { ETAPAS, ORIGENS } from "@/dominios/comercial/crm";
+import type { Oportunidade } from "@/dominios/comercial/crm";
+import { exportarExcel } from "@/lib/arquivos/excel";
 import { hojeISO } from "@/lib/datas";
 import { brl } from "@/lib/formato/moeda";
 import { fmtDataLocal } from "@/lib/formato/datas";

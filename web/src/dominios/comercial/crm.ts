@@ -1,7 +1,7 @@
 // CRM Comercial: tipos, etapas do funil, valores negociados e montagem do contrato a partir do modelo.
-import { hojeISO, primeiroDiaDoProximoMes } from "./datas";
-import { brl } from "./formato/moeda";
-import { IDENTIDADE_MDC } from "./identidade";
+import { hojeISO, primeiroDiaDoProximoMes } from "@/lib/datas";
+import { brl } from "@/lib/formato/moeda";
+import { IDENTIDADE_MDC } from "@/lib/identidade";
 
 export type Etapa = "novo" | "contato" | "reuniao" | "proposta" | "negociacao" | "ganho" | "perdido";
 

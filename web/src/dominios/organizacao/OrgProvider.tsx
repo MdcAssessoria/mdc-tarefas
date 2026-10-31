@@ -2,12 +2,14 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
-import { supabase } from "./supabase";
-import type { Cliente, HubApp, Membro, Organizacao, Papel, PapelApp, Setor } from "./types";
-import { PESO_PAPEL_APP } from "./types";
+import { supabase } from "@/lib/supabase";
+import type { Cliente } from "@/dominios/clientes/tipos";
+import type { HubApp, PapelApp } from "@/dominios/acessos/tipos";
+import type { Membro, Organizacao, Papel, Setor } from "./tipos";
+import { PESO_PAPEL_APP } from "@/dominios/acessos/tipos";
 import { traduzirErro } from "@/lib/erros";
 import { caminho } from "@/lib/caminho";
-import { CHAVES, gravarLocal, lerLocal } from "./armazenamentoLocal";
+import { CHAVES, gravarLocal, lerLocal } from "@/lib/armazenamentoLocal";
 
 interface OrgCtx {
   session: Session;

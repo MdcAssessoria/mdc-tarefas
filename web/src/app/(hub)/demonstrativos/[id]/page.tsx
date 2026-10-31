@@ -3,27 +3,27 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useOrg } from "@/lib/org";
+import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { supabase } from "@/lib/supabase";
 import { traduzirErro } from "@/lib/erros";
 import { GRUPOS } from "@/dominios/demonstrativos/balancete/classificacao";
-import { rascunhoParecer } from "@/lib/parecer";
-import { AbaDemonstracoes } from "@/components/demonstrativos/Demonstracoes";
-import { BotaoPdf } from "@/components/demonstrativos/BotaoPdf";
+import { rascunhoParecer } from "@/dominios/demonstrativos/parecer";
+import { AbaDemonstracoes } from "@/dominios/demonstrativos/componentes/Demonstracoes";
+import { BotaoPdf } from "@/dominios/demonstrativos/componentes/BotaoPdf";
 import type { Grupo } from "@/dominios/demonstrativos/balancete/tipos";
 import { carregarMapaDfc, definirGrupo, definirLinhaDfc, recalcular } from "@/dominios/demonstrativos/repositorio";
 import { LINHAS_DFC, linhaDfc, linhaDfcAuto } from "@/dominios/demonstrativos/calculosDemonstracoes";
 import type { MapaDfc } from "@/dominios/demonstrativos/calculosDemonstracoes";
-import { REGIMES } from "@/lib/types";
-import { ArvoreBalancete } from "@/components/demonstrativos/ArvoreBalancete";
-import { GradeIndices } from "@/components/demonstrativos/GradeIndices";
-import { ListaAlertas } from "@/components/demonstrativos/ListaAlertas";
-import { PainelResumo } from "@/components/demonstrativos/PainelResumo";
-import { VisaoParecer } from "@/components/demonstrativos/VisaoParecer";
+import { REGIMES } from "@/dominios/clientes/tipos";
+import { ArvoreBalancete } from "@/dominios/demonstrativos/componentes/ArvoreBalancete";
+import { GradeIndices } from "@/dominios/demonstrativos/componentes/GradeIndices";
+import { ListaAlertas } from "@/dominios/demonstrativos/componentes/ListaAlertas";
+import { PainelResumo } from "@/dominios/demonstrativos/componentes/PainelResumo";
+import { VisaoParecer } from "@/dominios/demonstrativos/componentes/VisaoParecer";
 import type { BalanceteReg, LinhaReg, ParecerReg } from "@/dominios/demonstrativos/tipos";
 import { hojeISO, somarDias } from "@/lib/datas";
 import { mesExtenso } from "@/lib/formato/datas";
-import { nomeCliente } from "@/lib/clientes";
+import { nomeCliente } from "@/dominios/clientes/nome";
 
 export default function PaginaBalancete() {
   return <Detalhe />;

@@ -2,7 +2,7 @@
 "use client";
 
 import Link from "next/link";
-import { useOrg } from "@/lib/org";
+import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { NAV } from "./navegacao";
 import type { Modulo } from "./navegacao";
 

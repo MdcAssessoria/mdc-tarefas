@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { useMemo, useRef, useState } from "react";
-import { useOrg } from "@/lib/org";
+import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { supabase } from "@/lib/supabase";
-import { REGIMES } from "@/lib/types";
+import { REGIMES } from "@/dominios/clientes/tipos";
 import { traduzirErro } from "@/lib/erros";
 import {
   CAMPOS,
@@ -15,8 +15,8 @@ import {
   soDigitos,
   type Campo,
   type LinhaImport,
-} from "@/lib/importacao";
-import { carregarSheetJS, corrigirXlsDominio } from "@/lib/planilha";
+} from "@/dominios/clientes/importacao";
+import { carregarSheetJS, corrigirXlsDominio } from "@/lib/arquivos/planilha";
 import { fmtData } from "@/lib/formato/datas";
 
 async function lerArquivo(arq: File): Promise<{ abas: string[]; dados: Record<string, string[][]> }> {

@@ -1,13 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useOrg } from "@/lib/org";
+import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { supabase } from "@/lib/supabase";
 import { traduzirErro } from "@/lib/erros";
-import { VARIAVEIS, montarContrato, valoresIniciais } from "@/lib/crm";
-import type { Modelo, Oportunidade } from "@/lib/crm";
+import { VARIAVEIS, montarContrato, valoresIniciais } from "@/dominios/comercial/crm";
+import type { Modelo, Oportunidade } from "@/dominios/comercial/crm";
 import { mdParaHtml } from "@/lib/markdown";
-import { baixarBytes, gerarContratoPdf } from "@/lib/contratoPdf";
+import { baixarBytes } from "@/lib/arquivos/baixar";
+import { gerarContratoPdf } from "@/dominios/comercial/contratoPdf";
 import { carregarLogo } from "@/lib/marca";
 
 export default function PaginaModelo() {

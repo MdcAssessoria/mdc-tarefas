@@ -1,7 +1,7 @@
 // Selos das ferramentas liberadas para uma pessoa ou perfil, com o nível de cada uma.
 "use client";
 
-import type { PapelApp } from "@/lib/types";
+import type { PapelApp } from "@/dominios/acessos/tipos";
 import { COR_NIVEL, nomeNivel } from "./niveis";
 
 export function Chips({ apps, ferramentas }: { apps: Record<string, PapelApp>; ferramentas: { slug: string; nome: string }[] }) {

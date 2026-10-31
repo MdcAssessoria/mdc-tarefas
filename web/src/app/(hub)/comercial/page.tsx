@@ -3,11 +3,11 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useOrg } from "@/lib/org";
+import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { supabase } from "@/lib/supabase";
 import { traduzirErro } from "@/lib/erros";
-import { ETAPAS, ORIGENS } from "@/lib/crm";
-import type { Etapa, Oportunidade } from "@/lib/crm";
+import { ETAPAS, ORIGENS } from "@/dominios/comercial/crm";
+import type { Etapa, Oportunidade } from "@/dominios/comercial/crm";
 import { hojeISO } from "@/lib/datas";
 import { brl } from "@/lib/formato/moeda";
 import { fmtData } from "@/lib/formato/datas";

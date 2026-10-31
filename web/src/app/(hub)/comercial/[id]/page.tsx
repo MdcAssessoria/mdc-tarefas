@@ -3,14 +3,23 @@
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useOrg } from "@/lib/org";
+import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { hojeISO } from "@/lib/datas";
 import { supabase } from "@/lib/supabase";
 import { traduzirErro } from "@/lib/erros";
-import { REGIMES } from "@/lib/types";
-import { ETAPAS, ORIGENS, SERVICOS_PADRAO, TIPOS_ATIVIDADE, montarContrato, numeroContrato, valoresIniciais } from "@/lib/crm";
-import type { Atividade, Contrato, Etapa, Modelo, Oportunidade, Valores } from "@/lib/crm";
-import { baixarBytes, gerarContratoPdf } from "@/lib/contratoPdf";
+import { REGIMES } from "@/dominios/clientes/tipos";
+import {
+  ETAPAS,
+  ORIGENS,
+  SERVICOS_PADRAO,
+  TIPOS_ATIVIDADE,
+  montarContrato,
+  numeroContrato,
+  valoresIniciais,
+} from "@/dominios/comercial/crm";
+import type { Atividade, Contrato, Etapa, Modelo, Oportunidade, Valores } from "@/dominios/comercial/crm";
+import { baixarBytes } from "@/lib/arquivos/baixar";
+import { gerarContratoPdf } from "@/dominios/comercial/contratoPdf";
 import { carregarLogo } from "@/lib/marca";
 import { mdParaHtml } from "@/lib/markdown";
 import { brl } from "@/lib/formato/moeda";

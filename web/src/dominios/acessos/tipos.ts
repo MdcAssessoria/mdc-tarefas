@@ -1,7 +1,5 @@
-// Tipos de Pessoas e acessos: acesso de uma pessoa a uma ferramenta, perfil de acesso, situação da conta
-// e registro do histórico (auditoria).
-
-import type { PapelApp } from "@/lib/types";
+// Tipos de Pessoas e acessos: nível numa ferramenta (ver, operar, gerir), ferramenta do HUB liberada para a pessoa,
+// acesso de uma pessoa a uma ferramenta, perfil de acesso, situação da conta e registro do histórico (auditoria).
 
 export interface Acesso {
   user_id: string;
@@ -27,3 +25,25 @@ export interface Auditoria {
   depois: unknown;
   em: string;
 }
+
+export type PapelApp = "ver" | "operar" | "gerir";
+
+export interface HubApp {
+  slug: string;
+  nome: string;
+  descricao: string;
+  icone: string;
+  rota: string;
+  status: "ativo" | "beta" | "em_breve" | "desligado";
+  externo: boolean;
+  ordem: number;
+  papel: PapelApp | null;
+}
+
+export const PAPEIS_APP: { id: PapelApp; nome: string; ajuda: string }[] = [
+  { id: "ver", nome: "Ver", ajuda: "consulta, sem alterar" },
+  { id: "operar", nome: "Operar", ajuda: "trabalha no dia a dia" },
+  { id: "gerir", nome: "Gerir", ajuda: "configura, publica e exclui" },
+];
+
+export const PESO_PAPEL_APP: Record<PapelApp, number> = { ver: 1, operar: 2, gerir: 3 };

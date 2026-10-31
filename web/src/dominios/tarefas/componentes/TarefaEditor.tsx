@@ -1,15 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useOrg } from "@/lib/org";
+import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { supabase } from "@/lib/supabase";
-import { PRIORIDADES, STATUS, nomePrioridade, nomeStatus } from "@/lib/types";
-import type { Prioridade, Status, Tarefa } from "@/lib/types";
+import { PRIORIDADES, STATUS, nomePrioridade, nomeStatus } from "@/dominios/tarefas/tipos";
+import type { Prioridade, Status, Tarefa } from "@/dominios/tarefas/tipos";
 import { traduzirErro } from "@/lib/erros";
-import { abrirArquivo, enviarArquivo, fmtTamanho } from "@/lib/arquivos";
-import type { Arquivo } from "@/lib/arquivos";
+import { abrirArquivo, enviarArquivo, fmtTamanho } from "@/lib/arquivos/armazenamento";
+import type { Arquivo } from "@/lib/arquivos/armazenamento";
 import { fmtData, fmtDataHora } from "@/lib/formato/datas";
-import { nomeCliente } from "@/lib/clientes";
+import { nomeCliente } from "@/dominios/clientes/nome";
 
 interface Comentario {
   id: string;

@@ -1,12 +1,14 @@
 "use client";
 
+import { TIPOS_VENC, nomeTipo } from "@/dominios/vencimentos/tipos";
+import type { Vencimento } from "@/dominios/vencimentos/tipos";
 import { useCallback, useMemo, useState } from "react";
-import { useOrg } from "@/lib/org";
+import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { supabase } from "@/lib/supabase";
 import { traduzirErro } from "@/lib/erros";
 import { diasAte } from "@/lib/datas";
 import { fmtData } from "@/lib/formato/datas";
-import { nomeCliente } from "@/lib/clientes";
+import { nomeCliente } from "@/dominios/clientes/nome";
 import { exigir } from "@/lib/exigir";
 import { useConsulta } from "@/lib/useConsulta";
 import { Aviso } from "@/components/ui/Aviso";
@@ -16,41 +18,13 @@ export default function PaginaVencimentos() {
   return <Vencimentos />;
 }
 
-const TIPOS_VENC = [
-  { id: "certificado_a1", nome: "Certificado digital A1" },
-  { id: "certificado_a3", nome: "Certificado digital A3" },
-  { id: "procuracao_ecac", nome: "Procuração e-CAC" },
-  { id: "procuracao_outra", nome: "Procuração (outra)" },
-  { id: "alvara", nome: "Alvará de funcionamento" },
-  { id: "avcb", nome: "AVCB (Bombeiros)" },
-  { id: "cetesb", nome: "Licença CETESB" },
-  { id: "vigilancia", nome: "Licença da Vigilância Sanitária" },
-  { id: "licenca_outra", nome: "Licença (outra)" },
-  { id: "contrato", nome: "Contrato" },
-  { id: "outro", nome: "Outro" },
-];
-const nomeTipo = (t: string) => TIPOS_VENC.find((x) => x.id === t)?.nome ?? t;
-
-interface Item {
-  id: string;
-  cliente_id: string | null;
-  tipo: string;
-  descricao: string | null;
-  vence_em: string;
-  responsavel_id: string | null;
-  status: "ativo" | "renovado" | "encerrado";
-  tarefa_id: string | null;
-  visivel_cliente: boolean;
-  observacao: string | null;
-}
-
 function Vencimentos() {
   const { org, clientes, clientePorId, nomeMembro, membros, pode } = useOrg();
   const [erro, setErro] = useState<string | null>(null);
   const [janela, setJanela] = useState(90);
   const [tipo, setTipo] = useState("");
   const [busca, setBusca] = useState("");
-  const [editando, setEditando] = useState<Item | null | undefined>(undefined);
+  const [editando, setEditando] = useState<Vencimento | null | undefined>(undefined);
   const podeOperar = pode("vencimentos", "operar");
 
   const consulta = useConsulta(
@@ -58,7 +32,7 @@ function Vencimentos() {
       async () =>
         exigir(
           await supabase().from("venc_itens").select("*").eq("org_id", org.id).eq("status", "ativo").order("vence_em").limit(3000),
-        ) as Item[],
+        ) as Vencimento[],
       [org.id],
     ),
   );
@@ -95,7 +69,7 @@ function Vencimentos() {
     }).length,
   };
 
-  async function renovar(i: Item) {
+  async function renovar(i: Vencimento) {
     const nova = prompt(`Nova data de vencimento de ${nomeTipo(i.tipo)} (dd/mm/aaaa):`);
     if (!nova) return;
     const m = nova.match(/(\d{2})\/(\d{2})\/(\d{4})/);
@@ -234,7 +208,7 @@ function Editor({
   aoFechar,
   aoSalvar,
 }: {
-  item: Item | null;
+  item: Vencimento | null;
   clientes: { id: string; razao_social: string; nome_fantasia: string | null; codigo_dominio?: string | null }[];
   membros: { user_id: string; nome: string }[];
   podeExcluir: boolean;

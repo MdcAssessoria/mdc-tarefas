@@ -4,12 +4,13 @@
 
 import { gruposDosClientes } from "@/dominios/clientes/grupos";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useOrg } from "@/lib/org";
+import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { supabase } from "@/lib/supabase";
 import { mesAnteriorISO } from "@/lib/datas";
-import { PRIORIDADES, REGIMES, SEGMENTOS, nomeSegmento } from "@/lib/types";
-import { Etiquetas } from "@/components/Etiquetas";
-import type { Modelo, Prioridade } from "@/lib/types";
+import { PRIORIDADES } from "@/dominios/tarefas/tipos";
+import { REGIMES, SEGMENTOS, nomeSegmento } from "@/dominios/clientes/tipos";
+import { Etiquetas } from "@/components/ui/Etiquetas";
+import type { Modelo, Prioridade } from "@/dominios/tarefas/tipos";
 import { traduzirErro } from "@/lib/erros";
 import { fmtCompetencia } from "@/lib/formato/datas";
 import { useMensagem } from "./useMensagem";

@@ -1,6 +1,6 @@
 // Mapa de navegação do HUB: módulos, abas de cada módulo, qual módulo está ativo em cada rota
 // e o filtro de quais abas cada pessoa pode ver. Usado pelo menu, pela barra superior e pela busca rápida.
-import type { PapelApp } from "@/lib/types";
+import type { PapelApp } from "@/dominios/acessos/tipos";
 
 export type Modulo = "hub" | "tarefas" | "societario" | "demonstrativos" | "atendimento" | "vencimentos" | "comercial";
 

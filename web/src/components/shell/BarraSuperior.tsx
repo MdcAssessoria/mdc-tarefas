@@ -3,8 +3,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useOrg } from "@/lib/org";
-import { Icone } from "@/components/Icone";
+import { useOrg } from "@/dominios/organizacao/OrgProvider";
+import { Icone } from "@/components/ui/Icone";
 import { NAV, filtrarLinks } from "./navegacao";
 import type { Modulo } from "./navegacao";
 import { Sino } from "./Sino";

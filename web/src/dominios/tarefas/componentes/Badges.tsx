@@ -1,6 +1,7 @@
 import { diasAte, rotuloPrazo } from "@/lib/datas";
-import type { Prioridade, Setor, Status } from "@/lib/types";
-import { nomePrioridade } from "@/lib/types";
+import type { Prioridade, Status } from "@/dominios/tarefas/tipos";
+import type { Setor } from "@/dominios/organizacao/tipos";
+import { nomePrioridade } from "@/dominios/tarefas/tipos";
 import { fmtData } from "@/lib/formato/datas";
 
 export function PrazoBadge({ prazo, status, fuso }: { prazo: string | null; status: Status; fuso?: string }) {

@@ -2,8 +2,8 @@
 "use client";
 
 import { useState } from "react";
-import { PAPEIS } from "@/lib/types";
-import type { Membro, Papel } from "@/lib/types";
+import { PAPEIS } from "@/dominios/organizacao/tipos";
+import type { Membro, Papel } from "@/dominios/organizacao/tipos";
 import type { Perfil } from "@/dominios/acessos/tipos";
 
 export function EditarPessoa({

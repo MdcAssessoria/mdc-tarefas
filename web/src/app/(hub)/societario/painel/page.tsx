@@ -1,13 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useOrg } from "@/lib/org";
+import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { supabase } from "@/lib/supabase";
 import { diasAte, hojeISO } from "@/lib/datas";
-import { COLUNAS, diasParado } from "@/lib/societario";
-import type { SocFase, SocProcesso, SocTipo } from "@/lib/societario";
+import { COLUNAS, diasParado } from "@/dominios/societario/processos";
+import type { SocFase, SocProcesso, SocTipo } from "@/dominios/societario/processos";
 import { caminho } from "@/lib/caminho";
-import { nomeCliente } from "@/lib/clientes";
+import { nomeCliente } from "@/dominios/clientes/nome";
 
 export default function PaginaPainelSocietario() {
   return <Painel />;

@@ -1,4 +1,4 @@
-// Testes de caracterização de lib/importacao.ts (planilha de clientes do Domínio → linhas de importação).
+// Testes de caracterização de importacao.ts (planilha de clientes do Domínio → linhas de importação).
 import { describe, expect, it } from "vitest";
 import {
   detectarCabecalho,
