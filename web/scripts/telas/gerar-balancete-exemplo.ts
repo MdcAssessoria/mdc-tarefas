@@ -1,10 +1,14 @@
 // Gera scripts/telas/balancete-exemplo.json (linhas, resumo, índices e demonstrações) a partir da matriz de teste,
-// usando as próprias funções de src/lib. Rode de dentro de web/ quando os cálculos mudarem:
+// usando as próprias funções de src/dominios/demonstrativos. Rode de dentro de web/ quando os cálculos mudarem:
 //   npx esbuild scripts/telas/gerar-balancete-exemplo.ts --bundle --platform=node --format=esm --alias:@=./src \
 //     --outfile=/tmp/gerar.mjs && node /tmp/gerar.mjs > scripts/telas/balancete-exemplo.json
-import { MATRIZ_BALANCETE } from "@/lib/__testes__/balanceteExemplo";
-import { calcularIndices, classificar, conferir, fragilidades, lerBalancete, resumir } from "@/lib/balancete";
-import { basePrazos, montar, periodoDe } from "@/lib/demonstracoes";
+import { MATRIZ_BALANCETE } from "@/dominios/demonstrativos/__testes__/balanceteExemplo";
+import { classificar } from "@/dominios/demonstrativos/balancete/classificacao";
+import { conferir, fragilidades } from "@/dominios/demonstrativos/balancete/fragilidades";
+import { calcularIndices } from "@/dominios/demonstrativos/balancete/indices";
+import { lerBalancete } from "@/dominios/demonstrativos/balancete/leitura";
+import { resumir } from "@/dominios/demonstrativos/balancete/resumo";
+import { basePrazos, montar, periodoDe } from "@/dominios/demonstrativos/calculosDemonstracoes";
 
 const leitura = lerBalancete(MATRIZ_BALANCETE);
 const linhas = classificar(leitura.linhas);

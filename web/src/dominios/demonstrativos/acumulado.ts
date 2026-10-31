@@ -1,6 +1,6 @@
 // Regra do acumulado do ano: soma a DRE e a DFC dos meses quando todos os meses do ano estão gravados.
-import { somarDfc, somarDre } from "@/lib/demonstracoes";
-import type { Dfc } from "@/lib/demonstracoes";
+import { somarDfc, somarDre } from "./calculosDemonstracoes";
+import type { Dfc } from "./calculosDemonstracoes";
 import type { BalanceteReg } from "./tipos";
 
 /** Acumulado do ano: DRE e DFC somando os meses quando todos estão gravados. */

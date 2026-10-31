@@ -1,5 +1,5 @@
 // Lista das fragilidades encontradas no balancete, com nível de risco, evidência e recomendação.
-import type { Alerta } from "@/lib/balancete";
+import type { Alerta } from "@/dominios/demonstrativos/balancete/fragilidades";
 
 /** Lista de fragilidades com evidência, risco e recomendação. */
 export function ListaAlertas({ alertas }: { alertas: Alerta[] }) {

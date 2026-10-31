@@ -1,9 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import type { Dre } from "@/lib/balancete";
-import { cruzar, linhasDre } from "@/lib/demonstracoes";
-import type { Balanco, Dfc, LinhaBp } from "@/lib/demonstracoes";
+import type { Dre } from "@/dominios/demonstrativos/balancete/resumo";
+import { cruzar, linhasDre } from "@/dominios/demonstrativos/calculosDemonstracoes";
+import type { Balanco, Dfc, LinhaBp } from "@/dominios/demonstrativos/calculosDemonstracoes";
 import { SeletorPeriodo, useSeletorPeriodo } from "./SeletorPeriodo";
 import { agregar } from "@/lib/periodos";
 import type { TipoPeriodo } from "@/lib/periodos";

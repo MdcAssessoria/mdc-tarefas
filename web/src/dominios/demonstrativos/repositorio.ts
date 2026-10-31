@@ -1,9 +1,14 @@
-import { supabase } from "./supabase";
-import { calcularIndices, classificar, conferir, fragilidades, normalizarSinal, resumir } from "./balancete";
-import type { Grupo, Linha, Resumo } from "./balancete";
-import { basePrazos, montar, periodoDe } from "./demonstracoes";
-import type { MapaDfc } from "./demonstracoes";
-import { hojeISO } from "./datas";
+import { supabase } from "@/lib/supabase";
+import { calcularIndices } from "@/dominios/demonstrativos/balancete/indices";
+import { classificar } from "@/dominios/demonstrativos/balancete/classificacao";
+import { conferir, fragilidades } from "@/dominios/demonstrativos/balancete/fragilidades";
+import { normalizarSinal } from "@/dominios/demonstrativos/balancete/leitura";
+import { resumir } from "@/dominios/demonstrativos/balancete/resumo";
+import type { Grupo, Linha } from "@/dominios/demonstrativos/balancete/tipos";
+import type { Resumo } from "@/dominios/demonstrativos/balancete/resumo";
+import { basePrazos, montar, periodoDe } from "./calculosDemonstracoes";
+import type { MapaDfc } from "./calculosDemonstracoes";
+import { hojeISO } from "@/lib/datas";
 
 /** Regras de conta → grupo salvas (padrão da organização + específicas do cliente). */
 export async function carregarMapa(org: string, cliente: string) {

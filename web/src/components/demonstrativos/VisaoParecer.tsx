@@ -1,5 +1,5 @@
 // Parecer do contador renderizado com o cabeçalho e o rodapé da MDC (também usado na impressão e no PDF).
-import { mdParaHtml } from "@/lib/balancete";
+import { mdParaHtml } from "@/lib/markdown";
 import { caminho } from "@/lib/caminho";
 import { IDENTIDADE_MDC, LINHA_EMPRESA } from "@/lib/identidade";
 

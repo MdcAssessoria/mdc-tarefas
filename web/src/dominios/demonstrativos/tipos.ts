@@ -1,7 +1,10 @@
 // Tipos dos registros de demonstrativos como vêm do banco (balancete importado, linhas e parecer).
 // Usados pelas telas da equipe e pelo Portal do Cliente.
-import type { Alerta, Conferencia, Indices, Linha, Resumo } from "@/lib/balancete";
-import type { Demonstracoes } from "@/lib/demonstracoes";
+import type { Alerta, Conferencia } from "@/dominios/demonstrativos/balancete/fragilidades";
+import type { Indices } from "@/dominios/demonstrativos/balancete/indices";
+import type { Linha } from "@/dominios/demonstrativos/balancete/tipos";
+import type { Resumo } from "@/dominios/demonstrativos/balancete/resumo";
+import type { Demonstracoes } from "./calculosDemonstracoes";
 
 export interface BalanceteReg {
   id: string;

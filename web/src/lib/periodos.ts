@@ -1,8 +1,9 @@
 // Agregação dos balancetes mensais em trimestre, semestre ou ano (DRE e DFC somadas,
 // balanço do último mês contra a abertura do primeiro, índices refeitos sobre o período).
-import type { Dre, Indices, Resumo } from "./balancete";
-import { cruzar, saude, somarDfc, somarDre } from "./demonstracoes";
-import type { Balanco, Cruzamento, Demonstracoes, Dfc, Saude } from "./demonstracoes";
+import type { Dre, Resumo } from "@/dominios/demonstrativos/balancete/resumo";
+import type { Indices } from "@/dominios/demonstrativos/balancete/indices";
+import { cruzar, saude, somarDfc, somarDre } from "@/dominios/demonstrativos/calculosDemonstracoes";
+import type { Balanco, Cruzamento, Demonstracoes, Dfc, Saude } from "@/dominios/demonstrativos/calculosDemonstracoes";
 
 export type TipoPeriodo = "mensal" | "trimestral" | "semestral" | "anual";
 export const TIPOS_PERIODO: { id: TipoPeriodo; nome: string; meses: number }[] = [

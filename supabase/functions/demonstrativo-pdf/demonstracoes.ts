@@ -1,9 +1,20 @@
-// Tipos e somas das demonstrações usados pela Edge Function (gerado de web/src/lib/demonstracoes.ts).
+// Tipos e somas das demonstrações usados pela Edge Function (gerado de
+// web/src/dominios/demonstrativos/calculosDemonstracoes.ts por scripts/sync-funcoes.sh).
 import type { Dre } from "./balancete.ts";
 
-export interface Periodo { inicio: string; fim: string; dias: number }
+export interface Periodo {
+  inicio: string;
+  fim: string;
+  dias: number;
+}
 
-export interface LinhaBp { classificacao: string; rotulo: string; nivel: number; atual: number; anterior: number }
+export interface LinhaBp {
+  classificacao: string;
+  rotulo: string;
+  nivel: number;
+  atual: number;
+  anterior: number;
+}
 export interface Balanco {
   ativo: LinhaBp[];
   passivo: LinhaBp[];
@@ -11,18 +22,30 @@ export interface Balanco {
   total_passivo: { atual: number; anterior: number };
 }
 
-export interface LinhaFluxo { chave: string; rotulo: string; valor: number }
+export interface LinhaFluxo {
+  chave: string;
+  rotulo: string;
+  valor: number;
+}
 export interface Dfc {
   operacional: LinhaFluxo[];
   investimento: LinhaFluxo[];
   financiamento: LinhaFluxo[];
-  fco: number; fci: number; fcf: number;
-  caixa_inicial: number; caixa_final: number; variacao: number;
+  fco: number;
+  fci: number;
+  fcf: number;
+  caixa_inicial: number;
+  caixa_final: number;
+  variacao: number;
   depreciacao: number;
   fechado: boolean;
 }
 
-export interface Comentario { titulo: string; texto: string; tom: "positivo" | "neutro" | "atencao" }
+export interface Comentario {
+  titulo: string;
+  texto: string;
+  tom: "positivo" | "neutro" | "atencao";
+}
 export interface Cruzamento {
   lucro: number;
   ebitda: number;
@@ -32,8 +55,18 @@ export interface Cruzamento {
   comentarios: Comentario[];
 }
 
-export interface Pilar { id: string; nome: string; status: "bom" | "atencao" | "critico"; nota: number; frase: string }
-export interface Saude { nota: number; faixa: "Saudável" | "Atenção" | "Crítica"; pilares: Pilar[] }
+export interface Pilar {
+  id: string;
+  nome: string;
+  status: "bom" | "atencao" | "critico";
+  nota: number;
+  frase: string;
+}
+export interface Saude {
+  nota: number;
+  faixa: "Saudável" | "Atenção" | "Crítica";
+  pilares: Pilar[];
+}
 
 export interface Demonstracoes {
   periodo: Periodo;
@@ -63,12 +96,28 @@ const ROTULOS: Record<string, [keyof Pick<Dfc, "operacional" | "investimento" | 
 };
 
 export function somarDre(lista: Dre[]): Dre {
-  const campos = ["receita_bruta", "deducoes", "receita_liquida", "custos", "lucro_bruto", "despesas_operacionais", "resultado_operacional",
-    "receitas_financeiras", "despesas_financeiras", "outras", "resultado_antes_ir", "ir_csll", "lucro_liquido"] as const;
+  const campos = [
+    "receita_bruta",
+    "deducoes",
+    "receita_liquida",
+    "custos",
+    "lucro_bruto",
+    "despesas_operacionais",
+    "resultado_operacional",
+    "receitas_financeiras",
+    "despesas_financeiras",
+    "outras",
+    "resultado_antes_ir",
+    "ir_csll",
+    "lucro_liquido",
+  ] as const;
   const out = Object.fromEntries(campos.map((c) => [c, r2(lista.reduce((a, x) => a + (x?.[c] ?? 0), 0))])) as unknown as Dre;
   const contas = new Map<string, number>();
   for (const x of lista) for (const c of x?.despesas_por_conta ?? []) contas.set(c.conta, (contas.get(c.conta) ?? 0) + c.valor);
-  out.despesas_por_conta = [...contas.entries()].map(([conta, valor]) => ({ conta, valor: r2(valor) })).sort((a, b) => b.valor - a.valor).slice(0, 12);
+  out.despesas_por_conta = [...contas.entries()]
+    .map(([conta, valor]) => ({ conta, valor: r2(valor) }))
+    .sort((a, b) => b.valor - a.valor)
+    .slice(0, 12);
   return out;
 }
 
@@ -87,9 +136,16 @@ export function somarDfc(lista: Dfc[]): Dfc | null {
   };
   const s = (k: "fco" | "fci" | "fcf" | "variacao" | "depreciacao") => r2(lista.reduce((a, d) => a + d[k], 0));
   return {
-    operacional: somaSec("operacional"), investimento: somaSec("investimento"), financiamento: somaSec("financiamento"),
-    fco: s("fco"), fci: s("fci"), fcf: s("fcf"), variacao: s("variacao"), depreciacao: s("depreciacao"),
-    caixa_inicial: lista[0].caixa_inicial, caixa_final: lista[lista.length - 1].caixa_final,
+    operacional: somaSec("operacional"),
+    investimento: somaSec("investimento"),
+    financiamento: somaSec("financiamento"),
+    fco: s("fco"),
+    fci: s("fci"),
+    fcf: s("fcf"),
+    variacao: s("variacao"),
+    depreciacao: s("depreciacao"),
+    caixa_inicial: lista[0].caixa_inicial,
+    caixa_final: lista[lista.length - 1].caixa_final,
     fechado: lista.every((d) => d.fechado),
   };
 }

@@ -6,7 +6,7 @@ import { supabase } from "@/lib/supabase";
 import { traduzirErro } from "@/lib/erros";
 import { VARIAVEIS, montarContrato, valoresIniciais } from "@/lib/crm";
 import type { Modelo, Oportunidade } from "@/lib/crm";
-import { mdParaHtml } from "@/lib/balancete";
+import { mdParaHtml } from "@/lib/markdown";
 import { baixarBytes, gerarContratoPdf } from "@/lib/contratoPdf";
 import { carregarLogo } from "@/lib/marca";
 

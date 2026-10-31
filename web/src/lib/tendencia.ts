@@ -1,5 +1,5 @@
 // Tendência linear (mínimos quadrados) dos índices ao longo dos meses.
-import type { Indices } from "./balancete";
+import type { Indices } from "@/dominios/demonstrativos/balancete/indices";
 
 export interface Tendencia {
   n: number; // meses usados

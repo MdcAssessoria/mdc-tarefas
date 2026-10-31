@@ -12,7 +12,7 @@ import { ETAPAS, ORIGENS, SERVICOS_PADRAO, TIPOS_ATIVIDADE, montarContrato, nume
 import type { Atividade, Contrato, Etapa, Modelo, Oportunidade, Valores } from "@/lib/crm";
 import { baixarBytes, gerarContratoPdf } from "@/lib/contratoPdf";
 import { carregarLogo } from "@/lib/marca";
-import { mdParaHtml } from "@/lib/balancete";
+import { mdParaHtml } from "@/lib/markdown";
 import { brl } from "@/lib/formato/moeda";
 
 export default function PaginaOportunidade() {

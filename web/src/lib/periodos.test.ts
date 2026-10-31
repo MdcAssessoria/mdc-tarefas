@@ -1,7 +1,10 @@
 // Testes de caracterização de lib/periodos.ts (janelas trimestre/semestre/ano e agregação dos meses).
 import { describe, expect, it } from "vitest";
-import { MATRIZ_BALANCETE } from "./__testes__/balanceteExemplo";
-import { calcularIndices, classificar, lerBalancete, resumir } from "./balancete";
+import { MATRIZ_BALANCETE } from "@/dominios/demonstrativos/__testes__/balanceteExemplo";
+import { calcularIndices } from "@/dominios/demonstrativos/balancete/indices";
+import { classificar } from "@/dominios/demonstrativos/balancete/classificacao";
+import { lerBalancete } from "@/dominios/demonstrativos/balancete/leitura";
+import { resumir } from "@/dominios/demonstrativos/balancete/resumo";
 import { agregar, janela, serieAgrupada } from "./periodos";
 
 describe("janela", () => {

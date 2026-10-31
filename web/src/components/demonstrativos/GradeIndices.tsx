@@ -5,7 +5,7 @@
 import { CicloCaixa, Faisca } from "./Graficos";
 import { SENTIDO } from "./paletas";
 import { SeletorPeriodo, useSeletorPeriodo } from "./SeletorPeriodo";
-import { INDICES_INFO } from "@/lib/balancete";
+import { INDICES_INFO } from "@/dominios/demonstrativos/balancete/indices";
 import { agregar } from "@/lib/periodos";
 import { MAIOR_MELHOR, tendenciaLinear } from "@/lib/tendencia";
 import type { Tendencia } from "@/lib/tendencia";

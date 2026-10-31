@@ -1,7 +1,12 @@
 // Testes de caracterização de lib/balancete.ts: leitura do Excel do Domínio, classificação, DRE, índices e Markdown.
 import { describe, expect, it } from "vitest";
-import { MATRIZ_BALANCETE, MATRIZ_SEM_DC } from "./__testes__/balanceteExemplo";
-import { calcularIndices, classificar, conferir, fragilidades, lerBalancete, lerValor, mdParaHtml, resumir, sem } from "./balancete";
+import { MATRIZ_BALANCETE, MATRIZ_SEM_DC } from "@/dominios/demonstrativos/__testes__/balanceteExemplo";
+import { calcularIndices } from "./indices";
+import { classificar } from "./classificacao";
+import { conferir, fragilidades } from "./fragilidades";
+import { lerBalancete, lerValor, sem } from "./leitura";
+import { mdParaHtml } from "@/lib/markdown";
+import { resumir } from "./resumo";
 
 describe("lerValor", () => {
   it("lê os formatos do Domínio (D positivo, C negativo)", () => {

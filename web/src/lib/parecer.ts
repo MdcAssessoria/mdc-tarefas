@@ -1,7 +1,9 @@
 // Parecer técnico contábil: linguagem técnica com fundamento legal e normativo,
 // cada seção seguida de um quadro "Em linguagem simples" (linhas iniciadas por "> ").
-import type { Alerta, Indices, Resumo } from "./balancete";
-import type { Demonstracoes } from "./demonstracoes";
+import type { Alerta } from "@/dominios/demonstrativos/balancete/fragilidades";
+import type { Indices } from "@/dominios/demonstrativos/balancete/indices";
+import type { Resumo } from "@/dominios/demonstrativos/balancete/resumo";
+import type { Demonstracoes } from "@/dominios/demonstrativos/calculosDemonstracoes";
 import { brl } from "./formato/moeda";
 import { fmtIndice } from "./formato/numero";
 import { fmtData } from "./formato/datas";

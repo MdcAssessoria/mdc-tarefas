@@ -6,7 +6,7 @@ import { useOrg } from "@/lib/org";
 import { supabase } from "@/lib/supabase";
 import { traduzirErro } from "@/lib/erros";
 import type { BalanceteReg } from "@/dominios/demonstrativos/tipos";
-import { reprocessar } from "@/lib/demonstrativos";
+import { reprocessar } from "@/dominios/demonstrativos/repositorio";
 import { caminho } from "@/lib/caminho";
 import { brl } from "@/lib/formato/moeda";
 import { fmtIndice } from "@/lib/formato/numero";

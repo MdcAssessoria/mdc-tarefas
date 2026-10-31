@@ -3,7 +3,7 @@
 "use client";
 
 import { useState } from "react";
-import { nomeGrupo } from "@/lib/balancete";
+import { nomeGrupo } from "@/dominios/demonstrativos/balancete/classificacao";
 import { fmtNumero } from "@/lib/formato/numero";
 import type { LinhaReg } from "@/dominios/demonstrativos/tipos";
 

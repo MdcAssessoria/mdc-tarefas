@@ -1,10 +1,13 @@
 // Demonstrações a partir do balancete: Balanço Patrimonial, DFC (método indireto),
 // cruzamento DRE × DFC em linguagem simples e termômetro de saúde financeira.
 // Convenção dos saldos: devedor = positivo, credor = negativo.
-import { blocoDe, sem } from "./balancete";
-import type { BasePrazos, Dre, Indices, Linha, Resumo } from "./balancete";
-import { brl } from "./formato/moeda";
-import { fmtIndice } from "./formato/numero";
+import { blocoDe } from "@/dominios/demonstrativos/balancete/classificacao";
+import { sem } from "@/dominios/demonstrativos/balancete/leitura";
+import type { BasePrazos, Indices } from "@/dominios/demonstrativos/balancete/indices";
+import type { Dre, Resumo } from "@/dominios/demonstrativos/balancete/resumo";
+import type { Linha } from "@/dominios/demonstrativos/balancete/tipos";
+import { brl } from "@/lib/formato/moeda";
+import { fmtIndice } from "@/lib/formato/numero";
 
 /** Valores dos textos de análise em reais inteiros, sem centavos. */
 const reais = (v: number | null | undefined) => brl(v, { centavos: false });
