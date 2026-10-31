@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { useOrg } from "@/lib/org";
 import { supabase } from "@/lib/supabase";
@@ -8,6 +8,10 @@ import { traduzirErro } from "@/lib/erros";
 import { diasAte } from "@/lib/datas";
 import { fmtData } from "@/lib/formato/datas";
 import { nomeCliente } from "@/lib/clientes";
+import { exigir } from "@/lib/exigir";
+import { useConsulta } from "@/lib/useConsulta";
+import { Aviso } from "@/components/ui/Aviso";
+import { Modal } from "@/components/ui/Modal";
 
 export default function PaginaVencimentos() {
   return (
@@ -47,7 +51,6 @@ interface Item {
 
 function Vencimentos() {
   const { org, clientes, clientePorId, nomeMembro, membros, pode } = useOrg();
-  const [itens, setItens] = useState<Item[]>([]);
   const [erro, setErro] = useState<string | null>(null);
   const [janela, setJanela] = useState(90);
   const [tipo, setTipo] = useState("");
@@ -55,21 +58,17 @@ function Vencimentos() {
   const [editando, setEditando] = useState<Item | null | undefined>(undefined);
   const podeOperar = pode("vencimentos", "operar");
 
-  const carregar = useCallback(async () => {
-    const { data, error } = await supabase()
-      .from("venc_itens")
-      .select("*")
-      .eq("org_id", org.id)
-      .eq("status", "ativo")
-      .order("vence_em")
-      .limit(3000);
-    if (error) return setErro(traduzirErro(error));
-    setItens(data as Item[]);
-  }, [org.id]);
-
-  useEffect(() => {
-    void carregar();
-  }, [carregar]);
+  const consulta = useConsulta(
+    useCallback(
+      async () =>
+        exigir(
+          await supabase().from("venc_itens").select("*").eq("org_id", org.id).eq("status", "ativo").order("vence_em").limit(3000),
+        ) as Item[],
+      [org.id],
+    ),
+  );
+  const itens = useMemo(() => consulta.dados ?? [], [consulta.dados]);
+  const recarregar = consulta.recarregar;
 
   const lista = useMemo(() => {
     const q = busca.trim().toLowerCase();
@@ -108,7 +107,8 @@ function Vencimentos() {
     if (!m) return setErro("Data inválida. Use dd/mm/aaaa.");
     const { error } = await supabase().rpc("venc_renovar", { p_item: i.id, p_nova_data: `${m[3]}-${m[2]}-${m[1]}`, p_obs: null });
     if (error) return setErro(traduzirErro(error));
-    void carregar();
+    setErro(null);
+    recarregar();
   }
 
   return (
@@ -151,7 +151,7 @@ function Vencimentos() {
           ))}
         </select>
       </div>
-      {erro && <p className="rounded-md bg-red-50 p-3 text-sm text-red-800">{erro}</p>}
+      {(erro ?? consulta.erro) && <Aviso>{erro ?? consulta.erro}</Aviso>}
       <div className="cartao overflow-x-auto">
         <table className="tabela">
           <thead>
@@ -203,7 +203,7 @@ function Vencimentos() {
             {lista.length === 0 && (
               <tr>
                 <td colSpan={6} className="py-8 text-center text-neutral-500">
-                  Nada vencendo nesse período.
+                  {consulta.dados ? "Nada vencendo nesse período." : "Carregando…"}
                 </td>
               </tr>
             )}
@@ -223,7 +223,7 @@ function Vencimentos() {
           aoFechar={() => setEditando(undefined)}
           aoSalvar={() => {
             setEditando(undefined);
-            void carregar();
+            recarregar();
           }}
         />
       )}
@@ -279,9 +279,8 @@ function Editor({
   }
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4" onClick={aoFechar}>
-      <form onSubmit={salvar} onClick={(e) => e.stopPropagation()} className="cartao w-full max-w-md space-y-3 p-5">
-        <h2 className="text-lg font-semibold text-[var(--marca)]">{item ? "Editar vencimento" : "Novo vencimento"}</h2>
+    <Modal titulo={item ? "Editar vencimento" : "Novo vencimento"} aoFechar={aoFechar}>
+      <form onSubmit={salvar} className="space-y-3">
         <label className="campo">
           <span>Tipo</span>
           <select value={f.tipo} onChange={(e) => setF({ ...f, tipo: e.target.value })}>
@@ -362,6 +361,6 @@ function Editor({
           </div>
         </div>
       </form>
-    </div>
+    </Modal>
   );
 }

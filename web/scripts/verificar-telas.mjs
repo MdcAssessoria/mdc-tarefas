@@ -16,6 +16,7 @@
 //     scripts/telas/dados-exemplo.mjs; rota nova com parâmetro sem id de exemplo faz o script falhar.
 //   - Uma sessão falsa é gravada no localStorage antes de a página abrir, e toda requisição ao Supabase
 //     (*.supabase.co) é respondida com os dados de scripts/telas/dados-exemplo.mjs. Nada sai para o banco real.
+//   - Algumas telas têm cliques extras (abrir janela, trocar aba) em INTERACOES, mais abaixo.
 //   - Requisito: pacote `playwright` com o Chromium já instalado na máquina (aqui ele é global). Este script
 //     não roda `playwright install`.
 import { execFileSync, spawn } from "node:child_process";
@@ -203,6 +204,35 @@ function sessaoFalsa() {
   };
 }
 
+// ---------------------------------------------------------------- interações
+
+/** Abre a janela pelo botão, confere que é um diálogo acessível com o foco dentro e fecha com Esc. */
+async function abrirEFecharModal(pagina, botao, titulo) {
+  await pagina.getByRole("button", { name: botao, exact: true }).click();
+  const dialogo = pagina.getByRole("dialog", { name: titulo });
+  await dialogo.waitFor({ timeout: 3000 });
+  const focoDentro = await dialogo.evaluate((d) => d.contains(document.activeElement));
+  if (!focoDentro) throw new Error(`o foco não foi para dentro da janela "${titulo}"`);
+  await pagina.keyboard.press("Escape");
+  await dialogo.waitFor({ state: "detached", timeout: 3000 });
+}
+
+/**
+ * Cliques extras depois que a tela abre, para cobrir o que só aparece com interação (janelas, abas).
+ * A chave é o caminho da rota; a função lança erro quando algo não se comporta como esperado.
+ */
+const INTERACOES = {
+  "/vencimentos": (p) => abrirEFecharModal(p, "Novo vencimento", "Novo vencimento"),
+  "/comercial": (p) => abrirEFecharModal(p, "Limpar funil", "Limpar funil"),
+  "/config": async (p) => {
+    for (const aba of await p.getByRole("tab").all()) {
+      await aba.click();
+      if ((await aba.getAttribute("aria-selected")) !== "true") throw new Error(`a aba "${await aba.innerText()}" não ficou selecionada`);
+      await p.waitForTimeout(300);
+    }
+  },
+};
+
 // ---------------------------------------------------------------- verificação de uma tela
 
 async function verificarTela(navegador, porta, rota, pastaFotos) {
@@ -260,6 +290,14 @@ async function verificarTela(navegador, porta, rota, pastaFotos) {
         path: join(pastaFotos, (rota.caminho === "/" ? "inicio" : rota.chave.replace(/[^\w-]+/g, "_")) + ".png"),
         fullPage: true,
       });
+    const interacao = INTERACOES[rota.caminho];
+    if (interacao) {
+      try {
+        await interacao(pagina);
+      } catch (e) {
+        problemas.push(`interação falhou: ${String(e.message ?? e).split("\n")[0]}`);
+      }
+    }
   } catch (e) {
     problemas.push(`falha ao abrir: ${String(e.message ?? e).split("\n")[0]}`);
   }

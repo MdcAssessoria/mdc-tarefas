@@ -12,6 +12,7 @@ import type { Cliente, Modelo, Prioridade } from "@/lib/types";
 import { traduzirErro } from "@/lib/erros";
 import { enderecoHub } from "@/lib/caminho";
 import { fmtCompetencia, fmtData } from "@/lib/formato/datas";
+import { Abas } from "@/components/ui/Abas";
 
 type Aba = "organizacao" | "equipe" | "setores" | "clientes" | "obrigacoes" | "feriados";
 
@@ -41,23 +42,7 @@ function Config() {
   return (
     <div className="space-y-4">
       <h1 className="text-xl font-semibold text-[var(--marca)]">Configurações</h1>
-      <div className="flex gap-1 overflow-x-auto border-b border-[var(--borda)]">
-        {abas
-          .filter((a) => !a.admin || papel === "admin")
-          .map((a) => (
-            <button
-              key={a.id}
-              onClick={() => setAba(a.id)}
-              className={`whitespace-nowrap border-b-2 px-3 py-2 text-sm ${
-                aba === a.id
-                  ? "border-[var(--destaque-escuro)] font-medium text-[var(--marca)]"
-                  : "border-transparent text-[var(--texto-suave)]"
-              }`}
-            >
-              {a.nome}
-            </button>
-          ))}
-      </div>
+      <Abas rotulo="Seções das configurações" itens={abas.filter((a) => !a.admin || papel === "admin")} valor={aba} aoMudar={setAba} />
       {aba === "organizacao" && <AbaOrganizacao />}
       {aba === "equipe" && <AbaEquipe />}
       {aba === "setores" && <AbaSetores />}

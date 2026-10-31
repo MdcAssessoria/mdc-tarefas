@@ -1,14 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { useOrg } from "@/lib/org";
 import { supabase } from "@/lib/supabase";
 import type { Contrato } from "@/lib/crm";
 import { mesAtualISO } from "@/lib/datas";
 import { brl } from "@/lib/formato/moeda";
-import { fmtData } from "@/lib/formato/datas";
+import { fmtData, fmtDataLocal } from "@/lib/formato/datas";
+import { exigir } from "@/lib/exigir";
+import { useConsulta } from "@/lib/useConsulta";
+import { Aviso } from "@/components/ui/Aviso";
 
 export default function PaginaContratos() {
   return (
@@ -29,16 +32,20 @@ const COR: Record<string, string> = {
 
 function Lista() {
   const { org } = useOrg();
-  const [lista, setLista] = useState<Linha[] | null>(null);
   const [status, setStatus] = useState("");
-  useEffect(() => {
-    supabase()
-      .from("crm_contratos")
-      .select("*, crm_oportunidades(empresa)")
-      .eq("org_id", org.id)
-      .order("criado_em", { ascending: false })
-      .then(({ data }) => setLista((data as Linha[]) ?? []));
-  }, [org.id]);
+  const { dados: lista, erro } = useConsulta(
+    useCallback(
+      async () =>
+        exigir(
+          await supabase()
+            .from("crm_contratos")
+            .select("*, crm_oportunidades(empresa)")
+            .eq("org_id", org.id)
+            .order("criado_em", { ascending: false }),
+        ) as Linha[],
+      [org.id],
+    ),
+  );
   const filtrada = useMemo(() => (lista ?? []).filter((c) => !status || c.status === status), [lista, status]);
   const assinadosMes = (lista ?? []).filter((c) => c.status === "assinado" && c.assinado_em?.slice(0, 7) === mesAtualISO(org.fuso));
 
@@ -54,6 +61,7 @@ function Lista() {
           <option value="cancelado">Cancelados</option>
         </select>
       </div>
+      {erro && <Aviso>{erro}</Aviso>}
       <p className="text-sm text-neutral-600">
         Assinados no mês: {assinadosMes.length} · {brl(assinadosMes.reduce((a, c) => a + (c.valores.honorario_mensal || 0), 0))} em
         honorários mensais novos.
@@ -84,7 +92,7 @@ function Lista() {
                 <td>
                   <span className={`chip ${COR[c.status]}`}>{c.status}</span>
                 </td>
-                <td className="whitespace-nowrap text-sm text-neutral-500">{new Date(c.criado_em).toLocaleDateString("pt-BR")}</td>
+                <td className="whitespace-nowrap text-sm text-neutral-500">{fmtDataLocal(c.criado_em)}</td>
               </tr>
             ))}
             {lista && !filtrada.length && (

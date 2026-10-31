@@ -12,6 +12,7 @@ import type { Etapa, Oportunidade } from "@/lib/crm";
 import { hojeISO } from "@/lib/datas";
 import { brl } from "@/lib/formato/moeda";
 import { fmtData } from "@/lib/formato/datas";
+import { Modal } from "@/components/ui/Modal";
 
 export default function PaginaFunil() {
   return (
@@ -547,87 +548,85 @@ function LimparFunil({
     (o) => (perdidos && o.etapa === "perdido") || (parados && etapas.includes(o.etapa) && diasDesde(o.etapa_desde) >= dias),
   );
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4" onClick={aoFechar}>
-      <div onClick={(e) => e.stopPropagation()} className="cartao w-full max-w-lg space-y-4 p-5">
-        <div>
-          <h2 className="text-lg font-semibold text-[var(--marca)]">Limpar funil</h2>
-          <p className="text-sm text-neutral-600">
-            Arquiva de uma vez o que não vai para frente. Nada é apagado: fica em Arquivados e pode ser restaurado.
-          </p>
-        </div>
-        <label className="flex items-center gap-2 text-sm">
+    <Modal
+      titulo="Limpar funil"
+      descricao="Arquiva de uma vez o que não vai para frente. Nada é apagado: fica em Arquivados e pode ser restaurado."
+      aoFechar={aoFechar}
+      largura="lg"
+      espaco={4}
+    >
+      <label className="flex items-center gap-2 text-sm">
+        <input
+          type="checkbox"
+          className="h-4 w-4 accent-[var(--marca)]"
+          checked={perdidos}
+          onChange={(e) => setPerdidos(e.target.checked)}
+        />
+        Oportunidades marcadas como perdidas
+      </label>
+      <div className="space-y-2">
+        <label className="flex flex-wrap items-center gap-2 text-sm">
           <input
             type="checkbox"
             className="h-4 w-4 accent-[var(--marca)]"
-            checked={perdidos}
-            onChange={(e) => setPerdidos(e.target.checked)}
+            checked={parados}
+            onChange={(e) => setParados(e.target.checked)}
           />
-          Oportunidades marcadas como perdidas
+          Paradas há pelo menos
+          <input
+            type="number"
+            min={1}
+            className="entrada !min-h-8 w-20"
+            value={dias}
+            onChange={(e) => setDias(Math.max(1, Number(e.target.value)))}
+          />
+          dias sem mudar de etapa em:
         </label>
-        <div className="space-y-2">
-          <label className="flex flex-wrap items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              className="h-4 w-4 accent-[var(--marca)]"
-              checked={parados}
-              onChange={(e) => setParados(e.target.checked)}
-            />
-            Paradas há pelo menos
-            <input
-              type="number"
-              min={1}
-              className="entrada !min-h-8 w-20"
-              value={dias}
-              onChange={(e) => setDias(Math.max(1, Number(e.target.value)))}
-            />
-            dias sem mudar de etapa em:
-          </label>
-          <div className="flex flex-wrap gap-3 pl-6 text-sm">
-            {ETAPAS.filter((e) => !["ganho", "perdido"].includes(e.id)).map((e) => (
-              <label key={e.id} className="flex items-center gap-1.5">
-                <input
-                  type="checkbox"
-                  className="accent-[var(--marca)]"
-                  checked={etapas.includes(e.id)}
-                  onChange={(ev) => setEtapas((x) => (ev.target.checked ? [...x, e.id] : x.filter((y) => y !== e.id)))}
-                />
-                {e.nome}
-              </label>
-            ))}
-          </div>
-        </div>
-        <div className="max-h-48 overflow-y-auto rounded-lg border border-[var(--borda)] text-sm">
-          {alvo.length === 0 ? (
-            <p className="p-3 text-neutral-500">Nada se encaixa nesses critérios.</p>
-          ) : (
-            alvo.map((o) => (
-              <div key={o.id} className="flex justify-between border-b border-[var(--borda)] px-3 py-1.5 last:border-0">
-                <span className="truncate">{o.empresa}</span>
-                <span className="shrink-0 text-xs text-neutral-500">
-                  {ETAPAS.find((x) => x.id === o.etapa)?.nome} · {diasDesde(o.etapa_desde)}d
-                </span>
-              </div>
-            ))
-          )}
-        </div>
-        <div className="flex justify-end gap-2">
-          <button className="btn" onClick={aoFechar}>
-            Cancelar
-          </button>
-          <button
-            className="btn-primario"
-            disabled={!alvo.length}
-            onClick={() =>
-              aoConfirmar(
-                alvo.map((o) => o.id),
-                perdidos && !parados ? "Perdido" : "Sem avanço no funil",
-              )
-            }
-          >
-            Arquivar {alvo.length}
-          </button>
+        <div className="flex flex-wrap gap-3 pl-6 text-sm">
+          {ETAPAS.filter((e) => !["ganho", "perdido"].includes(e.id)).map((e) => (
+            <label key={e.id} className="flex items-center gap-1.5">
+              <input
+                type="checkbox"
+                className="accent-[var(--marca)]"
+                checked={etapas.includes(e.id)}
+                onChange={(ev) => setEtapas((x) => (ev.target.checked ? [...x, e.id] : x.filter((y) => y !== e.id)))}
+              />
+              {e.nome}
+            </label>
+          ))}
         </div>
       </div>
-    </div>
+      <div className="max-h-48 overflow-y-auto rounded-lg border border-[var(--borda)] text-sm">
+        {alvo.length === 0 ? (
+          <p className="p-3 text-neutral-500">Nada se encaixa nesses critérios.</p>
+        ) : (
+          alvo.map((o) => (
+            <div key={o.id} className="flex justify-between border-b border-[var(--borda)] px-3 py-1.5 last:border-0">
+              <span className="truncate">{o.empresa}</span>
+              <span className="shrink-0 text-xs text-neutral-500">
+                {ETAPAS.find((x) => x.id === o.etapa)?.nome} · {diasDesde(o.etapa_desde)}d
+              </span>
+            </div>
+          ))
+        )}
+      </div>
+      <div className="flex justify-end gap-2">
+        <button className="btn" onClick={aoFechar}>
+          Cancelar
+        </button>
+        <button
+          className="btn-primario"
+          disabled={!alvo.length}
+          onClick={() =>
+            aoConfirmar(
+              alvo.map((o) => o.id),
+              perdidos && !parados ? "Perdido" : "Sem avanço no funil",
+            )
+          }
+        >
+          Arquivar {alvo.length}
+        </button>
+      </div>
+    </Modal>
   );
 }
