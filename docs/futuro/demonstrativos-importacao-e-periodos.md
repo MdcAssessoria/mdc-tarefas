@@ -31,7 +31,13 @@ flowchart LR
 
 ## 3. Agente do SharePoint (automático, sem computador ligado)
 
-- Pasta `HUB-MDC/Balancetes/Entrada` no SharePoint da MDC (nome a confirmar), com `Processados` e `Com problema`.
+- **A pasta não fica no código:** em Configurações › Integrações (só administrador) há o campo "Pasta de balancetes":
+  endereço do site do SharePoint, biblioteca e caminho (ex.: `HUB-MDC/Balancetes/Entrada`), com botão **"Testar conexão"**
+  (confere se a pasta existe e se o HUB consegue ler e mover arquivos), situação da última leitura e opção de pausar.
+  O que for gravado ali passa a ser a pasta padrão; trocar a pasta não exige programador. O HUB cria sozinho as
+  subpastas `Processados` e `Com problema`.
+- O endereço da pasta fica numa tabela de configurações por organização (`hub_integracoes`, só administrador lê e
+  grava, alteração registrada na auditoria). O código de acesso do aplicativo Microsoft fica no cofre, nunca nessa tela.
 - A cada 15 minutos o HUB (agendador do banco + Função Edge) lê a pasta pela Microsoft Graph, processa e move o arquivo.
 - Requer, uma vez, um aplicativo no Entra ID com permissão **só àquela pasta** (Sites.Selected); o código fica no cofre
   do Supabase. Passo a passo para o TI a ser escrito em `infra/`.
