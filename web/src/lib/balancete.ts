@@ -1,6 +1,13 @@
 // Leitura do balancete exportado pelo Domínio, classificação gerencial, índices,
 // verificações de fragilidade e rascunho do parecer técnico.
 // Convenção interna: devedor = positivo, credor = negativo.
+import { brl } from "./formato/moeda";
+import { fmtIndice } from "./formato/numero";
+import type { FormatoIndice } from "./formato/numero";
+import { fmtCompetencia } from "./formato/datas";
+
+/** Valores dos textos de análise em reais inteiros, sem centavos. */
+const reais = (v: number | null | undefined) => brl(v, { centavos: false });
 
 export type Grupo =
   | "ac_disponivel"
@@ -629,7 +636,7 @@ export function calcularIndices(r: Resumo, diasPeriodo = 30, b?: BasePrazos): In
 export const INDICES_INFO: {
   id: keyof Indices;
   nome: string;
-  formato: "x" | "%" | "R$" | "dias";
+  formato: FormatoIndice;
   leitura: string;
   alerta?: (v: number) => boolean;
 }[] = [
@@ -723,17 +730,6 @@ export const INDICES_INFO: {
   },
 ];
 
-export function fmtIndice(v: number | null | undefined, f: "x" | "%" | "R$" | "dias") {
-  if (v === null || v === undefined || !Number.isFinite(v)) return "—";
-  if (f === "x") return v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  if (f === "%") return (v * 100).toLocaleString("pt-BR", { maximumFractionDigits: 1 }) + "%";
-  if (f === "dias") return `${Math.round(v)} dias`;
-  return brl(v);
-}
-
-export const brl = (v: number | null | undefined) =>
-  v === null || v === undefined ? "—" : v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
-
 // ---------------------------------------------------------------- conferências e fragilidades
 
 export interface Conferencia {
@@ -755,12 +751,12 @@ export function conferir(r: Resumo, linhas: Linha[], competencia: string | null)
   const difBal = Math.abs(linhas.filter((l) => l.analitica).reduce((a, l) => a + l.saldo_atual, 0));
   const semGrupo = linhas.filter((l) => l.analitica && !l.grupo).length;
   return [
-    { nome: "Balancete fechado (débitos = créditos)", ok: dif < 1, detalhe: dif < 1 ? "ok" : `diferença de ${brl(dif)}` },
-    { nome: "Ativo = passivo + PL + resultado do ano", ok: difBal < 1, detalhe: difBal < 1 ? "ok" : `diferença de ${brl(difBal)}` },
+    { nome: "Balancete fechado (débitos = créditos)", ok: dif < 1, detalhe: dif < 1 ? "ok" : `diferença de ${reais(dif)}` },
+    { nome: "Ativo = passivo + PL + resultado do ano", ok: difBal < 1, detalhe: difBal < 1 ? "ok" : `diferença de ${reais(difBal)}` },
     {
       nome: "Competência identificada",
       ok: !!competencia,
-      detalhe: competencia ? competencia.slice(0, 7).split("-").reverse().join("/") : "informe o mês",
+      detalhe: competencia ? fmtCompetencia(competencia) : "informe o mês",
     },
     { nome: "Todas as contas com grupo gerencial", ok: semGrupo === 0, detalhe: semGrupo ? `${semGrupo} conta(s) sem grupo` : "ok" },
   ];
@@ -776,7 +772,7 @@ export function fragilidades(r: Resumo, i: Indices, linhas: Linha[], anterior?: 
       area: "Liquidez e capital de giro",
       nivel: "alto",
       texto: "Liquidez corrente abaixo de 1",
-      evidencia: `AC ${brl(r.ac)} × PC ${brl(r.pc)} (${fmtIndice(i.liquidez_corrente, "x")})`,
+      evidencia: `AC ${reais(r.ac)} × PC ${reais(r.pc)} (${fmtIndice(i.liquidez_corrente, "x")})`,
       recomendacao: "Rever prazos com fornecedores e bancos e avaliar alongar dívidas de curto prazo.",
     });
   if (i.capital_giro < 0)
@@ -784,7 +780,7 @@ export function fragilidades(r: Resumo, i: Indices, linhas: Linha[], anterior?: 
       area: "Liquidez e capital de giro",
       nivel: "alto",
       texto: "Capital de giro negativo",
-      evidencia: brl(i.capital_giro),
+      evidencia: reais(i.capital_giro),
       recomendacao: "Planejar o caixa dos próximos meses e evitar novos compromissos de curto prazo.",
     });
   for (const l of an.filter((x) => x.grupo === "ac_disponivel" && x.saldo_atual < -1))
@@ -792,7 +788,7 @@ export function fragilidades(r: Resumo, i: Indices, linhas: Linha[], anterior?: 
       area: "Caixa",
       nivel: "alto",
       texto: `Saldo credor em ${l.descricao}`,
-      evidencia: `${l.classificacao} · ${brl(l.saldo_atual)}`,
+      evidencia: `${l.classificacao} · ${reais(l.saldo_atual)}`,
       recomendacao: "Conferir a conciliação: caixa ou banco credor indica estouro ou lançamento faltando.",
     });
   for (const l of an.filter(
@@ -807,7 +803,7 @@ export function fragilidades(r: Resumo, i: Indices, linhas: Linha[], anterior?: 
       area: "Caixa",
       nivel: "medio",
       texto: "Caixa alto sem movimento no mês",
-      evidencia: `${l.descricao} · ${brl(l.saldo_atual)}`,
+      evidencia: `${l.descricao} · ${reais(l.saldo_atual)}`,
       recomendacao: "Confirmar a existência do dinheiro; saldo de caixa parado pode ser saldo fictício.",
     });
   if (r.pl + r.resultado_exercicio < 0)
@@ -815,7 +811,7 @@ export function fragilidades(r: Resumo, i: Indices, linhas: Linha[], anterior?: 
       area: "Patrimônio líquido",
       nivel: "alto",
       texto: "Patrimônio líquido negativo (passivo a descoberto)",
-      evidencia: brl(r.pl + r.resultado_exercicio),
+      evidencia: reais(r.pl + r.resultado_exercicio),
       recomendacao: "Avaliar aporte de capital ou conversão de mútuos em capital.",
     });
   if (r.ano.lucro_liquido < 0)
@@ -823,7 +819,7 @@ export function fragilidades(r: Resumo, i: Indices, linhas: Linha[], anterior?: 
       area: "Resultado",
       nivel: "medio",
       texto: "Prejuízo acumulado no ano",
-      evidencia: brl(r.ano.lucro_liquido),
+      evidencia: reais(r.ano.lucro_liquido),
       recomendacao: "Revisar preços, custos e as despesas que mais cresceram.",
     });
   const socios = an.filter(
@@ -835,7 +831,7 @@ export function fragilidades(r: Resumo, i: Indices, linhas: Linha[], anterior?: 
       area: "Contas com sócios",
       nivel: "medio",
       texto: "Valores a receber de sócios elevados",
-      evidencia: `${socios.length} conta(s) · ${brl(totSocios)}`,
+      evidencia: `${socios.length} conta(s) · ${reais(totSocios)}`,
       recomendacao: "Regularizar por distribuição de lucros ou devolução; mútuo com sócio tem efeito tributário (IOF).",
     });
   if (i.pmr !== null && i.pmr > 60)
@@ -859,7 +855,7 @@ export function fragilidades(r: Resumo, i: Indices, linhas: Linha[], anterior?: 
       area: "Obrigações fiscais e trabalhistas",
       nivel: "alto",
       texto: "Tributos e encargos a recolher acumulando",
-      evidencia: `${brl(anterior.pc_obrigacoes)} → ${brl(r.pc_obrigacoes)}`,
+      evidencia: `${reais(anterior.pc_obrigacoes)} → ${reais(r.pc_obrigacoes)}`,
       recomendacao: "Verificar guias não pagas e parcelamentos em atraso antes que virem dívida ativa.",
     });
   const temFolha = an.some((x) => /SALARIO|ORDENADO|PRO.?LABORE/.test(d(x)) && x.grupo === "despesas_operacionais" && x.saldo_atual > 0);
@@ -879,7 +875,7 @@ export function fragilidades(r: Resumo, i: Indices, linhas: Linha[], anterior?: 
       area: "Provisões",
       nivel: "medio",
       texto: "Imobilizado sem depreciação no mês",
-      evidencia: `imobilizado ${brl(r.permanente)}`,
+      evidencia: `imobilizado ${reais(r.permanente)}`,
       recomendacao: "Conferir o cálculo e o lançamento da depreciação.",
     });
   const transit = an.filter((x) => /A CLASSIFICAR|TRANSITORIA|A IDENTIFICAR|PENDENTE/.test(d(x)) && Math.abs(x.saldo_atual) > 100);
@@ -888,7 +884,7 @@ export function fragilidades(r: Resumo, i: Indices, linhas: Linha[], anterior?: 
       area: "Contas transitórias",
       nivel: "medio",
       texto: "Saldo em contas a classificar",
-      evidencia: transit.map((x) => `${x.descricao} ${brl(x.saldo_atual)}`).join("; "),
+      evidencia: transit.map((x) => `${x.descricao} ${reais(x.saldo_atual)}`).join("; "),
       recomendacao: "Identificar e reclassificar os lançamentos pendentes.",
     });
   for (const l of an.filter((x) => x.grupo === "ac_estoques" && x.saldo_atual < -1))
@@ -896,7 +892,7 @@ export function fragilidades(r: Resumo, i: Indices, linhas: Linha[], anterior?: 
       area: "Estoques",
       nivel: "alto",
       texto: `Estoque negativo em ${l.descricao}`,
-      evidencia: brl(l.saldo_atual),
+      evidencia: reais(l.saldo_atual),
       recomendacao: "Conferir notas de entrada e baixas de estoque.",
     });
   if (anterior && anterior.estoques > 0 && r.estoques > anterior.estoques * 1.3 && r.mes.receita_bruta <= anterior.mes.receita_bruta)
@@ -904,7 +900,7 @@ export function fragilidades(r: Resumo, i: Indices, linhas: Linha[], anterior?: 
       area: "Estoques",
       nivel: "medio",
       texto: "Estoque crescendo sem crescer as vendas",
-      evidencia: `${brl(anterior.estoques)} → ${brl(r.estoques)}`,
+      evidencia: `${reais(anterior.estoques)} → ${reais(r.estoques)}`,
       recomendacao: "Avaliar compras e itens parados.",
     });
   if (
@@ -916,7 +912,7 @@ export function fragilidades(r: Resumo, i: Indices, linhas: Linha[], anterior?: 
       area: "Endividamento",
       nivel: "medio",
       texto: "Empréstimos crescendo mais que a receita",
-      evidencia: `${brl(anterior.pc_emprestimos + anterior.pnc_emprestimos)} → ${brl(r.pc_emprestimos + r.pnc_emprestimos)}`,
+      evidencia: `${reais(anterior.pc_emprestimos + anterior.pnc_emprestimos)} → ${reais(r.pc_emprestimos + r.pnc_emprestimos)}`,
       recomendacao: "Rever a necessidade e o custo dos financiamentos.",
     });
   if (i.composicao_endividamento !== null && i.composicao_endividamento > 0.8 && r.pc_emprestimos > 0)

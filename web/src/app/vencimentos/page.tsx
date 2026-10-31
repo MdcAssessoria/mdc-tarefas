@@ -5,7 +5,8 @@ import { AppShell } from "@/components/AppShell";
 import { useOrg } from "@/lib/org";
 import { supabase } from "@/lib/supabase";
 import { traduzirErro } from "@/lib/erros";
-import { diasAte, fmtData } from "@/lib/datas";
+import { diasAte } from "@/lib/datas";
+import { fmtData } from "@/lib/formato/datas";
 
 export default function PaginaVencimentos() {
   return (

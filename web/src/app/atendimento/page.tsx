@@ -7,10 +7,10 @@ import { ChatMensagens } from "@/components/ChatMensagens";
 import { useOrg } from "@/lib/org";
 import { supabase } from "@/lib/supabase";
 import { traduzirErro } from "@/lib/erros";
-import { fmtDataHora } from "@/lib/datas";
 import { ASSUNTOS, STATUS_CONVERSA, nomeAssunto } from "@/lib/chat";
 import type { Conversa } from "@/lib/chat";
 import { caminho } from "@/lib/caminho";
+import { fmtDataHora } from "@/lib/formato/datas";
 
 export default function PaginaAtendimento() {
   return (

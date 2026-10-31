@@ -18,6 +18,7 @@ import {
   type LinhaImport,
 } from "@/lib/importacao";
 import { carregarSheetJS, corrigirXlsDominio } from "@/lib/planilha";
+import { fmtData } from "@/lib/formato/datas";
 
 async function lerArquivo(arq: File): Promise<{ abas: string[]; dados: Record<string, string[][]> }> {
   const XLSX = await carregarSheetJS();
@@ -450,7 +451,7 @@ function Importar() {
                         <td className="whitespace-nowrap text-xs">
                           {l.ativo === false ? (
                             <span className="text-red-700">
-                              Inativa{l.inativo_em ? ` desde ${l.inativo_em.split("-").reverse().join("/")}` : ""}
+                              Inativa{l.inativo_em ? ` desde ${fmtData(l.inativo_em)}` : ""}
                               {l.motivo_inativacao ? ` · ${l.motivo_inativacao}` : ""}
                             </span>
                           ) : l.ativo === true ? (

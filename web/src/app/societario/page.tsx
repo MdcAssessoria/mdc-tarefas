@@ -6,10 +6,11 @@ import { AppShell } from "@/components/AppShell";
 import { useOrg } from "@/lib/org";
 import { supabase } from "@/lib/supabase";
 import { traduzirErro } from "@/lib/erros";
-import { diasAte, fmtData } from "@/lib/datas";
+import { diasAte } from "@/lib/datas";
 import { COLUNAS, corStatusFase, diasParado, nomeStatusFase } from "@/lib/societario";
 import type { SocFase, SocProcesso, SocTipo } from "@/lib/societario";
 import { caminho } from "@/lib/caminho";
+import { fmtData } from "@/lib/formato/datas";
 
 export default function PaginaSocietario() {
   return (

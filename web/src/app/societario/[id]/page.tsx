@@ -7,11 +7,13 @@ import { AppShell } from "@/components/AppShell";
 import { useOrg } from "@/lib/org";
 import { supabase } from "@/lib/supabase";
 import { traduzirErro } from "@/lib/erros";
-import { diasAte, fmtData, fmtDataHora, hojeISO } from "@/lib/datas";
+import { diasAte, hojeISO } from "@/lib/datas";
 import { abrirArquivo, enviarArquivo, fmtTamanho } from "@/lib/arquivos";
 import type { Arquivo } from "@/lib/arquivos";
 import { ORGAOS, STATUS_FASE, corStatusFase, diasParado, nomeStatusFase } from "@/lib/societario";
 import type { SocFase, SocProcesso, SocTipo, StatusFase } from "@/lib/societario";
+import { brl } from "@/lib/formato/moeda";
+import { fmtData, fmtDataHora } from "@/lib/formato/datas";
 
 export default function PaginaProcesso() {
   return (
@@ -52,8 +54,6 @@ interface Evento {
   visivel_cliente: boolean;
   em: string;
 }
-
-const brl = (v: number | null) => (v == null ? "—" : v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }));
 
 function Ficha() {
   const { id } = useParams<{ id: string }>();

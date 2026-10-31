@@ -1,5 +1,6 @@
-// Datas do dia a dia do HUB. Regra: "hoje" é sempre o dia no fuso da organização (hojeISO), nunca o dia em UTC,
-// e contas com mês/dia são feitas sobre o texto AAAA-MM-DD, sem objetos Date no fuso do navegador.
+// Cálculos com datas do HUB (a formatação para a tela fica em lib/formato/datas.ts).
+// Regra: "hoje" é sempre o dia no fuso da organização (hojeISO), nunca o dia em UTC, e contas com mês/dia
+// são feitas sobre o texto AAAA-MM-DD, sem objetos Date no fuso do navegador.
 
 /** Data de hoje (YYYY-MM-DD) no fuso da organização. */
 export function hojeISO(fuso = "America/Sao_Paulo"): string {
@@ -39,18 +40,6 @@ export function diasAte(prazo: string | null, fuso?: string): number | null {
   return Math.round((p - h) / 86_400_000);
 }
 
-export function fmtData(d: string | null): string {
-  if (!d) return "—";
-  const [a, m, dia] = d.slice(0, 10).split("-");
-  return `${dia}/${m}/${a}`;
-}
-
-export function fmtCompetencia(d: string | null): string {
-  if (!d) return "";
-  const [a, m] = d.split("-");
-  return `${m}/${a}`;
-}
-
 export function rotuloPrazo(dias: number | null): string {
   if (dias === null) return "Sem prazo";
   if (dias < -1) return `Atrasada ${-dias} dias`;
@@ -58,8 +47,4 @@ export function rotuloPrazo(dias: number | null): string {
   if (dias === 0) return "Vence hoje";
   if (dias === 1) return "Amanhã";
   return `Em ${dias} dias`;
-}
-
-export function fmtDataHora(iso: string): string {
-  return new Date(iso).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
 }

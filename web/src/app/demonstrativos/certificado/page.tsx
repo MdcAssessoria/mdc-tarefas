@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { useOrg } from "@/lib/org";
 import { SUPABASE_KEY, SUPABASE_URL, supabase } from "@/lib/supabase";
+import { fmtDataLocal } from "@/lib/formato/datas";
 
 export default function PaginaCertificado() {
   return (
@@ -24,8 +25,6 @@ interface Cert {
   valido_ate: string | null;
   enviado_em: string;
 }
-
-const dataBr = (s: string | null) => (s ? new Date(s).toLocaleDateString("pt-BR") : "—");
 
 function Certificado() {
   const { org, eu } = useOrg();
@@ -138,11 +137,11 @@ function Certificado() {
             </dd>
             <dt className="text-neutral-500">Validade</dt>
             <dd className={vence !== null && vence < 30 ? "font-medium text-[var(--perigo)]" : ""}>
-              {dataBr(cert.valido_de)} a {dataBr(cert.valido_ate)}
+              {fmtDataLocal(cert.valido_de)} a {fmtDataLocal(cert.valido_ate)}
               {vence !== null && (vence < 0 ? " · vencido" : ` · ${vence} dias restantes`)}
             </dd>
             <dt className="text-neutral-500">Cadastrado em</dt>
-            <dd>{dataBr(cert.enviado_em)}</dd>
+            <dd>{fmtDataLocal(cert.enviado_em)}</dd>
           </dl>
         )}
         {cert && (

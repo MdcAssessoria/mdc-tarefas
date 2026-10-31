@@ -9,10 +9,11 @@ import { CORES_RITMO, RitmoSemanal } from "@/components/RitmoSemanal";
 import type { SemanaRitmo } from "@/components/RitmoSemanal";
 import { useOrg } from "@/lib/org";
 import { supabase } from "@/lib/supabase";
-import { hojeISO, fmtData } from "@/lib/datas";
+import { hojeISO, somarDias } from "@/lib/datas";
 import { caminho } from "@/lib/caminho";
 import { traduzirErro } from "@/lib/erros";
 import type { Prioridade, Status } from "@/lib/types";
+import { fmtData } from "@/lib/formato/datas";
 
 export default function Inicio() {
   return (
@@ -39,10 +40,9 @@ function saudacao(fuso: string) {
   return h < 12 ? "Bom dia" : h < 18 ? "Boa tarde" : "Boa noite";
 }
 
-const somaDias = (iso: string, n: number) => new Date(Date.parse(iso + "T12:00:00Z") + n * 864e5).toISOString().slice(0, 10);
 const segunda = (iso: string) => {
   const d = new Date(iso + "T12:00:00Z").getUTCDay(); // 0 = domingo
-  return somaDias(iso, d === 0 ? -6 : 1 - d);
+  return somarDias(iso, d === 0 ? -6 : 1 - d);
 };
 
 function Hub() {
@@ -59,7 +59,7 @@ function Hub() {
     if (papel === "tv") window.location.replace(caminho("/tv"));
   }, [papel]);
 
-  const inicioJanela = useMemo(() => somaDias(segunda(hoje), -7 * (semanasAtras - 1)), [hoje, semanasAtras]);
+  const inicioJanela = useMemo(() => somarDias(segunda(hoje), -7 * (semanasAtras - 1)), [hoje, semanasAtras]);
 
   const carregar = useCallback(async () => {
     if (!temTarefas) return setAbertas([]);
@@ -99,7 +99,7 @@ function Hub() {
   // números do dia, só da pessoa
   const n = useMemo(() => {
     const l = abertas ?? [];
-    const em7 = somaDias(hoje, 7);
+    const em7 = somarDias(hoje, 7);
     const mes = hoje.slice(0, 7);
     const doMes = feitas.filter((t) => t.concluida_em && diaLocal(t.concluida_em).slice(0, 7) === mes);
     const doMesPrazo = doMes.filter((t) => t.prazo);
@@ -118,8 +118,8 @@ function Hub() {
     const atual = segunda(hoje);
     const lista: SemanaRitmo[] = [];
     for (let k = -(semanasAtras - 1); k <= 4; k++) {
-      const ini = somaDias(atual, 7 * k);
-      const fim = somaDias(ini, 6);
+      const ini = somarDias(atual, 7 * k);
+      const fim = somarDias(ini, 6);
       const feitasSem = feitas.filter((t) => t.concluida_em && diaLocal(t.concluida_em) >= ini && diaLocal(t.concluida_em) <= fim);
       lista.push({
         inicio: ini,
@@ -149,13 +149,13 @@ function Hub() {
   // lista abaixo do gráfico: a semana clicada ou a fila (atrasadas + próximos 7 dias)
   const lista = useMemo(() => {
     if (semanaSel) {
-      const fim = somaDias(semanaSel, 6);
+      const fim = somarDias(semanaSel, 6);
       const sem = semanas.find((s) => s.inicio === semanaSel);
       const concl = feitas.filter((t) => t.concluida_em && diaLocal(t.concluida_em) >= semanaSel && diaLocal(t.concluida_em) <= fim);
       const prev = (abertas ?? []).filter((t) => t.prazo && t.prazo >= semanaSel && t.prazo <= fim);
       return sem?.futura ? prev : [...prev, ...concl];
     }
-    const em7 = somaDias(hoje, 7);
+    const em7 = somarDias(hoje, 7);
     return (abertas ?? []).filter((t) => t.prazo && t.prazo <= em7).slice(0, 12);
   }, [semanaSel, semanas, feitas, abertas, hoje, diaLocal]);
 

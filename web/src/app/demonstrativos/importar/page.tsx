@@ -5,10 +5,12 @@ import { AppShell } from "@/components/AppShell";
 import { useOrg } from "@/lib/org";
 import { traduzirErro } from "@/lib/erros";
 import { lerPlanilha } from "@/lib/planilha";
-import { GRUPOS, brl, classificar, lerBalancete, nomeGrupo } from "@/lib/balancete";
+import { GRUPOS, classificar, lerBalancete, nomeGrupo } from "@/lib/balancete";
 import type { Grupo, Leitura } from "@/lib/balancete";
 import { analisar, carregarMapa, salvarBalancete } from "@/lib/demonstrativos";
 import { caminho } from "@/lib/caminho";
+import { brl } from "@/lib/formato/moeda";
+import { fmtData } from "@/lib/formato/datas";
 
 export default function PaginaImportarBalancete() {
   return (
@@ -47,7 +49,7 @@ function Importar() {
       if (l.cabecalho.fim) setCompetencia(l.cabecalho.fim.slice(0, 7));
       if (l.cabecalho.inicio && l.cabecalho.fim && l.cabecalho.inicio.slice(0, 7) !== l.cabecalho.fim.slice(0, 7))
         l.avisos.push(
-          `O período do arquivo vai de ${l.cabecalho.inicio.split("-").reverse().join("/")} a ${l.cabecalho.fim.split("-").reverse().join("/")}. Débitos e créditos cobrem o período inteiro; a DRE "do mês" vai refletir esse período. Para o painel mensal, exporte o balancete de um mês só.`,
+          `O período do arquivo vai de ${fmtData(l.cabecalho.inicio)} a ${fmtData(l.cabecalho.fim)}. Débitos e créditos cobrem o período inteiro; a DRE "do mês" vai refletir esse período. Para o painel mensal, exporte o balancete de um mês só.`,
         );
       const mapa = c ? await carregarMapa(org.id, c.id) : [];
       classificar(l.linhas, mapa as { classificacao: string; grupo: Grupo }[]);
@@ -246,19 +248,19 @@ function Importar() {
                 <h2 className="mb-1 font-semibold">Prévia</h2>
                 <div className="flex justify-between">
                   <span>Ativo total</span>
-                  <b>{brl(analise.resumo.ativo_total)}</b>
+                  <b>{brl(analise.resumo.ativo_total, { centavos: false })}</b>
                 </div>
                 <div className="flex justify-between">
                   <span>Receita bruta do mês</span>
-                  <b>{brl(analise.resumo.mes.receita_bruta)}</b>
+                  <b>{brl(analise.resumo.mes.receita_bruta, { centavos: false })}</b>
                 </div>
                 <div className="flex justify-between">
                   <span>Resultado do mês</span>
-                  <b>{brl(analise.resumo.mes.lucro_liquido)}</b>
+                  <b>{brl(analise.resumo.mes.lucro_liquido, { centavos: false })}</b>
                 </div>
                 <div className="flex justify-between">
                   <span>Resultado no ano</span>
-                  <b>{brl(analise.resumo.ano.lucro_liquido)}</b>
+                  <b>{brl(analise.resumo.ano.lucro_liquido, { centavos: false })}</b>
                 </div>
                 <div className="flex justify-between">
                   <span>Fragilidades</span>

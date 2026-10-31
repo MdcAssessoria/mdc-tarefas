@@ -1,18 +1,6 @@
 // Testes de caracterização de lib/datas.ts: registram o comportamento atual antes da refatoração.
 import { afterEach, describe, expect, it, vi } from "vitest";
-import {
-  diasAte,
-  fmtCompetencia,
-  fmtData,
-  fmtDataHora,
-  hojeISO,
-  mesAnteriorISO,
-  mesAtualISO,
-  primeiroDiaDoProximoMes,
-  rotuloPrazo,
-  somarDias,
-  somarMeses,
-} from "./datas";
+import { diasAte, hojeISO, mesAnteriorISO, mesAtualISO, primeiroDiaDoProximoMes, rotuloPrazo, somarDias, somarMeses } from "./datas";
 
 afterEach(() => vi.useRealTimers());
 
@@ -37,17 +25,6 @@ describe("diasAte", () => {
   });
 });
 
-describe("fmtData e fmtCompetencia", () => {
-  it("convertem AAAA-MM-DD para o formato brasileiro", () => {
-    expect(fmtData(null)).toBe("—");
-    expect(fmtData("2026-03-05")).toBe("05/03/2026");
-    expect(fmtData("2026-03-05T10:00:00Z")).toBe("05/03/2026");
-    expect(fmtCompetencia(null)).toBe("");
-    expect(fmtCompetencia("2026-09-01")).toBe("09/2026");
-    expect(fmtCompetencia("2026-09")).toBe("09/2026");
-  });
-});
-
 describe("rotuloPrazo", () => {
   it("descreve o prazo em palavras", () => {
     expect(rotuloPrazo(null)).toBe("Sem prazo");
@@ -56,12 +33,6 @@ describe("rotuloPrazo", () => {
     expect(rotuloPrazo(0)).toBe("Vence hoje");
     expect(rotuloPrazo(1)).toBe("Amanhã");
     expect(rotuloPrazo(10)).toBe("Em 10 dias");
-  });
-});
-
-describe("fmtDataHora", () => {
-  it("mostra data e hora curtas em pt-BR (no fuso do navegador)", () => {
-    expect(fmtDataHora("2026-10-30T15:45:00Z")).toMatch(/^\d{2}\/\d{2}\/\d{4},? \d{2}:\d{2}$/);
   });
 });
 

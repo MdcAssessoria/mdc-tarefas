@@ -1,19 +1,7 @@
 // Testes de caracterização de lib/balancete.ts: leitura do Excel do Domínio, classificação, DRE, índices e Markdown.
 import { describe, expect, it } from "vitest";
 import { MATRIZ_BALANCETE, MATRIZ_SEM_DC } from "./__testes__/balanceteExemplo";
-import {
-  brl,
-  calcularIndices,
-  classificar,
-  conferir,
-  fmtIndice,
-  fragilidades,
-  lerBalancete,
-  lerValor,
-  mdParaHtml,
-  resumir,
-  sem,
-} from "./balancete";
+import { calcularIndices, classificar, conferir, fragilidades, lerBalancete, lerValor, mdParaHtml, resumir, sem } from "./balancete";
 
 describe("lerValor", () => {
   it("lê os formatos do Domínio (D positivo, C negativo)", () => {
@@ -296,22 +284,6 @@ describe("resumir e calcularIndices", () => {
       ]
     `);
     expect(fragilidades(r, i, linhas).map((a) => a.texto)).toMatchInlineSnapshot(`[]`);
-  });
-});
-
-describe("formatação", () => {
-  it("brl do balancete não mostra centavos e aceita vazio", () => {
-    expect(brl(1234.56)).toBe("R$ 1.235");
-    expect(brl(null)).toBe("—");
-    expect(brl(undefined)).toBe("—");
-  });
-  it("fmtIndice por formato", () => {
-    expect(fmtIndice(1.234, "x")).toBe("1,23");
-    expect(fmtIndice(0.1234, "%")).toBe("12,3%");
-    expect(fmtIndice(45.6, "dias")).toBe("46 dias");
-    expect(fmtIndice(-1500, "R$")).toBe("-R$ 1.500");
-    expect(fmtIndice(null, "x")).toBe("—");
-    expect(fmtIndice(Infinity, "x")).toBe("—");
   });
 });
 

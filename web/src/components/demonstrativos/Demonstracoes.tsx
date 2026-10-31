@@ -1,20 +1,18 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { brl, fmtIndice } from "@/lib/balancete";
 import type { Dre } from "@/lib/balancete";
 import { cruzar, linhasDre } from "@/lib/demonstracoes";
 import type { Balanco, Dfc, LinhaBp } from "@/lib/demonstracoes";
-import { SeletorPeriodo, mesExtenso, useSeletorPeriodo } from "./Painel";
+import { SeletorPeriodo, useSeletorPeriodo } from "./Painel";
 import { agregar } from "@/lib/periodos";
 import type { TipoPeriodo } from "@/lib/periodos";
 import type { BalanceteReg } from "./Painel";
+import { brl } from "@/lib/formato/moeda";
+import { fmtIndice, fmtNumero } from "@/lib/formato/numero";
+import { fmtData, mesExtenso } from "@/lib/formato/datas";
 
-const dataBr = (s: string) => s.slice(0, 10).split("-").reverse().join("/");
-const fmt = (v: number) =>
-  Math.abs(v) < 0.5
-    ? "—"
-    : (v < 0 ? "(" : "") + Math.abs(v).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + (v < 0 ? ")" : "");
+const fmt = (v: number) => (Math.abs(v) < 0.5 ? "—" : (v < 0 ? "(" : "") + fmtNumero(Math.abs(v)) + (v < 0 ? ")" : ""));
 
 type Sub = "bp" | "dre" | "dfc" | "cruzamento";
 
@@ -62,7 +60,7 @@ export function AbaDemonstracoes({ atual, historico }: { atual: BalanceteReg; hi
       </div>
       <p className="text-xs text-neutral-500">
         {t === "mensal"
-          ? `Elaboradas a partir do balancete de ${dataBr(demo.periodo.inicio)} a ${dataBr(demo.periodo.fim)}`
+          ? `Elaboradas a partir do balancete de ${fmtData(demo.periodo.inicio)} a ${fmtData(demo.periodo.fim)}`
           : `${ag.rotulo}: soma de ${ag.meses.length} balancete(s) mensal(is)${ag.completo ? "" : " — faltam meses do período no Hub"}`}{" "}
         (Lei nº 6.404/1976, arts. 176 a 188; NBC TG 26 e NBC TG 03). Valores em R$; entre parênteses, negativos.
       </p>
@@ -101,8 +99,8 @@ function BlocoBalanco({
         <thead>
           <tr>
             <th>{titulo}</th>
-            <th className="text-right">{dataBr(fim)}</th>
-            <th className="text-right">{dataBr(inicio)}*</th>
+            <th className="text-right">{fmtData(fim)}</th>
+            <th className="text-right">{fmtData(inicio)}*</th>
             <th className="text-right">Variação</th>
           </tr>
         </thead>
@@ -138,7 +136,7 @@ function TabelaBalanco({ b, inicio, fim }: { b: Balanco; inicio: string; fim: st
       <p className={`text-xs ${fecha ? "text-emerald-700" : "text-[var(--perigo)]"}`}>
         {fecha
           ? "✔ Ativo igual a passivo + patrimônio líquido."
-          : `✖ Diferença de ${brl(b.total_ativo.atual - b.total_passivo.atual)} entre ativo e passivo + PL.`}{" "}
+          : `✖ Diferença de ${brl(b.total_ativo.atual - b.total_passivo.atual, { centavos: false })} entre ativo e passivo + PL.`}{" "}
         * Saldo de abertura do período.
       </p>
     </div>
@@ -309,9 +307,24 @@ function Cruzamento({ d, f, titulo }: { d: Dre; f: Dfc; titulo: string }) {
           <h3 className="font-semibold text-[var(--marca)]">{b.titulo}</h3>
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
             {[
-              { r: "Lucro líquido (DRE)", v: brl(b.c.lucro), neg: b.c.lucro < 0, s: "o que a empresa ganhou ou perdeu" },
-              { r: "EBITDA", v: brl(b.c.ebitda), neg: b.c.ebitda < 0, s: "geração da atividade, antes de juros, IR e depreciação" },
-              { r: "Caixa da operação (DFC)", v: brl(b.c.fco), neg: b.c.fco < 0, s: "o que de fato entrou ou saiu do caixa" },
+              {
+                r: "Lucro líquido (DRE)",
+                v: brl(b.c.lucro, { centavos: false }),
+                neg: b.c.lucro < 0,
+                s: "o que a empresa ganhou ou perdeu",
+              },
+              {
+                r: "EBITDA",
+                v: brl(b.c.ebitda, { centavos: false }),
+                neg: b.c.ebitda < 0,
+                s: "geração da atividade, antes de juros, IR e depreciação",
+              },
+              {
+                r: "Caixa da operação (DFC)",
+                v: brl(b.c.fco, { centavos: false }),
+                neg: b.c.fco < 0,
+                s: "o que de fato entrou ou saiu do caixa",
+              },
               {
                 r: "Lucro que virou caixa",
                 v: b.c.conversao === null ? "—" : fmtIndice(b.c.conversao, "%"),

@@ -4,10 +4,11 @@ import { useEffect, useMemo, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { useOrg } from "@/lib/org";
 import { supabase } from "@/lib/supabase";
-import { brl, fmtIndice } from "@/lib/balancete";
-import { mesAno } from "@/components/demonstrativos/Painel";
 import type { BalanceteReg } from "@/components/demonstrativos/Painel";
 import { caminho } from "@/lib/caminho";
+import { brl } from "@/lib/formato/moeda";
+import { fmtIndice } from "@/lib/formato/numero";
+import { mesAno } from "@/lib/formato/datas";
 
 export default function PaginaRiscos() {
   return (
@@ -88,7 +89,7 @@ function Riscos() {
                     {fmtIndice(b.indices.liquidez_corrente, "x")}
                   </td>
                   <td className={`text-right tabular-nums ${b.resumo.ano.lucro_liquido < 0 ? "text-[var(--perigo)]" : ""}`}>
-                    {brl(b.resumo.ano.lucro_liquido)}
+                    {brl(b.resumo.ano.lucro_liquido, { centavos: false })}
                   </td>
                   <td>
                     <div className="flex flex-wrap gap-1">

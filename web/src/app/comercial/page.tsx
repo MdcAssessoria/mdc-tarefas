@@ -7,9 +7,11 @@ import { AppShell } from "@/components/AppShell";
 import { useOrg } from "@/lib/org";
 import { supabase } from "@/lib/supabase";
 import { traduzirErro } from "@/lib/erros";
-import { ETAPAS, ORIGENS, brl } from "@/lib/crm";
+import { ETAPAS, ORIGENS } from "@/lib/crm";
 import type { Etapa, Oportunidade } from "@/lib/crm";
 import { hojeISO } from "@/lib/datas";
+import { brl } from "@/lib/formato/moeda";
+import { fmtData } from "@/lib/formato/datas";
 
 export default function PaginaFunil() {
   return (
@@ -351,7 +353,7 @@ function Funil() {
                                   : ""
                             }
                           >
-                            {atrasado ? `retorno ${o.proximo_contato!.split("-").reverse().join("/")}` : `${parado}d na etapa`}
+                            {atrasado ? `retorno ${fmtData(o.proximo_contato)}` : `${parado}d na etapa`}
                           </span>
                         </div>
                         {podeOperar && (

@@ -6,11 +6,12 @@ import { MultiSelecao } from "@/components/MultiSelecao";
 import { useOrg } from "@/lib/org";
 import { supabase } from "@/lib/supabase";
 import { traduzirErro } from "@/lib/erros";
-import { fmtData, hojeISO } from "@/lib/datas";
+import { hojeISO } from "@/lib/datas";
 import { carregarLogo } from "@/lib/marca";
 import { baixarBytes } from "@/lib/contratoPdf";
 import { exportarExcel } from "@/lib/excel";
 import { gerarRelatorioPdf } from "@/lib/relatorioPdf";
+import { fmtData } from "@/lib/formato/datas";
 
 export default function PaginaRelatorio() {
   return (

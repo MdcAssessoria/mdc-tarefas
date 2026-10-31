@@ -5,10 +5,10 @@ import { AppShell } from "@/components/AppShell";
 import { useOrg } from "@/lib/org";
 import { supabase } from "@/lib/supabase";
 import { traduzirErro } from "@/lib/erros";
-import { fmtDataHora } from "@/lib/datas";
 import { enviarConvite } from "@/lib/convite";
 import { PAPEIS, PAPEIS_APP } from "@/lib/types";
 import type { Membro, Papel, PapelApp } from "@/lib/types";
+import { fmtDataHora } from "@/lib/formato/datas";
 
 export default function PaginaAcessos() {
   return (

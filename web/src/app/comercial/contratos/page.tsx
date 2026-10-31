@@ -5,9 +5,10 @@ import { useEffect, useMemo, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { useOrg } from "@/lib/org";
 import { supabase } from "@/lib/supabase";
-import { brl } from "@/lib/crm";
 import type { Contrato } from "@/lib/crm";
 import { mesAtualISO } from "@/lib/datas";
+import { brl } from "@/lib/formato/moeda";
+import { fmtData } from "@/lib/formato/datas";
 
 export default function PaginaContratos() {
   return (
@@ -79,7 +80,7 @@ function Lista() {
                   </Link>
                 </td>
                 <td className="text-right tabular-nums">{brl(c.valores.honorario_mensal || 0)}</td>
-                <td>{c.valores.inicio ? c.valores.inicio.split("-").reverse().join("/") : "—"}</td>
+                <td>{fmtData(c.valores.inicio)}</td>
                 <td>
                   <span className={`chip ${COR[c.status]}`}>{c.status}</span>
                 </td>

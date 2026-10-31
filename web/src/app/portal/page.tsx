@@ -4,18 +4,19 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 import { traduzirErro } from "@/lib/erros";
-import { fmtData, fmtDataHora, hojeISO } from "@/lib/datas";
+import { hojeISO, somarMeses } from "@/lib/datas";
 import { abrirArquivo, enviarArquivo, fmtTamanho } from "@/lib/arquivos";
 import type { Arquivo } from "@/lib/arquivos";
 import { ASSUNTOS, STATUS_CONVERSA, nomeAssunto } from "@/lib/chat";
 import type { Conversa } from "@/lib/chat";
 import { ChatMensagens } from "@/components/ChatMensagens";
 import { Icone } from "@/components/Icone";
-import { ArvoreBalancete, GradeIndices, PainelResumo, VisaoParecer, mesAno, mesExtenso } from "@/components/demonstrativos/Painel";
+import { ArvoreBalancete, GradeIndices, PainelResumo, VisaoParecer } from "@/components/demonstrativos/Painel";
 import type { BalanceteReg, LinhaReg, ParecerReg } from "@/components/demonstrativos/Painel";
 import { AbaDemonstracoes } from "@/components/demonstrativos/Demonstracoes";
 import { BotaoPdf } from "@/components/demonstrativos/BotaoPdf";
 import { caminho } from "@/lib/caminho";
+import { fmtData, fmtDataHora, mesAno, mesExtenso } from "@/lib/formato/datas";
 
 interface Empresa {
   cliente_id: string;
@@ -354,10 +355,7 @@ function Rotinas({ emp }: { emp: Empresa }) {
     void carregar();
   }, [carregar]);
 
-  const meses = Array.from({ length: 6 }, (_, i) => {
-    const d = new Date(Date.UTC(Number(hoje.slice(0, 4)), Number(hoje.slice(5, 7)) - 1 - i, 1));
-    return d.toISOString().slice(0, 7);
-  });
+  const meses = Array.from({ length: 6 }, (_, i) => somarMeses(hoje, -i));
 
   async function enviar(r: Rotina, arq: File) {
     try {

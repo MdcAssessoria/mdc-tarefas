@@ -1,10 +1,14 @@
 // Parecer técnico contábil: linguagem técnica com fundamento legal e normativo,
 // cada seção seguida de um quadro "Em linguagem simples" (linhas iniciadas por "> ").
-import { brl, fmtIndice } from "./balancete";
 import type { Alerta, Indices, Resumo } from "./balancete";
 import type { Demonstracoes } from "./demonstracoes";
+import { brl } from "./formato/moeda";
+import { fmtIndice } from "./formato/numero";
+import { fmtData } from "./formato/datas";
 
-const dataBr = (iso: string) => iso.slice(0, 10).split("-").reverse().join("/");
+/** Valores dos textos de análise em reais inteiros, sem centavos. */
+const reais = (v: number | null | undefined) => brl(v, { centavos: false });
+
 const pct = (v: number | null | undefined) => fmtIndice(v ?? null, "%");
 const x2 = (v: number | null | undefined) => fmtIndice(v ?? null, "x");
 
@@ -58,12 +62,12 @@ export function rascunhoParecer(o: {
     year: "numeric",
     timeZone: "UTC",
   });
-  const periodo = demo ? `${dataBr(demo.periodo.inicio)} a ${dataBr(demo.periodo.fim)}` : mes;
+  const periodo = demo ? `${fmtData(demo.periodo.inicio)} a ${fmtData(demo.periodo.fim)}` : mes;
   const anual = !!demo && demo.periodo.dias > 40;
   const f = demo?.dfc;
   const cz = demo?.cruzamento;
   const s = demo?.saude;
-  const lucroTxt = (v: number) => (v >= 0 ? `lucro líquido de ${brl(v)}` : `prejuízo líquido de ${brl(-v)}`);
+  const lucroTxt = (v: number) => (v >= 0 ? `lucro líquido de ${reais(v)}` : `prejuízo líquido de ${reais(-v)}`);
   const varPct = (a: number, b?: number) =>
     b
       ? ` (${a >= b ? "+" : "−"}${Math.abs(((a - b) / Math.abs(b)) * 100)
@@ -100,10 +104,10 @@ export function rascunhoParecer(o: {
 
   L.push("## 2. Síntese");
   L.push(
-    `No período, a receita bruta foi de ${brl(d.receita_bruta)}${anual ? "" : varPct(d.receita_bruta, anterior?.mes.receita_bruta)}, com ${lucroTxt(d.lucro_liquido)}` +
+    `No período, a receita bruta foi de ${reais(d.receita_bruta)}${anual ? "" : varPct(d.receita_bruta, anterior?.mes.receita_bruta)}, com ${lucroTxt(d.lucro_liquido)}` +
       (ml !== null ? ` e margem líquida de ${pct(ml)}` : "") +
-      `. A liquidez corrente é de ${x2(i.liquidez_corrente)}, o capital circulante líquido é de ${brl(i.capital_giro)} e o endividamento geral é de ${pct(i.endividamento_geral)}.` +
-      (f ? ` O caixa ${f.variacao >= 0 ? "aumentou" : "diminuiu"} ${brl(Math.abs(f.variacao))} no período.` : ""),
+      `. A liquidez corrente é de ${x2(i.liquidez_corrente)}, o capital circulante líquido é de ${reais(i.capital_giro)} e o endividamento geral é de ${pct(i.endividamento_geral)}.` +
+      (f ? ` O caixa ${f.variacao >= 0 ? "aumentou" : "diminuiu"} ${reais(Math.abs(f.variacao))} no período.` : ""),
   );
   if (s) {
     L.push("");
@@ -123,17 +127,17 @@ export function rascunhoParecer(o: {
   L.push("## 3. Desempenho do período (DRE)");
   L.push(
     `As receitas e despesas foram reconhecidas pelo regime de competência (Lei nº 6.404/1976, art. 177; NBC TG 00 – Estrutura Conceitual). ` +
-      `Da receita bruta de ${brl(d.receita_bruta)}, ${brl(d.deducoes)} correspondem a tributos e deduções sobre a receita, resultando em receita líquida de ${brl(d.receita_liquida)}. ` +
-      `Os custos somaram ${brl(d.custos)} (margem bruta de ${pct(mb)}) e as despesas operacionais ${brl(d.despesas_operacionais)} (margem operacional de ${pct(mo)}). ` +
-      `O resultado financeiro líquido foi de ${brl(d.receitas_financeiras - d.despesas_financeiras)} e o IRPJ/CSLL do período, de ${brl(d.ir_csll)}.` +
-      (cz ? ` O EBITDA (resultado operacional antes da depreciação e amortização) foi de ${brl(cz.ebitda)}.` : ""),
+      `Da receita bruta de ${reais(d.receita_bruta)}, ${reais(d.deducoes)} correspondem a tributos e deduções sobre a receita, resultando em receita líquida de ${reais(d.receita_liquida)}. ` +
+      `Os custos somaram ${reais(d.custos)} (margem bruta de ${pct(mb)}) e as despesas operacionais ${reais(d.despesas_operacionais)} (margem operacional de ${pct(mo)}). ` +
+      `O resultado financeiro líquido foi de ${reais(d.receitas_financeiras - d.despesas_financeiras)} e o IRPJ/CSLL do período, de ${reais(d.ir_csll)}.` +
+      (cz ? ` O EBITDA (resultado operacional antes da depreciação e amortização) foi de ${reais(cz.ebitda)}.` : ""),
   );
   if (d.despesas_por_conta.length)
     L.push(
       "",
       `Principais custos e despesas: ${d.despesas_por_conta
         .slice(0, 4)
-        .map((x) => `${x.conta} (${brl(x.valor)})`)
+        .map((x) => `${x.conta} (${reais(x.valor)})`)
         .join("; ")}.`,
     );
   L.push("");
@@ -155,9 +159,9 @@ export function rascunhoParecer(o: {
 
   L.push("## 4. Situação patrimonial (Balanço Patrimonial)");
   L.push(
-    `O ativo total é de ${brl(r.ativo_total)}, sendo ${brl(r.ac)} no circulante (disponível de ${brl(r.disponivel)}, clientes de ${brl(r.clientes)} e estoques de ${brl(r.estoques)}). ` +
-      `O passivo circulante soma ${brl(r.pc)} e o não circulante ${brl(r.pnc)}, classificados pelo critério de vencimento em até 12 meses (Lei nº 6.404/1976, art. 180). ` +
-      `O patrimônio líquido, incluído o resultado do exercício em curso, é de ${brl(r.pl + r.resultado_exercicio)}.`,
+    `O ativo total é de ${reais(r.ativo_total)}, sendo ${reais(r.ac)} no circulante (disponível de ${reais(r.disponivel)}, clientes de ${reais(r.clientes)} e estoques de ${reais(r.estoques)}). ` +
+      `O passivo circulante soma ${reais(r.pc)} e o não circulante ${reais(r.pnc)}, classificados pelo critério de vencimento em até 12 meses (Lei nº 6.404/1976, art. 180). ` +
+      `O patrimônio líquido, incluído o resultado do exercício em curso, é de ${reais(r.pl + r.resultado_exercicio)}.`,
   );
   L.push(
     "",
@@ -175,9 +179,9 @@ export function rascunhoParecer(o: {
   if (f && cz) {
     L.push("## 5. Fluxo de caixa e confronto com o resultado (DFC × DRE)");
     L.push(
-      `Pela DFC (método indireto, NBC TG 03), as atividades operacionais ${f.fco >= 0 ? "geraram" : "consumiram"} ${brl(Math.abs(f.fco))}, ` +
-        `as de investimento ${f.fci >= 0 ? "geraram" : "consumiram"} ${brl(Math.abs(f.fci))} e as de financiamento ${f.fcf >= 0 ? "geraram" : "consumiram"} ${brl(Math.abs(f.fcf))}, ` +
-        `levando o caixa e equivalentes de ${brl(f.caixa_inicial)} para ${brl(f.caixa_final)}.` +
+      `Pela DFC (método indireto, NBC TG 03), as atividades operacionais ${f.fco >= 0 ? "geraram" : "consumiram"} ${reais(Math.abs(f.fco))}, ` +
+        `as de investimento ${f.fci >= 0 ? "geraram" : "consumiram"} ${reais(Math.abs(f.fci))} e as de financiamento ${f.fcf >= 0 ? "geraram" : "consumiram"} ${reais(Math.abs(f.fcf))}, ` +
+        `levando o caixa e equivalentes de ${reais(f.caixa_inicial)} para ${reais(f.caixa_final)}.` +
         (cz.conversao !== null ? ` A conversão do lucro em caixa operacional foi de ${pct(cz.conversao)}.` : ""),
     );
     L.push("");

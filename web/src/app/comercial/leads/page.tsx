@@ -6,10 +6,12 @@ import { AppShell } from "@/components/AppShell";
 import { useOrg } from "@/lib/org";
 import { supabase } from "@/lib/supabase";
 import { traduzirErro } from "@/lib/erros";
-import { ETAPAS, ORIGENS, brl } from "@/lib/crm";
+import { ETAPAS, ORIGENS } from "@/lib/crm";
 import type { Oportunidade } from "@/lib/crm";
 import { exportarExcel } from "@/lib/excel";
 import { hojeISO } from "@/lib/datas";
+import { brl } from "@/lib/formato/moeda";
+import { fmtDataLocal } from "@/lib/formato/datas";
 
 export default function PaginaLeads() {
   return (
@@ -22,7 +24,6 @@ export default function PaginaLeads() {
 const REGIME: Record<string, string> = { simples: "Simples", presumido: "Presumido", real: "Real", mei: "MEI" };
 const nomeRegime = (r: unknown) => (typeof r === "string" ? (REGIME[r.toLowerCase()] ?? r) : "—");
 const num = (v: unknown) => (typeof v === "number" ? v : typeof v === "string" && v.trim() !== "" && !isNaN(Number(v)) ? Number(v) : null);
-const dataBr = (iso: string) => new Date(iso).toLocaleDateString("pt-BR");
 
 type Situacao = "ativos" | "arquivados" | "todos";
 
@@ -314,7 +315,7 @@ function Leads() {
                       }
                     />
                   </td>
-                  <td className="whitespace-nowrap text-sm text-neutral-600">{dataBr(o.criado_em)}</td>
+                  <td className="whitespace-nowrap text-sm text-neutral-600">{fmtDataLocal(o.criado_em)}</td>
                   <td>
                     <div className="font-medium">{o.empresa}</div>
                     <div className="text-xs text-neutral-500">

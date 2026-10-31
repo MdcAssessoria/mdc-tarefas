@@ -1,5 +1,6 @@
 // CRM Comercial: tipos, etapas do funil, valores negociados e montagem do contrato a partir do modelo.
 import { hojeISO, primeiroDiaDoProximoMes } from "./datas";
+import { brl } from "./formato/moeda";
 
 export type Etapa = "novo" | "contato" | "reuniao" | "proposta" | "negociacao" | "ganho" | "perdido";
 
@@ -163,7 +164,6 @@ export function valoresIniciais(o: Oportunidade, hoje = hojeISO()): Valores {
   };
 }
 
-export const brl = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 const dataExtenso = (iso: string) =>
   iso ? new Date(iso + "T12:00:00Z").toLocaleDateString("pt-BR", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }) : "";
 

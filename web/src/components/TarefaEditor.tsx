@@ -3,12 +3,12 @@
 import { useEffect, useState } from "react";
 import { useOrg } from "@/lib/org";
 import { supabase } from "@/lib/supabase";
-import { fmtData, fmtDataHora } from "@/lib/datas";
 import { PRIORIDADES, STATUS, nomePrioridade, nomeStatus } from "@/lib/types";
 import type { Prioridade, Status, Tarefa } from "@/lib/types";
 import { traduzirErro } from "@/lib/erros";
 import { abrirArquivo, enviarArquivo, fmtTamanho } from "@/lib/arquivos";
 import type { Arquivo } from "@/lib/arquivos";
+import { fmtData, fmtDataHora } from "@/lib/formato/datas";
 
 interface Comentario {
   id: string;

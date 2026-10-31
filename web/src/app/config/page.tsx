@@ -5,12 +5,13 @@ import Link from "next/link";
 import { AppShell } from "@/components/AppShell";
 import { useOrg } from "@/lib/org";
 import { supabase } from "@/lib/supabase";
-import { fmtData, hojeISO, mesAnteriorISO } from "@/lib/datas";
+import { hojeISO, mesAnteriorISO } from "@/lib/datas";
 import { PAPEIS, PRIORIDADES, REGIMES, SEGMENTOS, nomeSegmento } from "@/lib/types";
 import { Etiquetas } from "@/components/Etiquetas";
 import type { Cliente, Modelo, Prioridade } from "@/lib/types";
 import { traduzirErro } from "@/lib/erros";
 import { enderecoHub } from "@/lib/caminho";
+import { fmtCompetencia, fmtData } from "@/lib/formato/datas";
 
 type Aba = "organizacao" | "equipe" | "setores" | "clientes" | "obrigacoes" | "feriados";
 
@@ -900,11 +901,7 @@ function AbaObrigacoes() {
   async function gerar() {
     const { data, error } = await supabase().rpc("gerar_competencia", { p_org: org.id, p_competencia: comp + "-01" });
     if (error) return mostrar(traduzirErro(error), true);
-    mostrar(
-      data
-        ? `${data} tarefas criadas para ${comp.split("-").reverse().join("/")}.`
-        : "Nenhuma tarefa nova: a competência já estava gerada.",
-    );
+    mostrar(data ? `${data} tarefas criadas para ${fmtCompetencia(comp)}.` : "Nenhuma tarefa nova: a competência já estava gerada.");
   }
 
   const descreverMeses = (m: number[] | null) =>

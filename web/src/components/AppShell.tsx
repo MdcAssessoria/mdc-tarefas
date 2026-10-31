@@ -9,9 +9,9 @@ import { supabase } from "@/lib/supabase";
 import { PAPEIS, PAPEIS_APP } from "@/lib/types";
 import type { PapelApp } from "@/lib/types";
 import { Icone } from "./Icone";
-import { fmtDataHora } from "@/lib/datas";
 import { caminho } from "@/lib/caminho";
 import { traduzirErro } from "@/lib/erros";
+import { fmtDataHora } from "@/lib/formato/datas";
 
 type Modulo = "hub" | "tarefas" | "societario" | "demonstrativos" | "atendimento" | "vencimentos" | "comercial";
 

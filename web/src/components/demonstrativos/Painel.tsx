@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Barras, COR, Cascata, CicloCaixa, ColunasPareadas, Composicao, Evolucao, Faisca, Pilha100, STATUS, Termometro } from "./Graficos";
-import { INDICES_INFO, brl, fmtIndice, mdParaHtml, nomeGrupo } from "@/lib/balancete";
+import { INDICES_INFO, mdParaHtml, nomeGrupo } from "@/lib/balancete";
 import type { Alerta, Conferencia, Indices, Linha, Resumo } from "@/lib/balancete";
 import { somarDfc, somarDre } from "@/lib/demonstracoes";
 import { TIPOS_PERIODO, agregar, serieAgrupada } from "@/lib/periodos";
@@ -11,6 +11,9 @@ import type { Demonstracoes, Dfc } from "@/lib/demonstracoes";
 import { caminho } from "@/lib/caminho";
 import { MAIOR_MELHOR, tendenciaLinear } from "@/lib/tendencia";
 import type { Tendencia } from "@/lib/tendencia";
+import { brl } from "@/lib/formato/moeda";
+import { fmtIndice, fmtNumero } from "@/lib/formato/numero";
+import { fmtData, mesExtenso } from "@/lib/formato/datas";
 
 // paletas validadas (dataviz): composição da receita e do balanço — sempre com rótulo direto
 export const PAL_RECEITA = { impostos: "#6250d6", custos: "#C0892A", despesas: "#D55181", financeiro: "#2a78d6", lucro: "#1B8263" };
@@ -50,14 +53,6 @@ export interface ParecerReg {
   contador_crc: string | null;
   publicado_em: string | null;
 }
-
-export const mesAno = (c: string) => {
-  const [a, m] = c.split("-");
-  return `${["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"][Number(m) - 1]}/${a.slice(2)}`;
-};
-
-export const mesExtenso = (c: string) =>
-  new Date(c.slice(0, 7) + "-15T12:00:00Z").toLocaleDateString("pt-BR", { month: "long", year: "numeric", timeZone: "UTC" });
 
 function Kpi({
   rotulo,
@@ -174,7 +169,7 @@ export function PainelResumo({ atual, historico }: { atual: BalanceteReg; histor
         <h2 className="text-lg font-semibold text-[var(--marca)]">
           Como está a empresa ·{" "}
           {multi && demo
-            ? `${demo.periodo.inicio.split("-").reverse().join("/")} a ${demo.periodo.fim.split("-").reverse().join("/")}`
+            ? `${fmtData(demo.periodo.inicio)} a ${fmtData(demo.periodo.fim)}`
             : t === "mensal"
               ? mesExtenso(atual.competencia)
               : ag.rotulo}
@@ -227,27 +222,27 @@ export function PainelResumo({ atual, historico }: { atual: BalanceteReg; histor
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Kpi
           rotulo={`Receita bruta (${t === "mensal" ? "mês" : TIPOS_PERIODO.find((x) => x.id === t)!.nome.toLowerCase()})`}
-          valor={brl(d.receita_bruta)}
+          valor={brl(d.receita_bruta, { centavos: false })}
           serie={serie((g) => g.dre.receita_bruta)}
           sub={!multi ? variacao(d.receita_bruta, anteriorGrupo?.dre.receita_bruta) : undefined}
         />
         <Kpi
           rotulo={d.lucro_liquido >= 0 ? "Lucro líquido" : "Prejuízo"}
-          valor={brl(d.lucro_liquido)}
+          valor={brl(d.lucro_liquido, { centavos: false })}
           negativo={d.lucro_liquido < 0}
           serie={serie((g) => g.dre.lucro_liquido)}
           sub={d.receita_liquida ? `margem de ${fmtIndice(d.lucro_liquido / d.receita_liquida, "%")}` : undefined}
         />
         <Kpi
           rotulo="Dinheiro em caixa, bancos e aplicações"
-          valor={brl(r.disponivel)}
+          valor={brl(r.disponivel, { centavos: false })}
           negativo={r.disponivel < 0}
           serie={serie((g) => g.disponivel)}
-          sub={f ? `${f.variacao >= 0 ? "▲ entrou" : "▼ saiu"} ${brl(Math.abs(f.variacao))} no período` : undefined}
+          sub={f ? `${f.variacao >= 0 ? "▲ entrou" : "▼ saiu"} ${brl(Math.abs(f.variacao), { centavos: false })} no período` : undefined}
         />
         <Kpi
           rotulo="Caixa gerado pela operação"
-          valor={f ? brl(f.fco) : "—"}
+          valor={f ? brl(f.fco, { centavos: false }) : "—"}
           negativo={!!f && f.fco < 0}
           serie={serie((g) => g.fco)}
           sub={
@@ -282,7 +277,7 @@ export function PainelResumo({ atual, historico }: { atual: BalanceteReg; histor
           />
           {d.lucro_liquido < 0 && (
             <p className="mt-2 text-xs font-medium text-[var(--perigo)]">
-              Os gastos superaram a receita em {brl(-d.lucro_liquido)}: faltaram R${" "}
+              Os gastos superaram a receita em {brl(-d.lucro_liquido, { centavos: false })}: faltaram R${" "}
               {((-d.lucro_liquido / d.receita_bruta) * 100).toFixed(1).replace(".", ",")} para cada R$ 100 vendidos.
             </p>
           )}
@@ -358,8 +353,9 @@ export function PainelResumo({ atual, historico }: { atual: BalanceteReg; histor
           )}
           {mesmoPeriodoAnoAnterior && (
             <p className="mt-2 text-xs text-neutral-500">
-              Mesmo período do ano anterior ({mesmoPeriodoAnoAnterior.rotulo}): receita {brl(mesmoPeriodoAnoAnterior.dre.receita_bruta)},
-              lucro {brl(mesmoPeriodoAnoAnterior.dre.lucro_liquido)}.
+              Mesmo período do ano anterior ({mesmoPeriodoAnoAnterior.rotulo}): receita{" "}
+              {brl(mesmoPeriodoAnoAnterior.dre.receita_bruta, { centavos: false })}, lucro{" "}
+              {brl(mesmoPeriodoAnoAnterior.dre.lucro_liquido, { centavos: false })}.
             </p>
           )}
         </section>
@@ -538,8 +534,8 @@ function fmtVariacao(v: number, f: "x" | "%" | "R$" | "dias") {
   const a = Math.abs(v);
   if (f === "%") return `${s}${(a * 100).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} p.p.`;
   if (f === "dias") return `${s}${a.toLocaleString("pt-BR", { maximumFractionDigits: 1 })} dia${a >= 1.95 ? "s" : ""}`;
-  if (f === "R$") return `${s}${brl(a)}`;
-  return `${s}${a.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  if (f === "R$") return `${s}${brl(a, { centavos: false })}`;
+  return `${s}${fmtNumero(a)}`;
 }
 
 /** Tendência linear do índice: sentido, ritmo mensal, aderência (R²) e projeção de 3 meses. */
@@ -635,7 +631,7 @@ export function ArvoreBalancete({
   });
   const temFilhos = (l: LinhaReg) => !l.analitica;
   const nat = (v: number) => (v === 0 ? "" : v > 0 ? " D" : " C");
-  const fmt = (v: number) => (v === 0 ? "—" : Math.abs(v).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+  const fmt = (v: number) => (v === 0 ? "—" : fmtNumero(Math.abs(v)));
 
   return (
     <div className="space-y-2">

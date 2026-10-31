@@ -2,7 +2,7 @@
 
 // Gráficos em SVG puro (sem bibliotecas), na paleta validada da MDC.
 import { useState } from "react";
-import { brl } from "@/lib/balancete";
+import { brl } from "@/lib/formato/moeda";
 
 export const COR = {
   receita: "#1B8263",
@@ -137,7 +137,7 @@ export function Cascata({ passos }: { passos: CascataPasso[] }) {
         <Dica
           x={`${((ml + hover * bw + bw / 2) / W) * 100}%`}
           y={0}
-          linhas={[barras[hover].rotulo, brl(barras[hover].total ? barras[hover].ate : barras[hover].valor)]}
+          linhas={[barras[hover].rotulo, brl(barras[hover].total ? barras[hover].ate : barras[hover].valor, { centavos: false })]}
         />
       )}
     </div>
@@ -218,7 +218,11 @@ export function Evolucao({ meses, series }: { meses: string[]; series: { nome: s
         })}
       </svg>
       {hover !== null && (
-        <Dica x={`${(x(hover) / W) * 100}%`} y={0} linhas={[meses[hover], ...series.map((s) => `${s.nome}: ${brl(s.valores[hover])}`)]} />
+        <Dica
+          x={`${(x(hover) / W) * 100}%`}
+          y={0}
+          linhas={[meses[hover], ...series.map((s) => `${s.nome}: ${brl(s.valores[hover], { centavos: false })}`)]}
+        />
       )}
     </div>
   );
@@ -234,14 +238,15 @@ export function Barras({ itens, cor = COR.despesa }: { itens: { rotulo: string; 
         <div
           key={i.rotulo}
           className="grid grid-cols-[minmax(0,180px)_1fr_auto] items-center gap-2 text-sm"
-          title={`${i.rotulo}: ${brl(i.valor)}`}
+          title={`${i.rotulo}: ${brl(i.valor, { centavos: false })}`}
         >
           <span className="truncate text-neutral-700">{i.rotulo}</span>
           <div className="h-3.5 rounded bg-[var(--fundo)]">
             <div className="h-3.5 rounded" style={{ width: `${(i.valor / max) * 100}%`, background: cor }} />
           </div>
           <span className="whitespace-nowrap text-right tabular-nums text-neutral-600">
-            {brl(i.valor)} <span className="text-xs text-neutral-400">{total ? `${Math.round((i.valor / total) * 100)}%` : ""}</span>
+            {brl(i.valor, { centavos: false })}{" "}
+            <span className="text-xs text-neutral-400">{total ? `${Math.round((i.valor / total) * 100)}%` : ""}</span>
           </span>
         </div>
       ))}
@@ -350,7 +355,7 @@ export function Pilha100({ partes }: { partes: { rotulo: string; valor: number; 
               style={{ width: `${w}%`, background: p.cor, opacity: hover === null || hover === i ? 1 : 0.6 }}
               onMouseEnter={() => setHover(i)}
               onMouseLeave={() => setHover(null)}
-              title={`${p.rotulo}: R$ ${w.toFixed(1).replace(".", ",")} de cada R$ 100 (${brl(p.valor)})`}
+              title={`${p.rotulo}: R$ ${w.toFixed(1).replace(".", ",")} de cada R$ 100 (${brl(p.valor, { centavos: false })})`}
             >
               {w >= 7 ? `R$ ${Math.round(w)}` : ""}
             </div>
@@ -446,7 +451,7 @@ function ColunaComposicao({
                 key={x.rotulo}
                 className="flex items-center justify-center rounded-sm px-1 text-center text-[11px] font-semibold leading-tight text-white"
                 style={{ height: `${h}%`, background: x.cor }}
-                title={`${x.rotulo}: ${brl(x.valor)} (${h.toFixed(0)}%)`}
+                title={`${x.rotulo}: ${brl(x.valor, { centavos: false })} (${h.toFixed(0)}%)`}
               >
                 {h >= 8 ? `${h.toFixed(0)}%` : ""}
               </div>
@@ -458,7 +463,9 @@ function ColunaComposicao({
           <div key={x.rotulo} className="flex items-center gap-1.5">
             <span className="h-2.5 w-2.5 shrink-0 rounded-sm" style={{ background: x.cor }} />
             <span className="truncate">{x.rotulo}</span>
-            <b className={`ml-auto whitespace-nowrap tabular-nums ${x.valor < 0 ? "text-[var(--perigo)]" : ""}`}>{brl(x.valor)}</b>
+            <b className={`ml-auto whitespace-nowrap tabular-nums ${x.valor < 0 ? "text-[var(--perigo)]" : ""}`}>
+              {brl(x.valor, { centavos: false })}
+            </b>
           </div>
         ))}
       </div>
@@ -560,7 +567,7 @@ export function ColunasPareadas({
         <Dica
           x={`${((ml + hover * gw + gw / 2) / W) * 100}%`}
           y={0}
-          linhas={[meses[hover], ...series.map((s) => `${s.nome}: ${brl(s.valores[hover])}`)]}
+          linhas={[meses[hover], ...series.map((s) => `${s.nome}: ${brl(s.valores[hover], { centavos: false })}`)]}
         />
       )}
     </div>

@@ -16,9 +16,10 @@ import { carregarMapaDfc, definirGrupo, definirLinhaDfc, recalcular } from "@/li
 import { LINHAS_DFC, linhaDfc, linhaDfcAuto } from "@/lib/demonstracoes";
 import type { MapaDfc } from "@/lib/demonstracoes";
 import { REGIMES } from "@/lib/types";
-import { ArvoreBalancete, GradeIndices, ListaAlertas, PainelResumo, VisaoParecer, mesExtenso } from "@/components/demonstrativos/Painel";
+import { ArvoreBalancete, GradeIndices, ListaAlertas, PainelResumo, VisaoParecer } from "@/components/demonstrativos/Painel";
 import type { BalanceteReg, LinhaReg, ParecerReg } from "@/components/demonstrativos/Painel";
 import { hojeISO, somarDias } from "@/lib/datas";
+import { mesExtenso } from "@/lib/formato/datas";
 
 export default function PaginaBalancete() {
   return (

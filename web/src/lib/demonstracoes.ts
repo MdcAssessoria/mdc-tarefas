@@ -1,8 +1,13 @@
 // Demonstrações a partir do balancete: Balanço Patrimonial, DFC (método indireto),
 // cruzamento DRE × DFC em linguagem simples e termômetro de saúde financeira.
 // Convenção dos saldos: devedor = positivo, credor = negativo.
-import { blocoDe, brl, fmtIndice, sem } from "./balancete";
+import { blocoDe, sem } from "./balancete";
 import type { BasePrazos, Dre, Indices, Linha, Resumo } from "./balancete";
+import { brl } from "./formato/moeda";
+import { fmtIndice } from "./formato/numero";
+
+/** Valores dos textos de análise em reais inteiros, sem centavos. */
+const reais = (v: number | null | undefined) => brl(v, { centavos: false });
 
 export interface Periodo {
   inicio: string;
@@ -361,7 +366,7 @@ export function cruzar(d: Dre, f: Dfc): Cruzamento {
   const giro = r2(f.operacional.filter((x) => x.chave !== "lucro" && x.chave !== "depreciacao").reduce((a, x) => a + x.valor, 0));
   const conversao = lucro > 0 ? f.fco / lucro : null;
   const C: Comentario[] = [];
-  const cem = (v: number) => brl(Math.abs(v));
+  const cem = (v: number) => reais(Math.abs(v));
 
   // 1. lucro × caixa da operação
   if (lucro >= 0 && f.fco >= lucro)
@@ -426,7 +431,7 @@ export function cruzar(d: Dre, f: Dfc): Cruzamento {
   if (d.receita_liquida > 0)
     C.push({
       tom: ebitda >= 0 ? "neutro" : "atencao",
-      titulo: `Geração operacional (EBITDA): ${brl(ebitda)}`,
+      titulo: `Geração operacional (EBITDA): ${reais(ebitda)}`,
       texto: `É o resultado da operação antes de juros, impostos sobre o lucro e depreciação — ${fmtIndice(ebitda / d.receita_liquida, "%")} da receita líquida. Mostra quanto o negócio gera só com a atividade principal.`,
     });
 
@@ -450,7 +455,7 @@ export function cruzar(d: Dre, f: Dfc): Cruzamento {
   C.push({
     tom: f.variacao >= 0 ? "positivo" : f.caixa_final >= 0 ? "neutro" : "atencao",
     titulo: f.variacao >= 0 ? `O caixa aumentou ${cem(f.variacao)}` : `O caixa diminuiu ${cem(f.variacao)}`,
-    texto: `Começou o período com ${brl(f.caixa_inicial)} em caixa, bancos e aplicações e terminou com ${brl(f.caixa_final)}.`,
+    texto: `Começou o período com ${reais(f.caixa_inicial)} em caixa, bancos e aplicações e terminou com ${reais(f.caixa_final)}.`,
   });
   return { lucro, ebitda, fco: f.fco, conversao, capital_giro: giro, comentarios: C };
 }
@@ -499,7 +504,7 @@ export function saude(r: Resumo, i: Indices, f: Dfc): Saude {
     "caixa",
     "Gerar caixa",
     f.fco > 0 ? "bom" : f.fco > -Math.abs(r.mes.receita_bruta) * 0.05 ? "atencao" : "critico",
-    f.fco >= 0 ? `A operação colocou ${brl(f.fco)} no caixa no período.` : `A operação consumiu ${brl(-f.fco)} do caixa no período.`,
+    f.fco >= 0 ? `A operação colocou ${reais(f.fco)} no caixa no período.` : `A operação consumiu ${reais(-f.fco)} do caixa no período.`,
   );
   const cf = i.ciclo_financeiro;
   pil(

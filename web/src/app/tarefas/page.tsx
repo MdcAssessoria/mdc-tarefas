@@ -8,11 +8,12 @@ import { MultiSelecao } from "@/components/MultiSelecao";
 import { PrazoBadge, PrioridadeDot, SetorChip } from "@/components/Badges";
 import { useOrg } from "@/lib/org";
 import { useTarefas } from "@/lib/useTarefas";
-import { diasAte, fmtCompetencia } from "@/lib/datas";
+import { diasAte } from "@/lib/datas";
 import { STATUS } from "@/lib/types";
 import type { Status, Tarefa } from "@/lib/types";
 import { traduzirErro } from "@/lib/erros";
 import { caminho } from "@/lib/caminho";
+import { fmtCompetencia } from "@/lib/formato/datas";
 
 export default function PaginaTarefas() {
   return (

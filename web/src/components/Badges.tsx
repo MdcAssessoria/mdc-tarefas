@@ -1,6 +1,7 @@
-import { diasAte, fmtData, rotuloPrazo } from "@/lib/datas";
+import { diasAte, rotuloPrazo } from "@/lib/datas";
 import type { Prioridade, Setor, Status } from "@/lib/types";
 import { nomePrioridade } from "@/lib/types";
+import { fmtData } from "@/lib/formato/datas";
 
 export function PrazoBadge({ prazo, status, fuso }: { prazo: string | null; status: Status; fuso?: string }) {
   const fechada = status === "concluida" || status === "cancelada";
