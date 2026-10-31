@@ -27,6 +27,7 @@ import { createServer } from "node:net";
 import { join, relative, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { EU, IDS_EXEMPLO, RPCS, TABELAS, USUARIO } from "./telas/dados-exemplo.mjs";
+import { importarEmLote } from "./telas/interacoes-importacao.mjs";
 import { trocarPeriodo } from "./telas/interacoes-periodo.mjs";
 
 const WEB = fileURLToPath(new URL("..", import.meta.url));
@@ -225,13 +226,15 @@ async function abrirEFecharModal(pagina, botao, titulo) {
 
 /**
  * Cliques extras depois que a tela abre, para cobrir o que só aparece com interação (janelas, abas).
- * A chave é o caminho da rota; a função lança erro quando algo não se comporta como esperado.
+ * A chave é o caminho da rota; a função recebe (página, foto) e lança erro quando algo não se comporta como esperado.
+ * foto("sufixo") salva uma captura do momento quando a verificação roda com FOTOS.
  */
 const INTERACOES = {
   "/vencimentos": (p) => abrirEFecharModal(p, "Novo vencimento", "Novo vencimento"),
   "/comercial": (p) => abrirEFecharModal(p, "Limpar funil", "Limpar funil"),
   [`/demonstrativos/${IDS_EXEMPLO["demonstrativos/[id]"]}`]: trocarPeriodo,
   "/portal": trocarPeriodo,
+  "/demonstrativos/importar": importarEmLote,
   "/config": async (p) => {
     for (const aba of await p.getByRole("tab").all()) {
       await aba.click();
@@ -308,7 +311,12 @@ async function verificarTela(navegador, porta, rota, pastaFotos) {
     const interacao = INTERACOES[rota.caminho];
     if (interacao) {
       try {
-        await interacao(pagina);
+        // foto("x") salva uma captura intermediária (<tela>-x.png) quando FOTOS está ligado
+        const foto = (sufixo) =>
+          pastaFotos
+            ? pagina.screenshot({ path: join(pastaFotos, `${rota.chave.replace(/[^\w-]+/g, "_")}-${sufixo}.png`), fullPage: true })
+            : Promise.resolve();
+        await interacao(pagina, foto);
       } catch (e) {
         problemas.push(`interação falhou: ${String(e.message ?? e).split("\n")[0]}`);
       }

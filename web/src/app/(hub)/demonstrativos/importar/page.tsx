@@ -13,12 +13,13 @@ import { caminho } from "@/lib/caminho";
 import { brl } from "@/lib/formato/moeda";
 import { fmtData } from "@/lib/formato/datas";
 import { nomeCliente } from "@/dominios/clientes/nome";
+import { identificarEmpresa } from "@/dominios/demonstrativos/importacaoLote";
+import type { ItemLote } from "@/dominios/demonstrativos/importacaoLote";
+import { ImportacaoLote, lerLote } from "./_componentes/ImportacaoLote";
 
 export default function PaginaImportarBalancete() {
   return <Importar />;
 }
-
-const so = (s: string | null | undefined) => (s ?? "").replace(/\D/g, "");
 
 function Importar() {
   const { org, clientes, pode } = useOrg();
@@ -29,6 +30,8 @@ function Importar() {
   const [erro, setErro] = useState<string | null>(null);
   const [processando, setProcessando] = useState(false);
   const [mostrar, setMostrar] = useState<"todas" | "sem">("todas");
+  const [lote, setLote] = useState<{ id: number; itens: ItemLote[] } | null>(null);
+  const [arrastando, setArrastando] = useState(false);
 
   const ativos = clientes.filter((c) => c.ativo || c.inativo_em);
 
@@ -40,9 +43,7 @@ function Importar() {
       const { abas, dados } = await lerPlanilha(arq, true);
       const l = lerBalancete(dados[abas[0]]);
       // empresa: pelo CNPJ do cabeçalho, senão pelo código do Domínio
-      const porCnpj = l.cabecalho.cnpj ? ativos.find((c) => so(c.cnpj) && so(c.cnpj) === so(l.cabecalho.cnpj)) : undefined;
-      const porCodigo = l.cabecalho.codigoEmpresa ? ativos.find((c) => c.codigo_dominio === l.cabecalho.codigoEmpresa) : undefined;
-      const c = porCnpj ?? porCodigo;
+      const c = identificarEmpresa(l.cabecalho, ativos);
       if (c) setCliente(c.id);
       if (l.cabecalho.fim) setCompetencia(l.cabecalho.fim.slice(0, 7));
       if (l.cabecalho.inicio && l.cabecalho.fim && l.cabecalho.inicio.slice(0, 7) !== l.cabecalho.fim.slice(0, 7))
@@ -56,6 +57,23 @@ function Importar() {
     } catch (e) {
       setErro(traduzirErro(e));
     }
+    setProcessando(false);
+  }
+
+  /** Um arquivo: revisão detalhada de sempre. Vários: lista do lote. */
+  async function escolher(lista: FileList | null | undefined) {
+    const arquivos = [...(lista ?? [])].filter((f) => /\.(xlsx?|csv|txt)$/i.test(f.name));
+    if (!arquivos.length) return setErro(lista?.length ? "Escolha arquivos Excel (.xls ou .xlsx) exportados do Domínio." : null);
+    if (arquivos.length === 1) {
+      setLote(null);
+      return abrir(arquivos[0]);
+    }
+    setErro(null);
+    setLeitura(null);
+    setArquivo("");
+    setProcessando(true);
+    const itens = await lerLote(arquivos, ativos);
+    setLote({ id: Date.now(), itens });
     setProcessando(false);
   }
 
@@ -113,26 +131,48 @@ function Importar() {
         <h1 className="text-xl font-semibold text-[var(--marca)]">Importar balancete do Domínio</h1>
         <p className="max-w-3xl text-sm text-neutral-600">
           No Domínio: Relatórios › Contabilidade › Balancete, empresa e mês, e exporte em Excel (.xls ou .xlsx). O Hub reconhece a empresa
-          pelo CNPJ ou código, o mês pelo período e cada conta pelo plano de contas. Nada vai para o cliente antes de você revisar e
-          publicar.
+          pelo CNPJ ou código, o mês pelo período e cada conta pelo plano de contas. Pode mandar vários arquivos de uma vez, de várias
+          empresas e meses. Nada vai para o cliente antes de você revisar e publicar.
         </p>
       </div>
 
-      <label className="cartao flex cursor-pointer flex-col items-center justify-center gap-2 border-dashed p-8 text-center hover:border-[var(--destaque-escuro)]">
-        <span className="font-medium">{arquivo || "Escolher arquivo do balancete"}</span>
-        <span className="text-xs text-neutral-500">.xls, .xlsx ou .csv</span>
-        <input
-          type="file"
-          accept=".xls,.xlsx,.csv,.txt"
-          className="hidden"
-          onChange={(e) => e.target.files?.[0] && abrir(e.target.files[0])}
-        />
-      </label>
+      {!lote && (
+        <label
+          className={`cartao flex cursor-pointer flex-col items-center justify-center gap-2 border-dashed p-8 text-center hover:border-[var(--destaque-escuro)] ${arrastando ? "!border-[var(--destaque-escuro)] bg-[var(--fundo)]" : ""}`}
+          onDragOver={(e) => {
+            e.preventDefault();
+            setArrastando(true);
+          }}
+          onDragLeave={() => setArrastando(false)}
+          onDrop={(e) => {
+            e.preventDefault();
+            setArrastando(false);
+            void escolher(e.dataTransfer.files);
+          }}
+        >
+          <span className="font-medium">{arquivo || "Escolher ou arrastar os arquivos do balancete"}</span>
+          <span className="text-xs text-neutral-500">
+            .xls, .xlsx ou .csv · pode ser um arquivo só ou vários de uma vez, de várias empresas e meses
+          </span>
+          <input
+            type="file"
+            multiple
+            accept=".xls,.xlsx,.csv,.txt"
+            className="hidden"
+            onChange={(e) => {
+              void escolher(e.target.files);
+              e.target.value = "";
+            }}
+          />
+        </label>
+      )}
 
-      {processando && <p className="text-sm text-neutral-500">Lendo…</p>}
+      {lote && <ImportacaoLote key={lote.id} inicial={lote.itens} aoRecomecar={() => setLote(null)} />}
+
+      {processando && <p className="text-sm text-neutral-500">Lendo os arquivos…</p>}
       {erro && <p className="rounded-md bg-red-50 p-3 text-sm text-red-800">{erro}</p>}
 
-      {leitura && analise && (
+      {!lote && leitura && analise && (
         <>
           <section className="cartao grid gap-4 p-4 md:grid-cols-3">
             <div>

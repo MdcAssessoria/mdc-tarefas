@@ -15,7 +15,7 @@ async function esperarTexto(p, texto, msg) {
 
 const botaoVisao = (p, nome) => p.getByRole("group", { name: "Visão" }).getByRole("button", { name: nome, exact: true });
 
-export async function trocarPeriodo(p) {
+export async function trocarPeriodo(p, foto = async () => {}) {
   const ano = p.getByLabel("Ano", { exact: true });
   const qual = p.getByLabel("Qual período");
 
@@ -26,6 +26,7 @@ export async function trocarPeriodo(p) {
   await qual.selectOption("2");
   await esperarTexto(p, "2º trimestre de 2025", "o painel não mostrou o 2º trimestre de 2025");
   await esperarTexto(p, "3 de 3 meses importados", "a completude do trimestre não apareceu");
+  await foto("trimestre");
 
   // semestre e ano
   await botaoVisao(p, "Semestre").click();
@@ -37,6 +38,7 @@ export async function trocarPeriodo(p) {
   await ano.selectOption("2024");
   await esperarTexto(p, "enviado de uma vez", "o ano acumulado não foi reconhecido");
   if (!(await botaoVisao(p, "Mês").isDisabled())) throw new Error("a visão Mês deveria ficar indisponível no ano acumulado");
+  await foto("acumulado");
 
   // 2026 por mês, com comparação ao mesmo mês de 2025
   await ano.selectOption("2026");
