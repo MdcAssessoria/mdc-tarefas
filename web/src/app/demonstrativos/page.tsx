@@ -12,6 +12,7 @@ import { caminho } from "@/lib/caminho";
 import { brl } from "@/lib/formato/moeda";
 import { fmtIndice } from "@/lib/formato/numero";
 import { mesAno } from "@/lib/formato/datas";
+import { nomeCliente } from "@/lib/clientes";
 
 export default function PaginaDemonstrativos() {
   return (
@@ -36,9 +37,7 @@ function Lista() {
     setErro(null);
     for (let i = 0; i < alvo.length; i++) {
       const c = clientePorId(alvo[i].cliente_id);
-      setProgresso(
-        `Reprocessando ${i + 1} de ${alvo.length}: ${c?.nome_fantasia || c?.razao_social || ""} ${alvo[i].competencia.slice(0, 7)}`,
-      );
+      setProgresso(`Reprocessando ${i + 1} de ${alvo.length}: ${nomeCliente(c)} ${alvo[i].competencia.slice(0, 7)}`);
       try {
         await reprocessar(alvo[i].id);
       } catch (e) {
@@ -134,7 +133,7 @@ function Lista() {
                   className="cursor-pointer hover:bg-[var(--fundo)]"
                   onClick={() => (window.location.href = caminho(`/demonstrativos/${b.id}`))}
                 >
-                  <td className="font-medium">{c ? c.nome_fantasia || c.razao_social : "—"}</td>
+                  <td className="font-medium">{nomeCliente(c, "—")}</td>
                   <td>{mesAno(b.competencia)}</td>
                   <td>
                     {b.status === "publicado" ? (

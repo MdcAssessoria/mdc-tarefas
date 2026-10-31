@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { traduzirErro } from "@/lib/erros";
 import { caminho, enderecoHub } from "@/lib/caminho";
+import { LINHA_EMPRESA } from "@/lib/identidade";
 
 // Contas são criadas pelo administrador (convite por e-mail); aqui a pessoa entra,
 // cria a senha pelo link do convite ou redefine a senha esquecida.
@@ -99,9 +100,7 @@ export default function Login() {
         <p className="relative mt-4 hidden max-w-md text-center text-lg font-light leading-relaxed text-white/90 lg:block">
           Tarefas, societário, demonstrativos, atendimento e o Portal do Cliente em um só lugar.
         </p>
-        <p className="relative mt-10 hidden text-xs text-[#C6D3CC]/70 lg:block">
-          MDC Assessoria Ltda · CNPJ 48.140.121/0001-65 · Bragança Paulista/SP
-        </p>
+        <p className="relative mt-10 hidden text-xs text-[#C6D3CC]/70 lg:block">{LINHA_EMPRESA}</p>
         <div className="absolute inset-x-0 bottom-0 h-1 bg-[var(--destaque)]" />
       </div>
 

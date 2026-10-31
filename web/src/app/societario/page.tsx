@@ -11,6 +11,8 @@ import { COLUNAS, corStatusFase, diasParado, nomeStatusFase } from "@/lib/societ
 import type { SocFase, SocProcesso, SocTipo } from "@/lib/societario";
 import { caminho } from "@/lib/caminho";
 import { fmtData } from "@/lib/formato/datas";
+import { nomeCliente } from "@/lib/clientes";
+import { CHAVES, useEstadoLembrado } from "@/lib/armazenamentoLocal";
 
 export default function PaginaSocietario() {
   return (
@@ -28,7 +30,7 @@ function Societario() {
   const [fases, setFases] = useState<SocFase[]>([]);
   const [tipos, setTipos] = useState<SocTipo[]>([]);
   const [erro, setErro] = useState<string | null>(null);
-  const [visao, setVisao] = useState<Visao>("quadro");
+  const [visao, setVisao] = useEstadoLembrado<Visao>(CHAVES.visaoSocietario, "quadro", (v) => v === "quadro" || v === "lista");
   const [situacao, setSituacao] = useState<"aberto" | "concluido" | "todos">("aberto");
   const [tipo, setTipo] = useState("");
   const [resp, setResp] = useState("");
@@ -53,18 +55,14 @@ function Societario() {
 
   useEffect(() => {
     void carregar();
-    try {
-      const v = localStorage.getItem("mdc-societario:visao");
-      if (v === "quadro" || v === "lista") setVisao(v);
-    } catch {}
   }, [carregar]);
 
   const faseAtual = useCallback((p: SocProcesso) => fases.find((f) => f.processo_id === p.id && f.ordem === p.fase_atual), [fases]);
   const nomeTipo = (id: string) => tipos.find((t) => t.id === id)?.nome ?? "";
-  const nomeCliente = useCallback(
+  const nomeClienteDoProcesso = useCallback(
     (p: SocProcesso) => {
       const c = clientePorId(p.cliente_id);
-      return c ? c.nome_fantasia || c.razao_social : (p.futuro_cliente ?? "—");
+      return nomeCliente(c, p.futuro_cliente ?? "—");
     },
     [clientePorId],
   );
@@ -79,12 +77,12 @@ function Societario() {
       const f = faseAtual(p);
       if (parado && (!f || p.status !== "aberto" || diasParado(f.mudou_em) < parado)) return false;
       if (q) {
-        const alvo = `${p.numero} ${nomeCliente(p)} ${p.descricao ?? ""} ${p.cnpj ?? ""}`.toLowerCase();
+        const alvo = `${p.numero} ${nomeClienteDoProcesso(p)} ${p.descricao ?? ""} ${p.cnpj ?? ""}`.toLowerCase();
         if (!alvo.includes(q)) return false;
       }
       return true;
     });
-  }, [processos, situacao, tipo, resp, uf, parado, busca, faseAtual, nomeCliente]);
+  }, [processos, situacao, tipo, resp, uf, parado, busca, faseAtual, nomeClienteDoProcesso]);
 
   async function soltar(processoId: string, codigoDestino: string) {
     setArrastando(null);
@@ -129,9 +127,6 @@ function Societario() {
               className={`rounded-md px-3 py-1 ${visao === v ? "bg-[var(--marca)] text-white" : ""}`}
               onClick={() => {
                 setVisao(v);
-                try {
-                  localStorage.setItem("mdc-societario:visao", v);
-                } catch {}
               }}
             >
               {v === "quadro" ? "Quadro" : "Lista"}
@@ -221,7 +216,7 @@ function Societario() {
                         className="block rounded-lg border border-[var(--borda)] bg-white p-2.5 text-sm shadow-sm hover:border-[var(--destaque-escuro)]"
                       >
                         <div className="flex items-start justify-between gap-2">
-                          <span className="font-medium leading-tight">{nomeCliente(p)}</span>
+                          <span className="font-medium leading-tight">{nomeClienteDoProcesso(p)}</span>
                           <span className="text-xs text-neutral-400">#{p.numero}</span>
                         </div>
                         <div className="mt-0.5 text-xs text-neutral-600">{nomeTipo(p.tipo_id)}</div>
@@ -267,7 +262,7 @@ function Societario() {
                     onClick={() => (window.location.href = caminho(`/societario/${p.id}`))}
                   >
                     <td className="text-neutral-500">#{p.numero}</td>
-                    <td className="font-medium">{nomeCliente(p)}</td>
+                    <td className="font-medium">{nomeClienteDoProcesso(p)}</td>
                     <td>{nomeTipo(p.tipo_id)}</td>
                     <td>
                       {p.status === "aberto" && f ? (
@@ -397,7 +392,7 @@ function NovoProcesso({ tipos, aoFechar, aoCriar }: { tipos: SocTipo[]; aoFechar
                 .map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.codigo_dominio ? `${c.codigo_dominio} · ` : ""}
-                    {c.nome_fantasia || c.razao_social}
+                    {nomeCliente(c)}
                   </option>
                 ))}
             </select>

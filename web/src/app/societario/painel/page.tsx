@@ -8,6 +8,7 @@ import { diasAte, hojeISO } from "@/lib/datas";
 import { COLUNAS, diasParado } from "@/lib/societario";
 import type { SocFase, SocProcesso, SocTipo } from "@/lib/societario";
 import { caminho } from "@/lib/caminho";
+import { nomeCliente } from "@/lib/clientes";
 
 export default function PaginaPainelSocietario() {
   return (
@@ -73,7 +74,7 @@ function Painel() {
   const max = Math.max(1, ...d.porFase.map((f) => f.n));
   const nome = (p: SocProcesso) => {
     const c = clientePorId(p.cliente_id);
-    return c ? c.nome_fantasia || c.razao_social : p.futuro_cliente;
+    return nomeCliente(c, p.futuro_cliente ?? "");
   };
 
   return (

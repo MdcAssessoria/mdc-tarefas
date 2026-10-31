@@ -12,6 +12,9 @@ import { Icone } from "./Icone";
 import { caminho } from "@/lib/caminho";
 import { traduzirErro } from "@/lib/erros";
 import { fmtDataHora } from "@/lib/formato/datas";
+import { nomeCliente } from "@/lib/clientes";
+import { semAcento } from "@/lib/texto";
+import { CHAVES, useEstadoLembrado } from "@/lib/armazenamentoLocal";
 
 type Modulo = "hub" | "tarefas" | "societario" | "demonstrativos" | "atendimento" | "vencimentos" | "comercial";
 
@@ -60,8 +63,6 @@ const NAV: Record<Modulo, { titulo: string; links: { href: string; nome: string;
   },
 };
 
-const CHAVE_RECOLHIDO = "hub-mdc:menu-recolhido";
-
 export function AppShell({ children, modulo = "tarefas" }: { children: React.ReactNode; modulo?: Modulo }) {
   return (
     <OrgProvider>
@@ -99,16 +100,12 @@ function useLinksDoModulo(modulo: Modulo) {
 
 /** Estrutura do Hub: menu lateral (recolhível; gaveta no celular), barra superior com as abas do módulo, busca rápida e sino. */
 function Moldura({ modulo, children }: { modulo: Modulo; children: React.ReactNode }) {
-  const [recolhido, setRecolhido] = useState(false);
+  const [menuRecolhido, setMenuRecolhido] = useEstadoLembrado<"0" | "1">(CHAVES.menuRecolhido, "0", (v) => v === "0" || v === "1");
+  const recolhido = menuRecolhido === "1";
   const [gaveta, setGaveta] = useState(false);
   const [busca, setBusca] = useState(false);
   const rota = usePathname();
 
-  useEffect(() => {
-    try {
-      setRecolhido(localStorage.getItem(CHAVE_RECOLHIDO) === "1");
-    } catch {}
-  }, []);
   useEffect(() => setGaveta(false), [rota]);
   useEffect(() => {
     const f = (e: KeyboardEvent) => {
@@ -121,13 +118,7 @@ function Moldura({ modulo, children }: { modulo: Modulo; children: React.ReactNo
     return () => window.removeEventListener("keydown", f);
   }, []);
 
-  const alternar = () =>
-    setRecolhido((x) => {
-      try {
-        localStorage.setItem(CHAVE_RECOLHIDO, x ? "0" : "1");
-      } catch {}
-      return !x;
-    });
+  const alternar = () => setMenuRecolhido(recolhido ? "0" : "1");
 
   return (
     <div className="min-h-screen lg:flex">
@@ -417,7 +408,7 @@ function BuscaRapida({ aoFechar }: { aoFechar: () => void }) {
         itens.push({
           id: "cli-" + c.id,
           grupo: "Clientes",
-          nome: c.nome_fantasia || c.razao_social,
+          nome: nomeCliente(c),
           detalhe: [c.cnpj, c.codigo_dominio && `Domínio ${c.codigo_dominio}`].filter(Boolean).join("  ·  ") || undefined,
           icone: "pasta",
           href: `/tarefas?cliente=${c.id}`,
@@ -426,18 +417,9 @@ function BuscaRapida({ aoFechar }: { aoFechar: () => void }) {
   }, [apps, pode, podeEditarCadastros, papel, clientes]);
 
   const resultado = useMemo(() => {
-    const t = q
-      .trim()
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "");
+    const t = semAcento(q.trim().toLowerCase());
     if (!t) return base.filter((x) => x.grupo !== "Clientes");
-    const sem = (s: string) =>
-      s
-        .toLowerCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "");
-    return base.filter((x) => sem(`${x.nome} ${x.detalhe ?? ""}`).includes(t)).slice(0, 40);
+    return base.filter((x) => semAcento(`${x.nome} ${x.detalhe ?? ""}`.toLowerCase()).includes(t)).slice(0, 40);
   }, [q, base]);
 
   useEffect(() => setI(0), [q]);

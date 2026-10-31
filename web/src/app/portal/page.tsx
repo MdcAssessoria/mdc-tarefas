@@ -17,6 +17,9 @@ import { AbaDemonstracoes } from "@/components/demonstrativos/Demonstracoes";
 import { BotaoPdf } from "@/components/demonstrativos/BotaoPdf";
 import { caminho } from "@/lib/caminho";
 import { fmtData, fmtDataHora, mesAno, mesExtenso } from "@/lib/formato/datas";
+import { nomeCliente } from "@/lib/clientes";
+import { CHAVES, gravarLocal, lerLocal } from "@/lib/armazenamentoLocal";
+import { IDENTIDADE_MDC } from "@/lib/identidade";
 
 interface Empresa {
   cliente_id: string;
@@ -70,10 +73,7 @@ export default function Portal() {
         if (error) return setErro(traduzirErro(error));
         const l = (data as Empresa[]) ?? [];
         setEmpresas(l);
-        let salva = "";
-        try {
-          salva = localStorage.getItem("mdc-portal:empresa") ?? "";
-        } catch {}
+        const salva = lerLocal(CHAVES.empresaPortal) ?? "";
         setAtual(l.find((e) => e.cliente_id === salva)?.cliente_id ?? l[0]?.cliente_id ?? "");
       });
   }, [session]);
@@ -114,19 +114,17 @@ export default function Portal() {
                 value={atual}
                 onChange={(e) => {
                   setAtual(e.target.value);
-                  try {
-                    localStorage.setItem("mdc-portal:empresa", e.target.value);
-                  } catch {}
+                  gravarLocal(CHAVES.empresaPortal, e.target.value);
                 }}
               >
                 {empresas.map((e) => (
                   <option key={e.cliente_id} value={e.cliente_id} className="text-black">
-                    {e.nome_fantasia || e.razao_social}
+                    {nomeCliente(e)}
                   </option>
                 ))}
               </select>
             ) : (
-              <div className="font-semibold text-[var(--destaque)]">{emp.nome_fantasia || emp.razao_social}</div>
+              <div className="font-semibold text-[var(--destaque)]">{nomeCliente(emp)}</div>
             )}
           </div>
           <SinoCliente uid={session.user.id} />
@@ -163,7 +161,7 @@ export default function Portal() {
         {aba === "documentos" && <Documentos emp={emp} />}
       </main>
       <footer className="mx-auto max-w-[1200px] px-4 pb-6 text-xs text-neutral-500 print:hidden">
-        MDC Assessoria Contábil · (11) 98859-8041 · mdcassessoria.com
+        {IDENTIDADE_MDC.nomeComercial} · {IDENTIDADE_MDC.telefone} · {IDENTIDADE_MDC.site}
       </footer>
     </div>
   );

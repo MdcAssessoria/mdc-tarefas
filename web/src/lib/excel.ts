@@ -1,6 +1,7 @@
 // Exportação para Excel no padrão MDC (cabeçalho verde e dourado, rodapé com o responsável técnico).
 // exceljs é carregado só quando alguém exporta.
 import { baixarBytes } from "./contratoPdf";
+import { IDENTIDADE_MDC, LINHA_EMPRESA, linhaResponsavel } from "./identidade";
 
 export interface ColunaExcel {
   titulo: string;
@@ -100,11 +101,9 @@ export async function exportarExcel(arquivo: string, titulo: string, subtitulo: 
     if (aba.linhas.length) ws.autoFilter = { from: { row: 4, column: 1 }, to: { row: 4 + aba.linhas.length, column: n } };
 
     ws.addRow([]);
-    const r1 = ws.addRow(["MDC Assessoria Ltda · CNPJ 48.140.121/0001-65 · Bragança Paulista/SP · mdcassessoria.com"]);
+    const r1 = ws.addRow([`${LINHA_EMPRESA} · ${IDENTIDADE_MDC.site}`]);
     r1.font = { name: "Calibri", size: 9, color: { argb: "FF0B2820" } };
-    const r2 = ws.addRow([
-      "Responsável técnico: Edvaldo Ribeiro de Carvalho · Contador CRC 1SP346098-O/0 · edvaldo@mdcassessoria.com · (11) 98859-8041",
-    ]);
+    const r2 = ws.addRow([`Responsável técnico: ${linhaResponsavel()}`]);
     r2.font = { name: "Calibri", size: 9, color: { argb: OURO_ESC } };
     ws.pageSetup = { orientation: n > 6 ? "landscape" : "portrait", fitToPage: true, fitToWidth: 1, fitToHeight: 0, paperSize: 9 };
   }

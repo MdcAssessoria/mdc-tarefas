@@ -20,6 +20,7 @@ import { ArvoreBalancete, GradeIndices, ListaAlertas, PainelResumo, VisaoParecer
 import type { BalanceteReg, LinhaReg, ParecerReg } from "@/components/demonstrativos/Painel";
 import { hojeISO, somarDias } from "@/lib/datas";
 import { mesExtenso } from "@/lib/formato/datas";
+import { nomeCliente } from "@/lib/clientes";
 
 export default function PaginaBalancete() {
   return (
@@ -82,7 +83,7 @@ function Detalhe() {
   }, [carregar]);
 
   const cliente = b ? clientePorId(b.cliente_id) : undefined;
-  const nome = cliente ? cliente.nome_fantasia || cliente.razao_social : "";
+  const nome = nomeCliente(cliente, "");
   const parecer = pareceres[0];
   const anterior = useMemo(() => (b ? historico.filter((x) => x.competencia < b.competencia).at(-1) : undefined), [b, historico]);
 

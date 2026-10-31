@@ -14,6 +14,8 @@ import type { Status, Tarefa } from "@/lib/types";
 import { traduzirErro } from "@/lib/erros";
 import { caminho } from "@/lib/caminho";
 import { fmtCompetencia } from "@/lib/formato/datas";
+import { nomeCliente } from "@/lib/clientes";
+import { CHAVES, gravarLocal, lerLocal, useEstadoLembrado } from "@/lib/armazenamentoLocal";
 
 export default function PaginaTarefas() {
   return (
@@ -36,7 +38,7 @@ function Tarefas() {
   const { org, eu, papel, setores, clientes, membros, setorPorId, clientePorId, nomeMembro } = ctx;
   const { tarefas, carregando, erro, online, recarregar, atualizar } = useTarefas(org.id, org.fuso);
 
-  const [visao, setVisao] = useState<Visao>("lista");
+  const [visao, setVisao] = useEstadoLembrado<Visao>(CHAVES.visaoTarefas, "lista", (v) => v === "lista" || v === "quadro");
   const [busca, setBusca] = useState("");
   const [situacao, setSituacao] = useState<Situacao>("abertas");
   // filtros por setor (grupo) e por responsável: seleção múltipla, lembrada neste navegador
@@ -65,9 +67,7 @@ function Tarefas() {
 
   useEffect(() => {
     try {
-      const v = localStorage.getItem("mdc-tarefas:visao");
-      if (v === "lista" || v === "quadro") setVisao(v);
-      const f = JSON.parse(localStorage.getItem(`mdc-tarefas:filtros:${org.id}`) ?? "null") as {
+      const f = JSON.parse(lerLocal(CHAVES.filtrosTarefas(org.id)) ?? "null") as {
         setores?: string[];
         resps?: string[];
       } | null;
@@ -88,9 +88,7 @@ function Tarefas() {
 
   useEffect(() => {
     if (!filtrosProntos) return;
-    try {
-      localStorage.setItem(`mdc-tarefas:filtros:${org.id}`, JSON.stringify({ setores: setorSel, resps: respSel }));
-    } catch {}
+    gravarLocal(CHAVES.filtrosTarefas(org.id), JSON.stringify({ setores: setorSel, resps: respSel }));
   }, [org.id, setorSel, respSel, filtrosProntos]);
 
   const base = useMemo(() => {
@@ -189,9 +187,6 @@ function Tarefas() {
                 key={v}
                 onClick={() => {
                   setVisao(v);
-                  try {
-                    localStorage.setItem("mdc-tarefas:visao", v);
-                  } catch {}
                 }}
                 className={`rounded-md px-3 py-1.5 ${visao === v ? "bg-[var(--marca)] text-white" : ""}`}
               >
@@ -257,7 +252,7 @@ function Tarefas() {
           <option value="">Todos os clientes</option>
           {clientes.map((c) => (
             <option key={c.id} value={c.id}>
-              {c.nome_fantasia || c.razao_social}
+              {nomeCliente(c)}
               {c.ativo ? "" : " (inativo)"}
             </option>
           ))}
@@ -332,7 +327,7 @@ function Lista({ tarefas, abrir, mudarStatus, fuso, setorPorId, clientePorId, no
                 </span>
               </div>
               <div className="mt-0.5 truncate text-xs text-[var(--texto-suave)]">
-                {c ? c.nome_fantasia || c.razao_social : "Interna"}
+                {nomeCliente(c, "Interna")}
                 {t.competencia && ` · comp. ${fmtCompetencia(t.competencia)}`}
                 <span className="sm:hidden"> · {nomeMembro(t.responsavel_id)}</span>
               </div>
@@ -413,7 +408,7 @@ function Quadro({ tarefas, abrir, mudarStatus, fuso, setorPorId, clientePorId, n
                       </span>
                       <span className="font-medium leading-snug">{t.titulo}</span>
                     </div>
-                    {c && <div className="truncate text-xs text-[var(--texto-suave)]">{c.nome_fantasia || c.razao_social}</div>}
+                    {c && <div className="truncate text-xs text-[var(--texto-suave)]">{nomeCliente(c)}</div>}
                     <div className="flex flex-wrap items-center gap-1.5">
                       <PrazoBadge prazo={t.prazo} status={t.status} fuso={fuso} />
                       <SetorChip setor={setorPorId(t.setor_id)} />

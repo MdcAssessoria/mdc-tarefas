@@ -1,4 +1,5 @@
 // Leitura e normalização de planilhas de clientes (relatório de empresas do Domínio, Excel ou CSV).
+import { semAcento } from "./texto";
 
 export type Campo =
   | "codigo_dominio"
@@ -85,9 +86,7 @@ const SINONIMOS: Record<Campo, string[]> = {
 };
 
 export function normalizar(t: unknown): string {
-  return String(t ?? "")
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
+  return semAcento(t)
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, " ")
     .trim();

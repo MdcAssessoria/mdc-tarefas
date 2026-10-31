@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useOrgOpcional } from "@/lib/org";
 import { useLogo } from "@/lib/marca";
 import type { Organizacao } from "@/lib/types";
+import { nomeCliente } from "@/lib/clientes";
 
 export interface Kpis {
   abertas: number;
@@ -140,22 +141,22 @@ export function PainelTV({
   online,
   atualizadoEm,
   nomeMembro,
-  nomeCliente,
+  nomeDoCliente,
 }: {
   org: Organizacao;
   dados: DadosPainel | null;
   online: boolean;
   atualizadoEm: Date | null;
   nomeMembro?: (id: string | null) => string;
-  nomeCliente?: (id: string | null) => string;
+  nomeDoCliente?: (id: string | null) => string;
 }) {
   const ctx = useOrgOpcional();
   const nm = nomeMembro ?? ctx?.nomeMembro ?? (() => "");
   const nc =
-    nomeCliente ??
+    nomeDoCliente ??
     ((id: string | null) => {
       const c = ctx?.clientePorId(id);
-      return c ? c.nome_fantasia || c.razao_social : "";
+      return nomeCliente(c, "");
     });
 
   const k = dados?.kpis;

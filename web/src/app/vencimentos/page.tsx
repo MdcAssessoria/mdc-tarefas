@@ -7,6 +7,7 @@ import { supabase } from "@/lib/supabase";
 import { traduzirErro } from "@/lib/erros";
 import { diasAte } from "@/lib/datas";
 import { fmtData } from "@/lib/formato/datas";
+import { nomeCliente } from "@/lib/clientes";
 
 export default function PaginaVencimentos() {
   return (
@@ -178,7 +179,7 @@ function Vencimentos() {
                     </span>
                   </td>
                   <td>{nomeTipo(i.tipo)}</td>
-                  <td>{c ? c.nome_fantasia || c.razao_social : "MDC"}</td>
+                  <td>{nomeCliente(c, "MDC")}</td>
                   <td className="text-neutral-600">
                     {i.descricao}
                     {i.tarefa_id && <span className="chip ml-2 bg-sky-50 text-sky-800">tarefa de renovação</span>}
@@ -298,7 +299,7 @@ function Editor({
             {clientes.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.codigo_dominio ? `${c.codigo_dominio} · ` : ""}
-                {c.nome_fantasia || c.razao_social}
+                {nomeCliente(c)}
               </option>
             ))}
           </select>

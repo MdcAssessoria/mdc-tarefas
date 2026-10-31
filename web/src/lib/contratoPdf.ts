@@ -1,5 +1,6 @@
 // Contrato em PDF no layout MDC (gerado no navegador com pdf-lib).
 import { PDFDocument, PDFFont, PDFImage, PDFPage, StandardFonts, rgb } from "pdf-lib";
+import { IDENTIDADE_MDC, linhaResponsavel } from "./identidade";
 
 const VERDE = rgb(11 / 255, 40 / 255, 32 / 255);
 const DOURADO = rgb(226 / 255, 193 / 255, 126 / 255);
@@ -29,7 +30,7 @@ export interface DadosContratoPdf {
 export async function gerarContratoPdf(d: DadosContratoPdf): Promise<Uint8Array> {
   const pdf = await PDFDocument.create();
   pdf.setTitle(`Contrato ${d.numero} — ${d.contratante.nome}`);
-  pdf.setAuthor("MDC Assessoria Contábil");
+  pdf.setAuthor(IDENTIDADE_MDC.nomeComercial);
   pdf.setCreator("HUB-MDC");
   const f = await pdf.embedFont(StandardFonts.Helvetica);
   const b = await pdf.embedFont(StandardFonts.HelveticaBold);
@@ -74,8 +75,8 @@ export async function gerarContratoPdf(d: DadosContratoPdf): Promise<Uint8Array>
     marca(ME - 10, H - BANDA + 16, 46);
     const linhasCab: [string, number, PDFFont, ReturnType<typeof rgb>][] = [
       ["ASSESSORIA CONTÁBIL, TRIBUTÁRIA E GESTÃO FINANCEIRA", 9.2, b, DOURADO],
-      ["MDC Assessoria Ltda  ·  CNPJ 48.140.121/0001-65", 8, f, CLARO],
-      ["Bragança Paulista/SP  ·  (11) 98859-8041  ·  mdcassessoria.com", 7.4, f, CLARO],
+      [`${IDENTIDADE_MDC.razaoSocial}  ·  CNPJ ${IDENTIDADE_MDC.cnpj}`, 8, f, CLARO],
+      [`${IDENTIDADE_MDC.cidadeUf}  ·  ${IDENTIDADE_MDC.telefone}  ·  ${IDENTIDADE_MDC.site}`, 7.4, f, CLARO],
     ];
     let yy = H - 30;
     for (const [t, sz, fo, cor] of linhasCab) {
@@ -168,7 +169,13 @@ export async function gerarContratoPdf(d: DadosContratoPdf): Promise<Uint8Array>
   y -= 46;
   const meia = (largura - 30) / 2;
   assinatura("CONTRATANTE", d.contratante.nome.slice(0, 48), d.contratante.representante, ME, meia);
-  assinatura("CONTRATADA", "MDC ASSESSORIA LTDA", "Edvaldo Ribeiro de Carvalho · CRC 1SP346098-O/0", ME + meia + 30, meia);
+  assinatura(
+    "CONTRATADA",
+    IDENTIDADE_MDC.razaoSocial.toUpperCase(),
+    `${IDENTIDADE_MDC.responsavelTecnico.nome} · CRC ${IDENTIDADE_MDC.responsavelTecnico.crc}`,
+    ME + meia + 30,
+    meia,
+  );
   y -= 82;
   assinatura("TESTEMUNHA 1", "Nome:", "CPF:", ME, meia);
   assinatura("TESTEMUNHA 2", "Nome:", "CPF:", ME + meia + 30, meia);
@@ -177,24 +184,17 @@ export async function gerarContratoPdf(d: DadosContratoPdf): Promise<Uint8Array>
   paginas.forEach((p, k) => {
     page = p;
     p.drawLine({ start: { x: ME, y: 62 }, end: { x: W - MD, y: 62 }, thickness: 0.8, color: DOURADO });
-    text("MDC Assessoria Ltda", ME, 50, 7.2, b, VERDE);
+    text(IDENTIDADE_MDC.razaoSocial, ME, 50, 7.2, b, VERDE);
     text(
-      "  ·  CNPJ 48.140.121/0001-65  ·  Bragança Paulista/SP  ·  mdcassessoria.com  ·  @mdcassessoria_",
-      ME + w("MDC Assessoria Ltda", 7.2, b),
+      `  ·  CNPJ ${IDENTIDADE_MDC.cnpj}  ·  ${IDENTIDADE_MDC.cidadeUf}  ·  ${IDENTIDADE_MDC.site}  ·  ${IDENTIDADE_MDC.instagram}`,
+      ME + w(IDENTIDADE_MDC.razaoSocial, 7.2, b),
       50,
       7.2,
       f,
       VERDE,
     );
     text("Responsável técnico: ", ME, 39, 7.2, b, DOURADO_ESC);
-    text(
-      "Edvaldo Ribeiro de Carvalho  ·  Contador CRC 1SP346098-O/0  ·  edvaldo@mdcassessoria.com  ·  (11) 98859-8041",
-      ME + w("Responsável técnico: ", 7.2, b),
-      39,
-      7.2,
-      f,
-      VERDE,
-    );
+    text(linhaResponsavel("  ·  "), ME + w("Responsável técnico: ", 7.2, b), 39, 7.2, f, VERDE);
     const pg = `Página ${k + 1} de ${paginas.length}`;
     text(pg, W - MD - w(pg, 7.2, f), 50, 7.2, f, SUAVE);
     if (k < paginas.length - 1) {

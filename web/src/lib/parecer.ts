@@ -5,6 +5,7 @@ import type { Demonstracoes } from "./demonstracoes";
 import { brl } from "./formato/moeda";
 import { fmtIndice } from "./formato/numero";
 import { fmtData } from "./formato/datas";
+import { LINHA_EMPRESA } from "./identidade";
 
 /** Valores dos textos de análise em reais inteiros, sem centavos. */
 const reais = (v: number | null | undefined) => brl(v, { centavos: false });
@@ -249,7 +250,7 @@ export function rascunhoParecer(o: {
   L.push("");
   L.push(`## ${n + 3}. Responsabilidade técnica`);
   L.push(`${o.contador} — Contador, CRC ${o.crc}`);
-  L.push("MDC Assessoria Ltda · CNPJ 48.140.121/0001-65 · Bragança Paulista/SP");
+  L.push(LINHA_EMPRESA);
   L.push("");
   L.push(
     "_Parecer emitido com base nos registros contábeis do período e nas informações fornecidas pela administração, observado o Código de Ética Profissional do Contador (NBC PG 01)._",

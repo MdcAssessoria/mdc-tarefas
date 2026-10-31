@@ -11,6 +11,7 @@ import { analisar, carregarMapa, salvarBalancete } from "@/lib/demonstrativos";
 import { caminho } from "@/lib/caminho";
 import { brl } from "@/lib/formato/moeda";
 import { fmtData } from "@/lib/formato/datas";
+import { nomeCliente } from "@/lib/clientes";
 
 export default function PaginaImportarBalancete() {
   return (
@@ -105,7 +106,7 @@ function Importar() {
     return <p className="text-sm text-neutral-600">Você pode consultar os demonstrativos, mas não importar.</p>;
 
   const cab = leitura?.cabecalho;
-  const nomeCliente = clientes.find((c) => c.id === cliente);
+  const clienteEscolhido = clientes.find((c) => c.id === cliente);
   const analiticas = leitura?.linhas.filter((l) => l.analitica) ?? [];
   const lista = mostrar === "sem" ? analiticas.filter((l) => !l.grupo) : analiticas;
 
@@ -151,7 +152,7 @@ function Importar() {
                 {ativos.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.codigo_dominio ? `${c.codigo_dominio} · ` : ""}
-                    {c.nome_fantasia || c.razao_social}
+                    {nomeCliente(c)}
                   </option>
                 ))}
               </select>
@@ -268,9 +269,7 @@ function Importar() {
                 </div>
               </section>
               <button className="btn-primario w-full" disabled={!cliente || !competencia || processando} onClick={gravar}>
-                {processando
-                  ? "Gravando…"
-                  : `Gravar rascunho${nomeCliente ? ` de ${nomeCliente.nome_fantasia || nomeCliente.razao_social}` : ""}`}
+                {processando ? "Gravando…" : `Gravar rascunho${clienteEscolhido ? ` de ${nomeCliente(clienteEscolhido)}` : ""}`}
               </button>
               {!cliente && <p className="text-xs text-amber-800">Escolha a empresa para gravar.</p>}
               <p className="text-xs text-neutral-500">

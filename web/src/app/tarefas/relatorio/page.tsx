@@ -12,6 +12,7 @@ import { baixarBytes } from "@/lib/contratoPdf";
 import { exportarExcel } from "@/lib/excel";
 import { gerarRelatorioPdf } from "@/lib/relatorioPdf";
 import { fmtData } from "@/lib/formato/datas";
+import { nomeCliente } from "@/lib/clientes";
 
 export default function PaginaRelatorio() {
   return (
@@ -206,7 +207,7 @@ function Relatorio() {
   }`;
   const nomeCli = (id: string | null) => {
     const c = clientePorId(id);
-    return c ? c.nome_fantasia || c.razao_social : "Interna";
+    return nomeCliente(c, "Interna");
   };
   const situacao = (t: Concluida) => {
     const d = diasAtraso(t);

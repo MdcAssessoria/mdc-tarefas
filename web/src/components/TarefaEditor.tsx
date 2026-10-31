@@ -9,6 +9,7 @@ import { traduzirErro } from "@/lib/erros";
 import { abrirArquivo, enviarArquivo, fmtTamanho } from "@/lib/arquivos";
 import type { Arquivo } from "@/lib/arquivos";
 import { fmtData, fmtDataHora } from "@/lib/formato/datas";
+import { nomeCliente } from "@/lib/clientes";
 
 interface Comentario {
   id: string;
@@ -184,7 +185,7 @@ export function TarefaEditor({
                   .filter((c) => c.ativo || c.id === f.cliente_id)
                   .map((c) => (
                     <option key={c.id} value={c.id}>
-                      {c.nome_fantasia || c.razao_social}
+                      {nomeCliente(c)}
                     </option>
                   ))}
               </select>

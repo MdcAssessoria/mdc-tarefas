@@ -5,6 +5,7 @@ import { brl } from "./formato/moeda";
 import { fmtIndice } from "./formato/numero";
 import type { FormatoIndice } from "./formato/numero";
 import { fmtCompetencia } from "./formato/datas";
+import { semAcento } from "./texto";
 
 /** Valores dos textos de análise em reais inteiros, sem centavos. */
 const reais = (v: number | null | undefined) => brl(v, { centavos: false });
@@ -84,10 +85,9 @@ export interface Cabecalho {
 
 // ---------------------------------------------------------------- leitura
 
+/** Descrição de conta normalizada para as regras: sem acento, maiúscula, "(-)" vira "(MENOS)" e traços viram espaço. */
 export const sem = (s: unknown) =>
-  String(s ?? "")
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
+  semAcento(s)
     .toUpperCase()
     .replace(/\(\s*-\s*\)/g, "(MENOS)")
     .replace(/[-–]/g, " ")

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Barras, COR, Cascata, CicloCaixa, ColunasPareadas, Composicao, Evolucao, Faisca, Pilha100, STATUS, Termometro } from "./Graficos";
 import { INDICES_INFO, mdParaHtml, nomeGrupo } from "@/lib/balancete";
 import type { Alerta, Conferencia, Indices, Linha, Resumo } from "@/lib/balancete";
@@ -14,6 +14,8 @@ import type { Tendencia } from "@/lib/tendencia";
 import { brl } from "@/lib/formato/moeda";
 import { fmtIndice, fmtNumero } from "@/lib/formato/numero";
 import { fmtData, mesExtenso } from "@/lib/formato/datas";
+import { CHAVES, useEstadoLembrado } from "@/lib/armazenamentoLocal";
+import { IDENTIDADE_MDC, LINHA_EMPRESA } from "@/lib/identidade";
 
 // paletas validadas (dataviz): composição da receita e do balanço — sempre com rótulo direto
 export const PAL_RECEITA = { impostos: "#6250d6", custos: "#C0892A", despesas: "#D55181", financeiro: "#2a78d6", lucro: "#1B8263" };
@@ -95,24 +97,7 @@ export function acumulado(atual: BalanceteReg, historico: BalanceteReg[]) {
 
 /** Período escolhido (lembrado neste navegador). */
 export function useSeletorPeriodo(): [TipoPeriodo, (t: TipoPeriodo) => void] {
-  const [tipo, setTipo] = useState<TipoPeriodo>("mensal");
-  useEffect(() => {
-    try {
-      const v = localStorage.getItem("mdc-periodo-demonstrativos") as TipoPeriodo | null;
-      if (v && TIPOS_PERIODO.some((x) => x.id === v)) setTipo(v);
-    } catch {
-      /* sem armazenamento */
-    }
-  }, []);
-  const mudar = (t: TipoPeriodo) => {
-    setTipo(t);
-    try {
-      localStorage.setItem("mdc-periodo-demonstrativos", t);
-    } catch {
-      /* sem armazenamento */
-    }
-  };
-  return [tipo, mudar];
+  return useEstadoLembrado<TipoPeriodo>(CHAVES.periodoDemonstrativos, "mensal", (v) => TIPOS_PERIODO.some((x) => x.id === v));
 }
 
 export function SeletorPeriodo({ tipo, aoMudar }: { tipo: TipoPeriodo; aoMudar: (t: TipoPeriodo) => void }) {
@@ -757,8 +742,10 @@ export function VisaoParecer({ texto, empresa, cnpj }: { texto: string; empresa:
         <div className="flex items-center gap-3">
           <img src={caminho("/icone-hub-mdc.svg")} alt="" className="h-10 w-10 rounded-md" />
           <div>
-            <div className="font-semibold text-[var(--marca)]">MDC Assessoria Contábil</div>
-            <div className="text-xs text-neutral-500">Assessoria Contábil, Tributária e Gestão Financeira · mdcassessoria.com</div>
+            <div className="font-semibold text-[var(--marca)]">{IDENTIDADE_MDC.nomeComercial}</div>
+            <div className="text-xs text-neutral-500">
+              {IDENTIDADE_MDC.areas} · {IDENTIDADE_MDC.site}
+            </div>
           </div>
         </div>
         <div className="text-right text-xs text-neutral-600">
@@ -768,7 +755,7 @@ export function VisaoParecer({ texto, empresa, cnpj }: { texto: string; empresa:
       </header>
       <div className="prosa" dangerouslySetInnerHTML={{ __html: mdParaHtml(texto) }} />
       <footer className="mt-6 border-t border-[var(--borda)] pt-2 text-[11px] text-neutral-500">
-        MDC Assessoria Ltda · CNPJ 48.140.121/0001-65 · Bragança Paulista/SP · (11) 98859-8041 · edvaldo@mdcassessoria.com
+        {LINHA_EMPRESA} · {IDENTIDADE_MDC.telefone} · {IDENTIDADE_MDC.email}
       </footer>
     </article>
   );

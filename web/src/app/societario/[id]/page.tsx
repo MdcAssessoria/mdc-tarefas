@@ -14,6 +14,7 @@ import { ORGAOS, STATUS_FASE, corStatusFase, diasParado, nomeStatusFase } from "
 import type { SocFase, SocProcesso, SocTipo, StatusFase } from "@/lib/societario";
 import { brl } from "@/lib/formato/moeda";
 import { fmtData, fmtDataHora } from "@/lib/formato/datas";
+import { nomeCliente } from "@/lib/clientes";
 
 export default function PaginaProcesso() {
   return (
@@ -107,7 +108,7 @@ function Ficha() {
   if (!p) return <p className="text-sm text-neutral-500">Carregando…</p>;
 
   const cliente = clientePorId(p.cliente_id);
-  const nome = cliente ? cliente.nome_fantasia || cliente.razao_social : p.futuro_cliente;
+  const nome = nomeCliente(cliente, p.futuro_cliente ?? "");
   const aberto = p.status === "aberto";
 
   async function rpc(fn: string, args: Record<string, unknown>) {

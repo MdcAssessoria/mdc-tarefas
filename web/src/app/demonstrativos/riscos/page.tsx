@@ -9,6 +9,7 @@ import { caminho } from "@/lib/caminho";
 import { brl } from "@/lib/formato/moeda";
 import { fmtIndice } from "@/lib/formato/numero";
 import { mesAno } from "@/lib/formato/datas";
+import { nomeCliente } from "@/lib/clientes";
 
 export default function PaginaRiscos() {
   return (
@@ -83,7 +84,7 @@ function Riscos() {
                   className="cursor-pointer align-top hover:bg-[var(--fundo)]"
                   onClick={() => (window.location.href = caminho(`/demonstrativos/${b.id}`))}
                 >
-                  <td className="font-medium">{c ? c.nome_fantasia || c.razao_social : "—"}</td>
+                  <td className="font-medium">{nomeCliente(c, "—")}</td>
                   <td>{mesAno(b.competencia)}</td>
                   <td className={`text-right tabular-nums ${(b.indices.liquidez_corrente ?? 1) < 1 ? "text-[var(--perigo)]" : ""}`}>
                     {fmtIndice(b.indices.liquidez_corrente, "x")}

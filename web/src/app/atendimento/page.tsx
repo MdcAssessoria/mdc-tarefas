@@ -11,6 +11,7 @@ import { ASSUNTOS, STATUS_CONVERSA, nomeAssunto } from "@/lib/chat";
 import type { Conversa } from "@/lib/chat";
 import { caminho } from "@/lib/caminho";
 import { fmtDataHora } from "@/lib/formato/datas";
+import { nomeCliente } from "@/lib/clientes";
 
 export default function PaginaAtendimento() {
   return (
@@ -88,7 +89,7 @@ function Caixa() {
 
   const nomeCli = (id: string) => {
     const c = clientePorId(id);
-    return c ? c.nome_fantasia || c.razao_social : "—";
+    return nomeCliente(c, "—");
   };
   const atrasada = (c: Conversa) =>
     !c.respondida_em && c.prazo_resposta && Date.parse(c.prazo_resposta) < agora && c.status !== "resolvido";
@@ -289,7 +290,7 @@ function NovaConversa({
             {clientes.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.codigo_dominio ? `${c.codigo_dominio} · ` : ""}
-                {c.nome_fantasia || c.razao_social}
+                {nomeCliente(c)}
               </option>
             ))}
           </select>

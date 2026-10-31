@@ -14,6 +14,7 @@ import { caminho } from "@/lib/caminho";
 import { traduzirErro } from "@/lib/erros";
 import type { Prioridade, Status } from "@/lib/types";
 import { fmtData } from "@/lib/formato/datas";
+import { nomeCliente } from "@/lib/clientes";
 
 export default function Inicio() {
   return (
@@ -178,7 +179,7 @@ function Hub() {
   const maxCli = Math.max(1, ...porCliente.map((c) => c.total));
   const nomeCli = (id: string | null) => {
     const c = clientePorId(id);
-    return c ? c.nome_fantasia || c.razao_social : "Internas";
+    return nomeCliente(c, "Internas");
   };
 
   const livro: { rotulo: string; valor: string; href: string; quente?: boolean }[] = [
@@ -368,7 +369,7 @@ function Hub() {
                             </span>
                           </div>
                           <div className="truncate pl-[18px] text-[12px] text-[var(--texto-suave)]">
-                            {c ? c.nome_fantasia || c.razao_social : "Interna"}
+                            {nomeCliente(c, "Interna")}
                             {feita &&
                               t.concluida_em &&
                               ` · concluída em ${fmtData(diaLocal(t.concluida_em))}${noPrazo(t) ? "" : " (com atraso)"}`}

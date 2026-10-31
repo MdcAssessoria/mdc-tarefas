@@ -7,6 +7,7 @@ import type { Cliente, HubApp, Membro, Organizacao, Papel, PapelApp, Setor } fro
 import { PESO_PAPEL_APP } from "./types";
 import { traduzirErro } from "@/lib/erros";
 import { caminho } from "@/lib/caminho";
+import { CHAVES, gravarLocal, lerLocal } from "./armazenamentoLocal";
 
 interface OrgCtx {
   session: Session;
@@ -42,14 +43,8 @@ export function useOrgOpcional(): OrgCtx | null {
   return useContext(Ctx);
 }
 
-const CHAVE_ORG = "mdc-tarefas:org";
-
 function lerOrgSalva(): string | null {
-  try {
-    return localStorage.getItem(CHAVE_ORG);
-  } catch {
-    return null;
-  }
+  return lerLocal(CHAVES.organizacao);
 }
 
 export function aplicarCores(org: Pick<Organizacao, "cor_primaria" | "cor_destaque">) {
@@ -178,9 +173,7 @@ export function OrgProvider({ children }: { children: React.ReactNode }) {
       membros,
       podeEditarCadastros: eu.papel === "admin" || eu.papel === "gestor",
       trocarOrg: (id) => {
-        try {
-          localStorage.setItem(CHAVE_ORG, id);
-        } catch {}
+        gravarLocal(CHAVES.organizacao, id);
         setOrgId(id);
       },
       recarregar,

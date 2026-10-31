@@ -1,6 +1,7 @@
 // CRM Comercial: tipos, etapas do funil, valores negociados e montagem do contrato a partir do modelo.
 import { hojeISO, primeiroDiaDoProximoMes } from "./datas";
 import { brl } from "./formato/moeda";
+import { IDENTIDADE_MDC } from "./identidade";
 
 export type Etapa = "novo" | "contato" | "reuniao" | "proposta" | "negociacao" | "ganho" | "perdido";
 
@@ -159,7 +160,7 @@ export function valoresIniciais(o: Oportunidade, hoje = hojeISO()): Valores {
     aviso_previo: 30,
     prazo_documentos: 5,
     servicos: SERVICOS_PADRAO.slice(0, 6),
-    cidade_assinatura: "Bragança Paulista/SP",
+    cidade_assinatura: IDENTIDADE_MDC.cidadeUf,
     data_assinatura: hoje,
   };
 }

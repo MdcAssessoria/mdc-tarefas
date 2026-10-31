@@ -6,6 +6,7 @@ import { useOrg } from "@/lib/org";
 import { supabase } from "@/lib/supabase";
 import { traduzirErro } from "@/lib/erros";
 import { enviarConvite } from "@/lib/convite";
+import { nomeCliente } from "@/lib/clientes";
 
 export default function PaginaAcessosPortal() {
   return (
@@ -97,7 +98,7 @@ function AcessosPortal() {
 
   const nomeCli = (id: string) => {
     const c = clientePorId(id);
-    return c ? c.nome_fantasia || c.razao_social : "—";
+    return nomeCliente(c, "—");
   };
 
   return (
@@ -122,7 +123,7 @@ function AcessosPortal() {
               .map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.codigo_dominio ? `${c.codigo_dominio} · ` : ""}
-                  {c.nome_fantasia || c.razao_social}
+                  {nomeCliente(c)}
                 </option>
               ))}
           </select>

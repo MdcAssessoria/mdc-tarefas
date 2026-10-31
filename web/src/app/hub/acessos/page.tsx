@@ -9,6 +9,7 @@ import { enviarConvite } from "@/lib/convite";
 import { PAPEIS, PAPEIS_APP } from "@/lib/types";
 import type { Membro, Papel, PapelApp } from "@/lib/types";
 import { fmtDataHora } from "@/lib/formato/datas";
+import { nomeCliente } from "@/lib/clientes";
 
 export default function PaginaAcessos() {
   return (
@@ -945,7 +946,7 @@ function AcessosClientes({ aoAviso, aoErro }: { aoAviso: (t: string, link?: stri
   const nomeCli = useCallback(
     (id: string) => {
       const c = clientePorId(id);
-      return c ? c.nome_fantasia || c.razao_social : "—";
+      return nomeCliente(c, "—");
     },
     [clientePorId],
   );
@@ -1225,7 +1226,7 @@ function EditorCliente({
                   checked={empresas.includes(c.id)}
                   onChange={() => alternar(c.id)}
                 />
-                <span className="truncate">{c.nome_fantasia || c.razao_social}</span>
+                <span className="truncate">{nomeCliente(c)}</span>
                 {c.cnpj && <span className="ml-auto shrink-0 text-xs text-neutral-400">{c.cnpj}</span>}
               </label>
             ))}
