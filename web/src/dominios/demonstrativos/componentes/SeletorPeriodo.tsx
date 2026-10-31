@@ -131,12 +131,12 @@ export function SeletorPeriodo<T extends RegPeriodo>({
       {sel && (
         <div className="flex flex-wrap items-center gap-2 text-xs">
           <span
-            className={`chip ${sel.completo ? "bg-emerald-50 text-emerald-800" : "bg-amber-50 text-amber-900"}`}
+            className={`chip max-w-full whitespace-normal ${sel.completo ? "bg-emerald-50 text-emerald-800" : "bg-amber-50 text-amber-900"}`}
             title={sel.completo ? "Todos os meses do período estão no Hub" : "Os números somam só os meses importados"}
           >
             {sel.completo ? "✓" : "!"} {sel.completude}
           </span>
-          <span className="chip bg-[var(--fundo)] text-neutral-700">
+          <span className="chip max-w-full whitespace-normal bg-[var(--fundo)] text-neutral-700">
             {anterior ? `Comparando com ${anterior.rotulo}` : `Sem o mesmo período de ${escolha.ano - 1} para comparar`}
           </span>
         </div>

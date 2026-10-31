@@ -382,7 +382,7 @@ export function CicloCaixa({ pme, pmr, pmp }: { pme: number | null; pmr: number 
         <div className="flex h-8 gap-[2px]">
           {e > 0 && (
             <div
-              className="flex items-center justify-center rounded-l-md text-white"
+              className="flex min-w-0 items-center justify-center truncate rounded-l-md px-1 text-white"
               style={{ width: pctW(e), background: COR.despesa }}
               title={`PME ${e} dias`}
             >
@@ -390,7 +390,7 @@ export function CicloCaixa({ pme, pmr, pmp }: { pme: number | null; pmr: number 
             </div>
           )}
           <div
-            className={`flex items-center justify-center text-white ${e > 0 ? "rounded-r-md" : "rounded-md"}`}
+            className={`flex min-w-0 items-center justify-center truncate px-1 text-white ${e > 0 ? "rounded-r-md" : "rounded-md"}`}
             style={{ width: pctW(r), background: COR.receita }}
             title={`PMR ${r} dias`}
           >
@@ -402,7 +402,7 @@ export function CicloCaixa({ pme, pmr, pmp }: { pme: number | null; pmr: number 
         <div className="mb-1 text-neutral-600">Prazo que os fornecedores dão (PMP)</div>
         <div className="flex h-8">
           <div
-            className="flex items-center justify-center rounded-md text-white"
+            className="flex min-w-0 items-center justify-center truncate rounded-md px-1 text-white"
             style={{ width: pctW(p), background: COR.lucro }}
             title={`PMP ${p} dias`}
           >
@@ -455,7 +455,9 @@ function ColunaComposicao({
         {[...itens].reverse().map((x) => (
           <div key={x.rotulo} className="flex items-center gap-1.5">
             <span className="h-2.5 w-2.5 shrink-0 rounded-sm" style={{ background: x.cor }} />
-            <span className="truncate">{x.rotulo}</span>
+            <span className="min-w-0 truncate" title={x.rotulo}>
+              {x.rotulo}
+            </span>
             <b className={`ml-auto whitespace-nowrap tabular-nums ${x.valor < 0 ? "text-[var(--perigo)]" : ""}`}>
               {brl(x.valor, { centavos: false })}
             </b>

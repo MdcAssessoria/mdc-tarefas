@@ -187,7 +187,7 @@ export function PainelResumo({
         </section>
       )}
 
-      <div className="grid gap-5 lg:grid-cols-2">
+      <div className="grid gap-5 lg:grid-cols-2 [&>section]:min-w-0">
         <section className="cartao p-4">
           <h3 className="font-semibold">Da receita ao lucro ({rotuloPeriodo})</h3>
           <p className="mb-2 text-xs text-neutral-500">Verde soma, dourado subtrai, azul é o total.</p>
@@ -239,7 +239,7 @@ export function PainelResumo({
         </section>
       )}
 
-      <div className="grid gap-5 lg:grid-cols-2">
+      <div className="grid gap-5 lg:grid-cols-2 [&>section]:min-w-0">
         <section className="cartao p-4">
           <h3 className="mb-2 font-semibold">Evolução {t === "mensal" ? "mensal" : t === "anual" ? "anual" : t} do resultado</h3>
           {grupos.length < 2 ? (
@@ -278,7 +278,7 @@ export function PainelResumo({
         </section>
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-2">
+      <div className="grid gap-5 lg:grid-cols-2 [&>section]:min-w-0">
         <section className="cartao p-4">
           <h3 className="mb-1 font-semibold">Ciclo do dinheiro</h3>
           <p className="mb-3 text-xs text-neutral-500">Quantos dias o dinheiro fica preso entre comprar, vender e receber.</p>
