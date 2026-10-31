@@ -46,6 +46,12 @@ desconciliação auditada.
 - Exportação no leiaute de importação de lançamentos contábeis do Domínio, em Excel e TXT.
 - O módulo entra no honorário pago pelo cliente.
 - PDF: bancos de primeira linha e cooperativas (Sicoob, Sicredi); OFX é o formato principal.
+- Plano de contas sai do Domínio em Excel.
+- Piloto: a própria MDC.
+- Clientes do Simples podem usar os módulos como gestão.
+- Notas: integração própria com SEFAZ e ambiente nacional da NFS-e (sem API paga), bibliotecas validadas
+  (ex.: sped-nfe/NFePHP, PyNFe) num serviço fiscal separado (mTLS + assinatura XML), testes em homologação.
+- Certificado A1: o cliente guarda na área dele do HUB; o administrador da MDC acessa todos.
 
 ## Módulos Entradas (compras) e Saídas (vendas)
 Módulos à parte que descarregam no Financeiro: cada nota vira título a pagar/receber; a conciliação
@@ -56,14 +62,11 @@ baixa o título e contabiliza. Mesmo cadastro de pessoas, plano e categorias.
 - Saídas: emissão de NF-e e NFS-e padrão nacional (NFC-e depois), cadastros com NCM/CFOP/CST/CSOSN e
   IBS/CBS, regras fiscais por operação travadas pela MDC, cancelamento/CC-e/inutilização,
   DANFE/DANFSe por e-mail (hub@), títulos a receber, XML para o Domínio.
-- Emissão via API homologada (não falar direto com cada SEFAZ/prefeitura).
+- Emissão e recebimento por integração própria (ver decisões).
 - Tabelas: fis_pessoas, fis_produtos, fis_regras_fiscais, fis_notas, fis_nota_itens, fis_eventos;
   fin_titulos.nota_id.
 - Fases 5 (Entradas) e 6 (Saídas).
 
 ## Decisões em aberto
-- Formato de saída do plano de contas do Domínio (Excel, TXT ou consulta direta).
-- Clientes piloto; uso por clientes do Simples só como gestão.
-- API de emissão/recebimento de notas e custo por nota no honorário.
-- Entradas/Saídas no mesmo honorário ou faixa acima.
-- Guarda e renovação do certificado A1 de cada cliente.
+- Entradas/Saídas no mesmo honorário do Financeiro ou faixa acima.
+- Onde roda o serviço fiscal (servidor próprio da MDC ou nuvem) e quem mantém.
