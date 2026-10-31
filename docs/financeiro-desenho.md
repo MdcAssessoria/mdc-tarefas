@@ -55,6 +55,9 @@ desconciliação auditada.
 - Notas: integração própria com SEFAZ e ambiente nacional da NFS-e (sem API paga), bibliotecas validadas
   (ex.: sped-nfe/NFePHP, PyNFe) num serviço fiscal separado (mTLS + assinatura XML), testes em homologação.
 - Certificado A1: o cliente guarda na área dele do HUB; o administrador da MDC acessa todos.
+- Pacote Gestão inclui Fiscal e Contabilidade.
+- Integra Contador: segundo momento, após a implantação (até lá guias anexadas pela MDC).
+- Livro oficial = Domínio; Contabilidade do HUB é gerencial/espelho conferido.
 
 ## Módulos Entradas (compras) e Saídas (vendas)
 Módulos à parte que descarregam no Financeiro: cada nota vira título a pagar/receber; a conciliação
@@ -88,7 +91,7 @@ Base: lib/excel.ts e lib/relatorioPdf.ts viram um componente único de relatóri
 
 ## Pacotes e contratação
 - Tela nova "Pacotes": nome, descrição, módulos incluídos, valor mensal, ativo. Partida: pacote Gestão =
-  Financeiro + Entradas + Saídas + Fiscal (Fiscal vem no pacote de quem compra os três).
+  Financeiro + Entradas + Saídas + Fiscal + Contabilidade.
 - Cadastro do cliente: seção "Módulos contratados" — Pacote ou Módulos avulsos, valor negociado, início/fim.
 - Portal mostra só o contratado; contrato encerrado bloqueia acesso e mantém dados. Valor alimenta honorário/CRM.
 - Tabelas: hub_pacotes, hub_pacote_modulos, cliente_contratos, cliente_contrato_modulos.
