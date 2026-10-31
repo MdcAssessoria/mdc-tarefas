@@ -1,0 +1,478 @@
+{
+  "linhas": [
+    {
+      "codigo": null,
+      "classificacao": "1",
+      "descricao": "ATIVO",
+      "nivel": 1,
+      "analitica": false,
+      "saldo_anterior": 9500,
+      "debitos": 15200,
+      "creditos": 12500,
+      "saldo_atual": 12200,
+      "grupo": "ac_outros"
+    },
+    {
+      "codigo": "2",
+      "classificacao": "1.1",
+      "descricao": "ATIVO CIRCULANTE",
+      "nivel": 2,
+      "analitica": false,
+      "saldo_anterior": 9500,
+      "debitos": 15200,
+      "creditos": 12500,
+      "saldo_atual": 12200,
+      "grupo": "ac_outros"
+    },
+    {
+      "codigo": "3",
+      "classificacao": "1.1.1",
+      "descricao": "DISPONIVEL",
+      "nivel": 3,
+      "analitica": false,
+      "saldo_anterior": 1000,
+      "debitos": 7200,
+      "creditos": 4000,
+      "saldo_atual": 4200,
+      "grupo": "ac_disponivel"
+    },
+    {
+      "codigo": "10",
+      "classificacao": "1.1.1.01",
+      "descricao": "CAIXA GERAL",
+      "nivel": 4,
+      "analitica": true,
+      "saldo_anterior": 1000,
+      "debitos": 7200,
+      "creditos": 4000,
+      "saldo_atual": 4200,
+      "grupo": "ac_disponivel"
+    },
+    {
+      "codigo": "4",
+      "classificacao": "1.1.2",
+      "descricao": "CLIENTES",
+      "nivel": 3,
+      "analitica": false,
+      "saldo_anterior": 3000,
+      "debitos": 4000,
+      "creditos": 2000,
+      "saldo_atual": 5000,
+      "grupo": "ac_clientes"
+    },
+    {
+      "codigo": "20",
+      "classificacao": "1.1.2.01",
+      "descricao": "DUPLICATAS A RECEBER",
+      "nivel": 4,
+      "analitica": true,
+      "saldo_anterior": 3000,
+      "debitos": 4000,
+      "creditos": 2000,
+      "saldo_atual": 5000,
+      "grupo": "ac_clientes"
+    },
+    {
+      "codigo": "5",
+      "classificacao": "1.1.3",
+      "descricao": "ESTOQUES",
+      "nivel": 3,
+      "analitica": false,
+      "saldo_anterior": 5500,
+      "debitos": 4000,
+      "creditos": 6500,
+      "saldo_atual": 3000,
+      "grupo": "ac_estoques"
+    },
+    {
+      "codigo": "30",
+      "classificacao": "1.1.3.01",
+      "descricao": "MERCADORIAS PARA REVENDA",
+      "nivel": 4,
+      "analitica": true,
+      "saldo_anterior": 5500,
+      "debitos": 4000,
+      "creditos": 6500,
+      "saldo_atual": 3000,
+      "grupo": "ac_estoques"
+    },
+    {
+      "codigo": "6",
+      "classificacao": "2",
+      "descricao": "PASSIVO",
+      "nivel": 1,
+      "analitica": false,
+      "saldo_anterior": -9500,
+      "debitos": 3000,
+      "creditos": 3500,
+      "saldo_atual": -10000,
+      "grupo": "pc_outros"
+    },
+    {
+      "codigo": "7",
+      "classificacao": "2.1",
+      "descricao": "PASSIVO CIRCULANTE",
+      "nivel": 2,
+      "analitica": false,
+      "saldo_anterior": -4000,
+      "debitos": 3000,
+      "creditos": 3500,
+      "saldo_atual": -4500,
+      "grupo": "pc_outros"
+    },
+    {
+      "codigo": "8",
+      "classificacao": "2.1.1",
+      "descricao": "FORNECEDORES",
+      "nivel": 3,
+      "analitica": false,
+      "saldo_anterior": -3700,
+      "debitos": 2700,
+      "creditos": 3000,
+      "saldo_atual": -4000,
+      "grupo": "pc_fornecedores"
+    },
+    {
+      "codigo": "40",
+      "classificacao": "2.1.1.01",
+      "descricao": "FORNECEDORES NACIONAIS",
+      "nivel": 4,
+      "analitica": true,
+      "saldo_anterior": -3700,
+      "debitos": 2700,
+      "creditos": 3000,
+      "saldo_atual": -4000,
+      "grupo": "pc_fornecedores"
+    },
+    {
+      "codigo": "9",
+      "classificacao": "2.1.2",
+      "descricao": "OBRIGACOES FISCAIS",
+      "nivel": 3,
+      "analitica": false,
+      "saldo_anterior": -300,
+      "debitos": 300,
+      "creditos": 500,
+      "saldo_atual": -500,
+      "grupo": "pc_obrigacoes"
+    },
+    {
+      "codigo": "50",
+      "classificacao": "2.1.2.01",
+      "descricao": "SIMPLES NACIONAL A RECOLHER",
+      "nivel": 4,
+      "analitica": true,
+      "saldo_anterior": -300,
+      "debitos": 300,
+      "creditos": 500,
+      "saldo_atual": -500,
+      "grupo": "pc_obrigacoes"
+    },
+    {
+      "codigo": "11",
+      "classificacao": "2.3",
+      "descricao": "PATRIMONIO LIQUIDO",
+      "nivel": 2,
+      "analitica": false,
+      "saldo_anterior": -5500,
+      "debitos": 0,
+      "creditos": 0,
+      "saldo_atual": -5500,
+      "grupo": "pl"
+    },
+    {
+      "codigo": "60",
+      "classificacao": "2.3.1.01",
+      "descricao": "CAPITAL SOCIAL",
+      "nivel": 4,
+      "analitica": true,
+      "saldo_anterior": -3300,
+      "debitos": 0,
+      "creditos": 0,
+      "saldo_atual": -3300,
+      "grupo": "pl"
+    },
+    {
+      "codigo": "61",
+      "classificacao": "2.3.2.01",
+      "descricao": "LUCROS ACUMULADOS",
+      "nivel": 4,
+      "analitica": true,
+      "saldo_anterior": -2200,
+      "debitos": 0,
+      "creditos": 0,
+      "saldo_atual": -2200,
+      "grupo": "pl"
+    },
+    {
+      "codigo": "12",
+      "classificacao": "3",
+      "descricao": "RECEITAS",
+      "nivel": 1,
+      "analitica": false,
+      "saldo_anterior": 0,
+      "debitos": 0,
+      "creditos": 6000,
+      "saldo_atual": -6000,
+      "grupo": "receita_bruta"
+    },
+    {
+      "codigo": "70",
+      "classificacao": "3.1.1.01",
+      "descricao": "RECEITA DE VENDAS DE MERCADORIAS",
+      "nivel": 4,
+      "analitica": true,
+      "saldo_anterior": 0,
+      "debitos": 0,
+      "creditos": 6000,
+      "saldo_atual": -6000,
+      "grupo": "receita_bruta"
+    },
+    {
+      "codigo": "71",
+      "classificacao": "3.1.2.01",
+      "descricao": "(-) SIMPLES NACIONAL",
+      "nivel": 4,
+      "analitica": true,
+      "saldo_anterior": 0,
+      "debitos": 300,
+      "creditos": 0,
+      "saldo_atual": 300,
+      "grupo": "deducoes"
+    },
+    {
+      "codigo": "13",
+      "classificacao": "4",
+      "descricao": "CUSTOS E DESPESAS",
+      "nivel": 1,
+      "analitica": false,
+      "saldo_anterior": 0,
+      "debitos": 3500,
+      "creditos": 0,
+      "saldo_atual": 3500,
+      "grupo": "custos"
+    },
+    {
+      "codigo": "80",
+      "classificacao": "4.1.1.01",
+      "descricao": "CUSTO DAS MERCADORIAS VENDIDAS",
+      "nivel": 4,
+      "analitica": true,
+      "saldo_anterior": 0,
+      "debitos": 2500,
+      "creditos": 0,
+      "saldo_atual": 2500,
+      "grupo": "custos"
+    },
+    {
+      "codigo": "90",
+      "classificacao": "4.2.1.01",
+      "descricao": "DESPESAS COM ALUGUEL",
+      "nivel": 4,
+      "analitica": true,
+      "saldo_anterior": 0,
+      "debitos": 1000,
+      "creditos": 0,
+      "saldo_atual": 1000,
+      "grupo": "despesas_operacionais"
+    }
+  ],
+  "resumo": {
+    "disponivel": 4200,
+    "clientes": 5000,
+    "estoques": 3000,
+    "ac_outros": 0,
+    "ac": 12200,
+    "rlp": 0,
+    "permanente": 0,
+    "anc": 0,
+    "ativo_total": 12200,
+    "fornecedores": 4000,
+    "pc_emprestimos": 0,
+    "pc_obrigacoes": 500,
+    "pc_outros": 0,
+    "pc": 4500,
+    "pnc_emprestimos": 0,
+    "pnc": 0,
+    "pl": 5500,
+    "resultado_exercicio": 2200,
+    "mes": {
+      "receita_bruta": 6000,
+      "deducoes": 300,
+      "receita_liquida": 5700,
+      "custos": 2500,
+      "lucro_bruto": 3200,
+      "despesas_operacionais": 1000,
+      "resultado_operacional": 2200,
+      "receitas_financeiras": 0,
+      "despesas_financeiras": 0,
+      "outras": 0,
+      "resultado_antes_ir": 2200,
+      "ir_csll": 0,
+      "lucro_liquido": 2200,
+      "despesas_por_conta": [
+        { "conta": "CUSTO DAS MERCADORIAS VENDIDAS", "valor": 2500 },
+        { "conta": "DESPESAS COM ALUGUEL", "valor": 1000 }
+      ]
+    },
+    "ano": {
+      "receita_bruta": 6000,
+      "deducoes": 300,
+      "receita_liquida": 5700,
+      "custos": 2500,
+      "lucro_bruto": 3200,
+      "despesas_operacionais": 1000,
+      "resultado_operacional": 2200,
+      "receitas_financeiras": 0,
+      "despesas_financeiras": 0,
+      "outras": 0,
+      "resultado_antes_ir": 2200,
+      "ir_csll": 0,
+      "lucro_liquido": 2200,
+      "despesas_por_conta": [
+        { "conta": "CUSTO DAS MERCADORIAS VENDIDAS", "valor": 2500 },
+        { "conta": "DESPESAS COM ALUGUEL", "valor": 1000 }
+      ]
+    },
+    "debitos": 22000,
+    "creditos": 22000
+  },
+  "indices": {
+    "liquidez_corrente": 2.7111111111111112,
+    "liquidez_seca": 2.0444444444444443,
+    "liquidez_imediata": 0.9333333333333333,
+    "liquidez_geral": 2.7111111111111112,
+    "capital_giro": 7700,
+    "endividamento_geral": 0.36885245901639346,
+    "composicao_endividamento": 1,
+    "margem_bruta": 0.5614035087719298,
+    "margem_operacional": 0.38596491228070173,
+    "margem_liquida": 0.38596491228070173,
+    "roe": 0.2857142857142857,
+    "pmr": 20,
+    "pmp": 39,
+    "pme": 51,
+    "pmv": 51,
+    "ciclo_operacional": 71,
+    "ciclo_financeiro": 32,
+    "carga_tributaria": 0.05
+  },
+  "conferencias": [
+    { "nome": "Balancete fechado (débitos = créditos)", "ok": true, "detalhe": "ok" },
+    { "nome": "Ativo = passivo + PL + resultado do ano", "ok": true, "detalhe": "ok" },
+    { "nome": "Competência identificada", "ok": true, "detalhe": "09/2026" },
+    { "nome": "Todas as contas com grupo gerencial", "ok": true, "detalhe": "ok" }
+  ],
+  "alertas": [],
+  "demonstracoes": {
+    "periodo": { "inicio": "2026-09-01", "fim": "2026-09-30", "dias": 30 },
+    "balanco": {
+      "ativo": [
+        { "classificacao": "1", "rotulo": "ATIVO", "nivel": 1, "atual": 12200, "anterior": 9500 },
+        { "classificacao": "1.1", "rotulo": "ATIVO CIRCULANTE", "nivel": 2, "atual": 12200, "anterior": 9500 },
+        { "classificacao": "1.1.1", "rotulo": "DISPONIVEL", "nivel": 3, "atual": 4200, "anterior": 1000 },
+        { "classificacao": "1.1.2", "rotulo": "CLIENTES", "nivel": 3, "atual": 5000, "anterior": 3000 },
+        { "classificacao": "1.1.3", "rotulo": "ESTOQUES", "nivel": 3, "atual": 3000, "anterior": 5500 }
+      ],
+      "passivo": [
+        { "classificacao": "2", "rotulo": "PASSIVO", "nivel": 1, "atual": 10000, "anterior": 9500 },
+        { "classificacao": "2.1", "rotulo": "PASSIVO CIRCULANTE", "nivel": 2, "atual": 4500, "anterior": 4000 },
+        { "classificacao": "2.1.1", "rotulo": "FORNECEDORES", "nivel": 3, "atual": 4000, "anterior": 3700 },
+        { "classificacao": "2.1.2", "rotulo": "OBRIGACOES FISCAIS", "nivel": 3, "atual": 500, "anterior": 300 },
+        { "classificacao": "2.3", "rotulo": "PATRIMONIO LIQUIDO", "nivel": 2, "atual": 5500, "anterior": 5500 },
+        {
+          "classificacao": "",
+          "rotulo": "Resultado do exercício em curso (lucro ou prejuízo ainda não encerrado)",
+          "nivel": 2,
+          "atual": 2200,
+          "anterior": 0
+        }
+      ],
+      "total_ativo": { "atual": 12200, "anterior": 9500 },
+      "total_passivo": { "atual": 12200, "anterior": 9500 }
+    },
+    "dfc": {
+      "operacional": [
+        { "chave": "lucro", "rotulo": "Lucro (prejuízo) líquido do período", "valor": 2200 },
+        { "chave": "clientes", "rotulo": "Clientes a receber — (aumento) ou redução", "valor": -2000 },
+        { "chave": "estoques", "rotulo": "Estoques — (aumento) ou redução", "valor": 2500 },
+        { "chave": "fornecedores", "rotulo": "Fornecedores — aumento ou (redução)", "valor": 300 },
+        { "chave": "obrigacoes", "rotulo": "Impostos, salários e encargos a pagar", "valor": 200 }
+      ],
+      "investimento": [],
+      "financiamento": [],
+      "fco": 3200,
+      "fci": 0,
+      "fcf": 0,
+      "caixa_inicial": 1000,
+      "caixa_final": 4200,
+      "variacao": 3200,
+      "depreciacao": 0,
+      "fechado": true
+    },
+    "cruzamento": {
+      "lucro": 2200,
+      "ebitda": 2200,
+      "fco": 3200,
+      "conversao": 1.4545454545454546,
+      "capital_giro": 1000,
+      "comentarios": [
+        {
+          "tom": "positivo",
+          "titulo": "O lucro virou dinheiro",
+          "texto": "A empresa teve lucro de R$ 2.200 e a operação colocou R$ 3.200 no caixa. Cada R$ 100 de lucro trouxeram cerca de R$ 145 de dinheiro."
+        },
+        {
+          "tom": "positivo",
+          "titulo": "O giro do negócio liberou R$ 1.000",
+          "texto": "o estoque diminuiu (vendeu mais do que comprou) (+R$ 2.500); as vendas a prazo ainda não recebidas aumentaram (−R$ 2.000)."
+        },
+        {
+          "tom": "neutro",
+          "titulo": "Geração operacional (EBITDA): R$ 2.200",
+          "texto": "É o resultado da operação antes de juros, impostos sobre o lucro e depreciação — 38,6% da receita líquida. Mostra quanto o negócio gera só com a atividade principal."
+        },
+        {
+          "tom": "positivo",
+          "titulo": "O caixa aumentou R$ 3.200",
+          "texto": "Começou o período com R$ 1.000 em caixa, bancos e aplicações e terminou com R$ 4.200."
+        }
+      ]
+    },
+    "saude": {
+      "nota": 91,
+      "faixa": "Saudável",
+      "pilares": [
+        {
+          "id": "liquidez",
+          "nome": "Pagar as contas em dia",
+          "status": "bom",
+          "nota": 100,
+          "frase": "Para cada R$ 1,00 que vence em até 12 meses, a empresa tem R$ 2,71 em caixa e a receber."
+        },
+        {
+          "id": "endividamento",
+          "nome": "Dívidas sob controle",
+          "status": "bom",
+          "nota": 100,
+          "frase": "36,9% do que a empresa tem é financiado por terceiros (bancos, fornecedores, governo)."
+        },
+        {
+          "id": "rentabilidade",
+          "nome": "Dar lucro",
+          "status": "bom",
+          "nota": 100,
+          "frase": "De cada R$ 100 vendidos, sobram R$ 37 de lucro."
+        },
+        { "id": "caixa", "nome": "Gerar caixa", "status": "bom", "nota": 100, "frase": "A operação colocou R$ 3.200 no caixa no período." },
+        {
+          "id": "ciclo",
+          "nome": "Receber antes de pagar",
+          "status": "atencao",
+          "nota": 55,
+          "frase": "A empresa precisa bancar 32 dias entre pagar e receber."
+        }
+      ]
+    }
+  }
+}
