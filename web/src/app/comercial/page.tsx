@@ -38,7 +38,11 @@ function Funil() {
   const podeOperar = pode("comercial", "operar");
 
   const carregar = useCallback(async () => {
-    const { data, error } = await supabase().from("crm_oportunidades").select("*").eq("org_id", org.id).order("atualizado_em", { ascending: false });
+    const { data, error } = await supabase()
+      .from("crm_oportunidades")
+      .select("*")
+      .eq("org_id", org.id)
+      .order("atualizado_em", { ascending: false });
     if (error) return setErro(traduzirErro(error));
     setLista((data as Oportunidade[]) ?? []);
   }, [org.id]);
@@ -59,7 +63,8 @@ function Funil() {
     return (lista ?? []).filter(
       (o) =>
         !!o.arquivado_em === verArquivados &&
-        (!q || `${o.empresa} ${o.razao_social ?? ""} ${o.contato_nome ?? ""} ${o.cnpj ?? ""} ${o.cidade ?? ""}`.toLowerCase().includes(q)) &&
+        (!q ||
+          `${o.empresa} ${o.razao_social ?? ""} ${o.contato_nome ?? ""} ${o.cnpj ?? ""} ${o.cidade ?? ""}`.toLowerCase().includes(q)) &&
         (!origem || o.origem === origem) &&
         (!resp || (resp === "sem" ? !o.responsavel_id : o.responsavel_id === resp)),
     );
@@ -105,12 +110,19 @@ function Funil() {
     if (!ids.length) return;
     const { data, error } = await supabase().rpc("crm_arquivar", { p_ids: ids, p_motivo: motivo, p_arquivar: arquivarSim });
     if (error) return setErro(traduzirErro(error));
-    setAviso(arquivarSim ? `${data} oportunidade(s) arquivada(s). Ficam em "Arquivados" e podem ser restauradas.` : `${data} oportunidade(s) de volta ao funil.`);
+    setAviso(
+      arquivarSim
+        ? `${data} oportunidade(s) arquivada(s). Ficam em "Arquivados" e podem ser restauradas.`
+        : `${data} oportunidade(s) de volta ao funil.`,
+    );
     carregar();
   }
 
   async function excluir(o: Oportunidade) {
-    if (!confirm(`Excluir ${o.empresa} de vez? Atividades e contratos em rascunho também são apagados. Para só tirar do funil, use Arquivar.`)) return;
+    if (
+      !confirm(`Excluir ${o.empresa} de vez? Atividades e contratos em rascunho também são apagados. Para só tirar do funil, use Arquivar.`)
+    )
+      return;
     const { error } = await supabase().from("crm_oportunidades").delete().eq("id", o.id);
     if (error) return setErro(traduzirErro(error));
     setAviso(`${o.empresa} excluída.`);
@@ -149,13 +161,20 @@ function Funil() {
         ].map((k) => (
           <div key={k.r} className="cartao p-3">
             <div className="text-xs text-neutral-500">{k.r}</div>
-            <div className={`mt-1 text-xl font-semibold tabular-nums ${k.alerta ? "text-[var(--perigo)]" : "text-[var(--marca)]"}`}>{k.v}</div>
+            <div className={`mt-1 text-xl font-semibold tabular-nums ${k.alerta ? "text-[var(--perigo)]" : "text-[var(--marca)]"}`}>
+              {k.v}
+            </div>
           </div>
         ))}
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
-        <input className="entrada w-64" placeholder="Buscar empresa, contato, CNPJ, cidade…" value={busca} onChange={(e) => setBusca(e.target.value)} />
+        <input
+          className="entrada w-64"
+          placeholder="Buscar empresa, contato, CNPJ, cidade…"
+          value={busca}
+          onChange={(e) => setBusca(e.target.value)}
+        />
         <select className="entrada" value={origem} onChange={(e) => setOrigem(e.target.value)}>
           <option value="">Todas as origens</option>
           {ORIGENS.map((o) => (
@@ -168,18 +187,23 @@ function Funil() {
           <option value="">Todos os responsáveis</option>
           <option value={eu.user_id}>Meus</option>
           <option value="sem">Sem responsável</option>
-          {membros.filter((m) => m.ativo).map((m) => (
-            <option key={m.user_id} value={m.user_id}>
-              {m.nome}
-            </option>
-          ))}
+          {membros
+            .filter((m) => m.ativo)
+            .map((m) => (
+              <option key={m.user_id} value={m.user_id}>
+                {m.nome}
+              </option>
+            ))}
         </select>
         {!verArquivados && (
           <label className="ml-auto flex items-center gap-2 text-sm text-neutral-600">
             <input type="checkbox" checked={verFechados} onChange={(e) => setVerFechados(e.target.checked)} /> Mostrar ganhos e perdidos
           </label>
         )}
-        <button className={`btn ${verArquivados ? "!border-[var(--marca)] !bg-[var(--marca)] !text-white" : ""} ${verArquivados ? "ml-auto" : ""}`} onClick={() => setVerArquivados((x) => !x)}>
+        <button
+          className={`btn ${verArquivados ? "!border-[var(--marca)] !bg-[var(--marca)] !text-white" : ""} ${verArquivados ? "ml-auto" : ""}`}
+          onClick={() => setVerArquivados((x) => !x)}
+        >
           {verArquivados ? "Voltar ao funil" : `Arquivados (${nArquivados})`}
         </button>
       </div>
@@ -214,11 +238,15 @@ function Funil() {
                     <button className="text-left font-medium hover:underline" onClick={() => router.push(`/comercial/${o.id}`)}>
                       {o.empresa}
                     </button>
-                    <div className="text-xs text-neutral-500">{[o.contato_nome, ORIGENS.find((x) => x.id === o.origem)?.nome].filter(Boolean).join(" · ")}</div>
+                    <div className="text-xs text-neutral-500">
+                      {[o.contato_nome, ORIGENS.find((x) => x.id === o.origem)?.nome].filter(Boolean).join(" · ")}
+                    </div>
                   </td>
                   <td>{ETAPAS.find((x) => x.id === o.etapa)?.nome}</td>
                   <td className="text-sm text-neutral-600">{o.motivo_arquivo || o.motivo_perda || "—"}</td>
-                  <td className="whitespace-nowrap text-sm text-neutral-600">{o.arquivado_em ? new Date(o.arquivado_em).toLocaleDateString("pt-BR") : ""}</td>
+                  <td className="whitespace-nowrap text-sm text-neutral-600">
+                    {o.arquivado_em ? new Date(o.arquivado_em).toLocaleDateString("pt-BR") : ""}
+                  </td>
                   <td className="whitespace-nowrap text-right">
                     {podeOperar && (
                       <button className="btn-link mr-3" onClick={() => arquivar([o.id], null, false)}>
@@ -284,7 +312,10 @@ function Funil() {
                           {podeOperar && (
                             <MenuCartao
                               aoArquivar={() => {
-                                const m = prompt(`Arquivar ${o.empresa}? Motivo (opcional): sem retorno, sem interesse, duplicado…`, "Sem retorno");
+                                const m = prompt(
+                                  `Arquivar ${o.empresa}? Motivo (opcional): sem retorno, sem interesse, duplicado…`,
+                                  "Sem retorno",
+                                );
                                 if (m !== null) arquivar([o.id], m);
                               }}
                               aoExcluir={podeGerir && !o.cliente_id ? () => excluir(o) : undefined}
@@ -295,15 +326,29 @@ function Funil() {
                           {[o.contato_nome, o.cidade && `${o.cidade}${o.uf ? `/${o.uf}` : ""}`].filter(Boolean).join(" · ")}
                         </div>
                         <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[11px]">
-                          <span className="chip bg-[var(--fundo)] text-neutral-700">{ORIGENS.find((x) => x.id === o.origem)?.nome ?? o.origem}</span>
+                          <span className="chip bg-[var(--fundo)] text-neutral-700">
+                            {ORIGENS.find((x) => x.id === o.origem)?.nome ?? o.origem}
+                          </span>
                           {o.valor_mensal ? <span className="chip bg-emerald-50 text-emerald-800">{brl(o.valor_mensal)}/mês</span> : null}
-                          {o.origem === "simulador" && typeof o.dados_origem?.economia_estimada === "number" && (o.dados_origem.economia_estimada as number) > 0 && (
-                            <span className="chip bg-amber-50 text-amber-900">economia {brl(o.dados_origem.economia_estimada as number)}</span>
-                          )}
+                          {o.origem === "simulador" &&
+                            typeof o.dados_origem?.economia_estimada === "number" &&
+                            (o.dados_origem.economia_estimada as number) > 0 && (
+                              <span className="chip bg-amber-50 text-amber-900">
+                                economia {brl(o.dados_origem.economia_estimada as number)}
+                              </span>
+                            )}
                         </div>
                         <div className="mt-2 flex items-center justify-between text-[11px] text-neutral-500">
                           <span>{nomeMembro(o.responsavel_id)}</span>
-                          <span className={atrasado ? "font-medium text-[var(--perigo)]" : parado > 7 && !["ganho", "perdido"].includes(o.etapa) ? "text-amber-700" : ""}>
+                          <span
+                            className={
+                              atrasado
+                                ? "font-medium text-[var(--perigo)]"
+                                : parado > 7 && !["ganho", "perdido"].includes(o.etapa)
+                                  ? "text-amber-700"
+                                  : ""
+                            }
+                          >
                             {atrasado ? `retorno ${o.proximo_contato!.split("-").reverse().join("/")}` : `${parado}d na etapa`}
                           </span>
                         </div>
@@ -348,7 +393,17 @@ function Funil() {
 
 function NovaOportunidade({ aoFechar, aoCriar }: { aoFechar: () => void; aoCriar: (id: string) => void }) {
   const { org, eu } = useOrg();
-  const [f, setF] = useState({ empresa: "", contato_nome: "", whatsapp: "", email: "", cnpj: "", cidade: "", uf: "SP", origem: "indicacao", valor_mensal: "" });
+  const [f, setF] = useState({
+    empresa: "",
+    contato_nome: "",
+    whatsapp: "",
+    email: "",
+    cnpj: "",
+    cidade: "",
+    uf: "SP",
+    origem: "indicacao",
+    valor_mensal: "",
+  });
   const [erro, setErro] = useState<string | null>(null);
   const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setF({ ...f, [k]: e.target.value });
 
@@ -432,7 +487,10 @@ function NovaOportunidade({ aoFechar, aoCriar }: { aoFechar: () => void; aoCriar
           <button className="btn-primario">Criar</button>
         </div>
         <p className="text-xs text-neutral-500">
-          Leads do Simulador de Regime entram sozinhos no funil. <Link href="/comercial/modelo" className="underline">Modelo de contrato</Link>
+          Leads do Simulador de Regime entram sozinhos no funil.{" "}
+          <Link href="/comercial/modelo" className="underline">
+            Modelo de contrato
+          </Link>
         </p>
       </form>
     </div>
@@ -482,26 +540,42 @@ function LimparFunil({
   const [dias, setDias] = useState(30);
   const [etapas, setEtapas] = useState<Etapa[]>(["novo", "contato"]);
   const alvo = lista.filter(
-    (o) =>
-      (perdidos && o.etapa === "perdido") ||
-      (parados && etapas.includes(o.etapa) && diasDesde(o.etapa_desde) >= dias),
+    (o) => (perdidos && o.etapa === "perdido") || (parados && etapas.includes(o.etapa) && diasDesde(o.etapa_desde) >= dias),
   );
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4" onClick={aoFechar}>
       <div onClick={(e) => e.stopPropagation()} className="cartao w-full max-w-lg space-y-4 p-5">
         <div>
           <h2 className="text-lg font-semibold text-[var(--marca)]">Limpar funil</h2>
-          <p className="text-sm text-neutral-600">Arquiva de uma vez o que não vai para frente. Nada é apagado: fica em Arquivados e pode ser restaurado.</p>
+          <p className="text-sm text-neutral-600">
+            Arquiva de uma vez o que não vai para frente. Nada é apagado: fica em Arquivados e pode ser restaurado.
+          </p>
         </div>
         <label className="flex items-center gap-2 text-sm">
-          <input type="checkbox" className="h-4 w-4 accent-[var(--marca)]" checked={perdidos} onChange={(e) => setPerdidos(e.target.checked)} />
+          <input
+            type="checkbox"
+            className="h-4 w-4 accent-[var(--marca)]"
+            checked={perdidos}
+            onChange={(e) => setPerdidos(e.target.checked)}
+          />
           Oportunidades marcadas como perdidas
         </label>
         <div className="space-y-2">
           <label className="flex flex-wrap items-center gap-2 text-sm">
-            <input type="checkbox" className="h-4 w-4 accent-[var(--marca)]" checked={parados} onChange={(e) => setParados(e.target.checked)} />
+            <input
+              type="checkbox"
+              className="h-4 w-4 accent-[var(--marca)]"
+              checked={parados}
+              onChange={(e) => setParados(e.target.checked)}
+            />
             Paradas há pelo menos
-            <input type="number" min={1} className="entrada !min-h-8 w-20" value={dias} onChange={(e) => setDias(Math.max(1, Number(e.target.value)))} />
+            <input
+              type="number"
+              min={1}
+              className="entrada !min-h-8 w-20"
+              value={dias}
+              onChange={(e) => setDias(Math.max(1, Number(e.target.value)))}
+            />
             dias sem mudar de etapa em:
           </label>
           <div className="flex flex-wrap gap-3 pl-6 text-sm">
@@ -539,7 +613,12 @@ function LimparFunil({
           <button
             className="btn-primario"
             disabled={!alvo.length}
-            onClick={() => aoConfirmar(alvo.map((o) => o.id), perdidos && !parados ? "Perdido" : "Sem avanço no funil")}
+            onClick={() =>
+              aoConfirmar(
+                alvo.map((o) => o.id),
+                perdidos && !parados ? "Perdido" : "Sem avanço no funil",
+              )
+            }
           >
             Arquivar {alvo.length}
           </button>

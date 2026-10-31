@@ -69,7 +69,12 @@ function AcessosPortal() {
   async function convidar(e: React.FormEvent) {
     e.preventDefault();
     setErro(null);
-    const { data, error } = await supabase().rpc("portal_convidar", { p_cliente: cliente, p_email: email, p_nome: nome, p_permissoes: perms });
+    const { data, error } = await supabase().rpc("portal_convidar", {
+      p_cliente: cliente,
+      p_email: email,
+      p_nome: nome,
+      p_permissoes: perms,
+    });
     if (error) return setErro(traduzirErro(error));
     if (data === "convite") {
       const r = await enviarConvite(email, nome);
@@ -100,8 +105,8 @@ function AcessosPortal() {
       <div>
         <h1 className="text-xl font-semibold text-[var(--marca)]">Acessos ao Portal do Cliente</h1>
         <p className="text-sm text-neutral-600">
-          Cada pessoa do cliente (sócio, financeiro, RH) entra com o próprio e-mail e vê só as empresas e as áreas liberadas aqui. Um grupo de
-          empresas pode ter a mesma pessoa em várias delas. Cliente inativado perde o acesso depois do mês de saída.
+          Cada pessoa do cliente (sócio, financeiro, RH) entra com o próprio e-mail e vê só as empresas e as áreas liberadas aqui. Um grupo
+          de empresas pode ter a mesma pessoa em várias delas. Cliente inativado perde o acesso depois do mês de saída.
         </p>
       </div>
       {erro && <p className="rounded-md bg-red-50 p-3 text-sm text-red-800">{erro}</p>}
@@ -112,12 +117,14 @@ function AcessosPortal() {
           <span>Empresa</span>
           <select required value={cliente} onChange={(e) => setCliente(e.target.value)}>
             <option value="">Escolha…</option>
-            {clientes.filter((c) => c.ativo).map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.codigo_dominio ? `${c.codigo_dominio} · ` : ""}
-                {c.nome_fantasia || c.razao_social}
-              </option>
-            ))}
+            {clientes
+              .filter((c) => c.ativo)
+              .map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.codigo_dominio ? `${c.codigo_dominio} · ` : ""}
+                  {c.nome_fantasia || c.razao_social}
+                </option>
+              ))}
           </select>
         </label>
         <label className="campo">
@@ -131,7 +138,11 @@ function AcessosPortal() {
         <fieldset className="flex flex-wrap gap-x-4 gap-y-1 text-sm md:col-span-3">
           {PERMISSOES.map((p) => (
             <label key={p.id} className="flex items-center gap-1.5">
-              <input type="checkbox" checked={perms.includes(p.id)} onChange={(e) => setPerms((x) => (e.target.checked ? [...x, p.id] : x.filter((y) => y !== p.id)))} />
+              <input
+                type="checkbox"
+                checked={perms.includes(p.id)}
+                onChange={(e) => setPerms((x) => (e.target.checked ? [...x, p.id] : x.filter((y) => y !== p.id)))}
+              />
               {p.nome}
             </label>
           ))}
@@ -166,7 +177,9 @@ function AcessosPortal() {
                         <input
                           type="checkbox"
                           checked={u.permissoes.includes(p.id)}
-                          onChange={(e) => alterar(u, { permissoes: e.target.checked ? [...u.permissoes, p.id] : u.permissoes.filter((x) => x !== p.id) })}
+                          onChange={(e) =>
+                            alterar(u, { permissoes: e.target.checked ? [...u.permissoes, p.id] : u.permissoes.filter((x) => x !== p.id) })
+                          }
                         />
                         {p.nome}
                       </label>
@@ -174,7 +187,11 @@ function AcessosPortal() {
                   </div>
                 </td>
                 <td>
-                  <button className={`chip ${u.ativo ? "bg-emerald-50 text-emerald-800" : "bg-neutral-100 text-neutral-500"}`} onClick={() => alterar(u, { ativo: !u.ativo })} title="Clique para alternar">
+                  <button
+                    className={`chip ${u.ativo ? "bg-emerald-50 text-emerald-800" : "bg-neutral-100 text-neutral-500"}`}
+                    onClick={() => alterar(u, { ativo: !u.ativo })}
+                    title="Clique para alternar"
+                  >
                     {u.ativo ? "Ativo" : "Bloqueado"}
                   </button>
                 </td>

@@ -1,11 +1,25 @@
 // Leitura e normalização de planilhas de clientes (relatório de empresas do Domínio, Excel ou CSV).
 
 export type Campo =
-  | "codigo_dominio" | "razao_social" | "nome_fantasia" | "cnpj"
-  | "regime" | "cidade" | "uf" | "situacao" | "inativo_em" | "motivo_inativacao" | "cliente_desde" | "inicio_em";
+  | "codigo_dominio"
+  | "razao_social"
+  | "nome_fantasia"
+  | "cnpj"
+  | "regime"
+  | "cidade"
+  | "uf"
+  | "situacao"
+  | "inativo_em"
+  | "motivo_inativacao"
+  | "cliente_desde"
+  | "inicio_em";
 
 export const CAMPOS: { id: Campo; nome: string; obrigatorio?: boolean; dica: string }[] = [
-  { id: "codigo_dominio", nome: "Código no Domínio", dica: "Número da empresa no Domínio. Garante que a próxima importação atualize em vez de duplicar." },
+  {
+    id: "codigo_dominio",
+    nome: "Código no Domínio",
+    dica: "Número da empresa no Domínio. Garante que a próxima importação atualize em vez de duplicar.",
+  },
   { id: "razao_social", nome: "Razão social", obrigatorio: true, dica: "Nome da empresa." },
   { id: "nome_fantasia", nome: "Nome curto / apelido", dica: "Aparece na TV e na lista de tarefas." },
   { id: "cnpj", nome: "CNPJ / CPF", dica: "Com ou sem pontuação." },
@@ -21,11 +35,46 @@ export const CAMPOS: { id: Campo; nome: string; obrigatorio?: boolean; dica: str
 
 // Nomes de coluna aceitos para cada campo (comparados sem acento, minúsculos, sem pontuação).
 const SINONIMOS: Record<Campo, string[]> = {
-  codigo_dominio: ["codigo dominio", "codigo", "cod", "cod empresa", "codigo empresa", "codigo da empresa", "codi emp", "n empresa", "numero empresa", "empresa n", "nro", "id empresa"],
+  codigo_dominio: [
+    "codigo dominio",
+    "codigo",
+    "cod",
+    "cod empresa",
+    "codigo empresa",
+    "codigo da empresa",
+    "codi emp",
+    "n empresa",
+    "numero empresa",
+    "empresa n",
+    "nro",
+    "id empresa",
+  ],
   razao_social: ["razao social", "razao", "nome empresarial", "nome da empresa", "nome empresa", "nome emp", "empresa", "nome", "cliente"],
   nome_fantasia: ["apelido", "apel emp", "nome curto", "nome reduzido", "abreviado", "nome fantasia", "fantasia"],
-  cnpj: ["cnpj cpf", "cpf cnpj", "cnpj", "cpf", "cgc", "cgce emp", "inscricao federal", "inscricao", "documento", "cnpj cei cpf", "cnpj cpf cei"],
-  regime: ["regime de tributacao", "regime tributario", "regime federal", "regime", "tributacao", "forma de tributacao", "tipo de tributacao", "enquadramento", "regime de apuracao"],
+  cnpj: [
+    "cnpj cpf",
+    "cpf cnpj",
+    "cnpj",
+    "cpf",
+    "cgc",
+    "cgce emp",
+    "inscricao federal",
+    "inscricao",
+    "documento",
+    "cnpj cei cpf",
+    "cnpj cpf cei",
+  ],
+  regime: [
+    "regime de tributacao",
+    "regime tributario",
+    "regime federal",
+    "regime",
+    "tributacao",
+    "forma de tributacao",
+    "tipo de tributacao",
+    "enquadramento",
+    "regime de apuracao",
+  ],
   cidade: ["cidade", "municipio", "nome municipio"],
   uf: ["uf", "estado", "sigla uf"],
   situacao: ["situacao", "status", "ativa", "ativo", "situacao empresa", "stat emp"],
@@ -37,8 +86,11 @@ const SINONIMOS: Record<Campo, string[]> = {
 
 export function normalizar(t: unknown): string {
   return String(t ?? "")
-    .normalize("NFD").replace(/[̀-ͯ]/g, "")
-    .toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
 }
 
 /**
@@ -62,11 +114,16 @@ export function fichasParaTabela(linhas: string[][]): string[][] | null {
         const v = String(l[j] ?? "").trim();
         if (!v) continue;
         if (ehRotulo(v)) break;
-        valor = v; break;
+        valor = v;
+        break;
       }
-      if (normalizar(chave) === "codigo") { cur = {}; regs.push(cur); }
+      if (normalizar(chave) === "codigo") {
+        cur = {};
+        regs.push(cur);
+      }
       if (!cur) continue;
-      if (normalizar(chave) === "data" && cur["Duração do contrato"] !== undefined && cur["Data do contrato"] === undefined) chave = "Data do contrato";
+      if (normalizar(chave) === "data" && cur["Duração do contrato"] !== undefined && cur["Data do contrato"] === undefined)
+        chave = "Data do contrato";
       if (cur[chave] !== undefined) continue;
       cur[chave] = valor;
       if (!ordem.includes(chave)) ordem.push(chave);
@@ -98,7 +155,11 @@ function mapear(cab: string[]): Partial<Record<Campo, number>> {
       if (mapa[campo] !== undefined) continue;
       for (const s of SINONIMOS[campo]) {
         const idx = norm.findIndex((h, j) => !usadas.has(j) && h && (modo === "exato" ? h === s : h.includes(s) && s.length >= 4));
-        if (idx >= 0) { mapa[campo] = idx; usadas.add(idx); break; }
+        if (idx >= 0) {
+          mapa[campo] = idx;
+          usadas.add(idx);
+          break;
+        }
       }
     }
   }

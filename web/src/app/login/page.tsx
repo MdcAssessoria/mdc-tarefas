@@ -28,7 +28,8 @@ export default function Login() {
   useEffect(() => {
     const q = new URLSearchParams(window.location.search);
     const hash = window.location.hash;
-    const pedido: Modo | null = q.get("convite") || /type=invite/.test(hash) ? "convite" : q.get("redefinir") || /type=recovery/.test(hash) ? "nova" : null;
+    const pedido: Modo | null =
+      q.get("convite") || /type=invite/.test(hash) ? "convite" : q.get("redefinir") || /type=recovery/.test(hash) ? "nova" : null;
     if (!pedido) return;
     setModo(pedido);
     // o link do e-mail abre a sessão; sem ela o link expirou ou já foi usado
@@ -90,11 +91,7 @@ export default function Login() {
       {/* capa */}
       <div className="relative flex flex-col items-center justify-center overflow-hidden bg-[var(--marca)] px-8 py-12 text-[#C6D3CC] lg:py-0">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(226,193,126,0.14),transparent_62%)]" />
-        <img
-          src={caminho("/logo-mdc-dourado.png")}
-          alt="MDC Assessoria"
-          className="relative w-56 max-w-[70vw] sm:w-72 lg:w-[26rem]"
-        />
+        <img src={caminho("/logo-mdc-dourado.png")} alt="MDC Assessoria" className="relative w-56 max-w-[70vw] sm:w-72 lg:w-[26rem]" />
         <div className="relative mt-8 h-px w-40 bg-gradient-to-r from-transparent via-[var(--destaque)] to-transparent lg:mt-10" />
         <p className="relative mt-6 text-center text-xs uppercase tracking-[0.3em] text-[var(--destaque)] sm:text-sm">
           Contábil · Tributária · Gestão Financeira
@@ -123,7 +120,8 @@ export default function Login() {
           )}
           {definindoSenha && semSessao && (
             <p className="rounded-md bg-amber-50 p-3 text-sm text-amber-900">
-              Este link expirou ou já foi usado. {modo === "convite" ? "Peça ao administrador para reenviar o convite" : "Peça um novo link em “Esqueci a senha”"}.
+              Este link expirou ou já foi usado.{" "}
+              {modo === "convite" ? "Peça ao administrador para reenviar o convite" : "Peça um novo link em “Esqueci a senha”"}.
             </p>
           )}
           {!definindoSenha && (
@@ -148,12 +146,21 @@ export default function Login() {
           {definindoSenha && (
             <label className="campo">
               <span>Repita a senha</span>
-              <input type="password" required minLength={8} autoComplete="new-password" value={confirma} onChange={(e) => setConfirma(e.target.value)} />
+              <input
+                type="password"
+                required
+                minLength={8}
+                autoComplete="new-password"
+                value={confirma}
+                onChange={(e) => setConfirma(e.target.value)}
+              />
             </label>
           )}
           {msg && <p className={`text-sm ${msg.tipo === "erro" ? "text-[var(--perigo)]" : "text-[var(--sucesso)]"}`}>{msg.texto}</p>}
           <button className="btn-primario w-full" disabled={enviando || !supabaseConfigurado || (definindoSenha && semSessao)}>
-            {enviando ? "Aguarde…" : { entrar: "Entrar", recuperar: "Enviar link", nova: "Salvar senha", convite: "Criar senha e entrar" }[modo]}
+            {enviando
+              ? "Aguarde…"
+              : { entrar: "Entrar", recuperar: "Enviar link", nova: "Salvar senha", convite: "Criar senha e entrar" }[modo]}
           </button>
           <div className="flex justify-between text-sm">
             {modo !== "entrar" ? (

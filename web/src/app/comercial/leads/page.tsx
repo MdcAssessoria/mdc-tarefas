@@ -19,7 +19,7 @@ export default function PaginaLeads() {
 }
 
 const REGIME: Record<string, string> = { simples: "Simples", presumido: "Presumido", real: "Real", mei: "MEI" };
-const nomeRegime = (r: unknown) => (typeof r === "string" ? REGIME[r.toLowerCase()] ?? r : "—");
+const nomeRegime = (r: unknown) => (typeof r === "string" ? (REGIME[r.toLowerCase()] ?? r) : "—");
 const num = (v: unknown) => (typeof v === "number" ? v : typeof v === "string" && v.trim() !== "" && !isNaN(Number(v)) ? Number(v) : null);
 const dataBr = (iso: string) => new Date(iso).toLocaleDateString("pt-BR");
 
@@ -41,7 +41,12 @@ function Leads() {
   const podeGerir = pode("comercial", "gerir");
 
   const carregar = useCallback(async () => {
-    const { data, error } = await supabase().from("crm_oportunidades").select("*").eq("org_id", org.id).order("criado_em", { ascending: false }).limit(2000);
+    const { data, error } = await supabase()
+      .from("crm_oportunidades")
+      .select("*")
+      .eq("org_id", org.id)
+      .order("criado_em", { ascending: false })
+      .limit(2000);
     if (error) return setErro(traduzirErro(error));
     setLista((data as Oportunidade[]) ?? []);
   }, [org.id]);
@@ -94,7 +99,13 @@ function Leads() {
     const alvo = (lista ?? []).filter((o) => ids.includes(o.id) && !o.cliente_id);
     if (!alvo.length) return setErro("Leads que viraram cliente não podem ser excluídos; arquive-os.");
     if (!confirm(`Excluir ${alvo.length} lead(s) de vez? As atividades registradas também são apagadas.`)) return;
-    const { error } = await supabase().from("crm_oportunidades").delete().in("id", alvo.map((o) => o.id));
+    const { error } = await supabase()
+      .from("crm_oportunidades")
+      .delete()
+      .in(
+        "id",
+        alvo.map((o) => o.id),
+      );
     if (error) return setErro(traduzirErro(error));
     setSel(new Set());
     setAviso(`${alvo.length} lead(s) excluído(s).`);
@@ -149,7 +160,9 @@ function Leads() {
       <div className="flex flex-wrap items-end gap-3">
         <div className="mr-auto">
           <h1 className="text-xl font-semibold text-[var(--marca)]">Leads</h1>
-          <p className="text-sm text-neutral-600">Quem chegou pelo Simulador de Regime e pelos demais canais. Cada lead já entra no funil como “Novo lead”.</p>
+          <p className="text-sm text-neutral-600">
+            Quem chegou pelo Simulador de Regime e pelos demais canais. Cada lead já entra no funil como “Novo lead”.
+          </p>
         </div>
         <button className="btn" onClick={exportar} disabled={!filtrada.length}>
           Exportar Excel
@@ -172,7 +185,12 @@ function Leads() {
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
-        <input className="entrada w-64" placeholder="Empresa, CNPJ, contato, atividade…" value={busca} onChange={(e) => setBusca(e.target.value)} />
+        <input
+          className="entrada w-64"
+          placeholder="Empresa, CNPJ, contato, atividade…"
+          value={busca}
+          onChange={(e) => setBusca(e.target.value)}
+        />
         <select className="entrada" value={origem} onChange={(e) => setOrigem(e.target.value)} aria-label="Origem">
           <option value="">Todas as origens</option>
           {ORIGENS.map((o) => (
@@ -195,7 +213,11 @@ function Leads() {
         </label>
         <div className="ml-auto flex overflow-hidden rounded-lg border border-[var(--borda)] text-sm">
           {(["ativos", "arquivados", "todos"] as Situacao[]).map((s) => (
-            <button key={s} onClick={() => setSituacao(s)} className={`px-3 py-1.5 ${situacao === s ? "bg-[var(--marca)] text-white" : "bg-white"}`}>
+            <button
+              key={s}
+              onClick={() => setSituacao(s)}
+              className={`px-3 py-1.5 ${situacao === s ? "bg-[var(--marca)] text-white" : "bg-white"}`}
+            >
               {s === "ativos" ? "No funil" : s === "arquivados" ? "Arquivados" : "Todos"}
             </button>
           ))}
@@ -270,7 +292,11 @@ function Leads() {
               const econ = num(d.economia_estimada);
               const zap = (o.whatsapp ?? "").replace(/\D/g, "");
               return (
-                <tr key={o.id} className={`cursor-pointer hover:bg-[var(--fundo)] ${o.arquivado_em ? "opacity-60" : ""}`} onClick={() => router.push(`/comercial/${o.id}`)}>
+                <tr
+                  key={o.id}
+                  className={`cursor-pointer hover:bg-[var(--fundo)] ${o.arquivado_em ? "opacity-60" : ""}`}
+                  onClick={() => router.push(`/comercial/${o.id}`)}
+                >
                   <td onClick={(e) => e.stopPropagation()}>
                     <input
                       type="checkbox"
@@ -298,7 +324,12 @@ function Leads() {
                     <div>{o.contato_nome ?? "—"}</div>
                     <div className="flex gap-2 text-xs" onClick={(e) => e.stopPropagation()}>
                       {zap && (
-                        <a className="text-[var(--destaque-escuro)] hover:underline" href={`https://wa.me/${zap.length <= 11 ? "55" + zap : zap}`} target="_blank" rel="noopener">
+                        <a
+                          className="text-[var(--destaque-escuro)] hover:underline"
+                          href={`https://wa.me/${zap.length <= 11 ? "55" + zap : zap}`}
+                          target="_blank"
+                          rel="noopener"
+                        >
                           WhatsApp
                         </a>
                       )}
@@ -314,10 +345,14 @@ function Leads() {
                   </td>
                   <td className="text-right tabular-nums">{econ ? brl(econ) : "—"}</td>
                   <td>
-                    <span className={`chip ${o.etapa === "ganho" ? "bg-emerald-50 text-emerald-800" : o.etapa === "perdido" ? "bg-red-50 text-red-800" : "bg-[var(--fundo)] text-neutral-700"}`}>
+                    <span
+                      className={`chip ${o.etapa === "ganho" ? "bg-emerald-50 text-emerald-800" : o.etapa === "perdido" ? "bg-red-50 text-red-800" : "bg-[var(--fundo)] text-neutral-700"}`}
+                    >
                       {ETAPAS.find((e) => e.id === o.etapa)?.nome}
                     </span>
-                    {o.arquivado_em && <div className="mt-0.5 text-[11px] text-neutral-500">arquivado{o.motivo_arquivo ? `: ${o.motivo_arquivo}` : ""}</div>}
+                    {o.arquivado_em && (
+                      <div className="mt-0.5 text-[11px] text-neutral-500">arquivado{o.motivo_arquivo ? `: ${o.motivo_arquivo}` : ""}</div>
+                    )}
                   </td>
                 </tr>
               );

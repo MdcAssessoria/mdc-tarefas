@@ -11,7 +11,9 @@ export interface SemanaRitmo {
   futura: boolean;
 }
 
-const OK = "#1B8263", ATRASO = "#C0892A", PREVISTA = "#0B2820";
+const OK = "#1B8263",
+  ATRASO = "#C0892A",
+  PREVISTA = "#0B2820";
 
 const rotulo = (iso: string) => {
   const [, m, d] = iso.split("-");
@@ -22,9 +24,22 @@ const rotulo = (iso: string) => {
  * Colunas por semana: o que foi concluído (no prazo e com atraso) e o que vence nas próximas semanas.
  * Passe o mouse para ver os números; clique numa semana para ver as tarefas dela.
  */
-export function RitmoSemanal({ semanas, selecionada, aoSelecionar }: { semanas: SemanaRitmo[]; selecionada: string | null; aoSelecionar: (inicio: string | null) => void }) {
+export function RitmoSemanal({
+  semanas,
+  selecionada,
+  aoSelecionar,
+}: {
+  semanas: SemanaRitmo[];
+  selecionada: string | null;
+  aoSelecionar: (inicio: string | null) => void;
+}) {
   const [hover, setHover] = useState<number | null>(null);
-  const W = 720, H = 240, ml = 34, mr = 12, mt = 16, mb = 34;
+  const W = 720,
+    H = 240,
+    ml = 34,
+    mr = 12,
+    mt = 16,
+    mb = 34;
   const max = Math.max(4, ...semanas.map((s) => Math.max(s.noPrazo + s.atrasadas, s.previstas)));
   const passo = Math.ceil(max / 4);
   const topo = passo * 4;
@@ -59,23 +74,64 @@ export function RitmoSemanal({ semanas, selecionada, aoSelecionar }: { semanas: 
               style={{ cursor: "pointer" }}
               opacity={apagada ? 0.35 : 1}
             >
-              <rect x={x} y={mt} width={larg} height={H - mt - mb} fill={sm.atual ? "#E2C17E" : hover === i ? "#EEF2EF" : "transparent"} fillOpacity={sm.atual ? 0.18 : 1} />
+              <rect
+                x={x}
+                y={mt}
+                width={larg}
+                height={H - mt - mb}
+                fill={sm.atual ? "#E2C17E" : hover === i ? "#EEF2EF" : "transparent"}
+                fillOpacity={sm.atual ? 0.18 : 1}
+              />
               {sm.futura ? (
                 sm.previstas > 0 && (
-                  <rect x={cx - bw / 2} y={y(sm.previstas)} width={bw} height={y(0) - y(sm.previstas)} rx="3" fill="none" stroke={PREVISTA} strokeWidth="1.5" strokeDasharray="4 3" />
+                  <rect
+                    x={cx - bw / 2}
+                    y={y(sm.previstas)}
+                    width={bw}
+                    height={y(0) - y(sm.previstas)}
+                    rx="3"
+                    fill="none"
+                    stroke={PREVISTA}
+                    strokeWidth="1.5"
+                    strokeDasharray="4 3"
+                  />
                 )
               ) : (
                 <>
                   {sm.noPrazo > 0 && <rect x={cx - bw / 2} y={y(sm.noPrazo)} width={bw} height={y(0) - y(sm.noPrazo)} rx="3" fill={OK} />}
                   {sm.atrasadas > 0 && (
-                    <rect x={cx - bw / 2} y={y(sm.noPrazo + sm.atrasadas)} width={bw} height={y(sm.noPrazo) - y(sm.noPrazo + sm.atrasadas) - 1} rx="3" fill={ATRASO} />
+                    <rect
+                      x={cx - bw / 2}
+                      y={y(sm.noPrazo + sm.atrasadas)}
+                      width={bw}
+                      height={y(sm.noPrazo) - y(sm.noPrazo + sm.atrasadas) - 1}
+                      rx="3"
+                      fill={ATRASO}
+                    />
                   )}
                   {sm.atual && sm.previstas > 0 && (
-                    <rect x={cx + bw / 2 + 2} y={y(sm.previstas)} width={6} height={y(0) - y(sm.previstas)} rx="2" fill="none" stroke={PREVISTA} strokeWidth="1.2" strokeDasharray="3 2" />
+                    <rect
+                      x={cx + bw / 2 + 2}
+                      y={y(sm.previstas)}
+                      width={6}
+                      height={y(0) - y(sm.previstas)}
+                      rx="2"
+                      fill="none"
+                      stroke={PREVISTA}
+                      strokeWidth="1.2"
+                      strokeDasharray="3 2"
+                    />
                   )}
                 </>
               )}
-              <text x={cx} y={H - mb + 16} textAnchor="middle" fontSize="11" fontWeight={sm.atual || sel ? 600 : 400} fill={sm.atual ? "#0B2820" : "#5D6661"}>
+              <text
+                x={cx}
+                y={H - mb + 16}
+                textAnchor="middle"
+                fontSize="11"
+                fontWeight={sm.atual || sel ? 600 : 400}
+                fill={sm.atual ? "#0B2820" : "#5D6661"}
+              >
                 {sm.atual ? "esta" : rotulo(sm.inicio)}
               </text>
               {sel && <rect x={cx - 12} y={H - mb + 22} width={24} height={2.5} rx="1" fill="#8A6A2A" />}

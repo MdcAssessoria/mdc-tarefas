@@ -170,20 +170,43 @@ const dataExtenso = (iso: string) =>
 
 // ---------------------------------------------------------------- valor por extenso
 
-const UN = ["", "um", "dois", "três", "quatro", "cinco", "seis", "sete", "oito", "nove", "dez", "onze", "doze", "treze", "quatorze", "quinze", "dezesseis", "dezessete", "dezoito", "dezenove"];
+const UN = [
+  "",
+  "um",
+  "dois",
+  "três",
+  "quatro",
+  "cinco",
+  "seis",
+  "sete",
+  "oito",
+  "nove",
+  "dez",
+  "onze",
+  "doze",
+  "treze",
+  "quatorze",
+  "quinze",
+  "dezesseis",
+  "dezessete",
+  "dezoito",
+  "dezenove",
+];
 const DEZ = ["", "", "vinte", "trinta", "quarenta", "cinquenta", "sessenta", "setenta", "oitenta", "noventa"];
 const CEM = ["", "cento", "duzentos", "trezentos", "quatrocentos", "quinhentos", "seiscentos", "setecentos", "oitocentos", "novecentos"];
 
 function ate999(n: number): string {
   if (n === 0) return "";
   if (n === 100) return "cem";
-  const c = Math.floor(n / 100), r = n % 100;
+  const c = Math.floor(n / 100),
+    r = n % 100;
   const partes: string[] = [];
   if (c) partes.push(CEM[c]);
   if (r < 20) {
     if (r) partes.push(UN[r]);
   } else {
-    const d = Math.floor(r / 10), u = r % 10;
+    const d = Math.floor(r / 10),
+      u = r % 10;
     partes.push(u ? `${DEZ[d]} e ${UN[u]}` : DEZ[d]);
   }
   return partes.join(" e ");
@@ -218,7 +241,9 @@ function inteiroExtenso(n: number): string {
 export function valorExtenso(v: number): string {
   const reais = Math.floor(Math.round(v * 100) / 100);
   const cent = Math.round((v - reais) * 100);
-  const r = reais ? `${inteiroExtenso(reais)} ${reais === 1 ? "real" : /lh(ão|ões)$/.test(inteiroExtenso(reais)) ? "de reais" : "reais"}` : "";
+  const r = reais
+    ? `${inteiroExtenso(reais)} ${reais === 1 ? "real" : /lh(ão|ões)$/.test(inteiroExtenso(reais)) ? "de reais" : "reais"}`
+    : "";
   const c = cent ? `${inteiroExtenso(cent)} ${cent === 1 ? "centavo" : "centavos"}` : "";
   return [r, c].filter(Boolean).join(" e ") || "zero real";
 }

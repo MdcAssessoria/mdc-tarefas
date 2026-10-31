@@ -34,7 +34,7 @@ export async function enviarArquivo(
   o: { org: string; app: string; ref?: string | null; cliente?: string | null; visivelCliente?: boolean },
 ): Promise<Arquivo> {
   const sb = supabase();
-  const pasta = o.app === "portal" ? o.cliente : o.ref ?? o.cliente ?? "geral";
+  const pasta = o.app === "portal" ? o.cliente : (o.ref ?? o.cliente ?? "geral");
   const caminho = `${o.org}/${o.app}/${pasta}/${Date.now()}-${nomeSeguro(arquivo.name)}`;
   const up = await sb.storage.from(BUCKET).upload(caminho, arquivo, { contentType: arquivo.type || undefined });
   if (up.error) throw up.error;
@@ -62,7 +62,9 @@ export async function enviarArquivo(
 
 /** Abre o arquivo com um link temporário (5 minutos). */
 export async function abrirArquivo(caminho: string, nome?: string) {
-  const { data, error } = await supabase().storage.from(BUCKET).createSignedUrl(caminho, 300, { download: nome ?? true });
+  const { data, error } = await supabase()
+    .storage.from(BUCKET)
+    .createSignedUrl(caminho, 300, { download: nome ?? true });
   if (error) throw error;
   window.open(data.signedUrl, "_blank", "noopener");
 }

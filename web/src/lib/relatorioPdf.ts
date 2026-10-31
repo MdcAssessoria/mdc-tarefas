@@ -31,7 +31,10 @@ export interface SecaoPdf {
 }
 
 const limpar = (s: string) =>
-  s.replace(/[−‒]/g, "-").replace(/→/g, "->").replace(/[^\x20-\x7E -ÿ—–…“”‘’•€]/g, "");
+  s
+    .replace(/[−‒]/g, "-")
+    .replace(/→/g, "->")
+    .replace(/[^\x20-\x7E -ÿ—–…“”‘’•€]/g, "");
 
 export async function gerarRelatorioPdf(o: {
   titulo: string;
@@ -50,7 +53,9 @@ export async function gerarRelatorioPdf(o: {
   if (o.logo) logo = await pdf.embedPng(o.logo).catch(() => pdf.embedJpg(o.logo!).catch(() => null));
 
   const [W, H] = o.paisagem ? [841.89, 595.28] : [595.28, 841.89];
-  const M = 40, BANDA = 74, RODAPE = 80;
+  const M = 40,
+    BANDA = 74,
+    RODAPE = 80;
   let page!: PDFPage;
   let y = 0;
 
@@ -66,7 +71,8 @@ export async function gerarRelatorioPdf(o: {
     }
     return (t * size) / 1000;
   };
-  const text = (s: string, x: number, yy: number, size: number, font: PDFFont, cor = TEXTO) => page.drawText(limpar(s), { x, y: yy, size, font, color: cor });
+  const text = (s: string, x: number, yy: number, size: number, font: PDFFont, cor = TEXTO) =>
+    page.drawText(limpar(s), { x, y: yy, size, font, color: cor });
   const cortar = (s: string, larg: number, size: number, font: PDFFont) => {
     if (w(s, size, font) <= larg) return s;
     let t = s;
@@ -133,14 +139,23 @@ export async function gerarRelatorioPdf(o: {
     // barras horizontais (no prazo × com atraso), quando houver
     if (sec.barras?.length) {
       const max = Math.max(1, ...sec.barras.map((x) => x.partes.reduce((a, p) => a + p.valor, 0)));
-      const rot = 150, larg = W - 2 * M - rot - 40;
+      const rot = 150,
+        larg = W - 2 * M - rot - 40;
       for (const br of sec.barras) {
         garantir(18);
         text(cortar(br.rotulo, rot - 8, 8.5, f), M, y - 10, 8.5, f, TEXTO);
         let x = M + rot;
         for (const p of br.partes) {
           const lw = (p.valor / max) * larg;
-          if (lw > 0) page.drawRectangle({ x, y: y - 12, width: lw, height: 10, color: p.cor === "verde" ? rgb(27 / 255, 130 / 255, 99 / 255) : p.cor === "ouro" ? rgb(192 / 255, 137 / 255, 42 / 255) : PERIGO });
+          if (lw > 0)
+            page.drawRectangle({
+              x,
+              y: y - 12,
+              width: lw,
+              height: 10,
+              color:
+                p.cor === "verde" ? rgb(27 / 255, 130 / 255, 99 / 255) : p.cor === "ouro" ? rgb(192 / 255, 137 / 255, 42 / 255) : PERIGO,
+            });
           x += lw;
         }
         const tot = br.partes.reduce((a, p) => a + p.valor, 0);
@@ -190,9 +205,23 @@ export async function gerarRelatorioPdf(o: {
     page = p;
     p.drawLine({ start: { x: M, y: 58 }, end: { x: W - M, y: 58 }, thickness: 0.8, color: DOURADO });
     text("MDC Assessoria Ltda", M, 46, 7, b, VERDE);
-    text("  ·  CNPJ 48.140.121/0001-65  ·  Bragança Paulista/SP  ·  mdcassessoria.com  ·  @mdcassessoria_", M + w("MDC Assessoria Ltda", 7, b), 46, 7, f, VERDE);
+    text(
+      "  ·  CNPJ 48.140.121/0001-65  ·  Bragança Paulista/SP  ·  mdcassessoria.com  ·  @mdcassessoria_",
+      M + w("MDC Assessoria Ltda", 7, b),
+      46,
+      7,
+      f,
+      VERDE,
+    );
     text("Responsável técnico: ", M, 35, 7, b, DOURADO_ESC);
-    text("Edvaldo Ribeiro de Carvalho  ·  Contador CRC 1SP346098-O/0  ·  edvaldo@mdcassessoria.com  ·  (11) 98859-8041", M + w("Responsável técnico: ", 7, b), 35, 7, f, VERDE);
+    text(
+      "Edvaldo Ribeiro de Carvalho  ·  Contador CRC 1SP346098-O/0  ·  edvaldo@mdcassessoria.com  ·  (11) 98859-8041",
+      M + w("Responsável técnico: ", 7, b),
+      35,
+      7,
+      f,
+      VERDE,
+    );
     const pg = `Página ${k + 1} de ${paginas.length}  ·  gerado em ${new Date().toLocaleString("pt-BR")}`;
     text(pg, W - M - w(pg, 6.5, f), 20, 6.5, f, SUAVE);
     p.drawRectangle({ x: 0, y: 0, width: W, height: 10, color: VERDE });

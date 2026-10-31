@@ -54,7 +54,13 @@ function Vencimentos() {
   const podeOperar = pode("vencimentos", "operar");
 
   const carregar = useCallback(async () => {
-    const { data, error } = await supabase().from("venc_itens").select("*").eq("org_id", org.id).eq("status", "ativo").order("vence_em").limit(3000);
+    const { data, error } = await supabase()
+      .from("venc_itens")
+      .select("*")
+      .eq("org_id", org.id)
+      .eq("status", "ativo")
+      .order("vence_em")
+      .limit(3000);
     if (error) return setErro(traduzirErro(error));
     setItens(data as Item[]);
   }, [org.id]);
@@ -164,7 +170,9 @@ function Vencimentos() {
                 <tr key={i.id}>
                   <td className="whitespace-nowrap">
                     {fmtData(i.vence_em)}{" "}
-                    <span className={`chip ${d < 0 ? "bg-red-50 text-red-700" : d <= 7 ? "bg-red-50 text-red-700" : d <= 30 ? "bg-amber-50 text-amber-800" : "bg-neutral-100 text-neutral-600"}`}>
+                    <span
+                      className={`chip ${d < 0 ? "bg-red-50 text-red-700" : d <= 7 ? "bg-red-50 text-red-700" : d <= 30 ? "bg-amber-50 text-amber-800" : "bg-neutral-100 text-neutral-600"}`}
+                    >
                       {d < 0 ? `vencido há ${-d}d` : d === 0 ? "hoje" : `${d} dias`}
                     </span>
                   </td>
@@ -222,7 +230,12 @@ function Vencimentos() {
 }
 
 function Editor({
-  item, clientes, membros, podeExcluir, aoFechar, aoSalvar,
+  item,
+  clientes,
+  membros,
+  podeExcluir,
+  aoFechar,
+  aoSalvar,
 }: {
   item: Item | null;
   clientes: { id: string; razao_social: string; nome_fantasia: string | null; codigo_dominio?: string | null }[];
@@ -254,7 +267,10 @@ function Editor({
     };
     const sb = supabase();
     const r = item
-      ? await sb.from("venc_itens").update({ ...dados, avisos: item.vence_em !== f.vence_em ? [] : undefined }).eq("id", item.id)
+      ? await sb
+          .from("venc_itens")
+          .update({ ...dados, avisos: item.vence_em !== f.vence_em ? [] : undefined })
+          .eq("id", item.id)
       : await sb.from("venc_itens").insert({ ...dados, org_id: org.id, criado_por: eu.user_id });
     if (r.error) return setErro(traduzirErro(r.error));
     aoSalvar();
@@ -304,14 +320,19 @@ function Editor({
         </div>
         <label className="campo">
           <span>Descrição</span>
-          <input value={f.descricao} onChange={(e) => setF({ ...f, descricao: e.target.value })} placeholder="Ex.: e-CNPJ A1 da matriz, Alvará nº…" />
+          <input
+            value={f.descricao}
+            onChange={(e) => setF({ ...f, descricao: e.target.value })}
+            placeholder="Ex.: e-CNPJ A1 da matriz, Alvará nº…"
+          />
         </label>
         <label className="campo">
           <span>Observação</span>
           <textarea rows={2} value={f.observacao} onChange={(e) => setF({ ...f, observacao: e.target.value })} />
         </label>
         <label className="flex items-center gap-2 text-sm">
-          <input type="checkbox" checked={f.visivel_cliente} onChange={(e) => setF({ ...f, visivel_cliente: e.target.checked })} /> Mostrar no Portal do Cliente
+          <input type="checkbox" checked={f.visivel_cliente} onChange={(e) => setF({ ...f, visivel_cliente: e.target.checked })} /> Mostrar
+          no Portal do Cliente
         </label>
         {erro && <p className="text-sm text-red-700">{erro}</p>}
         <div className="flex justify-between gap-2">

@@ -38,7 +38,10 @@ export function ChatMensagens({
         .select("id,nome,caminho")
         .in("id", ids)
         .then(({ data }) =>
-          setAnexos((a) => ({ ...a, ...Object.fromEntries(((data as { id: string; nome: string; caminho: string }[]) ?? []).map((x) => [x.id, x])) })),
+          setAnexos((a) => ({
+            ...a,
+            ...Object.fromEntries(((data as { id: string; nome: string; caminho: string }[]) ?? []).map((x) => [x.id, x])),
+          })),
         );
   }, [mensagens, anexos]);
 
@@ -61,7 +64,13 @@ export function ChatMensagens({
       }
       const { error } = await supabase()
         .from("portal_mensagens")
-        .insert({ conversa_id: conversaId, org_id: orgId, texto: texto.trim() || (arquivo ? `📎 ${arquivo.name}` : ""), anexo_id, interna: lado === "equipe" && interna });
+        .insert({
+          conversa_id: conversaId,
+          org_id: orgId,
+          texto: texto.trim() || (arquivo ? `📎 ${arquivo.name}` : ""),
+          anexo_id,
+          interna: lado === "equipe" && interna,
+        });
       if (error) throw error;
       setTexto("");
     } catch (er) {
@@ -82,7 +91,11 @@ export function ChatMensagens({
       <div key={m.id} className={`flex ${minha ? "justify-end" : "justify-start"}`}>
         <div
           className={`max-w-[80%] rounded-2xl px-3 py-2 text-sm ${
-            m.interna ? "border border-dashed border-amber-400 bg-amber-50" : minha ? "bg-[var(--marca)] text-white" : "bg-white ring-1 ring-[var(--borda)]"
+            m.interna
+              ? "border border-dashed border-amber-400 bg-amber-50"
+              : minha
+                ? "bg-[var(--marca)] text-white"
+                : "bg-white ring-1 ring-[var(--borda)]"
           }`}
         >
           <div className={`mb-0.5 text-[11px] ${minha && !m.interna ? "text-[#C6D3CC]" : "text-neutral-500"}`}>
@@ -111,10 +124,15 @@ export function ChatMensagens({
       </div>
       {erro && <p className="bg-red-50 px-3 py-1 text-xs text-red-800">{erro}</p>}
       {fechada && lado === "cliente" ? (
-        <p className="border-t border-[var(--borda)] p-3 text-center text-xs text-neutral-500">Atendimento resolvido. Escreva abaixo para reabrir.</p>
+        <p className="border-t border-[var(--borda)] p-3 text-center text-xs text-neutral-500">
+          Atendimento resolvido. Escreva abaixo para reabrir.
+        </p>
       ) : null}
       <form onSubmit={enviar} className="flex items-end gap-2 border-t border-[var(--borda)] bg-white p-2">
-        <label className="grid h-9 w-9 shrink-0 cursor-pointer place-items-center rounded-md text-neutral-500 hover:bg-[var(--fundo)]" title="Anexar arquivo">
+        <label
+          className="grid h-9 w-9 shrink-0 cursor-pointer place-items-center rounded-md text-neutral-500 hover:bg-[var(--fundo)]"
+          title="Anexar arquivo"
+        >
           📎
           <input type="file" className="hidden" onChange={(e) => e.target.files?.[0] && enviar(undefined, e.target.files[0])} />
         </label>

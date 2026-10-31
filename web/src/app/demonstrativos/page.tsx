@@ -35,7 +35,9 @@ function Lista() {
     setErro(null);
     for (let i = 0; i < alvo.length; i++) {
       const c = clientePorId(alvo[i].cliente_id);
-      setProgresso(`Reprocessando ${i + 1} de ${alvo.length}: ${c?.nome_fantasia || c?.razao_social || ""} ${alvo[i].competencia.slice(0, 7)}`);
+      setProgresso(
+        `Reprocessando ${i + 1} de ${alvo.length}: ${c?.nome_fantasia || c?.razao_social || ""} ${alvo[i].competencia.slice(0, 7)}`,
+      );
       try {
         await reprocessar(alvo[i].id);
       } catch (e) {
@@ -50,7 +52,9 @@ function Lista() {
   useEffect(() => {
     supabase()
       .from("portal_balancetes")
-      .select("id,org_id,cliente_id,competencia,status,arquivo_nome,resumo,indices,alertas,conferencias,comentario,importado_em,publicado_em")
+      .select(
+        "id,org_id,cliente_id,competencia,status,arquivo_nome,resumo,indices,alertas,conferencias,comentario,importado_em,publicado_em",
+      )
       .eq("org_id", org.id)
       .order("competencia", { ascending: false })
       .limit(2000)
@@ -74,7 +78,12 @@ function Lista() {
       <div className="flex flex-wrap items-center gap-2">
         <h1 className="mr-auto text-xl font-semibold text-[var(--marca)]">Balancetes e demonstrativos</h1>
         {pode("demonstrativos", "operar") && lista.some((b) => b.status === "rascunho") && (
-          <button className="btn" onClick={reprocessarRascunhos} disabled={!!progresso} title="Relê as contas gravadas com as regras atuais: sinal, grupos e cálculos">
+          <button
+            className="btn"
+            onClick={reprocessarRascunhos}
+            disabled={!!progresso}
+            title="Relê as contas gravadas com as regras atuais: sinal, grupos e cálculos"
+          >
             Reprocessar rascunhos
           </button>
         )}
@@ -119,7 +128,11 @@ function Lista() {
               const falhas = (b.conferencias ?? []).filter((x) => !x.ok).length;
               const altos = (b.alertas ?? []).filter((a) => a.nivel === "alto").length;
               return (
-                <tr key={b.id} className="cursor-pointer hover:bg-[var(--fundo)]" onClick={() => (window.location.href = caminho(`/demonstrativos/${b.id}`))}>
+                <tr
+                  key={b.id}
+                  className="cursor-pointer hover:bg-[var(--fundo)]"
+                  onClick={() => (window.location.href = caminho(`/demonstrativos/${b.id}`))}
+                >
                   <td className="font-medium">{c ? c.nome_fantasia || c.razao_social : "—"}</td>
                   <td>{mesAno(b.competencia)}</td>
                   <td>
@@ -130,7 +143,9 @@ function Lista() {
                     )}
                   </td>
                   <td className="text-right tabular-nums">{brl(b.resumo?.mes?.receita_bruta)}</td>
-                  <td className={`text-right tabular-nums ${b.resumo?.ano?.lucro_liquido < 0 ? "text-[var(--perigo)]" : ""}`}>{brl(b.resumo?.ano?.lucro_liquido)}</td>
+                  <td className={`text-right tabular-nums ${b.resumo?.ano?.lucro_liquido < 0 ? "text-[var(--perigo)]" : ""}`}>
+                    {brl(b.resumo?.ano?.lucro_liquido)}
+                  </td>
                   <td className="text-right tabular-nums">{fmtIndice(b.indices?.liquidez_corrente, "x")}</td>
                   <td>
                     {b.alertas?.length ? (
@@ -142,7 +157,13 @@ function Lista() {
                       <span className="text-xs text-neutral-400">nenhuma</span>
                     )}
                   </td>
-                  <td>{falhas ? <span className="chip bg-red-50 text-red-700">{falhas} pendente(s)</span> : <span className="text-xs text-emerald-700">ok</span>}</td>
+                  <td>
+                    {falhas ? (
+                      <span className="chip bg-red-50 text-red-700">{falhas} pendente(s)</span>
+                    ) : (
+                      <span className="text-xs text-emerald-700">ok</span>
+                    )}
+                  </td>
                 </tr>
               );
             })}

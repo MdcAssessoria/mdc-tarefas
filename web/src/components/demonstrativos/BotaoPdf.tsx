@@ -33,7 +33,9 @@ export function BotaoPdf({ balanceteId, rascunho }: { balanceteId: string; rascu
       a.click();
       a.remove();
       setTimeout(() => URL.revokeObjectURL(a.href), 10_000);
-      setMsg(r.headers.get("x-assinado") === "1" ? "PDF assinado digitalmente pela MDC." : rascunho ? "PDF de rascunho (sem assinatura)." : null);
+      setMsg(
+        r.headers.get("x-assinado") === "1" ? "PDF assinado digitalmente pela MDC." : rascunho ? "PDF de rascunho (sem assinatura)." : null,
+      );
       setEstado("livre");
     } catch (e) {
       setMsg((e as Error).message);

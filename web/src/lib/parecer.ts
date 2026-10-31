@@ -29,9 +29,12 @@ function fundamento(a: Alerta): string | null {
     return "A escrituração deve registrar os fatos com individualização e clareza (Código Civil, art. 1.184; ITG 2000 – Escrituração Contábil); saldos pendentes de classificação comprometem a análise.";
   if (/estoque negativo/.test(t))
     return "Estoque com saldo credor é inconsistência de registro: os estoques devem ser mensurados pelo custo ou valor realizável líquido, dos dois o menor (NBC TG 16 – Estoques).";
-  if (/estoque crescendo/.test(t)) return "Estoques acima da necessidade de vendas elevam o risco de obsolescência e de ajuste ao valor realizável (NBC TG 16 – Estoques).";
-  if (/liquidez|capital de giro|ciclo/.test(t)) return "Indicador gerencial de solvência de curto prazo, calculado sobre a classificação circulante/não circulante (Lei nº 6.404/1976, art. 180; NBC TG 26).";
-  if (/endividamento|dívida/.test(t)) return "Análise da estrutura de capital; dívidas com vencimento em até 12 meses compõem o passivo circulante (Lei nº 6.404/1976, art. 180).";
+  if (/estoque crescendo/.test(t))
+    return "Estoques acima da necessidade de vendas elevam o risco de obsolescência e de ajuste ao valor realizável (NBC TG 16 – Estoques).";
+  if (/liquidez|capital de giro|ciclo/.test(t))
+    return "Indicador gerencial de solvência de curto prazo, calculado sobre a classificação circulante/não circulante (Lei nº 6.404/1976, art. 180; NBC TG 26).";
+  if (/endividamento|dívida/.test(t))
+    return "Análise da estrutura de capital; dívidas com vencimento em até 12 meses compõem o passivo circulante (Lei nº 6.404/1976, art. 180).";
   return null;
 }
 
@@ -50,7 +53,11 @@ export function rascunhoParecer(o: {
 }): string {
   const { r, i, alertas, anterior, demo } = o;
   const d = r.mes;
-  const mes = new Date(o.competencia.slice(0, 7) + "-15T12:00:00Z").toLocaleDateString("pt-BR", { month: "long", year: "numeric", timeZone: "UTC" });
+  const mes = new Date(o.competencia.slice(0, 7) + "-15T12:00:00Z").toLocaleDateString("pt-BR", {
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC",
+  });
   const periodo = demo ? `${dataBr(demo.periodo.inicio)} a ${dataBr(demo.periodo.fim)}` : mes;
   const anual = !!demo && demo.periodo.dias > 40;
   const f = demo?.dfc;
@@ -58,7 +65,11 @@ export function rascunhoParecer(o: {
   const s = demo?.saude;
   const lucroTxt = (v: number) => (v >= 0 ? `lucro líquido de ${brl(v)}` : `prejuízo líquido de ${brl(-v)}`);
   const varPct = (a: number, b?: number) =>
-    b ? ` (${a >= b ? "+" : "−"}${Math.abs(((a - b) / Math.abs(b)) * 100).toFixed(1).replace(".", ",")}% sobre o período anterior)` : "";
+    b
+      ? ` (${a >= b ? "+" : "−"}${Math.abs(((a - b) / Math.abs(b)) * 100)
+          .toFixed(1)
+          .replace(".", ",")}% sobre o período anterior)`
+      : "";
   const ml = d.receita_liquida ? d.lucro_liquido / d.receita_liquida : null;
   const mb = d.receita_liquida ? d.lucro_bruto / d.receita_liquida : null;
   const mo = d.receita_liquida ? d.resultado_operacional / d.receita_liquida : null;
@@ -83,7 +94,9 @@ export function rascunhoParecer(o: {
     "Alcance: trata-se de análise técnica gerencial do contador responsável pela escrituração. Não constitui auditoria independente (NBC TA) nem revisão (NBC TR 2400). " +
       "As informações e documentos que suportam os registros são de responsabilidade da administração da empresa.",
   );
-  simples("este documento explica, com base na contabilidade do período, se a empresa deu lucro, se tem dinheiro para pagar as contas e onde estão os riscos. É uma leitura técnica da MDC, não uma auditoria.");
+  simples(
+    "este documento explica, com base na contabilidade do período, se a empresa deu lucro, se tem dinheiro para pagar as contas e onde estão os riscos. É uma leitura técnica da MDC, não uma auditoria.",
+  );
 
   L.push("## 2. Síntese");
   L.push(
@@ -95,12 +108,15 @@ export function rascunhoParecer(o: {
   if (s) {
     L.push("");
     L.push(`**Termômetro de saúde financeira MDC: ${s.nota}/100 — ${s.faixa}.**`);
-    for (const p of s.pilares) L.push(`- **${p.nome} (${p.status === "bom" ? "bom" : p.status === "atencao" ? "atenção" : "crítico"}):** ${p.frase}`);
+    for (const p of s.pilares)
+      L.push(`- **${p.nome} (${p.status === "bom" ? "bom" : p.status === "atencao" ? "atenção" : "crítico"}):** ${p.frase}`);
     L.push("");
   }
   simples(
     `${d.lucro_liquido >= 0 ? "a empresa deu lucro" : "a empresa teve prejuízo"} no período` +
-      (i.liquidez_corrente !== null ? ` e ${i.liquidez_corrente >= 1 ? "tem mais a receber e em caixa do que dívidas a vencer no próximo ano" : "tem menos em caixa e a receber do que as dívidas que vencem no próximo ano"}` : "") +
+      (i.liquidez_corrente !== null
+        ? ` e ${i.liquidez_corrente >= 1 ? "tem mais a receber e em caixa do que dívidas a vencer no próximo ano" : "tem menos em caixa e a receber do que as dívidas que vencem no próximo ano"}`
+        : "") +
       ".",
   );
 
@@ -113,7 +129,13 @@ export function rascunhoParecer(o: {
       (cz ? ` O EBITDA (resultado operacional antes da depreciação e amortização) foi de ${brl(cz.ebitda)}.` : ""),
   );
   if (d.despesas_por_conta.length)
-    L.push("", `Principais custos e despesas: ${d.despesas_por_conta.slice(0, 4).map((x) => `${x.conta} (${brl(x.valor)})`).join("; ")}.`);
+    L.push(
+      "",
+      `Principais custos e despesas: ${d.despesas_por_conta
+        .slice(0, 4)
+        .map((x) => `${x.conta} (${brl(x.valor)})`)
+        .join("; ")}.`,
+    );
   L.push("");
   simples(
     d.receita_bruta > 0
@@ -125,7 +147,9 @@ export function rascunhoParecer(o: {
         ]
           .filter(([, v]) => (v as number) / d.receita_bruta >= 0.005)
           .map(([n, v]) => `R$ ${Math.round(((v as number) / d.receita_bruta) * 100)} foram para ${n}`)
-          .join(", ")} e ${d.lucro_liquido >= 0 ? `sobraram R$ ${Math.round((d.lucro_liquido / d.receita_bruta) * 100)} de lucro` : `faltaram R$ ${Math.round((-d.lucro_liquido / d.receita_bruta) * 100)} — os gastos foram maiores que a receita`}.`
+          .join(
+            ", ",
+          )} e ${d.lucro_liquido >= 0 ? `sobraram R$ ${Math.round((d.lucro_liquido / d.receita_bruta) * 100)} de lucro` : `faltaram R$ ${Math.round((-d.lucro_liquido / d.receita_bruta) * 100)} — os gastos foram maiores que a receita`}.`
       : "não houve receita no período.",
   );
 
@@ -143,7 +167,9 @@ export function rascunhoParecer(o: {
   L.push("");
   simples(
     `${r.pl + r.resultado_exercicio >= 0 ? "o que a empresa tem é maior do que o que ela deve" : "a empresa deve mais do que tem — o patrimônio está negativo"}. ` +
-      (i.endividamento_geral !== null ? `De cada R$ 100 em bens e direitos, R$ ${Math.round(i.endividamento_geral * 100)} foram financiados por bancos, fornecedores, governo e outros credores.` : ""),
+      (i.endividamento_geral !== null
+        ? `De cada R$ 100 em bens e direitos, R$ ${Math.round(i.endividamento_geral * 100)} foram financiados por bancos, fornecedores, governo e outros credores.`
+        : ""),
   );
 
   if (f && cz) {
@@ -157,7 +183,9 @@ export function rascunhoParecer(o: {
     L.push("");
     for (const c of cz.comentarios) L.push(`- **${c.titulo}.** ${c.texto}`);
     L.push("");
-    simples("a DRE mostra se a empresa ganhou ou perdeu dinheiro; a DFC mostra se esse dinheiro entrou de fato na conta. Lucro sem caixa costuma significar vendas a prazo, estoque ou contas adiantadas.");
+    simples(
+      "a DRE mostra se a empresa ganhou ou perdeu dinheiro; a DFC mostra se esse dinheiro entrou de fato na conta. Lucro sem caixa costuma significar vendas a prazo, estoque ou contas adiantadas.",
+    );
   }
 
   L.push(`## ${f ? 6 : 5}. Prazos médios e ciclo financeiro`);
@@ -189,7 +217,9 @@ export function rascunhoParecer(o: {
 
   L.push(`## ${n + 1}. Aspectos tributários`);
   L.push(`- Carga tributária efetiva sobre a receita bruta (tributos sobre vendas e IRPJ/CSLL): ${pct(i.carga_tributaria)}.`);
-  L.push("- [Revisar: adequação do regime de tributação, parcelamentos em curso e pendências nas certidões federais, estaduais e municipais.]");
+  L.push(
+    "- [Revisar: adequação do regime de tributação, parcelamentos em curso e pendências nas certidões federais, estaduais e municipais.]",
+  );
   L.push(
     "- Reforma tributária (Emenda Constitucional nº 132/2023 e Lei Complementar nº 214/2025): a partir de 2027 a CBS substitui o PIS e a COFINS, e entre 2029 e 2033 o IBS substitui gradualmente o ICMS e o ISS. A MDC avaliará os efeitos sobre preços, créditos e regime da empresa.",
   );
@@ -201,7 +231,9 @@ export function rascunhoParecer(o: {
     `Com base nos registros contábeis do período e nos procedimentos descritos, a empresa apresenta ${lucroTxt(d.lucro_liquido)}` +
       `, ${i.liquidez_corrente !== null && i.liquidez_corrente >= 1 ? "capacidade de honrar as obrigações de curto prazo" : "insuficiência de recursos de curto prazo frente às obrigações do mesmo prazo"}` +
       (s ? ` e termômetro de saúde financeira de ${s.nota}/100 (${s.faixa.toLowerCase()})` : "") +
-      (altos.length ? `. Há ${altos.length} ponto(s) de risco alto que pedem providência imediata, detalhados na seção ${n}.` : ". Não há pontos de risco alto pendentes.") +
+      (altos.length
+        ? `. Há ${altos.length} ponto(s) de risco alto que pedem providência imediata, detalhados na seção ${n}.`
+        : ". Não há pontos de risco alto pendentes.") +
       " Recomenda-se acompanhar os indicadores no próximo fechamento.",
   );
   const recs = [...new Set(alertas.map((a) => a.recomendacao))].slice(0, 5);
@@ -215,6 +247,8 @@ export function rascunhoParecer(o: {
   L.push(`${o.contador} — Contador, CRC ${o.crc}`);
   L.push("MDC Assessoria Ltda · CNPJ 48.140.121/0001-65 · Bragança Paulista/SP");
   L.push("");
-  L.push("_Parecer emitido com base nos registros contábeis do período e nas informações fornecidas pela administração, observado o Código de Ética Profissional do Contador (NBC PG 01)._");
+  L.push(
+    "_Parecer emitido com base nos registros contábeis do período e nas informações fornecidas pela administração, observado o Código de Ética Profissional do Contador (NBC PG 01)._",
+  );
   return L.join("\n");
 }

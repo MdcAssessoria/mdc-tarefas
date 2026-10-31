@@ -3,13 +3,28 @@
 // Convenção interna: devedor = positivo, credor = negativo.
 
 export type Grupo =
-  | "ac_disponivel" | "ac_clientes" | "ac_estoques" | "ac_outros"
-  | "anc_rlp" | "anc_permanente"
-  | "pc_fornecedores" | "pc_emprestimos" | "pc_obrigacoes" | "pc_outros"
-  | "pnc_emprestimos" | "pnc_outros"
+  | "ac_disponivel"
+  | "ac_clientes"
+  | "ac_estoques"
+  | "ac_outros"
+  | "anc_rlp"
+  | "anc_permanente"
+  | "pc_fornecedores"
+  | "pc_emprestimos"
+  | "pc_obrigacoes"
+  | "pc_outros"
+  | "pnc_emprestimos"
+  | "pnc_outros"
   | "pl"
-  | "receita_bruta" | "deducoes" | "custos" | "despesas_operacionais"
-  | "receitas_financeiras" | "despesas_financeiras" | "outras_receitas" | "outras_despesas" | "ir_csll"
+  | "receita_bruta"
+  | "deducoes"
+  | "custos"
+  | "despesas_operacionais"
+  | "receitas_financeiras"
+  | "despesas_financeiras"
+  | "outras_receitas"
+  | "outras_despesas"
+  | "ir_csll"
   | "ignorar";
 
 export const GRUPOS: { id: Grupo; nome: string; bloco: "Ativo" | "Passivo" | "Resultado" | "—" }[] = [
@@ -93,7 +108,8 @@ export function lerValor(v: unknown): { valor: number; natureza: "D" | "C" | nul
     s = s.slice(1);
   }
   s = s.replace(/[R$\s]/g, "");
-  const ultV = s.lastIndexOf(","), ultP = s.lastIndexOf(".");
+  const ultV = s.lastIndexOf(","),
+    ultP = s.lastIndexOf(".");
   if (ultV >= 0 && ultP >= 0) s = ultV > ultP ? s.replace(/\./g, "").replace(",", ".") : s.replace(/,/g, "");
   else if (ultV >= 0) s = s.replace(",", ".");
   else if (/^\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g, "");
@@ -131,7 +147,10 @@ export function lerBalancete(matriz: unknown[][]): Leitura {
 
   // cabeçalho do relatório (primeiras 15 linhas)
   for (const lin of matriz.slice(0, 15)) {
-    const txt = lin.map((c) => String(c ?? "")).join(" ").replace(/\s+/g, " ");
+    const txt = lin
+      .map((c) => String(c ?? ""))
+      .join(" ")
+      .replace(/\s+/g, " ");
     const t = sem(txt);
     const cnpj = txt.match(/\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2}/);
     if (cnpj && !cab.cnpj) cab.cnpj = cnpj[0];
@@ -166,7 +185,10 @@ export function lerBalancete(matriz: unknown[][]): Leitura {
       break;
     }
   }
-  if (hdr < 0) throw new Error("Não encontrei os títulos das colunas (Classificação, Descrição, Saldo atual). Exporte o Balancete do Domínio em Excel.");
+  if (hdr < 0)
+    throw new Error(
+      "Não encontrei os títulos das colunas (Classificação, Descrição, Saldo atual). Exporte o Balancete do Domínio em Excel.",
+    );
   if (mapa.descricao === undefined) {
     // Domínio às vezes deixa a descrição sem título, ao lado da classificação
     const base = mapa.classificacao ?? mapa.codigo;
@@ -180,7 +202,9 @@ export function lerBalancete(matriz: unknown[][]): Leitura {
     if (mapa[k] === undefined) return 0;
     // o Domínio às vezes põe a natureza (D/C) na célula seguinte
     const v = lin[mapa[k]];
-    const prox = String(lin[mapa[k] + 1] ?? "").trim().toUpperCase();
+    const prox = String(lin[mapa[k] + 1] ?? "")
+      .trim()
+      .toUpperCase();
     const r = lerValor(prox === "D" || prox === "C" ? `${v}${prox}` : v);
     if (r.natureza) temNatureza = true;
     return r.valor;
@@ -215,7 +239,9 @@ export function lerBalancete(matriz: unknown[][]): Leitura {
 
   // sem D/C no arquivo: saldos vêm pela natureza da conta → passivo, PL e receitas viram credores
   if (!temNatureza && normalizarSinal(linhas))
-    avisos.push("Saldos sem D/C: considerei a natureza normal de cada conta (ativo e despesas devedores; passivo, PL e receitas credores).");
+    avisos.push(
+      "Saldos sem D/C: considerei a natureza normal de cada conta (ativo e despesas devedores; passivo, PL e receitas credores).",
+    );
 
   return { cabecalho: cab, linhas, avisos };
 }
@@ -258,29 +284,77 @@ const REGRAS: { re: RegExp; grupo: Grupo; bloco: Bloco; dentro?: RegExp }[] = [
   { bloco: "ativo", re: /^CONTAS DE COMPENSACAO/, grupo: "ignorar" },
   { bloco: "ativo", re: /IMOBILIZADO|INTANGIVEL|DIFERIDO/, grupo: "anc_permanente" },
   { bloco: "ativo", re: /INVESTIMENTOS|PARTICIPACOES SOCIETARIAS/, grupo: "anc_permanente", dentro: /NAO CIRCULANTE|PERMANENTE/ },
-  { bloco: "ativo", re: /MOVEIS|UTENSILIOS|VEICULOS|MAQUINAS|EQUIPAMENTOS|EDIFICACOES|IMOVEIS|TERRENOS|COMPUTADORES|INSTALACOES|BENFEITORIAS|SOFTWARE|MARCAS|DEPRECIAC|AMORTIZAC.*ACUMUL|IMOBILIZAC/, grupo: "anc_permanente", dentro: /NAO CIRCULANTE|PERMANENTE/ },
+  {
+    bloco: "ativo",
+    re: /MOVEIS|UTENSILIOS|VEICULOS|MAQUINAS|EQUIPAMENTOS|EDIFICACOES|IMOVEIS|TERRENOS|COMPUTADORES|INSTALACOES|BENFEITORIAS|SOFTWARE|MARCAS|DEPRECIAC|AMORTIZAC.*ACUMUL|IMOBILIZAC/,
+    grupo: "anc_permanente",
+    dentro: /NAO CIRCULANTE|PERMANENTE/,
+  },
   { bloco: "ativo", re: /DISPONI|^CAIXA|BANCOS?\b|APLICAC.*(FINANC|LIQUIDEZ)|NUMERARIO|CARTOES PRE PAGOS/, grupo: "ac_disponivel" },
   { bloco: "ativo", re: /INVESTIMENTOS|APLIC/, grupo: "ac_disponivel", dentro: /^DISPONIVEL|^ATIVO CIRCULANTE/ },
-  { bloco: "ativo", re: /^CLIENTES|DUPLICATAS A RECEBER|CONTAS A RECEBER DE CLIENTES|CARTOES? (DE CREDITO )?A RECEBER/, grupo: "ac_clientes" },
+  {
+    bloco: "ativo",
+    re: /^CLIENTES|DUPLICATAS A RECEBER|CONTAS A RECEBER DE CLIENTES|CARTOES? (DE CREDITO )?A RECEBER/,
+    grupo: "ac_clientes",
+  },
   { bloco: "ativo", re: /ESTOQUE|MERCADORIAS|MATERIA.? PRIMA|PRODUTOS ACABADOS|PRODUTOS EM ELABORACAO/, grupo: "ac_estoques" },
   // passivo e PL
   { bloco: "passivo", re: /^CONTAS DE COMPENSACAO/, grupo: "ignorar" },
   { bloco: "passivo", re: /PATRIMONIO LIQUIDO/, grupo: "pl" },
-  { bloco: "passivo", re: /EMPRESTIMOS|FINANCIAMENTOS|JUROS A TRANSCORRER|CAPITAL DE GIRO|LEASING|ARRENDAMENTO MERCANTIL/, grupo: "pnc_emprestimos", dentro: /NAO CIRCULANTE|LONGO PRAZO/ },
-  { bloco: "passivo", re: /EMPRESTIMOS|FINANCIAMENTOS|JUROS A TRANSCORRER|CAPITAL DE GIRO|LEASING|ARRENDAMENTO MERCANTIL/, grupo: "pc_emprestimos" },
+  {
+    bloco: "passivo",
+    re: /EMPRESTIMOS|FINANCIAMENTOS|JUROS A TRANSCORRER|CAPITAL DE GIRO|LEASING|ARRENDAMENTO MERCANTIL/,
+    grupo: "pnc_emprestimos",
+    dentro: /NAO CIRCULANTE|LONGO PRAZO/,
+  },
+  {
+    bloco: "passivo",
+    re: /EMPRESTIMOS|FINANCIAMENTOS|JUROS A TRANSCORRER|CAPITAL DE GIRO|LEASING|ARRENDAMENTO MERCANTIL/,
+    grupo: "pc_emprestimos",
+  },
   { bloco: "passivo", re: /FORNECEDORES/, grupo: "pc_fornecedores" },
-  { bloco: "passivo", re: /OBRIGAC.*(TRIBUT|FISCA|TRABALH|SOCIA|PREVID|PESSOAL)|IMPOSTOS|TRIBUTOS|CONTRIBUICOES A RECOLHER|ENCARGOS|SALARIOS|ORDENADOS|FERIAS|13O|PROVIS|PARCELAMENTO|\b(INSS|FGTS|IRRF|PIS|COFINS|ICMS|ISS|ISSQN)\b/, grupo: "pc_obrigacoes", dentro: /^PASSIVO CIRCULANTE|^CIRCULANTE/ },
+  {
+    bloco: "passivo",
+    re: /OBRIGAC.*(TRIBUT|FISCA|TRABALH|SOCIA|PREVID|PESSOAL)|IMPOSTOS|TRIBUTOS|CONTRIBUICOES A RECOLHER|ENCARGOS|SALARIOS|ORDENADOS|FERIAS|13O|PROVIS|PARCELAMENTO|\b(INSS|FGTS|IRRF|PIS|COFINS|ICMS|ISS|ISSQN)\b/,
+    grupo: "pc_obrigacoes",
+    dentro: /^PASSIVO CIRCULANTE|^CIRCULANTE/,
+  },
   // resultado
   { bloco: "resultado", re: /APURACAO|ENCERRAMENTO|RESULTADO DO EXERCICIO/, grupo: "ignorar" },
-  { bloco: "resultado", re: /PROVIS.*(IMPOSTO DE RENDA|\bIR\b|IRPJ|CSLL|CONTRIBUICAO SOCIAL)|\bIRPJ\b|\bCSLL\b|CONTRIBUICAO SOCIAL SOBRE O LUCRO|IMPOSTO DE RENDA (PESSOA JURIDICA|E CONTRIBUICAO)/, grupo: "ir_csll" },
-  { bloco: "resultado", re: /DEDUC|DEVOLUC|\bDEV\b|CANCELAMENTO|ABATIMENTO|IMPOSTOS (SOBRE|INCIDENTES)|IMPOSTOS E CONTRIBUICOES SOBRE|SIMPLES NACIONAL|^\(MENOS\)/, grupo: "deducoes", dentro: /RECEITA/ },
-  { bloco: "resultado", re: /RECEITAS? FINANCEIRAS|RENDIMENTOS DE APLICAC|JUROS ATIVOS|DESCONTOS OBTIDOS|JUROS E DESCONTOS|VARIAC.*ATIVA/, grupo: "receitas_financeiras" },
-  { bloco: "resultado", re: /DESPESAS? FINANCEIRAS|JUROS PASSIVOS|TARIFAS BANCARIAS|DESPESAS BANCARIAS|\bIOF\b|VARIAC.*PASSIVA/, grupo: "despesas_financeiras" },
+  {
+    bloco: "resultado",
+    re: /PROVIS.*(IMPOSTO DE RENDA|\bIR\b|IRPJ|CSLL|CONTRIBUICAO SOCIAL)|\bIRPJ\b|\bCSLL\b|CONTRIBUICAO SOCIAL SOBRE O LUCRO|IMPOSTO DE RENDA (PESSOA JURIDICA|E CONTRIBUICAO)/,
+    grupo: "ir_csll",
+  },
+  {
+    bloco: "resultado",
+    re: /DEDUC|DEVOLUC|\bDEV\b|CANCELAMENTO|ABATIMENTO|IMPOSTOS (SOBRE|INCIDENTES)|IMPOSTOS E CONTRIBUICOES SOBRE|SIMPLES NACIONAL|^\(MENOS\)/,
+    grupo: "deducoes",
+    dentro: /RECEITA/,
+  },
+  {
+    bloco: "resultado",
+    re: /RECEITAS? FINANCEIRAS|RENDIMENTOS DE APLICAC|JUROS ATIVOS|DESCONTOS OBTIDOS|JUROS E DESCONTOS|VARIAC.*ATIVA/,
+    grupo: "receitas_financeiras",
+  },
+  {
+    bloco: "resultado",
+    re: /DESPESAS? FINANCEIRAS|JUROS PASSIVOS|TARIFAS BANCARIAS|DESPESAS BANCARIAS|\bIOF\b|VARIAC.*PASSIVA/,
+    grupo: "despesas_financeiras",
+  },
   { bloco: "resultado", re: /OUTRAS RECEITAS|RECEITAS NAO OPERACIONAIS|GANHO NA (ALIENACAO|VENDA)/, grupo: "outras_receitas" },
-  { bloco: "resultado", re: /OUTRAS DESPESAS|DESPESAS NAO OPERACIONAIS|PERDA NA (ALIENACAO|VENDA)|RESULTADOS NAO OPERACIONAIS/, grupo: "outras_despesas" },
+  {
+    bloco: "resultado",
+    re: /OUTRAS DESPESAS|DESPESAS NAO OPERACIONAIS|PERDA NA (ALIENACAO|VENDA)|RESULTADOS NAO OPERACIONAIS/,
+    grupo: "outras_despesas",
+  },
   { bloco: "resultado", re: /CUSTO/, grupo: "custos" },
   { bloco: "resultado", re: /DESPESA/, grupo: "despesas_operacionais" },
-  { bloco: "resultado", re: /RECEITA BRUTA|RECEITA OPERACIONAL|VENDAS?|PRESTACAO DE SERVICOS|FATURAMENTO|RECEITA DE SERVICOS|RECEITAS?/, grupo: "receita_bruta" },
+  {
+    bloco: "resultado",
+    re: /RECEITA BRUTA|RECEITA OPERACIONAL|VENDAS?|PRESTACAO DE SERVICOS|FATURAMENTO|RECEITA DE SERVICOS|RECEITAS?/,
+    grupo: "receita_bruta",
+  },
 ];
 
 export function blocoDe(topo: string, classificacao: string): Bloco {
@@ -337,18 +411,44 @@ export function classificar(linhas: Linha[], mapa: { classificacao: string; grup
 
 export interface Resumo {
   // balanço (saldos atuais, valores positivos na natureza da conta)
-  disponivel: number; clientes: number; estoques: number; ac_outros: number; ac: number;
-  rlp: number; permanente: number; anc: number; ativo_total: number;
-  fornecedores: number; pc_emprestimos: number; pc_obrigacoes: number; pc_outros: number; pc: number;
-  pnc_emprestimos: number; pnc: number; pl: number; resultado_exercicio: number;
+  disponivel: number;
+  clientes: number;
+  estoques: number;
+  ac_outros: number;
+  ac: number;
+  rlp: number;
+  permanente: number;
+  anc: number;
+  ativo_total: number;
+  fornecedores: number;
+  pc_emprestimos: number;
+  pc_obrigacoes: number;
+  pc_outros: number;
+  pc: number;
+  pnc_emprestimos: number;
+  pnc: number;
+  pl: number;
+  resultado_exercicio: number;
   // DRE do mês (movimento) e do ano (saldo acumulado)
-  mes: Dre; ano: Dre;
-  debitos: number; creditos: number;
+  mes: Dre;
+  ano: Dre;
+  debitos: number;
+  creditos: number;
 }
 export interface Dre {
-  receita_bruta: number; deducoes: number; receita_liquida: number; custos: number; lucro_bruto: number;
-  despesas_operacionais: number; resultado_operacional: number; receitas_financeiras: number; despesas_financeiras: number;
-  outras: number; resultado_antes_ir: number; ir_csll: number; lucro_liquido: number;
+  receita_bruta: number;
+  deducoes: number;
+  receita_liquida: number;
+  custos: number;
+  lucro_bruto: number;
+  despesas_operacionais: number;
+  resultado_operacional: number;
+  receitas_financeiras: number;
+  despesas_financeiras: number;
+  outras: number;
+  resultado_antes_ir: number;
+  ir_csll: number;
+  lucro_liquido: number;
   despesas_por_conta: { conta: string; valor: number }[];
 }
 
@@ -374,8 +474,18 @@ function dre(linhas: Linha[], valor: (l: Linha) => number): Dre {
     porConta.set(l.descricao, (porConta.get(l.descricao) ?? 0) + valor(l));
   }
   return {
-    receita_bruta, deducoes, receita_liquida, custos, lucro_bruto, despesas_operacionais, resultado_operacional,
-    receitas_financeiras, despesas_financeiras, outras, resultado_antes_ir, ir_csll,
+    receita_bruta,
+    deducoes,
+    receita_liquida,
+    custos,
+    lucro_bruto,
+    despesas_operacionais,
+    resultado_operacional,
+    receitas_financeiras,
+    despesas_financeiras,
+    outras,
+    resultado_antes_ir,
+    ir_csll,
     lucro_liquido: r2(resultado_antes_ir - ir_csll),
     despesas_por_conta: [...porConta.entries()]
       .map(([conta, v]) => ({ conta, valor: r2(v) }))
@@ -388,11 +498,18 @@ function dre(linhas: Linha[], valor: (l: Linha) => number): Dre {
 export function resumir(linhas: Linha[]): Resumo {
   const an = linhas.filter((l) => l.analitica);
   const sa = (g: Grupo) => r2(an.filter((l) => l.grupo === g).reduce((a, l) => a + l.saldo_atual, 0));
-  const disponivel = sa("ac_disponivel"), clientes = sa("ac_clientes"), estoques = sa("ac_estoques"), ac_outros = sa("ac_outros");
+  const disponivel = sa("ac_disponivel"),
+    clientes = sa("ac_clientes"),
+    estoques = sa("ac_estoques"),
+    ac_outros = sa("ac_outros");
   const ac = r2(disponivel + clientes + estoques + ac_outros);
-  const rlp = sa("anc_rlp"), permanente = sa("anc_permanente");
+  const rlp = sa("anc_rlp"),
+    permanente = sa("anc_permanente");
   const anc = r2(rlp + permanente);
-  const fornecedores = -sa("pc_fornecedores"), pc_emprestimos = -sa("pc_emprestimos"), pc_obrigacoes = -sa("pc_obrigacoes"), pc_outros = -sa("pc_outros");
+  const fornecedores = -sa("pc_fornecedores"),
+    pc_emprestimos = -sa("pc_emprestimos"),
+    pc_obrigacoes = -sa("pc_obrigacoes"),
+    pc_outros = -sa("pc_outros");
   const pc = r2(fornecedores + pc_emprestimos + pc_obrigacoes + pc_outros);
   const pnc_emprestimos = -sa("pnc_emprestimos");
   const pnc = r2(pnc_emprestimos - sa("pnc_outros"));
@@ -400,10 +517,26 @@ export function resumir(linhas: Linha[]): Resumo {
   const ano = dre(linhas, (l) => l.saldo_atual);
   const mes = dre(linhas, (l) => l.debitos - l.creditos);
   return {
-    disponivel, clientes, estoques, ac_outros, ac, rlp, permanente, anc, ativo_total: r2(ac + anc),
-    fornecedores, pc_emprestimos, pc_obrigacoes, pc_outros, pc, pnc_emprestimos, pnc, pl,
+    disponivel,
+    clientes,
+    estoques,
+    ac_outros,
+    ac,
+    rlp,
+    permanente,
+    anc,
+    ativo_total: r2(ac + anc),
+    fornecedores,
+    pc_emprestimos,
+    pc_obrigacoes,
+    pc_outros,
+    pc,
+    pnc_emprestimos,
+    pnc,
+    pl,
     resultado_exercicio: ano.lucro_liquido,
-    mes, ano,
+    mes,
+    ano,
     debitos: r2(an.reduce((a, l) => a + l.debitos, 0)),
     creditos: r2(an.reduce((a, l) => a + l.creditos, 0)),
   };
@@ -450,12 +583,21 @@ export function calcularIndices(r: Resumo, diasPeriodo = 30, b?: BasePrazos): In
   const cmv = d.custos;
   const temEstoque = !!b && b.estoques_medio > 1 && cmv > 0;
   // compras = CMV + estoque final − estoque inicial; sem estoque (serviços), a base de pagamento são custos + despesas operacionais
-  const compras = !b ? 0
-    : (b.compras_fornecedores ?? 0) > 0 ? b.compras_fornecedores!
-    : temEstoque ? cmv + b.estoque_final - b.estoque_inicial : cmv + d.despesas_operacionais;
+  const compras = !b
+    ? 0
+    : (b.compras_fornecedores ?? 0) > 0
+      ? b.compras_fornecedores!
+      : temEstoque
+        ? cmv + b.estoque_final - b.estoque_inicial
+        : cmv + d.despesas_operacionais;
   const dd = (v: number | null) => (v === null || !Number.isFinite(v) ? null : Math.round(v));
-  const pmr = b ? (d.receita_bruta > 0 ? dd((b.clientes_medio / d.receita_bruta) * dias) : null)
-    : r.mes.receita_bruta > 0 ? Math.round((r.clientes / r.mes.receita_bruta) * diasPeriodo) : null;
+  const pmr = b
+    ? d.receita_bruta > 0
+      ? dd((b.clientes_medio / d.receita_bruta) * dias)
+      : null
+    : r.mes.receita_bruta > 0
+      ? Math.round((r.clientes / r.mes.receita_bruta) * diasPeriodo)
+      : null;
   const pme = temEstoque ? dd((b!.estoques_medio / cmv) * dias) : null;
   const pmv = temEstoque ? dd(((b!.acabados_medio ?? b!.estoques_medio) / cmv) * dias) : null;
   const pmp = b && compras > 0 && b.fornecedores_medio > 0 ? dd((b.fornecedores_medio / compras) * dias) : null;
@@ -474,30 +616,111 @@ export function calcularIndices(r: Resumo, diasPeriodo = 30, b?: BasePrazos): In
     margem_operacional: div(r.ano.resultado_operacional, r.ano.receita_liquida),
     margem_liquida: div(r.ano.lucro_liquido, r.ano.receita_liquida),
     roe: plAjustado > 0 ? div(r.ano.lucro_liquido, plAjustado) : null,
-    pmr, pmp, pme, pmv, ciclo_operacional, ciclo_financeiro,
+    pmr,
+    pmp,
+    pme,
+    pmv,
+    ciclo_operacional,
+    ciclo_financeiro,
     carga_tributaria: div(r.ano.deducoes + r.ano.ir_csll, r.ano.receita_bruta),
   };
 }
 
-export const INDICES_INFO: { id: keyof Indices; nome: string; formato: "x" | "%" | "R$" | "dias"; leitura: string; alerta?: (v: number) => boolean }[] = [
-  { id: "liquidez_corrente", nome: "Liquidez corrente", formato: "x", leitura: "quanto há em caixa e a receber para cada R$ 1 de dívida de curto prazo", alerta: (v) => v < 1 },
-  { id: "liquidez_seca", nome: "Liquidez seca", formato: "x", leitura: "a mesma conta sem depender de vender o estoque", alerta: (v) => v < 0.8 },
-  { id: "liquidez_imediata", nome: "Liquidez imediata", formato: "x", leitura: "quanto das dívidas de curto prazo o caixa paga hoje", alerta: (v) => v < 0.2 },
+export const INDICES_INFO: {
+  id: keyof Indices;
+  nome: string;
+  formato: "x" | "%" | "R$" | "dias";
+  leitura: string;
+  alerta?: (v: number) => boolean;
+}[] = [
+  {
+    id: "liquidez_corrente",
+    nome: "Liquidez corrente",
+    formato: "x",
+    leitura: "quanto há em caixa e a receber para cada R$ 1 de dívida de curto prazo",
+    alerta: (v) => v < 1,
+  },
+  {
+    id: "liquidez_seca",
+    nome: "Liquidez seca",
+    formato: "x",
+    leitura: "a mesma conta sem depender de vender o estoque",
+    alerta: (v) => v < 0.8,
+  },
+  {
+    id: "liquidez_imediata",
+    nome: "Liquidez imediata",
+    formato: "x",
+    leitura: "quanto das dívidas de curto prazo o caixa paga hoje",
+    alerta: (v) => v < 0.2,
+  },
   { id: "liquidez_geral", nome: "Liquidez geral", formato: "x", leitura: "capacidade de pagar todas as dívidas", alerta: (v) => v < 1 },
   { id: "capital_giro", nome: "Capital de giro", formato: "R$", leitura: "folga (ou falta) de dinheiro para operar", alerta: (v) => v < 0 },
-  { id: "endividamento_geral", nome: "Endividamento geral", formato: "%", leitura: "quanto do que a empresa tem é financiado por terceiros", alerta: (v) => v > 0.7 },
-  { id: "composicao_endividamento", nome: "Dívida de curto prazo", formato: "%", leitura: "quanto da dívida vence em até 12 meses", alerta: (v) => v > 0.8 },
+  {
+    id: "endividamento_geral",
+    nome: "Endividamento geral",
+    formato: "%",
+    leitura: "quanto do que a empresa tem é financiado por terceiros",
+    alerta: (v) => v > 0.7,
+  },
+  {
+    id: "composicao_endividamento",
+    nome: "Dívida de curto prazo",
+    formato: "%",
+    leitura: "quanto da dívida vence em até 12 meses",
+    alerta: (v) => v > 0.8,
+  },
   { id: "margem_bruta", nome: "Margem bruta", formato: "%", leitura: "quanto sobra de cada R$ 100 vendidos depois dos custos" },
-  { id: "margem_operacional", nome: "Margem operacional", formato: "%", leitura: "quanto sobra depois das despesas da operação", alerta: (v) => v < 0 },
+  {
+    id: "margem_operacional",
+    nome: "Margem operacional",
+    formato: "%",
+    leitura: "quanto sobra depois das despesas da operação",
+    alerta: (v) => v < 0,
+  },
   { id: "margem_liquida", nome: "Margem líquida", formato: "%", leitura: "lucro final de cada R$ 100 vendidos", alerta: (v) => v < 0 },
   { id: "roe", nome: "Retorno sobre o patrimônio", formato: "%", leitura: "quanto o capital dos sócios rendeu no ano" },
-  { id: "pmr", nome: "PMR · Prazo médio de recebimento", formato: "dias", leitura: "em quantos dias, em média, a empresa recebe dos clientes depois de vender", alerta: (v) => v > 60 },
-  { id: "pmp", nome: "PMP · Prazo médio de pagamento", formato: "dias", leitura: "em quantos dias, em média, a empresa paga fornecedores (base: compras lançadas em fornecedores no período)" },
-  { id: "pme", nome: "PME · Prazo médio de estocagem", formato: "dias", leitura: "quantos dias o estoque (matéria-prima a produto) fica parado até sair; vazio quando não há estoque", alerta: (v) => v > 120 },
-  { id: "pmv", nome: "PMV · Prazo médio de venda", formato: "dias", leitura: "quantos dias o produto pronto ou a mercadoria espera até ser vendido; vazio quando não há estoque", alerta: (v) => v > 90 },
+  {
+    id: "pmr",
+    nome: "PMR · Prazo médio de recebimento",
+    formato: "dias",
+    leitura: "em quantos dias, em média, a empresa recebe dos clientes depois de vender",
+    alerta: (v) => v > 60,
+  },
+  {
+    id: "pmp",
+    nome: "PMP · Prazo médio de pagamento",
+    formato: "dias",
+    leitura: "em quantos dias, em média, a empresa paga fornecedores (base: compras lançadas em fornecedores no período)",
+  },
+  {
+    id: "pme",
+    nome: "PME · Prazo médio de estocagem",
+    formato: "dias",
+    leitura: "quantos dias o estoque (matéria-prima a produto) fica parado até sair; vazio quando não há estoque",
+    alerta: (v) => v > 120,
+  },
+  {
+    id: "pmv",
+    nome: "PMV · Prazo médio de venda",
+    formato: "dias",
+    leitura: "quantos dias o produto pronto ou a mercadoria espera até ser vendido; vazio quando não há estoque",
+    alerta: (v) => v > 90,
+  },
   { id: "ciclo_operacional", nome: "Ciclo operacional", formato: "dias", leitura: "do estoque ao dinheiro na conta: PME + PMR" },
-  { id: "ciclo_financeiro", nome: "Ciclo financeiro (de caixa)", formato: "dias", leitura: "quantos dias a empresa banca a operação com dinheiro próprio ou de banco: ciclo operacional − PMP", alerta: (v) => v > 60 },
-  { id: "carga_tributaria", nome: "Carga tributária efetiva", formato: "%", leitura: "quanto da receita bruta vai para impostos (vendas + IRPJ/CSLL)" },
+  {
+    id: "ciclo_financeiro",
+    nome: "Ciclo financeiro (de caixa)",
+    formato: "dias",
+    leitura: "quantos dias a empresa banca a operação com dinheiro próprio ou de banco: ciclo operacional − PMP",
+    alerta: (v) => v > 60,
+  },
+  {
+    id: "carga_tributaria",
+    nome: "Carga tributária efetiva",
+    formato: "%",
+    leitura: "quanto da receita bruta vai para impostos (vendas + IRPJ/CSLL)",
+  },
 ];
 
 export function fmtIndice(v: number | null | undefined, f: "x" | "%" | "R$" | "dias") {
@@ -513,8 +736,18 @@ export const brl = (v: number | null | undefined) =>
 
 // ---------------------------------------------------------------- conferências e fragilidades
 
-export interface Conferencia { nome: string; ok: boolean; detalhe: string }
-export interface Alerta { area: string; nivel: "alto" | "medio"; texto: string; evidencia: string; recomendacao: string }
+export interface Conferencia {
+  nome: string;
+  ok: boolean;
+  detalhe: string;
+}
+export interface Alerta {
+  area: string;
+  nivel: "alto" | "medio";
+  texto: string;
+  evidencia: string;
+  recomendacao: string;
+}
 
 export function conferir(r: Resumo, linhas: Linha[], competencia: string | null): Conferencia[] {
   const dif = Math.abs(r.debitos - r.creditos);
@@ -524,7 +757,11 @@ export function conferir(r: Resumo, linhas: Linha[], competencia: string | null)
   return [
     { nome: "Balancete fechado (débitos = créditos)", ok: dif < 1, detalhe: dif < 1 ? "ok" : `diferença de ${brl(dif)}` },
     { nome: "Ativo = passivo + PL + resultado do ano", ok: difBal < 1, detalhe: difBal < 1 ? "ok" : `diferença de ${brl(difBal)}` },
-    { nome: "Competência identificada", ok: !!competencia, detalhe: competencia ? competencia.slice(0, 7).split("-").reverse().join("/") : "informe o mês" },
+    {
+      nome: "Competência identificada",
+      ok: !!competencia,
+      detalhe: competencia ? competencia.slice(0, 7).split("-").reverse().join("/") : "informe o mês",
+    },
     { nome: "Todas as contas com grupo gerencial", ok: semGrupo === 0, detalhe: semGrupo ? `${semGrupo} conta(s) sem grupo` : "ok" },
   ];
 }
@@ -535,51 +772,172 @@ export function fragilidades(r: Resumo, i: Indices, linhas: Linha[], anterior?: 
   const d = (l: Linha) => sem(l.descricao);
 
   if (i.liquidez_corrente !== null && i.liquidez_corrente < 1)
-    out.push({ area: "Liquidez e capital de giro", nivel: "alto", texto: "Liquidez corrente abaixo de 1", evidencia: `AC ${brl(r.ac)} × PC ${brl(r.pc)} (${fmtIndice(i.liquidez_corrente, "x")})`, recomendacao: "Rever prazos com fornecedores e bancos e avaliar alongar dívidas de curto prazo." });
+    out.push({
+      area: "Liquidez e capital de giro",
+      nivel: "alto",
+      texto: "Liquidez corrente abaixo de 1",
+      evidencia: `AC ${brl(r.ac)} × PC ${brl(r.pc)} (${fmtIndice(i.liquidez_corrente, "x")})`,
+      recomendacao: "Rever prazos com fornecedores e bancos e avaliar alongar dívidas de curto prazo.",
+    });
   if (i.capital_giro < 0)
-    out.push({ area: "Liquidez e capital de giro", nivel: "alto", texto: "Capital de giro negativo", evidencia: brl(i.capital_giro), recomendacao: "Planejar o caixa dos próximos meses e evitar novos compromissos de curto prazo." });
+    out.push({
+      area: "Liquidez e capital de giro",
+      nivel: "alto",
+      texto: "Capital de giro negativo",
+      evidencia: brl(i.capital_giro),
+      recomendacao: "Planejar o caixa dos próximos meses e evitar novos compromissos de curto prazo.",
+    });
   for (const l of an.filter((x) => x.grupo === "ac_disponivel" && x.saldo_atual < -1))
-    out.push({ area: "Caixa", nivel: "alto", texto: `Saldo credor em ${l.descricao}`, evidencia: `${l.classificacao} · ${brl(l.saldo_atual)}`, recomendacao: "Conferir a conciliação: caixa ou banco credor indica estouro ou lançamento faltando." });
-  for (const l of an.filter((x) => x.grupo === "ac_disponivel" && /CAIXA/.test(d(x)) && x.debitos === 0 && x.creditos === 0 && x.saldo_atual > Math.max(20000, r.ativo_total * 0.1)))
-    out.push({ area: "Caixa", nivel: "medio", texto: "Caixa alto sem movimento no mês", evidencia: `${l.descricao} · ${brl(l.saldo_atual)}`, recomendacao: "Confirmar a existência do dinheiro; saldo de caixa parado pode ser saldo fictício." });
+    out.push({
+      area: "Caixa",
+      nivel: "alto",
+      texto: `Saldo credor em ${l.descricao}`,
+      evidencia: `${l.classificacao} · ${brl(l.saldo_atual)}`,
+      recomendacao: "Conferir a conciliação: caixa ou banco credor indica estouro ou lançamento faltando.",
+    });
+  for (const l of an.filter(
+    (x) =>
+      x.grupo === "ac_disponivel" &&
+      /CAIXA/.test(d(x)) &&
+      x.debitos === 0 &&
+      x.creditos === 0 &&
+      x.saldo_atual > Math.max(20000, r.ativo_total * 0.1),
+  ))
+    out.push({
+      area: "Caixa",
+      nivel: "medio",
+      texto: "Caixa alto sem movimento no mês",
+      evidencia: `${l.descricao} · ${brl(l.saldo_atual)}`,
+      recomendacao: "Confirmar a existência do dinheiro; saldo de caixa parado pode ser saldo fictício.",
+    });
   if (r.pl + r.resultado_exercicio < 0)
-    out.push({ area: "Patrimônio líquido", nivel: "alto", texto: "Patrimônio líquido negativo (passivo a descoberto)", evidencia: brl(r.pl + r.resultado_exercicio), recomendacao: "Avaliar aporte de capital ou conversão de mútuos em capital." });
+    out.push({
+      area: "Patrimônio líquido",
+      nivel: "alto",
+      texto: "Patrimônio líquido negativo (passivo a descoberto)",
+      evidencia: brl(r.pl + r.resultado_exercicio),
+      recomendacao: "Avaliar aporte de capital ou conversão de mútuos em capital.",
+    });
   if (r.ano.lucro_liquido < 0)
-    out.push({ area: "Resultado", nivel: "medio", texto: "Prejuízo acumulado no ano", evidencia: brl(r.ano.lucro_liquido), recomendacao: "Revisar preços, custos e as despesas que mais cresceram." });
-  const socios = an.filter((x) => x.grupo !== "pl" && /SOCIO|MUTUO|ADIANTAMENTO A SOCIO|CONTA CORRENTE.*SOCIO/.test(d(x)) && x.saldo_atual > 0);
+    out.push({
+      area: "Resultado",
+      nivel: "medio",
+      texto: "Prejuízo acumulado no ano",
+      evidencia: brl(r.ano.lucro_liquido),
+      recomendacao: "Revisar preços, custos e as despesas que mais cresceram.",
+    });
+  const socios = an.filter(
+    (x) => x.grupo !== "pl" && /SOCIO|MUTUO|ADIANTAMENTO A SOCIO|CONTA CORRENTE.*SOCIO/.test(d(x)) && x.saldo_atual > 0,
+  );
   const totSocios = socios.reduce((a, x) => a + x.saldo_atual, 0);
   if (totSocios > Math.max(10000, r.ativo_total * 0.05))
-    out.push({ area: "Contas com sócios", nivel: "medio", texto: "Valores a receber de sócios elevados", evidencia: `${socios.length} conta(s) · ${brl(totSocios)}`, recomendacao: "Regularizar por distribuição de lucros ou devolução; mútuo com sócio tem efeito tributário (IOF)." });
+    out.push({
+      area: "Contas com sócios",
+      nivel: "medio",
+      texto: "Valores a receber de sócios elevados",
+      evidencia: `${socios.length} conta(s) · ${brl(totSocios)}`,
+      recomendacao: "Regularizar por distribuição de lucros ou devolução; mútuo com sócio tem efeito tributário (IOF).",
+    });
   if (i.pmr !== null && i.pmr > 60)
-    out.push({ area: "Recebimento", nivel: "medio", texto: "Prazo médio de recebimento alto", evidencia: `${i.pmr} dias`, recomendacao: "Revisar a carteira de clientes vencidos e a política de crédito." });
+    out.push({
+      area: "Recebimento",
+      nivel: "medio",
+      texto: "Prazo médio de recebimento alto",
+      evidencia: `${i.pmr} dias`,
+      recomendacao: "Revisar a carteira de clientes vencidos e a política de crédito.",
+    });
   if (i.ciclo_financeiro != null && i.ciclo_financeiro > 60 && (i.pmr ?? 0) > 0)
-    out.push({ area: "Capital de giro", nivel: "medio", texto: "Ciclo financeiro longo", evidencia: `${i.ciclo_financeiro} dias (PMR ${i.pmr ?? "—"}${i.pme != null ? `, PME ${i.pme}` : ""}, PMP ${i.pmp ?? "—"})`, recomendacao: "Encurtar o prazo de recebimento ou alongar o de pagamento reduz a necessidade de capital de giro." });
+    out.push({
+      area: "Capital de giro",
+      nivel: "medio",
+      texto: "Ciclo financeiro longo",
+      evidencia: `${i.ciclo_financeiro} dias (PMR ${i.pmr ?? "—"}${i.pme != null ? `, PME ${i.pme}` : ""}, PMP ${i.pmp ?? "—"})`,
+      recomendacao: "Encurtar o prazo de recebimento ou alongar o de pagamento reduz a necessidade de capital de giro.",
+    });
   if (anterior && r.pc_obrigacoes > anterior.pc_obrigacoes * 1.15 && r.pc_obrigacoes - anterior.pc_obrigacoes > 5000)
-    out.push({ area: "Obrigações fiscais e trabalhistas", nivel: "alto", texto: "Tributos e encargos a recolher acumulando", evidencia: `${brl(anterior.pc_obrigacoes)} → ${brl(r.pc_obrigacoes)}`, recomendacao: "Verificar guias não pagas e parcelamentos em atraso antes que virem dívida ativa." });
+    out.push({
+      area: "Obrigações fiscais e trabalhistas",
+      nivel: "alto",
+      texto: "Tributos e encargos a recolher acumulando",
+      evidencia: `${brl(anterior.pc_obrigacoes)} → ${brl(r.pc_obrigacoes)}`,
+      recomendacao: "Verificar guias não pagas e parcelamentos em atraso antes que virem dívida ativa.",
+    });
   const temFolha = an.some((x) => /SALARIO|ORDENADO|PRO.?LABORE/.test(d(x)) && x.grupo === "despesas_operacionais" && x.saldo_atual > 0);
   const temProvFerias = an.some((x) => /PROVIS.*(FERIAS|13)/.test(d(x)) && x.saldo_atual !== 0);
   if (temFolha && !temProvFerias)
-    out.push({ area: "Provisões", nivel: "medio", texto: "Sem provisão de férias e 13º", evidencia: "há despesa de salários, mas nenhuma conta de provisão com saldo", recomendacao: "Lançar as provisões mensais de férias, 13º e encargos." });
+    out.push({
+      area: "Provisões",
+      nivel: "medio",
+      texto: "Sem provisão de férias e 13º",
+      evidencia: "há despesa de salários, mas nenhuma conta de provisão com saldo",
+      recomendacao: "Lançar as provisões mensais de férias, 13º e encargos.",
+    });
   const temImob = r.permanente > 0;
   const temDepr = an.some((x) => /DEPRECIAC|AMORTIZAC/.test(d(x)) && (x.debitos > 0 || x.creditos > 0));
   if (temImob && !temDepr && r.permanente > 20000)
-    out.push({ area: "Provisões", nivel: "medio", texto: "Imobilizado sem depreciação no mês", evidencia: `imobilizado ${brl(r.permanente)}`, recomendacao: "Conferir o cálculo e o lançamento da depreciação." });
+    out.push({
+      area: "Provisões",
+      nivel: "medio",
+      texto: "Imobilizado sem depreciação no mês",
+      evidencia: `imobilizado ${brl(r.permanente)}`,
+      recomendacao: "Conferir o cálculo e o lançamento da depreciação.",
+    });
   const transit = an.filter((x) => /A CLASSIFICAR|TRANSITORIA|A IDENTIFICAR|PENDENTE/.test(d(x)) && Math.abs(x.saldo_atual) > 100);
   if (transit.length)
-    out.push({ area: "Contas transitórias", nivel: "medio", texto: "Saldo em contas a classificar", evidencia: transit.map((x) => `${x.descricao} ${brl(x.saldo_atual)}`).join("; "), recomendacao: "Identificar e reclassificar os lançamentos pendentes." });
+    out.push({
+      area: "Contas transitórias",
+      nivel: "medio",
+      texto: "Saldo em contas a classificar",
+      evidencia: transit.map((x) => `${x.descricao} ${brl(x.saldo_atual)}`).join("; "),
+      recomendacao: "Identificar e reclassificar os lançamentos pendentes.",
+    });
   for (const l of an.filter((x) => x.grupo === "ac_estoques" && x.saldo_atual < -1))
-    out.push({ area: "Estoques", nivel: "alto", texto: `Estoque negativo em ${l.descricao}`, evidencia: brl(l.saldo_atual), recomendacao: "Conferir notas de entrada e baixas de estoque." });
+    out.push({
+      area: "Estoques",
+      nivel: "alto",
+      texto: `Estoque negativo em ${l.descricao}`,
+      evidencia: brl(l.saldo_atual),
+      recomendacao: "Conferir notas de entrada e baixas de estoque.",
+    });
   if (anterior && anterior.estoques > 0 && r.estoques > anterior.estoques * 1.3 && r.mes.receita_bruta <= anterior.mes.receita_bruta)
-    out.push({ area: "Estoques", nivel: "medio", texto: "Estoque crescendo sem crescer as vendas", evidencia: `${brl(anterior.estoques)} → ${brl(r.estoques)}`, recomendacao: "Avaliar compras e itens parados." });
-  if (anterior && r.pc_emprestimos + r.pnc_emprestimos > (anterior.pc_emprestimos + anterior.pnc_emprestimos) * 1.1 && r.mes.receita_bruta <= anterior.mes.receita_bruta)
-    out.push({ area: "Endividamento", nivel: "medio", texto: "Empréstimos crescendo mais que a receita", evidencia: `${brl(anterior.pc_emprestimos + anterior.pnc_emprestimos)} → ${brl(r.pc_emprestimos + r.pnc_emprestimos)}`, recomendacao: "Rever a necessidade e o custo dos financiamentos." });
+    out.push({
+      area: "Estoques",
+      nivel: "medio",
+      texto: "Estoque crescendo sem crescer as vendas",
+      evidencia: `${brl(anterior.estoques)} → ${brl(r.estoques)}`,
+      recomendacao: "Avaliar compras e itens parados.",
+    });
+  if (
+    anterior &&
+    r.pc_emprestimos + r.pnc_emprestimos > (anterior.pc_emprestimos + anterior.pnc_emprestimos) * 1.1 &&
+    r.mes.receita_bruta <= anterior.mes.receita_bruta
+  )
+    out.push({
+      area: "Endividamento",
+      nivel: "medio",
+      texto: "Empréstimos crescendo mais que a receita",
+      evidencia: `${brl(anterior.pc_emprestimos + anterior.pnc_emprestimos)} → ${brl(r.pc_emprestimos + r.pnc_emprestimos)}`,
+      recomendacao: "Rever a necessidade e o custo dos financiamentos.",
+    });
   if (i.composicao_endividamento !== null && i.composicao_endividamento > 0.8 && r.pc_emprestimos > 0)
-    out.push({ area: "Endividamento", nivel: "medio", texto: "Dívida concentrada no curto prazo", evidencia: fmtIndice(i.composicao_endividamento, "%"), recomendacao: "Negociar alongamento dos empréstimos." });
+    out.push({
+      area: "Endividamento",
+      nivel: "medio",
+      texto: "Dívida concentrada no curto prazo",
+      evidencia: fmtIndice(i.composicao_endividamento, "%"),
+      recomendacao: "Negociar alongamento dos empréstimos.",
+    });
   if (anterior && anterior.ano.receita_liquida > 0 && r.ano.receita_liquida > 0) {
     const mAnt = anterior.ano.lucro_liquido / anterior.ano.receita_liquida;
     const mAt = r.ano.lucro_liquido / r.ano.receita_liquida;
     if (mAt < mAnt - 0.03)
-      out.push({ area: "Resultado", nivel: "medio", texto: "Margem líquida em queda", evidencia: `${fmtIndice(mAnt, "%")} → ${fmtIndice(mAt, "%")}`, recomendacao: "Identificar as despesas que cresceram acima da receita." });
+      out.push({
+        area: "Resultado",
+        nivel: "medio",
+        texto: "Margem líquida em queda",
+        evidencia: `${fmtIndice(mAnt, "%")} → ${fmtIndice(mAt, "%")}`,
+        recomendacao: "Identificar as despesas que cresceram acima da receita.",
+      });
   }
   return out;
 }
@@ -589,7 +947,10 @@ export function fragilidades(r: Resumo, i: Indices, linhas: Linha[], anterior?: 
 /** Markdown simples (títulos, listas, negrito, itálico) → HTML para tela e impressão. */
 export function mdParaHtml(md: string): string {
   const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-  const inline = (s: string) => esc(s).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/_(.+?)_/g, "<i>$1</i>");
+  const inline = (s: string) =>
+    esc(s)
+      .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>")
+      .replace(/_(.+?)_/g, "<i>$1</i>");
   const out: string[] = [];
   let lista = false;
   for (const linha of md.split("\n")) {

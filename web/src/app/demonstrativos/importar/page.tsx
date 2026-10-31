@@ -70,7 +70,10 @@ function Importar() {
   }
 
   const analise = useMemo(
-    () => (leitura ? analisar(leitura.linhas, competencia ? competencia + "-01" : null, null, leitura.cabecalho.inicio, leitura.cabecalho.fim) : null),
+    () =>
+      leitura
+        ? analisar(leitura.linhas, competencia ? competencia + "-01" : null, null, leitura.cabecalho.inicio, leitura.cabecalho.fim)
+        : null,
     [leitura, competencia],
   );
 
@@ -79,7 +82,15 @@ function Importar() {
     setProcessando(true);
     setErro(null);
     try {
-      const id = await salvarBalancete({ org: org.id, cliente, competencia: competencia + "-01", arquivo, linhas: leitura.linhas, inicio: leitura.cabecalho.inicio, fim: leitura.cabecalho.fim });
+      const id = await salvarBalancete({
+        org: org.id,
+        cliente,
+        competencia: competencia + "-01",
+        arquivo,
+        linhas: leitura.linhas,
+        inicio: leitura.cabecalho.inicio,
+        fim: leitura.cabecalho.fim,
+      });
       window.location.href = caminho(`/demonstrativos/${id}`);
     } catch (e) {
       setErro(traduzirErro(e));
@@ -87,7 +98,8 @@ function Importar() {
     }
   }
 
-  if (!pode("demonstrativos", "operar")) return <p className="text-sm text-neutral-600">Você pode consultar os demonstrativos, mas não importar.</p>;
+  if (!pode("demonstrativos", "operar"))
+    return <p className="text-sm text-neutral-600">Você pode consultar os demonstrativos, mas não importar.</p>;
 
   const cab = leitura?.cabecalho;
   const nomeCliente = clientes.find((c) => c.id === cliente);
@@ -100,14 +112,20 @@ function Importar() {
         <h1 className="text-xl font-semibold text-[var(--marca)]">Importar balancete do Domínio</h1>
         <p className="max-w-3xl text-sm text-neutral-600">
           No Domínio: Relatórios › Contabilidade › Balancete, empresa e mês, e exporte em Excel (.xls ou .xlsx). O Hub reconhece a empresa
-          pelo CNPJ ou código, o mês pelo período e cada conta pelo plano de contas. Nada vai para o cliente antes de você revisar e publicar.
+          pelo CNPJ ou código, o mês pelo período e cada conta pelo plano de contas. Nada vai para o cliente antes de você revisar e
+          publicar.
         </p>
       </div>
 
       <label className="cartao flex cursor-pointer flex-col items-center justify-center gap-2 border-dashed p-8 text-center hover:border-[var(--destaque-escuro)]">
         <span className="font-medium">{arquivo || "Escolher arquivo do balancete"}</span>
         <span className="text-xs text-neutral-500">.xls, .xlsx ou .csv</span>
-        <input type="file" accept=".xls,.xlsx,.csv,.txt" className="hidden" onChange={(e) => e.target.files?.[0] && abrir(e.target.files[0])} />
+        <input
+          type="file"
+          accept=".xls,.xlsx,.csv,.txt"
+          className="hidden"
+          onChange={(e) => e.target.files?.[0] && abrir(e.target.files[0])}
+        />
       </label>
 
       {processando && <p className="text-sm text-neutral-500">Lendo…</p>}
@@ -153,7 +171,11 @@ function Importar() {
                 <span className="text-sm">
                   {analiticas.length} contas analíticas · {analiticas.filter((l) => !l.grupo).length} sem grupo
                 </span>
-                <select className="entrada !min-h-8 !py-1 text-sm" value={mostrar} onChange={(e) => setMostrar(e.target.value as "todas" | "sem")}>
+                <select
+                  className="entrada !min-h-8 !py-1 text-sm"
+                  value={mostrar}
+                  onChange={(e) => setMostrar(e.target.value as "todas" | "sem")}
+                >
                   <option value="todas">Todas</option>
                   <option value="sem">Só sem grupo</option>
                 </select>
@@ -173,7 +195,8 @@ function Importar() {
                       <td className="text-neutral-500">{l.classificacao}</td>
                       <td>{l.descricao}</td>
                       <td className="whitespace-nowrap text-right tabular-nums">
-                        {Math.abs(l.saldo_atual).toLocaleString("pt-BR", { minimumFractionDigits: 2 })} {l.saldo_atual > 0 ? "D" : l.saldo_atual < 0 ? "C" : ""}
+                        {Math.abs(l.saldo_atual).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}{" "}
+                        {l.saldo_atual > 0 ? "D" : l.saldo_atual < 0 ? "C" : ""}
                       </td>
                       <td>
                         <select
@@ -197,8 +220,8 @@ function Importar() {
                 </tbody>
               </table>
               <p className="p-3 text-xs text-neutral-500">
-                O grupo foi sugerido pelo nome das contas. Ajustes feitos aqui valem para este arquivo; para guardar a regra para os próximos
-                meses, ajuste o grupo na tela do balancete depois de gravar.
+                O grupo foi sugerido pelo nome das contas. Ajustes feitos aqui valem para este arquivo; para guardar a regra para os
+                próximos meses, ajuste o grupo na tela do balancete depois de gravar.
               </p>
             </section>
 
@@ -219,18 +242,36 @@ function Importar() {
               </section>
               <section className="cartao space-y-1 p-4 text-sm">
                 <h2 className="mb-1 font-semibold">Prévia</h2>
-                <div className="flex justify-between"><span>Ativo total</span><b>{brl(analise.resumo.ativo_total)}</b></div>
-                <div className="flex justify-between"><span>Receita bruta do mês</span><b>{brl(analise.resumo.mes.receita_bruta)}</b></div>
-                <div className="flex justify-between"><span>Resultado do mês</span><b>{brl(analise.resumo.mes.lucro_liquido)}</b></div>
-                <div className="flex justify-between"><span>Resultado no ano</span><b>{brl(analise.resumo.ano.lucro_liquido)}</b></div>
-                <div className="flex justify-between"><span>Fragilidades</span><b>{analise.alertas.length}</b></div>
+                <div className="flex justify-between">
+                  <span>Ativo total</span>
+                  <b>{brl(analise.resumo.ativo_total)}</b>
+                </div>
+                <div className="flex justify-between">
+                  <span>Receita bruta do mês</span>
+                  <b>{brl(analise.resumo.mes.receita_bruta)}</b>
+                </div>
+                <div className="flex justify-between">
+                  <span>Resultado do mês</span>
+                  <b>{brl(analise.resumo.mes.lucro_liquido)}</b>
+                </div>
+                <div className="flex justify-between">
+                  <span>Resultado no ano</span>
+                  <b>{brl(analise.resumo.ano.lucro_liquido)}</b>
+                </div>
+                <div className="flex justify-between">
+                  <span>Fragilidades</span>
+                  <b>{analise.alertas.length}</b>
+                </div>
               </section>
               <button className="btn-primario w-full" disabled={!cliente || !competencia || processando} onClick={gravar}>
-                {processando ? "Gravando…" : `Gravar rascunho${nomeCliente ? ` de ${nomeCliente.nome_fantasia || nomeCliente.razao_social}` : ""}`}
+                {processando
+                  ? "Gravando…"
+                  : `Gravar rascunho${nomeCliente ? ` de ${nomeCliente.nome_fantasia || nomeCliente.razao_social}` : ""}`}
               </button>
               {!cliente && <p className="text-xs text-amber-800">Escolha a empresa para gravar.</p>}
               <p className="text-xs text-neutral-500">
-                Grupos: {[...new Set(analiticas.map((l) => l.grupo))].filter(Boolean).length} usados. {nomeGrupo(null)} = conta que não entra nos demonstrativos até receber um grupo.
+                Grupos: {[...new Set(analiticas.map((l) => l.grupo))].filter(Boolean).length} usados. {nomeGrupo(null)} = conta que não
+                entra nos demonstrativos até receber um grupo.
               </p>
             </aside>
           </div>

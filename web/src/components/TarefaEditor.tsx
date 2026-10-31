@@ -117,7 +117,10 @@ export function TarefaEditor({
     const sb = supabase();
     const r = tarefa
       ? await sb.from("tarefas").update(dados).eq("id", tarefa.id).select("id")
-      : await sb.from("tarefas").insert({ ...dados, org_id: org.id }).select("id");
+      : await sb
+          .from("tarefas")
+          .insert({ ...dados, org_id: org.id })
+          .select("id");
     setSalvando(false);
     if (r.error) return setErro(traduzirErro(r.error));
     if (!r.data?.length) return setErro("Você não tem permissão para alterar esta tarefa.");
@@ -252,7 +255,11 @@ export function TarefaEditor({
               </label>
               <label className="campo">
                 <span>O que o cliente precisa enviar (com status “Aguardando”, vira “Aguardando você” no portal)</span>
-                <input value={f.pendencia_cliente} onChange={(e) => set("pendencia_cliente", e.target.value)} placeholder="Ex.: extratos bancários de outubro" />
+                <input
+                  value={f.pendencia_cliente}
+                  onChange={(e) => set("pendencia_cliente", e.target.value)}
+                  placeholder="Ex.: extratos bancários de outubro"
+                />
               </label>
             </fieldset>
           )}
@@ -286,8 +293,15 @@ export function TarefaEditor({
             <ul className="space-y-1 text-sm">
               {arquivos.map((a) => (
                 <li key={a.id} className="flex items-center justify-between gap-2">
-                  <button className="truncate text-left hover:underline" onClick={() => abrirArquivo(a.caminho, a.nome).catch((e) => setErro(traduzirErro(e)))}>
-                    {a.nome} <span className="text-xs text-[var(--texto-suave)]">{fmtTamanho(a.tamanho)}{a.app === "portal" ? " · enviado pelo cliente" : ""}</span>
+                  <button
+                    className="truncate text-left hover:underline"
+                    onClick={() => abrirArquivo(a.caminho, a.nome).catch((e) => setErro(traduzirErro(e)))}
+                  >
+                    {a.nome}{" "}
+                    <span className="text-xs text-[var(--texto-suave)]">
+                      {fmtTamanho(a.tamanho)}
+                      {a.app === "portal" ? " · enviado pelo cliente" : ""}
+                    </span>
                   </button>
                   {a.app !== "portal" && tarefa.cliente_id && (
                     <label className="flex shrink-0 items-center gap-1 text-xs text-[var(--texto-suave)]">
@@ -314,7 +328,13 @@ export function TarefaEditor({
                 onChange={async (e) => {
                   try {
                     for (const arq of Array.from(e.target.files ?? [])) {
-                      const a = await enviarArquivo(arq, { org: org.id, app: "tarefas", ref: tarefa.id, cliente: tarefa.cliente_id, visivelCliente: !!tarefa.cliente_id });
+                      const a = await enviarArquivo(arq, {
+                        org: org.id,
+                        app: "tarefas",
+                        ref: tarefa.id,
+                        cliente: tarefa.cliente_id,
+                        visivelCliente: !!tarefa.cliente_id,
+                      });
                       setArquivos((l) => [...l, a]);
                     }
                   } catch (er) {
@@ -323,7 +343,11 @@ export function TarefaEditor({
                 }}
               />
             </label>
-            {tarefa.cliente_id && <p className="text-xs text-[var(--texto-suave)]">Anexos de tarefas de cliente ficam disponíveis no portal (desmarque “no portal” para manter interno).</p>}
+            {tarefa.cliente_id && (
+              <p className="text-xs text-[var(--texto-suave)]">
+                Anexos de tarefas de cliente ficam disponíveis no portal (desmarque “no portal” para manter interno).
+              </p>
+            )}
           </section>
         )}
 
@@ -374,8 +398,6 @@ function descreverHistorico(h: Historico, nome: (id: string | null) => string): 
   if (d.responsavel) partes.push(`responsável: ${nome(d.responsavel[0])} → ${nome(d.responsavel[1])}`);
   if (d.prazo) partes.push(`prazo: ${fmtData(d.prazo[0])} → ${fmtData(d.prazo[1])}`);
   if (d.prioridade)
-    partes.push(
-      `prioridade: ${nomePrioridade(d.prioridade[0] as Prioridade)} → ${nomePrioridade(d.prioridade[1] as Prioridade)}`,
-    );
+    partes.push(`prioridade: ${nomePrioridade(d.prioridade[0] as Prioridade)} → ${nomePrioridade(d.prioridade[1] as Prioridade)}`);
   return "alterou " + partes.join("; ");
 }

@@ -111,29 +111,48 @@ export async function salvarBalancete(o: {
 /** Recalcula resumo, índices e alertas de um balancete já gravado (depois de ajustar grupos). */
 export async function recalcular(balanceteId: string) {
   const sb = supabase();
-  const b = await sb.from("portal_balancetes").select("org_id,cliente_id,competencia,periodo_inicio,periodo_fim").eq("id", balanceteId).single();
+  const b = await sb
+    .from("portal_balancetes")
+    .select("org_id,cliente_id,competencia,periodo_inicio,periodo_fim")
+    .eq("id", balanceteId)
+    .single();
   if (b.error) throw b.error;
   const l = await sb.from("portal_balancete_linhas").select("*").eq("balancete_id", balanceteId).order("classificacao").limit(20000);
   if (l.error) throw l.error;
-  const { org_id, cliente_id, competencia, periodo_inicio, periodo_fim } = b.data as { org_id: string; cliente_id: string; competencia: string; periodo_inicio: string | null; periodo_fim: string | null };
-  const num = (l.data as Linha[]).map((x) => ({ ...x, saldo_anterior: Number(x.saldo_anterior), debitos: Number(x.debitos), creditos: Number(x.creditos), saldo_atual: Number(x.saldo_atual) }));
-  const a = analisar(num, competencia, await resumoAnterior(cliente_id, competencia), periodo_inicio, periodo_fim, await carregarMapaDfc(org_id, cliente_id));
+  const { org_id, cliente_id, competencia, periodo_inicio, periodo_fim } = b.data as {
+    org_id: string;
+    cliente_id: string;
+    competencia: string;
+    periodo_inicio: string | null;
+    periodo_fim: string | null;
+  };
+  const num = (l.data as Linha[]).map((x) => ({
+    ...x,
+    saldo_anterior: Number(x.saldo_anterior),
+    debitos: Number(x.debitos),
+    creditos: Number(x.creditos),
+    saldo_atual: Number(x.saldo_atual),
+  }));
+  const a = analisar(
+    num,
+    competencia,
+    await resumoAnterior(cliente_id, competencia),
+    periodo_inicio,
+    periodo_fim,
+    await carregarMapaDfc(org_id, cliente_id),
+  );
   const u = await sb.from("portal_balancetes").update(a).eq("id", balanceteId);
   if (u.error) throw u.error;
 }
 
 /** Guarda a escolha de grupo como regra (do cliente ou padrão) e reaplica ao balancete. */
-export async function definirGrupo(o: {
-  org: string;
-  cliente: string | null;
-  balanceteId: string;
-  classificacao: string;
-  grupo: Grupo;
-}) {
+export async function definirGrupo(o: { org: string; cliente: string | null; balanceteId: string; classificacao: string; grupo: Grupo }) {
   const sb = supabase();
   const del = sb.from("portal_mapa_contas").delete().eq("org_id", o.org).eq("classificacao", o.classificacao);
   await (o.cliente ? del.eq("cliente_id", o.cliente) : del.is("cliente_id", null));
-  const ins = await sb.from("portal_mapa_contas").insert({ org_id: o.org, cliente_id: o.cliente, classificacao: o.classificacao, grupo: o.grupo });
+  const ins = await sb
+    .from("portal_mapa_contas")
+    .insert({ org_id: o.org, cliente_id: o.cliente, classificacao: o.classificacao, grupo: o.grupo });
   if (ins.error) throw ins.error;
   const up = await sb
     .from("portal_balancete_linhas")
@@ -144,18 +163,25 @@ export async function definirGrupo(o: {
   await recalcular(o.balanceteId);
 }
 
-
-
 /**
  * Reprocessa um balancete já gravado com as regras atuais do leitor:
  * corrige o sinal (devedor +, credor −), reclassifica as contas (respeitando o mapa salvo) e refaz os cálculos.
  */
 export async function reprocessar(balanceteId: string) {
   const sb = supabase();
-  const b = await sb.from("portal_balancetes").select("org_id,cliente_id,competencia,status,periodo_inicio,periodo_fim").eq("id", balanceteId).single();
+  const b = await sb
+    .from("portal_balancetes")
+    .select("org_id,cliente_id,competencia,status,periodo_inicio,periodo_fim")
+    .eq("id", balanceteId)
+    .single();
   if (b.error) throw b.error;
   const { org_id, cliente_id, competencia, status, periodo_inicio, periodo_fim } = b.data as {
-    org_id: string; cliente_id: string; competencia: string; status: string; periodo_inicio: string | null; periodo_fim: string | null;
+    org_id: string;
+    cliente_id: string;
+    competencia: string;
+    status: string;
+    periodo_inicio: string | null;
+    periodo_fim: string | null;
   };
   if (status === "publicado") throw new Error("Despublique o balancete antes de reprocessar.");
   const l = await sb.from("portal_balancete_linhas").select("*").eq("balancete_id", balanceteId).order("classificacao").limit(20000);
@@ -180,19 +206,34 @@ export async function reprocessar(balanceteId: string) {
     const r = await sb.from("portal_balancete_linhas").insert(rows.slice(k, k + 500));
     if (r.error) throw r.error;
   }
-  const a = analisar(linhas, competencia, await resumoAnterior(cliente_id, competencia), periodo_inicio, periodo_fim, await carregarMapaDfc(org_id, cliente_id));
+  const a = analisar(
+    linhas,
+    competencia,
+    await resumoAnterior(cliente_id, competencia),
+    periodo_inicio,
+    periodo_fim,
+    await carregarMapaDfc(org_id, cliente_id),
+  );
   const u = await sb.from("portal_balancetes").update(a).eq("id", balanceteId);
   if (u.error) throw u.error;
 }
 
 /** Guarda a linha da DFC escolhida para uma conta (do cliente ou padrão da MDC) e refaz os cálculos. */
-export async function definirLinhaDfc(o: { org: string; cliente: string | null; balanceteId: string; classificacao: string; linha: string | null }) {
+export async function definirLinhaDfc(o: {
+  org: string;
+  cliente: string | null;
+  balanceteId: string;
+  classificacao: string;
+  linha: string | null;
+}) {
   const sb = supabase();
   const del = sb.from("portal_mapa_dfc").delete().eq("org_id", o.org).eq("classificacao", o.classificacao);
   const d = await (o.cliente ? del.eq("cliente_id", o.cliente) : del.is("cliente_id", null));
   if (d.error) throw d.error;
   if (o.linha) {
-    const ins = await sb.from("portal_mapa_dfc").insert({ org_id: o.org, cliente_id: o.cliente, classificacao: o.classificacao, linha: o.linha });
+    const ins = await sb
+      .from("portal_mapa_dfc")
+      .insert({ org_id: o.org, cliente_id: o.cliente, classificacao: o.classificacao, linha: o.linha });
     if (ins.error) throw ins.error;
   }
   await recalcular(o.balanceteId);

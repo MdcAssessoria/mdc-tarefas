@@ -55,10 +55,18 @@ body {
 }
 
 @keyframes surgir {
-  from { opacity: 0; transform: translateY(-6px) scale(0.985); }
-  to { opacity: 1; transform: none; }
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
-.surgir { animation: surgir 140ms ease-out; }
+.surgir {
+  animation: surgir 140ms ease-out;
+}
 
 @layer components {
   .cartao {
@@ -169,16 +177,56 @@ body {
 }
 
 /* texto do parecer técnico */
-.prosa h1 { font-size: 20px; font-weight: 600; color: var(--marca); margin: 0 0 4px; }
-.prosa h2 { font-size: 15px; font-weight: 600; color: var(--marca); margin: 18px 0 6px; }
-.prosa p { font-size: 14px; line-height: 1.6; margin: 0 0 8px; }
-.prosa ul { list-style: disc; padding-left: 20px; margin: 0 0 8px; }
-.prosa li { font-size: 14px; line-height: 1.55; margin-bottom: 4px; }
-.prosa blockquote { font-size: 13.5px; line-height: 1.55; margin: 2px 0 12px; padding: 8px 12px; background: #F6F4EE; border-left: 3px solid #E2C17E; border-radius: 6px; color: #1c2420; }
+.prosa h1 {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--marca);
+  margin: 0 0 4px;
+}
+.prosa h2 {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--marca);
+  margin: 18px 0 6px;
+}
+.prosa p {
+  font-size: 14px;
+  line-height: 1.6;
+  margin: 0 0 8px;
+}
+.prosa ul {
+  list-style: disc;
+  padding-left: 20px;
+  margin: 0 0 8px;
+}
+.prosa li {
+  font-size: 14px;
+  line-height: 1.55;
+  margin-bottom: 4px;
+}
+.prosa blockquote {
+  font-size: 13.5px;
+  line-height: 1.55;
+  margin: 2px 0 12px;
+  padding: 8px 12px;
+  background: #f6f4ee;
+  border-left: 3px solid #e2c17e;
+  border-radius: 6px;
+  color: #1c2420;
+}
 
 @media print {
-  body { background: #fff; }
-  main { max-width: none !important; padding: 0 !important; }
-  .cartao { break-inside: avoid; }
-  @page { margin: 16mm; }
+  body {
+    background: #fff;
+  }
+  main {
+    max-width: none !important;
+    padding: 0 !important;
+  }
+  .cartao {
+    break-inside: avoid;
+  }
+  @page {
+    margin: 16mm;
+  }
 }

@@ -1,10 +1,4 @@
-export type StatusFase =
-  | "a_fazer"
-  | "em_andamento"
-  | "aguardando_cliente"
-  | "aguardando_orgao"
-  | "concluida"
-  | "dispensada";
+export type StatusFase = "a_fazer" | "em_andamento" | "aguardando_cliente" | "aguardando_orgao" | "concluida" | "dispensada";
 
 export interface SocTipo {
   id: string;
@@ -80,7 +74,17 @@ export const COLUNAS = [
   { codigo: "entrega", nome: "Entrega" },
 ];
 
-export const ORGAOS = ["JUCESP", "JUCEMG", "Receita Federal", "Prefeitura", "SEFAZ", "Bombeiros", "Vigilância Sanitária", "CETESB", "Outro"];
+export const ORGAOS = [
+  "JUCESP",
+  "JUCEMG",
+  "Receita Federal",
+  "Prefeitura",
+  "SEFAZ",
+  "Bombeiros",
+  "Vigilância Sanitária",
+  "CETESB",
+  "Outro",
+];
 
 /** Dias desde a última mudança da fase. */
 export function diasParado(mudou_em: string): number {

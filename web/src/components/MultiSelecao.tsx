@@ -44,7 +44,11 @@ export function MultiSelecao({
   const q = busca.trim().toLowerCase();
   const visiveis = opcoes.filter((o) => !q || o.nome.toLowerCase().includes(q));
   const resumo =
-    valor.length === 0 ? todos : valor.length === 1 ? opcoes.find((o) => o.id === valor[0])?.nome ?? "1 selecionado" : `${valor.length} selecionados`;
+    valor.length === 0
+      ? todos
+      : valor.length === 1
+        ? (opcoes.find((o) => o.id === valor[0])?.nome ?? "1 selecionado")
+        : `${valor.length} selecionados`;
 
   return (
     <div className="relative" ref={ref}>
@@ -64,7 +68,13 @@ export function MultiSelecao({
       {aberto && (
         <div className="absolute left-0 z-40 mt-1 w-full min-w-60 rounded-xl border border-[var(--borda)] bg-white p-2 shadow-lg">
           {opcoes.length > 8 && (
-            <input className="entrada mb-2 !min-h-8 text-sm" placeholder="Buscar…" value={busca} onChange={(e) => setBusca(e.target.value)} autoFocus />
+            <input
+              className="entrada mb-2 !min-h-8 text-sm"
+              placeholder="Buscar…"
+              value={busca}
+              onChange={(e) => setBusca(e.target.value)}
+              autoFocus
+            />
           )}
           <div className="max-h-72 overflow-y-auto" role="listbox" aria-multiselectable="true">
             {visiveis.map((o, i) => (
@@ -73,7 +83,12 @@ export function MultiSelecao({
                   <div className="px-2 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-wide text-neutral-400">{o.grupo}</div>
                 )}
                 <label className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-[var(--fundo)]">
-                  <input type="checkbox" className="h-4 w-4 accent-[var(--marca)]" checked={sel.has(o.id)} onChange={() => alternar(o.id)} />
+                  <input
+                    type="checkbox"
+                    className="h-4 w-4 accent-[var(--marca)]"
+                    checked={sel.has(o.id)}
+                    onChange={() => alternar(o.id)}
+                  />
                   {o.cor && <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: o.cor }} />}
                   <span className="truncate">{o.nome}</span>
                 </label>

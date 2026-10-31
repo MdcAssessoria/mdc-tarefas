@@ -21,10 +21,37 @@ export default function PaginaProcesso() {
   );
 }
 
-interface Protocolo { id: string; orgao: string; numero: string; data: string; link: string | null }
-interface Exigencia { id: string; data: string; orgao: string; texto: string; resposta: string | null; reprotocolo_em: string | null }
-interface Taxa { id: string; descricao: string; valor: number | null; vencimento: string | null; pago_por: string | null; pago_em: string | null }
-interface Evento { id: number; user_id: string | null; tipo: string; texto: string; visivel_cliente: boolean; em: string }
+interface Protocolo {
+  id: string;
+  orgao: string;
+  numero: string;
+  data: string;
+  link: string | null;
+}
+interface Exigencia {
+  id: string;
+  data: string;
+  orgao: string;
+  texto: string;
+  resposta: string | null;
+  reprotocolo_em: string | null;
+}
+interface Taxa {
+  id: string;
+  descricao: string;
+  valor: number | null;
+  vencimento: string | null;
+  pago_por: string | null;
+  pago_em: string | null;
+}
+interface Evento {
+  id: number;
+  user_id: string | null;
+  tipo: string;
+  texto: string;
+  visivel_cliente: boolean;
+  em: string;
+}
 
 const brl = (v: number | null) => (v == null ? "—" : v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }));
 
@@ -64,7 +91,11 @@ function Ficha() {
     setTaxas((tx.data as Taxa[]) ?? []);
     setEventos((ev.data as Evento[]) ?? []);
     setArquivos((ar.data as Arquivo[]) ?? []);
-    const t = await sb.from("soc_tipos").select("*").eq("id", (a.data as SocProcesso).tipo_id).single();
+    const t = await sb
+      .from("soc_tipos")
+      .select("*")
+      .eq("id", (a.data as SocProcesso).tipo_id)
+      .single();
     setTipo(t.data as SocTipo);
   }, [id]);
 
@@ -98,7 +129,9 @@ function Ficha() {
     const sb = supabase();
     const { error } = await sb.from(tabela).insert({ ...dados, org_id: org.id, processo_id: id });
     if (error) return setErro(traduzirErro(error));
-    await sb.from("soc_eventos").insert({ org_id: org.id, processo_id: id, tipo: tabela.replace("soc_", ""), texto: evento, visivel_cliente: visivel });
+    await sb
+      .from("soc_eventos")
+      .insert({ org_id: org.id, processo_id: id, tipo: tabela.replace("soc_", ""), texto: evento, visivel_cliente: visivel });
     carregar();
   }
 
@@ -118,9 +151,14 @@ function Ficha() {
     try {
       for (const a of Array.from(arqs)) {
         await enviarArquivo(a, { org: org.id, app: "societario", ref: id, cliente: p!.cliente_id, visivelCliente: false });
-        await supabase().from("soc_eventos").insert({
-          org_id: org.id, processo_id: id, tipo: "documento", texto: `Documento anexado${faseNome ? ` (${faseNome})` : ""}: ${a.name}`,
-        });
+        await supabase()
+          .from("soc_eventos")
+          .insert({
+            org_id: org.id,
+            processo_id: id,
+            tipo: "documento",
+            texto: `Documento anexado${faseNome ? ` (${faseNome})` : ""}: ${a.name}`,
+          });
       }
     } catch (e) {
       setErro(traduzirErro(e));
@@ -154,7 +192,9 @@ function Ficha() {
           {p.descricao && <p className="mt-1 max-w-3xl whitespace-pre-wrap text-sm">{p.descricao}</p>}
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <span className={`chip ${aberto ? "bg-sky-50 text-sky-800" : p.status === "concluido" ? "bg-emerald-50 text-emerald-800" : "bg-neutral-100 text-neutral-500"}`}>
+          <span
+            className={`chip ${aberto ? "bg-sky-50 text-sky-800" : p.status === "concluido" ? "bg-emerald-50 text-emerald-800" : "bg-neutral-100 text-neutral-500"}`}
+          >
             {aberto ? "Em andamento" : p.status === "concluido" ? `Concluído em ${fmtData(p.concluido_em)}` : "Cancelado"}
           </span>
           {podeOperar && (
@@ -171,7 +211,13 @@ function Ficha() {
             </label>
           )}
           {aberto && podeOperar && (
-            <button className="btn" onClick={() => confirm("Concluir o processo agora? As fases pendentes serão dispensadas.") && rpc("soc_concluir_processo", { p_proc: p.id })}>
+            <button
+              className="btn"
+              onClick={() =>
+                confirm("Concluir o processo agora? As fases pendentes serão dispensadas.") &&
+                rpc("soc_concluir_processo", { p_proc: p.id })
+              }
+            >
               Concluir processo
             </button>
           )}
@@ -210,7 +256,12 @@ function Ficha() {
                   const atual = aberto && f.ordem === p.fase_atual;
                   const d = diasAte(f.prazo_em, org.fuso);
                   return (
-                    <tr key={f.id} className={atual ? "bg-[color-mix(in_srgb,var(--destaque)_14%,white)]" : f.status === "dispensada" ? "text-neutral-400" : ""}>
+                    <tr
+                      key={f.id}
+                      className={
+                        atual ? "bg-[color-mix(in_srgb,var(--destaque)_14%,white)]" : f.status === "dispensada" ? "text-neutral-400" : ""
+                      }
+                    >
                       <td>
                         <div className="font-medium">{f.nome}</div>
                         {atual && <div className="text-xs text-neutral-500">fase atual · há {diasParado(f.mudou_em)} dia(s)</div>}
@@ -240,11 +291,13 @@ function Ficha() {
                             onChange={(e) => atualizarFase(f, { responsavel_id: e.target.value || null })}
                           >
                             <option value="">—</option>
-                            {membros.filter((m) => m.ativo).map((m) => (
-                              <option key={m.user_id} value={m.user_id}>
-                                {m.nome}
-                              </option>
-                            ))}
+                            {membros
+                              .filter((m) => m.ativo)
+                              .map((m) => (
+                                <option key={m.user_id} value={m.user_id}>
+                                  {m.nome}
+                                </option>
+                              ))}
                           </select>
                         ) : (
                           nomeMembro(f.responsavel_id)
@@ -319,7 +372,9 @@ function Ficha() {
                   </div>
                   <div className="whitespace-pre-wrap text-neutral-700">{x.texto}</div>
                   {x.resposta ? (
-                    <div className="text-xs text-emerald-700">Respondida{x.reprotocolo_em && `, reprotocolo ${fmtData(x.reprotocolo_em)}`}: {x.resposta}</div>
+                    <div className="text-xs text-emerald-700">
+                      Respondida{x.reprotocolo_em && `, reprotocolo ${fmtData(x.reprotocolo_em)}`}: {x.resposta}
+                    </div>
                   ) : (
                     podeOperar && (
                       <button
@@ -327,7 +382,10 @@ function Ficha() {
                         onClick={async () => {
                           const r = prompt("Resposta à exigência:");
                           if (!r) return;
-                          await supabase().from("soc_exigencias").update({ resposta: r, reprotocolo_em: new Date().toISOString().slice(0, 10) }).eq("id", x.id);
+                          await supabase()
+                            .from("soc_exigencias")
+                            .update({ resposta: r, reprotocolo_em: new Date().toISOString().slice(0, 10) })
+                            .eq("id", x.id);
                           carregar();
                         }}
                       >
@@ -353,7 +411,8 @@ function Ficha() {
               {taxas.map((x) => (
                 <li key={x.id} className="flex items-center justify-between gap-2">
                   <span>
-                    {x.descricao} · {brl(x.valor)} · vence {fmtData(x.vencimento)} {x.pago_por && `· paga por ${x.pago_por === "mdc" ? "MDC" : "cliente"}`}
+                    {x.descricao} · {brl(x.valor)} · vence {fmtData(x.vencimento)}{" "}
+                    {x.pago_por && `· paga por ${x.pago_por === "mdc" ? "MDC" : "cliente"}`}
                   </span>
                   {x.pago_em ? (
                     <span className="chip bg-emerald-50 text-emerald-800">paga {fmtData(x.pago_em)}</span>
@@ -362,7 +421,10 @@ function Ficha() {
                       <button
                         className="btn-link"
                         onClick={async () => {
-                          await supabase().from("soc_taxas").update({ pago_em: new Date().toISOString().slice(0, 10) }).eq("id", x.id);
+                          await supabase()
+                            .from("soc_taxas")
+                            .update({ pago_em: new Date().toISOString().slice(0, 10) })
+                            .eq("id", x.id);
                           carregar();
                         }}
                       >
@@ -375,13 +437,23 @@ function Ficha() {
               {podeOperar && aberto && (
                 <FormLinha
                   campos={[
-                    { nome: "descricao", rotulo: "Taxa", opcoes: ["DARE Junta Comercial", "GRU", "Taxa municipal", "Taxa Bombeiros", "Taxa Vigilância", "Outra"] },
+                    {
+                      nome: "descricao",
+                      rotulo: "Taxa",
+                      opcoes: ["DARE Junta Comercial", "GRU", "Taxa municipal", "Taxa Bombeiros", "Taxa Vigilância", "Outra"],
+                    },
                     { nome: "valor", rotulo: "Valor (R$)", tipo: "number" },
                     { nome: "vencimento", rotulo: "Vencimento", tipo: "date", opcional: true },
                     { nome: "pago_por", rotulo: "Paga por", opcoes: ["cliente", "mdc"] },
                   ]}
                   botao="Registrar taxa"
-                  aoEnviar={(v) => inserir("soc_taxas", { ...v, valor: v.valor ? Number(String(v.valor).replace(",", ".")) : null }, `Taxa registrada: ${v.descricao}`)}
+                  aoEnviar={(v) =>
+                    inserir(
+                      "soc_taxas",
+                      { ...v, valor: v.valor ? Number(String(v.valor).replace(",", ".")) : null },
+                      `Taxa registrada: ${v.descricao}`,
+                    )
+                  }
                 />
               )}
             </Bloco>
@@ -389,7 +461,10 @@ function Ficha() {
             <Bloco titulo="Documentos">
               {arquivos.map((a) => (
                 <li key={a.id} className="flex items-center justify-between gap-2">
-                  <button className="truncate text-left hover:underline" onClick={() => abrirArquivo(a.caminho, a.nome).catch((e) => setErro(traduzirErro(e)))}>
+                  <button
+                    className="truncate text-left hover:underline"
+                    onClick={() => abrirArquivo(a.caminho, a.nome).catch((e) => setErro(traduzirErro(e)))}
+                  >
                     {a.nome} <span className="text-xs text-neutral-400">{fmtTamanho(a.tamanho)}</span>
                   </button>
                   {podeOperar && p.cliente_id && (
@@ -413,10 +488,17 @@ function Ficha() {
           <h2 className="mb-3 font-semibold">Linha do tempo</h2>
           {podeOperar && (
             <form onSubmit={comentar} className="mb-4 space-y-2">
-              <textarea className="entrada w-full" rows={2} placeholder="Comentário da equipe…" value={comentario} onChange={(e) => setComentario(e.target.value)} />
+              <textarea
+                className="entrada w-full"
+                rows={2}
+                placeholder="Comentário da equipe…"
+                value={comentario}
+                onChange={(e) => setComentario(e.target.value)}
+              />
               <div className="flex items-center justify-between">
                 <label className="flex items-center gap-1.5 text-xs text-neutral-600">
-                  <input type="checkbox" checked={comentarioCliente} onChange={(e) => setComentarioCliente(e.target.checked)} /> mostrar ao cliente
+                  <input type="checkbox" checked={comentarioCliente} onChange={(e) => setComentarioCliente(e.target.checked)} /> mostrar ao
+                  cliente
                 </label>
                 <button className="btn-primario !min-h-8 !py-1">Comentar</button>
               </div>
@@ -453,7 +535,9 @@ type Campo = { nome: string; rotulo: string; tipo?: string; opcoes?: string[]; a
 function FormLinha({ campos, botao, aoEnviar }: { campos: Campo[]; botao: string; aoEnviar: (v: Record<string, string>) => void }) {
   const [aberto, setAberto] = useState(false);
   const inicial = () =>
-    Object.fromEntries(campos.map((c) => [c.nome, c.tipo === "date" && !c.opcional ? new Date().toISOString().slice(0, 10) : c.opcoes?.[0] ?? ""]));
+    Object.fromEntries(
+      campos.map((c) => [c.nome, c.tipo === "date" && !c.opcional ? new Date().toISOString().slice(0, 10) : (c.opcoes?.[0] ?? "")]),
+    );
   const [v, setV] = useState<Record<string, string>>(inicial);
   if (!aberto)
     return (

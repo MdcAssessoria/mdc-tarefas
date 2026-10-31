@@ -39,8 +39,14 @@ function TV() {
     setDados({
       // Sem tarefas a view não retorna linha: mostra zeros em vez de traço.
       kpis: k.data ?? {
-        abertas: 0, vencem_hoje: 0, atrasadas: 0, proximos_7_dias: 0,
-        em_andamento: 0, concluidas_hoje: 0, concluidas_mes: 0, pct_no_prazo_mes: null,
+        abertas: 0,
+        vencem_hoje: 0,
+        atrasadas: 0,
+        proximos_7_dias: 0,
+        em_andamento: 0,
+        concluidas_hoje: 0,
+        concluidas_mes: 0,
+        pct_no_prazo_mes: null,
       },
       setores: s.data ?? [],
       responsaveis: r.data ?? [],

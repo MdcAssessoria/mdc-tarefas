@@ -112,7 +112,7 @@ export function OrgProvider({ children }: { children: React.ReactNode }) {
     const pedida = new URLSearchParams(window.location.search).get("org");
     const porSlug = (o.data as Organizacao[]).find((x) => x.slug === pedida)?.id;
     const salva = lerOrgSalva();
-    setOrgId(porSlug ?? (salva && ids.includes(salva) ? salva : ids[0] ?? null));
+    setOrgId(porSlug ?? (salva && ids.includes(salva) ? salva : (ids[0] ?? null)));
   }, [userId]);
 
   useEffect(() => {
@@ -183,7 +183,7 @@ export function OrgProvider({ children }: { children: React.ReactNode }) {
         setOrgId(id);
       },
       recarregar,
-      nomeMembro: (id) => (id ? mapM.get(id)?.nome ?? "—" : "—"),
+      nomeMembro: (id) => (id ? (mapM.get(id)?.nome ?? "—") : "—"),
       setorPorId: (id) => (id ? mapS.get(id) : undefined),
       clientePorId: (id) => (id ? mapC.get(id) : undefined),
       apps,
@@ -200,8 +200,7 @@ export function OrgProvider({ children }: { children: React.ReactNode }) {
   if (!supabaseConfigurado) return <SemConfiguracao />;
   if (erro) return <Centro titulo="Não foi possível carregar">{erro}</Centro>;
   if (session === undefined || (session && orgs === null)) return <Centro titulo="Carregando…" />;
-  if (session && orgs && orgs.length === 0)
-    return <CriarOrganizacao aoCriar={carregarOrgs} email={session.user.email ?? ""} />;
+  if (session && orgs && orgs.length === 0) return <CriarOrganizacao aoCriar={carregarOrgs} email={session.user.email ?? ""} />;
   if (!valor) return <Centro titulo="Carregando…" />;
   return <Ctx.Provider value={valor}>{children}</Ctx.Provider>;
 }
@@ -220,8 +219,8 @@ export function Centro({ titulo, children }: { titulo: string; children?: React.
 function SemConfiguracao() {
   return (
     <Centro titulo="Supabase não configurado">
-      Defina <code>NEXT_PUBLIC_SUPABASE_URL</code> e <code>NEXT_PUBLIC_SUPABASE_KEY</code> nas variáveis de
-      ambiente (arquivo <code>.env.local</code> ou painel da Vercel) e publique novamente.
+      Defina <code>NEXT_PUBLIC_SUPABASE_URL</code> e <code>NEXT_PUBLIC_SUPABASE_KEY</code> nas variáveis de ambiente (arquivo{" "}
+      <code>.env.local</code> ou painel da Vercel) e publique novamente.
     </Centro>
   );
 }

@@ -15,7 +15,10 @@ export interface AbaExcel {
   totais?: Record<string, unknown>;
 }
 
-const VERDE = "FF0B2820", OURO = "FFE2C17E", OURO_ESC = "FF8A6A2A", FUNDO = "FFF3F6F4";
+const VERDE = "FF0B2820",
+  OURO = "FFE2C17E",
+  OURO_ESC = "FF8A6A2A",
+  FUNDO = "FFF3F6F4";
 
 export async function exportarExcel(arquivo: string, titulo: string, subtitulo: string, abas: AbaExcel[]) {
   const ExcelJS = (await import("exceljs")).default;
@@ -55,7 +58,15 @@ export async function exportarExcel(arquivo: string, titulo: string, subtitulo: 
     cab.height = 22;
 
     const fmt = (c: ColunaExcel) =>
-      c.formato === "moeda" ? '"R$" #,##0.00' : c.formato === "numero" ? "#,##0" : c.formato === "percentual" ? "0.0%" : c.formato === "data" ? "dd/mm/yyyy" : undefined;
+      c.formato === "moeda"
+        ? '"R$" #,##0.00'
+        : c.formato === "numero"
+          ? "#,##0"
+          : c.formato === "percentual"
+            ? "0.0%"
+            : c.formato === "data"
+              ? "dd/mm/yyyy"
+              : undefined;
 
     aba.linhas.forEach((l, k) => {
       const row = ws.addRow(
@@ -91,7 +102,9 @@ export async function exportarExcel(arquivo: string, titulo: string, subtitulo: 
     ws.addRow([]);
     const r1 = ws.addRow(["MDC Assessoria Ltda · CNPJ 48.140.121/0001-65 · Bragança Paulista/SP · mdcassessoria.com"]);
     r1.font = { name: "Calibri", size: 9, color: { argb: "FF0B2820" } };
-    const r2 = ws.addRow(["Responsável técnico: Edvaldo Ribeiro de Carvalho · Contador CRC 1SP346098-O/0 · edvaldo@mdcassessoria.com · (11) 98859-8041"]);
+    const r2 = ws.addRow([
+      "Responsável técnico: Edvaldo Ribeiro de Carvalho · Contador CRC 1SP346098-O/0 · edvaldo@mdcassessoria.com · (11) 98859-8041",
+    ]);
     r2.font = { name: "Calibri", size: 9, color: { argb: OURO_ESC } };
     ws.pageSetup = { orientation: n > 6 ? "landscape" : "portrait", fitToPage: true, fitToWidth: 1, fitToHeight: 0, paperSize: 9 };
   }

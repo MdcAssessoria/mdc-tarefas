@@ -167,7 +167,10 @@ function Iniciais({ nome, className = "" }: { nome: string; className?: string }
     .join("")
     .toUpperCase();
   return (
-    <span className={`grid shrink-0 place-items-center rounded-full bg-[var(--destaque)] font-semibold text-[var(--marca)] ${className}`} aria-hidden="true">
+    <span
+      className={`grid shrink-0 place-items-center rounded-full bg-[var(--destaque)] font-semibold text-[var(--marca)] ${className}`}
+      aria-hidden="true"
+    >
       {ini}
     </span>
   );
@@ -232,8 +235,10 @@ function MenuLateral({ modulo, recolhido, aoRecolher }: { modulo: Modulo; recolh
           <>
             {!recolhido && <div className="px-3 pb-1.5 pt-5 text-[12px] text-[var(--nevoa)]/55">Administração</div>}
             {recolhido && <div className="mx-3 my-3 h-px bg-white/10" />}
-            {papel === "admin" && item({ href: "/hub/acessos", nome: "Pessoas e acessos", icone: "pessoas", ativo: rota.startsWith("/hub/acessos") })}
-            {podeEditarCadastros && item({ href: "/config", nome: "Configurações", icone: "engrenagem", ativo: rota.startsWith("/config") })}
+            {papel === "admin" &&
+              item({ href: "/hub/acessos", nome: "Pessoas e acessos", icone: "pessoas", ativo: rota.startsWith("/hub/acessos") })}
+            {podeEditarCadastros &&
+              item({ href: "/config", nome: "Configurações", icone: "engrenagem", ativo: rota.startsWith("/config") })}
           </>
         )}
       </nav>
@@ -297,7 +302,11 @@ function BarraSuperior({ modulo, aoMenu, aoBuscar }: { modulo: Modulo; aoMenu: (
   return (
     <header className="sticky top-0 z-30 border-b border-[var(--borda)] bg-white/85 backdrop-blur print:hidden">
       <div className="mx-auto flex h-14 max-w-[1400px] items-center gap-3 px-4 sm:px-6 lg:px-8">
-        <button className="grid h-9 w-9 place-items-center rounded-lg text-[var(--marca)] hover:bg-[var(--fundo)] lg:hidden" onClick={aoMenu} aria-label="Abrir menu">
+        <button
+          className="grid h-9 w-9 place-items-center rounded-lg text-[var(--marca)] hover:bg-[var(--fundo)] lg:hidden"
+          onClick={aoMenu}
+          aria-label="Abrir menu"
+        >
           <Icone nome="menu" />
         </button>
         <span className="font-semibold text-[var(--marca)] lg:hidden">{NAV[modulo].titulo}</span>
@@ -309,7 +318,9 @@ function BarraSuperior({ modulo, aoMenu, aoBuscar }: { modulo: Modulo; aoMenu: (
                 href={l.href}
                 aria-current={ativo(l.href) ? "page" : undefined}
                 className={`flex items-center border-b-2 px-3 text-[14px] ${
-                  ativo(l.href) ? "border-[var(--destaque-escuro)] font-medium text-[var(--marca)]" : "border-transparent text-[var(--texto-suave)] hover:text-[var(--marca)]"
+                  ativo(l.href)
+                    ? "border-[var(--destaque-escuro)] font-medium text-[var(--marca)]"
+                    : "border-transparent text-[var(--texto-suave)] hover:text-[var(--marca)]"
                 }`}
               >
                 {l.nome}
@@ -374,14 +385,30 @@ function BuscaRapida({ aoFechar }: { aoFechar: () => void }) {
     for (const a of apps.filter((x) => x.papel && x.status !== "em_breve")) {
       const mod = NAV[a.slug as Modulo];
       if (!mod) {
-        itens.push({ id: a.slug, grupo: "Ferramentas", nome: a.nome, detalhe: a.descricao, icone: a.icone, href: a.rota, externo: a.externo });
+        itens.push({
+          id: a.slug,
+          grupo: "Ferramentas",
+          nome: a.nome,
+          detalhe: a.descricao,
+          icone: a.icone,
+          href: a.rota,
+          externo: a.externo,
+        });
         continue;
       }
       for (const l of mod.links.filter((l) => (l.gestor ? podeEditarCadastros : l.minimo ? pode(a.slug, l.minimo) : true)))
-        itens.push({ id: l.href, grupo: "Ferramentas", nome: l.nome === mod.titulo ? mod.titulo : `${mod.titulo}: ${l.nome}`, icone: a.icone, href: l.href });
+        itens.push({
+          id: l.href,
+          grupo: "Ferramentas",
+          nome: l.nome === mod.titulo ? mod.titulo : `${mod.titulo}: ${l.nome}`,
+          icone: a.icone,
+          href: l.href,
+        });
     }
-    if (papel === "admin") itens.push({ id: "acessos", grupo: "Administração", nome: "Pessoas e acessos", icone: "pessoas", href: "/hub/acessos" });
-    if (podeEditarCadastros) itens.push({ id: "config", grupo: "Administração", nome: "Configurações e clientes", icone: "engrenagem", href: "/config" });
+    if (papel === "admin")
+      itens.push({ id: "acessos", grupo: "Administração", nome: "Pessoas e acessos", icone: "pessoas", href: "/hub/acessos" });
+    if (podeEditarCadastros)
+      itens.push({ id: "config", grupo: "Administração", nome: "Configurações e clientes", icone: "engrenagem", href: "/config" });
     if (pode("tarefas"))
       for (const c of clientes.filter((c) => c.ativo))
         itens.push({
@@ -402,7 +429,11 @@ function BuscaRapida({ aoFechar }: { aoFechar: () => void }) {
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "");
     if (!t) return base.filter((x) => x.grupo !== "Clientes");
-    const sem = (s: string) => s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const sem = (s: string) =>
+      s
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "");
     return base.filter((x) => sem(`${x.nome} ${x.detalhe ?? ""}`).includes(t)).slice(0, 40);
   }, [q, base]);
 
@@ -423,7 +454,10 @@ function BuscaRapida({ aoFechar }: { aoFechar: () => void }) {
 
   let ultimoGrupo = "";
   return (
-    <div className="fixed inset-0 z-[60] flex items-start justify-center bg-[rgba(11,40,32,0.35)] p-4 pt-[12vh] backdrop-blur-[2px]" onClick={aoFechar}>
+    <div
+      className="fixed inset-0 z-[60] flex items-start justify-center bg-[rgba(11,40,32,0.35)] p-4 pt-[12vh] backdrop-blur-[2px]"
+      onClick={aoFechar}
+    >
       <div
         className="surgir w-full max-w-xl overflow-hidden rounded-2xl border border-[var(--borda)] bg-white shadow-[0_24px_60px_-20px_rgba(11,40,32,0.45)]"
         onClick={(e) => e.stopPropagation()}
@@ -470,7 +504,9 @@ function BuscaRapida({ aoFechar }: { aoFechar: () => void }) {
                   onClick={() => abrir(x)}
                   className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-[14px] ${k === i ? "bg-[var(--fundo)] text-[var(--marca)]" : ""}`}
                 >
-                  <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg ${k === i ? "bg-[var(--marca)] text-[var(--destaque)]" : "bg-[var(--fundo)] text-[var(--texto-suave)]"}`}>
+                  <span
+                    className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg ${k === i ? "bg-[var(--marca)] text-[var(--destaque)]" : "bg-[var(--fundo)] text-[var(--texto-suave)]"}`}
+                  >
                     <Icone nome={x.icone} className="h-4 w-4" />
                   </span>
                   <span className="min-w-0 flex-1">
@@ -577,8 +613,7 @@ function Sino() {
                 key={n.id}
                 href={n.link ? caminho(n.link) : "#"}
                 onClick={() =>
-                  !n.lida_em &&
-                  supabase().from("hub_notificacoes").update({ lida_em: new Date().toISOString() }).eq("id", n.id)
+                  !n.lida_em && supabase().from("hub_notificacoes").update({ lida_em: new Date().toISOString() }).eq("id", n.id)
                 }
                 className={`block border-b border-[var(--borda)] px-3 py-2 text-sm last:border-0 hover:bg-[var(--fundo)] ${
                   n.lida_em ? "text-neutral-500" : ""

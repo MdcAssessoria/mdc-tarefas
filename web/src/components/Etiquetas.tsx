@@ -25,11 +25,18 @@ export function Etiquetas({
     setTexto("");
   };
   return (
-    <div className={`flex flex-wrap items-center gap-1 rounded-lg border border-[var(--borda)] bg-white px-1.5 ${compacto ? "min-h-8 py-0.5" : "min-h-10 py-1"}`}>
+    <div
+      className={`flex flex-wrap items-center gap-1 rounded-lg border border-[var(--borda)] bg-white px-1.5 ${compacto ? "min-h-8 py-0.5" : "min-h-10 py-1"}`}
+    >
       {valor.map((g) => (
         <span key={g} className="chip bg-[#F6EEDC] text-[#6B5220]">
           {g}
-          <button type="button" className="ml-0.5 opacity-60 hover:opacity-100" onClick={() => aoMudar(valor.filter((x) => x !== g))} aria-label={`Remover ${g}`}>
+          <button
+            type="button"
+            className="ml-0.5 opacity-60 hover:opacity-100"
+            onClick={() => aoMudar(valor.filter((x) => x !== g))}
+            aria-label={`Remover ${g}`}
+          >
             ✕
           </button>
         </span>
@@ -49,9 +56,11 @@ export function Etiquetas({
         onBlur={() => texto && incluir(texto)}
       />
       <datalist id={lista}>
-        {sugestoes.filter((s) => !valor.includes(s)).map((s) => (
-          <option key={s} value={s} />
-        ))}
+        {sugestoes
+          .filter((s) => !valor.includes(s))
+          .map((s) => (
+            <option key={s} value={s} />
+          ))}
       </datalist>
     </div>
   );

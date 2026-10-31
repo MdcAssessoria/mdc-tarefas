@@ -76,9 +76,7 @@ function Relogio({ fuso }: { fuso: string }) {
       <div className="font-light text-white" style={{ fontSize: "2.6vw" }}>
         {hora}
       </div>
-      <div style={{ color: TEXTO_SUAVE, fontSize: "0.95vw" }}>
-        {data}
-      </div>
+      <div style={{ color: TEXTO_SUAVE, fontSize: "0.95vw" }}>{data}</div>
     </div>
   );
 }
@@ -196,8 +194,7 @@ export function PainelTV({
               style={{ width: "0.7vw", height: "0.7vw", background: online ? "#32D583" : "#98A2B3" }}
             />
             {online ? "Ao vivo" : "Reconectando"}
-            {atualizadoEm &&
-              ` · ${atualizadoEm.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`}
+            {atualizadoEm && ` · ${atualizadoEm.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`}
           </div>
           <Relogio fuso={org.fuso} />
         </div>
@@ -213,11 +210,7 @@ export function PainelTV({
           rotulo="Concluídas no mês"
           valor={k?.concluidas_mes ?? "–"}
           cor={OURO}
-          sub={
-            k
-              ? `${k.concluidas_hoje} hoje${k.pct_no_prazo_mes !== null ? ` · ${Math.round(k.pct_no_prazo_mes)}% no prazo` : ""}`
-              : ""
-          }
+          sub={k ? `${k.concluidas_hoje} hoje${k.pct_no_prazo_mes !== null ? ` · ${Math.round(k.pct_no_prazo_mes)}% no prazo` : ""}` : ""}
         />
       </section>
 
@@ -280,10 +273,7 @@ export function PainelTV({
         </div>
 
         <div className="flex min-h-0 flex-col gap-[1.2vw]">
-          <div
-            className="rounded-[0.8vw] border p-[1.2vw]"
-            style={{ borderColor: "rgba(226,193,126,.18)", background: "rgba(0,0,0,.12)" }}
-          >
+          <div className="rounded-[0.8vw] border p-[1.2vw]" style={{ borderColor: "rgba(226,193,126,.18)", background: "rgba(0,0,0,.12)" }}>
             <h2 className="pb-[0.8vw] font-medium" style={{ color: OURO, fontSize: "1.25vw" }}>
               Por setor
             </h2>
@@ -297,7 +287,10 @@ export function PainelTV({
                       {s.atrasadas > 0 && <b style={{ color: VERMELHO }}> · {s.atrasadas} atrasadas</b>}
                     </span>
                   </div>
-                  <div className="mt-[0.3vw] flex overflow-hidden rounded-full" style={{ height: "0.7vw", background: "rgba(255,255,255,.08)" }}>
+                  <div
+                    className="mt-[0.3vw] flex overflow-hidden rounded-full"
+                    style={{ height: "0.7vw", background: "rgba(255,255,255,.08)" }}
+                  >
                     <div style={{ width: `${(s.atrasadas / maxSetor) * 100}%`, background: VERMELHO }} />
                     <div style={{ width: `${((s.abertas - s.atrasadas) / maxSetor) * 100}%`, background: s.cor }} />
                   </div>

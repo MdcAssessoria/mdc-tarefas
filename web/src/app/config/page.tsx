@@ -139,7 +139,16 @@ function AbaOrganizacao() {
         <label className="campo">
           <span>Fuso horário</span>
           <select value={f.fuso} onChange={(e) => setF({ ...f, fuso: e.target.value })}>
-            {["America/Sao_Paulo", "America/Manaus", "America/Cuiaba", "America/Belem", "America/Fortaleza", "America/Recife", "America/Rio_Branco", "America/Noronha"].map((z) => (
+            {[
+              "America/Sao_Paulo",
+              "America/Manaus",
+              "America/Cuiaba",
+              "America/Belem",
+              "America/Fortaleza",
+              "America/Recife",
+              "America/Rio_Branco",
+              "America/Noronha",
+            ].map((z) => (
               <option key={z}>{z}</option>
             ))}
           </select>
@@ -179,8 +188,8 @@ function AbaEquipe() {
     <div className="space-y-4">
       <div className="cartao flex flex-wrap items-center justify-between gap-3 p-4 text-sm">
         <p className="text-neutral-600">
-          Novas pessoas são cadastradas em <b>Pessoas e acessos</b>: você escolhe o perfil e a pessoa recebe o convite por e-mail para criar a
-          senha. Aqui você ajusta nome, papel nas tarefas, setor e desativa quem saiu.
+          Novas pessoas são cadastradas em <b>Pessoas e acessos</b>: você escolhe o perfil e a pessoa recebe o convite por e-mail para criar
+          a senha. Aqui você ajusta nome, papel nas tarefas, setor e desativa quem saiu.
         </p>
         <Link href="/hub/acessos" className="btn-primario">
           Cadastrar pessoa
@@ -320,7 +329,11 @@ function AbaSetores() {
                   />
                 </td>
                 <td>
-                  <input type="color" defaultValue={s.cor} onBlur={(e) => e.target.value !== s.cor && alterar(s.id, { cor: e.target.value })} />
+                  <input
+                    type="color"
+                    defaultValue={s.cor}
+                    onBlur={(e) => e.target.value !== s.cor && alterar(s.id, { cor: e.target.value })}
+                  />
                 </td>
                 <td>
                   <input
@@ -369,11 +382,15 @@ function AbaClientes() {
     if (!inativando.data) return mostrar("Informe a data em que o cliente passou a ser inativo.", true);
     const motivo = inativando.motivo === "Outro" ? inativando.outro : inativando.motivo;
     const { data, error } = await supabase().rpc("inativar_cliente", {
-      p_cliente: inativando.id, p_data: inativando.data, p_motivo: motivo || null,
+      p_cliente: inativando.id,
+      p_data: inativando.data,
+      p_motivo: motivo || null,
     });
     if (error) return mostrar(traduzirErro(error), true);
     setInativando(null);
-    mostrar(`Cliente inativado desde ${fmtData(inativando.data)}. ${data?.tarefas_canceladas ?? 0} tarefa(s) de competência posterior à saída cancelada(s).`);
+    mostrar(
+      `Cliente inativado desde ${fmtData(inativando.data)}. ${data?.tarefas_canceladas ?? 0} tarefa(s) de competência posterior à saída cancelada(s).`,
+    );
     recarregar();
   }
 
@@ -399,7 +416,13 @@ function AbaClientes() {
       .filter((c) => situacao === "todos" || (situacao === "ativos" ? c.ativo : !c.ativo))
       .filter((c) => !filtroSeg || (filtroSeg === "_sem" ? !c.segmento : c.segmento === filtroSeg))
       .filter((c) => !filtroGrupo || (c.grupos ?? []).includes(filtroGrupo))
-      .filter((c) => !q || `${c.razao_social} ${c.nome_fantasia ?? ""} ${c.cnpj ?? ""} ${c.codigo_dominio ?? ""} ${c.cidade ?? ""} ${c.uf ?? ""}`.toLowerCase().includes(q));
+      .filter(
+        (c) =>
+          !q ||
+          `${c.razao_social} ${c.nome_fantasia ?? ""} ${c.cnpj ?? ""} ${c.codigo_dominio ?? ""} ${c.cidade ?? ""} ${c.uf ?? ""}`
+            .toLowerCase()
+            .includes(q),
+      );
   }, [clientes, busca, situacao, filtroSeg, filtroGrupo]);
   const nAtivos = clientes.filter((c) => c.ativo).length;
 
@@ -441,9 +464,7 @@ function AbaClientes() {
   async function definirResp(clienteId: string, setorId: string, userId: string) {
     const sb = supabase();
     const { error } = userId
-      ? await sb
-          .from("cliente_responsaveis")
-          .upsert({ org_id: org.id, cliente_id: clienteId, setor_id: setorId, user_id: userId })
+      ? await sb.from("cliente_responsaveis").upsert({ org_id: org.id, cliente_id: clienteId, setor_id: setorId, user_id: userId })
       : await sb.from("cliente_responsaveis").delete().eq("cliente_id", clienteId).eq("setor_id", setorId);
     if (error) return mostrar(traduzirErro(error), true);
     carregarResps();
@@ -451,7 +472,12 @@ function AbaClientes() {
 
   async function importar() {
     if (!csv) return;
-    const regimes = new Map(REGIMES.flatMap((r) => [[r.id, r.id], [r.nome.toLowerCase(), r.id]]));
+    const regimes = new Map(
+      REGIMES.flatMap((r) => [
+        [r.id, r.id],
+        [r.nome.toLowerCase(), r.id],
+      ]),
+    );
     const linhas = csv
       .split(/\r?\n/)
       .map((l) => l.split(/[;\t]/).map((x) => x.trim()))
@@ -501,16 +527,28 @@ function AbaClientes() {
 
       <div className="flex flex-wrap gap-2">
         <div className="flex overflow-hidden rounded-md border border-[var(--borda)] text-sm">
-          {([
-            ["ativos", `Ativos (${nAtivos})`],
-            ["inativos", `Inativos (${clientes.length - nAtivos})`],
-            ["todos", `Todos (${clientes.length})`],
-          ] as const).map(([id, nome]) => (
-            <button key={id} onClick={() => setSituacao(id)}
-              className={`px-3 py-1.5 ${situacao === id ? "bg-[var(--marca)] text-white" : "bg-white"}`}>{nome}</button>
+          {(
+            [
+              ["ativos", `Ativos (${nAtivos})`],
+              ["inativos", `Inativos (${clientes.length - nAtivos})`],
+              ["todos", `Todos (${clientes.length})`],
+            ] as const
+          ).map(([id, nome]) => (
+            <button
+              key={id}
+              onClick={() => setSituacao(id)}
+              className={`px-3 py-1.5 ${situacao === id ? "bg-[var(--marca)] text-white" : "bg-white"}`}
+            >
+              {nome}
+            </button>
           ))}
         </div>
-        <input className="entrada flex-1" placeholder="Buscar cliente, CNPJ, código, cidade ou UF" value={busca} onChange={(e) => setBusca(e.target.value)} />
+        <input
+          className="entrada flex-1"
+          placeholder="Buscar cliente, CNPJ, código, cidade ou UF"
+          value={busca}
+          onChange={(e) => setBusca(e.target.value)}
+        />
         <select className="entrada w-44" value={filtroSeg} onChange={(e) => setFiltroSeg(e.target.value)} aria-label="Segmento">
           <option value="">Todos os segmentos</option>
           <option value="_sem">Sem segmento</option>
@@ -551,7 +589,12 @@ function AbaClientes() {
       {sel.size > 0 && (
         <div className="cartao sticky top-2 z-20 flex flex-wrap items-center gap-3 border-[var(--destaque-escuro)] p-3">
           <b className="text-sm text-[var(--marca)]">{sel.size} selecionado(s)</b>
-          <select className="entrada w-48" value={lote.segmento} onChange={(e) => setLote({ ...lote, segmento: e.target.value })} aria-label="Segmento em lote">
+          <select
+            className="entrada w-48"
+            value={lote.segmento}
+            onChange={(e) => setLote({ ...lote, segmento: e.target.value })}
+            aria-label="Segmento em lote"
+          >
             <option value="">Segmento: manter</option>
             {SEGMENTOS.map((x) => (
               <option key={x.id} value={x.id}>
@@ -561,7 +604,13 @@ function AbaClientes() {
             <option value="_limpar">Segmento: limpar</option>
           </select>
           <div className="min-w-64 flex-1">
-            <Etiquetas valor={lote.grupos} aoMudar={(g) => setLote({ ...lote, grupos: g })} sugestoes={todosGrupos} placeholder="Incluir grupos (Enter)…" compacto />
+            <Etiquetas
+              valor={lote.grupos}
+              aoMudar={(g) => setLote({ ...lote, grupos: g })}
+              sugestoes={todosGrupos}
+              placeholder="Incluir grupos (Enter)…"
+              compacto
+            />
           </div>
           <button className="btn-primario" onClick={aplicarLote}>
             Aplicar
@@ -619,14 +668,20 @@ function AbaClientes() {
                       <div className="font-medium">{c.razao_social}</div>
                       {(c.nome_fantasia || c.codigo_dominio) && (
                         <div className="text-xs text-[var(--texto-suave)]">
-                          {[c.codigo_dominio && `Domínio ${c.codigo_dominio}`, c.nome_fantasia, [c.cidade, c.uf].filter(Boolean).join("/")].filter(Boolean).join(" · ")}
+                          {[c.codigo_dominio && `Domínio ${c.codigo_dominio}`, c.nome_fantasia, [c.cidade, c.uf].filter(Boolean).join("/")]
+                            .filter(Boolean)
+                            .join(" · ")}
                         </div>
                       )}
                     </td>
                     <td className="whitespace-nowrap text-[var(--texto-suave)]">{c.cnpj}</td>
                     <td className="text-[var(--texto-suave)]">{c.uf ?? "—"}</td>
                     <td>
-                      <select className="entrada" value={c.regime ?? ""} onChange={(e) => alterar(c.id, { regime: e.target.value || null })}>
+                      <select
+                        className="entrada"
+                        value={c.regime ?? ""}
+                        onChange={(e) => alterar(c.id, { regime: e.target.value || null })}
+                      >
                         <option value="">—</option>
                         {REGIMES.map((r) => (
                           <option key={r.id} value={r.id}>
@@ -636,7 +691,12 @@ function AbaClientes() {
                       </select>
                     </td>
                     <td className="min-w-56">
-                      <select className="entrada mb-1 w-full" value={c.segmento ?? ""} onChange={(e) => alterar(c.id, { segmento: e.target.value || null })} aria-label="Segmento">
+                      <select
+                        className="entrada mb-1 w-full"
+                        value={c.segmento ?? ""}
+                        onChange={(e) => alterar(c.id, { segmento: e.target.value || null })}
+                        aria-label="Segmento"
+                      >
                         <option value="">Segmento…</option>
                         {SEGMENTOS.map((x) => (
                           <option key={x.id} value={x.id}>
@@ -655,8 +715,10 @@ function AbaClientes() {
                       {c.ativo ? (
                         <div className="flex items-center gap-2">
                           <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs text-emerald-800">Ativo</span>
-                          <button className="btn-link text-xs"
-                            onClick={() => setInativando({ id: c.id, data: hojeISO(), motivo: "Saiu do escritório", outro: "" })}>
+                          <button
+                            className="btn-link text-xs"
+                            onClick={() => setInativando({ id: c.id, data: hojeISO(), motivo: "Saiu do escritório", outro: "" })}
+                          >
                             Inativar
                           </button>
                         </div>
@@ -666,7 +728,9 @@ function AbaClientes() {
                             Inativo{c.inativo_em ? ` desde ${fmtData(c.inativo_em)}` : ""}
                           </span>
                           {c.motivo_inativacao && <div className="mt-0.5 text-xs text-[var(--texto-suave)]">{c.motivo_inativacao}</div>}
-                          <button className="btn-link text-xs" onClick={() => reativar(c.id)}>Reativar</button>
+                          <button className="btn-link text-xs" onClick={() => reativar(c.id)}>
+                            Reativar
+                          </button>
                         </div>
                       )}
                     </td>
@@ -677,13 +741,23 @@ function AbaClientes() {
                         <div className="grid gap-3 py-2 sm:grid-cols-[auto_auto_1fr_auto_auto] sm:items-end">
                           <label className="campo">
                             <span>Inativo a partir de *</span>
-                            <input type="date" required value={inativando.data}
-                              onChange={(e) => setInativando({ ...inativando, data: e.target.value })} />
+                            <input
+                              type="date"
+                              required
+                              value={inativando.data}
+                              onChange={(e) => setInativando({ ...inativando, data: e.target.value })}
+                            />
                           </label>
                           <label className="campo">
                             <span>Motivo</span>
                             <select value={inativando.motivo} onChange={(e) => setInativando({ ...inativando, motivo: e.target.value })}>
-                              {["Saiu do escritório", "Transferida para outro escritório", "Baixada / encerrada", "Inadimplência", "Outro"].map((m) => (
+                              {[
+                                "Saiu do escritório",
+                                "Transferida para outro escritório",
+                                "Baixada / encerrada",
+                                "Inadimplência",
+                                "Outro",
+                              ].map((m) => (
                                 <option key={m}>{m}</option>
                               ))}
                             </select>
@@ -691,12 +765,21 @@ function AbaClientes() {
                           {inativando.motivo === "Outro" ? (
                             <label className="campo">
                               <span>Descreva</span>
-                              <input value={inativando.outro} maxLength={300}
-                                onChange={(e) => setInativando({ ...inativando, outro: e.target.value })} />
+                              <input
+                                value={inativando.outro}
+                                maxLength={300}
+                                onChange={(e) => setInativando({ ...inativando, outro: e.target.value })}
+                              />
                             </label>
-                          ) : <span />}
-                          <button className="btn-primario" onClick={confirmarInativacao}>Confirmar inativação</button>
-                          <button className="btn" onClick={() => setInativando(null)}>Cancelar</button>
+                          ) : (
+                            <span />
+                          )}
+                          <button className="btn-primario" onClick={confirmarInativacao}>
+                            Confirmar inativação
+                          </button>
+                          <button className="btn" onClick={() => setInativando(null)}>
+                            Cancelar
+                          </button>
                         </div>
                         <p className="pb-2 text-xs text-[var(--texto-suave)]">
                           As competências até o mês da data informada continuam com o escritório. Tarefas abertas de competências
@@ -804,7 +887,12 @@ function AbaObrigacoes() {
     if (!editando?.por_cliente) return setAlcance(null);
     let vivo = true;
     supabase()
-      .rpc("prever_rotina", { p_org: org.id, p_regimes: editando.regimes ?? null, p_segmentos: editando.segmentos ?? null, p_grupos: editando.grupos ?? null })
+      .rpc("prever_rotina", {
+        p_org: org.id,
+        p_regimes: editando.regimes ?? null,
+        p_segmentos: editando.segmentos ?? null,
+        p_grupos: editando.grupos ?? null,
+      })
       .then(({ data }) => vivo && setAlcance((data as number) ?? null));
     return () => {
       vivo = false;
@@ -814,21 +902,28 @@ function AbaObrigacoes() {
   async function gerar() {
     const { data, error } = await supabase().rpc("gerar_competencia", { p_org: org.id, p_competencia: comp + "-01" });
     if (error) return mostrar(traduzirErro(error), true);
-    mostrar(data ? `${data} tarefas criadas para ${comp.split("-").reverse().join("/")}.` : "Nenhuma tarefa nova: a competência já estava gerada.");
+    mostrar(
+      data
+        ? `${data} tarefas criadas para ${comp.split("-").reverse().join("/")}.`
+        : "Nenhuma tarefa nova: a competência já estava gerada.",
+    );
   }
 
   const descreverMeses = (m: number[] | null) =>
-    !m ? "Mensal" : m.length === 4 && [3, 6, 9, 12].every((x) => m.includes(x)) ? "Trimestral"
-          : m.length === 1
-            ? `Anual (comp. ${MESES[m[0] - 1].toLowerCase()})`
-            : m.map((x) => MESES[x - 1]).join(", ");
+    !m
+      ? "Mensal"
+      : m.length === 4 && [3, 6, 9, 12].every((x) => m.includes(x))
+        ? "Trimestral"
+        : m.length === 1
+          ? `Anual (comp. ${MESES[m[0] - 1].toLowerCase()})`
+          : m.map((x) => MESES[x - 1]).join(", ");
 
   return (
     <div className="space-y-4">
       <div className="cartao flex flex-wrap items-end gap-3 p-4">
         <div className="mr-auto max-w-xl text-sm text-[var(--texto-suave)]">
-          As tarefas são criadas automaticamente todo dia às 06:05 para a competência anterior, uma por cliente ativo
-          que se encaixe no regime, segmento e grupo indicados. Para antecipar ou refazer uma competência, gere manualmente:
+          As tarefas são criadas automaticamente todo dia às 06:05 para a competência anterior, uma por cliente ativo que se encaixe no
+          regime, segmento e grupo indicados. Para antecipar ou refazer uma competência, gere manualmente:
         </div>
         <label className="campo">
           <span>Competência</span>
@@ -973,7 +1068,8 @@ function AbaObrigacoes() {
           </div>
           {editando.por_cliente && (
             <p className="rounded-lg bg-[var(--fundo)] px-3 py-2 text-sm md:col-span-4">
-              Alcance: <b className="text-[var(--marca)]">{alcance ?? "…"}</b> cliente(s) ativo(s) recebem esta tarefa a cada competência com os filtros acima.
+              Alcance: <b className="text-[var(--marca)]">{alcance ?? "…"}</b> cliente(s) ativo(s) recebem esta tarefa a cada competência
+              com os filtros acima.
             </p>
           )}
           <fieldset className="campo md:col-span-2">
@@ -999,7 +1095,11 @@ function AbaObrigacoes() {
           </fieldset>
           <label className="campo md:col-span-4">
             <span>Descrição / checklist</span>
-            <textarea rows={2} value={editando.descricao ?? ""} onChange={(e) => setEditando({ ...editando, descricao: e.target.value || null })} />
+            <textarea
+              rows={2}
+              value={editando.descricao ?? ""}
+              onChange={(e) => setEditando({ ...editando, descricao: e.target.value || null })}
+            />
           </label>
           <div className="flex gap-2 md:col-span-4">
             <button className="btn-primario">Salvar</button>
@@ -1024,13 +1124,21 @@ function AbaObrigacoes() {
           </thead>
           <tbody>
             {modelos.map((m) => (
-              <tr key={m.id} className={`cursor-pointer hover:bg-[var(--fundo)] ${m.ativo ? "" : "opacity-50"}`} onClick={() => setEditando(m)}>
+              <tr
+                key={m.id}
+                className={`cursor-pointer hover:bg-[var(--fundo)] ${m.ativo ? "" : "opacity-50"}`}
+                onClick={() => setEditando(m)}
+              >
                 <td className="font-medium">{m.titulo}</td>
                 <td>{setorPorId(m.setor_id)?.nome ?? "—"}</td>
                 <td>{descreverMeses(m.meses)}</td>
                 <td className="whitespace-nowrap">
                   Dia {m.dia_vencimento}
-                  {m.meses_apos_competencia === 0 ? " do mês" : m.meses_apos_competencia === 1 ? " do mês seguinte" : ` (+${m.meses_apos_competencia} meses)`}
+                  {m.meses_apos_competencia === 0
+                    ? " do mês"
+                    : m.meses_apos_competencia === 1
+                      ? " do mês seguinte"
+                      : ` (+${m.meses_apos_competencia} meses)`}
                 </td>
                 <td className="text-[var(--texto-suave)]">
                   {!m.regimes && !m.segmentos?.length && !m.grupos?.length
@@ -1093,7 +1201,9 @@ function AbaFeriados() {
 
   async function adicionar(e: React.FormEvent) {
     e.preventDefault();
-    const { error } = await supabase().from("feriados").insert({ ...novo, org_id: org.id });
+    const { error } = await supabase()
+      .from("feriados")
+      .insert({ ...novo, org_id: org.id });
     if (error) return mostrar(traduzirErro(error), true);
     setNovo({ data: "", descricao: "" });
     carregar();

@@ -11,9 +11,7 @@ import { ASSUNTOS, STATUS_CONVERSA, nomeAssunto } from "@/lib/chat";
 import type { Conversa } from "@/lib/chat";
 import { ChatMensagens } from "@/components/ChatMensagens";
 import { Icone } from "@/components/Icone";
-import {
-  ArvoreBalancete, GradeIndices, PainelResumo, VisaoParecer, mesAno, mesExtenso,
-} from "@/components/demonstrativos/Painel";
+import { ArvoreBalancete, GradeIndices, PainelResumo, VisaoParecer, mesAno, mesExtenso } from "@/components/demonstrativos/Painel";
 import type { BalanceteReg, LinhaReg, ParecerReg } from "@/components/demonstrativos/Painel";
 import { AbaDemonstracoes } from "@/components/demonstrativos/Demonstracoes";
 import { BotaoPdf } from "@/components/demonstrativos/BotaoPdf";
@@ -155,7 +153,9 @@ export default function Portal() {
         </nav>
       </header>
       <main className="mx-auto max-w-[1200px] px-4 py-5">
-        {(aba === "inicio" || aba === "demonstracoes" || aba === "balancete" || aba === "indices" || aba === "parecer") && <Demonstrativos emp={emp} aba={aba} />}
+        {(aba === "inicio" || aba === "demonstracoes" || aba === "balancete" || aba === "indices" || aba === "parecer") && (
+          <Demonstrativos emp={emp} aba={aba} />
+        )}
         {aba === "rotinas" && <Rotinas emp={emp} />}
         {aba === "processos" && <Processos emp={emp} />}
         {aba === "chat" && <Chat emp={emp} />}
@@ -201,7 +201,13 @@ function SinoCliente({ uid }: { uid: string }) {
           setAberto((x) => !x);
           if (novas) {
             const agora = new Date().toISOString();
-            await supabase().from("hub_notificacoes").update({ lida_em: agora }).in("id", n.filter((x) => !x.lida_em).map((x) => x.id));
+            await supabase()
+              .from("hub_notificacoes")
+              .update({ lida_em: agora })
+              .in(
+                "id",
+                n.filter((x) => !x.lida_em).map((x) => x.id),
+              );
           }
         }}
         aria-label="Avisos"
@@ -253,8 +259,19 @@ function Demonstrativos({ emp, aba }: { emp: Empresa; aba: Aba }) {
   useEffect(() => {
     if (!atual) return;
     const sb = supabase();
-    sb.from("portal_balancete_linhas").select("*").eq("balancete_id", atual.id).order("classificacao").limit(20000).then(({ data }) => setLinhas((data as LinhaReg[]) ?? []));
-    sb.from("portal_pareceres").select("*").eq("balancete_id", atual.id).eq("status", "publicado").order("versao", { ascending: false }).limit(1).then(({ data }) => setParecer((data?.[0] as ParecerReg) ?? null));
+    sb.from("portal_balancete_linhas")
+      .select("*")
+      .eq("balancete_id", atual.id)
+      .order("classificacao")
+      .limit(20000)
+      .then(({ data }) => setLinhas((data as LinhaReg[]) ?? []));
+    sb.from("portal_pareceres")
+      .select("*")
+      .eq("balancete_id", atual.id)
+      .eq("status", "publicado")
+      .order("versao", { ascending: false })
+      .limit(1)
+      .then(({ data }) => setParecer((data?.[0] as ParecerReg) ?? null));
   }, [atual]);
 
   const anteriores = useMemo(() => undefined as Map<string, number> | undefined, []);
@@ -264,7 +281,9 @@ function Demonstrativos({ emp, aba }: { emp: Empresa; aba: Aba }) {
     return (
       <div className="cartao p-8 text-center">
         <h2 className="font-semibold text-[var(--marca)]">Fechamento em andamento</h2>
-        <p className="mt-1 text-sm text-neutral-600">Assim que a MDC concluir e publicar o fechamento contábil, os demonstrativos aparecem aqui.</p>
+        <p className="mt-1 text-sm text-neutral-600">
+          Assim que a MDC concluir e publicar o fechamento contábil, os demonstrativos aparecem aqui.
+        </p>
       </div>
     );
 
@@ -291,7 +310,9 @@ function Demonstrativos({ emp, aba }: { emp: Empresa; aba: Aba }) {
         (parecer ? (
           <VisaoParecer texto={parecer.texto} empresa={emp.razao_social} cnpj={emp.cnpj} />
         ) : (
-          <div className="cartao p-8 text-center text-sm text-neutral-600">O parecer técnico de {mesExtenso(atual.competencia)} ainda está em elaboração.</div>
+          <div className="cartao p-8 text-center text-sm text-neutral-600">
+            O parecer técnico de {mesExtenso(atual.competencia)} ainda está em elaboração.
+          </div>
         ))}
     </div>
   );
@@ -374,16 +395,18 @@ function Rotinas({ emp }: { emp: Empresa }) {
           </div>
         </div>
       )}
-      {lista?.filter((r) => r.situacao === "aguardando_voce").map((r) => (
-        <div key={r.tarefa_id} className="cartao border-l-4 !border-l-amber-500 p-4">
-          <div className="text-sm font-semibold">A MDC precisa de você: {r.titulo}</div>
-          <div className="text-sm text-neutral-700">{r.pendencia}</div>
-          <label className="btn mt-2 cursor-pointer">
-            Enviar arquivo
-            <input type="file" className="hidden" onChange={(e) => e.target.files?.[0] && enviar(r, e.target.files[0])} />
-          </label>
-        </div>
-      ))}
+      {lista
+        ?.filter((r) => r.situacao === "aguardando_voce")
+        .map((r) => (
+          <div key={r.tarefa_id} className="cartao border-l-4 !border-l-amber-500 p-4">
+            <div className="text-sm font-semibold">A MDC precisa de você: {r.titulo}</div>
+            <div className="text-sm text-neutral-700">{r.pendencia}</div>
+            <label className="btn mt-2 cursor-pointer">
+              Enviar arquivo
+              <input type="file" className="hidden" onChange={(e) => e.target.files?.[0] && enviar(r, e.target.files[0])} />
+            </label>
+          </div>
+        ))}
       <div className="cartao overflow-x-auto">
         <table className="tabela">
           <thead>
@@ -408,7 +431,11 @@ function Rotinas({ emp }: { emp: Empresa }) {
                 <td>{fmtData(r.prazo)}</td>
                 <td>
                   {r.arquivos.map((a) => (
-                    <button key={a.id} className="block text-left text-sm text-[var(--destaque-escuro)] underline" onClick={() => abrirArquivo(a.caminho, a.nome).catch((e) => setErro(traduzirErro(e)))}>
+                    <button
+                      key={a.id}
+                      className="block text-left text-sm text-[var(--destaque-escuro)] underline"
+                      onClick={() => abrirArquivo(a.caminho, a.nome).catch((e) => setErro(traduzirErro(e)))}
+                    >
                       {a.nome}
                     </button>
                   ))}
@@ -467,7 +494,14 @@ function Processos({ emp }: { emp: Empresa }) {
             {p.status === "concluido" ? (
               <span className="chip bg-emerald-50 text-emerald-800">Concluído em {fmtData(p.concluido_em)}</span>
             ) : (
-              <span className="chip bg-sky-50 text-sky-800">{p.fase}{p.fase_status === "aguardando_cliente" ? " · aguardando você" : p.fase_status === "aguardando_orgao" ? " · aguardando órgão" : ""}</span>
+              <span className="chip bg-sky-50 text-sky-800">
+                {p.fase}
+                {p.fase_status === "aguardando_cliente"
+                  ? " · aguardando você"
+                  : p.fase_status === "aguardando_orgao"
+                    ? " · aguardando órgão"
+                    : ""}
+              </span>
             )}
           </div>
           {p.descricao && <p className="mt-1 text-sm text-neutral-700">{p.descricao}</p>}
@@ -500,7 +534,11 @@ function Chat({ emp }: { emp: Empresa }) {
   const [erro, setErro] = useState<string | null>(null);
 
   const carregar = useCallback(async () => {
-    const { data } = await supabase().from("portal_conversas").select("*").eq("cliente_id", emp.cliente_id).order("atualizado_em", { ascending: false });
+    const { data } = await supabase()
+      .from("portal_conversas")
+      .select("*")
+      .eq("cliente_id", emp.cliente_id)
+      .order("atualizado_em", { ascending: false });
     setLista((data as Conversa[]) ?? []);
   }, [emp.cliente_id]);
 
@@ -509,7 +547,11 @@ function Chat({ emp }: { emp: Empresa }) {
     const sb = supabase();
     const canal = sb
       .channel(`portal-conv-${emp.cliente_id}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "portal_conversas", filter: `cliente_id=eq.${emp.cliente_id}` }, carregar)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "portal_conversas", filter: `cliente_id=eq.${emp.cliente_id}` },
+        carregar,
+      )
       .subscribe();
     return () => {
       sb.removeChannel(canal);
@@ -520,7 +562,12 @@ function Chat({ emp }: { emp: Empresa }) {
 
   async function abrir(e: React.FormEvent) {
     e.preventDefault();
-    const { data, error } = await supabase().rpc("portal_abrir_conversa", { p_cliente: emp.cliente_id, p_assunto: assunto, p_titulo: titulo, p_texto: texto });
+    const { data, error } = await supabase().rpc("portal_abrir_conversa", {
+      p_cliente: emp.cliente_id,
+      p_assunto: assunto,
+      p_titulo: titulo,
+      p_texto: texto,
+    });
     if (error) return setErro(traduzirErro(error));
     setNova(false);
     setTitulo("");
@@ -539,7 +586,13 @@ function Chat({ emp }: { emp: Empresa }) {
     <div className="grid h-[calc(100vh-200px)] min-h-[460px] gap-3 md:grid-cols-[300px_1fr]">
       <aside className="cartao flex min-h-0 flex-col">
         <div className="border-b border-[var(--borda)] p-2">
-          <button className="btn-primario w-full" onClick={() => { setNova(true); setSel(null); }}>
+          <button
+            className="btn-primario w-full"
+            onClick={() => {
+              setNova(true);
+              setSel(null);
+            }}
+          >
             Nova solicitação
           </button>
         </div>
@@ -548,7 +601,14 @@ function Chat({ emp }: { emp: Empresa }) {
           {lista.map((c) => {
             const st = STATUS_CONVERSA.find((s) => s.id === c.status)!;
             return (
-              <button key={c.id} onClick={() => { setSel(c.id); setNova(false); }} className={`block w-full border-b border-[var(--borda)] px-3 py-2 text-left text-sm hover:bg-[var(--fundo)] ${sel === c.id ? "bg-[var(--fundo)]" : ""}`}>
+              <button
+                key={c.id}
+                onClick={() => {
+                  setSel(c.id);
+                  setNova(false);
+                }}
+                className={`block w-full border-b border-[var(--borda)] px-3 py-2 text-left text-sm hover:bg-[var(--fundo)] ${sel === c.id ? "bg-[var(--fundo)]" : ""}`}
+              >
                 <div className="flex justify-between gap-2">
                   <span className="truncate font-medium">{c.titulo}</span>
                   <span className={`chip shrink-0 ${st.cor}`}>{c.status === "aguardando_cliente" ? "Responder" : st.nome}</span>
@@ -584,7 +644,9 @@ function Chat({ emp }: { emp: Empresa }) {
               <textarea required rows={6} value={texto} onChange={(e) => setTexto(e.target.value)} />
             </label>
             {erro && <p className="text-sm text-red-700">{erro}</p>}
-            <p className="text-xs text-neutral-500">A mensagem chega direto ao responsável da MDC pelo assunto. Arquivos podem ser anexados na conversa.</p>
+            <p className="text-xs text-neutral-500">
+              A mensagem chega direto ao responsável da MDC pelo assunto. Arquivos podem ser anexados na conversa.
+            </p>
             <button className="btn-primario">Enviar</button>
           </form>
         ) : atual ? (
@@ -609,7 +671,12 @@ function Chat({ emp }: { emp: Empresa }) {
               ) : (
                 <div className="flex items-center gap-1 text-sm" title="Avalie o atendimento">
                   {[1, 2, 3, 4, 5].map((n) => (
-                    <button key={n} onClick={() => avaliar(n)} className={`text-lg ${(atual.avaliacao ?? 0) >= n ? "text-[var(--destaque-escuro)]" : "text-neutral-300"}`} aria-label={`Nota ${n}`}>
+                    <button
+                      key={n}
+                      onClick={() => avaliar(n)}
+                      className={`text-lg ${(atual.avaliacao ?? 0) >= n ? "text-[var(--destaque-escuro)]" : "text-neutral-300"}`}
+                      aria-label={`Nota ${n}`}
+                    >
                       ★
                     </button>
                   ))}
@@ -617,11 +684,19 @@ function Chat({ emp }: { emp: Empresa }) {
               )}
             </div>
             <div className="min-h-0 flex-1">
-              <ChatMensagens conversaId={atual.id} orgId={emp.org_id} clienteId={emp.cliente_id} lado="cliente" fechada={atual.status === "resolvido"} />
+              <ChatMensagens
+                conversaId={atual.id}
+                orgId={emp.org_id}
+                clienteId={emp.cliente_id}
+                lado="cliente"
+                fechada={atual.status === "resolvido"}
+              />
             </div>
           </>
         ) : (
-          <div className="grid flex-1 place-items-center p-6 text-center text-sm text-neutral-500">Escolha uma conversa ou abra uma nova solicitação.</div>
+          <div className="grid flex-1 place-items-center p-6 text-center text-sm text-neutral-500">
+            Escolha uma conversa ou abra uma nova solicitação.
+          </div>
         )}
       </section>
     </div>
@@ -637,7 +712,13 @@ function Documentos({ emp }: { emp: Empresa }) {
   const carregar = useCallback(async () => {
     const sb = supabase();
     const [a, v] = await Promise.all([
-      sb.from("hub_arquivos").select("*").eq("cliente_id", emp.cliente_id).eq("visivel_cliente", true).order("enviado_em", { ascending: false }).limit(300),
+      sb
+        .from("hub_arquivos")
+        .select("*")
+        .eq("cliente_id", emp.cliente_id)
+        .eq("visivel_cliente", true)
+        .order("enviado_em", { ascending: false })
+        .limit(300),
       sb.from("venc_itens").select("id,tipo,descricao,vence_em").eq("cliente_id", emp.cliente_id).eq("status", "ativo").order("vence_em"),
     ]);
     setArquivos((a.data as Arquivo[]) ?? []);
@@ -648,9 +729,17 @@ function Documentos({ emp }: { emp: Empresa }) {
   }, [carregar]);
 
   const nomesTipo: Record<string, string> = {
-    certificado_a1: "Certificado digital A1", certificado_a3: "Certificado digital A3", procuracao_ecac: "Procuração e-CAC",
-    procuracao_outra: "Procuração", alvara: "Alvará", avcb: "AVCB", cetesb: "Licença CETESB", vigilancia: "Vigilância Sanitária",
-    licenca_outra: "Licença", contrato: "Contrato", outro: "Vencimento",
+    certificado_a1: "Certificado digital A1",
+    certificado_a3: "Certificado digital A3",
+    procuracao_ecac: "Procuração e-CAC",
+    procuracao_outra: "Procuração",
+    alvara: "Alvará",
+    avcb: "AVCB",
+    cetesb: "Licença CETESB",
+    vigilancia: "Vigilância Sanitária",
+    licenca_outra: "Licença",
+    contrato: "Contrato",
+    outro: "Vencimento",
   };
 
   return (
@@ -666,7 +755,8 @@ function Documentos({ emp }: { emp: Empresa }) {
               className="hidden"
               onChange={async (e) => {
                 try {
-                  for (const f of Array.from(e.target.files ?? [])) await enviarArquivo(f, { org: emp.org_id, app: "portal", cliente: emp.cliente_id, visivelCliente: true });
+                  for (const f of Array.from(e.target.files ?? []))
+                    await enviarArquivo(f, { org: emp.org_id, app: "portal", cliente: emp.cliente_id, visivelCliente: true });
                   carregar();
                 } catch (er) {
                   setErro(traduzirErro(er));
@@ -679,7 +769,10 @@ function Documentos({ emp }: { emp: Empresa }) {
         <ul className="divide-y divide-[var(--borda)] text-sm">
           {arquivos.map((a) => (
             <li key={a.id} className="flex items-center justify-between gap-2 py-2">
-              <button className="truncate text-left hover:underline" onClick={() => abrirArquivo(a.caminho, a.nome).catch((er) => setErro(traduzirErro(er)))}>
+              <button
+                className="truncate text-left hover:underline"
+                onClick={() => abrirArquivo(a.caminho, a.nome).catch((er) => setErro(traduzirErro(er)))}
+              >
                 {a.nome}
               </button>
               <span className="shrink-0 text-xs text-neutral-500">
@@ -702,7 +795,9 @@ function Documentos({ emp }: { emp: Empresa }) {
                   {nomesTipo[v.tipo] ?? v.tipo}
                   {v.descricao && <span className="block text-xs text-neutral-500">{v.descricao}</span>}
                 </span>
-                <span className={`shrink-0 ${d <= 30 ? "font-medium text-[var(--alerta)]" : "text-neutral-600"}`}>{fmtData(v.vence_em)}</span>
+                <span className={`shrink-0 ${d <= 30 ? "font-medium text-[var(--alerta)]" : "text-neutral-600"}`}>
+                  {fmtData(v.vence_em)}
+                </span>
               </li>
             );
           })}

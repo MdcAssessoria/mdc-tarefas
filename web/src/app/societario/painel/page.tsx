@@ -88,7 +88,9 @@ function Painel() {
           { r: "Concluídos no mês", v: d.concluidosMes.length },
         ].map((k) => (
           <div key={k.r} className="cartao p-4">
-            <div className={`text-3xl font-semibold tabular-nums ${k.alerta && k.v ? "text-[var(--perigo)]" : "text-[var(--marca)]"}`}>{k.v}</div>
+            <div className={`text-3xl font-semibold tabular-nums ${k.alerta && k.v ? "text-[var(--perigo)]" : "text-[var(--marca)]"}`}>
+              {k.v}
+            </div>
             <div className="text-sm text-neutral-600">{k.r}</div>
           </div>
         ))}

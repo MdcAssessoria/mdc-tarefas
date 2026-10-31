@@ -58,14 +58,11 @@ function Societario() {
     } catch {}
   }, [carregar]);
 
-  const faseAtual = useCallback(
-    (p: SocProcesso) => fases.find((f) => f.processo_id === p.id && f.ordem === p.fase_atual),
-    [fases],
-  );
+  const faseAtual = useCallback((p: SocProcesso) => fases.find((f) => f.processo_id === p.id && f.ordem === p.fase_atual), [fases]);
   const nomeTipo = (id: string) => tipos.find((t) => t.id === id)?.nome ?? "";
   const nomeCliente = (p: SocProcesso) => {
     const c = clientePorId(p.cliente_id);
-    return c ? c.nome_fantasia || c.razao_social : p.futuro_cliente ?? "—";
+    return c ? c.nome_fantasia || c.razao_social : (p.futuro_cliente ?? "—");
   };
 
   const filtrados = useMemo(() => {
@@ -162,11 +159,13 @@ function Societario() {
         </select>
         <select className="entrada" value={resp} onChange={(e) => setResp(e.target.value)}>
           <option value="">Todos os responsáveis</option>
-          {membros.filter((m) => m.ativo).map((m) => (
-            <option key={m.user_id} value={m.user_id}>
-              {m.nome}
-            </option>
-          ))}
+          {membros
+            .filter((m) => m.ativo)
+            .map((m) => (
+              <option key={m.user_id} value={m.user_id}>
+                {m.nome}
+              </option>
+            ))}
         </select>
         {ufs.length > 1 && (
           <select className="entrada" value={uf} onChange={(e) => setUf(e.target.value)}>
@@ -259,7 +258,11 @@ function Societario() {
                 const f = faseAtual(p);
                 const d = f ? diasAte(f.prazo_em, org.fuso) : null;
                 return (
-                  <tr key={p.id} className="cursor-pointer hover:bg-[var(--fundo)]" onClick={() => (window.location.href = caminho(`/societario/${p.id}`))}>
+                  <tr
+                    key={p.id}
+                    className="cursor-pointer hover:bg-[var(--fundo)]"
+                    onClick={() => (window.location.href = caminho(`/societario/${p.id}`))}
+                  >
                     <td className="text-neutral-500">#{p.numero}</td>
                     <td className="font-medium">{nomeCliente(p)}</td>
                     <td>{nomeTipo(p.tipo_id)}</td>
@@ -299,7 +302,13 @@ function Societario() {
         </p>
       )}
 
-      {novo && <NovoProcesso tipos={tipos} aoFechar={() => setNovo(false)} aoCriar={(id) => (window.location.href = caminho(`/societario/${id}`))} />}
+      {novo && (
+        <NovoProcesso
+          tipos={tipos}
+          aoFechar={() => setNovo(false)}
+          aoCriar={(id) => (window.location.href = caminho(`/societario/${id}`))}
+        />
+      )}
     </div>
   );
 }
@@ -348,7 +357,11 @@ function NovoProcesso({ tipos, aoFechar, aoCriar }: { tipos: SocTipo[]; aoFechar
 
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4" onClick={aoFechar}>
-      <form onSubmit={criar} onClick={(e) => e.stopPropagation()} className="cartao max-h-[92vh] w-full max-w-xl space-y-3 overflow-y-auto p-5">
+      <form
+        onSubmit={criar}
+        onClick={(e) => e.stopPropagation()}
+        className="cartao max-h-[92vh] w-full max-w-xl space-y-3 overflow-y-auto p-5"
+      >
         <h2 className="text-lg font-semibold text-[var(--marca)]">Novo processo societário</h2>
         <label className="campo">
           <span>Tipo</span>
@@ -395,17 +408,24 @@ function NovoProcesso({ tipos, aoFechar, aoCriar }: { tipos: SocTipo[]; aoFechar
         )}
         <label className="campo">
           <span>O que muda / observações</span>
-          <textarea rows={3} value={descricao} onChange={(e) => setDescricao(e.target.value)} placeholder="Ex.: endereço, entrada de sócio, capital, CNAE…" />
+          <textarea
+            rows={3}
+            value={descricao}
+            onChange={(e) => setDescricao(e.target.value)}
+            placeholder="Ex.: endereço, entrada de sócio, capital, CNAE…"
+          />
         </label>
         <div className="grid grid-cols-2 gap-3">
           <label className="campo">
             <span>Responsável</span>
             <select value={resp} onChange={(e) => setResp(e.target.value)}>
-              {membros.filter((m) => m.ativo).map((m) => (
-                <option key={m.user_id} value={m.user_id}>
-                  {m.nome}
-                </option>
-              ))}
+              {membros
+                .filter((m) => m.ativo)
+                .map((m) => (
+                  <option key={m.user_id} value={m.user_id}>
+                    {m.nome}
+                  </option>
+                ))}
             </select>
           </label>
           <label className="campo">
@@ -424,9 +444,7 @@ function NovoProcesso({ tipos, aoFechar, aoCriar }: { tipos: SocTipo[]; aoFechar
                     <input
                       type="checkbox"
                       checked={!dispensar.includes(f.codigo)}
-                      onChange={(e) =>
-                        setDispensar((d) => (e.target.checked ? d.filter((x) => x !== f.codigo) : [...d, f.codigo]))
-                      }
+                      onChange={(e) => setDispensar((d) => (e.target.checked ? d.filter((x) => x !== f.codigo) : [...d, f.codigo]))}
                     />
                     {f.nome}
                   </label>

@@ -37,7 +37,10 @@ export function corrigirXlsDominio(XLSX: SheetJS, buf: Uint8Array): Uint8Array |
       const atual = (d[p + 4] | (d[p + 5] << 8) | (d[p + 6] << 16) | (d[p + 7] << 24)) >>> 0;
       if (atual !== bofs[k]) {
         const v = bofs[k];
-        d[p + 4] = v & 255; d[p + 5] = (v >> 8) & 255; d[p + 6] = (v >> 16) & 255; d[p + 7] = (v >>> 24) & 255;
+        d[p + 4] = v & 255;
+        d[p + 5] = (v >> 8) & 255;
+        d[p + 6] = (v >> 16) & 255;
+        d[p + 7] = (v >>> 24) & 255;
         mudou = true;
       }
     });
@@ -56,12 +59,14 @@ export function carregarSheetJS(): Promise<SheetJS> {
       const s = document.createElement("script");
       s.src = SHEETJS;
       s.onload = () => (w.XLSX ? ok(w.XLSX) : falha(new Error("Leitor de planilhas não carregou")));
-      s.onerror = () => { carregando = null; falha(new Error("Sem conexão para carregar o leitor de planilhas")); };
+      s.onerror = () => {
+        carregando = null;
+        falha(new Error("Sem conexão para carregar o leitor de planilhas"));
+      };
       document.head.appendChild(s);
     });
   return carregando;
 }
-
 
 /** Primeira aba (ou todas) como matriz. raw=true mantém números como números. */
 export async function lerPlanilha(arq: File, raw = true): Promise<{ abas: string[]; dados: Record<string, unknown[][]> }> {
@@ -70,8 +75,11 @@ export async function lerPlanilha(arq: File, raw = true): Promise<{ abas: string
   let wb;
   if (/\.(csv|txt)$/i.test(arq.name)) {
     let texto: string;
-    try { texto = new TextDecoder("utf-8", { fatal: true }).decode(buf); }
-    catch { texto = new TextDecoder("windows-1252").decode(buf); }
+    try {
+      texto = new TextDecoder("utf-8", { fatal: true }).decode(buf);
+    } catch {
+      texto = new TextDecoder("windows-1252").decode(buf);
+    }
     const amostra = texto.split(/\r?\n/, 5).join("");
     const sep = (amostra.match(/;/g)?.length ?? 0) >= (amostra.match(/,/g)?.length ?? 0) ? ";" : ",";
     wb = XLSX.read(texto.replace(/^\uFEFF/, ""), { type: "string", FS: sep, raw: true });

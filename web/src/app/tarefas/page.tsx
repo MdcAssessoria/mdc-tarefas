@@ -67,7 +67,10 @@ function Tarefas() {
     try {
       const v = localStorage.getItem("mdc-tarefas:visao");
       if (v === "lista" || v === "quadro") setVisao(v);
-      const f = JSON.parse(localStorage.getItem(`mdc-tarefas:filtros:${org.id}`) ?? "null") as { setores?: string[]; resps?: string[] } | null;
+      const f = JSON.parse(localStorage.getItem(`mdc-tarefas:filtros:${org.id}`) ?? "null") as {
+        setores?: string[];
+        resps?: string[];
+      } | null;
       // descarta setores/pessoas que não existem mais
       const setoresOk = new Set([...setores.map((x) => x.id), "_sem"]);
       const pessoasOk = new Set([...membros.filter((m) => m.ativo).map((m) => m.user_id), "_sem"]);
@@ -207,9 +210,7 @@ function Tarefas() {
             key={f.id}
             onClick={() => setSituacao(f.id)}
             className={`chip border py-1.5 text-sm ${
-              situacao === f.id
-                ? "border-[var(--marca)] bg-[var(--marca)] text-white"
-                : `border-[var(--borda)] bg-white ${f.cor ?? ""}`
+              situacao === f.id ? "border-[var(--marca)] bg-[var(--marca)] text-white" : `border-[var(--borda)] bg-white ${f.cor ?? ""}`
             }`}
           >
             {f.nome}
@@ -289,9 +290,7 @@ function Tarefas() {
         />
       )}
 
-      {editando !== undefined && (
-        <TarefaEditor tarefa={editando} aoFechar={() => setEditando(undefined)} aoSalvar={recarregar} />
-      )}
+      {editando !== undefined && <TarefaEditor tarefa={editando} aoFechar={() => setEditando(undefined)} aoSalvar={recarregar} />}
     </div>
   );
 }
@@ -307,8 +306,7 @@ interface VisaoProps {
 }
 
 function Lista({ tarefas, abrir, mudarStatus, fuso, setorPorId, clientePorId, nomeMembro }: VisaoProps) {
-  if (tarefas.length === 0)
-    return <div className="cartao p-10 text-center text-sm text-[var(--texto-suave)]">Nenhuma tarefa aqui.</div>;
+  if (tarefas.length === 0) return <div className="cartao p-10 text-center text-sm text-[var(--texto-suave)]">Nenhuma tarefa aqui.</div>;
   return (
     <div className="cartao divide-y divide-[var(--borda)] overflow-hidden">
       {tarefas.map((t) => {
@@ -423,9 +421,7 @@ function Quadro({ tarefas, abrir, mudarStatus, fuso, setorPorId, clientePorId, n
                   </div>
                 );
               })}
-              {itens.length > 200 && (
-                <p className="px-2 text-xs text-[var(--texto-suave)]">+{itens.length - 200} — use os filtros</p>
-              )}
+              {itens.length > 200 && <p className="px-2 text-xs text-[var(--texto-suave)]">+{itens.length - 200} — use os filtros</p>}
             </div>
           </div>
         );

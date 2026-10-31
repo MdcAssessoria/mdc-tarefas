@@ -40,24 +40,20 @@ export function useTarefas(orgId: string, fuso: string) {
     carregar();
     const canal = supabase()
       .channel(`tarefas-${orgId}`)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "tarefas", filter: `org_id=eq.${orgId}` },
-        (p) => {
-          // aplica a mudança na hora e agenda uma recarga completa (garante consistência)
-          setTarefas((lista) => {
-            if (p.eventType === "DELETE") return lista.filter((t) => t.id !== (p.old as Tarefa).id);
-            const nova = p.new as Tarefa;
-            const i = lista.findIndex((t) => t.id === nova.id);
-            if (i === -1) return [...lista, nova];
-            const copia = lista.slice();
-            copia[i] = nova;
-            return copia;
-          });
-          if (timer.current) clearTimeout(timer.current);
-          timer.current = setTimeout(carregar, 4000);
-        },
-      )
+      .on("postgres_changes", { event: "*", schema: "public", table: "tarefas", filter: `org_id=eq.${orgId}` }, (p) => {
+        // aplica a mudança na hora e agenda uma recarga completa (garante consistência)
+        setTarefas((lista) => {
+          if (p.eventType === "DELETE") return lista.filter((t) => t.id !== (p.old as Tarefa).id);
+          const nova = p.new as Tarefa;
+          const i = lista.findIndex((t) => t.id === nova.id);
+          if (i === -1) return [...lista, nova];
+          const copia = lista.slice();
+          copia[i] = nova;
+          return copia;
+        });
+        if (timer.current) clearTimeout(timer.current);
+        timer.current = setTimeout(carregar, 4000);
+      })
       .subscribe((status) => setOnline(status === "SUBSCRIBED"));
     const intervalo = setInterval(carregar, 5 * 60_000);
     return () => {

@@ -38,7 +38,9 @@ function Lista() {
       .then(({ data }) => setLista((data as Linha[]) ?? []));
   }, [org.id]);
   const filtrada = useMemo(() => (lista ?? []).filter((c) => !status || c.status === status), [lista, status]);
-  const assinadosMes = (lista ?? []).filter((c) => c.status === "assinado" && c.assinado_em?.slice(0, 7) === new Date().toISOString().slice(0, 7));
+  const assinadosMes = (lista ?? []).filter(
+    (c) => c.status === "assinado" && c.assinado_em?.slice(0, 7) === new Date().toISOString().slice(0, 7),
+  );
 
   return (
     <div className="space-y-4">
@@ -53,7 +55,8 @@ function Lista() {
         </select>
       </div>
       <p className="text-sm text-neutral-600">
-        Assinados no mês: {assinadosMes.length} · {brl(assinadosMes.reduce((a, c) => a + (c.valores.honorario_mensal || 0), 0))} em honorários mensais novos.
+        Assinados no mês: {assinadosMes.length} · {brl(assinadosMes.reduce((a, c) => a + (c.valores.honorario_mensal || 0), 0))} em
+        honorários mensais novos.
       </p>
       <div className="cartao overflow-x-auto">
         <table className="tabela">

@@ -16,9 +16,7 @@ import { carregarMapaDfc, definirGrupo, definirLinhaDfc, recalcular } from "@/li
 import { LINHAS_DFC, linhaDfc, linhaDfcAuto } from "@/lib/demonstracoes";
 import type { MapaDfc } from "@/lib/demonstracoes";
 import { REGIMES } from "@/lib/types";
-import {
-  ArvoreBalancete, GradeIndices, ListaAlertas, PainelResumo, VisaoParecer, mesExtenso,
-} from "@/components/demonstrativos/Painel";
+import { ArvoreBalancete, GradeIndices, ListaAlertas, PainelResumo, VisaoParecer, mesExtenso } from "@/components/demonstrativos/Painel";
 import type { BalanceteReg, LinhaReg, ParecerReg } from "@/components/demonstrativos/Painel";
 
 export default function PaginaBalancete() {
@@ -71,7 +69,9 @@ function Detalhe() {
     const ant = hist.filter((x) => x.competencia < atual.competencia).at(-1);
     if (ant) {
       const la = await sb.from("portal_balancete_linhas").select("classificacao,saldo_atual").eq("balancete_id", ant.id).limit(20000);
-      setAnteriores(new Map(((la.data as { classificacao: string; saldo_atual: number }[]) ?? []).map((x) => [x.classificacao, Number(x.saldo_atual)])));
+      setAnteriores(
+        new Map(((la.data as { classificacao: string; saldo_atual: number }[]) ?? []).map((x) => [x.classificacao, Number(x.saldo_atual)])),
+      );
     } else setAnteriores(undefined);
   }, [id]);
 
@@ -92,12 +92,17 @@ function Detalhe() {
     if (sim && b!.conferencias.some((c) => !c.ok) && !confirm("Há conferências pendentes. Publicar mesmo assim?")) return;
     const { error } = await supabase().rpc("portal_publicar_balancete", { p_balancete: b!.id, p_publicar: sim });
     if (error) return setErro(traduzirErro(error));
-    setAviso(sim ? "Publicado. Os usuários do cliente foram avisados no portal." : "Voltou para rascunho; o cliente deixa de ver este mês.");
+    setAviso(
+      sim ? "Publicado. Os usuários do cliente foram avisados no portal." : "Voltou para rascunho; o cliente deixa de ver este mês.",
+    );
     carregar();
   }
 
   async function salvarComentario() {
-    const { error } = await supabase().from("portal_balancetes").update({ comentario: comentario.trim() || null }).eq("id", b!.id);
+    const { error } = await supabase()
+      .from("portal_balancetes")
+      .update({ comentario: comentario.trim() || null })
+      .eq("id", b!.id);
     if (error) return setErro(traduzirErro(error));
     setAviso("Comentário salvo.");
     carregar();
@@ -106,7 +111,13 @@ function Detalhe() {
   async function mudarGrupo(l: LinhaReg, grupo: Grupo, escopo: "cliente" | "padrao") {
     setErro(null);
     try {
-      await definirGrupo({ org: org.id, cliente: escopo === "cliente" ? b!.cliente_id : null, balanceteId: b!.id, classificacao: l.classificacao, grupo });
+      await definirGrupo({
+        org: org.id,
+        cliente: escopo === "cliente" ? b!.cliente_id : null,
+        balanceteId: b!.id,
+        classificacao: l.classificacao,
+        grupo,
+      });
       await carregar();
     } catch (e) {
       setErro(traduzirErro(e));
@@ -116,7 +127,11 @@ function Detalhe() {
   async function mudarLinhaDfc(l: LinhaReg, linha: string) {
     setErro(null);
     const auto = linhaDfcAuto(l);
-    const padrao = linha !== "" && confirm(`Usar esta linha da DFC para a conta ${l.classificacao} em TODAS as empresas?\n\nOK = regra padrão da MDC · Cancelar = só para ${nome}`);
+    const padrao =
+      linha !== "" &&
+      confirm(
+        `Usar esta linha da DFC para a conta ${l.classificacao} em TODAS as empresas?\n\nOK = regra padrão da MDC · Cancelar = só para ${nome}`,
+      );
     try {
       await definirLinhaDfc({
         org: org.id,
@@ -146,15 +161,17 @@ function Detalhe() {
       contador: parecer?.contador_nome ?? eu.nome,
       crc: parecer?.contador_crc ?? "",
     });
-    const { error } = await supabase().from("portal_pareceres").insert({
-      org_id: org.id,
-      cliente_id: b!.cliente_id,
-      balancete_id: b!.id,
-      versao: (parecer?.versao ?? 0) + 1,
-      texto,
-      contador_nome: parecer?.contador_nome ?? eu.nome,
-      contador_crc: parecer?.contador_crc ?? "",
-    });
+    const { error } = await supabase()
+      .from("portal_pareceres")
+      .insert({
+        org_id: org.id,
+        cliente_id: b!.cliente_id,
+        balancete_id: b!.id,
+        versao: (parecer?.versao ?? 0) + 1,
+        texto,
+        contador_nome: parecer?.contador_nome ?? eu.nome,
+        contador_crc: parecer?.contador_crc ?? "",
+      });
     if (error) return setErro(traduzirErro(error));
     setAba("parecer");
     carregar();
@@ -211,7 +228,12 @@ function Detalhe() {
 
       {b.conferencias.some((c) => !c.ok) && (
         <div className="rounded-md bg-amber-50 p-3 text-sm text-amber-900 print:hidden">
-          Conferências pendentes: {b.conferencias.filter((c) => !c.ok).map((c) => `${c.nome} (${c.detalhe})`).join("; ")}.
+          Conferências pendentes:{" "}
+          {b.conferencias
+            .filter((c) => !c.ok)
+            .map((c) => `${c.nome} (${c.detalhe})`)
+            .join("; ")}
+          .
         </div>
       )}
 
@@ -232,7 +254,9 @@ function Detalhe() {
           {podeOperar && (
             <section className="cartao p-4 print:hidden">
               <h2 className="font-semibold">Comentário do contador para o cliente</h2>
-              <p className="mb-2 text-xs text-neutral-500">Um parágrafo: o que aconteceu na empresa no mês. Aparece no topo do painel do cliente.</p>
+              <p className="mb-2 text-xs text-neutral-500">
+                Um parágrafo: o que aconteceu na empresa no mês. Aparece no topo do painel do cliente.
+              </p>
               <textarea className="entrada w-full" rows={3} value={comentario} onChange={(e) => setComentario(e.target.value)} />
               <div className="mt-2 flex justify-end">
                 <button className="btn" onClick={salvarComentario}>
@@ -313,10 +337,18 @@ function Detalhe() {
               className="btn-primario mr-2"
               onClick={async () => {
                 const sb = supabase();
-                const setor = (await sb.from("setores").select("id").eq("org_id", org.id).ilike("nome", "cont%").limit(1)).data?.[0]?.id ?? null;
+                const setor =
+                  (await sb.from("setores").select("id").eq("org_id", org.id).ilike("nome", "cont%").limit(1)).data?.[0]?.id ?? null;
                 const resp =
                   (setor
-                    ? (await sb.from("cliente_responsaveis").select("user_id").eq("cliente_id", b.cliente_id).eq("setor_id", setor).limit(1)).data?.[0]?.user_id
+                    ? (
+                        await sb
+                          .from("cliente_responsaveis")
+                          .select("user_id")
+                          .eq("cliente_id", b.cliente_id)
+                          .eq("setor_id", setor)
+                          .limit(1)
+                      ).data?.[0]?.user_id
                     : null) ?? eu.user_id;
                 const prazo = new Date(Date.now() + 7 * 864e5).toISOString().slice(0, 10);
                 const { error } = await sb.from("tarefas").insert(
@@ -373,7 +405,15 @@ function Detalhe() {
 }
 
 function EditorParecer({
-  parecer, versoes, empresa, cnpj, podeOperar, podeGerir, aoGerar, aoMudar, aoErro,
+  parecer,
+  versoes,
+  empresa,
+  cnpj,
+  podeOperar,
+  podeGerir,
+  aoGerar,
+  aoMudar,
+  aoErro,
 }: {
   parecer?: ParecerReg;
   versoes: number;
@@ -398,7 +438,8 @@ function EditorParecer({
     return (
       <div className="cartao p-6 text-center">
         <p className="text-sm text-neutral-600">
-          O Hub monta o rascunho com os números, os índices e as fragilidades deste balancete. Você revisa, ajusta e assina antes de publicar.
+          O Hub monta o rascunho com os números, os índices e as fragilidades deste balancete. Você revisa, ajusta e assina antes de
+          publicar.
         </p>
         {podeOperar && (
           <button className="btn-primario mt-4" onClick={aoGerar}>
@@ -411,7 +452,10 @@ function EditorParecer({
   const publicado = parecer.status === "publicado";
 
   async function salvar() {
-    const { error } = await supabase().from("portal_pareceres").update({ texto, contador_nome: nome, contador_crc: crc }).eq("id", parecer!.id);
+    const { error } = await supabase()
+      .from("portal_pareceres")
+      .update({ texto, contador_nome: nome, contador_crc: crc })
+      .eq("id", parecer!.id);
     if (error) return aoErro(error);
     aoMudar();
   }
@@ -448,7 +492,9 @@ function EditorParecer({
           disabled={publicado || !podeOperar}
           onChange={(e) => setTexto(e.target.value)}
         />
-        <p className="text-xs text-neutral-500"># título · ## seção · - item · **negrito**. Trechos entre colchetes [Revisar…] pedem sua complementação.</p>
+        <p className="text-xs text-neutral-500">
+          # título · ## seção · - item · **negrito**. Trechos entre colchetes [Revisar…] pedem sua complementação.
+        </p>
         <div className="flex flex-wrap gap-2">
           {!publicado && podeOperar && (
             <button className="btn" onClick={salvar}>
@@ -469,7 +515,9 @@ function EditorParecer({
             Imprimir / salvar PDF
           </button>
         </div>
-        {/\[Revisar/.test(texto) && <p className="text-xs text-amber-800">Complete os trechos marcados com [Revisar…] antes de publicar.</p>}
+        {/\[Revisar/.test(texto) && (
+          <p className="text-xs text-amber-800">Complete os trechos marcados com [Revisar…] antes de publicar.</p>
+        )}
       </section>
       <VisaoParecer texto={texto} empresa={empresa} cnpj={cnpj} />
     </div>

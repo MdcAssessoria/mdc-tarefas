@@ -126,7 +126,8 @@ function Detalhe() {
           <p className="text-sm text-neutral-600">
             {ORIGENS.find((x) => x.id === o.origem)?.nome} · entrou em {new Date(o.criado_em).toLocaleDateString("pt-BR")}
             {o.cliente_id && " · já é cliente da carteira"}
-            {o.arquivado_em && ` · arquivada em ${new Date(o.arquivado_em).toLocaleDateString("pt-BR")}${o.motivo_arquivo ? ` (${o.motivo_arquivo})` : ""}`}
+            {o.arquivado_em &&
+              ` · arquivada em ${new Date(o.arquivado_em).toLocaleDateString("pt-BR")}${o.motivo_arquivo ? ` (${o.motivo_arquivo})` : ""}`}
           </p>
         </div>
         {zap && (
@@ -184,7 +185,14 @@ function Detalhe() {
 
       <div className="grid gap-5 lg:grid-cols-[1fr_380px]">
         <Dados o={o} podeOperar={podeOperar} aoSalvar={atualizar} membros={membros} />
-        <Atividades o={o} ativ={ativ} podeOperar={podeOperar} autorNome={(u) => membros.find((m) => m.user_id === u)?.nome ?? ""} aoMudar={carregar} eu={eu.user_id} />
+        <Atividades
+          o={o}
+          ativ={ativ}
+          podeOperar={podeOperar}
+          autorNome={(u) => membros.find((m) => m.user_id === u)?.nome ?? ""}
+          aoMudar={carregar}
+          eu={eu.user_id}
+        />
       </div>
 
       <ContratoSecao o={o} modelo={modelo} contratos={contratos} podeOperar={podeOperar} aoMudar={carregar} logoUrl={org.logo_url} />
@@ -193,7 +201,10 @@ function Detalhe() {
 }
 
 function Dados({
-  o, podeOperar, aoSalvar, membros,
+  o,
+  podeOperar,
+  aoSalvar,
+  membros,
 }: {
   o: Oportunidade;
   podeOperar: boolean;
@@ -209,7 +220,9 @@ function Dados({
         type={tipo}
         disabled={!podeOperar}
         value={(f[k] as string | number | null) ?? ""}
-        onChange={(e) => setF({ ...f, [k]: tipo === "number" ? (e.target.value === "" ? null : Number(e.target.value)) : e.target.value || null })}
+        onChange={(e) =>
+          setF({ ...f, [k]: tipo === "number" ? (e.target.value === "" ? null : Number(e.target.value)) : e.target.value || null })
+        }
       />
     </label>
   );
@@ -222,7 +235,7 @@ function Dados({
           ? brl(v)
           : String(v)
       : k === "melhor_regime"
-        ? REGIMES.find((r) => r.id === v)?.nome ?? String(v)
+        ? (REGIMES.find((r) => r.id === v)?.nome ?? String(v))
         : String(v);
 
   return (
@@ -239,7 +252,11 @@ function Dados({
         {campo("uf", "UF")}
         <label className="campo">
           <span>Regime atual</span>
-          <select disabled={!podeOperar} value={f.regime_atual ?? ""} onChange={(e) => setF({ ...f, regime_atual: e.target.value || null })}>
+          <select
+            disabled={!podeOperar}
+            value={f.regime_atual ?? ""}
+            onChange={(e) => setF({ ...f, regime_atual: e.target.value || null })}
+          >
             <option value="">—</option>
             {REGIMES.map((r) => (
               <option key={r.id} value={r.id}>
@@ -254,26 +271,48 @@ function Dados({
         {campo("proximo_contato", "Próximo retorno", "date")}
         <label className="campo">
           <span>Responsável</span>
-          <select disabled={!podeOperar} value={f.responsavel_id ?? ""} onChange={(e) => setF({ ...f, responsavel_id: e.target.value || null })}>
+          <select
+            disabled={!podeOperar}
+            value={f.responsavel_id ?? ""}
+            onChange={(e) => setF({ ...f, responsavel_id: e.target.value || null })}
+          >
             <option value="">—</option>
-            {membros.filter((m) => m.ativo).map((m) => (
-              <option key={m.user_id} value={m.user_id}>
-                {m.nome}
-              </option>
-            ))}
+            {membros
+              .filter((m) => m.ativo)
+              .map((m) => (
+                <option key={m.user_id} value={m.user_id}>
+                  {m.nome}
+                </option>
+              ))}
           </select>
         </label>
       </div>
       <label className="campo">
         <span>Observações</span>
-        <textarea rows={3} disabled={!podeOperar} value={f.observacoes ?? ""} onChange={(e) => setF({ ...f, observacoes: e.target.value || null })} />
+        <textarea
+          rows={3}
+          disabled={!podeOperar}
+          value={f.observacoes ?? ""}
+          onChange={(e) => setF({ ...f, observacoes: e.target.value || null })}
+        />
       </label>
       {podeOperar && (
         <div className="flex justify-end">
           <button
             className="btn-primario"
             onClick={() => {
-              const { id: _i, org_id: _o, criado_em: _c, atualizado_em: _a, etapa_desde: _e, etapa: _et, cliente_id: _cl, dados_origem: _d, origem_ref: _r, ...resto } = f;
+              const {
+                id: _i,
+                org_id: _o,
+                criado_em: _c,
+                atualizado_em: _a,
+                etapa_desde: _e,
+                etapa: _et,
+                cliente_id: _cl,
+                dados_origem: _d,
+                origem_ref: _r,
+                ...resto
+              } = f;
               aoSalvar({ ...resto, uf: resto.uf ? resto.uf.toUpperCase() : null });
             }}
           >
@@ -299,7 +338,12 @@ function Dados({
 }
 
 function Atividades({
-  o, ativ, podeOperar, autorNome, aoMudar, eu,
+  o,
+  ativ,
+  podeOperar,
+  autorNome,
+  aoMudar,
+  eu,
 }: {
   o: Oportunidade;
   ativ: Atividade[];
@@ -330,7 +374,10 @@ function Atividades({
     if (tipo === "tarefa" && quando) await sb.from("crm_oportunidades").update({ proximo_contato: quando }).eq("id", o.id);
     else await sb.from("crm_oportunidades").update({ atualizado_em: new Date().toISOString() }).eq("id", o.id);
     if (o.etapa === "novo" && ["ligacao", "whatsapp", "email", "reuniao"].includes(tipo))
-      await sb.from("crm_oportunidades").update({ etapa: tipo === "reuniao" ? "reuniao" : "contato" }).eq("id", o.id);
+      await sb
+        .from("crm_oportunidades")
+        .update({ etapa: tipo === "reuniao" ? "reuniao" : "contato" })
+        .eq("id", o.id);
     setTexto("");
     setQuando("");
     aoMudar();
@@ -356,7 +403,13 @@ function Atividades({
             </select>
             {tipo === "tarefa" && <input type="date" className="entrada" value={quando} onChange={(e) => setQuando(e.target.value)} />}
           </div>
-          <textarea className="entrada w-full" rows={2} placeholder="O que foi conversado ou o que fazer…" value={texto} onChange={(e) => setTexto(e.target.value)} />
+          <textarea
+            className="entrada w-full"
+            rows={2}
+            placeholder="O que foi conversado ou o que fazer…"
+            value={texto}
+            onChange={(e) => setTexto(e.target.value)}
+          />
           <div className="flex justify-end">
             <button className="btn">Registrar</button>
           </div>
@@ -365,9 +418,14 @@ function Atividades({
       )}
       <ul className="mt-3 max-h-[480px] space-y-2 overflow-y-auto">
         {ativ.map((a) => (
-          <li key={a.id} className={`rounded-lg border p-2 text-sm ${a.tipo === "tarefa" && !a.concluida ? "border-amber-200 bg-amber-50" : "border-[var(--borda)]"}`}>
+          <li
+            key={a.id}
+            className={`rounded-lg border p-2 text-sm ${a.tipo === "tarefa" && !a.concluida ? "border-amber-200 bg-amber-50" : "border-[var(--borda)]"}`}
+          >
             <div className="flex items-center gap-2 text-[11px] text-neutral-500">
-              <span className="font-medium text-neutral-700">{TIPOS_ATIVIDADE.find((t) => t.id === a.tipo)?.nome ?? (a.tipo === "etapa" ? "Etapa" : "Contrato")}</span>
+              <span className="font-medium text-neutral-700">
+                {TIPOS_ATIVIDADE.find((t) => t.id === a.tipo)?.nome ?? (a.tipo === "etapa" ? "Etapa" : "Contrato")}
+              </span>
               <span>{new Date(a.criado_em).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" })}</span>
               <span>{autorNome(a.autor_id)}</span>
               {a.tipo === "tarefa" && (
@@ -387,7 +445,12 @@ function Atividades({
 }
 
 function ContratoSecao({
-  o, modelo, contratos, podeOperar, aoMudar, logoUrl,
+  o,
+  modelo,
+  contratos,
+  podeOperar,
+  aoMudar,
+  logoUrl,
 }: {
   o: Oportunidade;
   modelo: Modelo | null;
@@ -407,7 +470,8 @@ function ContratoSecao({
   const numeroPrevisto = ultimo && ultimo.status !== "cancelado" ? (ultimo.numero ?? "") : "(gerado ao salvar)";
   const texto = useMemo(() => (modelo ? montarContrato(modelo.texto, v, numeroPrevisto) : ""), [modelo, v, numeroPrevisto]);
   const pendencias = (texto.match(/\[preencher[^\]]*\]/g) ?? []).length;
-  const num = (k: keyof Valores) => (e: React.ChangeEvent<HTMLInputElement>) => setV({ ...v, [k]: e.target.value === "" ? 0 : Number(e.target.value) });
+  const num = (k: keyof Valores) => (e: React.ChangeEvent<HTMLInputElement>) =>
+    setV({ ...v, [k]: e.target.value === "" ? 0 : Number(e.target.value) });
   const txt = (k: keyof Valores) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setV({ ...v, [k]: e.target.value });
   const editavel = podeOperar && (!ultimo || ultimo.status === "rascunho" || ultimo.status === "cancelado");
 
@@ -417,29 +481,60 @@ function ContratoSecao({
     const sb = supabase();
     if (ultimo && ultimo.status === "rascunho") {
       const t = montarContrato(modelo.texto, v, ultimo.numero ?? "");
-      const { data, error } = await sb.from("crm_contratos").update({ valores: v, texto: t, modelo_id: modelo.id, modelo_versao: modelo.versao }).eq("id", ultimo.id).select("*").single();
+      const { data, error } = await sb
+        .from("crm_contratos")
+        .update({ valores: v, texto: t, modelo_id: modelo.id, modelo_versao: modelo.versao })
+        .eq("id", ultimo.id)
+        .select("*")
+        .single();
       if (error) {
         setErro(traduzirErro(error));
         return null;
       }
-      await sb.from("crm_oportunidades").update({ valor_mensal: v.honorario_mensal || null }).eq("id", o.id);
+      await sb
+        .from("crm_oportunidades")
+        .update({ valor_mensal: v.honorario_mensal || null })
+        .eq("id", o.id);
       aoMudar();
       return data as Contrato;
     }
     const ano = new Date().getFullYear();
-    const { count } = await sb.from("crm_contratos").select("id", { count: "exact", head: true }).eq("org_id", o.org_id).gte("criado_em", `${ano}-01-01`);
+    const { count } = await sb
+      .from("crm_contratos")
+      .select("id", { count: "exact", head: true })
+      .eq("org_id", o.org_id)
+      .gte("criado_em", `${ano}-01-01`);
     const numero = numeroContrato((count ?? 0) + 1);
     const { data, error } = await sb
       .from("crm_contratos")
-      .insert({ org_id: o.org_id, oportunidade_id: o.id, modelo_id: modelo.id, modelo_versao: modelo.versao, numero, valores: v, texto: montarContrato(modelo.texto, v, numero) })
+      .insert({
+        org_id: o.org_id,
+        oportunidade_id: o.id,
+        modelo_id: modelo.id,
+        modelo_versao: modelo.versao,
+        numero,
+        valores: v,
+        texto: montarContrato(modelo.texto, v, numero),
+      })
       .select("*")
       .single();
     if (error) {
       setErro(traduzirErro(error));
       return null;
     }
-    await sb.from("crm_oportunidades").update({ valor_mensal: v.honorario_mensal || null }).eq("id", o.id);
-    await sb.from("crm_atividades").insert({ org_id: o.org_id, oportunidade_id: o.id, tipo: "contrato", texto: `Contrato ${numero} criado (${brl(v.honorario_mensal)}/mês)`, concluida: true });
+    await sb
+      .from("crm_oportunidades")
+      .update({ valor_mensal: v.honorario_mensal || null })
+      .eq("id", o.id);
+    await sb
+      .from("crm_atividades")
+      .insert({
+        org_id: o.org_id,
+        oportunidade_id: o.id,
+        tipo: "contrato",
+        texto: `Contrato ${numero} criado (${brl(v.honorario_mensal)}/mês)`,
+        concluida: true,
+      });
     aoMudar();
     return data as Contrato;
   }
@@ -456,7 +551,10 @@ function ContratoSecao({
         logo: await carregarLogo(logoUrl),
         rascunho: alvo.status === "rascunho",
       });
-      baixarBytes(bytes, `Contrato-${(alvo.numero ?? "").replace("/", "-")}-${alvo.valores.razao_social.split(" ").slice(0, 2).join("-")}.pdf`);
+      baixarBytes(
+        bytes,
+        `Contrato-${(alvo.numero ?? "").replace("/", "-")}-${alvo.valores.razao_social.split(" ").slice(0, 2).join("-")}.pdf`,
+      );
     } catch (e) {
       setErro(traduzirErro(e));
     } finally {
@@ -472,9 +570,13 @@ function ContratoSecao({
     const sb = supabase();
     const { error } = await sb.from("crm_contratos").update(campos).eq("id", ultimo.id);
     if (error) return setErro(traduzirErro(error));
-    await sb.from("crm_atividades").insert({ org_id: o.org_id, oportunidade_id: o.id, tipo: "contrato", texto: `Contrato ${ultimo.numero} ${status}`, concluida: true });
-    if (status === "enviado" && ["novo", "contato", "reuniao"].includes(o.etapa)) await sb.from("crm_oportunidades").update({ etapa: "proposta" }).eq("id", o.id);
-    if (status === "assinado" && !o.cliente_id && confirm("Contrato assinado. Cadastrar a empresa como cliente da carteira agora?")) await sb.rpc("crm_converter_cliente", { p_op: o.id });
+    await sb
+      .from("crm_atividades")
+      .insert({ org_id: o.org_id, oportunidade_id: o.id, tipo: "contrato", texto: `Contrato ${ultimo.numero} ${status}`, concluida: true });
+    if (status === "enviado" && ["novo", "contato", "reuniao"].includes(o.etapa))
+      await sb.from("crm_oportunidades").update({ etapa: "proposta" }).eq("id", o.id);
+    if (status === "assinado" && !o.cliente_id && confirm("Contrato assinado. Cadastrar a empresa como cliente da carteira agora?"))
+      await sb.rpc("crm_converter_cliente", { p_op: o.id });
     aoMudar();
   }
 
@@ -488,7 +590,11 @@ function ContratoSecao({
   if (!modelo)
     return (
       <section className="cartao p-4 text-sm text-neutral-600">
-        Nenhum modelo de contrato ativo. <Link className="underline" href="/comercial/modelo">Cadastre o modelo-base</Link>.
+        Nenhum modelo de contrato ativo.{" "}
+        <Link className="underline" href="/comercial/modelo">
+          Cadastre o modelo-base
+        </Link>
+        .
       </section>
     );
 
@@ -497,7 +603,9 @@ function ContratoSecao({
       <div className="flex flex-wrap items-center gap-2">
         <h2 className="mr-auto font-semibold">Proposta e contrato</h2>
         {ultimo && (
-          <span className={`chip ${ultimo.status === "assinado" ? "bg-emerald-50 text-emerald-800" : ultimo.status === "enviado" ? "bg-sky-50 text-sky-800" : ultimo.status === "cancelado" ? "bg-neutral-100 text-neutral-600" : "bg-amber-50 text-amber-800"}`}>
+          <span
+            className={`chip ${ultimo.status === "assinado" ? "bg-emerald-50 text-emerald-800" : ultimo.status === "enviado" ? "bg-sky-50 text-sky-800" : ultimo.status === "cancelado" ? "bg-neutral-100 text-neutral-600" : "bg-amber-50 text-amber-800"}`}
+          >
             Contrato {ultimo.numero} · {ultimo.status}
           </span>
         )}
@@ -510,36 +618,94 @@ function ContratoSecao({
         <fieldset disabled={!editavel} className="space-y-3">
           <legend className="mb-1 text-sm font-semibold">Contratante</legend>
           <div className="grid gap-2 sm:grid-cols-2">
-            <label className="campo"><span>Razão social</span><input value={v.razao_social} onChange={txt("razao_social")} /></label>
-            <label className="campo"><span>CNPJ</span><input value={v.cnpj} onChange={txt("cnpj")} /></label>
-            <label className="campo sm:col-span-2"><span>Endereço completo</span><input value={v.endereco} onChange={txt("endereco")} placeholder="Rua, número, bairro, CEP" /></label>
-            <label className="campo"><span>Cidade/UF</span><input value={v.cidade_uf} onChange={txt("cidade_uf")} /></label>
-            <label className="campo"><span>Representante</span><input value={v.representante} onChange={txt("representante")} /></label>
-            <label className="campo sm:col-span-2"><span>Qualificação do representante</span><input value={v.representante_qualificacao} onChange={txt("representante_qualificacao")} placeholder="sócio administrador, CPF nº …" /></label>
+            <label className="campo">
+              <span>Razão social</span>
+              <input value={v.razao_social} onChange={txt("razao_social")} />
+            </label>
+            <label className="campo">
+              <span>CNPJ</span>
+              <input value={v.cnpj} onChange={txt("cnpj")} />
+            </label>
+            <label className="campo sm:col-span-2">
+              <span>Endereço completo</span>
+              <input value={v.endereco} onChange={txt("endereco")} placeholder="Rua, número, bairro, CEP" />
+            </label>
+            <label className="campo">
+              <span>Cidade/UF</span>
+              <input value={v.cidade_uf} onChange={txt("cidade_uf")} />
+            </label>
+            <label className="campo">
+              <span>Representante</span>
+              <input value={v.representante} onChange={txt("representante")} />
+            </label>
+            <label className="campo sm:col-span-2">
+              <span>Qualificação do representante</span>
+              <input
+                value={v.representante_qualificacao}
+                onChange={txt("representante_qualificacao")}
+                placeholder="sócio administrador, CPF nº …"
+              />
+            </label>
           </div>
 
           <legend className="mb-1 pt-2 text-sm font-semibold">Valores negociados</legend>
           <div className="grid gap-2 sm:grid-cols-3">
-            <label className="campo"><span>Honorário mensal (R$)</span><input type="number" step="0.01" value={v.honorario_mensal || ""} onChange={num("honorario_mensal")} /></label>
-            <label className="campo"><span>Vencimento (dia)</span><input type="number" min={1} max={28} value={v.vencimento_dia} onChange={num("vencimento_dia")} /></label>
-            <label className="campo"><span>Início</span><input type="date" value={v.inicio} onChange={txt("inicio")} /></label>
-            <label className="campo"><span>Funcionários incluídos</span><input type="number" min={0} value={v.funcionarios_incluidos} onChange={num("funcionarios_incluidos")} /></label>
-            <label className="campo"><span>Por funcionário adicional (R$)</span><input type="number" step="0.01" value={v.valor_funcionario_adicional || ""} onChange={num("valor_funcionario_adicional")} /></label>
-            <label className="campo"><span>Taxa de implantação (R$)</span><input type="number" step="0.01" value={v.taxa_implantacao || ""} onChange={num("taxa_implantacao")} /></label>
-            <label className="campo"><span>Parcelas da implantação</span><input type="number" min={1} value={v.parcelas_implantacao} onChange={num("parcelas_implantacao")} /></label>
-            <label className="campo"><span>Reajuste</span>
+            <label className="campo">
+              <span>Honorário mensal (R$)</span>
+              <input type="number" step="0.01" value={v.honorario_mensal || ""} onChange={num("honorario_mensal")} />
+            </label>
+            <label className="campo">
+              <span>Vencimento (dia)</span>
+              <input type="number" min={1} max={28} value={v.vencimento_dia} onChange={num("vencimento_dia")} />
+            </label>
+            <label className="campo">
+              <span>Início</span>
+              <input type="date" value={v.inicio} onChange={txt("inicio")} />
+            </label>
+            <label className="campo">
+              <span>Funcionários incluídos</span>
+              <input type="number" min={0} value={v.funcionarios_incluidos} onChange={num("funcionarios_incluidos")} />
+            </label>
+            <label className="campo">
+              <span>Por funcionário adicional (R$)</span>
+              <input type="number" step="0.01" value={v.valor_funcionario_adicional || ""} onChange={num("valor_funcionario_adicional")} />
+            </label>
+            <label className="campo">
+              <span>Taxa de implantação (R$)</span>
+              <input type="number" step="0.01" value={v.taxa_implantacao || ""} onChange={num("taxa_implantacao")} />
+            </label>
+            <label className="campo">
+              <span>Parcelas da implantação</span>
+              <input type="number" min={1} value={v.parcelas_implantacao} onChange={num("parcelas_implantacao")} />
+            </label>
+            <label className="campo">
+              <span>Reajuste</span>
               <select value={v.reajuste_indice} onChange={txt("reajuste_indice")}>
-                {["IPCA (IBGE)", "INPC (IBGE)", "IGP-M (FGV)", "salário mínimo nacional"].map((x) => <option key={x}>{x}</option>)}
+                {["IPCA (IBGE)", "INPC (IBGE)", "IGP-M (FGV)", "salário mínimo nacional"].map((x) => (
+                  <option key={x}>{x}</option>
+                ))}
               </select>
             </label>
-            <label className="campo"><span>Vigência</span>
+            <label className="campo">
+              <span>Vigência</span>
               <select value={v.vigencia} onChange={txt("vigencia")}>
-                {["indeterminado", "de 12 meses, renovável automaticamente", "de 24 meses, renovável automaticamente"].map((x) => <option key={x}>{x}</option>)}
+                {["indeterminado", "de 12 meses, renovável automaticamente", "de 24 meses, renovável automaticamente"].map((x) => (
+                  <option key={x}>{x}</option>
+                ))}
               </select>
             </label>
-            <label className="campo"><span>Aviso prévio (dias)</span><input type="number" min={0} value={v.aviso_previo} onChange={num("aviso_previo")} /></label>
-            <label className="campo"><span>Documentos até o dia</span><input type="number" min={1} max={28} value={v.prazo_documentos} onChange={num("prazo_documentos")} /></label>
-            <label className="flex items-center gap-2 pt-5 text-sm"><input type="checkbox" checked={v.decimo_terceiro} onChange={(e) => setV({ ...v, decimo_terceiro: e.target.checked })} /> 13º honorário</label>
+            <label className="campo">
+              <span>Aviso prévio (dias)</span>
+              <input type="number" min={0} value={v.aviso_previo} onChange={num("aviso_previo")} />
+            </label>
+            <label className="campo">
+              <span>Documentos até o dia</span>
+              <input type="number" min={1} max={28} value={v.prazo_documentos} onChange={num("prazo_documentos")} />
+            </label>
+            <label className="flex items-center gap-2 pt-5 text-sm">
+              <input type="checkbox" checked={v.decimo_terceiro} onChange={(e) => setV({ ...v, decimo_terceiro: e.target.checked })} /> 13º
+              honorário
+            </label>
           </div>
 
           <legend className="mb-1 pt-2 text-sm font-semibold">Serviços contratados</legend>
@@ -557,14 +723,29 @@ function ContratoSecao({
             ))}
             <div className="flex gap-2 pt-1">
               <input className="entrada flex-1" placeholder="Outro serviço…" value={extra} onChange={(e) => setExtra(e.target.value)} />
-              <button type="button" className="btn" onClick={() => { if (extra.trim()) { setV({ ...v, servicos: [...v.servicos, extra.trim()] }); setExtra(""); } }}>
+              <button
+                type="button"
+                className="btn"
+                onClick={() => {
+                  if (extra.trim()) {
+                    setV({ ...v, servicos: [...v.servicos, extra.trim()] });
+                    setExtra("");
+                  }
+                }}
+              >
                 Incluir
               </button>
             </div>
           </div>
           <div className="grid gap-2 sm:grid-cols-2">
-            <label className="campo"><span>Cidade da assinatura</span><input value={v.cidade_assinatura} onChange={txt("cidade_assinatura")} /></label>
-            <label className="campo"><span>Data da assinatura</span><input type="date" value={v.data_assinatura} onChange={txt("data_assinatura")} /></label>
+            <label className="campo">
+              <span>Cidade da assinatura</span>
+              <input value={v.cidade_assinatura} onChange={txt("cidade_assinatura")} />
+            </label>
+            <label className="campo">
+              <span>Data da assinatura</span>
+              <input type="date" value={v.data_assinatura} onChange={txt("data_assinatura")} />
+            </label>
           </div>
         </fieldset>
 
@@ -573,7 +754,10 @@ function ContratoSecao({
             <h3 className="text-sm font-semibold">Prévia do contrato</h3>
             {pendencias > 0 && <span className="text-xs text-amber-800">{pendencias} campo(s) a preencher</span>}
           </div>
-          <article className="prosa max-h-[640px] overflow-y-auto rounded-lg border border-[var(--borda)] bg-white p-5" dangerouslySetInnerHTML={{ __html: mdParaHtml(texto) }} />
+          <article
+            className="prosa max-h-[640px] overflow-y-auto rounded-lg border border-[var(--borda)] bg-white p-5"
+            dangerouslySetInnerHTML={{ __html: mdParaHtml(texto) }}
+          />
         </div>
       </div>
 

@@ -48,7 +48,8 @@ interface PorPessoa {
 
 type Periodo = "mes" | "mes_anterior" | "trimestre" | "ano" | "livre";
 
-const VERDE_OK = "#1B8263", OURO = "#C0892A";
+const VERDE_OK = "#1B8263",
+  OURO = "#C0892A";
 
 function intervalo(p: Periodo, hoje: string): [string, string] {
   const [a, m] = hoje.split("-").map(Number);
@@ -104,7 +105,12 @@ function Relatorio() {
       todas.push(...((data as Concluida[]) ?? []));
       if ((data ?? []).length < 1000) break;
     }
-    let qa = sb.from("tarefas").select("responsavel_id,prazo").eq("org_id", org.id).in("status", ["a_fazer", "em_andamento", "aguardando"]).limit(5000);
+    let qa = sb
+      .from("tarefas")
+      .select("responsavel_id,prazo")
+      .eq("org_id", org.id)
+      .in("status", ["a_fazer", "em_andamento", "aguardando"])
+      .limit(5000);
     if (soEu) qa = qa.eq("responsavel_id", eu.user_id);
     const ab = await qa;
     setAbertas((ab.data as Aberta[]) ?? []);
@@ -132,12 +138,26 @@ function Relatorio() {
     [feitas, pessoasSel, setorSel],
   );
 
-  const nomePessoa = useCallback((id: string | null) => (id ? membros.find((m) => m.user_id === id)?.nome ?? "Pessoa removida" : "Sem responsável"), [membros]);
+  const nomePessoa = useCallback(
+    (id: string | null) => (id ? (membros.find((m) => m.user_id === id)?.nome ?? "Pessoa removida") : "Sem responsável"),
+    [membros],
+  );
 
   const porPessoa = useMemo<PorPessoa[]>(() => {
     const m = new Map<string, PorPessoa & { somaAtraso: number }>();
     const base = (id: string) =>
-      m.get(id) ?? { id, nome: nomePessoa(id === "_sem" ? null : id), total: 0, noPrazo: 0, atrasadas: 0, semPrazo: 0, diasAtrasoMedio: null, abertas: 0, vencidasHoje: 0, somaAtraso: 0 };
+      m.get(id) ?? {
+        id,
+        nome: nomePessoa(id === "_sem" ? null : id),
+        total: 0,
+        noPrazo: 0,
+        atrasadas: 0,
+        semPrazo: 0,
+        diasAtrasoMedio: null,
+        abertas: 0,
+        vencidasHoje: 0,
+        somaAtraso: 0,
+      };
     for (const t of filtradas) {
       const k = t.responsavel_id ?? "_sem";
       const p = base(k);
@@ -166,7 +186,14 @@ function Relatorio() {
   }, [filtradas, abertas, pessoasSel, membros, nomePessoa, diasAtraso, hoje]);
 
   const tot = porPessoa.reduce(
-    (a, p) => ({ total: a.total + p.total, noPrazo: a.noPrazo + p.noPrazo, atrasadas: a.atrasadas + p.atrasadas, semPrazo: a.semPrazo + p.semPrazo, abertas: a.abertas + p.abertas, vencidas: a.vencidas + p.vencidasHoje }),
+    (a, p) => ({
+      total: a.total + p.total,
+      noPrazo: a.noPrazo + p.noPrazo,
+      atrasadas: a.atrasadas + p.atrasadas,
+      semPrazo: a.semPrazo + p.semPrazo,
+      abertas: a.abertas + p.abertas,
+      vencidas: a.vencidas + p.vencidasHoje,
+    }),
     { total: 0, noPrazo: 0, atrasadas: 0, semPrazo: 0, abertas: 0, vencidas: 0 },
   );
   const pct = (a: number, b: number) => (b ? `${Math.round((a / b) * 100)}%` : "—");
@@ -205,19 +232,43 @@ function Relatorio() {
               { titulo: "Abertas", peso: 1, direita: true },
               { titulo: "Vencidas", peso: 1.1, direita: true },
             ],
-            barras: porPessoa.filter((p) => p.total).map((p) => ({
-              rotulo: p.nome,
-              partes: [
-                { valor: p.noPrazo + p.semPrazo, cor: "verde" as const },
-                { valor: p.atrasadas, cor: "ouro" as const },
-              ],
-            })),
+            barras: porPessoa
+              .filter((p) => p.total)
+              .map((p) => ({
+                rotulo: p.nome,
+                partes: [
+                  { valor: p.noPrazo + p.semPrazo, cor: "verde" as const },
+                  { valor: p.atrasadas, cor: "ouro" as const },
+                ],
+              })),
             linhas: [
               ...porPessoa.map((p) => ({
-                celulas: [p.nome, String(p.total), String(p.noPrazo), String(p.atrasadas), pct(p.noPrazo, p.noPrazo + p.atrasadas), p.diasAtrasoMedio ? `${p.diasAtrasoMedio.toFixed(1)} d` : "—", String(p.abertas), String(p.vencidasHoje)],
+                celulas: [
+                  p.nome,
+                  String(p.total),
+                  String(p.noPrazo),
+                  String(p.atrasadas),
+                  pct(p.noPrazo, p.noPrazo + p.atrasadas),
+                  p.diasAtrasoMedio ? `${p.diasAtrasoMedio.toFixed(1)} d` : "—",
+                  String(p.abertas),
+                  String(p.vencidasHoje),
+                ],
                 alerta: [false, false, false, p.atrasadas > 0, false, false, false, p.vencidasHoje > 0],
               })),
-              { celulas: ["Total", String(tot.total), String(tot.noPrazo), String(tot.atrasadas), pct(tot.noPrazo, tot.noPrazo + tot.atrasadas), "", String(tot.abertas), String(tot.vencidas)], negrito: true, fundo: true },
+              {
+                celulas: [
+                  "Total",
+                  String(tot.total),
+                  String(tot.noPrazo),
+                  String(tot.atrasadas),
+                  pct(tot.noPrazo, tot.noPrazo + tot.atrasadas),
+                  "",
+                  String(tot.abertas),
+                  String(tot.vencidas),
+                ],
+                negrito: true,
+                fundo: true,
+              },
             ],
             texto: "Barras: verde = concluídas no prazo (ou sem prazo); dourado = concluídas com atraso.",
           },
@@ -233,7 +284,14 @@ function Relatorio() {
             ],
             linhas: detalhe.map((t) => {
               const d = diasAtraso(t);
-              const cels = [fmtData(diaLocal(t.concluida_em)), t.titulo, nomeCli(t.cliente_id), ...(soEu ? [] : [nomePessoa(t.responsavel_id)]), fmtData(t.prazo), situacao(t)];
+              const cels = [
+                fmtData(diaLocal(t.concluida_em)),
+                t.titulo,
+                nomeCli(t.cliente_id),
+                ...(soEu ? [] : [nomePessoa(t.responsavel_id)]),
+                fmtData(t.prazo),
+                situacao(t),
+              ];
               return { celulas: cels, alerta: cels.map((_, i) => i === cels.length - 1 && d !== null && d > 0) };
             }),
           },
@@ -330,7 +388,9 @@ function Relatorio() {
         <div className="mr-auto">
           <h1 className="text-xl font-semibold text-[var(--marca)]">Relatório de tarefas concluídas</h1>
           <p className="text-sm text-neutral-600">
-            {soEu ? "Suas entregas no período, no prazo e com atraso." : "Entregas de cada pessoa no período: quantas, quantas no prazo e o que ainda está em aberto."}
+            {soEu
+              ? "Suas entregas no período, no prazo e com atraso."
+              : "Entregas de cada pessoa no período: quantas, quantas no prazo e o que ainda está em aberto."}
           </p>
         </div>
         <button className="btn" onClick={exportarXlsx} disabled={!feitas || !!exportando}>
@@ -352,7 +412,11 @@ function Relatorio() {
               ["livre", "Escolher"],
             ] as [Periodo, string][]
           ).map(([id, nome]) => (
-            <button key={id} onClick={() => setPeriodo(id)} className={`px-3 py-1.5 ${periodo === id ? "bg-[var(--marca)] text-white" : "bg-white"}`}>
+            <button
+              key={id}
+              onClick={() => setPeriodo(id)}
+              className={`px-3 py-1.5 ${periodo === id ? "bg-[var(--marca)] text-white" : "bg-white"}`}
+            >
               {nome}
             </button>
           ))}
@@ -399,7 +463,9 @@ function Relatorio() {
         ].map(([r, v, al]) => (
           <div key={r as string} className="cartao p-3">
             <div className="text-xs text-neutral-500">{r}</div>
-            <div className={`font-display num mt-1 text-[28px] leading-none ${al ? "text-[var(--perigo)]" : "text-[var(--marca)]"}`}>{feitas ? v : "…"}</div>
+            <div className={`font-display num mt-1 text-[28px] leading-none ${al ? "text-[var(--perigo)]" : "text-[var(--marca)]"}`}>
+              {feitas ? v : "…"}
+            </div>
           </div>
         ))}
       </div>
@@ -438,8 +504,14 @@ function Relatorio() {
                   >
                     <span className="truncate">{p.nome}</span>
                     <span className="flex h-4 overflow-hidden rounded-full bg-[var(--fundo)]">
-                      <span className="h-full transition-[width] duration-500" style={{ width: `${(ok / max) * 100}%`, background: VERDE_OK }} />
-                      <span className="h-full transition-[width] duration-500" style={{ width: `${(p.atrasadas / max) * 100}%`, background: OURO }} />
+                      <span
+                        className="h-full transition-[width] duration-500"
+                        style={{ width: `${(ok / max) * 100}%`, background: VERDE_OK }}
+                      />
+                      <span
+                        className="h-full transition-[width] duration-500"
+                        style={{ width: `${(p.atrasadas / max) * 100}%`, background: OURO }}
+                      />
                     </span>
                     <span className="num w-28 text-right text-[13px] text-neutral-600">
                       <b className="text-[var(--marca)]">{p.total}</b> · {pct(p.noPrazo, p.noPrazo + p.atrasadas)} no prazo
@@ -513,13 +585,17 @@ function Relatorio() {
                       <td className="text-sm text-neutral-600">{nomeCli(t.cliente_id)}</td>
                       {!soEu && <td className="text-sm">{nomePessoa(t.responsavel_id)}</td>}
                       <td className="whitespace-nowrap text-sm">{fmtData(t.prazo)}</td>
-                      <td className={`whitespace-nowrap text-sm ${d !== null && d > 0 ? "text-[var(--perigo)]" : "text-emerald-700"}`}>{situacao(t)}</td>
+                      <td className={`whitespace-nowrap text-sm ${d !== null && d > 0 ? "text-[var(--perigo)]" : "text-emerald-700"}`}>
+                        {situacao(t)}
+                      </td>
                     </tr>
                   );
                 })}
               </tbody>
             </table>
-            {detalhe.length > 500 && <p className="p-3 text-xs text-neutral-500">Mostrando 500 de {detalhe.length}. A exportação traz todas.</p>}
+            {detalhe.length > 500 && (
+              <p className="p-3 text-xs text-neutral-500">Mostrando 500 de {detalhe.length}. A exportação traz todas.</p>
+            )}
           </div>
         </section>
       )}

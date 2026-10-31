@@ -36,7 +36,11 @@ function Certificado() {
   const [aviso, setAviso] = useState<string | null>(null);
 
   const carregar = useCallback(async () => {
-    const { data } = await supabase().from("hub_certificados").select("titular,documento_final,emissor,icp_brasil,valido_de,valido_ate,enviado_em").eq("org_id", org.id).maybeSingle();
+    const { data } = await supabase()
+      .from("hub_certificados")
+      .select("titular,documento_final,emissor,icp_brasil,valido_de,valido_ate,enviado_em")
+      .eq("org_id", org.id)
+      .maybeSingle();
     setCert((data as Cert) ?? null);
   }, [org.id]);
   useEffect(() => {
@@ -100,8 +104,8 @@ function Certificado() {
         </Link>
         <h1 className="text-xl font-semibold text-[var(--marca)]">Certificado digital para assinar os demonstrativos</h1>
         <p className="mt-1 text-sm text-neutral-600">
-          Com o certificado cadastrado, o PDF de cada mês publicado sai assinado digitalmente pelo contador responsável (ICP-Brasil, MP nº 2.200-2/2001).
-          O cliente baixa o arquivo já assinado no portal.
+          Com o certificado cadastrado, o PDF de cada mês publicado sai assinado digitalmente pelo contador responsável (ICP-Brasil, MP nº
+          2.200-2/2001). O cliente baixa o arquivo já assinado no portal.
         </p>
       </div>
 
@@ -123,7 +127,12 @@ function Certificado() {
             </dd>
             <dt className="text-neutral-500">Emissor</dt>
             <dd>
-              {cert.emissor} {cert.icp_brasil ? <span className="chip bg-emerald-50 text-emerald-800">ICP-Brasil</span> : <span className="chip bg-amber-50 text-amber-800">fora da ICP-Brasil</span>}
+              {cert.emissor}{" "}
+              {cert.icp_brasil ? (
+                <span className="chip bg-emerald-50 text-emerald-800">ICP-Brasil</span>
+              ) : (
+                <span className="chip bg-amber-50 text-amber-800">fora da ICP-Brasil</span>
+              )}
             </dd>
             <dt className="text-neutral-500">Validade</dt>
             <dd className={vence !== null && vence < 30 ? "font-medium text-[var(--perigo)]" : ""}>
@@ -153,7 +162,9 @@ function Certificado() {
         </label>
         <ul className="list-disc space-y-1 pl-5 text-xs text-neutral-600">
           <li>Funciona só com certificado A1 (arquivo). O A3 (token ou cartão) não pode ser usado em servidor.</li>
-          <li>O arquivo e a senha ficam criptografados no cofre do banco (Supabase Vault) e só o serviço que gera o PDF consegue lê-los.</li>
+          <li>
+            O arquivo e a senha ficam criptografados no cofre do banco (Supabase Vault) e só o serviço que gera o PDF consegue lê-los.
+          </li>
           <li>Só PDFs de meses publicados são assinados; rascunhos saem com a marca “Rascunho”.</li>
           <li>O Hub avisa quando faltar menos de 30 dias para o certificado vencer.</li>
         </ul>

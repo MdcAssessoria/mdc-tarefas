@@ -88,7 +88,8 @@ function Caixa() {
     const c = clientePorId(id);
     return c ? c.nome_fantasia || c.razao_social : "—";
   };
-  const atrasada = (c: Conversa) => !c.respondida_em && c.prazo_resposta && Date.parse(c.prazo_resposta) < Date.now() && c.status !== "resolvido";
+  const atrasada = (c: Conversa) =>
+    !c.respondida_em && c.prazo_resposta && Date.parse(c.prazo_resposta) < Date.now() && c.status !== "resolvido";
 
   return (
     <div className="space-y-3">
@@ -106,12 +107,21 @@ function Caixa() {
           <div className="space-y-2 border-b border-[var(--borda)] p-2">
             <div className="flex gap-1 text-xs">
               {(["abertas", "minhas", "resolvidas", "todas"] as const).map((f) => (
-                <button key={f} className={`rounded-md px-2 py-1 ${filtro === f ? "bg-[var(--marca)] text-white" : "hover:bg-[var(--fundo)]"}`} onClick={() => setFiltro(f)}>
+                <button
+                  key={f}
+                  className={`rounded-md px-2 py-1 ${filtro === f ? "bg-[var(--marca)] text-white" : "hover:bg-[var(--fundo)]"}`}
+                  onClick={() => setFiltro(f)}
+                >
                   {f === "abertas" ? "Abertas" : f === "minhas" ? "Minhas" : f === "resolvidas" ? "Resolvidas" : "Todas"}
                 </button>
               ))}
             </div>
-            <input className="entrada w-full" placeholder="Buscar cliente ou assunto…" value={busca} onChange={(e) => setBusca(e.target.value)} />
+            <input
+              className="entrada w-full"
+              placeholder="Buscar cliente ou assunto…"
+              value={busca}
+              onChange={(e) => setBusca(e.target.value)}
+            />
           </div>
           <div className="flex-1 overflow-y-auto">
             {lista.length === 0 && <p className="p-4 text-sm text-neutral-500">Nenhum atendimento aqui.</p>}
@@ -157,7 +167,11 @@ function Caixa() {
                 </div>
                 {podeOperar && (
                   <>
-                    <select className="entrada !min-h-8 !py-1 text-sm" value={atual.status} onChange={(e) => atualizar({ status: e.target.value as Conversa["status"] })}>
+                    <select
+                      className="entrada !min-h-8 !py-1 text-sm"
+                      value={atual.status}
+                      onChange={(e) => atualizar({ status: e.target.value as Conversa["status"] })}
+                    >
                       {STATUS_CONVERSA.map((s) => (
                         <option key={s.id} value={s.id}>
                           {s.nome}
@@ -171,13 +185,20 @@ function Caixa() {
                       aria-label="Responsável"
                     >
                       <option value="">Sem responsável</option>
-                      {membros.filter((m) => m.ativo).map((m) => (
-                        <option key={m.user_id} value={m.user_id}>
-                          {m.nome}
-                        </option>
-                      ))}
+                      {membros
+                        .filter((m) => m.ativo)
+                        .map((m) => (
+                          <option key={m.user_id} value={m.user_id}>
+                            {m.nome}
+                          </option>
+                        ))}
                     </select>
-                    <select className="entrada !min-h-8 !py-1 text-sm" value={atual.setor_id ?? ""} onChange={(e) => atualizar({ setor_id: e.target.value || null })} aria-label="Setor">
+                    <select
+                      className="entrada !min-h-8 !py-1 text-sm"
+                      value={atual.setor_id ?? ""}
+                      onChange={(e) => atualizar({ setor_id: e.target.value || null })}
+                      aria-label="Setor"
+                    >
                       <option value="">Sem setor</option>
                       {setores.map((s) => (
                         <option key={s.id} value={s.id}>
@@ -190,7 +211,11 @@ function Caixa() {
                         virou tarefa
                       </a>
                     ) : (
-                      <button className="btn !min-h-8 !py-1" onClick={virarTarefa} title="Cria uma tarefa no MDC Tarefas com o histórico da conversa">
+                      <button
+                        className="btn !min-h-8 !py-1"
+                        onClick={virarTarefa}
+                        title="Cria uma tarefa no MDC Tarefas com o histórico da conversa"
+                      >
                         Virar tarefa
                       </button>
                     )}
@@ -243,7 +268,12 @@ function NovaConversa({
         onClick={(e) => e.stopPropagation()}
         onSubmit={async (e) => {
           e.preventDefault();
-          const { data, error } = await supabase().rpc("portal_abrir_conversa", { p_cliente: cliente, p_assunto: assunto, p_titulo: titulo, p_texto: texto });
+          const { data, error } = await supabase().rpc("portal_abrir_conversa", {
+            p_cliente: cliente,
+            p_assunto: assunto,
+            p_titulo: titulo,
+            p_texto: texto,
+          });
           if (error) return setErro(traduzirErro(error));
           aoCriar(data as string);
         }}

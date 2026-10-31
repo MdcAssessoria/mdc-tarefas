@@ -7,7 +7,10 @@ const DOURADO_ESC = rgb(138 / 255, 106 / 255, 42 / 255);
 const CLARO = rgb(198 / 255, 211 / 255, 204 / 255);
 const TEXTO = rgb(28 / 255, 36 / 255, 32 / 255);
 const SUAVE = rgb(93 / 255, 102 / 255, 97 / 255);
-const W = 595.28, H = 841.89, ME = 62, MD = 56;
+const W = 595.28,
+  H = 841.89,
+  ME = 62,
+  MD = 56;
 
 const limpar = (s: string) =>
   s
@@ -88,8 +91,14 @@ export async function gerarContratoPdf(d: DadosContratoPdf): Promise<Uint8Array>
   };
 
   // parágrafo justificado com trechos em **negrito**
-  const paragrafo = (s: string, o: { size?: number; x?: number; larg?: number; bold?: boolean; centro?: boolean; antes?: number; depois?: number } = {}) => {
-    const size = o.size ?? 10.2, x = o.x ?? ME, larg = o.larg ?? largura, lh = size * 1.5;
+  const paragrafo = (
+    s: string,
+    o: { size?: number; x?: number; larg?: number; bold?: boolean; centro?: boolean; antes?: number; depois?: number } = {},
+  ) => {
+    const size = o.size ?? 10.2,
+      x = o.x ?? ME,
+      larg = o.larg ?? largura,
+      lh = size * 1.5;
     y -= o.antes ?? 0;
     const pal: { t: string; bold: boolean }[] = [];
     let neg = !!o.bold;
@@ -169,9 +178,23 @@ export async function gerarContratoPdf(d: DadosContratoPdf): Promise<Uint8Array>
     page = p;
     p.drawLine({ start: { x: ME, y: 62 }, end: { x: W - MD, y: 62 }, thickness: 0.8, color: DOURADO });
     text("MDC Assessoria Ltda", ME, 50, 7.2, b, VERDE);
-    text("  ·  CNPJ 48.140.121/0001-65  ·  Bragança Paulista/SP  ·  mdcassessoria.com  ·  @mdcassessoria_", ME + w("MDC Assessoria Ltda", 7.2, b), 50, 7.2, f, VERDE);
+    text(
+      "  ·  CNPJ 48.140.121/0001-65  ·  Bragança Paulista/SP  ·  mdcassessoria.com  ·  @mdcassessoria_",
+      ME + w("MDC Assessoria Ltda", 7.2, b),
+      50,
+      7.2,
+      f,
+      VERDE,
+    );
     text("Responsável técnico: ", ME, 39, 7.2, b, DOURADO_ESC);
-    text("Edvaldo Ribeiro de Carvalho  ·  Contador CRC 1SP346098-O/0  ·  edvaldo@mdcassessoria.com  ·  (11) 98859-8041", ME + w("Responsável técnico: ", 7.2, b), 39, 7.2, f, VERDE);
+    text(
+      "Edvaldo Ribeiro de Carvalho  ·  Contador CRC 1SP346098-O/0  ·  edvaldo@mdcassessoria.com  ·  (11) 98859-8041",
+      ME + w("Responsável técnico: ", 7.2, b),
+      39,
+      7.2,
+      f,
+      VERDE,
+    );
     const pg = `Página ${k + 1} de ${paginas.length}`;
     text(pg, W - MD - w(pg, 7.2, f), 50, 7.2, f, SUAVE);
     if (k < paginas.length - 1) {

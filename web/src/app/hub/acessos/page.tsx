@@ -104,7 +104,11 @@ function Acessos() {
     recarregarApps();
   };
 
-  async function salvarMembro(m: Membro, campos: { nome?: string; papel?: Papel; setor?: string | null; perfil?: string | null; ativo?: boolean }, texto: string) {
+  async function salvarMembro(
+    m: Membro,
+    campos: { nome?: string; papel?: Papel; setor?: string | null; perfil?: string | null; ativo?: boolean },
+    texto: string,
+  ) {
     const papelNovo = campos.papel ?? m.papel;
     const { error } = await supabase().rpc("hub_editar_membro", {
       p_org: org.id,
@@ -112,7 +116,7 @@ function Acessos() {
       p_nome: campos.nome ?? m.nome,
       p_papel: papelNovo,
       p_setor: campos.setor !== undefined ? campos.setor : m.setor_id,
-      p_perfil: papelNovo === "admin" ? null : campos.perfil !== undefined ? campos.perfil : m.perfil_id ?? null,
+      p_perfil: papelNovo === "admin" ? null : campos.perfil !== undefined ? campos.perfil : (m.perfil_id ?? null),
       p_ativo: campos.ativo ?? m.ativo,
     });
     if (error) return falhar(error);
@@ -125,7 +129,12 @@ function Acessos() {
       if (!window.confirm(`${m.nome} passará a ser Administrador, com acesso total ao Hub, inclusive a esta tela. Confirmar?`)) return;
       return salvarMembro(m, { papel: "admin" }, `${m.nome} agora é Administrador.`);
     }
-    if (m.papel === "admin") return salvarMembro(m, { papel: "analista", perfil: valor || null }, `${m.nome} deixou de ser Administrador e segue o perfil ${perfis.find((p) => p.id === valor)?.nome}.`);
+    if (m.papel === "admin")
+      return salvarMembro(
+        m,
+        { papel: "analista", perfil: valor || null },
+        `${m.nome} deixou de ser Administrador e segue o perfil ${perfis.find((p) => p.id === valor)?.nome}.`,
+      );
     const { error } = await supabase().rpc("hub_definir_perfil", { p_org: org.id, p_user: m.user_id, p_perfil: valor || null });
     if (error) return falhar(error);
     avisar(valor ? `${m.nome} agora segue o perfil ${perfis.find((p) => p.id === valor)?.nome}.` : `${m.nome} passou a ter acesso manual.`);
@@ -151,7 +160,10 @@ function Acessos() {
     if (!m.email) return;
     const r = await enviarConvite(m.email, m.nome);
     if (r.erro) return falhar(r.erro);
-    avisar(r.enviado ? `Convite reenviado para ${m.email}.` : `O e-mail não pôde ser enviado agora. Repasse este link para ${m.nome}:`, r.link);
+    avisar(
+      r.enviado ? `Convite reenviado para ${m.email}.` : `O e-mail não pôde ser enviado agora. Repasse este link para ${m.nome}:`,
+      r.link,
+    );
   }
 
   const ativos = membros.filter((m) => m.ativo);
@@ -164,8 +176,8 @@ function Acessos() {
         <div>
           <h1 className="text-xl font-semibold text-[var(--marca)]">Pessoas e acessos</h1>
           <p className="max-w-3xl text-sm text-neutral-600">
-            O acesso é definido pelo <b>perfil</b>: ele diz quais ferramentas a pessoa vê e em que nível. Mudou o perfil, muda para todos que o
-            seguem. A pessoa só enxerga no Hub o que o perfil libera. Administradores têm acesso total.
+            O acesso é definido pelo <b>perfil</b>: ele diz quais ferramentas a pessoa vê e em que nível. Mudou o perfil, muda para todos
+            que o seguem. A pessoa só enxerga no Hub o que o perfil libera. Administradores têm acesso total.
           </p>
         </div>
         <button className="btn-primario" onClick={() => setConvite(true)}>
@@ -239,7 +251,8 @@ function Acessos() {
                 {inativos.map((m) => (
                   <li key={m.user_id} className="flex items-center justify-between gap-3 py-2">
                     <span>
-                      <span className="font-medium text-neutral-700">{m.nome}</span> <span className="text-xs text-neutral-500">{m.email}</span>
+                      <span className="font-medium text-neutral-700">{m.nome}</span>{" "}
+                      <span className="text-xs text-neutral-500">{m.email}</span>
                     </span>
                     <button className="btn !min-h-8" onClick={() => setEditando(m)}>
                       Reativar
@@ -273,7 +286,8 @@ function Acessos() {
           <ul className="space-y-1 text-sm">
             {historico.map((h) => (
               <li key={h.id} className="text-neutral-700">
-                <span className="text-neutral-400">{fmtDataHora(h.em)}</span> · {nomeMembro(h.user_id)} {descrever(h, apps, perfis, nomeMembro)}
+                <span className="text-neutral-400">{fmtDataHora(h.em)}</span> · {nomeMembro(h.user_id)}{" "}
+                {descrever(h, apps, perfis, nomeMembro)}
               </li>
             ))}
           </ul>
@@ -328,11 +342,13 @@ function Acessos() {
 }
 
 function descrever(h: Auditoria, apps: { slug: string; nome: string }[], perfis: Perfil[], nomeMembro: (id: string | null) => string) {
-  const nomePerfil = (v: unknown) => (v ? perfis.find((p) => p.id === v)?.nome ?? "perfil removido" : "acesso manual");
+  const nomePerfil = (v: unknown) => (v ? (perfis.find((p) => p.id === v)?.nome ?? "perfil removido") : "acesso manual");
   if (h.acao === "acesso") {
     const [app, user] = (h.alvo ?? "").split(":");
     const nomeApp = apps.find((a) => a.slug === app)?.nome ?? app;
-    return h.depois ? `liberou ${nomeApp} (${String(h.depois)}) para ${nomeMembro(user ?? null)}` : `retirou ${nomeApp} de ${nomeMembro(user ?? null)}`;
+    return h.depois
+      ? `liberou ${nomeApp} (${String(h.depois)}) para ${nomeMembro(user ?? null)}`
+      : `retirou ${nomeApp} de ${nomeMembro(user ?? null)}`;
   }
   if (h.acao === "vincular_perfil") return `colocou ${nomeMembro(h.alvo)} em ${nomePerfil(h.depois)}`;
   if (h.acao === "perfil") return `alterou o perfil ${h.alvo}`;
@@ -427,7 +443,7 @@ function LinhaPessoa({
         ) : (
           <select
             className={`entrada !min-h-8 !py-1 text-sm ${admin ? "font-semibold text-[var(--marca)]" : ""}`}
-            value={admin ? ADMIN : m.perfil_id ?? ""}
+            value={admin ? ADMIN : (m.perfil_id ?? "")}
             onChange={(e) => aoVincular(e.target.value)}
             aria-label={`Perfil de ${m.nome}`}
           >
@@ -457,7 +473,11 @@ function LinhaPessoa({
                 {ferramentas.map((f) => (
                   <label key={f.slug} className="flex items-center justify-between gap-2 text-xs">
                     <span>{f.nome}</span>
-                    <select className="entrada !min-h-7 !py-0.5 text-xs" value={atuais[f.slug] ?? ""} onChange={(e) => aoDefinir(f.slug, e.target.value)}>
+                    <select
+                      className="entrada !min-h-7 !py-0.5 text-xs"
+                      value={atuais[f.slug] ?? ""}
+                      onChange={(e) => aoDefinir(f.slug, e.target.value)}
+                    >
                       <option value="">—</option>
                       {PAPEIS_APP.map((p) => (
                         <option key={p.id} value={p.id}>
@@ -492,7 +512,11 @@ function LinhaPessoa({
         <button className="btn-link mr-3 text-sm" onClick={aoEditar}>
           Editar
         </button>
-        <button className="btn-link mr-3 text-sm" onClick={aoTransferir} title="Passar tarefas, carteira e demais itens em aberto para outra pessoa">
+        <button
+          className="btn-link mr-3 text-sm"
+          onClick={aoTransferir}
+          title="Passar tarefas, carteira e demais itens em aberto para outra pessoa"
+        >
           Transferir
         </button>
         {!souEu && (
@@ -533,7 +557,14 @@ function Perfis({
 
   async function excluir(p: Perfil) {
     const n = uso(p.id);
-    if (!window.confirm(n ? `${n} pessoa(s) seguem ${p.nome} e passarão a ter acesso manual (mantêm o que têm hoje). Excluir o perfil?` : `Excluir o perfil ${p.nome}?`)) return;
+    if (
+      !window.confirm(
+        n
+          ? `${n} pessoa(s) seguem ${p.nome} e passarão a ter acesso manual (mantêm o que têm hoje). Excluir o perfil?`
+          : `Excluir o perfil ${p.nome}?`,
+      )
+    )
+      return;
     const { error } = await supabase().from("hub_perfis").delete().eq("id", p.id);
     if (error) return aoErro(error);
     await aoMudar(`Perfil ${p.nome} excluído.`);
@@ -604,7 +635,12 @@ function EditorPerfil({
         <h2 className="text-lg font-semibold text-[var(--marca)]">{perfil.id ? `Perfil ${perfil.nome}` : "Novo perfil"}</h2>
         <label className="campo">
           <span>Nome do perfil</span>
-          <input required value={p.nome} onChange={(e) => setP({ ...p, nome: e.target.value })} placeholder="Ex.: Fiscal, Contábil, Estagiário" />
+          <input
+            required
+            value={p.nome}
+            onChange={(e) => setP({ ...p, nome: e.target.value })}
+            placeholder="Ex.: Fiscal, Contábil, Estagiário"
+          />
         </label>
         <div>
           <div className="mb-1 text-sm font-medium">Ferramentas liberadas</div>
@@ -823,7 +859,9 @@ function EditarPessoa({
           </label>
         </div>
         {papel === "admin" ? (
-          <p className="rounded-md bg-[var(--fundo)] p-2 text-xs text-neutral-600">Administrador acessa todas as ferramentas e esta tela de acessos.</p>
+          <p className="rounded-md bg-[var(--fundo)] p-2 text-xs text-neutral-600">
+            Administrador acessa todas as ferramentas e esta tela de acessos.
+          </p>
         ) : (
           <label className="campo">
             <span>Perfil de acesso</span>
@@ -896,7 +934,7 @@ function AcessosClientes({ aoAviso, aoErro }: { aoAviso: (t: string, link?: stri
     setErroLista(null);
     setVinculos([
       ...((u.data as VinculoCliente[]) ?? []),
-      ...(((c.data as Omit<VinculoCliente, "user_id" | "ativo">[]) ?? []).map((x) => ({ ...x, user_id: null, ativo: true }))),
+      ...((c.data as Omit<VinculoCliente, "user_id" | "ativo">[]) ?? []).map((x) => ({ ...x, user_id: null, ativo: true })),
     ]);
   }, [org.id]);
 
@@ -925,8 +963,8 @@ function AcessosClientes({ aoAviso, aoErro }: { aoAviso: (t: string, link?: stri
     <div className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="max-w-3xl text-sm text-neutral-600">
-          Cada pessoa do cliente entra com o próprio e-mail e vê <b>só as empresas vinculadas</b> a ela, com o perfil de cliente escolhido (o que pode ver no
-          portal). Um sócio de um grupo pode ter várias empresas.
+          Cada pessoa do cliente entra com o próprio e-mail e vê <b>só as empresas vinculadas</b> a ela, com o perfil de cliente escolhido
+          (o que pode ver no portal). Um sócio de um grupo pode ter várias empresas.
         </p>
         <div className="flex gap-2">
           <input className="entrada w-56" placeholder="Buscar pessoa ou empresa" value={busca} onChange={(e) => setBusca(e.target.value)} />
@@ -967,7 +1005,10 @@ function AcessosClientes({ aoAviso, aoErro }: { aoAviso: (t: string, link?: stri
                   <td>
                     <div className="flex flex-wrap gap-1">
                       {p.vs.map((v) => (
-                        <span key={v.cliente_id} className={`chip ${v.ativo ? "bg-[var(--fundo)] text-neutral-700" : "bg-neutral-100 text-neutral-400 line-through"}`}>
+                        <span
+                          key={v.cliente_id}
+                          className={`chip ${v.ativo ? "bg-[var(--fundo)] text-neutral-700" : "bg-neutral-100 text-neutral-400 line-through"}`}
+                        >
                           {nomeCli(v.cliente_id)}
                         </span>
                       ))}
@@ -1058,7 +1099,12 @@ function EditorCliente({
       for (const [cli, v] of antes) {
         if (empresas.includes(cli)) continue;
         if (v.user_id) {
-          const { error } = await sb.from("portal_usuarios").update({ ativo: false }).eq("user_id", v.user_id).eq("cliente_id", cli).eq("org_id", orgId);
+          const { error } = await sb
+            .from("portal_usuarios")
+            .update({ ativo: false })
+            .eq("user_id", v.user_id)
+            .eq("cliente_id", cli)
+            .eq("org_id", orgId);
           if (error) throw error;
         } else {
           const { error } = await sb.from("portal_convites").delete().eq("email", v.email).eq("cliente_id", cli).eq("org_id", orgId);
@@ -1069,11 +1115,18 @@ function EditorCliente({
       if (novaConta) {
         const r = await enviarConvite(email, nome);
         setEnviando(false);
-        if (r.enviado) return aoSalvar(`Convite enviado para ${email}. A pessoa cria a senha pelo e-mail e já entra vendo ${empresas.length} empresa(s).`);
+        if (r.enviado)
+          return aoSalvar(
+            `Convite enviado para ${email}. A pessoa cria a senha pelo e-mail e já entra vendo ${empresas.length} empresa(s).`,
+          );
         return aoSalvar(`Acesso cadastrado, mas o e-mail não pôde ser enviado${r.erro ? ` (${r.erro})` : ""}. Repasse este link:`, r.link);
       }
       setEnviando(false);
-      aoSalvar(empresas.length ? `Acesso de ${nome || email} salvo: ${empresas.length} empresa(s).` : `Acesso de ${nome || email} removido de todas as empresas.`);
+      aoSalvar(
+        empresas.length
+          ? `Acesso de ${nome || email} salvo: ${empresas.length} empresa(s).`
+          : `Acesso de ${nome || email} removido de todas as empresas.`,
+      );
     } catch (err) {
       setEnviando(false);
       aoErro(err);
@@ -1084,7 +1137,11 @@ function EditorCliente({
 
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4" onClick={aoFechar}>
-      <form onSubmit={salvar} onClick={(e) => e.stopPropagation()} className="cartao max-h-[92vh] w-full max-w-2xl space-y-3 overflow-y-auto p-5">
+      <form
+        onSubmit={salvar}
+        onClick={(e) => e.stopPropagation()}
+        className="cartao max-h-[92vh] w-full max-w-2xl space-y-3 overflow-y-auto p-5"
+      >
         <h2 className="text-lg font-semibold text-[var(--marca)]">{pessoa ? `Acesso de ${pessoa.nome}` : "Novo acesso de cliente"}</h2>
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="campo">
@@ -1132,12 +1189,23 @@ function EditorCliente({
         <div>
           <div className="mb-1 flex items-center justify-between gap-2">
             <span className="text-sm font-medium">Empresas vinculadas ({empresas.length})</span>
-            <input className="entrada !min-h-8 w-56 text-sm" placeholder="Buscar empresa ou CNPJ" value={busca} onChange={(e) => setBusca(e.target.value)} />
+            <input
+              className="entrada !min-h-8 w-56 text-sm"
+              placeholder="Buscar empresa ou CNPJ"
+              value={busca}
+              onChange={(e) => setBusca(e.target.value)}
+            />
           </div>
           {empresas.length > 0 && (
             <div className="mb-2 flex flex-wrap gap-1">
               {empresas.map((id) => (
-                <button type="button" key={id} className="chip bg-[var(--fundo)] text-neutral-700" onClick={() => alternar(id)} title="Remover">
+                <button
+                  type="button"
+                  key={id}
+                  className="chip bg-[var(--fundo)] text-neutral-700"
+                  onClick={() => alternar(id)}
+                  title="Remover"
+                >
                   {nomeCli(id)} ✕
                 </button>
               ))}
@@ -1145,8 +1213,16 @@ function EditorCliente({
           )}
           <div className="max-h-56 overflow-y-auto rounded-lg border border-[var(--borda)]">
             {lista.map((c) => (
-              <label key={c.id} className="flex cursor-pointer items-center gap-2 border-b border-[var(--borda)] px-3 py-1.5 text-sm last:border-0 hover:bg-[var(--fundo)]">
-                <input type="checkbox" className="h-4 w-4 accent-[var(--marca)]" checked={empresas.includes(c.id)} onChange={() => alternar(c.id)} />
+              <label
+                key={c.id}
+                className="flex cursor-pointer items-center gap-2 border-b border-[var(--borda)] px-3 py-1.5 text-sm last:border-0 hover:bg-[var(--fundo)]"
+              >
+                <input
+                  type="checkbox"
+                  className="h-4 w-4 accent-[var(--marca)]"
+                  checked={empresas.includes(c.id)}
+                  onChange={() => alternar(c.id)}
+                />
                 <span className="truncate">{c.nome_fantasia || c.razao_social}</span>
                 {c.cnpj && <span className="ml-auto shrink-0 text-xs text-neutral-400">{c.cnpj}</span>}
               </label>
@@ -1213,7 +1289,12 @@ function TransferirTrabalho({
     const sb = supabase();
     let texto = "";
     if (total > 0) {
-      const { data, error } = await sb.rpc("hub_transferir_trabalho", { p_org: org.id, p_de: m.user_id, p_para: para, p_carteira: carteira });
+      const { data, error } = await sb.rpc("hub_transferir_trabalho", {
+        p_org: org.id,
+        p_de: m.user_id,
+        p_para: para,
+        p_carteira: carteira,
+      });
       if (error) {
         setEnviando(false);
         return aoErro(error);
@@ -1224,7 +1305,13 @@ function TransferirTrabalho({
     }
     if (inativar) {
       const { error } = await sb.rpc("hub_editar_membro", {
-        p_org: org.id, p_user: m.user_id, p_nome: m.nome, p_papel: m.papel, p_setor: m.setor_id, p_perfil: m.perfil_id ?? null, p_ativo: false,
+        p_org: org.id,
+        p_user: m.user_id,
+        p_nome: m.nome,
+        p_papel: m.papel,
+        p_setor: m.setor_id,
+        p_perfil: m.perfil_id ?? null,
+        p_ativo: false,
       });
       if (error) {
         setEnviando(false);
@@ -1241,7 +1328,9 @@ function TransferirTrabalho({
     <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4" onClick={aoFechar}>
       <div onClick={(e) => e.stopPropagation()} className="cartao w-full max-w-md space-y-4 p-5">
         <div>
-          <h2 className="text-lg font-semibold text-[var(--marca)]">{inativar ? `Inativar ${m.nome}` : `Transferir trabalho de ${m.nome}`}</h2>
+          <h2 className="text-lg font-semibold text-[var(--marca)]">
+            {inativar ? `Inativar ${m.nome}` : `Transferir trabalho de ${m.nome}`}
+          </h2>
           <p className="text-sm text-neutral-600">
             {inativar
               ? "Antes de inativar, todo o trabalho em aberto passa para outra pessoa. O histórico fica guardado."
@@ -1275,7 +1364,12 @@ function TransferirTrabalho({
             </label>
             {Number(pend.carteira) > 0 && (
               <label className="flex items-start gap-2 text-sm">
-                <input type="checkbox" className="mt-0.5 h-4 w-4 accent-[var(--marca)]" checked={carteira} onChange={(e) => setCarteira(e.target.checked)} />
+                <input
+                  type="checkbox"
+                  className="mt-0.5 h-4 w-4 accent-[var(--marca)]"
+                  checked={carteira}
+                  onChange={(e) => setCarteira(e.target.checked)}
+                />
                 <span>Transferir também a carteira de clientes (as próximas rotinas já nascem com a nova pessoa)</span>
               </label>
             )}
@@ -1290,7 +1384,13 @@ function TransferirTrabalho({
           </button>
           <button
             className={inativar ? "btn-primario !bg-[var(--perigo)]" : "btn-primario"}
-            disabled={!pend || enviando || (precisaDestino && !para) || (inativar && !carteira && Number(pend?.carteira) > 0) || (!inativar && total === 0)}
+            disabled={
+              !pend ||
+              enviando ||
+              (precisaDestino && !para) ||
+              (inativar && !carteira && Number(pend?.carteira) > 0) ||
+              (!inativar && total === 0)
+            }
             onClick={concluir}
           >
             {enviando ? "Aguarde…" : inativar ? (total > 0 ? "Transferir e inativar" : "Inativar") : "Transferir"}

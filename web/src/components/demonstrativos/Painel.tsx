@@ -60,7 +60,21 @@ export const mesAno = (c: string) => {
 export const mesExtenso = (c: string) =>
   new Date(c.slice(0, 7) + "-15T12:00:00Z").toLocaleDateString("pt-BR", { month: "long", year: "numeric", timeZone: "UTC" });
 
-function Kpi({ rotulo, valor, sub, negativo, serie, dica }: { rotulo: string; valor: string; sub?: string; negativo?: boolean; serie?: (number | null)[]; dica?: string }) {
+function Kpi({
+  rotulo,
+  valor,
+  sub,
+  negativo,
+  serie,
+  dica,
+}: {
+  rotulo: string;
+  valor: string;
+  sub?: string;
+  negativo?: boolean;
+  serie?: (number | null)[];
+  dica?: string;
+}) {
   return (
     <div className="cartao p-4" title={dica}>
       <div className="flex items-start justify-between gap-2">
@@ -111,7 +125,11 @@ export function SeletorPeriodo({ tipo, aoMudar }: { tipo: TipoPeriodo; aoMudar: 
   return (
     <div className="flex rounded-lg border border-[var(--borda)] bg-white p-0.5 text-sm print:hidden" role="group" aria-label="Período">
       {TIPOS_PERIODO.map((p) => (
-        <button key={p.id} className={`rounded-md px-3 py-1 ${tipo === p.id ? "bg-[var(--marca)] text-white" : ""}`} onClick={() => aoMudar(p.id)}>
+        <button
+          key={p.id}
+          className={`rounded-md px-3 py-1 ${tipo === p.id ? "bg-[var(--marca)] text-white" : ""}`}
+          onClick={() => aoMudar(p.id)}
+        >
           {p.nome}
         </button>
       ))}
@@ -140,8 +158,13 @@ export function PainelResumo({ atual, historico }: { atual: BalanceteReg; histor
   }, [historico, atual.competencia, t]);
   const anteriorGrupo = grupos.length > 1 ? grupos[grupos.length - 2] : null;
   const variacao = (a: number, b?: number | null) =>
-    b ? `${a >= b ? "▲" : "▼"} ${Math.abs(((a - b) / Math.abs(b)) * 100).toFixed(1).replace(".", ",")}% sobre ${anteriorGrupo?.rotulo ?? ""}` : undefined;
-  const serie = (fn: (g: (typeof grupos)[number]) => number | null | undefined) => (grupos.length > 1 ? grupos.map((g) => fn(g) ?? null) : undefined);
+    b
+      ? `${a >= b ? "▲" : "▼"} ${Math.abs(((a - b) / Math.abs(b)) * 100)
+          .toFixed(1)
+          .replace(".", ",")}% sobre ${anteriorGrupo?.rotulo ?? ""}`
+      : undefined;
+  const serie = (fn: (g: (typeof grupos)[number]) => number | null | undefined) =>
+    grupos.length > 1 ? grupos.map((g) => fn(g) ?? null) : undefined;
   const rotuloPeriodo = multi ? "período do balancete" : t === "mensal" ? "mês" : ag.rotulo;
   const fin = d.despesas_financeiras - d.receitas_financeiras - d.outras;
   const ult = grupos;
@@ -150,7 +173,12 @@ export function PainelResumo({ atual, historico }: { atual: BalanceteReg; histor
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-lg font-semibold text-[var(--marca)]">
-          Como está a empresa · {multi && demo ? `${demo.periodo.inicio.split("-").reverse().join("/")} a ${demo.periodo.fim.split("-").reverse().join("/")}` : t === "mensal" ? mesExtenso(atual.competencia) : ag.rotulo}
+          Como está a empresa ·{" "}
+          {multi && demo
+            ? `${demo.periodo.inicio.split("-").reverse().join("/")} a ${demo.periodo.fim.split("-").reverse().join("/")}`
+            : t === "mensal"
+              ? mesExtenso(atual.competencia)
+              : ag.rotulo}
         </h2>
         {!multi && <SeletorPeriodo tipo={tipo} aoMudar={setTipo} />}
       </div>
@@ -166,7 +194,10 @@ export function PainelResumo({ atual, historico }: { atual: BalanceteReg; histor
           <div className="text-center">
             <h3 className="font-semibold">Termômetro de saúde financeira</h3>
             <Termometro nota={saudeP.nota} faixa={saudeP.faixa} />
-            <div className="text-sm font-semibold" style={{ color: saudeP.nota >= 75 ? STATUS.bom.cor : saudeP.nota >= 50 ? STATUS.atencao.cor : STATUS.critico.cor }}>
+            <div
+              className="text-sm font-semibold"
+              style={{ color: saudeP.nota >= 75 ? STATUS.bom.cor : saudeP.nota >= 50 ? STATUS.atencao.cor : STATUS.critico.cor }}
+            >
               {saudeP.faixa}
             </div>
             <p className="mt-1 text-[11px] text-neutral-500">Média de cinco pilares, avaliados pela MDC a cada fechamento.</p>
@@ -177,7 +208,11 @@ export function PainelResumo({ atual, historico }: { atual: BalanceteReg; histor
               return (
                 <div key={p.id} className="rounded-lg border p-3" style={{ background: st.fundo, borderColor: st.cor + "33" }}>
                   <div className="flex items-center gap-2 text-sm font-semibold" style={{ color: st.cor }}>
-                    <span className="flex h-5 w-5 items-center justify-center rounded-full text-xs text-white" style={{ background: st.cor }} aria-hidden>
+                    <span
+                      className="flex h-5 w-5 items-center justify-center rounded-full text-xs text-white"
+                      style={{ background: st.cor }}
+                      aria-hidden
+                    >
                       {st.icone}
                     </span>
                     {p.nome} <span className="ml-auto text-[11px] font-medium">{st.rotulo}</span>
@@ -191,19 +226,44 @@ export function PainelResumo({ atual, historico }: { atual: BalanceteReg; histor
       )}
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Kpi rotulo={`Receita bruta (${t === "mensal" ? "mês" : TIPOS_PERIODO.find((x) => x.id === t)!.nome.toLowerCase()})`} valor={brl(d.receita_bruta)} serie={serie((g) => g.dre.receita_bruta)}
-          sub={!multi ? variacao(d.receita_bruta, anteriorGrupo?.dre.receita_bruta) : undefined} />
-        <Kpi rotulo={d.lucro_liquido >= 0 ? "Lucro líquido" : "Prejuízo"} valor={brl(d.lucro_liquido)} negativo={d.lucro_liquido < 0} serie={serie((g) => g.dre.lucro_liquido)}
-          sub={d.receita_liquida ? `margem de ${fmtIndice(d.lucro_liquido / d.receita_liquida, "%")}` : undefined} />
-        <Kpi rotulo="Dinheiro em caixa, bancos e aplicações" valor={brl(r.disponivel)} negativo={r.disponivel < 0} serie={serie((g) => g.disponivel)}
-          sub={f ? `${f.variacao >= 0 ? "▲ entrou" : "▼ saiu"} ${brl(Math.abs(f.variacao))} no período` : undefined} />
-        <Kpi rotulo="Caixa gerado pela operação" valor={f ? brl(f.fco) : "—"} negativo={!!f && f.fco < 0} serie={serie((g) => g.fco)}
-          sub={f && d.lucro_liquido > 0 ? `${fmtIndice(f.fco / d.lucro_liquido, "%")} do lucro virou caixa` : "dinheiro que a atividade principal colocou (ou tirou) do caixa"} />
+        <Kpi
+          rotulo={`Receita bruta (${t === "mensal" ? "mês" : TIPOS_PERIODO.find((x) => x.id === t)!.nome.toLowerCase()})`}
+          valor={brl(d.receita_bruta)}
+          serie={serie((g) => g.dre.receita_bruta)}
+          sub={!multi ? variacao(d.receita_bruta, anteriorGrupo?.dre.receita_bruta) : undefined}
+        />
+        <Kpi
+          rotulo={d.lucro_liquido >= 0 ? "Lucro líquido" : "Prejuízo"}
+          valor={brl(d.lucro_liquido)}
+          negativo={d.lucro_liquido < 0}
+          serie={serie((g) => g.dre.lucro_liquido)}
+          sub={d.receita_liquida ? `margem de ${fmtIndice(d.lucro_liquido / d.receita_liquida, "%")}` : undefined}
+        />
+        <Kpi
+          rotulo="Dinheiro em caixa, bancos e aplicações"
+          valor={brl(r.disponivel)}
+          negativo={r.disponivel < 0}
+          serie={serie((g) => g.disponivel)}
+          sub={f ? `${f.variacao >= 0 ? "▲ entrou" : "▼ saiu"} ${brl(Math.abs(f.variacao))} no período` : undefined}
+        />
+        <Kpi
+          rotulo="Caixa gerado pela operação"
+          valor={f ? brl(f.fco) : "—"}
+          negativo={!!f && f.fco < 0}
+          serie={serie((g) => g.fco)}
+          sub={
+            f && d.lucro_liquido > 0
+              ? `${fmtIndice(f.fco / d.lucro_liquido, "%")} do lucro virou caixa`
+              : "dinheiro que a atividade principal colocou (ou tirou) do caixa"
+          }
+        />
       </div>
 
       {atual.comentario && (
         <div className="cartao border-l-4 !border-l-[var(--destaque)] p-4">
-          <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-neutral-500">O que aconteceu na sua empresa em {mesExtenso(atual.competencia)}</div>
+          <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-neutral-500">
+            O que aconteceu na sua empresa em {mesExtenso(atual.competencia)}
+          </div>
           <p className="whitespace-pre-wrap text-sm">{atual.comentario}</p>
         </div>
       )}
@@ -223,7 +283,8 @@ export function PainelResumo({ atual, historico }: { atual: BalanceteReg; histor
           />
           {d.lucro_liquido < 0 && (
             <p className="mt-2 text-xs font-medium text-[var(--perigo)]">
-              Os gastos superaram a receita em {brl(-d.lucro_liquido)}: faltaram R$ {((-d.lucro_liquido / d.receita_bruta) * 100).toFixed(1).replace(".", ",")} para cada R$ 100 vendidos.
+              Os gastos superaram a receita em {brl(-d.lucro_liquido)}: faltaram R${" "}
+              {((-d.lucro_liquido / d.receita_bruta) * 100).toFixed(1).replace(".", ",")} para cada R$ 100 vendidos.
             </p>
           )}
         </section>
@@ -269,7 +330,10 @@ export function PainelResumo({ atual, historico }: { atual: BalanceteReg; histor
           <h3 className="mb-3 font-semibold">Lucro × caixa: o que explica a diferença ({rotuloPeriodo})</h3>
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
             {comentarios.map((c, k) => (
-              <div key={k} className={`rounded-lg border p-3 text-sm ${c.tom === "positivo" ? "border-emerald-200 bg-emerald-50" : c.tom === "atencao" ? "border-amber-200 bg-amber-50" : "border-[var(--borda)] bg-[var(--fundo)]"}`}>
+              <div
+                key={k}
+                className={`rounded-lg border p-3 text-sm ${c.tom === "positivo" ? "border-emerald-200 bg-emerald-50" : c.tom === "atencao" ? "border-amber-200 bg-amber-50" : "border-[var(--borda)] bg-[var(--fundo)]"}`}
+              >
                 <div className="font-semibold">{c.titulo}</div>
                 <p className="mt-1 text-xs leading-relaxed text-neutral-700">{c.texto}</p>
               </div>
@@ -295,7 +359,8 @@ export function PainelResumo({ atual, historico }: { atual: BalanceteReg; histor
           )}
           {mesmoPeriodoAnoAnterior && (
             <p className="mt-2 text-xs text-neutral-500">
-              Mesmo período do ano anterior ({mesmoPeriodoAnoAnterior.rotulo}): receita {brl(mesmoPeriodoAnoAnterior.dre.receita_bruta)}, lucro {brl(mesmoPeriodoAnoAnterior.dre.lucro_liquido)}.
+              Mesmo período do ano anterior ({mesmoPeriodoAnoAnterior.rotulo}): receita {brl(mesmoPeriodoAnoAnterior.dre.receita_bruta)},
+              lucro {brl(mesmoPeriodoAnoAnterior.dre.lucro_liquido)}.
             </p>
           )}
         </section>
@@ -319,7 +384,11 @@ export function PainelResumo({ atual, historico }: { atual: BalanceteReg; histor
         <section className="cartao p-4">
           <h3 className="mb-1 font-semibold">Ciclo do dinheiro</h3>
           <p className="mb-3 text-xs text-neutral-500">Quantos dias o dinheiro fica preso entre comprar, vender e receber.</p>
-          {i.pmr != null ? <CicloCaixa pme={i.pme ?? null} pmr={i.pmr} pmp={i.pmp ?? null} /> : <p className="text-sm text-neutral-500">Sem receita para calcular os prazos.</p>}
+          {i.pmr != null ? (
+            <CicloCaixa pme={i.pme ?? null} pmr={i.pmr} pmp={i.pmp ?? null} />
+          ) : (
+            <p className="text-sm text-neutral-500">Sem receita para calcular os prazos.</p>
+          )}
         </section>
         <section className="cartao p-4">
           <h3 className="mb-3 font-semibold">Balanço em uma imagem</h3>
@@ -356,12 +425,27 @@ export function PainelResumo({ atual, historico }: { atual: BalanceteReg; histor
 
 /** Grade de índices com a curva dos últimos meses e a faixa de alerta. */
 export function GradeIndices({ atual, historico }: { atual: BalanceteReg; historico: BalanceteReg[] }) {
-  const ult = [...historico].sort((a, b) => a.competencia.localeCompare(b.competencia)).filter((b) => b.competencia <= atual.competencia).slice(-12);
+  const ult = [...historico]
+    .sort((a, b) => a.competencia.localeCompare(b.competencia))
+    .filter((b) => b.competencia <= atual.competencia)
+    .slice(-12);
   const SECOES: { titulo: string; sub: string; ids: string[] }[] = [
-    { titulo: "Liquidez", sub: "capacidade de pagar as contas", ids: ["liquidez_corrente", "liquidez_seca", "liquidez_imediata", "liquidez_geral", "capital_giro"] },
+    {
+      titulo: "Liquidez",
+      sub: "capacidade de pagar as contas",
+      ids: ["liquidez_corrente", "liquidez_seca", "liquidez_imediata", "liquidez_geral", "capital_giro"],
+    },
     { titulo: "Endividamento", sub: "quanto depende de terceiros", ids: ["endividamento_geral", "composicao_endividamento"] },
-    { titulo: "Rentabilidade", sub: "quanto sobra do que vende", ids: ["margem_bruta", "margem_operacional", "margem_liquida", "roe", "carga_tributaria"] },
-    { titulo: "Prazos médios e ciclo", sub: "quanto tempo o dinheiro fica preso", ids: ["pmr", "pmp", "pme", "pmv", "ciclo_operacional", "ciclo_financeiro"] },
+    {
+      titulo: "Rentabilidade",
+      sub: "quanto sobra do que vende",
+      ids: ["margem_bruta", "margem_operacional", "margem_liquida", "roe", "carga_tributaria"],
+    },
+    {
+      titulo: "Prazos médios e ciclo",
+      sub: "quanto tempo o dinheiro fica preso",
+      ids: ["pmr", "pmp", "pme", "pmv", "ciclo_operacional", "ciclo_financeiro"],
+    },
   ];
   const multi = (atual.demonstracoes?.periodo.dias ?? 31) > 31;
   const [tipo, setTipo] = useSeletorPeriodo();
@@ -370,7 +454,13 @@ export function GradeIndices({ atual, historico }: { atual: BalanceteReg; histor
   // série mensal contínua (mês sem balancete = vazio), só balancetes mensais: a reta usa o mês do calendário
   const serie = serieMensal(ult);
   const tend = new Map<string, Tendencia | null>(
-    INDICES_INFO.map((x) => [x.id, tendenciaLinear(serie.map((b) => (b ? (b.indices[x.id] as number | null) : null)), MAIOR_MELHOR[x.id] ?? true)]),
+    INDICES_INFO.map((x) => [
+      x.id,
+      tendenciaLinear(
+        serie.map((b) => (b ? (b.indices[x.id] as number | null) : null)),
+        MAIOR_MELHOR[x.id] ?? true,
+      ),
+    ]),
   );
   return (
     <div className="space-y-6">
@@ -378,7 +468,9 @@ export function GradeIndices({ atual, historico }: { atual: BalanceteReg; histor
       {!multi && (
         <div className="flex flex-wrap items-center justify-between gap-2">
           <p className="text-sm text-neutral-600">
-            {tipo === "mensal" ? "Índices do mês." : `Índices de ${ag.rotulo}: margens sobre a DRE do período, liquidez e endividamento no fechamento, prazos pela média dos meses.`}
+            {tipo === "mensal"
+              ? "Índices do mês."
+              : `Índices de ${ag.rotulo}: margens sobre a DRE do período, liquidez e endividamento no fechamento, prazos pela média dos meses.`}
           </p>
           <SeletorPeriodo tipo={tipo} aoMudar={setTipo} />
         </div>
@@ -402,10 +494,12 @@ export function GradeIndices({ atual, historico }: { atual: BalanceteReg; histor
                   <div className="flex items-start justify-between gap-2">
                     <div>
                       <div className="text-sm font-medium">{info.nome}</div>
-                      <div className={`text-2xl font-semibold tabular-nums ${ruim ? "text-[var(--perigo)]" : "text-[var(--marca)]"}`}>{fmtIndice(v as number, info.formato)}</div>
+                      <div className={`text-2xl font-semibold tabular-nums ${ruim ? "text-[var(--perigo)]" : "text-[var(--marca)]"}`}>
+                        {fmtIndice(v as number, info.formato)}
+                      </div>
                     </div>
                     <Faisca
-                      valores={serie.map((b) => (b ? (b.indices[info.id] as number | null) ?? null : null))}
+                      valores={serie.map((b) => (b ? ((b.indices[info.id] as number | null) ?? null) : null))}
                       alerta={!!ruim}
                       reta={tend.get(info.id) ? { a: tend.get(info.id)!.intercepto, b: tend.get(info.id)!.inclinacao } : null}
                     />
@@ -454,7 +548,10 @@ function LinhaTendencia({ t, formato }: { t: Tendencia | null; formato: "x" | "%
   if (!t) return <p className="mt-2 text-[11px] text-neutral-400">Tendência linear: precisa de 3 meses com valor.</p>;
   const s = SENTIDO[t.sentido];
   return (
-    <p className="mt-2 border-t border-[var(--borda)] pt-2 text-[11px] leading-snug text-neutral-600" title={`Reta de mínimos quadrados sobre ${t.n} meses. R² ${t.r2.toFixed(2)}.`}>
+    <p
+      className="mt-2 border-t border-[var(--borda)] pt-2 text-[11px] leading-snug text-neutral-600"
+      title={`Reta de mínimos quadrados sobre ${t.n} meses. R² ${t.r2.toFixed(2)}.`}
+    >
       <span className="font-semibold" style={{ color: s.cor }}>
         {s.icone} Tendência linear: {s.nome}
       </span>{" "}
@@ -476,7 +573,9 @@ function ResumoTendencia({ tend, meses }: { tend: Map<string, Tendencia | null>;
     <section className="cartao p-4">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h3 className="font-semibold text-[var(--marca)]">Tendência linear dos índices</h3>
-        <span className="text-xs text-neutral-500">reta de mínimos quadrados sobre os últimos {meses} meses · linha tracejada nos minigráficos</span>
+        <span className="text-xs text-neutral-500">
+          reta de mínimos quadrados sobre os últimos {meses} meses · linha tracejada nos minigráficos
+        </span>
       </div>
       <div className="mt-3 grid gap-3 sm:grid-cols-3">
         {(["melhora", "piora", "estavel"] as const).map((k) => (
@@ -492,12 +591,22 @@ function ResumoTendencia({ tend, meses }: { tend: Map<string, Tendencia | null>;
         <div className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
           {piora.length > 0 && (
             <p>
-              <b className="text-[#B42318]">Piorando:</b> {piora.slice(0, 5).map((x) => nome(x.info.nome)).join(", ")}.
+              <b className="text-[#B42318]">Piorando:</b>{" "}
+              {piora
+                .slice(0, 5)
+                .map((x) => nome(x.info.nome))
+                .join(", ")}
+              .
             </p>
           )}
           {melhora.length > 0 && (
             <p>
-              <b className="text-[#067647]">Melhorando:</b> {melhora.slice(0, 5).map((x) => nome(x.info.nome)).join(", ")}.
+              <b className="text-[#067647]">Melhorando:</b>{" "}
+              {melhora
+                .slice(0, 5)
+                .map((x) => nome(x.info.nome))
+                .join(", ")}
+              .
             </p>
           )}
         </div>
@@ -533,7 +642,10 @@ export function ArvoreBalancete({
     <div className="space-y-2">
       <div className="flex flex-wrap gap-2 print:hidden">
         <input className="entrada w-64" placeholder="Buscar conta…" value={busca} onChange={(e) => setBusca(e.target.value)} />
-        <button className="btn" onClick={() => setFechados(new Set(linhas.filter((l) => l.nivel === 2 && !l.analitica).map((l) => l.classificacao)))}>
+        <button
+          className="btn"
+          onClick={() => setFechados(new Set(linhas.filter((l) => l.nivel === 2 && !l.analitica).map((l) => l.classificacao)))}
+        >
           Recolher
         </button>
         <button className="btn" onClick={() => setFechados(new Set())}>
@@ -582,16 +694,30 @@ export function ArvoreBalancete({
                     ) : null}
                     {l.descricao}
                   </td>
-                  <td className="whitespace-nowrap text-right tabular-nums">{fmt(l.saldo_anterior)}{nat(l.saldo_anterior)}</td>
+                  <td className="whitespace-nowrap text-right tabular-nums">
+                    {fmt(l.saldo_anterior)}
+                    {nat(l.saldo_anterior)}
+                  </td>
                   <td className="whitespace-nowrap text-right tabular-nums">{fmt(l.debitos)}</td>
                   <td className="whitespace-nowrap text-right tabular-nums">{fmt(l.creditos)}</td>
-                  <td className="whitespace-nowrap text-right tabular-nums">{fmt(l.saldo_atual)}{nat(l.saldo_atual)}</td>
+                  <td className="whitespace-nowrap text-right tabular-nums">
+                    {fmt(l.saldo_atual)}
+                    {nat(l.saldo_atual)}
+                  </td>
                   {anteriores && (
-                    <td className={`whitespace-nowrap text-right tabular-nums text-xs ${dv && Math.abs(dv) > 0.5 ? "" : "text-neutral-400"}`}>
-                      {dv === null ? "novo" : Math.abs(dv) < 0.5 ? "—" : `${dv > 0 ? "+" : "−"}${fmt(dv)}${ant ? ` (${((Math.abs(dv) / Math.abs(ant)) * 100).toFixed(0)}%)` : ""}`}
+                    <td
+                      className={`whitespace-nowrap text-right tabular-nums text-xs ${dv && Math.abs(dv) > 0.5 ? "" : "text-neutral-400"}`}
+                    >
+                      {dv === null
+                        ? "novo"
+                        : Math.abs(dv) < 0.5
+                          ? "—"
+                          : `${dv > 0 ? "+" : "−"}${fmt(dv)}${ant ? ` (${((Math.abs(dv) / Math.abs(ant)) * 100).toFixed(0)}%)` : ""}`}
                     </td>
                   )}
-                  {editarGrupo && <td>{l.analitica ? editarGrupo(l) : <span className="text-xs text-neutral-400">{nomeGrupo(l.grupo)}</span>}</td>}
+                  {editarGrupo && (
+                    <td>{l.analitica ? editarGrupo(l) : <span className="text-xs text-neutral-400">{nomeGrupo(l.grupo)}</span>}</td>
+                  )}
                   {editarDfc && <td>{l.analitica ? editarDfc(l) : null}</td>}
                 </tr>
               );
@@ -609,9 +735,14 @@ export function ListaAlertas({ alertas }: { alertas: Alerta[] }) {
   return (
     <ul className="space-y-2">
       {alertas.map((a, k) => (
-        <li key={k} className={`rounded-lg border p-3 text-sm ${a.nivel === "alto" ? "border-red-200 bg-red-50" : "border-amber-200 bg-amber-50"}`}>
+        <li
+          key={k}
+          className={`rounded-lg border p-3 text-sm ${a.nivel === "alto" ? "border-red-200 bg-red-50" : "border-amber-200 bg-amber-50"}`}
+        >
           <div className="flex flex-wrap items-center gap-2">
-            <span className={`chip ${a.nivel === "alto" ? "bg-red-100 text-red-800" : "bg-amber-100 text-amber-900"}`}>{a.nivel === "alto" ? "Risco alto" : "Atenção"}</span>
+            <span className={`chip ${a.nivel === "alto" ? "bg-red-100 text-red-800" : "bg-amber-100 text-amber-900"}`}>
+              {a.nivel === "alto" ? "Risco alto" : "Atenção"}
+            </span>
             <b>{a.texto}</b>
             <span className="text-xs text-neutral-500">{a.area}</span>
           </div>

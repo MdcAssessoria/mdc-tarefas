@@ -68,8 +68,10 @@ export function useMensagens(conversaId: string | null) {
     const sb = supabase();
     const canal = sb
       .channel(`chat-${conversaId}`)
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "portal_mensagens", filter: `conversa_id=eq.${conversaId}` }, (p) =>
-        setMensagens((l) => (l.some((m) => m.id === (p.new as Mensagem).id) ? l : [...l, p.new as Mensagem])),
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "portal_mensagens", filter: `conversa_id=eq.${conversaId}` },
+        (p) => setMensagens((l) => (l.some((m) => m.id === (p.new as Mensagem).id) ? l : [...l, p.new as Mensagem])),
       )
       .subscribe();
     return () => {

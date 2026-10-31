@@ -34,10 +34,13 @@ export function janela(competencia: string, tipo: TipoPeriodo) {
   const parcial = mes < fimMes;
   const intervalo = iniMes === mes ? MESES[mes - 1] : `${MESES[iniMes - 1]}–${MESES[mes - 1]}`;
   const rotulo =
-    tipo === "mensal" ? `${MESES[mes - 1]}/${ano}`
-    : tipo === "trimestral" ? `${Math.ceil(mes / 3)}º trimestre/${ano} (${intervalo})`
-    : tipo === "semestral" ? `${Math.ceil(mes / 6)}º semestre/${ano} (${intervalo})`
-    : `${ano} (${intervalo})`;
+    tipo === "mensal"
+      ? `${MESES[mes - 1]}/${ano}`
+      : tipo === "trimestral"
+        ? `${Math.ceil(mes / 3)}º trimestre/${ano} (${intervalo})`
+        : tipo === "semestral"
+          ? `${Math.ceil(mes / 6)}º semestre/${ano} (${intervalo})`
+          : `${ano} (${intervalo})`;
   return { inicio, fim: ym(competencia), esperados, parcial, rotulo };
 }
 
@@ -99,7 +102,8 @@ export function agregar<T extends RegMinimo>(atual: T, historico: T[], tipo: Tip
   const primeiro = meses[0]?.demonstracoes?.balanco;
   if (tipo !== "mensal" && balanco && primeiro) {
     const abertura = (lado: "ativo" | "passivo") => new Map(primeiro[lado].map((l) => [l.classificacao + "|" + l.rotulo, l.anterior]));
-    const aA = abertura("ativo"), aP = abertura("passivo");
+    const aA = abertura("ativo"),
+      aP = abertura("passivo");
     balanco = {
       ativo: balanco.ativo.map((l) => ({ ...l, anterior: aA.get(l.classificacao + "|" + l.rotulo) ?? 0 })),
       passivo: balanco.passivo.map((l) => ({ ...l, anterior: aP.get(l.classificacao + "|" + l.rotulo) ?? 0 })),
@@ -129,9 +133,15 @@ export function serieAgrupada<T extends RegMinimo>(historico: T[], tipo: TipoPer
   const tam = TIPOS_PERIODO.find((t) => t.id === tipo)!.meses;
   const grupos = new Map<string, T[]>();
   for (const b of [...historico].filter((x) => x.competencia <= ate).sort((a, c) => a.competencia.localeCompare(c.competencia))) {
-    const ano = b.competencia.slice(0, 4), mes = Number(b.competencia.slice(5, 7));
+    const ano = b.competencia.slice(0, 4),
+      mes = Number(b.competencia.slice(5, 7));
     const n = Math.floor((mes - 1) / tam) + 1;
-    const chave = tipo === "mensal" ? `${MESES[mes - 1]}/${ano.slice(2)}` : tipo === "anual" ? ano : `${n}${tipo === "trimestral" ? "T" : "S"}/${ano.slice(2)}`;
+    const chave =
+      tipo === "mensal"
+        ? `${MESES[mes - 1]}/${ano.slice(2)}`
+        : tipo === "anual"
+          ? ano
+          : `${n}${tipo === "trimestral" ? "T" : "S"}/${ano.slice(2)}`;
     if (!grupos.has(chave)) grupos.set(chave, []);
     grupos.get(chave)!.push(b);
   }

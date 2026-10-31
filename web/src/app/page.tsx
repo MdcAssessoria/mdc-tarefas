@@ -66,7 +66,14 @@ function Hub() {
     const sb = supabase();
     const campos = "id,titulo,prazo,status,prioridade,cliente_id,concluida_em";
     const [a, f] = await Promise.all([
-      sb.from("tarefas").select(campos).eq("org_id", org.id).eq("responsavel_id", eu.user_id).in("status", ABERTAS).order("prazo", { nullsFirst: false }).limit(1000),
+      sb
+        .from("tarefas")
+        .select(campos)
+        .eq("org_id", org.id)
+        .eq("responsavel_id", eu.user_id)
+        .in("status", ABERTAS)
+        .order("prazo", { nullsFirst: false })
+        .limit(1000),
       sb
         .from("tarefas")
         .select(campos)
@@ -162,7 +169,12 @@ function Hub() {
   }
 
   const primeiroNome = eu.nome.split(" ")[0];
-  const data = new Date(hoje + "T12:00:00Z").toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" });
+  const data = new Date(hoje + "T12:00:00Z").toLocaleDateString("pt-BR", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    timeZone: "UTC",
+  });
   const maxCli = Math.max(1, ...porCliente.map((c) => c.total));
   const nomeCli = (id: string | null) => {
     const c = clientePorId(id);
@@ -206,9 +218,15 @@ function Hub() {
           <section aria-label="Seu resumo" className="overflow-hidden rounded-2xl border border-[var(--borda)] bg-white">
             <div className="grid grid-cols-2 divide-x divide-y divide-[var(--borda)] sm:grid-cols-3 lg:flex lg:divide-y-0">
               {livro.map((i) => (
-                <Link key={i.rotulo} href={i.href} className="group relative min-w-0 flex-1 px-5 py-4 transition-colors hover:bg-[var(--fundo)]">
+                <Link
+                  key={i.rotulo}
+                  href={i.href}
+                  className="group relative min-w-0 flex-1 px-5 py-4 transition-colors hover:bg-[var(--fundo)]"
+                >
                   {i.quente && <span className="absolute inset-x-0 top-0 h-[3px] bg-[var(--perigo)]" aria-hidden="true" />}
-                  <div className={`font-display num text-[38px] font-medium leading-none ${i.quente ? "text-[var(--perigo)]" : "text-[var(--marca)]"}`}>
+                  <div
+                    className={`font-display num text-[38px] font-medium leading-none ${i.quente ? "text-[var(--perigo)]" : "text-[var(--marca)]"}`}
+                  >
                     {abertas === null ? "·" : i.valor}
                   </div>
                   <div className="mt-2 text-[13px] leading-snug text-[var(--texto-suave)] group-hover:text-[var(--marca)]">{i.rotulo}</div>
@@ -224,11 +242,17 @@ function Hub() {
                   <h2 id="ritmo" className="text-[17px] font-semibold text-[var(--marca)]">
                     Seu ritmo por semana
                   </h2>
-                  <p className="text-[13px] text-[var(--texto-suave)]">Concluídas nas últimas semanas e o que vence nas próximas. Clique numa semana.</p>
+                  <p className="text-[13px] text-[var(--texto-suave)]">
+                    Concluídas nas últimas semanas e o que vence nas próximas. Clique numa semana.
+                  </p>
                 </div>
                 <div className="flex overflow-hidden rounded-lg border border-[var(--borda)] text-[13px]">
                   {[8, 16].map((k) => (
-                    <button key={k} onClick={() => setSemanasAtras(k)} className={`px-3 py-1 ${semanasAtras === k ? "bg-[var(--marca)] text-white" : "bg-white"}`}>
+                    <button
+                      key={k}
+                      onClick={() => setSemanasAtras(k)}
+                      className={`px-3 py-1 ${semanasAtras === k ? "bg-[var(--marca)] text-white" : "bg-white"}`}
+                    >
                       {k} semanas
                     </button>
                   ))}
@@ -307,7 +331,9 @@ function Hub() {
                 <div className="px-5 py-10 text-center">
                   <p className="font-display text-[22px] text-[var(--marca)]">{semanaSel ? "Nada nesta semana" : "Fila em dia"}</p>
                   <p className="mt-1 text-[14px] text-[var(--texto-suave)]">
-                    {semanaSel ? "Nenhuma tarefa sua concluída ou vencendo nesta semana." : "Nada atrasado nem vencendo nos próximos 7 dias com você."}
+                    {semanaSel
+                      ? "Nenhuma tarefa sua concluída ou vencendo nesta semana."
+                      : "Nada atrasado nem vencendo nos próximos 7 dias com você."}
                   </p>
                 </div>
               ) : (
@@ -318,7 +344,10 @@ function Hub() {
                     return (
                       <li key={t.id} className="flex items-center gap-3 px-4 py-3 hover:bg-[var(--fundo)]/60">
                         {feita ? (
-                          <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-[var(--sucesso)] text-white" title="Concluída">
+                          <span
+                            className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-[var(--sucesso)] text-white"
+                            title="Concluída"
+                          >
                             <Icone nome="check" className="h-3.5 w-3.5" />
                           </span>
                         ) : (
@@ -334,11 +363,15 @@ function Hub() {
                         <Link href={c ? `/tarefas?cliente=${c.id}` : "/tarefas"} className="min-w-0 flex-1">
                           <div className="flex items-center gap-2">
                             <PrioridadeDot p={t.prioridade} />
-                            <span className={`truncate text-[14px] font-medium ${feita ? "text-[var(--texto-suave)] line-through" : ""}`}>{t.titulo}</span>
+                            <span className={`truncate text-[14px] font-medium ${feita ? "text-[var(--texto-suave)] line-through" : ""}`}>
+                              {t.titulo}
+                            </span>
                           </div>
                           <div className="truncate pl-[18px] text-[12px] text-[var(--texto-suave)]">
                             {c ? c.nome_fantasia || c.razao_social : "Interna"}
-                            {feita && t.concluida_em && ` · concluída em ${fmtData(diaLocal(t.concluida_em))}${noPrazo(t) ? "" : " (com atraso)"}`}
+                            {feita &&
+                              t.concluida_em &&
+                              ` · concluída em ${fmtData(diaLocal(t.concluida_em))}${noPrazo(t) ? "" : " (com atraso)"}`}
                           </div>
                         </Link>
                         {!feita && <PrazoBadge prazo={t.prazo} status={t.status} fuso={org.fuso} />}
