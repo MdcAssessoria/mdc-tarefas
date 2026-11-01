@@ -72,6 +72,10 @@ npx supabase functions deploy convite --project-ref bulqqdgfrrpqquqvjjfa --impor
   `cd supabase/functions/balancete-agente && deno test --allow-env agente_test.ts`.
 - `npm run verificar` confere se as cópias do núcleo nas funções estão iguais às da tela (`npm run nucleo`); se
   acusar diferença, rode `sh scripts/sync-funcoes.sh` e publique as funções.
+- **Publicação sem a CLI (pelo conector do Supabase):** gere um arquivo único com
+  `npx esbuild@0.24.0 index.ts --bundle --format=esm --platform=neutral --target=es2022 --charset=ascii` marcando como
+  `--external` os pacotes do `deno.json` (e `node:*`), e publique esse `index.js` com o `deno.json`. Foi assim que
+  `balancete-agente` (v1) e `demonstrativo-pdf` (v7) foram publicadas em 01/11/2026; o código-fonte continua sendo os `.ts`.
 - Segredos das funções (chave de serviço etc.) ficam no painel: Edge Functions › Secrets. Nunca no código.
 - As origens permitidas (CORS e link de convite) são `mdcassessoria.com`, `www.mdcassessoria.com` e
   `mdc-tarefas.vercel.app`. Para testar convite rodando local, publique uma versão de teste com `localhost`.
