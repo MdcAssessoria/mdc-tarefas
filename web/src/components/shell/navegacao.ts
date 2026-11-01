@@ -2,7 +2,7 @@
 // e o filtro de quais abas cada pessoa pode ver. Usado pelo menu, pela barra superior e pela busca rápida.
 import type { PapelApp } from "@/dominios/acessos/tipos";
 
-export type Modulo = "hub" | "tarefas" | "societario" | "demonstrativos" | "atendimento" | "vencimentos" | "comercial" | "financeiro";
+export type Modulo = "hub" | "tarefas" | "societario" | "demonstrativos" | "atendimento" | "vencimentos" | "comercial" | "financeiro" | "entradas";
 
 /** Aba de um módulo. `minimo` exige um nível na ferramenta; `gestor` exige poder editar cadastros (admin ou gestor). */
 export interface LinkModulo {
@@ -60,6 +60,15 @@ export const NAV: Record<Modulo, { titulo: string; links: LinkModulo[] }> = {
       { href: "/financeiro/plano", nome: "Plano de contas" },
     ],
   },
+  entradas: {
+    titulo: "Entradas",
+    links: [
+      { href: "/entradas", nome: "Notas recebidas" },
+      { href: "/entradas/lancar", nome: "Lançar nota", minimo: "operar" },
+      { href: "/entradas/carga-tributaria", nome: "Carga tributária" },
+      { href: "/entradas/certificado", nome: "Certificado digital" },
+    ],
+  },
   comercial: {
     titulo: "CRM Comercial",
     links: [
@@ -87,7 +96,15 @@ export const MODULO_POR_PREFIXO: Record<string, Modulo> = {
   vencimentos: "vencimentos",
   comercial: "comercial",
   financeiro: "financeiro",
+  entradas: "entradas",
 };
+
+/**
+ * Ferramenta (hub_apps.slug) que libera cada módulo, quando é diferente do nome do módulo. Entradas usa a ferramenta
+ * Financeiro enquanto as permissões por módulo não forem separadas (o banco confere com app.fin_pode).
+ */
+export const APP_DO_MODULO: Partial<Record<Modulo, string>> = { entradas: "financeiro" };
+export const appDoModulo = (m: Modulo) => APP_DO_MODULO[m] ?? m;
 
 /** Módulo da rota atual (caminho sem o /hub-mdc, como devolve o usePathname). */
 export function moduloDaRota(rota: string): Modulo {
@@ -100,5 +117,5 @@ export function filtrarLinks(
   modulo: Modulo,
   permissoes: { pode: (app: string, minimo?: PapelApp) => boolean; podeEditarCadastros: boolean },
 ): LinkModulo[] {
-  return NAV[modulo].links.filter((l) => (l.gestor ? permissoes.podeEditarCadastros : l.minimo ? permissoes.pode(modulo, l.minimo) : true));
+  return NAV[modulo].links.filter((l) => (l.gestor ? permissoes.podeEditarCadastros : l.minimo ? permissoes.pode(appDoModulo(modulo), l.minimo) : true));
 }

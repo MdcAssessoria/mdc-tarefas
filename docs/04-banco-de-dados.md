@@ -20,6 +20,7 @@
 | Integrações e importações | `hub_integracoes`, `hub_importacoes` | Pasta do SharePoint lida pelo agente (só administrador) e histórico de tudo o que foi importado (tela, lote, pasta) |
 | Financeiro | `fin_plano_contas`, `fin_plano_importacoes`, `fin_contas_bancarias`, `fin_extrato_lotes`, `fin_extrato_linhas`, `fin_pessoas`, `fin_categorias`, `fin_centros_custo`, `fin_titulos`, `fin_baixas` | Plano de contas do Domínio, bancos, extratos, fornecedores/clientes, despesas/receitas ligadas ao plano, centros de custo, contas a pagar/receber e pagamentos de cada cliente ([módulo](modulos/financeiro.md)) |
 | Estoque | `est_itens`, `est_locais`, `est_parametros`, `est_movimentos`, visão `est_saldos` | Produtos e serviços (com "controla estoque"), estoques (locais), regra de estoque negativo, movimentos e saldo por item e local ([módulo](modulos/financeiro.md#6-itens-e-estoque)) |
+| Notas fiscais (Entradas) | `fis_parametros`, `fis_certificados`, `fis_dfe_controle`, `fis_notas`, `fis_nota_itens`, `fis_eventos`, `fis_depara_itens`, `fis_tipos_entrada`, `fis_regras_credito`; bucket privado `fiscal` | Certificado A1 por empresa (cofre), captura de NF-e/NFS-e com controle de NSU, notas e itens, manifestação e eventos com protocolo, de-para de itens do fornecedor, tipos de entrada e regras de crédito por regime com vigência ([módulo](modulos/notas-fiscais.md)) |
 | Vencimentos | `venc_itens` | Certificados, alvarás, procurações e outros itens que vencem |
 | Comercial (CRM) | `crm_oportunidades`, `crm_atividades`, `crm_modelos`, `crm_contratos` | Funil de vendas, leads e contratos |
 
@@ -205,6 +206,7 @@ pode fazer aquilo (normalmente com `app.hub_pode(org, app, nível)` ou `app.port
 | Vencimentos | `venc_renovar` |
 | CRM | `crm_receber_lead` (página pública de leads), `crm_converter_cliente`, `crm_arquivar` |
 | Certificado | `cert_salvar`, `cert_obter`, `cert_remover` (segredos no Supabase Vault) |
+| Notas fiscais (Entradas, 032) | Tela: `fis_processar_nota`, `fis_desfazer_lancamento`, `fis_registrar_upload`, `fis_salvar_parametros`, `fis_salvar_tipo_entrada`, `fis_pode`, `fis_pode_certificado`. Só Funções Edge (service_role): `fis_cert_salvar`, `fis_cert_obter`, `fis_cert_remover`, `fis_gravar_documento`, `fis_registrar_evento`, `fis_captura_reservar`, `fis_captura_concluir`, `fis_token_confere` |
 
 ## 4.4 Funções internas e gatilhos (`app.*`)
 
@@ -223,6 +225,12 @@ pode fazer aquilo (normalmente com `app.hub_pode(org, app, nível)` ou `app.port
 | `portal_mensagens_antes` | `portal_mensagens` | Autor e tipo da mensagem vêm do usuário logado |
 | `tarefas_historico` | `tarefas` | Registra cada mudança da tarefa |
 | `crm_op_excluir` | `crm_oportunidades` | Não exclui oportunidade que virou cliente ou tem contrato assinado |
+| `fis_depara_valida` | `fis_depara_itens` | O item do estoque do de-para é da mesma empresa |
+
+Funções internas das notas (032): `app.fis_gravar_nota` (grava ou completa a nota a partir do XML lido),
+`app.fis_gravar_evento` (evento aceito muda manifestação/cancelamento), `app.fis_tipo_efetivo` (regra do tipo de
+entrada: empresa › organização › geral), `app.fis_caminho_pode` (acesso ao bucket `fiscal`), `app.fis_org_visivel`,
+`app.fis_direcao`, `app.fis_digitos`, `app.fis_manifestacao_do_tipo`.
 
 ## 4.5 Migrações: onde está a versão que vale
 

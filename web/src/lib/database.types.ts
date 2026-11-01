@@ -1361,6 +1361,7 @@ export type Database = {
           emissao: string | null;
           grupo: string | null;
           id: string;
+          nota_id: string | null;
           observacao: string | null;
           org_id: string;
           parcela: number;
@@ -1386,6 +1387,7 @@ export type Database = {
           emissao?: string | null;
           grupo?: string | null;
           id?: string;
+          nota_id?: string | null;
           observacao?: string | null;
           org_id: string;
           parcela?: number;
@@ -1411,6 +1413,7 @@ export type Database = {
           emissao?: string | null;
           grupo?: string | null;
           id?: string;
+          nota_id?: string | null;
           observacao?: string | null;
           org_id?: string;
           parcela?: number;
@@ -1425,6 +1428,13 @@ export type Database = {
           vencimento?: string;
         };
         Relationships: [
+          {
+            foreignKeyName: "fin_titulos_nota_id_fkey";
+            columns: ["nota_id"];
+            isOneToOne: false;
+            referencedRelation: "fis_notas";
+            referencedColumns: ["id"];
+          },
           {
             foreignKeyName: "fin_titulos_categoria_id_fkey";
             columns: ["categoria_id"];
@@ -1465,6 +1475,779 @@ export type Database = {
             columns: ["pessoa_id"];
             isOneToOne: false;
             referencedRelation: "fin_pessoas";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      fis_certificados: {
+        Row: {
+          cliente_id: string;
+          cnpj: string;
+          emissor: string | null;
+          enviado_em: string;
+          enviado_por: string | null;
+          icp_brasil: boolean;
+          org_id: string;
+          pfx_secret: string;
+          senha_secret: string;
+          titular: string;
+          valido_ate: string;
+          valido_de: string | null;
+        };
+        Insert: {
+          cliente_id: string;
+          cnpj: string;
+          emissor?: string | null;
+          enviado_em?: string;
+          enviado_por?: string | null;
+          icp_brasil?: boolean;
+          org_id: string;
+          pfx_secret: string;
+          senha_secret: string;
+          titular: string;
+          valido_ate: string;
+          valido_de?: string | null;
+        };
+        Update: {
+          cliente_id?: string;
+          cnpj?: string;
+          emissor?: string | null;
+          enviado_em?: string;
+          enviado_por?: string | null;
+          icp_brasil?: boolean;
+          org_id?: string;
+          pfx_secret?: string;
+          senha_secret?: string;
+          titular?: string;
+          valido_ate?: string;
+          valido_de?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "fis_certificados_cliente_id_fkey";
+            columns: ["cliente_id"];
+            isOneToOne: true;
+            referencedRelation: "clientes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "fis_certificados_org_id_fkey";
+            columns: ["org_id"];
+            isOneToOne: false;
+            referencedRelation: "organizacoes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      fis_depara_itens: {
+        Row: {
+          atualizado_em: string;
+          cliente_id: string;
+          codigo_fornecedor: string;
+          fator: number;
+          fornecedor_doc: string;
+          id: string;
+          item_id: string;
+          org_id: string;
+        };
+        Insert: {
+          atualizado_em?: string;
+          cliente_id: string;
+          codigo_fornecedor: string;
+          fator?: number;
+          fornecedor_doc: string;
+          id?: string;
+          item_id: string;
+          org_id: string;
+        };
+        Update: {
+          atualizado_em?: string;
+          cliente_id?: string;
+          codigo_fornecedor?: string;
+          fator?: number;
+          fornecedor_doc?: string;
+          id?: string;
+          item_id?: string;
+          org_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "fis_depara_itens_cliente_id_fkey";
+            columns: ["cliente_id"];
+            isOneToOne: false;
+            referencedRelation: "clientes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "fis_depara_itens_item_id_fkey";
+            columns: ["item_id"];
+            isOneToOne: false;
+            referencedRelation: "est_itens";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "fis_depara_itens_org_id_fkey";
+            columns: ["org_id"];
+            isOneToOne: false;
+            referencedRelation: "organizacoes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      fis_dfe_controle: {
+        Row: {
+          bloqueado_ate: string | null;
+          cliente_id: string;
+          documentos_recebidos: number;
+          em_execucao_ate: string | null;
+          fonte: string;
+          max_nsu: number | null;
+          org_id: string;
+          proxima_consulta_em: string | null;
+          ult_nsu: number;
+          ultima_consulta_em: string | null;
+          ultimo_cstat: string | null;
+          ultimo_erro: string | null;
+        };
+        Insert: {
+          bloqueado_ate?: string | null;
+          cliente_id: string;
+          documentos_recebidos?: number;
+          em_execucao_ate?: string | null;
+          fonte: string;
+          max_nsu?: number | null;
+          org_id: string;
+          proxima_consulta_em?: string | null;
+          ult_nsu?: number;
+          ultima_consulta_em?: string | null;
+          ultimo_cstat?: string | null;
+          ultimo_erro?: string | null;
+        };
+        Update: {
+          bloqueado_ate?: string | null;
+          cliente_id?: string;
+          documentos_recebidos?: number;
+          em_execucao_ate?: string | null;
+          fonte?: string;
+          max_nsu?: number | null;
+          org_id?: string;
+          proxima_consulta_em?: string | null;
+          ult_nsu?: number;
+          ultima_consulta_em?: string | null;
+          ultimo_cstat?: string | null;
+          ultimo_erro?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "fis_dfe_controle_cliente_id_fkey";
+            columns: ["cliente_id"];
+            isOneToOne: false;
+            referencedRelation: "clientes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "fis_dfe_controle_org_id_fkey";
+            columns: ["org_id"];
+            isOneToOne: false;
+            referencedRelation: "organizacoes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      fis_eventos: {
+        Row: {
+          chave: string;
+          cliente_id: string;
+          cstat: string | null;
+          descricao: string | null;
+          em: string;
+          id: number;
+          justificativa: string | null;
+          motivo: string | null;
+          nota_id: string | null;
+          org_id: string;
+          origem: string;
+          por: string | null;
+          protocolo: string | null;
+          registrado_em: string | null;
+          sequencia: number;
+          tp_evento: string;
+          xml: string | null;
+        };
+        Insert: {
+          chave: string;
+          cliente_id: string;
+          cstat?: string | null;
+          descricao?: string | null;
+          em?: string;
+          id?: never;
+          justificativa?: string | null;
+          motivo?: string | null;
+          nota_id?: string | null;
+          org_id: string;
+          origem: string;
+          por?: string | null;
+          protocolo?: string | null;
+          registrado_em?: string | null;
+          sequencia?: number;
+          tp_evento: string;
+          xml?: string | null;
+        };
+        Update: {
+          chave?: string;
+          cliente_id?: string;
+          cstat?: string | null;
+          descricao?: string | null;
+          em?: string;
+          id?: never;
+          justificativa?: string | null;
+          motivo?: string | null;
+          nota_id?: string | null;
+          org_id?: string;
+          origem?: string;
+          por?: string | null;
+          protocolo?: string | null;
+          registrado_em?: string | null;
+          sequencia?: number;
+          tp_evento?: string;
+          xml?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "fis_eventos_cliente_id_fkey";
+            columns: ["cliente_id"];
+            isOneToOne: false;
+            referencedRelation: "clientes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "fis_eventos_nota_id_fkey";
+            columns: ["nota_id"];
+            isOneToOne: false;
+            referencedRelation: "fis_notas";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "fis_eventos_org_id_fkey";
+            columns: ["org_id"];
+            isOneToOne: false;
+            referencedRelation: "organizacoes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      fis_nota_itens: {
+        Row: {
+          cbs_valor: number;
+          cest: string | null;
+          cfop: string | null;
+          cliente_id: string;
+          codigo: string | null;
+          cofins_cst: string | null;
+          cofins_valor: number;
+          desconto: number;
+          descricao: string;
+          fator: number;
+          frete: number;
+          gtin: string | null;
+          ibs_valor: number;
+          icms_aliquota: number;
+          icms_base: number;
+          icms_cst: string | null;
+          icms_st_valor: number;
+          icms_valor: number;
+          id: number;
+          ipi_valor: number;
+          item_id: string | null;
+          ncm: string | null;
+          nota_id: string;
+          numero: number;
+          org_id: string;
+          outros: number;
+          pis_cst: string | null;
+          pis_valor: number;
+          quantidade: number;
+          seguro: number;
+          unidade: string | null;
+          valor_total: number;
+          valor_unitario: number;
+        };
+        Insert: {
+          cbs_valor?: number;
+          cest?: string | null;
+          cfop?: string | null;
+          cliente_id: string;
+          codigo?: string | null;
+          cofins_cst?: string | null;
+          cofins_valor?: number;
+          desconto?: number;
+          descricao: string;
+          fator?: number;
+          frete?: number;
+          gtin?: string | null;
+          ibs_valor?: number;
+          icms_aliquota?: number;
+          icms_base?: number;
+          icms_cst?: string | null;
+          icms_st_valor?: number;
+          icms_valor?: number;
+          id?: never;
+          ipi_valor?: number;
+          item_id?: string | null;
+          ncm?: string | null;
+          nota_id: string;
+          numero: number;
+          org_id: string;
+          outros?: number;
+          pis_cst?: string | null;
+          pis_valor?: number;
+          quantidade?: number;
+          seguro?: number;
+          unidade?: string | null;
+          valor_total?: number;
+          valor_unitario?: number;
+        };
+        Update: {
+          cbs_valor?: number;
+          cest?: string | null;
+          cfop?: string | null;
+          cliente_id?: string;
+          codigo?: string | null;
+          cofins_cst?: string | null;
+          cofins_valor?: number;
+          desconto?: number;
+          descricao?: string;
+          fator?: number;
+          frete?: number;
+          gtin?: string | null;
+          ibs_valor?: number;
+          icms_aliquota?: number;
+          icms_base?: number;
+          icms_cst?: string | null;
+          icms_st_valor?: number;
+          icms_valor?: number;
+          id?: never;
+          ipi_valor?: number;
+          item_id?: string | null;
+          ncm?: string | null;
+          nota_id?: string;
+          numero?: number;
+          org_id?: string;
+          outros?: number;
+          pis_cst?: string | null;
+          pis_valor?: number;
+          quantidade?: number;
+          seguro?: number;
+          unidade?: string | null;
+          valor_total?: number;
+          valor_unitario?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "fis_nota_itens_cliente_id_fkey";
+            columns: ["cliente_id"];
+            isOneToOne: false;
+            referencedRelation: "clientes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "fis_nota_itens_item_id_fkey";
+            columns: ["item_id"];
+            isOneToOne: false;
+            referencedRelation: "est_itens";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "fis_nota_itens_nota_id_fkey";
+            columns: ["nota_id"];
+            isOneToOne: false;
+            referencedRelation: "fis_notas";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "fis_nota_itens_org_id_fkey";
+            columns: ["org_id"];
+            isOneToOne: false;
+            referencedRelation: "organizacoes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      fis_notas: {
+        Row: {
+          atualizado_em: string;
+          autorizacao: string | null;
+          cbs_valor: number;
+          cfop_principal: string | null;
+          chave: string;
+          cliente_id: string;
+          cofins_valor: number;
+          conteudo: string;
+          criado_em: string;
+          data_entrada: string | null;
+          destinatario_doc: string | null;
+          destinatario_nome: string | null;
+          direcao: string;
+          duplicatas: Json;
+          emissao: string | null;
+          emitente_doc: string | null;
+          emitente_ie: string | null;
+          emitente_nome: string | null;
+          emitente_uf: string | null;
+          estoque_grupo: string | null;
+          ibs_valor: number;
+          icms_base: number;
+          icms_st_base: number;
+          icms_st_valor: number;
+          icms_valor: number;
+          id: string;
+          ipi_valor: number;
+          iss_retido: boolean;
+          iss_valor: number;
+          manifestacao: string | null;
+          manifestacao_em: string | null;
+          manifestacao_protocolo: string | null;
+          modelo: string;
+          natureza: string | null;
+          nsu: number | null;
+          numero: string | null;
+          org_id: string;
+          origem: string;
+          pessoa_id: string | null;
+          pis_valor: number;
+          processada: boolean;
+          processada_em: string | null;
+          processada_por: string | null;
+          protocolo: string | null;
+          retencoes: number;
+          serie: string | null;
+          situacao: string;
+          tipo_entrada: string | null;
+          tipo_nf: string | null;
+          titulos: string[];
+          valor_desconto: number;
+          valor_frete: number;
+          valor_outros: number;
+          valor_produtos: number;
+          valor_seguro: number;
+          valor_total: number;
+          xml_caminho: string | null;
+        };
+        Insert: {
+          atualizado_em?: string;
+          autorizacao?: string | null;
+          cbs_valor?: number;
+          cfop_principal?: string | null;
+          chave: string;
+          cliente_id: string;
+          cofins_valor?: number;
+          conteudo?: string;
+          criado_em?: string;
+          data_entrada?: string | null;
+          destinatario_doc?: string | null;
+          destinatario_nome?: string | null;
+          direcao: string;
+          duplicatas?: Json;
+          emissao?: string | null;
+          emitente_doc?: string | null;
+          emitente_ie?: string | null;
+          emitente_nome?: string | null;
+          emitente_uf?: string | null;
+          estoque_grupo?: string | null;
+          ibs_valor?: number;
+          icms_base?: number;
+          icms_st_base?: number;
+          icms_st_valor?: number;
+          icms_valor?: number;
+          id?: string;
+          ipi_valor?: number;
+          iss_retido?: boolean;
+          iss_valor?: number;
+          manifestacao?: string | null;
+          manifestacao_em?: string | null;
+          manifestacao_protocolo?: string | null;
+          modelo: string;
+          natureza?: string | null;
+          nsu?: number | null;
+          numero?: string | null;
+          org_id: string;
+          origem: string;
+          pessoa_id?: string | null;
+          pis_valor?: number;
+          processada?: boolean;
+          processada_em?: string | null;
+          processada_por?: string | null;
+          protocolo?: string | null;
+          retencoes?: number;
+          serie?: string | null;
+          situacao?: string;
+          tipo_entrada?: string | null;
+          tipo_nf?: string | null;
+          titulos?: string[];
+          valor_desconto?: number;
+          valor_frete?: number;
+          valor_outros?: number;
+          valor_produtos?: number;
+          valor_seguro?: number;
+          valor_total?: number;
+          xml_caminho?: string | null;
+        };
+        Update: {
+          atualizado_em?: string;
+          autorizacao?: string | null;
+          cbs_valor?: number;
+          cfop_principal?: string | null;
+          chave?: string;
+          cliente_id?: string;
+          cofins_valor?: number;
+          conteudo?: string;
+          criado_em?: string;
+          data_entrada?: string | null;
+          destinatario_doc?: string | null;
+          destinatario_nome?: string | null;
+          direcao?: string;
+          duplicatas?: Json;
+          emissao?: string | null;
+          emitente_doc?: string | null;
+          emitente_ie?: string | null;
+          emitente_nome?: string | null;
+          emitente_uf?: string | null;
+          estoque_grupo?: string | null;
+          ibs_valor?: number;
+          icms_base?: number;
+          icms_st_base?: number;
+          icms_st_valor?: number;
+          icms_valor?: number;
+          id?: string;
+          ipi_valor?: number;
+          iss_retido?: boolean;
+          iss_valor?: number;
+          manifestacao?: string | null;
+          manifestacao_em?: string | null;
+          manifestacao_protocolo?: string | null;
+          modelo?: string;
+          natureza?: string | null;
+          nsu?: number | null;
+          numero?: string | null;
+          org_id?: string;
+          origem?: string;
+          pessoa_id?: string | null;
+          pis_valor?: number;
+          processada?: boolean;
+          processada_em?: string | null;
+          processada_por?: string | null;
+          protocolo?: string | null;
+          retencoes?: number;
+          serie?: string | null;
+          situacao?: string;
+          tipo_entrada?: string | null;
+          tipo_nf?: string | null;
+          titulos?: string[];
+          valor_desconto?: number;
+          valor_frete?: number;
+          valor_outros?: number;
+          valor_produtos?: number;
+          valor_seguro?: number;
+          valor_total?: number;
+          xml_caminho?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "fis_notas_cliente_id_fkey";
+            columns: ["cliente_id"];
+            isOneToOne: false;
+            referencedRelation: "clientes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "fis_notas_org_id_fkey";
+            columns: ["org_id"];
+            isOneToOne: false;
+            referencedRelation: "organizacoes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "fis_notas_pessoa_id_fkey";
+            columns: ["pessoa_id"];
+            isOneToOne: false;
+            referencedRelation: "fin_pessoas";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      fis_parametros: {
+        Row: {
+          ambiente: string;
+          atualizado_em: string;
+          atualizado_por: string | null;
+          captura_ativa: boolean;
+          ciencia_automatica: boolean;
+          cliente_id: string;
+          contribuinte_icms: boolean;
+          contribuinte_ipi: boolean;
+          org_id: string;
+        };
+        Insert: {
+          ambiente?: string;
+          atualizado_em?: string;
+          atualizado_por?: string | null;
+          captura_ativa?: boolean;
+          ciencia_automatica?: boolean;
+          cliente_id: string;
+          contribuinte_icms?: boolean;
+          contribuinte_ipi?: boolean;
+          org_id: string;
+        };
+        Update: {
+          ambiente?: string;
+          atualizado_em?: string;
+          atualizado_por?: string | null;
+          captura_ativa?: boolean;
+          ciencia_automatica?: boolean;
+          cliente_id?: string;
+          contribuinte_icms?: boolean;
+          contribuinte_ipi?: boolean;
+          org_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "fis_parametros_cliente_id_fkey";
+            columns: ["cliente_id"];
+            isOneToOne: true;
+            referencedRelation: "clientes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "fis_parametros_org_id_fkey";
+            columns: ["org_id"];
+            isOneToOne: false;
+            referencedRelation: "organizacoes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      fis_regras_credito: {
+        Row: {
+          aliquota: number | null;
+          base: string | null;
+          condicao: string | null;
+          criado_em: string;
+          cst_sem_credito: string[] | null;
+          explicacao: string;
+          fonte_legal: string;
+          forma: string;
+          id: number;
+          org_id: string | null;
+          regime: string;
+          tipos_entrada: string[] | null;
+          tributo: string;
+          vigencia_fim: string | null;
+          vigencia_inicio: string;
+        };
+        Insert: {
+          aliquota?: number | null;
+          base?: string | null;
+          condicao?: string | null;
+          criado_em?: string;
+          cst_sem_credito?: string[] | null;
+          explicacao: string;
+          fonte_legal: string;
+          forma: string;
+          id?: never;
+          org_id?: string | null;
+          regime: string;
+          tipos_entrada?: string[] | null;
+          tributo: string;
+          vigencia_fim?: string | null;
+          vigencia_inicio: string;
+        };
+        Update: {
+          aliquota?: number | null;
+          base?: string | null;
+          condicao?: string | null;
+          criado_em?: string;
+          cst_sem_credito?: string[] | null;
+          explicacao?: string;
+          fonte_legal?: string;
+          forma?: string;
+          id?: never;
+          org_id?: string | null;
+          regime?: string;
+          tipos_entrada?: string[] | null;
+          tributo?: string;
+          vigencia_fim?: string | null;
+          vigencia_inicio?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "fis_regras_credito_org_id_fkey";
+            columns: ["org_id"];
+            isOneToOne: false;
+            referencedRelation: "organizacoes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      fis_tipos_entrada: {
+        Row: {
+          ativo: boolean;
+          atualizado_em: string;
+          categoria_id: string | null;
+          cliente_id: string | null;
+          codigo: string;
+          explicacao: string | null;
+          gera_pagar: boolean;
+          id: string;
+          movimenta_estoque: boolean;
+          nome: string;
+          org_id: string | null;
+        };
+        Insert: {
+          ativo?: boolean;
+          atualizado_em?: string;
+          categoria_id?: string | null;
+          cliente_id?: string | null;
+          codigo: string;
+          explicacao?: string | null;
+          gera_pagar: boolean;
+          id?: string;
+          movimenta_estoque: boolean;
+          nome: string;
+          org_id?: string | null;
+        };
+        Update: {
+          ativo?: boolean;
+          atualizado_em?: string;
+          categoria_id?: string | null;
+          cliente_id?: string | null;
+          codigo?: string;
+          explicacao?: string | null;
+          gera_pagar?: boolean;
+          id?: string;
+          movimenta_estoque?: boolean;
+          nome?: string;
+          org_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "fis_tipos_entrada_categoria_id_fkey";
+            columns: ["categoria_id"];
+            isOneToOne: false;
+            referencedRelation: "fin_categorias";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "fis_tipos_entrada_cliente_id_fkey";
+            columns: ["cliente_id"];
+            isOneToOne: false;
+            referencedRelation: "clientes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "fis_tipos_entrada_org_id_fkey";
+            columns: ["org_id"];
+            isOneToOne: false;
+            referencedRelation: "organizacoes";
             referencedColumns: ["id"];
           },
         ];
@@ -3545,6 +4328,19 @@ export type Database = {
         Returns: Json;
       };
       fin_lancar: { Args: { p: Json }; Returns: Json };
+      fis_desfazer_lancamento: {
+        Args: { p_motivo: string; p_nota: string };
+        Returns: undefined;
+      };
+      fis_pode: { Args: { p_cliente: string; p_nivel?: string }; Returns: boolean };
+      fis_pode_certificado: { Args: { p_cliente: string }; Returns: boolean };
+      fis_processar_nota: { Args: { p: Json }; Returns: Json };
+      fis_registrar_upload: { Args: { p: Json }; Returns: Json };
+      fis_salvar_parametros: {
+        Args: { p: Json; p_cliente: string };
+        Returns: undefined;
+      };
+      fis_salvar_tipo_entrada: { Args: { p: Json }; Returns: string };
       gerar_competencia: {
         Args: { p_competencia: string; p_org: string };
         Returns: number;

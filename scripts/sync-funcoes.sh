@@ -3,3 +3,4 @@
 set -e
 cd "$(dirname "$0")/.."
 python3 scripts/nucleo_balancete.py
+python3 scripts/nucleo_fiscal.py

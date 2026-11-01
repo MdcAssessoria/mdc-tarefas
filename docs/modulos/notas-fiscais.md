@@ -1,0 +1,127 @@
+# Módulo Entradas — notas fiscais recebidas
+
+> **Resumo:** com o certificado A1 (e-CNPJ) da empresa, o HUB busca sozinho as NF-e na SEFAZ (Distribuição DF-e do
+> Ambiente Nacional) e as NFS-e no Ambiente de Dados Nacional (ADN), mostra cada nota em linguagem simples
+> ("Aguardando sua resposta", "Prazo vencendo", "Confirmada"…), responde à SEFAZ (manifestação do destinatário, com
+> protocolo) e lança a nota no modelo do Conta Azul: a pessoa escolhe o **tipo de entrada** e a regra decide estoque,
+> conta a pagar e categoria. A tela de carga tributária mostra os impostos das compras e os créditos **estimados**
+> conforme o regime da empresa. Frente 2 do Financeiro v2 (01/11/2026), migração `032_fiscal.sql`. Comunicador fiscal
+> próprio nas Edge Functions (sem empresa emissora).
+
+## 1. Telas (módulo Entradas, rota `/entradas`)
+
+| Endereço | Quem usa | O que faz |
+| --- | --- | --- |
+| `/entradas` | Financeiro (ver; responder, enviar XML e buscar com operar) | **Notas recebidas**: situação em linguagem simples, dias para o prazo, filtros (emissão em um clique, situação, + fornecedor e tipo de nota), busca; 3 indicadores que filtram (aguardando, prazo vencendo, prontas para lançar); marcar várias e responder em lote; "Responder" por nota; ver itens e histórico com protocolos; baixar XML; "Buscar agora" (respeita a regra da SEFAZ); "Enviar XML"; PDF e Excel |
+| `/entradas/lancar` | Financeiro (ver; lançar com operar; regras com gerir) | **Lançar nota**: prontas para lançar → 1) tipo de entrada (com o efeito de cada um) 2) fornecedor (acha pelo CNPJ ou cadastra) 3) itens ligados ao estoque (de-para lembrado, fator de unidade, cadastrar item novo) 4) parcelas da fatura (lidas das duplicatas; NFS-e sugere valor líquido das retenções), categoria, centro, conta; aba **Lançadas** com "Desfazer lançamento" (motivo); aba **Regras dos tipos de entrada** da empresa; PDF e Excel. `?nota=<id>` abre direto |
+| `/entradas/carga-tributaria` | Financeiro (ver) | **Carga tributária das entradas**: por fornecedor, NCM, CFOP ou mês; ICMS(+ST), IPI, PIS/COFINS, ISS, IBS/CBS, carga % e crédito estimado; frase de resumo, 3 indicadores, gráfico que filtra a tabela; "Como o crédito é estimado" com a lei e a vigência de cada regra; PDF e Excel |
+| `/entradas/certificado` | Financeiro (gerir envia/remove; operar muda parâmetros) | **Certificado digital** da empresa: situação, CNPJ, emissor (ICP-Brasil?), vencimento; envio com `CampoArquivo` + senha; busca automática (por fonte: documentos recebidos, última e próxima consulta, último aviso) e parâmetros (busca ligada, ciência automática, contribuinte de ICMS/IPI, ambiente) |
+
+Módulo próprio no menu (`navegacao.ts`, módulo `entradas`). Enquanto as permissões por módulo não forem separadas,
+Entradas usa a ferramenta **Financeiro** (`APP_DO_MODULO`) e o banco confere com `app.fin_pode`. A empresa escolhida
+é a mesma do Financeiro (lembrada no navegador).
+
+Código: regras puras em `web/src/dominios/notas/` — `xml.ts` (leitor de XML sem dependências), `documentos.ts`
+(procNFe, resNFe, resEvento/procEventoNFe, NFS-e nacional → campos do banco), `sefaz.ts` (endereços, SOAP 1.2,
+retornos, gzip, eventos, ADN), `regras.ts` (prazos, situação, manifestações permitidas, decisão da captura),
+`creditos.ts` (estimativa por regime), `tiposEntrada.ts` (tipos, sugestão por CFOP, regra efetiva); testes em
+`notas.test.ts` com XMLs fictícios de `exemplosXml.ts`. Leituras em `leituras.ts`, gravações em `repositorio.ts`,
+componentes em `componentes/`, telas em `web/src/app/(hub)/entradas/`.
+
+## 2. Regras
+
+| Regra | Onde |
+| --- | --- |
+| Certificado: só A1 (.pfx/.p12), senha conferida, **mesmo CNPJ raiz** da empresa (SubjectAltName 2.16.76.1.3.3 ou final do CN), dentro da validade; não ICP-Brasil é aceito com aviso (SEFAZ/ADN recusam) | `_fiscal/certificado.ts`, `fiscal-certificado` |
+| Arquivo e senha no Vault; nunca voltam para a tela; vencimento entra em Vencimentos (visível ao cliente) | `fis_cert_salvar` |
+| NF-e: `distDFeInt` por `ultNSU`, lote de até 50; 138 com ultNSU < maxNSU continua; 137 ou ultNSU = maxNSU → próxima consulta só em 1 hora; 656 → bloqueio de 1 hora; nunca fora de sequência (o NSU só avança e só até o último documento gravado) | `regras.decidirDistDFe`, `fiscal-captura`, `fis_captura_concluir` |
+| NFS-e: `GET {ADN}/DFe/{NSU}?cnpjConsulta=&lote=true`; documentos com NSU ≤ último guardado são descartados (não importa se o ADN inclui o NSU pedido); lote cheio continua, vazio/404 espera 1 hora; 429 espera 1 hora | `regras.decidirAdn`, `_fiscal/captura.ts` |
+| Ciência automática (ligável por empresa): nos resumos (resNFe) dentro do prazo de ciência, até 20 por rodada, para a SEFAZ liberar o XML completo, que chega numa próxima consulta | `fiscal-captura` |
+| Manifestação: Ciência (210210), Confirmação (210200), Desconhecimento (210220), Operação não realizada (210240, justificativa de 15 a 255 letras); cOrgao 91; lote de até 20; no máximo dois eventos de cada tipo conclusivo (NT 2020.001 v1.50); a ciência não volta atrás de uma conclusiva | `sefaz.ts`, `regras.manifestacoesPermitidas`, `app.fis_gravar_evento` |
+| Prazos (da autorização): ciência 10 dias; conclusivas 180 dias até 31/05/2026 e **90 dias** para notas autorizadas desde 01/06/2026 (Ajuste SINIEF 14/26, NT 2020.001 v1.60). "Prazo vencendo" = 10 dias ou menos | `regras.PRAZOS_MANIFESTACAO` |
+| Evento recusado pela SEFAZ fica no histórico com o código e o motivo, sem mudar a nota | `fis_registrar_evento` |
+| Assinatura XMLDSig enveloped, RSA-SHA1, C14N, Reference ao Id do infEvento, certificado em KeyInfo; conferida com `xmlsec1 --verify` nos testes | `_fiscal/assinatura.ts` |
+| Cancelamento distribuído (110111/110112) marca a nota como cancelada, mesmo se chegar antes da nota | `app.fis_gravar_evento`, `app.fis_gravar_nota` |
+| Só nota de **entrada**, **completa**, **autorizada** e não lançada pode ser lançada; **NF-e só depois da Confirmação da operação** (pedido do Edvaldo) | `fis_processar_nota`, `regras.prontaParaLancar` |
+| Tipo de entrada decide: estoque (sim/não), conta a pagar (sim/não) e categoria padrão. Vale a regra da empresa, senão a da organização, senão a geral (padrão MDC) | `fis_tipos_entrada`, `app.fis_tipo_efetivo` |
+| Padrões: revenda e matéria-prima = estoque + pagar; uso e consumo, imobilizado e serviço = só pagar; devolução de venda = só estoque; remessa/retorno/bonificação = nada | seed da 032 e `TIPOS_ENTRADA` |
+| Sugestão do tipo pelo CFOP do fornecedor (devolução, remessa, imobilizado, uso e consumo, industrialização) ou pelo último tipo usado com o mesmo fornecedor; NFS-e = serviço | `sugerirTipoEntrada` |
+| Fornecedor: o escolhido, ou o cadastro com o mesmo CNPJ, ou cadastrado na hora | `fis_processar_nota` |
+| Estoque: cada item precisa estar ligado a um item do estoque (ou ser cadastrado na hora); quantidade × fator; custo = produto + frete + seguro + outras − desconto + IPI + ICMS-ST; movimento `app.est_gravar('entrada', origem 'nota_entrada')`; item que não controla estoque passa sem movimento | `fis_processar_nota` |
+| De-para lembrado por empresa + CNPJ do fornecedor + código do item no fornecedor (com o fator) | `fis_depara_itens` |
+| Contas a pagar: uma por parcela via `public.fin_lancar` (descrição "NF 123 · Fornecedor (1/2)", documento "NF 123/1"); soma das parcelas não passa do valor da nota; título ganha `nota_id` | `fis_processar_nota` |
+| Desfazer: motivo obrigatório; recusa se alguma conta já teve pagamento; cancela as contas e estorna o estoque (recusa se ficar negativo) | `fis_desfazer_lancamento` |
+| XML avulso: lido no navegador com o mesmo leitor da captura; precisa ser da empresa (CNPJ raiz do emitente ou do destinatário/tomador); XML completo; mesma nota não entra duas vezes (resumo vira completa) | `fis_registrar_upload`, `repositorio.enviarXml` |
+| Créditos (estimativa): **Simples** sem crédito de ICMS/IPI/PIS/COFINS (LC 123/2006, art. 23); **Presumido** PIS/COFINS cumulativos sem crédito, ICMS destacado para contribuinte (revenda, matéria-prima, devolução) e IPI para indústria (matéria-prima); **Real** PIS 1,65% e COFINS 7,6% sobre revenda, insumos, serviços e devoluções, com o ICMS fora da base desde 30/05/2023 (Lei 14.592/2023), e ICMS/IPI como no Presumido; compra com CST 04–09 (monofásico, alíquota zero, isento, suspenso) não gera crédito; IBS/CBS 2026 só informativo. Tudo em `fis_regras_credito` (regra da organização tem preferência) | `creditos.ts`, `fis_regras_credito` |
+
+## 3. Banco (migração 032)
+
+`fis_parametros`, `fis_certificados`, `fis_dfe_controle`, `fis_notas`, `fis_nota_itens`, `fis_eventos`,
+`fis_depara_itens`, `fis_tipos_entrada`, `fis_regras_credito`; coluna `fin_titulos.nota_id`; bucket privado `fiscal`
+(XML até 5 MB). Leitura por `app.fin_pode(cliente, 'ver')` (tipos e regras: gerais para todos, as da organização para
+quem vê o Financeiro dela). Gravação só pelas funções (ver docs/04, 4.3). Agendamento `fiscal-captura` (pg_cron a cada
+15 minutos, token `fiscal_captura_token` no Vault). Testes: `supabase/testes/50_fiscal.sql`.
+
+Caminhos no Storage: `<org>/<cliente>/nfe/AAAA/MM/<chave>[-resumo].xml`, `…/nfse/…`, `…/eventos/…/<chave>-<tpEvento>-<seq>.xml`,
+`…/upload/AAAA/MM/<chave>-<momento>.xml`. O comprovante da manifestação enviada pelo HUB (procEventoNFe) fica em
+`fis_eventos.xml`.
+
+## 4. Fluxos
+
+```mermaid
+sequenceDiagram
+    participant Cron as pg_cron (15 min)
+    participant EF as fiscal-captura
+    participant DB as Banco (fis_*)
+    participant SEFAZ as SEFAZ AN (DistDFe)
+    participant ADN as ADN NFS-e
+    Cron->>EF: x-agente-token
+    EF->>DB: fis_captura_reservar (hora liberada, sem bloqueio)
+    EF->>DB: fis_cert_obter (Vault)
+    loop até 137 ou ultNSU = maxNSU (máx. 10 lotes)
+      EF->>SEFAZ: distDFeInt ultNSU (mTLS, HTTP/1.1)
+      SEFAZ-->>EF: docZip (resNFe, procNFe, resEvento…)
+      EF->>DB: Storage "fiscal" + fis_gravar_documento
+    end
+    EF->>SEFAZ: Ciência (210210) nos resumos, assinada
+    EF->>ADN: GET /DFe/{NSU}
+    EF->>DB: fis_captura_concluir (NSU, próxima consulta, erro)
+```
+
+Na tela: Notas recebidas → **Responder** (fiscal-manifestar assina e envia; o aceito muda a situação) → **Lançar**
+(fis_processar_nota: fornecedor, de-para, estoque, contas a pagar) → contas aparecem em Financeiro › A pagar.
+
+## 5. Publicar e primeiro teste real
+
+1. Aplicar `032_fiscal.sql` (quem integra, com aprovação do Edvaldo) e rodar os Advisors.
+2. Publicar `fiscal-certificado`, `fiscal-manifestar` e `fiscal-captura` (docs/07, 7.4).
+3. Edvaldo envia o e-CNPJ A1 da MDC em `/entradas/certificado` (ele digita a senha). Conferir o CNPJ raiz e a validade.
+4. Para testar sem risco: ambiente **Homologação** nos parâmetros (as URLs de homologação estão em `sefaz.ts`) e
+   "Buscar agora". Depois voltar para Produção. Na produção, a primeira consulta traz os últimos 90 dias.
+5. Ver em `/entradas/certificado` o último código (cStat) e o último aviso de cada fonte.
+
+## 6. Fontes
+
+- NT 2014.002 v1.40 — Distribuição de DF-e (Portal Nacional da NF-e).
+- NT 2020.001 v1.50/v1.60 — Manifestação do destinatário; prazos ciência 10 dias, conclusivas 90 dias desde 01/06/2026
+  (Ajuste SINIEF 14/26): [Senior — exigências legais](https://documentacao.senior.com.br/exigenciaslegais/noticias/federal/2026/2026-04-27-nf-e-nota-tecnica-no-2020-001-v-1-60-evento-de-manifestacao-do-destinatario),
+  [Focus NFe — NT 2020.001](https://focusnfe.com.br/notas-tecnicas/mde/2020-001/).
+- Endereços do Ambiente Nacional e montagem do evento: projeto aberto [NFePHP/sped-nfe](https://github.com/nfephp-org/sped-nfe)
+  (`storage/wsnfe_4.00_mod55.xml`, `src/Tools.php`); mudança de endereço de homologação em 23/05/2022:
+  [Inventti](https://inventti.com.br/nota-fiscal-eletronica-alteracao-do-web-services-do-ambiente-nacional/).
+- ADN NFS-e: [Manual Contribuintes – APIs ADN](https://www.gov.br/nfse/pt-br/biblioteca/documentacao-tecnica/documentacao-atual/manual-contribuintes-apis-adn-sistema-nacional-nfse.pdf)
+  e o projeto aberto [dfe-nfse (PyPI)](https://pypi.org/project/dfe-nfse/0.2.0/) (`/contribuintes/DFe/{NSU}`, `cnpjConsulta`, `lote`,
+  `LoteDFe[].ArquivoXml` gzip+base64); fórum [TabNews](https://www.tabnews.com.br/Crazynds/6930df61-f915-4476-980f-6ce69d7197a7) (produção restrita).
+- Créditos: LC 123/2006 art. 23; Lei 9.718/1998; Leis 10.637/2002 e 10.833/2003 (art. 3º, incluído o §2º, III pela
+  Lei 14.592/2023); LC 87/1996 arts. 19, 20 e 33; Decreto 7.212/2010 art. 226; LC 214/2025.
+
+## 7. Limitações e próximos passos
+
+- Ainda não testado com certificado real (falta o e-CNPJ da MDC; o teste com certificado autoassinado foi recusado pela
+  SEFAZ e pelo ADN no aperto de mão, como esperado).
+- CT-e e NFC-e não são capturados; eventos da NFS-e (cancelamento pelo prestador) são ignorados por ora.
+- O custo de estoque usa o valor pago; a separação dos créditos recuperáveis no custo (Real/Presumido) fica para a
+  Contabilidade/Fiscal.
+- Crédito do imobilizado (CIAP 1/48, depreciação) e de uso e consumo não entram na estimativa.
+- Tela do Portal (cliente) e a separação de permissão "Entradas" × "Financeiro" ficam para a integração.
+- Emissão (Saídas) vai reaproveitar o certificado, `_fiscal/assinatura.ts` e o transporte mTLS.

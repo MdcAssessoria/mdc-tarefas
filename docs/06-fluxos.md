@@ -82,6 +82,7 @@ Concluir uma **baixa** (que inativa o cliente) é só para gestor ou administrad
 | `aplicar_convites`, `aplicar_convites_portal` | Conta criada pelo convite | Liga a conta à organização ou ao cliente |
 | `portal_usuario_nao_equipe` | Acesso de portal criado ou mudado | Impede equipe como usuário do portal e audita |
 | pg_cron `agente-balancetes` → Função `balancete-agente` | A cada 15 min, só com a pasta ligada em Configurações › Integrações | Lê a pasta de balancetes do SharePoint, cria rascunhos, move os arquivos e registra em `hub_importacoes` |
+| pg_cron `fiscal-captura` → Função `fiscal-captura` | A cada 15 min, só se houver empresa com captura ligada e certificado válido | Para cada empresa liberada: Distribuição DF-e da SEFAZ (NF-e, respeitando 137/656 e 1 hora de espera), ciência automática nos resumos, ADN da NFS-e; grava XML no bucket `fiscal` e as notas/eventos ([fluxo](modulos/notas-fiscais.md#4-fluxos)) |
 | Simulador (projeto separado) → `crm_receber_lead` | Lead preenchido no site | Cria a oportunidade no CRM |
 | `fin_conta_bancaria_valida`, `fin_categoria_valida`, `fin_titulo_valida`, `est_item_valida` | Gravação de conta bancária, categoria, título ou item | Confere empresa, conta analítica ativa do plano, tipo da categoria x tipo do título, travas de situação do título e de item com saldo |
 | `sem_troca_empresa`, `cliente_mesma_org` (tabelas `fin_*` e `est_*`) | Cadastro do Financeiro/estoque alterado | Impede mudar de empresa ou de organização |
