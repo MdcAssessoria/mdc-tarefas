@@ -1,5 +1,9 @@
-// Leitura de planilhas no navegador (SheetJS carregado do cdnjs na primeira vez).
-const SHEETJS = "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";
+// Leitura de planilhas no navegador (SheetJS carregado na primeira vez, do CDN oficial da SheetJS).
+// 0.20.3 corrige as falhas publicadas da 0.18.5 (CVE-2023-30533 e CVE-2024-22363); o npm e o cdnjs só têm a 0.18.5.
+// O "integrity" garante que o navegador só executa exatamente este arquivo: se o CDN mudar o conteúdo, a leitura
+// falha com aviso em vez de rodar código diferente. Para atualizar a versão, recalcule o hash (SHA-384 em base64).
+const SHEETJS = "https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js";
+const SHEETJS_INTEGRIDADE = "sha384-EnyY0/GSHQGSxSgMwaIPzSESbqoOLSexfnSMN2AP+39Ckmn92stwABZynq1JyzdT";
 
 export type SheetJS = {
   read: (d: unknown, o: Record<string, unknown>) => { SheetNames: string[]; Sheets: Record<string, unknown> };
@@ -58,6 +62,8 @@ export function carregarSheetJS(): Promise<SheetJS> {
     carregando = new Promise((ok, falha) => {
       const s = document.createElement("script");
       s.src = SHEETJS;
+      s.integrity = SHEETJS_INTEGRIDADE;
+      s.crossOrigin = "anonymous";
       s.onload = () => (w.XLSX ? ok(w.XLSX) : falha(new Error("Leitor de planilhas não carregou")));
       s.onerror = () => {
         carregando = null;
