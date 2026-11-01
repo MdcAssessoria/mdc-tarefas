@@ -2721,6 +2721,7 @@ export type Database = {
         Args: { p_email: string; p_org: string };
         Returns: undefined;
       };
+      fin_desfazer_lote: { Args: { p_lote: string }; Returns: Json };
       fin_importar_extrato: {
         Args: {
           p_arquivo: string;

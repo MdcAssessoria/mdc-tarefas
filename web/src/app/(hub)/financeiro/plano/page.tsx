@@ -233,6 +233,20 @@ export default function PaginaPlano() {
                 <b>{previa.arquivo}</b>: {previa.contas.length} conta(s) · {previa.contas.filter((c) => c.analitica).length} analítica(s) ·{" "}
                 {previa.contas.filter((c) => !c.analitica).length} sintética(s).
               </p>
+              {(() => {
+                const novas = new Set(previa.contas.map((c) => c.classificacao));
+                const ativas = plano.filter((c) => c.ativo);
+                const saem = ativas.filter((c) => !novas.has(c.classificacao)).length;
+                const entram = previa.contas.filter((c) => !plano.some((p) => p.classificacao === c.classificacao)).length;
+                if (!ativas.length) return null;
+                const muito = saem > ativas.length * 0.3;
+                return (
+                  <p className={muito ? "rounded-md bg-red-50 p-2 font-medium text-red-800" : "text-neutral-700"}>
+                    Comparado com o plano atual: {entram} conta(s) nova(s) e {saem} conta(s) que ficarão inativas.
+                    {muito && " Muitas contas sairiam: confira se este é mesmo o plano desta empresa antes de gravar."}
+                  </p>
+                );
+              })()}
               {previa.avisos.map((a) => (
                 <p key={a} className="text-amber-900">
                   {a}

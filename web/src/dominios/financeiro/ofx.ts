@@ -25,7 +25,18 @@ export interface ExtratoLido {
 function tag(bloco: string, nome: string): string | null {
   const m = bloco.match(new RegExp(`<${nome}>\\s*([^<\\r\\n]*)`, "i"));
   const v = m?.[1]?.trim();
-  return v ? v : null;
+  return v ? entidades(v) : null;
+}
+
+/** OFX em XML escreve &amp;, &lt;, &gt;, &quot;, &apos; e &#NN; no texto. */
+function entidades(s: string): string {
+  return s
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/&#(\d+);/g, (_, n: string) => String.fromCharCode(Number(n)))
+    .replace(/&amp;/g, "&");
 }
 
 /** 20260131120000[-3:BRT] → 2026-01-31 */
@@ -49,6 +60,9 @@ export function lerOfx(texto: string): ExtratoLido {
   const avisos: string[] = [];
   if (!/<OFX>/i.test(texto)) throw new Error("O arquivo não é um extrato OFX (não encontrei a marca <OFX>).");
   const corpo = texto.slice(texto.search(/<OFX>/i));
+  const contas = (corpo.match(/<STMTRS>/gi) ?? []).length + (corpo.match(/<CCSTMTRS>/gi) ?? []).length;
+  if (contas > 1)
+    throw new Error(`Este arquivo traz ${contas} contas juntas. Baixe no banco um extrato por conta e importe cada um na conta certa.`);
   const lancamentos: LancamentoExtrato[] = [];
   const blocos = corpo.split(/<STMTTRN>/i).slice(1);
   for (const b of blocos) {
@@ -85,12 +99,16 @@ export function lerOfx(texto: string): ExtratoLido {
 }
 
 /**
- * Chave que identifica um lançamento na conta para não importar duas vezes: o FITID do banco quando existe;
- * senão data + valor + descrição + documento (e a ordem, para dois lançamentos iguais no mesmo dia).
+ * Chave que identifica um lançamento na conta para não importar duas vezes. Com FITID do banco: FITID + data + valor
+ * (há bancos que repetem o FITID em lançamentos diferentes, como tarifas do mesmo dia). Sem FITID: data + valor +
+ * descrição + documento. Em ambos, a ordem entre iguais (repeticao) separa dois lançamentos idênticos no mesmo dia;
+ * como a data entra na chave, a contagem é por dia e não muda quando o mesmo dia aparece em outro arquivo.
  */
 export function chaveLancamento(l: LancamentoExtrato, repeticao = 0): string {
-  if (l.fitid) return `fitid:${l.fitid}`;
-  return `${l.data}|${l.valor.toFixed(2)}|${l.descricao.trim().toUpperCase()}|${l.documento ?? ""}|${repeticao}`;
+  const base = l.fitid
+    ? `fitid:${l.fitid}|${l.data}|${l.valor.toFixed(2)}`
+    : `${l.data}|${l.valor.toFixed(2)}|${l.descricao.trim().toUpperCase()}|${l.documento ?? ""}`;
+  return `${base}|${repeticao}`;
 }
 
 /** Chaves de todos os lançamentos do arquivo; iguais dentro do mesmo arquivo ganham número de repetição. */
@@ -100,6 +118,6 @@ export function chavesDoArquivo(lancamentos: LancamentoExtrato[]): string[] {
     const base = chaveLancamento(l);
     const n = vistos.get(base) ?? 0;
     vistos.set(base, n + 1);
-    return l.fitid ? base : chaveLancamento(l, n);
+    return chaveLancamento(l, n);
   });
 }

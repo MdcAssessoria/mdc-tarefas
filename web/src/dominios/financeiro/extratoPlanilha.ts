@@ -13,6 +13,7 @@ const COL = {
   data: /^(DATA|DT|DATA LANC|DATA DO LANCAMENTO|DATA MOVIMENTO|DATA MOV)/,
   descricao: /(HISTORICO|DESCRICAO|LANCAMENTO|DETALHE|MOVIMENTACAO)/,
   documento: /(DOCUMENTO|DOC|N DOC|NUM DOC|NUMERO)/,
+  natureza: /^(D\/C|C\/D|DC|CD|TIPO|NATUREZA|DEB\/CRED|CRED\/DEB|SINAL)$/,
   valor: /^(VALOR|VALOR \(R\$\)|VALOR R\$|QUANTIA)$/,
   debito: /(DEBITO|SAIDA)/,
   credito: /(CREDITO|ENTRADA)/,
@@ -76,10 +77,16 @@ export function lerExtratoPlanilha(matriz: unknown[][]): ExtratoLido {
     if (d >= 0 && (v >= 0 || (deb >= 0 && cred >= 0))) {
       cab = i;
       idx = { data: d, valor: v >= 0 ? v : undefined, debito: deb >= 0 ? deb : undefined, credito: cred >= 0 ? cred : undefined };
-      const desc = achar(COL.descricao);
+      // descrição: nunca a coluna da data ("Data Lançamento"); prefere Histórico/Descrição a "Lançamento"
+      const desc =
+        [/HISTORICO/, /DESCRICAO/, /DETALHE/, /MOVIMENTACAO/, COL.descricao]
+          .map((re) => cels.findIndex((c, k) => k !== d && k !== v && re.test(c)))
+          .find((k) => k >= 0) ?? -1;
       if (desc >= 0) idx.descricao = desc;
       const doc = cels.findIndex((c, k) => k !== desc && COL.documento.test(c));
       if (doc >= 0) idx.documento = doc;
+      const nat = cels.findIndex((c, k) => k !== d && k !== desc && k !== v && COL.natureza.test(c));
+      if (nat >= 0) idx.natureza = nat;
       break;
     }
   }
@@ -92,8 +99,15 @@ export function lerExtratoPlanilha(matriz: unknown[][]): ExtratoLido {
     const descricao = String(lin[idx.descricao ?? -1] ?? "").trim() || "(sem descrição)";
     if (/^SALDO\b/.test(norm(descricao))) continue; // linhas de saldo do banco não são lançamentos
     let valor: number | null;
-    if (idx.valor !== undefined) valor = valorBr(lin[idx.valor]);
-    else {
+    if (idx.valor !== undefined) {
+      valor = valorBr(lin[idx.valor]);
+      // valor sem sinal com a natureza em outra coluna ("D"/"C", "Débito"/"Crédito", "Saída"/"Entrada")
+      if (valor !== null && idx.natureza !== undefined) {
+        const n = norm(lin[idx.natureza]);
+        if (/^(D|DEB|DEBITO|S|SAIDA|-)$/.test(n)) valor = -Math.abs(valor);
+        else if (/^(C|CRED|CREDITO|E|ENTRADA|\+)$/.test(n)) valor = Math.abs(valor);
+      }
+    } else {
       const c = valorBr(lin[idx.credito!]) ?? 0,
         d = valorBr(lin[idx.debito!]) ?? 0;
       valor = Math.round((Math.abs(c) - Math.abs(d)) * 100) / 100;

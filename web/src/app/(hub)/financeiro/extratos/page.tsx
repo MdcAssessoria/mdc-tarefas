@@ -5,22 +5,18 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
-import Link from "next/link";
 import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { nomeCliente } from "@/dominios/clientes/nome";
 import { EscolhaCliente, useClienteFinanceiro } from "@/dominios/financeiro/componentes/EscolhaCliente";
-import { lerContas, lerLinhas, lerLotes, textoDoArquivo } from "@/dominios/financeiro/leituras";
-import { lerOfx } from "@/dominios/financeiro/ofx";
-import type { ExtratoLido } from "@/dominios/financeiro/ofx";
-import { lerExtratoPlanilha } from "@/dominios/financeiro/extratoPlanilha";
-import { importarExtrato } from "@/dominios/financeiro/repositorio";
+import { lerContas, lerLinhas, lerLotes } from "@/dominios/financeiro/leituras";
+import { ImportarExtrato } from "@/dominios/financeiro/componentes/ImportarExtrato";
+import { ListaLotes } from "@/dominios/financeiro/componentes/ListaLotes";
 import type { LinhaExtrato } from "@/dominios/financeiro/tipos";
 import { useConsulta } from "@/lib/useConsulta";
 import { traduzirErro } from "@/lib/erros";
 import { hojeISO, mesAtualISO, mesAnteriorISO, somarDias } from "@/lib/datas";
 import { brl } from "@/lib/formato/moeda";
-import { fmtData, fmtDataHora } from "@/lib/formato/datas";
-import { lerPlanilha } from "@/lib/arquivos/planilha";
+import { fmtData } from "@/lib/formato/datas";
 import { baixarBytes } from "@/lib/arquivos/baixar";
 import { exportarExcel } from "@/lib/arquivos/excel";
 import { gerarRelatorioPdf } from "@/lib/arquivos/relatorioPdf";
@@ -35,8 +31,6 @@ const SITUACAO = {
   ignorado: { nome: "Ignorado", tom: "bg-neutral-100 text-neutral-700" },
 } as const;
 const MOSTRAR = 500;
-
-type Previa = { arquivo: string; formato: "ofx" | "planilha"; extrato: ExtratoLido };
 
 /** Último dia do mês de uma data AAAA-MM-01. */
 const fimDoMes = (mes: string) => {
@@ -59,10 +53,6 @@ export default function PaginaExtratos() {
   const [tipo, setTipo] = useState("");
   const [situacao, setSituacao] = useState("");
   const [busca, setBusca] = useState("");
-  const [contaImportar, setContaImportar] = useState("");
-  const [previa, setPrevia] = useState<Previa | null>(null);
-  const [lendo, setLendo] = useState(false);
-  const [gravando, setGravando] = useState(false);
 
   const intervalo = useMemo(() => {
     if (periodo === "mes") return { de: mesAtualISO(org.fuso), ate: fimDoMes(mesAtualISO(org.fuso)) };
@@ -73,7 +63,6 @@ export default function PaginaExtratos() {
   }, [periodo, de, ate, hoje, org.fuso]);
 
   const contas = useConsulta(useCallback(async () => (cliente ? lerContas(cliente.id) : []), [cliente]));
-  const ativas = useMemo(() => (contas.dados ?? []).filter((c) => c.ativo), [contas.dados]);
   const nomeConta = useCallback((id: string) => contas.dados?.find((c) => c.id === id)?.nome ?? "—", [contas.dados]);
 
   const consulta = useConsulta(
@@ -101,59 +90,6 @@ export default function PaginaExtratos() {
   }, [consulta.dados, tipo, situacao, busca]);
   const entradas = lista.filter((l) => l.valor > 0).reduce((a, l) => a + Number(l.valor), 0);
   const saidas = lista.filter((l) => l.valor < 0).reduce((a, l) => a + Number(l.valor), 0);
-
-  async function escolherArquivo(arq: File | undefined) {
-    if (!arq) return;
-    setLendo(true);
-    setPrevia(null);
-    try {
-      const ofx = /\.(ofx|qfx)$/i.test(arq.name);
-      let extrato: ExtratoLido;
-      if (ofx) extrato = lerOfx(await textoDoArquivo(arq));
-      else {
-        const { abas, dados } = await lerPlanilha(arq);
-        extrato = lerExtratoPlanilha(dados[abas[0]]);
-      }
-      if (!extrato.lancamentos.length) throw new Error("Não encontrei lançamentos neste arquivo.");
-      const alvo = contas.dados?.find((c) => c.id === contaImportar);
-      const numero = (s: string | null | undefined) => (s ?? "").replace(/\D/g, "").replace(/^0+/, "");
-      if (
-        alvo?.numero &&
-        extrato.conta &&
-        !numero(extrato.conta).includes(numero(alvo.numero)) &&
-        !numero(alvo.numero).includes(numero(extrato.conta))
-      )
-        extrato.avisos.unshift(
-          `Atenção: o arquivo é da conta ${extrato.conta}, e a conta escolhida está cadastrada como ${alvo.numero}. Confira antes de gravar.`,
-        );
-      setPrevia({ arquivo: arq.name, formato: ofx ? "ofx" : "planilha", extrato });
-    } catch (e) {
-      mostrar(e instanceof Error ? e.message : traduzirErro(e), "erro");
-    } finally {
-      setLendo(false);
-    }
-  }
-
-  async function confirmar() {
-    if (!previa || !contaImportar) return;
-    setGravando(true);
-    try {
-      const r = await importarExtrato(contaImportar, previa.arquivo, previa.formato, previa.extrato);
-      setPrevia(null);
-      mostrar(
-        r.novas
-          ? `Extrato importado em ${nomeConta(contaImportar)}: ${r.novas} lançamento(s) novo(s)` +
-              (r.repetidas ? `, ${r.repetidas} já estavam no HUB e foram ignorados.` : ".")
-          : `Nada novo: os ${r.recebidas} lançamento(s) deste arquivo já estavam no HUB.`,
-        r.novas ? "sucesso" : "atencao",
-      );
-      consulta.recarregar();
-    } catch (e) {
-      mostrar(traduzirErro(e), "erro");
-    } finally {
-      setGravando(false);
-    }
-  }
 
   const rotuloPeriodo =
     intervalo.de || intervalo.ate
@@ -323,92 +259,13 @@ export default function PaginaExtratos() {
       </div>
 
       {cliente && podeOperar && (
-        <div className="cartao space-y-3 p-4">
-          <div>
-            <h2 className="font-semibold text-[var(--marca)]">Importar extrato</h2>
-            <p className="text-sm text-neutral-600">
-              Baixe o extrato no internet banking em <b>OFX</b> (também chamado de &quot;Money&quot; ou &quot;arquivo para
-              conciliação&quot;) ou em Excel, escolha a conta e o arquivo. Você confere antes de gravar; lançamento que já foi importado não
-              entra de novo.
-            </p>
-          </div>
-          {!ativas.length ? (
-            <p className="text-sm text-amber-900">
-              Cadastre antes a conta bancária em{" "}
-              <Link href="/financeiro" className="underline">
-                Contas bancárias
-              </Link>
-              .
-            </p>
-          ) : (
-            <div className="flex flex-wrap items-end gap-3">
-              <label className="campo">
-                <span>Conta que recebe o extrato</span>
-                <select
-                  value={contaImportar}
-                  onChange={(e) => {
-                    setContaImportar(e.target.value);
-                    setPrevia(null);
-                  }}
-                >
-                  <option value="">Escolha a conta…</option>
-                  {ativas.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.nome}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <input
-                type="file"
-                accept=".ofx,.qfx,.xls,.xlsx,.csv,.txt"
-                disabled={!contaImportar || lendo || gravando}
-                onChange={(e) => {
-                  void escolherArquivo(e.target.files?.[0]);
-                  e.target.value = "";
-                }}
-              />
-            </div>
-          )}
-          {lendo && <p className="text-sm text-neutral-600">Lendo o arquivo…</p>}
-          {previa && (
-            <div className="space-y-2 rounded-md bg-neutral-50 p-3 text-sm">
-              <p>
-                <b>{previa.arquivo}</b> → {nomeConta(contaImportar)}: {previa.extrato.lancamentos.length} lançamento(s)
-                {previa.extrato.inicio ? ` de ${fmtData(previa.extrato.inicio)} a ${fmtData(previa.extrato.fim ?? "")}` : ""}.
-              </p>
-              <p>
-                Entradas{" "}
-                <b className="text-emerald-800">
-                  {brl(previa.extrato.lancamentos.filter((l) => l.valor > 0).reduce((a, l) => a + l.valor, 0))}
-                </b>{" "}
-                · Saídas{" "}
-                <b className="text-red-700">
-                  {brl(-previa.extrato.lancamentos.filter((l) => l.valor < 0).reduce((a, l) => a + l.valor, 0))}
-                </b>
-                {previa.extrato.saldoFinal !== null && (
-                  <>
-                    {" "}
-                    · Saldo final informado pelo banco <b>{brl(previa.extrato.saldoFinal)}</b>
-                  </>
-                )}
-              </p>
-              {previa.extrato.avisos.map((a) => (
-                <p key={a} className="text-amber-900">
-                  {a}
-                </p>
-              ))}
-              <div className="flex gap-2">
-                <button className="btn-primario" onClick={confirmar} disabled={gravando}>
-                  {gravando ? "Gravando…" : "Gravar extrato"}
-                </button>
-                <button className="btn" onClick={() => setPrevia(null)} disabled={gravando}>
-                  Cancelar
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
+        <ImportarExtrato
+          clienteId={cliente.id}
+          contas={contas.dados ?? []}
+          nomeConta={nomeConta}
+          avisar={mostrar}
+          aoGravar={consulta.recarregar}
+        />
       )}
 
       {aviso}
@@ -478,23 +335,7 @@ export default function PaginaExtratos() {
             </div>
           )}
 
-          {lotes.length > 0 && (
-            <div className="cartao p-4">
-              <h2 className="mb-2 font-semibold text-[var(--marca)]">Últimos extratos importados</h2>
-              <ul className="space-y-1 text-sm">
-                {lotes.map((l) => (
-                  <li key={l.id} className="flex flex-wrap gap-x-2">
-                    <span className="text-neutral-500">{fmtDataHora(l.em)}</span>
-                    <span>{nomeConta(l.conta_id)}</span>
-                    <span className="truncate text-neutral-600">{l.arquivo}</span>
-                    <span>
-                      · {l.novas} novo(s){l.repetidas ? `, ${l.repetidas} repetido(s)` : ""}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+          <ListaLotes lotes={lotes} nomeConta={nomeConta} podeOperar={podeOperar} avisar={mostrar} aoDesfazer={consulta.recarregar} />
         </>
       )}
     </div>

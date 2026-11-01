@@ -27,12 +27,19 @@ Código: regras puras em `web/src/dominios/financeiro/` (`ofx.ts`, `extratoPlani
 | Importar o plano de novo atualiza: conta nova entra, existente é atualizada, conta que saiu do Domínio fica **inativa** (nunca apagada) | `fin_importar_plano` (migração 026) |
 | Conta bancária só se liga a conta **analítica ativa** do plano do mesmo cliente; não muda de cliente | gatilho `tg_fin_conta_bancaria` |
 | Extrato OFX (SGML ou XML) e planilha (data, histórico, valor ou débito/crédito); OFX com acento antigo é lido como Windows-1252 | `ofx.ts`, `extratoPlanilha.ts`, `leituras.textoDoArquivo` |
-| Lançamento repetido não entra duas vezes: chave = identificador do banco (FITID) ou data+valor+histórico (+ ordem dentro do arquivo) | `chavesDoArquivo` + `unique (conta_id, chave)` |
+| Lançamento repetido não entra duas vezes: chave = FITID do banco + data + valor (há bancos que repetem o FITID) ou, sem FITID, data + valor + histórico + documento; iguais no mesmo dia ganham número de ordem | `chavesDoArquivo` + `unique (conta_id, chave)` |
+| OFX com mais de uma conta é recusado (um extrato por conta) | `lerOfx` |
+| Planilha: a descrição nunca é a coluna da data; valor sem sinal com coluna D/C separada vira saída quando D | `extratoPlanilha.ts` |
+| Depois de gravar, o HUB compara o saldo calculado com o saldo final informado pelo banco no OFX e avisa a diferença | `ImportarExtrato.tsx` |
+| Desfazer importação: retira o lote e os lançamentos dele, só se nenhum foi conciliado; fica na auditoria | `fin_desfazer_lote` |
+| Reimportar o plano mostra antes quantas contas entram e quantas ficariam inativas (alerta forte acima de 30%) | tela do plano |
 | Aviso quando o número da conta do arquivo não bate com o cadastrado | tela de extratos |
-| Saldo da conta = saldo inicial + lançamentos a partir da data do saldo inicial | `saldoDaConta` |
+| Saldo da conta = saldo do banco no fim do dia informado + lançamentos dos dias seguintes | `saldoDaConta` |
 
 ## 3. Banco (migração 026)
 
 `fin_plano_contas`, `fin_plano_importacoes`, `fin_contas_bancarias`, `fin_extrato_lotes`, `fin_extrato_linhas`.
 Leitura com `app.hub_pode(org, 'financeiro', 'ver')`; contas bancárias gravadas direto com `operar`; plano e extrato só
-pelas funções `fin_importar_plano` e `fin_importar_extrato` (security definer, conferem `operar`, tudo ou nada).
+pelas funções `fin_importar_plano`, `fin_importar_extrato` e `fin_desfazer_lote` (security definer, conferem `operar`,
+tudo ou nada, registradas na auditoria). A conta contábil do banco só é validada quando muda (reimportar o plano não
+trava a edição da conta bancária).

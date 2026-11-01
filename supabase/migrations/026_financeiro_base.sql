@@ -74,7 +74,9 @@ begin
   if not exists (select 1 from clientes c where c.id = new.cliente_id and c.org_id = new.org_id) then
     raise exception 'Cliente não pertence a esta organização';
   end if;
-  if new.conta_contabil_id is not null and not exists (
+  -- valida a conta contábil só quando ela muda (reimportar o plano pode inativar a conta antiga: editar o resto continua)
+  if new.conta_contabil_id is not null
+     and (tg_op = 'INSERT' or new.conta_contabil_id is distinct from old.conta_contabil_id) and not exists (
     select 1 from fin_plano_contas p where p.id = new.conta_contabil_id and p.cliente_id = new.cliente_id and p.analitica and p.ativo) then
     raise exception 'A conta contábil precisa ser uma conta analítica ativa do plano deste cliente';
   end if;
@@ -161,7 +163,7 @@ begin
   if jsonb_typeof(p_contas) is distinct from 'array' or jsonb_array_length(p_contas) = 0 then raise exception 'O plano veio sem contas'; end if;
 
   create temporary table _plano on commit drop as
-    select distinct on (c.classificacao) trim(c.classificacao) as classificacao, nullif(trim(c.codigo), '') as codigo,
+    select distinct on (trim(c.classificacao)) trim(c.classificacao) as classificacao, nullif(trim(c.codigo), '') as codigo,
            coalesce(nullif(trim(c.descricao), ''), '(sem nome)') as descricao, coalesce(c.analitica, true) as analitica,
            coalesce(c.nivel, array_length(string_to_array(trim(c.classificacao), '.'), 1)) as nivel
       from jsonb_to_recordset(p_contas) as c(classificacao text, codigo text, descricao text, analitica boolean, nivel int)
@@ -207,7 +209,10 @@ begin
   values (c.org_id, c.cliente_id, c.id, p_arquivo, p_formato, p_inicio, p_fim, p_saldo_final, auth.uid())
   returning id into v_lote;
 
-  v_recebidas := jsonb_array_length(p_linhas);
+  select count(*) into v_recebidas
+    from jsonb_to_recordset(p_linhas) as l(data date, valor numeric, chave text)
+   where l.data is not null and l.valor is not null and round(l.valor, 2) <> 0 and coalesce(l.chave, '') <> '';
+  if v_recebidas = 0 then raise exception 'O extrato veio sem lançamentos válidos'; end if;
   insert into fin_extrato_linhas (org_id, cliente_id, conta_id, lote_id, data, valor, descricao, documento, fitid, chave)
   select c.org_id, c.cliente_id, c.id, v_lote, l.data, round(l.valor, 2), coalesce(nullif(trim(l.descricao), ''), '(sem descrição)'),
          nullif(trim(l.documento), ''), nullif(trim(l.fitid), ''), l.chave
@@ -217,9 +222,35 @@ begin
   get diagnostics v_novas = row_count;
 
   update fin_extrato_lotes set recebidas = v_recebidas, novas = v_novas, repetidas = v_recebidas - v_novas where id = v_lote;
+  perform app.registrar(c.org_id, 'financeiro', 'importar_extrato', c.id::text, null,
+    jsonb_build_object('arquivo', p_arquivo, 'lote', v_lote, 'novas', v_novas, 'repetidas', v_recebidas - v_novas));
   return jsonb_build_object('lote_id', v_lote, 'recebidas', v_recebidas, 'novas', v_novas, 'repetidas', v_recebidas - v_novas);
 end $$;
 revoke all on function public.fin_importar_extrato(uuid, text, text, date, date, numeric, jsonb) from public, anon;
 grant execute on function public.fin_importar_extrato(uuid, text, text, date, date, numeric, jsonb) to authenticated;
 comment on function public.fin_importar_extrato(uuid, text, text, date, date, numeric, jsonb) is
   'Importa um extrato (OFX ou planilha) numa transação: registra o lote e grava só os lançamentos que ainda não existem na conta.';
+
+-- ------------------------------------------------------------------------------------- desfazer importação
+/** Desfaz um extrato importado: apaga o lote e os lançamentos dele. Recusa se algum lançamento já foi conciliado. */
+create or replace function public.fin_desfazer_lote(p_lote uuid)
+returns jsonb language plpgsql security definer set search_path = public as $$
+declare l fin_extrato_lotes; v_apagadas int;
+begin
+  select * into l from fin_extrato_lotes where id = p_lote;
+  if l.id is null then raise exception 'Importação não encontrada'; end if;
+  if not app.hub_pode(l.org_id, 'financeiro', 'operar') then raise exception 'Sem permissão para desfazer importações'; end if;
+  if exists (select 1 from fin_extrato_linhas x where x.lote_id = p_lote and x.situacao <> 'pendente') then
+    raise exception 'Este extrato já tem lançamentos conciliados ou ignorados; desfaça a conciliação antes';
+  end if;
+  delete from fin_extrato_linhas where lote_id = p_lote;
+  get diagnostics v_apagadas = row_count;
+  delete from fin_extrato_lotes where id = p_lote;
+  perform app.registrar(l.org_id, 'financeiro', 'desfazer_extrato', l.conta_id::text, null,
+    jsonb_build_object('arquivo', l.arquivo, 'lote', p_lote, 'apagadas', v_apagadas));
+  return jsonb_build_object('apagadas', v_apagadas);
+end $$;
+revoke all on function public.fin_desfazer_lote(uuid) from public, anon;
+grant execute on function public.fin_desfazer_lote(uuid) to authenticated;
+comment on function public.fin_desfazer_lote(uuid) is
+  'Desfaz um extrato importado por engano (apaga lote e lançamentos, se nenhum foi conciliado). Fica na auditoria.';

@@ -331,7 +331,7 @@ export default function PaginaContasBancarias() {
       {form && (
         <Modal
           titulo={form.id ? "Editar conta bancária" : "Nova conta bancária"}
-          descricao="O saldo inicial é o saldo do banco na data informada; os extratos importados somam a partir dela."
+          descricao="Informe o saldo do banco no fim de um dia (como aparece no extrato). Os lançamentos dos dias seguintes somam a partir dele."
           aoFechar={() => setForm(null)}
           largura="lg"
         >
@@ -380,7 +380,7 @@ export default function PaginaContasBancarias() {
               <input value={form.saldo_inicial} onChange={(e) => setForm({ ...form, saldo_inicial: e.target.value })} inputMode="decimal" />
             </label>
             <label className="campo">
-              <span>Data do saldo inicial</span>
+              <span>Saldo no fim do dia</span>
               <input type="date" value={form.saldo_inicial_em} onChange={(e) => setForm({ ...form, saldo_inicial_em: e.target.value })} />
             </label>
           </div>

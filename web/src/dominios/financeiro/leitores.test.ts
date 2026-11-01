@@ -109,3 +109,46 @@ describe("lerPlanoDominio", () => {
     expect(r.avisos.join(" ")).toMatch(/código reduzido/);
   });
 });
+
+describe("correções da auditoria de 01/11", () => {
+  it("FITID repetido em lançamentos diferentes não some (A-2)", () => {
+    const t = { documento: null, descricao: "TARIFA" };
+    const ch = chavesDoArquivo([
+      { ...t, data: "2026-01-05", valor: -10, fitid: "F1" },
+      { ...t, data: "2026-01-05", valor: -12, fitid: "F1" },
+      { ...t, data: "2026-01-05", valor: -10, fitid: "F1" },
+    ]);
+    expect(new Set(ch).size).toBe(3);
+    // reimportar o mesmo arquivo gera as mesmas chaves
+    expect(
+      chavesDoArquivo([
+        { ...t, data: "2026-01-05", valor: -10, fitid: "F1" },
+        { ...t, data: "2026-01-05", valor: -12, fitid: "F1" },
+        { ...t, data: "2026-01-05", valor: -10, fitid: "F1" },
+      ]),
+    ).toEqual(ch);
+  });
+
+  it("OFX com duas contas é recusado (M-1) e &amp; vira & (B-5)", () => {
+    const um = "<STMTRS><BANKTRANLIST><STMTTRN><DTPOSTED>20260101<TRNAMT>-1,00<FITID>1<NAME>A &amp; B</STMTTRN></BANKTRANLIST></STMTRS>";
+    expect(lerOfx(`<OFX>${um}</OFX>`).lancamentos[0].descricao).toBe("A & B");
+    expect(() => lerOfx(`<OFX>${um}${um}</OFX>`)).toThrow(/2 contas/);
+  });
+
+  it("'Data Lançamento' não vira a descrição (A-3)", () => {
+    const e = lerExtratoPlanilha([
+      ["Data Lançamento", "Histórico", "Valor"],
+      ["05/01/2026", "PIX RECEBIDO", "100,00"],
+    ]);
+    expect(e.lancamentos[0]).toMatchObject({ data: "2026-01-05", descricao: "PIX RECEBIDO", valor: 100 });
+  });
+
+  it("valor sem sinal com coluna D/C separada (A-4)", () => {
+    const e = lerExtratoPlanilha([
+      ["Data", "Descrição", "Valor", "D/C"],
+      ["05/01/2026", "TARIFA", "12,90", "D"],
+      ["06/01/2026", "PIX", "100,00", "C"],
+    ]);
+    expect(e.lancamentos.map((l) => l.valor)).toEqual([-12.9, 100]);
+  });
+});

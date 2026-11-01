@@ -12,6 +12,11 @@ export async function importarPlano(cliente: string, arquivo: string, contas: Co
   ) as { total: number; novas: number; inativadas: number };
 }
 
+/** Desfaz um extrato importado por engano (só se nenhum lançamento dele foi conciliado). */
+export async function desfazerLote(lote: string) {
+  return exigir(await supabase().rpc("fin_desfazer_lote", { p_lote: lote })) as { apagadas: number };
+}
+
 export async function importarExtrato(conta: string, arquivo: string, formato: "ofx" | "planilha", e: ExtratoLido) {
   const chaves = chavesDoArquivo(e.lancamentos);
   const linhas = e.lancamentos.map((l, k) => ({ ...l, chave: chaves[k] }));

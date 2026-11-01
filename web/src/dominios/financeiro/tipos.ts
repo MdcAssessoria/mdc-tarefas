@@ -71,10 +71,10 @@ export const BANCOS = [
   "323 · Mercado Pago",
 ];
 
-/** Saldo atual da conta: saldo inicial + tudo o que entrou e saiu a partir da data do saldo inicial. */
+/** Saldo atual da conta: saldo inicial (saldo do banco no FIM do dia informado) + o que entrou e saiu DEPOIS desse dia. */
 export function saldoDaConta(c: ContaBancaria, linhas: Pick<LinhaExtrato, "conta_id" | "data" | "valor">[]): number {
   const soma = linhas
-    .filter((l) => l.conta_id === c.id && (!c.saldo_inicial_em || l.data >= c.saldo_inicial_em))
+    .filter((l) => l.conta_id === c.id && (!c.saldo_inicial_em || l.data > c.saldo_inicial_em))
     .reduce((a, l) => a + Number(l.valor), 0);
   return Math.round((Number(c.saldo_inicial) + soma) * 100) / 100;
 }
