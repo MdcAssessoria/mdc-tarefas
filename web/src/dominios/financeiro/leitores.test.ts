@@ -152,3 +152,24 @@ describe("correções da auditoria de 01/11", () => {
     expect(e.lancamentos.map((l) => l.valor)).toEqual([-12.9, 100]);
   });
 });
+
+describe("reauditoria: outros nomes da coluna de natureza (R-M1)", () => {
+  it.each(["Débito/Crédito", "Entrada/Saída", "D / C", "Tipo Lançamento"])("coluna %s", (nome) => {
+    const e = lerExtratoPlanilha([
+      ["Data", "Histórico", "Valor", nome],
+      ["05/01/2026", "TARIFA", "12,90", "DB"],
+      ["06/01/2026", "PIX", "100,00", "CR"],
+    ]);
+    expect(e.lancamentos.map((l) => l.valor)).toEqual([-12.9, 100]);
+  });
+
+  it("avisa quando nenhuma saída aparece", () => {
+    const e = lerExtratoPlanilha([
+      ["Data", "Histórico", "Valor"],
+      ["05/01/2026", "A", "1,00"],
+      ["06/01/2026", "B", "2,00"],
+      ["07/01/2026", "C", "3,00"],
+    ]);
+    expect(e.avisos.join(" ")).toMatch(/nenhuma saída/);
+  });
+});

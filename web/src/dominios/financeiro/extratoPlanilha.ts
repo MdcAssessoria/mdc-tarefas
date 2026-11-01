@@ -13,7 +13,8 @@ const COL = {
   data: /^(DATA|DT|DATA LANC|DATA DO LANCAMENTO|DATA MOVIMENTO|DATA MOV)/,
   descricao: /(HISTORICO|DESCRICAO|LANCAMENTO|DETALHE|MOVIMENTACAO)/,
   documento: /(DOCUMENTO|DOC|N DOC|NUM DOC|NUMERO)/,
-  natureza: /^(D\/C|C\/D|DC|CD|TIPO|NATUREZA|DEB\/CRED|CRED\/DEB|SINAL)$/,
+  natureza:
+    /^(D ?\/ ?C|C ?\/ ?D|DC|CD|TIPO|TIPO (DE )?(LANC|LANCAMENTO|MOVIMENTO|OPERACAO)|NATUREZA|DEB ?\/ ?CRED|CRED ?\/ ?DEB|DEBITO ?\/ ?CREDITO|CREDITO ?\/ ?DEBITO|ENTRADA ?\/ ?SAIDA|SAIDA ?\/ ?ENTRADA|E ?\/ ?S|SINAL)$/,
   valor: /^(VALOR|VALOR \(R\$\)|VALOR R\$|QUANTIA)$/,
   debito: /(DEBITO|SAIDA)/,
   credito: /(CREDITO|ENTRADA)/,
@@ -104,8 +105,8 @@ export function lerExtratoPlanilha(matriz: unknown[][]): ExtratoLido {
       // valor sem sinal com a natureza em outra coluna ("D"/"C", "Débito"/"Crédito", "Saída"/"Entrada")
       if (valor !== null && idx.natureza !== undefined) {
         const n = norm(lin[idx.natureza]);
-        if (/^(D|DEB|DEBITO|S|SAIDA|-)$/.test(n)) valor = -Math.abs(valor);
-        else if (/^(C|CRED|CREDITO|E|ENTRADA|\+)$/.test(n)) valor = Math.abs(valor);
+        if (/^(D|DB|DEB|DEBITO|S|SAIDA|PAGAMENTO|-)$/.test(n)) valor = -Math.abs(valor);
+        else if (/^(C|CR|CRED|CREDITO|E|ENTRADA|RECEBIMENTO|\+)$/.test(n)) valor = Math.abs(valor);
       }
     } else {
       const c = valorBr(lin[idx.credito!]) ?? 0,
@@ -117,6 +118,10 @@ export function lerExtratoPlanilha(matriz: unknown[][]): ExtratoLido {
     lancamentos.push({ data, valor, descricao, documento: doc || null, fitid: null });
   }
   if (!lancamentos.length) avisos.push("Não encontrei lançamentos com data e valor abaixo do cabeçalho.");
+  else if (lancamentos.length >= 3 && lancamentos.every((l) => l.valor > 0))
+    avisos.push(
+      "Atenção: todos os lançamentos vieram como entrada (nenhuma saída). Se a planilha marca as saídas em outra coluna, confira antes de gravar.",
+    );
   const datas = lancamentos.map((l) => l.data).sort();
   return {
     banco: null,
