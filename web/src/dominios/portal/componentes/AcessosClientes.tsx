@@ -10,8 +10,15 @@ import { nomeCliente } from "@/dominios/clientes/nome";
 import { perfilDasPerms } from "@/dominios/portal/permissoes";
 import type { VinculoCliente } from "@/dominios/portal/tipos";
 import { EditorCliente } from "./EditorCliente";
+import { gerarLinkConvite } from "@/dominios/acessos/convite";
 
-export function AcessosClientes({ aoAviso, aoErro }: { aoAviso: (t: string, link?: string) => void; aoErro: (e: unknown) => void }) {
+export function AcessosClientes({
+  aoAviso,
+  aoErro,
+}: {
+  aoAviso: (t: string, link?: string, nome?: string) => void;
+  aoErro: (e: unknown) => void;
+}) {
   const { org, clientes, clientePorId } = useOrg();
   const [vinculos, setVinculos] = useState<VinculoCliente[]>([]);
   const [novo, setNovo] = useState(false);
@@ -56,6 +63,13 @@ export function AcessosClientes({ aoAviso, aoErro }: { aoAviso: (t: string, link
 
   const pessoaEditada = pessoas.find((p) => p.email === editar) ?? null;
 
+  /** Link de criar senha para mandar pelo WhatsApp (o link do e-mail anterior deixa de valer). */
+  async function linkWhats(email: string, nome: string) {
+    const r = await gerarLinkConvite(email, nome === email ? undefined : nome);
+    if (!r.link) return aoErro(r.erro ?? "Não foi possível gerar o link agora.");
+    aoAviso(`Link de criar senha de ${nome} pronto. Se a pessoa já recebeu o e-mail, aquele link deixa de valer: use este.`, r.link, nome);
+  }
+
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -97,7 +111,14 @@ export function AcessosClientes({ aoAviso, aoErro }: { aoAviso: (t: string, link
                   <td>
                     <div className="font-medium">{p.nome}</div>
                     <div className="text-xs text-neutral-500">{p.email}</div>
-                    {pendente && <span className="chip mt-1 bg-amber-50 text-amber-900">Aguardando criar a senha</span>}
+                    {pendente && (
+                      <div className="mt-1 space-y-1">
+                        <span className="chip bg-amber-50 text-amber-900">Aguardando criar a senha</span>
+                        <button className="btn-link block text-sm" onClick={() => linkWhats(p.email, p.nome)}>
+                          Link para WhatsApp
+                        </button>
+                      </div>
+                    )}
                   </td>
                   <td>
                     <div className="flex flex-wrap gap-1">

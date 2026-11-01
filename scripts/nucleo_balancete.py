@@ -122,3 +122,55 @@ copiar("periodos.ts", "periodos.ts")
 copiar("selecaoPeriodo.ts", "selecaoPeriodo.ts")
 copiar("linhasPeriodo.ts", "linhasPeriodo.ts")
 copiar("pdfPeriodo.ts", "pdfPeriodo.ts")
+
+
+# ------------------------------------------------------------------------------------------------------------
+# Função balancete-agente (agente da pasta do SharePoint): copia os arquivos de cálculo e leitura INTEIROS, com
+# a mesma estrutura de pastas de web/src dentro de nucleo/, trocando só os imports (o Deno exige caminho com .ts).
+# Começa pelos arquivos de entrada e segue os imports; qualquer import que não seja de web/src aborta.
+import os
+
+AGENTE = "supabase/functions/balancete-agente/nucleo/"
+ENTRADAS = [
+    "dominios/demonstrativos/analise.ts",
+    "dominios/demonstrativos/importacaoLote.ts",
+    "dominios/demonstrativos/balancete/leitura.ts",
+    "dominios/demonstrativos/balancete/classificacao.ts",
+    "lib/arquivos/planilhaBytes.ts",
+]
+IMPORTA = re.compile(r'(from\s+")([^"]+)(")')
+
+
+def resolver(origem, alvo):
+    if alvo.startswith("@/"):
+        caminho = alvo[2:]
+    elif alvo.startswith("."):
+        caminho = os.path.normpath(os.path.join(os.path.dirname(origem), alvo))
+    else:
+        raise SystemExit(f"{origem}: import externo '{alvo}' não pode ir para a função")
+    if not os.path.exists(WEB + caminho + ".ts"):
+        raise SystemExit(f"{origem}: não achei {caminho}.ts")
+    return caminho + ".ts"
+
+
+import shutil
+
+shutil.rmtree(AGENTE, ignore_errors=True)
+fila, feitos = list(ENTRADAS), set()
+while fila:
+    arq = fila.pop()
+    if arq in feitos:
+        continue
+    feitos.add(arq)
+    texto = open(WEB + arq).read()
+
+    def troca(m):
+        destino = resolver(arq, m.group(2))
+        fila.append(destino)
+        rel = os.path.relpath(destino, os.path.dirname(arq))
+        return m.group(1) + (rel if rel.startswith(".") else "./" + rel) + m.group(3)
+
+    texto = IMPORTA.sub(troca, texto)
+    os.makedirs(os.path.dirname(AGENTE + arq), exist_ok=True)
+    open(AGENTE + arq, "w").write(f"// Cópia de web/src/{arq} feita por scripts/sync-funcoes.sh. Não edite aqui.\n" + texto)
+print("balancete-agente/nucleo:", len(feitos), "arquivos")

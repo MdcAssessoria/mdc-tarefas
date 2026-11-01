@@ -103,6 +103,8 @@ sequenceDiagram
 | A TV só lê a logo (`<org>/marca`); arquivo enviado não muda de caminho, empresa, cliente nem de quem enviou; apagar só gestor ou quem enviou | políticas `hub_arquivos_equipe_*`, `hub_storage_equipe_*`, gatilho `hub_arquivos_imutavel` |
 | Funções internas `app.*` não podem ser chamadas pela API, exceto as usadas pelas regras de acesso | grants da 020 |
 | Importar e reprocessar balancete gravam tudo numa transação (ou grava inteiro, ou nada muda); mês publicado é recusado (021) | `portal_gravar_balancete`, `portal_regravar_contas` |
+| Link de criar senha para WhatsApp: equipe só administrador; cliente administrador, gestor ou quem gere o Atendimento; só conta que nunca entrou; cada link na auditoria (024) | `hub_pode_ver_link_convite` + Função `convite` (`so_link`) |
+| Pasta do SharePoint: só administrador vê e muda; mudança na auditoria; segredo Microsoft só nos segredos da função (023) | `hub_integracoes`, gatilho `integracao_auditada` |
 | Números de balancete publicado (resumo, índices, demonstrações, período) não mudam; só o comentário do contador (022) | gatilho `balancete_publicado_imutavel` |
 
 Avisos do Supabase que continuam e são esperados: as funções `public.*` chamadas pelas telas (cada uma confere a

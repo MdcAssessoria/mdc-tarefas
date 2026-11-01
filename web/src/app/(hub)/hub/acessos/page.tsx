@@ -6,7 +6,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { supabase } from "@/lib/supabase";
 import { traduzirErro } from "@/lib/erros";
-import { enviarConvite } from "@/dominios/acessos/convite";
+import { enviarConvite, gerarLinkConvite } from "@/dominios/acessos/convite";
 import type { Membro, Papel } from "@/dominios/organizacao/tipos";
 import { fmtDataHora } from "@/lib/formato/datas";
 import type { Acesso, Auditoria, Conta, Perfil } from "@/dominios/acessos/tipos";
@@ -34,7 +34,7 @@ function Acessos() {
   const [contas, setContas] = useState<Map<string, Conta>>(new Map());
   const [historico, setHistorico] = useState<Auditoria[]>([]);
   const [erro, setErro] = useState<string | null>(null);
-  const [aviso, setAviso] = useState<{ texto: string; link?: string } | null>(null);
+  const [aviso, setAviso] = useState<{ texto: string; link?: string; nome?: string } | null>(null);
   const [convite, setConvite] = useState(false);
   const [editando, setEditando] = useState<Membro | null>(null);
   const [transferir, setTransferir] = useState<{ m: Membro; inativar: boolean } | null>(null);
@@ -65,9 +65,9 @@ function Acessos() {
 
   if (papel !== "admin") return <p className="text-sm text-neutral-600">Apenas administradores gerenciam acessos.</p>;
 
-  const avisar = (texto: string, link?: string) => {
+  const avisar = (texto: string, link?: string, nome?: string) => {
     setErro(null);
-    setAviso({ texto, link });
+    setAviso({ texto, link, nome });
   };
   const falhar = (e: unknown) => {
     setAviso(null);
@@ -135,8 +135,25 @@ function Acessos() {
     const r = await enviarConvite(m.email, m.nome);
     if (r.erro) return falhar(r.erro);
     avisar(
-      r.enviado ? `Convite reenviado para ${m.email}.` : `O e-mail não pôde ser enviado agora. Repasse este link para ${m.nome}:`,
+      r.enviado
+        ? `Convite reenviado para ${m.email}.`
+        : r.link
+          ? `O e-mail não pôde ser enviado agora. Mande o acesso de ${m.nome} pelo WhatsApp:`
+          : `O e-mail não pôde ser enviado agora. Use “Link para WhatsApp” na linha da pessoa para mandar o acesso por lá.`,
       r.link,
+      m.nome,
+    );
+  }
+
+  /** Link de criar senha para mandar pelo WhatsApp (o link do e-mail anterior deixa de valer). */
+  async function linkWhats(m: Membro) {
+    if (!m.email) return;
+    const r = await gerarLinkConvite(m.email, m.nome);
+    if (!r.link) return falhar(r.erro ?? "Não foi possível gerar o link agora.");
+    avisar(
+      `Link de criar senha de ${m.nome} pronto. Se ${m.nome.split(" ")[0]} já recebeu o e-mail, aquele link deixa de valer: use este.`,
+      r.link,
+      m.nome,
     );
   }
 
@@ -182,7 +199,7 @@ function Acessos() {
       {aviso && (
         <div className="rounded-md bg-emerald-50 p-3 text-sm text-emerald-900">
           {aviso.texto}
-          {aviso.link && <LinkCopiavel link={aviso.link} />}
+          {aviso.link && <LinkCopiavel link={aviso.link} nome={aviso.nome} />}
         </div>
       )}
 
@@ -210,6 +227,7 @@ function Acessos() {
                   aoVincular={(p) => vincular(m, p)}
                   aoDefinir={(app, v) => definirManual(m, app, v)}
                   aoReenviar={() => reenviar(m)}
+                  aoLinkWhats={() => linkWhats(m)}
                   aoEditar={() => setEditando(m)}
                   aoInativar={(pendente) => inativar(m, pendente)}
                   aoTransferir={() => setTransferir({ m, inativar: false })}

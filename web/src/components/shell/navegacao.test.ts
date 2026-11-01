@@ -25,6 +25,6 @@ describe("filtrarLinks", () => {
     const semGestao = filtrarLinks("tarefas", { pode: () => true, podeEditarCadastros: false });
     expect(semGestao.map((l) => l.href)).not.toContain("/config");
     const soVer = filtrarLinks("demonstrativos", { pode: (_app, minimo = "ver") => minimo === "ver", podeEditarCadastros: true });
-    expect(soVer.map((l) => l.href)).toEqual(["/demonstrativos", "/demonstrativos/riscos"]);
+    expect(soVer.map((l) => l.href)).toEqual(["/demonstrativos", "/demonstrativos/importacoes", "/demonstrativos/riscos"]);
   });
 });

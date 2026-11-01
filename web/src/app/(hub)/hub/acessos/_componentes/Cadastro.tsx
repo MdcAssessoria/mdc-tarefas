@@ -52,9 +52,14 @@ export function Cadastro({
     }
     const r = await enviarConvite(email, nome);
     setEnviando(false);
-    if (r.enviado) return aoCadastrar(`Convite enviado para ${email}. A pessoa recebe um e-mail com o link para criar a senha.`);
+    if (r.enviado)
+      return aoCadastrar(
+        `Convite enviado para ${email}. A pessoa recebe um e-mail com o link para criar a senha. Se preferir, use também “Link para WhatsApp” na linha da pessoa.`,
+      );
     aoCadastrar(
-      `${nome || email} foi cadastrado, mas o e-mail não pôde ser enviado${r.erro ? ` (${r.erro})` : ""}. Repasse este link para a pessoa criar a senha:`,
+      r.link
+        ? `${nome || email} foi cadastrado, mas o e-mail não pôde ser enviado. Mande o acesso pelo WhatsApp:`
+        : `${nome || email} foi cadastrado, mas o e-mail não pôde ser enviado${r.erro ? ` (${r.erro})` : ""}. Use “Link para WhatsApp” na linha da pessoa para mandar o acesso por lá.`,
       r.link,
     );
   }

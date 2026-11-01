@@ -77,7 +77,9 @@ function AcessosPortal() {
       setAviso(
         r.enviado
           ? `Convite enviado para ${email}. A pessoa recebe um e-mail para criar a senha e o portal já abre com a empresa liberada.`
-          : `Acesso cadastrado, mas o e-mail não pôde ser enviado${r.erro ? ` (${r.erro})` : ""}.${r.link ? ` Repasse este link para a pessoa criar a senha: ${r.link}` : ""}`,
+          : r.link
+            ? `Acesso cadastrado, mas o e-mail não pôde ser enviado. Mande este link para a pessoa criar a senha (pelo WhatsApp, por exemplo): ${r.link}`
+            : `Acesso cadastrado, mas o e-mail não pôde ser enviado${r.erro ? ` (${r.erro})` : ""}. Peça ao administrador o link pelo WhatsApp em Pessoas e acessos.`,
       );
     } else setAviso(`${email} já tinha conta e recebeu o acesso agora.`);
     setEmail("");

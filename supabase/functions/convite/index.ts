@@ -1,8 +1,9 @@
 // Edge Function: envia o convite de acesso por e-mail (a pessoa cria a própria senha pelo link).
 // O cadastro e a permissão ficam no banco (hub_convidar / portal_convidar); aqui só se dispara o e-mail,
 // e apenas para quem foi convidado por alguém com permissão (hub_pode_enviar_convite).
-// Se o e-mail não puder ser enviado (SMTP), devolve o link SÓ para administrador que convidou a pessoa
-// para a equipe (hub_pode_ver_link_convite) — auditoria de 31/10/2026, achado A-1.
+// Link para repassar pelo WhatsApp: com { so_link: true } (ou quando o e-mail falha) devolve o link de criar senha,
+// só para quem pode convidar aquela pessoa e só se a conta nunca entrou (hub_pode_ver_link_convite, migração 024).
+// Gerar um link novo invalida o do e-mail anterior (o Supabase guarda um link válido por conta).
 import { createClient } from "@supabase/supabase-js";
 
 // endereços onde o Hub roda; o link do convite só pode voltar para um deles
@@ -30,7 +31,7 @@ Deno.serve(async (req) => {
   const auth = req.headers.get("Authorization");
   if (!auth) return json(401, { erro: "Faça login." });
 
-  let corpo: { email?: string; nome?: string; origem?: string } = {};
+  let corpo: { email?: string; nome?: string; origem?: string; so_link?: boolean } = {};
   try {
     corpo = await req.json();
   } catch {
@@ -50,18 +51,28 @@ Deno.serve(async (req) => {
   if (!pode) return json(403, { erro: "Este e-mail não tem convite pendente feito por você, ou a conta já está ativa." });
 
   const nome = String(corpo.nome ?? "").trim().slice(0, 120) || undefined;
-  const { error } = await servico.auth.admin.inviteUserByEmail(email, { redirectTo, data: nome ? { nome } : undefined });
-  if (!error) return json(200, { enviado: true });
+  if (!corpo.so_link) {
+    const { error } = await servico.auth.admin.inviteUserByEmail(email, { redirectTo, data: nome ? { nome } : undefined });
+    if (!error) return json(200, { enviado: true });
+    console.error("convite por e-mail falhou", error.message);
+  }
 
-  // e-mail indisponível (SMTP) ou reenvio: gera só link de CONVITE (nunca de login), e só para administrador
-  // da organização que convidou a pessoa para a equipe. Para os demais, avisa que o e-mail não saiu.
-  console.error("convite por e-mail falhou", error.message);
+  // link para repassar (WhatsApp): só para quem pode e só para conta que nunca entrou
   const { data: verLink, error: eVer } = await usuario.rpc("hub_pode_ver_link_convite", { p_email: email });
   if (eVer || !verLink) {
-    return json(502, { erro: "O e-mail de convite não pôde ser enviado agora. Tente de novo mais tarde ou peça ao administrador." });
+    return json(corpo.so_link ? 403 : 502, {
+      erro: corpo.so_link
+        ? "Você não pode gerar o link desta pessoa, ou ela já criou a senha."
+        : "O e-mail de convite não pôde ser enviado agora. Tente de novo mais tarde ou peça ao administrador.",
+    });
   }
-  const { data, error: eLink } = await servico.auth.admin.generateLink({ type: "invite", email, options: { redirectTo, data: nome ? { nome } : undefined } });
-  if (!eLink && data?.properties?.action_link) return json(200, { enviado: false, link: data.properties.action_link });
+  // conta ainda não existe → link de convite (cria a conta); já convidada → link para criar a senha
+  const { data: conta } = await servico.rpc("hub_conta_existe", { p_email: email });
+  const tipo = conta === true ? "recovery" : "invite";
+  const { data, error: eLink } = await servico.auth.admin.generateLink(
+    tipo === "invite" ? { type: "invite", email, options: { redirectTo, data: nome ? { nome } : undefined } } : { type: "recovery", email, options: { redirectTo } },
+  );
+  if (!eLink && data?.properties?.action_link) return json(200, { enviado: false, link: data.properties.action_link, so_link: !!corpo.so_link });
   console.error("link de convite falhou", eLink?.message);
-  return json(500, { erro: "Não foi possível gerar o convite. Tente de novo em instantes." });
+  return json(500, { erro: "Não foi possível gerar o link. Tente de novo em instantes." });
 });

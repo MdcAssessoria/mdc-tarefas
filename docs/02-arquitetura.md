@@ -19,7 +19,7 @@ flowchart LR
         ST[Arquivos<br/>bucket hub-arquivos]
         VA[Cofre<br/>certificado A1]
         CRON[Agendador pg_cron<br/>tarefas do mês, avisos]
-        EF[Funções Edge<br/>convite · certificado · demonstrativo-pdf]
+        EF[Funções Edge<br/>convite · certificado · demonstrativo-pdf · balancete-agente]
         API --> DB
         EF --> DB
         EF --> VA
@@ -68,7 +68,7 @@ Duas formas de falar com o banco:
 | muda várias tabelas ou estados | Função RPC `public.*` | `soc_mudar_fase`, `portal_publicar_balancete` |
 | não pode ser quebrada por nenhuma tela | Gatilho no banco | Último administrador, balancete publicado travado |
 | calcula para mostrar (gráficos, índices) | TypeScript em `web/src/dominios/<módulo>/` | `demonstrativos/balancete/`, `calculosDemonstracoes.ts` |
-| usa segredo (chave de serviço, certificado) | Função Edge | `convite`, `demonstrativo-pdf` |
+| usa segredo (chave de serviço, certificado, Microsoft) | Função Edge | `convite`, `demonstrativo-pdf`, `balancete-agente` |
 | lê arquivo de terceiro (Excel do Domínio) | TypeScript, função pura testável | `lerBalancete`, `importacao.ts` |
 
 > **Ponto de atenção registrado na auditoria:** hoje o resultado do balancete é calculado no navegador e

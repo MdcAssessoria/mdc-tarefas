@@ -35,6 +35,7 @@ export const NAV: Record<Modulo, { titulo: string; links: LinkModulo[] }> = {
     links: [
       { href: "/demonstrativos", nome: "Balancetes" },
       { href: "/demonstrativos/importar", nome: "Importar", minimo: "operar" },
+      { href: "/demonstrativos/importacoes", nome: "Histórico de importações" },
       { href: "/demonstrativos/riscos", nome: "Riscos da carteira" },
     ],
   },

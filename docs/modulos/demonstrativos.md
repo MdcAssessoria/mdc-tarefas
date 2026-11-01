@@ -95,6 +95,27 @@ Situações de cada arquivo: **Pronto**, **Pronto · substitui o rascunho**, **E
 antes), **Repetido neste lote**, **Arquivo ilegível** (com o motivo do leitor). Só os prontos são gravados.
 Um arquivo só continua na revisão detalhada de sempre (grupos conta a conta, conferências e prévia).
 
+## 3b. Pasta do SharePoint (agente automático)
+
+Configurado em **Configurações › Integrações** (só administrador): endereço do site, biblioteca e pasta, gravados em
+`hub_integracoes` (nada fica no código). A cada 15 minutos o `pg_cron` (`agente-balancetes`) chama a Função Edge
+`balancete-agente`, que para cada arquivo da pasta:
+
+1. lê com o SheetJS 0.20.3 e as **mesmas regras da tela** (cópias em `supabase/functions/balancete-agente/nucleo/`,
+   geradas por `scripts/sync-funcoes.sh` a partir de `web/src`: leitura, classificação, `analise.ts`, reconhecimento da empresa);
+2. reconhece a empresa (CNPJ ou código do Domínio) e a competência; classifica com as regras salvas;
+3. grava o **rascunho** pela mesma função do banco da tela (`portal_gravar_balancete`, origem `pasta`), numa transação só;
+4. move o arquivo para **Processados** ou **Com problema** e registra em `hub_importacoes`;
+5. avisa no sino os administradores e gestores.
+
+Nunca publica e nunca substitui mês publicado nem rascunho existente (ficam "para revisar", com o motivo). O acesso à
+Microsoft é um aplicativo do Entra ID com `Sites.Selected` (só aquele site); segredos `MS_TENANT_ID`, `MS_CLIENT_ID`,
+`MS_CLIENT_SECRET` nos segredos da função. Passo a passo do TI: [`infra/microsoft-365/README.md`](../../infra/microsoft-365/README.md).
+A chamada do agendador usa um token gerado pelo próprio banco e guardado no Vault (`agente_balancete_token`).
+
+**Histórico de importações** (`/demonstrativos/importacoes`): tudo o que chegou (um arquivo, lote ou pasta), com filtros
+de período, porta e resultado, e exportação em PDF e Excel.
+
 ## 4. Tabelas usadas
 
 | Tabela | Uso no módulo |
@@ -104,17 +125,20 @@ Um arquivo só continua na revisão detalhada de sempre (grupos conta a conta, c
 | `portal_mapa_contas` | Regra conta → grupo (padrão da organização ou do cliente) |
 | `portal_mapa_dfc` | Regra conta → linha da DFC |
 | `portal_pareceres` | Parecer técnico por balancete, com versões |
+| `hub_integracoes` | Configuração da pasta do SharePoint (só administrador) |
+| `hub_importacoes` | Histórico de importações (arquivo, lote, pasta) |
 
 Detalhes de colunas e travas no [capítulo 4](../04-banco-de-dados.md); o fluxo até o Portal na [seção 6.1](../06-fluxos.md#61-balancete-do-excel-do-domínio-ao-portal-do-cliente).
 
 ## 5. Limitações conhecidas
 
-- O cálculo e a gravação ainda rodam no navegador (decisão 0003 prevê levar para o servidor); o lote grava arquivo a
-  arquivo, sem transação única: se a conexão cair no meio, os que já foram ficam gravados e o resumo mostra o resto.
+- Na tela, o cálculo ainda roda no navegador (o agente da pasta já calcula no servidor, com as mesmas regras); cada
+  balancete é gravado numa transação só, mas o lote grava arquivo a arquivo: se a conexão cair no meio, os que já foram
+  ficam gravados e o resumo mostra o resto.
 - O PDF de trimestre, semestre ou ano não traz parecer técnico nem comentário do contador (os dois são mensais); os
   pontos de atenção são os do último mês do período.
 - Período com mês faltando soma só os meses importados (a completude avisa); o balanço é o do último mês importado.
 - Prazos médios do período são a média simples dos meses (regra de `periodos.ts`).
 - Balancete acumulado que não começa em janeiro é tratado a partir de janeiro do ano da competência.
 - Na tela da equipe as abas Balancete, Fragilidades e Parecer continuam sendo do arquivo aberto, não do período.
-- O lote ainda não vem do SharePoint (seção 3 do desenho em `docs/futuro/demonstrativos-importacao-e-periodos.md`).
+- O agente lê até 20 arquivos por organização a cada 15 minutos; o resto entra na rodada seguinte.

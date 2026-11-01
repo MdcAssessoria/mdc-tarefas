@@ -78,7 +78,12 @@ export function EditorCliente({
           return aoSalvar(
             `Convite enviado para ${email}. A pessoa cria a senha pelo e-mail e já entra vendo ${empresas.length} empresa(s).`,
           );
-        return aoSalvar(`Acesso cadastrado, mas o e-mail não pôde ser enviado${r.erro ? ` (${r.erro})` : ""}. Repasse este link:`, r.link);
+        return aoSalvar(
+          r.link
+            ? "Acesso cadastrado, mas o e-mail não pôde ser enviado. Mande o acesso pelo WhatsApp:"
+            : `Acesso cadastrado, mas o e-mail não pôde ser enviado${r.erro ? ` (${r.erro})` : ""}. Use “Link para WhatsApp” na linha da pessoa para mandar o acesso por lá.`,
+          r.link,
+        );
       }
       setEnviando(false);
       aoSalvar(

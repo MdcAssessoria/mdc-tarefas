@@ -20,6 +20,7 @@ export function LinhaPessoa({
   aoVincular,
   aoDefinir,
   aoReenviar,
+  aoLinkWhats,
   aoEditar,
   aoInativar,
   aoTransferir,
@@ -33,6 +34,7 @@ export function LinhaPessoa({
   aoVincular: (perfil: string) => void;
   aoDefinir: (app: string, valor: string) => void;
   aoReenviar: () => void;
+  aoLinkWhats: () => void;
   aoEditar: () => void;
   aoInativar: (pendente: boolean) => void;
   aoTransferir: () => void;
@@ -118,6 +120,9 @@ export function LinhaPessoa({
             <span className="chip bg-amber-50 text-amber-900">Aguardando criar a senha</span>
             <button className="btn-link block" onClick={aoReenviar}>
               Reenviar convite
+            </button>
+            <button className="btn-link block" onClick={aoLinkWhats}>
+              Link para WhatsApp
             </button>
           </div>
         )}

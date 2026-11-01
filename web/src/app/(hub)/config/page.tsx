@@ -7,11 +7,12 @@ import { Abas } from "@/components/ui/Abas";
 import { AbaClientes } from "./_abas/AbaClientes";
 import { AbaEquipe } from "./_abas/AbaEquipe";
 import { AbaFeriados } from "./_abas/AbaFeriados";
+import { AbaIntegracoes } from "./_abas/AbaIntegracoes";
 import { AbaObrigacoes } from "./_abas/AbaObrigacoes";
 import { AbaOrganizacao } from "./_abas/AbaOrganizacao";
 import { AbaSetores } from "./_abas/AbaSetores";
 
-type Aba = "organizacao" | "equipe" | "setores" | "clientes" | "obrigacoes" | "feriados";
+type Aba = "organizacao" | "equipe" | "setores" | "clientes" | "obrigacoes" | "feriados" | "integracoes";
 
 export default function PaginaConfig() {
   return <Config />;
@@ -26,6 +27,7 @@ function Config() {
     { id: "setores", nome: "Setores" },
     { id: "feriados", nome: "Feriados" },
     { id: "organizacao", nome: "Organização e painel", admin: true },
+    { id: "integracoes", nome: "Integrações", admin: true },
   ];
   const [aba, setAba] = useState<Aba>("obrigacoes");
 
@@ -38,6 +40,7 @@ function Config() {
       <Abas rotulo="Seções das configurações" itens={abas.filter((a) => !a.admin || papel === "admin")} valor={aba} aoMudar={setAba} />
       {aba === "organizacao" && <AbaOrganizacao />}
       {aba === "equipe" && <AbaEquipe />}
+      {aba === "integracoes" && papel === "admin" && <AbaIntegracoes />}
       {aba === "setores" && <AbaSetores />}
       {aba === "clientes" && <AbaClientes />}
       {aba === "obrigacoes" && <AbaObrigacoes />}

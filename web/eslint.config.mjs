@@ -69,7 +69,7 @@ const config = [
       ],
     },
   },
-  { ignores: [".next/**", "node_modules/**", "next-env.d.ts", "src/lib/database.types.ts"] },
+  { ignores: [".next/**", "node_modules/**", "next-env.d.ts", "src/lib/database.types.ts", "public/vendor/**"] },
 ];
 
 export default config;

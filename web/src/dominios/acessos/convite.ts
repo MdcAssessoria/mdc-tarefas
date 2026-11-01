@@ -12,6 +12,18 @@ export interface RespostaConvite {
  * Quando o e-mail não sai (SMTP), volta o link para o administrador repassar.
  */
 export async function enviarConvite(email: string, nome?: string): Promise<RespostaConvite> {
+  return chamar({ email, nome });
+}
+
+/**
+ * Gera o link de criar senha para repassar pelo WhatsApp (sem mandar e-mail). Só para quem pode convidar a pessoa e
+ * só para conta que nunca entrou. O link novo substitui o do e-mail anterior (o Supabase guarda um válido por conta).
+ */
+export async function gerarLinkConvite(email: string, nome?: string): Promise<RespostaConvite> {
+  return chamar({ email, nome, so_link: true });
+}
+
+async function chamar(pedido: { email: string; nome?: string; so_link?: boolean }): Promise<RespostaConvite> {
   const { data } = await supabase().auth.getSession();
   const token = data.session?.access_token;
   if (!token) return { enviado: false, erro: "Sessão expirada. Entre de novo." };
@@ -19,7 +31,7 @@ export async function enviarConvite(email: string, nome?: string): Promise<Respo
     const r = await fetch(`${SUPABASE_URL}/functions/v1/convite`, {
       method: "POST",
       headers: { Authorization: `Bearer ${token}`, apikey: SUPABASE_KEY, "Content-Type": "application/json" },
-      body: JSON.stringify({ email, nome, origem: window.location.origin }),
+      body: JSON.stringify({ ...pedido, origem: window.location.origin }),
     });
     const corpo = (await r.json().catch(() => ({}))) as RespostaConvite;
     if (!r.ok) return { enviado: false, erro: corpo.erro ?? "Não foi possível enviar o convite." };

@@ -1,15 +1,13 @@
 import { supabase } from "@/lib/supabase";
 import { lerTudo } from "@/lib/lerTudo";
-import { calcularIndices } from "@/dominios/demonstrativos/balancete/indices";
 import { classificar } from "@/dominios/demonstrativos/balancete/classificacao";
-import { conferir, fragilidades } from "@/dominios/demonstrativos/balancete/fragilidades";
 import { normalizarSinal } from "@/dominios/demonstrativos/balancete/leitura";
-import { resumir } from "@/dominios/demonstrativos/balancete/resumo";
 import type { Grupo, Linha } from "@/dominios/demonstrativos/balancete/tipos";
 import type { Resumo } from "@/dominios/demonstrativos/balancete/resumo";
-import { basePrazos, montar, periodoDe } from "./calculosDemonstracoes";
 import type { MapaDfc } from "./calculosDemonstracoes";
-import { hojeISO } from "@/lib/datas";
+import { analisar } from "./analise";
+
+export { analisar };
 import { exigir } from "@/lib/exigir";
 import { traduzirErro } from "@/lib/erros";
 import type { Json } from "@/lib/database.types";
@@ -59,25 +57,6 @@ async function resumoAnterior(cliente: string, competencia: string): Promise<Res
   return ((data?.[0] as { resumo: Resumo } | undefined)?.resumo ?? null) as Resumo | null;
 }
 
-export function analisar(
-  linhas: Linha[],
-  competencia: string | null,
-  anterior: Resumo | null,
-  inicio?: string | null,
-  fim?: string | null,
-  mapaDfc: MapaDfc = [],
-) {
-  const resumo = resumir(linhas);
-  const periodo = periodoDe(competencia ?? hojeISO(), inicio, fim);
-  const indices = calcularIndices(resumo, periodo.dias, basePrazos(linhas, periodo.dias));
-  const alertas = fragilidades(resumo, indices, linhas, anterior);
-  const conferencias = conferir(resumo, linhas, competencia);
-  const demonstracoes = montar(linhas, resumo, indices, periodo, mapaDfc);
-  if (!demonstracoes.dfc.fechado)
-    conferencias.push({ nome: "DFC fecha com a variação do caixa", ok: false, detalhe: "revise os grupos das contas" });
-  return { resumo, indices, alertas, conferencias, demonstracoes, periodo_inicio: periodo.inicio, periodo_fim: periodo.fim };
-}
-
 /** Grava (ou substitui, se ainda for rascunho) o balancete do cliente na competência. */
 export async function salvarBalancete(o: {
   org: string;
@@ -87,6 +66,8 @@ export async function salvarBalancete(o: {
   linhas: Linha[];
   inicio?: string | null;
   fim?: string | null;
+  /** Porta de entrada, para o histórico de importações: um arquivo (padrão) ou vários de uma vez. */
+  origem?: "arquivo" | "lote";
 }): Promise<string> {
   const sb = supabase();
   const existe = await sb
@@ -109,6 +90,7 @@ export async function salvarBalancete(o: {
       p_arquivo: o.arquivo,
       p_analise: a as unknown as Json,
       p_linhas: o.linhas.map(somenteConta) as unknown as Json,
+      p_origem: o.origem ?? "arquivo",
     }),
   ) as string;
   return id;

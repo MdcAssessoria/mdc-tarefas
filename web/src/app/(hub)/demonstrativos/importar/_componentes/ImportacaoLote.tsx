@@ -111,6 +111,7 @@ export function ImportacaoLote({ inicial, aoRecomecar }: { inicial: ItemLote[]; 
           linhas,
           inicio: it.leitura!.cabecalho.inicio,
           fim: it.leitura!.cabecalho.fim,
+          origem: "lote",
         });
         saida.push({ ...r, entrou: true, motivo: "", balanceteId: id });
       } catch (e) {
