@@ -341,3 +341,96 @@ indicado, a situação é a mesma do parecer anterior, agora reconferida no banc
 3. **Antes do Financeiro:** decisões 0002 e 0003 executadas; RPC transacional para gravar balancete (M-N6); MFA para
    administradores (M-G4); tipos do banco no `createClient` (M-N10).
 4. **Contínuo:** exportação PDF/Excel nas telas que faltam (M-G3), capítulos de módulo (B-G5), `npm run telas` no CI.
+
+---
+
+## Reauditoria 01/11/2026 (commit 6a709b3)
+
+**Escopo:** só o commit `6a709b3` ("leitura sem corte de 1.000 linhas e PDF assinado só com meses publicados"),
+conferido no código, no banco de produção (somente leitura) e na função publicada.
+
+### Veredito
+
+**Pode publicar**, com uma condição: **publicar a função `demonstrativo-pdf` junto** (`supabase functions deploy`).
+A versão no ar é a **v4, de 30/10/2026 14:03**, sem a correção (`get_edge_function` não encontra `lerTodasLinhas` nem o
+filtro `status.eq.publicado`). Sem esse deploy, o push na `main` corrige as telas, mas o PDF assinado continua
+somando rascunho (A-G2 segue aberto em produção). O commit também ainda não foi enviado (`main` à frente de
+`origin/main` em 1).
+
+### Verificações executadas
+
+| Verificação | Resultado |
+| --- | --- |
+| `cd web && npm ci && npm run verificar` | ok: tipos ok, lint 0 erros / 40 avisos (`set-state-in-effect`, já existentes), 19 arquivos de teste / 100 testes passando, build ok (25 rotas) |
+| `npm run telas` | 25 de 25 telas ok |
+| `deno check --config deno.json index.ts` (demonstrativo-pdf) | ok (saída 0) |
+| Banco (leitura) | tarefas abertas na MDC: **953** (o limite estava a 47 linhas de ser atingido); maior balancete: 433 linhas; 26 balancetes; `portal_balancetes` tem `UNIQUE (cliente_id, competencia)` e `status` só `rascunho`/`publicado`; todas as tabelas paginadas por `id` têm a coluna `id` |
+
+### A-G1 (leitura cortada em 1.000 linhas): resolvido nos pontos de risco, falta 1 item da lista
+
+| Ponto listado no parecer | Situação |
+| --- | --- |
+| `dominios/tarefas/useTarefas.ts` (quadro de tarefas) | **Resolvido** (`lerTudo`, ordem `prazo, id`) |
+| `repositorio.ts` `recalcular` e `reprocessar` | **Resolvido** (`lerLinhas`, ordem `classificacao, id`) |
+| `reprocessar`: conferir contagem antes de apagar | **Resolvido** (`repositorio.ts:207-211`: `count exact` comparado com o lido; diferença aborta antes do `delete`) |
+| `supabase/functions/demonstrativo-pdf/index.ts` (anexo do PDF) | **Resolvido no código** (`lerTodasLinhas`, `:36-51`; erro devolve 500 em `:86`, não gera PDF incompleto). **Falta deploy** |
+| `demonstrativos/[id]/page.tsx` e `portal/page.tsx` (linhas) | **Resolvido** |
+| `societario/page.tsx` e `societario/painel/page.tsx` | **Resolvido** |
+| `demonstrativos/importar/_componentes/ImportacaoLote.tsx:64-68` (M-N5) | **Em aberto**: não foi tocado (ver R-1) |
+
+Além da lista, o commit também paginou: início (`(hub)/page.tsx`), relatório (abertas), vencimentos, lista e riscos de
+demonstrativos e leads do CRM. A função `lerTudo` (`web/src/lib/lerTudo.ts`) termina sempre (página vazia ou teto de
+200.000 linhas com mensagem), repassa o erro e tem 5 testes. Todas as consultas paginadas terminam a ordem em `id`
+(ordem estável, sem linha repetida ou pulada entre páginas). A mudança no simulador (`web/scripts/verificar-telas.mjs:197-203`)
+está correta e era necessária: sem respeitar `offset/limit`, o simulador devolveria a mesma página para sempre.
+
+### A-G2 (rascunho no PDF assinado): resolvido no código, falta deploy
+
+`index.ts:82` agora filtra `.or(status.eq.publicado,id.eq.<id>)`. Conferido:
+- **Segurança:** o `id` entra no filtro só depois de passar por `/^[0-9a-f-]{36}$/i` (`:67`), então não há como injetar
+  vírgula ou parêntese no filtro. A consulta continua com o login de quem pediu (RLS vale igual).
+- **Resultado:** o PDF só é assinado com o mês publicado (`:105`); nesse caso o acumulado usa só meses publicados, e
+  equipe e cliente recebem o **mesmo** acumulado. Se algum mês anterior estiver em rascunho, a contagem
+  (`:93`, com a garantia de `UNIQUE (cliente_id, competencia)`) não fecha e o acumulado é **omitido**, nunca somado
+  errado. Rascunho baixado pela equipe soma meses publicados + o próprio rascunho, sem assinatura: aceitável.
+
+### Achados da reauditoria
+
+**R-1 · médio · Importação em lote ainda lê os balancetes existentes sem paginação (M-N5, item de A-G1 não feito)**
+- `web/src/app/(hub)/demonstrativos/importar/_componentes/ImportacaoLote.tsx:67`: `select(...).eq("org_id", ...)` sem
+  `range`. Com mais de 1.000 balancetes na organização, os que ficarem de fora não aparecem como "já existe" na
+  avaliação do lote, e um **rascunho** existente é substituído sem a pessoa marcar "substituir" (`salvarBalancete`
+  só barra publicado, `repositorio.ts:85`). Hoje são 26; com a carteira (100 clientes × 12 meses) passa de 1.000 em
+  menos de um ano. Correção: `lerTudo` com `.order("id")`.
+
+**R-2 · médio (latente) · Mapas de contas e de DFC lidos sem paginação**
+- `web/src/dominios/demonstrativos/repositorio.ts:17` (`portal_mapa_contas`) e `:29` (`portal_mapa_dfc`): sem `range`.
+  Não estavam na lista do parecer. Se o mapa da organização passar de 1.000 classificações, parte das contas perde o
+  grupo e as demonstrações saem erradas **sem aviso** (o erro de leitura também é ignorado, M-N7). Hoje: 2 linhas.
+  Correção: `lerTudo` + tratar o erro.
+
+**R-3 · baixo · Erro de leitura vira tela vazia em três pontos (comportamento anterior mantido, não é regressão)**
+- `web/src/app/(hub)/demonstrativos/riscos/page.tsx:33`: falha → lista vazia, a tela parece "sem riscos".
+- `web/src/app/portal/page.tsx:272`: falha → o cliente vê o balancete sem nenhuma conta.
+- `web/src/app/(hub)/societario/painel/page.tsx:30-31`: falha na primeira carga → painel de TV vazio (nas seguintes
+  mantém o anterior, o que é bom). `demonstrativos/[id]/page.tsx:82`: falha → comparação com o mês anterior em branco.
+- Correção: mostrar `Aviso` com a mensagem e um botão "tentar de novo".
+
+**R-4 · baixo · Outras leituras sem paginação que podem crescer** (sem risco hoje)
+- `web/src/app/(hub)/comercial/page.tsx:41` (quadro do CRM, 7 linhas), `web/src/app/(hub)/config/_abas/AbaClientes.tsx:67`
+  (`cliente_responsaveis`, cresce com clientes × setores), `web/src/dominios/atendimento/chat.ts:61` (mensagens de
+  uma conversa), `web/src/dominios/organizacao/OrgProvider.tsx:126` (clientes, 100 hoje).
+- O laço antigo do relatório (`tarefas/relatorio/page.tsx:90`) para em 30 páginas (30.000 concluídas) e sai quando vem
+  menos de 1.000; não é defeito hoje, mas convém trocar por `lerTudo` para ter uma regra só.
+
+**R-5 · baixo · Sem teste para a trava de `reprocessar` e para o filtro do PDF**
+- Os testes cobrem só `lerTudo`. A trava de contagem e o filtro de publicados não têm teste. Lembrete: `reprocessar`
+  continua apagando e regravando fora de transação (M-N6): se a regravação falhar no meio, as contas se perdem.
+
+### Situação após a reauditoria
+
+| Achado | Situação |
+| --- | --- |
+| A-G1 | **Resolvido** nos pontos de risco (tarefas, balancete, PDF, portal, societário); **em aberto** só o lote (R-1 = M-N5) |
+| A-G2 | **Resolvido no código**; **em aberto em produção** até o deploy da `demonstrativo-pdf` |
+| Novos | R-1 e R-2 (médios), R-3 a R-5 (baixos) |
