@@ -74,6 +74,8 @@ Concluir uma **baixa** (que inativa o cliente) é só para gestor ou administrad
 | --- | --- | --- |
 | pg_cron `gerar-tarefas-recorrentes` | Todo dia 06h05 | Gera as tarefas do mês |
 | pg_cron `avisar-vencimentos` → `app.venc_avisar` | Todo dia 06h15 | Avisos de vencimento 60/30/7 dias no sino |
+| pg_cron `licencas-diaria` → `app.lic_rotina_diaria` | Todo dia 06h25 | Encerra contratos de licença com prazo vencido, gera as mensalidades do mês (sem duplicar) e, uma vez por dia, avisa no sino (administradores e quem tem Licenças) das mensalidades que venceram ontem e dos clientes que chegaram aos dias de atraso em que o HUB sugere bloquear. Bloquear é manual |
+| `organizacoes_semear_licencas` | Organização criada | Cadastra os módulos vendáveis e o plano Gestão completa (preço zero) |
 | `tarefas_historico` | Toda mudança de tarefa | Grava o histórico |
 | `tarefas_fase_societario` | Tarefa de fase concluída | Avança o processo societário |
 | `clientes_inativo_venc` | Cliente inativado | Encerra os vencimentos dele |

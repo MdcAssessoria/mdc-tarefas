@@ -26,6 +26,7 @@ import { fmtData, fmtDataHora, mesAno, mesExtenso } from "@/lib/formato/datas";
 import { nomeCliente } from "@/dominios/clientes/nome";
 import { CHAVES, gravarLocal, lerLocal } from "@/lib/armazenamentoLocal";
 import { IDENTIDADE_MDC } from "@/lib/identidade";
+import { AvisoBloqueioPortal } from "@/dominios/licencas/componentes/AvisoPortal";
 
 interface Empresa {
   cliente_id: string;
@@ -158,6 +159,11 @@ export default function Portal() {
         </nav>
       </header>
       <main className="mx-auto max-w-[1200px] px-4 py-5">
+        <AvisoBloqueioPortal
+          cliente={emp.cliente_id}
+          telefone={IDENTIDADE_MDC.telefone}
+          aoFalar={abas.some((a) => a.id === "chat") ? () => setAba("chat") : undefined}
+        />
         {(aba === "inicio" || aba === "demonstracoes" || aba === "balancete" || aba === "indices" || aba === "parecer") && (
           <Demonstrativos emp={emp} aba={aba} />
         )}

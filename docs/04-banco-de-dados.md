@@ -20,6 +20,7 @@
 | Integrações e importações | `hub_integracoes`, `hub_importacoes` | Pasta do SharePoint lida pelo agente (só administrador) e histórico de tudo o que foi importado (tela, lote, pasta) |
 | Financeiro | `fin_plano_contas`, `fin_plano_importacoes`, `fin_contas_bancarias`, `fin_extrato_lotes`, `fin_extrato_linhas`, `fin_pessoas`, `fin_categorias`, `fin_centros_custo`, `fin_titulos`, `fin_baixas` | Plano de contas do Domínio, bancos, extratos, fornecedores/clientes, despesas/receitas ligadas ao plano, centros de custo, contas a pagar/receber e pagamentos de cada cliente ([módulo](modulos/financeiro.md)) |
 | Estoque | `est_itens`, `est_locais`, `est_parametros`, `est_movimentos`, visão `est_saldos` | Produtos e serviços (com "controla estoque"), estoques (locais), regra de estoque negativo, movimentos e saldo por item e local ([módulo](modulos/financeiro.md#6-itens-e-estoque)) |
+| Licenças | `lic_produtos`, `lic_planos`, `lic_plano_produtos`, `lic_contratos`, `lic_contrato_produtos`, `lic_cobrancas`, `lic_baixas`, `lic_reajustes`, `lic_bloqueios`, `lic_parametros` | Módulos do HUB vendidos aos clientes: contratos, mensalidades, recebimentos, reajustes e bloqueio manual ([módulo](modulos/licencas.md)) |
 | Vencimentos | `venc_itens` | Certificados, alvarás, procurações e outros itens que vencem |
 | Comercial (CRM) | `crm_oportunidades`, `crm_atividades`, `crm_modelos`, `crm_contratos` | Funil de vendas, leads e contratos |
 
@@ -205,11 +206,14 @@ pode fazer aquilo (normalmente com `app.hub_pode(org, app, nível)` ou `app.port
 | Vencimentos | `venc_renovar` |
 | CRM | `crm_receber_lead` (página pública de leads), `crm_converter_cliente`, `crm_arquivar` |
 | Certificado | `cert_salvar`, `cert_obter`, `cert_remover` (segredos no Supabase Vault) |
+| Licenças | `lic_salvar_produto`, `lic_salvar_plano`, `lic_salvar_contrato`, `lic_encerrar_contrato`, `lic_reajustar_contrato`, `lic_gerar_cobrancas`, `lic_baixar_cobranca`, `lic_desfazer_baixa`, `lic_cancelar_cobranca`, `lic_bloquear`, `lic_desbloquear`, `lic_definir_parametros`, `portal_licenca_situacao` |
 
 ## 4.4 Funções internas e gatilhos (`app.*`)
 
-- **Permissão:** `hub_pode`, `papel`, `eh_gestor`, `portal_pode`, `minhas_orgs`, `meu_setor`, `hub_peso`.
-- **Rotinas:** `gerar_tarefas_recorrentes` (pg_cron diário), `venc_avisar` (avisos de vencimento),
+- **Permissão:** `hub_pode`, `papel`, `eh_gestor`, `portal_pode`, `minhas_orgs`, `meu_setor`, `hub_peso`; módulos pagos do
+  Portal: `cliente_tem_modulo(cliente, módulo)` e `cliente_bloqueado(cliente)` (031).
+- **Rotinas:** `gerar_tarefas_recorrentes` (pg_cron diário), `venc_avisar` (avisos de vencimento), `lic_rotina_diaria`
+  (mensalidades de licença e avisos de atraso),
   `vencimento` e `dia_util` (calculam prazo útil com feriados).
 - **Gatilhos que guardam regras** (não dá para contornar pela tela):
 

@@ -47,6 +47,7 @@ const APPS = [
   ["vencimentos", "Vencimentos", "Certificados, procurações e alvarás", "relogio", "/vencimentos", false, 50],
   ["financeiro", "Financeiro", "Bancos, extratos e conciliação", "moeda", "/financeiro", false, 35],
   ["comercial", "CRM Comercial", "Leads, proposta e contrato", "alvo", "/comercial", false, 80],
+  ["licencas", "Licenças", "Módulos vendidos: contratos, mensalidades e bloqueio", "documento", "/licencas", false, 85],
 ].map(([slug, nome, descricao, icone, rota, externo, ordem]) => ({
   slug,
   nome,
@@ -185,6 +186,74 @@ const oportunidade = {
 };
 
 /** Linhas por tabela/visão (o nome é o que vem depois de /rest/v1/). */
+
+// ---------------------------------------------------------------- Licenças (031)
+const mesRel = (n) => {
+  const d = new Date(Date.UTC(agora.getUTCFullYear(), agora.getUTCMonth() + n, 1));
+  return d.toISOString().slice(0, 10);
+};
+const LIC_PRODUTOS = [
+  ["financeiro", "Financeiro", 120],
+  ["entradas", "Entradas", 80],
+  ["saidas", "Saídas", 80],
+  ["estoque", "Estoque", 60],
+  ["centros_custo", "Centros de custo", 30],
+  ["plano_contas", "Plano de contas", 30],
+  ["relatorios", "Relatórios", 50],
+].map(([slug, nome, preco], i) => ({
+  id: `99999999-9999-4999-8999-00000000000${i + 1}`,
+  org_id: ORG,
+  slug,
+  nome,
+  descricao: `Módulo ${nome}`,
+  preco,
+  ativo: true,
+  ordem: (i + 1) * 10,
+  criado_em: momento(-100),
+}));
+const LIC_PLANO = "99999999-9999-4999-8999-0000000000a1";
+const LIC_K1 = "99999999-9999-4999-8999-0000000000b1";
+const LIC_K2 = "99999999-9999-4999-8999-0000000000b2";
+const licContrato = (id, cliente_id, plano_id, valor_tabela, valor_mensal, inicio) => ({
+  id,
+  org_id: ORG,
+  cliente_id,
+  plano_id,
+  valor_tabela,
+  valor_mensal,
+  dia_vencimento: 10,
+  inicio,
+  fim: null,
+  proporcional: false,
+  reajuste_indice: "IPCA",
+  reajuste_mes: Number(inicio.slice(5, 7)),
+  ultimo_reajuste: null,
+  situacao: "ativo",
+  encerrado_em: null,
+  encerrado_motivo: null,
+  observacao: null,
+  por: EU,
+  criado_em: momento(-400),
+});
+const licCobranca = (k, contrato_id, cliente_id, n, valor, situacao) => ({
+  id: `99999999-9999-4999-8999-0000000000c${k}`,
+  org_id: ORG,
+  cliente_id,
+  contrato_id,
+  competencia: mesRel(n),
+  vencimento: mesRel(n).slice(0, 8) + "10",
+  descricao: `Licença HUB ${mesRel(n).slice(5, 7)}/${mesRel(n).slice(0, 4)} · ${contrato_id === LIC_K1 ? "Plano Gestão completa" : "Financeiro"}`,
+  valor,
+  situacao,
+  pago_em: situacao === "paga" ? mesRel(n).slice(0, 8) + "09" : null,
+  valor_pago: situacao === "paga" ? valor : null,
+  cancelada_em: null,
+  cancelado_motivo: null,
+  observacao: null,
+  por: null,
+  criado_em: momento(-30),
+});
+
 export const TABELAS = {
   organizacoes: [org],
   membros: [
@@ -686,6 +755,58 @@ export const TABELAS = {
       atualizado_por: EU,
     },
   ],
+  lic_produtos: LIC_PRODUTOS,
+  lic_planos: [
+    { id: LIC_PLANO, org_id: ORG, nome: "Gestão completa", descricao: "Todos os módulos de gestão", preco: 390, ativo: true, criado_em: momento(-100) },
+  ],
+  lic_plano_produtos: LIC_PRODUTOS.map((p) => ({ plano_id: LIC_PLANO, produto_id: p.id, org_id: ORG })),
+  lic_contratos: [licContrato(LIC_K1, C1, LIC_PLANO, 390, 350, mesRel(-14)), licContrato(LIC_K2, C2, null, 120, 120, mesRel(-5))],
+  lic_contrato_produtos: [
+    ...LIC_PRODUTOS.map((p) => ({ contrato_id: LIC_K1, produto_id: p.id, org_id: ORG })),
+    { contrato_id: LIC_K2, produto_id: LIC_PRODUTOS[0].id, org_id: ORG },
+  ],
+  lic_cobrancas: [
+    licCobranca(1, LIC_K1, C1, -1, 350, "paga"),
+    licCobranca(2, LIC_K1, C1, 0, 350, "aberta"),
+    licCobranca(3, LIC_K2, C2, -2, 120, "aberta"),
+    licCobranca(4, LIC_K2, C2, -1, 120, "aberta"),
+    licCobranca(5, LIC_K2, C2, 0, 120, "aberta"),
+  ],
+  lic_baixas: [
+    {
+      id: 1,
+      org_id: ORG,
+      cliente_id: C1,
+      cobranca_id: "99999999-9999-4999-8999-0000000000c1",
+      data: mesRel(-1).slice(0, 8) + "09",
+      valor: 350,
+      juros: 0,
+      desconto: 0,
+      total: 350,
+      forma: "Pix",
+      observacao: null,
+      estornada: false,
+      estornada_em: null,
+      estorno_motivo: null,
+      por: EU,
+      em: momento(-20),
+    },
+  ],
+  lic_reajustes: [],
+  lic_bloqueios: [
+    {
+      id: 1,
+      org_id: ORG,
+      cliente_id: C2,
+      bloqueado_em: momento(-3),
+      bloqueado_por: EU,
+      motivo: "Inadimplência: 2 meses",
+      desbloqueado_em: null,
+      desbloqueado_por: null,
+      motivo_desbloqueio: null,
+    },
+  ],
+  lic_parametros: [{ org_id: ORG, dias_sugerir_bloqueio: 30, ultimo_aviso: null, atualizado_em: momento(-1) }],
   vw_painel_kpis: [
     {
       org_id: ORG,
@@ -758,4 +879,5 @@ export const RPCS = {
   ],
   portal_processos: () => [],
   prever_rotina: () => 2,
+  portal_licenca_situacao: () => ({ bloqueado: true, modulos: [{ slug: "financeiro", nome: "Financeiro" }] }),
 };

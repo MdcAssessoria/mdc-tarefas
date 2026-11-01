@@ -17,7 +17,7 @@ Leia na ordem abaixo; cada capítulo começa com um resumo de três linhas.
 
 Outras pastas:
 
-- [`modulos/`](modulos/) — um capítulo por módulo construído (telas, regras, tabelas, limitações): [Demonstrativos](modulos/demonstrativos.md), [Financeiro](modulos/financeiro.md).
+- [`modulos/`](modulos/) — um capítulo por módulo construído (telas, regras, tabelas, limitações): [Demonstrativos](modulos/demonstrativos.md), [Financeiro](modulos/financeiro.md), [Licenças](modulos/licencas.md).
 - [`auditoria/`](auditoria/) — pareceres técnicos de cada auditoria (o mais recente no topo do [índice](auditoria/README.md)).
 - [`decisoes/`](decisoes/) — registro de decisões de arquitetura (por que escolhemos X e não Y).
 - [`futuro/`](futuro/) — desenho dos módulos ainda não construídos (Financeiro, Entradas, Saídas, Fiscal, Contabilidade, Pacotes).
