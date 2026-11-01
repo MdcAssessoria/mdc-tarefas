@@ -4,12 +4,13 @@
 --  Relatório completo: docs/auditoria/2026-10-31-parecer.md (achados A-1, A-2, M-1 a M-4, B-5).
 --
 --  1) A-2  Acesso ao portal só por função auditada: a equipe não insere nem apaga portal_usuarios
---          direto, e ninguém da equipe pode ser "usuário de portal" da própria organização.
+--          direto, ninguém da equipe pode ter acesso de portal ativo na própria organização, e um acesso
+--          não muda de pessoa nem de empresa (ajustes do parecer geral de 31/10/2026).
 --  2) A-1  Link de convite devolvido na tela só para administrador (função hub_pode_ver_link_convite);
 --          a Edge Function "convite" passa a usar essa regra.
 --  3) M-1  Linhas de balancete publicado não mudam (o PDF assinado usa essas linhas).
 --  4) M-2  soc_concluir_processo: só processo aberto; baixa (que inativa cliente) só para gestor.
---  5) M-3  Arquivos: a TV não lê nada; caminho, organização e cliente não mudam depois do envio;
+--  5) M-3  Arquivos: a TV só lê a logo; caminho, organização, cliente e quem enviou não mudam depois do envio;
 --          apagar arquivo só gestor ou quem enviou.
 --  6) M-4  Funções internas do esquema app deixam de ser executáveis por quem chama a API,
 --          exceto as usadas pelas políticas RLS e views.
@@ -19,6 +20,7 @@
 
 -- ------------------------------------------------------------------------------------- 1) A-2 portal
 drop policy if exists portal_usuarios_write on public.portal_usuarios;
+drop policy if exists portal_usuarios_update on public.portal_usuarios;
 create policy portal_usuarios_update on public.portal_usuarios for update to authenticated
   using (app.eh_gestor(org_id) or app.hub_pode(org_id, 'atendimento', 'gerir'))
   with check (app.eh_gestor(org_id) or app.hub_pode(org_id, 'atendimento', 'gerir'));
@@ -27,7 +29,13 @@ create policy portal_usuarios_update on public.portal_usuarios for update to aut
 create or replace function app.tg_portal_usuario_nao_equipe()
 returns trigger language plpgsql security definer set search_path = public as $$
 begin
-  if exists (select 1 from membros m where m.org_id = new.org_id and m.user_id = new.user_id) then
+  -- quem é o acesso não muda depois de criado: para outra pessoa ou empresa, convide de novo
+  if tg_op = 'UPDATE' and (new.user_id is distinct from old.user_id or new.cliente_id is distinct from old.cliente_id
+                           or new.org_id is distinct from old.org_id) then
+    raise exception 'O acesso ao portal não muda de pessoa nem de empresa: desative este e convide de novo';
+  end if;
+  -- equipe não pode ter acesso de cliente ativo na própria organização (desativar um acesso antigo continua possível)
+  if (tg_op = 'INSERT' or new.ativo) and exists (select 1 from membros m where m.org_id = new.org_id and m.user_id = new.user_id) then
     raise exception 'Pessoa da equipe não pode ser usuária do portal da própria organização';
   end if;
   if tg_op = 'INSERT' or new.ativo is distinct from old.ativo or new.permissoes is distinct from old.permissoes then
@@ -115,6 +123,10 @@ end $$;
 
 -- ------------------------------------------------------------------------------------- 5) M-3 arquivos
 drop policy if exists hub_arquivos_equipe on public.hub_arquivos;
+drop policy if exists hub_arquivos_equipe_select on public.hub_arquivos;
+drop policy if exists hub_arquivos_equipe_insert on public.hub_arquivos;
+drop policy if exists hub_arquivos_equipe_update on public.hub_arquivos;
+drop policy if exists hub_arquivos_equipe_delete on public.hub_arquivos;
 create policy hub_arquivos_equipe_select on public.hub_arquivos for select to authenticated
   using (org_id in (select app.minhas_orgs()) and app.papel(org_id) <> 'tv');
 create policy hub_arquivos_equipe_insert on public.hub_arquivos for insert to authenticated
@@ -129,8 +141,8 @@ create or replace function app.tg_arquivo_imutavel()
 returns trigger language plpgsql set search_path = public as $$
 begin
   if new.caminho is distinct from old.caminho or new.org_id is distinct from old.org_id
-     or new.cliente_id is distinct from old.cliente_id then
-    raise exception 'Arquivo já enviado: caminho, organização e cliente não mudam (envie de novo)';
+     or new.cliente_id is distinct from old.cliente_id or new.enviado_por is distinct from old.enviado_por then
+    raise exception 'Arquivo já enviado: caminho, organização, cliente e quem enviou não mudam (envie de novo)';
   end if;
   return new;
 end $$;
@@ -141,9 +153,10 @@ create trigger hub_arquivos_imutavel before update on public.hub_arquivos
 drop policy if exists hub_storage_equipe_select on storage.objects;
 drop policy if exists hub_storage_equipe_insert on storage.objects;
 drop policy if exists hub_storage_equipe_delete on storage.objects;
+-- a TV lê só a logo da organização (pasta <org>/marca); o resto dos arquivos fica fora do alcance dela
 create policy hub_storage_equipe_select on storage.objects for select to authenticated
   using (bucket_id = 'hub-arquivos' and app.uuid_ou_nulo((storage.foldername(name))[1]) in (select app.minhas_orgs())
-         and app.papel(app.uuid_ou_nulo((storage.foldername(name))[1])) <> 'tv');
+         and (app.papel(app.uuid_ou_nulo((storage.foldername(name))[1])) <> 'tv' or (storage.foldername(name))[2] = 'marca'));
 create policy hub_storage_equipe_insert on storage.objects for insert to authenticated
   with check (bucket_id = 'hub-arquivos' and app.uuid_ou_nulo((storage.foldername(name))[1]) in (select app.minhas_orgs())
          and app.papel(app.uuid_ou_nulo((storage.foldername(name))[1])) <> 'tv');

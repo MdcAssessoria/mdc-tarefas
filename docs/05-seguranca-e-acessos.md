@@ -91,3 +91,18 @@ sequenceDiagram
 - Edge Functions conferem o token do usuário e a origem (lista `ORIGENS` em `supabase/functions/convite`).
 - Certificado digital: o arquivo e a senha ficam no **Supabase Vault** (`hub_certificados` guarda só as referências).
 - Depois de qualquer migração, rode os avisos de segurança do Supabase (Advisors).
+
+## 5.6 Travas que o banco garante (migração 020, aplicada em 01/11/2026)
+
+| Trava | Onde |
+| --- | --- |
+| Acesso ao Portal só nasce por convite; a equipe só desativa ou muda permissões. Pessoa da equipe não pode ter acesso de cliente **ativo** na própria organização. O acesso não muda de pessoa nem de empresa. Tudo fica na auditoria. | política `portal_usuarios_update` + gatilho `portal_usuario_nao_equipe` |
+| Link de convite na tela (quando o e-mail falha) só para administrador | `hub_pode_ver_link_convite` + Função `convite` |
+| Contas de balancete publicado não mudam | gatilho `linhas_balancete_protegidas` |
+| Concluir processo só se estiver aberto; baixa (que inativa o cliente) só gestor | `soc_concluir_processo` |
+| A TV só lê a logo (`<org>/marca`); arquivo enviado não muda de caminho, empresa, cliente nem de quem enviou; apagar só gestor ou quem enviou | políticas `hub_arquivos_equipe_*`, `hub_storage_equipe_*`, gatilho `hub_arquivos_imutavel` |
+| Funções internas `app.*` não podem ser chamadas pela API, exceto as usadas pelas regras de acesso | grants da 020 |
+
+Avisos do Supabase que continuam e são esperados: as funções `public.*` chamadas pelas telas (cada uma confere a
+permissão na primeira linha) e `crm_receber_lead`, que recebe os leads do Simulador sem login. Pendente no painel
+(Authentication › Policies): ligar a proteção contra senha vazada.

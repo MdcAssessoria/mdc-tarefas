@@ -2453,6 +2453,7 @@ export type Database = {
         Returns: Json;
       };
       hub_pode_enviar_convite: { Args: { p_email: string }; Returns: boolean };
+      hub_pode_ver_link_convite: { Args: { p_email: string }; Returns: boolean };
       hub_receber_arquivo_temp: {
         Args: { p_chave: string; p_dados: string };
         Returns: boolean;
