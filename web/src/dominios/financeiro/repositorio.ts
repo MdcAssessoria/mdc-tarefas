@@ -32,3 +32,84 @@ export async function importarExtrato(conta: string, arquivo: string, formato: "
     }),
   ) as { lote_id: string; recebidas: number; novas: number; repetidas: number };
 }
+
+// ------------------------------------------------------------------ contas a pagar e a receber
+
+export interface Lancamento {
+  cliente: string;
+  tipo: "pagar" | "receber";
+  pessoa?: string | null;
+  categoria: string;
+  centro?: string | null;
+  conta_prevista?: string | null;
+  descricao: string;
+  documento?: string | null;
+  emissao?: string | null;
+  vencimento: string;
+  valor: number;
+  parcelas: number;
+  observacao?: string | null;
+  /** Já pago/recebido na hora (Entradas e saídas): baixa total em todas as parcelas. */
+  pago?: { data: string; conta: string; forma?: string | null } | null;
+}
+
+export async function lancar(l: Lancamento) {
+  return exigir(await supabase().rpc("fin_lancar", { p: l as unknown as Json })) as { titulos: string[]; grupo: string | null };
+}
+
+export async function baixar(b: {
+  titulo: string;
+  data: string;
+  valor: number;
+  conta: string;
+  juros: number;
+  multa: number;
+  desconto: number;
+  forma: string | null;
+  obs: string | null;
+}) {
+  return exigir(
+    await supabase().rpc("fin_baixar", {
+      p_titulo: b.titulo,
+      p_data: b.data,
+      p_valor: b.valor,
+      p_conta: b.conta,
+      p_juros: b.juros,
+      p_multa: b.multa,
+      p_desconto: b.desconto,
+      p_forma: b.forma ?? undefined,
+      p_obs: b.obs ?? undefined,
+    }),
+  ) as { baixa: number; quitado: boolean; saldo: number };
+}
+
+export async function estornarBaixa(baixa: number, motivo: string) {
+  exigir(await supabase().rpc("fin_estornar_baixa", { p_baixa: baixa, p_motivo: motivo }));
+}
+
+export async function cancelarTitulo(titulo: string, motivo: string) {
+  exigir(await supabase().rpc("fin_cancelar_titulo", { p_titulo: titulo, p_motivo: motivo }));
+}
+
+// ------------------------------------------------------------------ estoque
+
+export async function movimentarEstoque(m: {
+  item: string;
+  local: string;
+  data: string;
+  tipo: "entrada" | "saida" | "ajuste" | "transferencia";
+  quantidade: number;
+  custo_unitario?: number | null;
+  destino?: string | null;
+  observacao?: string | null;
+}) {
+  return exigir(await supabase().rpc("est_movimentar", { p: m as unknown as Json })) as { movimentos: number[] };
+}
+
+export async function estornarMovimento(mov: number, motivo: string) {
+  exigir(await supabase().rpc("est_estornar_movimento", { p_mov: mov, p_motivo: motivo }));
+}
+
+export async function definirEstoqueNegativo(cliente: string, permite: boolean) {
+  exigir(await supabase().rpc("est_definir_negativo", { p_cliente: cliente, p_permite: permite }));
+}

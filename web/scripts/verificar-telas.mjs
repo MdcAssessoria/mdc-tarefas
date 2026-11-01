@@ -238,6 +238,25 @@ async function abrirEFecharModal(pagina, botao, titulo) {
 const INTERACOES = {
   "/vencimentos": (p) => abrirEFecharModal(p, "Novo vencimento", "Novo vencimento"),
   "/financeiro": (p) => abrirEFecharModal(p, "Nova conta", "Nova conta bancária"),
+  "/financeiro/pagar": (p) => abrirEFecharModal(p, "Nova conta a pagar", "Nova conta a pagar"),
+  "/financeiro/receber": (p) => abrirEFecharModal(p, "Nova conta a receber", "Nova conta a receber"),
+  "/financeiro/movimento": (p) => abrirEFecharModal(p, "+ Saída", "Nova conta a pagar"),
+  "/financeiro/cadastros": async (p) => {
+    for (const aba of await p.getByRole("tab").all()) {
+      await aba.click();
+      if ((await aba.getAttribute("aria-selected")) !== "true") throw new Error(`a aba "${await aba.innerText()}" não ficou selecionada`);
+      await p.waitForTimeout(300);
+    }
+  },
+  "/financeiro/estoque": async (p) => {
+    await abrirEFecharModal(p, "Novo item", "Novo item");
+    for (const aba of await p.getByRole("tab").all()) {
+      await aba.click();
+      if ((await aba.getAttribute("aria-selected")) !== "true") throw new Error(`a aba "${await aba.innerText()}" não ficou selecionada`);
+      await p.waitForTimeout(300);
+    }
+    await abrirEFecharModal(p, "Lançar movimento", "Lançar movimento de estoque");
+  },
   "/comercial": (p) => abrirEFecharModal(p, "Limpar funil", "Limpar funil"),
   [`/demonstrativos/${IDS_EXEMPLO["demonstrativos/[id]"]}`]: trocarPeriodo,
   "/portal": trocarPeriodo,
