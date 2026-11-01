@@ -66,7 +66,7 @@ export function AbaDemonstracoes({ sel, anterior }: { sel: Selecao<BalanceteReg>
   );
 }
 
-/** Um lado do balanço (ativo ou passivo + PL) em tabela, com saldo atual, de abertura e variação. */
+/** Um lado do balanço (ativo ou passivo + PL) em tabela: saldo inicial (abertura), saldo final e variação, nessa ordem. */
 function BlocoBalanco({
   titulo,
   linhas,
@@ -86,8 +86,14 @@ function BlocoBalanco({
         <thead>
           <tr>
             <th>{titulo}</th>
-            <th className="text-right">{fmtData(fim)}</th>
-            <th className="text-right">{fmtData(inicio)}*</th>
+            <th className="text-right">
+              Saldo inicial
+              <span className="block text-[11px] font-normal">{fmtData(inicio)}*</span>
+            </th>
+            <th className="text-right">
+              Saldo final
+              <span className="block text-[11px] font-normal">{fmtData(fim)}</span>
+            </th>
             <th className="text-right">Variação</th>
           </tr>
         </thead>
@@ -95,15 +101,15 @@ function BlocoBalanco({
           {linhas.map((l, k) => (
             <tr key={k} className={l.nivel <= 2 ? "bg-[var(--fundo)] font-medium" : ""}>
               <td style={{ paddingLeft: 10 + (l.nivel - 1) * 14 }}>{l.rotulo}</td>
-              <td className="whitespace-nowrap text-right tabular-nums">{fmt(l.atual)}</td>
               <td className="whitespace-nowrap text-right tabular-nums text-neutral-500">{fmt(l.anterior)}</td>
+              <td className="whitespace-nowrap text-right tabular-nums">{fmt(l.atual)}</td>
               <td className="whitespace-nowrap text-right tabular-nums text-xs text-neutral-500">{fmt(l.atual - l.anterior)}</td>
             </tr>
           ))}
           <tr className="border-t-2 border-[var(--marca)] font-semibold">
             <td>Total</td>
-            <td className="text-right tabular-nums">{fmt(total.atual)}</td>
             <td className="text-right tabular-nums">{fmt(total.anterior)}</td>
+            <td className="text-right tabular-nums">{fmt(total.atual)}</td>
             <td className="text-right tabular-nums text-xs">{fmt(total.atual - total.anterior)}</td>
           </tr>
         </tbody>
@@ -124,7 +130,7 @@ function TabelaBalanco({ b, inicio, fim }: { b: Balanco; inicio: string; fim: st
         {fecha
           ? "✔ Ativo igual a passivo + patrimônio líquido."
           : `✖ Diferença de ${brl(b.total_ativo.atual - b.total_passivo.atual, { centavos: false })} entre ativo e passivo + PL.`}{" "}
-        * Saldo de abertura do período.
+        Período de {fmtData(inicio)} a {fmtData(fim)}. * Saldo inicial = saldo de abertura do período.
       </p>
     </div>
   );

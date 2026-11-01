@@ -96,8 +96,8 @@ export function ExportarPeriodo({
           nome: "Balanço",
           colunas: [
             { titulo: "Conta", chave: "rotulo", largura: 52 },
-            { titulo: fmtData(sel.fim), chave: "atual", largura: 20, formato: "moeda" },
-            { titulo: `${fmtData(sel.inicio)} (abertura)`, chave: "abertura", largura: 20, formato: "moeda" },
+            { titulo: `Saldo inicial ${fmtData(sel.inicio)}`, chave: "abertura", largura: 22, formato: "moeda" },
+            { titulo: `Saldo final ${fmtData(sel.fim)}`, chave: "atual", largura: 22, formato: "moeda" },
           ],
           linhas: c.balanco.map((l) => ({ ...l, rotulo: `${"   ".repeat(Math.max(0, l.nivel - 1))}${l.rotulo}` })),
         },

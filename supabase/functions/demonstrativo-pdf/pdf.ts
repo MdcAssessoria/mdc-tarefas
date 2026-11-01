@@ -359,17 +359,17 @@ export async function gerarPdf(d: DadosPdf): Promise<PDFDocument> {
 
   // ---------------- balanço
   o.novaPagina();
-  o.titulo("Balanço Patrimonial", `Saldos em ${dataBr(demo.periodo.fim)} comparados com a abertura do período (${dataBr(demo.periodo.inicio)}). Lei nº 6.404/1976, arts. 178 a 182; NBC TG 26.`);
-  const cBp = [{ titulo: "", largura: 275 }, { titulo: dataBr(demo.periodo.fim), largura: 120, dir: true }, { titulo: dataBr(demo.periodo.inicio), largura: 120, dir: true }];
+  o.titulo("Balanço Patrimonial", `Período de ${dataBr(demo.periodo.inicio)} a ${dataBr(demo.periodo.fim)}: saldo inicial (abertura do período) e saldo final. Lei nº 6.404/1976, arts. 178 a 182; NBC TG 26.`);
+  const cBp = [{ titulo: "", largura: 275 }, { titulo: `Saldo inicial ${dataBr(demo.periodo.inicio)}`, largura: 120, dir: true }, { titulo: `Saldo final ${dataBr(demo.periodo.fim)}`, largura: 120, dir: true }];
   const bpLinhas = (xs: typeof demo.balanco.ativo) =>
-    xs.map((l) => ({ celulas: [l.rotulo, num(l.atual), num(l.anterior)], bold: l.nivel <= 2, fundo: l.nivel === 1, recuo: (l.nivel - 1) * 10 }));
+    xs.map((l) => ({ celulas: [l.rotulo, num(l.anterior), num(l.atual)], bold: l.nivel <= 2, fundo: l.nivel === 1, recuo: (l.nivel - 1) * 10 }));
   o.tabela([{ ...cBp[0], titulo: "ATIVO" }, cBp[1], cBp[2]], [
     ...bpLinhas(demo.balanco.ativo),
-    { celulas: ["TOTAL DO ATIVO", num(demo.balanco.total_ativo.atual), num(demo.balanco.total_ativo.anterior)], bold: true, total: true },
+    { celulas: ["TOTAL DO ATIVO", num(demo.balanco.total_ativo.anterior), num(demo.balanco.total_ativo.atual)], bold: true, total: true },
   ]);
   o.tabela([{ ...cBp[0], titulo: "PASSIVO E PATRIMÔNIO LÍQUIDO" }, cBp[1], cBp[2]], [
     ...bpLinhas(demo.balanco.passivo),
-    { celulas: ["TOTAL DO PASSIVO E PATRIMÔNIO LÍQUIDO", num(demo.balanco.total_passivo.atual), num(demo.balanco.total_passivo.anterior)], bold: true, total: true },
+    { celulas: ["TOTAL DO PASSIVO E PATRIMÔNIO LÍQUIDO", num(demo.balanco.total_passivo.anterior), num(demo.balanco.total_passivo.atual)], bold: true, total: true },
   ]);
 
   // ---------------- DRE
