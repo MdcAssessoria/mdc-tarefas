@@ -779,6 +779,111 @@ export type Database = {
           },
         ];
       };
+      hub_importacoes: {
+        Row: {
+          arquivo: string;
+          balancete_id: string | null;
+          cliente_id: string | null;
+          competencia: string | null;
+          em: string;
+          id: number;
+          motivo: string | null;
+          org_id: string;
+          origem: string;
+          por: string | null;
+          resultado: string;
+        };
+        Insert: {
+          arquivo: string;
+          balancete_id?: string | null;
+          cliente_id?: string | null;
+          competencia?: string | null;
+          em?: string;
+          id?: never;
+          motivo?: string | null;
+          org_id: string;
+          origem: string;
+          por?: string | null;
+          resultado: string;
+        };
+        Update: {
+          arquivo?: string;
+          balancete_id?: string | null;
+          cliente_id?: string | null;
+          competencia?: string | null;
+          em?: string;
+          id?: never;
+          motivo?: string | null;
+          org_id?: string;
+          origem?: string;
+          por?: string | null;
+          resultado?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "hub_importacoes_balancete_id_fkey";
+            columns: ["balancete_id"];
+            isOneToOne: false;
+            referencedRelation: "portal_balancetes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "hub_importacoes_cliente_id_fkey";
+            columns: ["cliente_id"];
+            isOneToOne: false;
+            referencedRelation: "clientes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "hub_importacoes_org_id_fkey";
+            columns: ["org_id"];
+            isOneToOne: false;
+            referencedRelation: "organizacoes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      hub_integracoes: {
+        Row: {
+          ativo: boolean;
+          atualizado_em: string;
+          atualizado_por: string | null;
+          config: Json;
+          org_id: string;
+          tipo: string;
+          ultima_execucao: string | null;
+          ultimo_resultado: string | null;
+        };
+        Insert: {
+          ativo?: boolean;
+          atualizado_em?: string;
+          atualizado_por?: string | null;
+          config?: Json;
+          org_id: string;
+          tipo: string;
+          ultima_execucao?: string | null;
+          ultimo_resultado?: string | null;
+        };
+        Update: {
+          ativo?: boolean;
+          atualizado_em?: string;
+          atualizado_por?: string | null;
+          config?: Json;
+          org_id?: string;
+          tipo?: string;
+          ultima_execucao?: string | null;
+          ultimo_resultado?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "hub_integracoes_org_id_fkey";
+            columns: ["org_id"];
+            isOneToOne: false;
+            referencedRelation: "organizacoes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       hub_notificacoes: {
         Row: {
           app: string | null;
@@ -2336,6 +2441,7 @@ export type Database = {
         };
         Returns: string;
       };
+      agente_token_confere: { Args: { p_token: string }; Returns: boolean };
       cancelar_convite: {
         Args: { p_email: string; p_org: string };
         Returns: undefined;
@@ -2396,6 +2502,7 @@ export type Database = {
         Args: { p_email: string; p_org: string };
         Returns: undefined;
       };
+      hub_conta_existe: { Args: { p_email: string }; Returns: boolean };
       hub_convidar: {
         Args: {
           p_email: string;
@@ -2513,6 +2620,7 @@ export type Database = {
           p_competencia: string;
           p_linhas: Json;
           p_org: string;
+          p_origem?: string;
         };
         Returns: string;
       };
