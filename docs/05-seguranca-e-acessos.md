@@ -105,6 +105,7 @@ sequenceDiagram
 | Link de criar senha (WhatsApp, ou quando o e-mail falha): e-mail da equipe (convite pendente ou membro) só administrador; cliente administrador, gestor ou quem gere o Atendimento; só conta que nunca entrou; acesso de cliente recusa e-mail da equipe e a equipe recusa qualquer e-mail que seja ou já tenha sido acesso de cliente; cada link na auditoria (024, 025, 027) | `hub_pode_ver_link_convite` + Função `convite` (`so_link`) |
 | Pasta do SharePoint: só administrador vê e muda; mudança na auditoria; segredo Microsoft só nos segredos da função (023) | `hub_integracoes`, gatilho `integracao_auditada` |
 | Números de balancete publicado (resumo, índices, demonstrações, período) não mudam; só o comentário do contador (022) | gatilho `balancete_publicado_imutavel` |
+| Financeiro: ver exige a ferramenta Financeiro (ver); cadastrar banco, importar plano e extrato exigem operar; plano e extrato só pelas funções (tudo ou nada, auditadas); conta bancária só liga em conta analítica do mesmo cliente (026) | `fin_*`, `fin_importar_plano`, `fin_importar_extrato`, `tg_fin_conta_bancaria` |
 
 Avisos do Supabase que continuam e são esperados: as funções `public.*` chamadas pelas telas (cada uma confere a
 permissão na primeira linha) e `crm_receber_lead`, que recebe os leads do Simulador sem login. Pendente no painel
