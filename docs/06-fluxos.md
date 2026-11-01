@@ -85,7 +85,10 @@ Concluir uma **baixa** (que inativa o cliente) é só para gestor ou administrad
 | Simulador (projeto separado) → `crm_receber_lead` | Lead preenchido no site | Cria a oportunidade no CRM |
 | `fin_conta_bancaria_valida`, `fin_categoria_valida`, `fin_titulo_valida`, `est_item_valida` | Gravação de conta bancária, categoria, título ou item | Confere empresa, conta analítica ativa do plano, tipo da categoria x tipo do título, travas de situação do título e de item com saldo |
 | `sem_troca_empresa`, `cliente_mesma_org` (tabelas `fin_*` e `est_*`) | Cadastro do Financeiro/estoque alterado | Impede mudar de empresa ou de organização |
-| `fin_auditar` | Conta bancária, fornecedor/cliente, categoria, centro de custo, título, item ou estoque criado/alterado direto pela tela | Registra antes e depois na auditoria (as funções `fin_*`/`est_*` registram o próprio evento) |
+| `fin_auditar` | Conta bancária, fornecedor/cliente, categoria, centro de custo, título, item, grupo de produto ou estoque criado/alterado direto pela tela | Registra antes e depois na auditoria (as funções `fin_*`/`est_*` registram o próprio evento) |
+| `app.est_recalcular` (chamado por `app.est_gravar` e pelos estornos) | Todo movimento de estoque gravado ou estornado | Recalcula a ficha do item (saldo e custo médio depois de cada movimento) e o custo médio do cadastro |
+| `est_pedido_confirmar` / `est_pedido_receber` → `app.est_pedido_lancar` | Venda confirmada / compra recebida | Baixa ou dá entrada no estoque dos itens estocáveis e cria uma conta a receber/pagar por parcela (`fin_lancar`) |
+| `est_pedido_cancelar` | Pedido cancelado | Estorna os movimentos do pedido e cancela as parcelas em aberto |
 
 ## 6.5 Atendimento: conversa vira tarefa
 

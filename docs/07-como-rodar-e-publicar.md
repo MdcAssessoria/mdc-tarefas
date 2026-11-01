@@ -95,8 +95,9 @@ para validar qualquer novidade antes de liberar para a carteira.
 ## Testes SQL (Financeiro e estoque)
 
 `bash supabase/testes/rodar.sh` sobe um Postgres 16 temporário na máquina, cria uma base simulada (`auth.uid()` lido de
-`teste.uid`, `app.hub_pode` lido de `teste.papel`), aplica as migrações 026, 028 e 029 e roda os cenários de
-`supabase/testes/20_titulos.sql` e `30_estoque.sql`: parcelas, baixa parcial com juros e desconto, estorno, cancelamento,
+`teste.uid`, `app.hub_pode` lido de `teste.papel`), aplica as migrações 026, 028, 029, 030 e 033 e roda os cenários de
+`supabase/testes/20_titulos.sql`, `30_estoque.sql` e `60_estoque_pedidos.sql` (custo médio, pedidos, cancelamento e
+duas vendas ao mesmo tempo, com duas conexões pelo `dblink`): parcelas, baixa parcial com juros e desconto, estorno, cancelamento,
 travas de situação, acesso do cliente pelo Portal e de quem não tem acesso, saldo de estoque, inventário,
 transferência, estorno e estoque negativo. Cada linha marcada "(deve falhar)" precisa terminar em erro com a mensagem
 em português. Rode antes de aplicar uma migração nova dessas tabelas.
