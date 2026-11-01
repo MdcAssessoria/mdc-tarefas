@@ -75,5 +75,5 @@ continuam obrigatórias em toda publicação. Quando a auditoria for pedida:
    o que verificar (segurança, manutenção, documentação, regras de tela) e o formato do parecer.
 3. O parecer é salvo em `docs/auditoria/AAAA-MM-DD-parecer.md` e listado em [`auditoria/README.md`](auditoria/README.md).
    Achados críticos e altos viram correção antes de liberar a funcionalidade aos clientes.
-4. Além das auditorias por implementação, há uma **auditoria semanal agendada** (segunda-feira de manhã) que
-   audita tudo o que entrou na semana e entrega o parecer ao Edvaldo.
+4. A **auditoria semanal agendada** (segunda-feira de manhã) foi **pausada** em 01/11/2026 junto com essa mudança;
+   pode ser religada nas tarefas agendadas do Claude quando o Edvaldo quiser.
