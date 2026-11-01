@@ -36,3 +36,21 @@ regime tributário de cada cliente. Este documento é a referência comum das fr
 - Testes SQL no padrão de `supabase/testes/` (Postgres 16 local) e testes de regra pura (vitest).
 - Componentes comuns: `CampoArquivo`, `Modal`, `Abas`, `dominios/financeiro/componentes/Comuns.tsx`
   (`BotoesExportar`, `FiltroPeriodo`, `Indicador`, `JanelaMotivo`), `dominios/financeiro/exportar.ts`.
+
+## Estrutura em módulos separados (decisão do Edvaldo, 01/11/2026 14h34)
+
+Modelo Conta Azul/Omie: cada módulo é independente no menu, vendável e liberável por cliente, dando autonomia ao
+cliente e melhor gestão ao HUB. Cadastros comuns (fornecedores/clientes, contas bancárias) são compartilhados.
+
+| Módulo (slug) | Rota | Conteúdo |
+| --- | --- | --- |
+| Financeiro (`financeiro`) | `/financeiro` | Painel, a pagar, a receber, entradas e saídas de caixa, bancos, **transferências entre contas**, extratos e conciliação |
+| Entradas (`entradas`) | `/entradas` | Notas recebidas (captura SEFAZ/ADN), manifestação, lançar nota por tipo de entrada, compras (pedidos de compra), carga tributária das entradas, certificado digital |
+| Saídas (`saidas`) | `/saidas` | Vendas (pedidos de venda com baixa de estoque), notas emitidas; emissão de NF-e/NFS-e na etapa seguinte |
+| Estoque (`estoque`) | `/estoque` | Itens, locais, posição valorizada, movimentações, ficha do item, inventário |
+| Centros de custo (`centros_custo`) | `/centros-custo` | Cadastro e análise por centro |
+| Plano de contas (`plano_contas`) | `/plano-contas` | Plano do Domínio e categorias de despesa/receita ligadas a ele |
+| Relatórios (`relatorios`) | `/relatorios` | DRE gerencial, fluxo de caixa realizado x previsto, relatórios de cada módulo |
+
+Integração (depois das frentes): migração que separa a permissão por módulo (`app.fin_pode(cliente, nível, módulo)`),
+liberação de cada módulo por pessoa da equipe (hub_apps) e por cliente (contrato da Frente 1).
