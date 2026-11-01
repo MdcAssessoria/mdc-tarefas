@@ -163,3 +163,16 @@ https://docs.oracle.com/en-us/iaas/Content/FreeTier/resourceref.htm
 - Emissão de NF-e/NFS-e com a regra fiscal vigente (inclui IBS/CBS).
 - **Decisão em aberto:** em 30/10 ficou "integração própria (Cloud Run), sem API paga"; em 01/11 o Edvaldo escolheu
   "usar empresa emissora (Focus NFe, PlugNotas, NFE.io…)". Confirmar antes de iniciar a fase de notas.
+
+## Comunicador fiscal próprio (decidido em 01/11/2026)
+- Decisão do Edvaldo: **serviço próprio** para falar com a SEFAZ e com a NFS-e Nacional (sem empresa emissora), usando
+  como base as bibliotecas abertas (NFePHP/sped-nfe e afins) e os manuais oficiais. Substitui a "decisão em aberto" acima.
+- **Onde roda: nas Edge Functions do Supabase, sem Google Cloud.** Sondagem de 01/11/2026 (função provisória
+  `sondagem-mtls`, já desativada): `Deno.createHttpClient({ cert, key, http2: false })` apresenta o certificado de cliente
+  na conexão (servidor de eco recebeu o certificado de teste); SEFAZ (`www1.nfe.fazenda.gov.br`) e ADN
+  (`adn.nfse.gov.br`) recusaram o certificado de teste autoassinado no aperto de mão, como esperado (exigem ICP-Brasil).
+  A SEFAZ exige HTTP/1.1 (com HTTP/2 responde "endpoint requires HTTP/1.1"). Falta o teste com um A1 real.
+- Regras oficiais anotadas (NT 2014.002 v1.40): `distDFeInt` por `distNSU/ultNSU` em lotes de até 50 documentos
+  (`docZip` em gzip + base64; `resNFe`, `procNFe`, `resEvento`); cStat 137 = nada novo → esperar 1 hora; consultar antes
+  ou fora de sequência → 656 e bloqueio de 1 hora; documentos ficam 90 dias no Ambiente Nacional. NFS-e: ADN
+  `GET /DFe/{NSU}` com certificado do mesmo CNPJ raiz; traz notas como emitente, tomador ou intermediário.
