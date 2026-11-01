@@ -1,4 +1,4 @@
-// Financeiro › Plano de contas da empresa, importado do Domínio (Excel/CSV exportado do "Plano de contas").
+// Plano de contas (módulo próprio, /plano-contas): o plano da empresa, importado do Domínio (Excel/CSV exportado do "Plano de contas").
 // Importar de novo atualiza: contas novas entram, as existentes são atualizadas e as que saíram do Domínio ficam
 // inativas (podem estar ligadas a banco ou lançamento). Lista com busca e exportação em PDF e Excel.
 "use client";
@@ -22,8 +22,14 @@ import { baixarBytes } from "@/lib/arquivos/baixar";
 import { exportarExcel } from "@/lib/arquivos/excel";
 import { gerarRelatorioPdf } from "@/lib/arquivos/relatorioPdf";
 import { carregarLogo } from "@/lib/marca";
-import { Carregando } from "@/components/ui/Carregando";
+import { CabecalhoPagina } from "@/components/ui/CabecalhoPagina";
+import { CartaoFiltros } from "@/components/ui/CartaoFiltros";
+import type { FiltroAtivo } from "@/components/ui/CartaoFiltros";
+import { Chip } from "@/dominios/financeiro/componentes/Comuns";
+import { Esqueleto } from "@/components/ui/Esqueleto";
 import { EstadoVazio } from "@/components/ui/EstadoVazio";
+import { Icone } from "@/components/ui/Icone";
+import { QuadroTabela } from "@/components/ui/QuadroTabela";
 import { useAviso } from "@/components/ui/Aviso";
 import { CampoArquivo } from "@/components/ui/CampoArquivo";
 
@@ -42,7 +48,7 @@ export default function PaginaPlano() {
   const { org, pode } = useOrg();
   const financeiro = useClienteFinanceiro();
   const cliente = financeiro.cliente;
-  const podeOperar = pode("financeiro", "operar");
+  const podeOperar = pode("plano_contas", "operar");
   const { aviso, mostrar } = useAviso();
   const [filtro, setFiltro] = useState("ativas");
   const [busca, setBusca] = useState("");
@@ -175,23 +181,35 @@ export default function PaginaPlano() {
   }
 
   const ultima = consulta.dados?.ultima;
+  const filtrosAtivos: FiltroAtivo[] = [
+    filtro !== "ativas" && { id: "filtro", rotulo: `Mostrar: ${FILTROS.find((f) => f.id === filtro)?.nome}`, aoTirar: () => setFiltro("ativas") },
+    busca.trim() && { id: "busca", rotulo: `Busca: "${busca.trim()}"`, aoTirar: () => setBusca("") },
+  ].filter((f): f is FiltroAtivo => !!f);
+  const limparFiltros = () => {
+    setFiltro("ativas");
+    setBusca("");
+  };
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-start gap-2">
-        <div className="mr-auto">
-          <h1 className="text-xl font-semibold text-[var(--marca)]">Plano de contas</h1>
-          <p className="text-sm text-neutral-600">O plano do Domínio de cada empresa, usado para ligar bancos e classificar lançamentos.</p>
-        </div>
-        <button className="btn" onClick={pdf} disabled={!lista.length}>
-          PDF
-        </button>
-        <button className="btn" onClick={excel} disabled={!lista.length}>
-          Excel
-        </button>
-      </div>
+      <CabecalhoPagina
+        titulo="Plano de contas"
+        descricao="O plano do Domínio de cada empresa, usado para ligar bancos e classificar lançamentos."
+        acoes={
+          <>
+            <button className="btn" onClick={pdf} disabled={!lista.length} title="Baixar a lista filtrada em PDF">
+              <Icone nome="documento" className="h-4 w-4" />
+              PDF
+            </button>
+            <button className="btn" onClick={excel} disabled={!lista.length} title="Baixar a lista filtrada em Excel">
+              <Icone nome="planilha" className="h-4 w-4" />
+              Excel
+            </button>
+          </>
+        }
+      />
 
-      <div className="cartao flex flex-wrap items-end gap-3 p-4">
+      <CartaoFiltros ativos={filtrosAtivos} aoLimpar={limparFiltros}>
         <EscolhaCliente financeiro={financeiro} />
         <label className="campo">
           <span>Mostrar</span>
@@ -203,16 +221,19 @@ export default function PaginaPlano() {
             ))}
           </select>
         </label>
-        <label className="campo min-w-48 flex-1">
+        <label className="campo campo-largo">
           <span>Buscar</span>
-          <input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Nome, classificação (1.1.1) ou código" />
+          <input type="search" value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Nome, classificação (1.1.1) ou código" />
         </label>
-      </div>
+      </CartaoFiltros>
 
       {cliente && podeOperar && (
-        <div className="cartao space-y-3 p-4">
+        <div className="cartao space-y-3 p-4 sm:p-5">
           <div>
-            <h2 className="font-semibold text-[var(--marca)]">Importar o plano do Domínio</h2>
+            <h2 className="flex items-center gap-2 font-semibold text-[var(--marca)]">
+              <Icone nome="importar" className="h-[18px] w-[18px] text-[var(--destaque-escuro)]" />
+              Importar o plano do Domínio
+            </h2>
             <p className="text-sm text-neutral-600">
               No Domínio, exporte o plano de contas da empresa em Excel ou CSV (com as colunas Classificação e Descrição) e escolha o
               arquivo aqui. Você confere antes de gravar. Importar de novo atualiza o plano sem apagar nada.
@@ -283,19 +304,45 @@ export default function PaginaPlano() {
       )}
 
       {aviso}
-      {consulta.erro && <p className="rounded-md bg-red-50 p-3 text-sm text-red-800">{consulta.erro}</p>}
+      {consulta.erro && (
+        <p role="alert" className="rounded-md bg-red-50 p-3 text-sm text-red-800">
+          {consulta.erro}
+        </p>
+      )}
 
       {!cliente ? (
-        <EstadoVazio>Escolha a empresa acima para ver o plano de contas dela.</EstadoVazio>
+        <EstadoVazio icone="lista" titulo="Escolha a empresa">
+          Escolha a empresa nos filtros acima para ver o plano de contas dela.
+        </EstadoVazio>
       ) : consulta.carregando && !consulta.dados ? (
-        <Carregando />
+        <Esqueleto indicadores={0} linhas={8} />
       ) : !plano.length ? (
-        <EstadoVazio>O plano de contas de {nomeCliente(cliente)} ainda não foi importado.</EstadoVazio>
+        <EstadoVazio icone="lista" titulo="Plano de contas ainda não importado">
+          {podeOperar
+            ? `Exporte o plano de ${nomeCliente(cliente)} no Domínio (Excel ou CSV) e solte o arquivo no quadro acima.`
+            : `O plano de contas de ${nomeCliente(cliente)} ainda não foi importado pela equipe MDC.`}
+        </EstadoVazio>
       ) : !lista.length ? (
-        <EstadoVazio>Nenhuma conta neste filtro.</EstadoVazio>
+        <EstadoVazio
+          icone="filtro"
+          titulo="Nenhuma conta neste filtro"
+          acao={
+            <button className="btn" onClick={limparFiltros}>
+              Limpar filtros
+            </button>
+          }
+        >
+          Troque o que mostrar ou a busca.
+        </EstadoVazio>
       ) : (
-        <div className="cartao overflow-x-auto">
-          <table className="tabela">
+        <QuadroTabela
+          rotulo="Plano de contas"
+          rodape={
+            lista.length > MOSTRAR
+              ? `Mostrando ${MOSTRAR} de ${lista.length} contas. Use a busca para achar uma conta, ou exporte para ver tudo.`
+              : undefined
+          }
+        >
             <thead>
               <tr>
                 <th>Classificação</th>
@@ -307,26 +354,30 @@ export default function PaginaPlano() {
             <tbody>
               {lista.slice(0, MOSTRAR).map((c) => (
                 <tr key={c.id} className={c.ativo ? "" : "text-neutral-400"}>
-                  <td className="whitespace-nowrap tabular-nums">{c.classificacao}</td>
-                  <td className="tabular-nums">{c.codigo}</td>
-                  <td className={c.analitica ? "" : "font-semibold"} style={{ paddingLeft: `${0.75 + Math.max(0, c.nivel - 1) * 0.9}rem` }}>
+                  <td data-rotulo="Classificação" className="num whitespace-nowrap">
+                    {c.classificacao}
+                  </td>
+                  <td data-rotulo="Código" className="num">
+                    {c.codigo}
+                  </td>
+                  <td
+                    className={`celula-titulo ${c.analitica ? "!font-normal" : "font-semibold text-[var(--marca)]"}`}
+                    style={{ paddingLeft: `${0.75 + Math.max(0, c.nivel - 1) * 0.9}rem` }}
+                  >
                     {c.descricao}
                   </td>
-                  <td>
-                    {tipo(c.analitica)}
-                    {!c.ativo && " · inativa"}
+                  <td data-rotulo="Tipo">
+                    <span className="flex flex-wrap justify-end gap-1 sm:justify-start">
+                      <Chip tom={c.analitica ? "azul" : "neutro"}>{tipo(c.analitica)}</Chip>
+                      {!c.ativo && <Chip tom="vermelho">Inativa</Chip>}
+                    </span>
                   </td>
                 </tr>
               ))}
             </tbody>
-          </table>
-          {lista.length > MOSTRAR && (
-            <p className="p-3 text-xs text-neutral-500">
-              Mostrando {MOSTRAR} de {lista.length} contas. Use a busca para achar uma conta, ou exporte para ver tudo.
-            </p>
-          )}
-        </div>
+        </QuadroTabela>
       )}
+
     </div>
   );
 }

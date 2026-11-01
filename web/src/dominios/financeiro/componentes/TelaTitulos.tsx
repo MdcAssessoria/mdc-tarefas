@@ -11,16 +11,21 @@ import { useConsulta } from "@/lib/useConsulta";
 import { hojeISO } from "@/lib/datas";
 import { brl } from "@/lib/formato/moeda";
 import { fmtData } from "@/lib/formato/datas";
-import { Carregando } from "@/components/ui/Carregando";
+import { CabecalhoPagina } from "@/components/ui/CabecalhoPagina";
+import { CartaoFiltros, MaisFiltros } from "@/components/ui/CartaoFiltros";
+import type { FiltroAtivo } from "@/components/ui/CartaoFiltros";
+import { Esqueleto } from "@/components/ui/Esqueleto";
 import { EstadoVazio } from "@/components/ui/EstadoVazio";
+import { Icone } from "@/components/ui/Icone";
+import { QuadroTabela } from "@/components/ui/QuadroTabela";
 import { useAviso } from "@/components/ui/Aviso";
 import { EscolhaCliente, useClienteFinanceiro } from "./EscolhaCliente";
-import { BotoesExportar, FiltroPeriodo, Indicador, JanelaMotivo } from "./Comuns";
+import { BotoesExportar, Chip, FiltroPeriodo, Indicador, JanelaMotivo, Valor } from "./Comuns";
 import { LancarTitulo, TEXTOS } from "./LancarTitulo";
 import { BaixarTitulo, HistoricoTitulo } from "./BaixaTitulo";
 import { lerCategorias, lerCentros, lerContas, lerPessoas, lerTitulos } from "../leituras";
 import { cancelarTitulo } from "../repositorio";
-import { intervaloDoPeriodo, saldoDoTitulo, SITUACOES, situacaoDoTitulo } from "../regras";
+import { intervaloDoPeriodo, PERIODOS, saldoDoTitulo, SITUACOES, situacaoDoTitulo } from "../regras";
 import type { Periodo, SituacaoExibida } from "../regras";
 import { nomeArquivo } from "../exportar";
 import type { Titulo, TipoTitulo } from "../tipos";
@@ -67,7 +72,11 @@ export function TelaTitulos({ tipo }: { tipo: TipoTitulo }) {
   const [pessoa, setPessoa] = useState("");
   const [categoria, setCategoria] = useState("");
   const [busca, setBusca] = useState("");
-  const [janela, setJanela] = useState<Janela | null>(null);
+  const [janelaEscolhida, setJanela] = useState<Janela | null>(null);
+  // atalho do painel (?nova=1): abre "Nova conta" assim que os cadastros chegam
+  const [pedidoNova, setPedidoNova] = useState(
+    () => typeof window !== "undefined" && new URLSearchParams(window.location.search).get("nova") === "1",
+  );
   const intervalo = useMemo(() => intervaloDoPeriodo(periodo, hoje, de, ate), [periodo, hoje, de, ate]);
 
   const cad = useConsulta(
@@ -151,6 +160,10 @@ export function TelaTitulos({ tipo }: { tipo: TipoTitulo }) {
 
   function fechar(msg?: string) {
     setJanela(null);
+    if (pedidoNova) {
+      setPedidoNova(false);
+      window.history.replaceState(null, "", window.location.pathname);
+    }
     if (msg) {
       mostrar(msg);
       consulta.recarregar();
@@ -158,50 +171,78 @@ export function TelaTitulos({ tipo }: { tipo: TipoTitulo }) {
     }
   }
 
+  function limparFiltros() {
+    setPessoa("");
+    setCategoria("");
+    setBusca("");
+    setSituacao("abertos");
+    setPeriodo("tudo");
+  }
+  const filtrosAtivos: FiltroAtivo[] = [
+    periodo !== "tudo" && {
+      id: "periodo",
+      rotulo: `Vencimento: ${periodo === "escolher" ? rotuloPeriodo.replace("vencimento de ", "") : PERIODOS.find((p) => p.id === periodo)?.nome}`,
+      aoTirar: () => setPeriodo("tudo"),
+    },
+    situacao !== "abertos" && {
+      id: "situacao",
+      rotulo: `Situação: ${FILTROS_SITUACAO.find((x) => x.id === situacao)?.nome}`,
+      aoTirar: () => setSituacao("abertos"),
+    },
+    pessoa && { id: "pessoa", rotulo: `${T.pessoa}: ${nomes.pessoa.get(pessoa) ?? "—"}`, aoTirar: () => setPessoa("") },
+    categoria && { id: "categoria", rotulo: `Categoria: ${nomes.categoria.get(categoria) ?? "—"}`, aoTirar: () => setCategoria("") },
+    busca.trim() && { id: "busca", rotulo: `Busca: "${busca.trim()}"`, aoTirar: () => setBusca("") },
+  ].filter((f): f is FiltroAtivo => !!f);
+
   const semCategoria = cad.dados && !cad.dados.categorias.some((c) => c.ativo && c.tipo === (tipo === "pagar" ? "despesa" : "receita"));
+  const janela: Janela | null =
+    janelaEscolhida ?? (pedidoNova && podeOperar && cliente && cad.dados && !semCategoria ? { tipo: "novo" } : null);
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-start gap-2">
-        <div className="mr-auto">
-          <h1 className="text-xl font-semibold text-[var(--marca)]">{T.titulo}</h1>
-          <p className="text-sm text-neutral-600">
-            {tipo === "pagar"
-              ? "O que a empresa tem para pagar: vencimentos, pagamentos e atrasos."
-              : "O que a empresa tem para receber: vencimentos, recebimentos e atrasos."}
-          </p>
-        </div>
-        <BotoesExportar
-          vazio={!lista.length}
-          avisar={mostrar}
-          montar={() => ({
-            titulo: T.titulo,
-            subtitulo: `${cliente ? nomeCliente(cliente) : ""} · ${rotuloPeriodo} · ${FILTROS_SITUACAO.find((x) => x.id === situacao)?.nome} · ${lista.length} lançamento(s)`,
-            arquivo: nomeArquivo(T.titulo, cliente ? nomeCliente(cliente) : "", hoje),
-            logoUrl: org.logo_url,
-            linhas: lista,
-            colunas: [
-              { titulo: "Vencimento", valor: (x) => fmtData(x.t.vencimento), peso: 1, largura: 12 },
-              { titulo: "Descrição", valor: (x) => x.t.descricao, peso: 3, largura: 40 },
-              { titulo: T.pessoa, valor: (x) => nomes.pessoa.get(x.t.pessoa_id ?? "") ?? "", peso: 2, largura: 30 },
-              { titulo: "Categoria", valor: (x) => nomes.categoria.get(x.t.categoria_id) ?? "", peso: 1.6, largura: 24 },
-              { titulo: "Documento", valor: (x) => x.t.documento ?? "", peso: 1, largura: 14 },
-              { titulo: "Valor", valor: (x) => Number(x.t.valor), formato: "moeda", peso: 1.2 },
-              { titulo: T.feito, valor: (x) => Number(x.t.valor_pago), formato: "moeda", peso: 1.2 },
-              { titulo: "Falta", valor: (x) => x.saldo, formato: "moeda", peso: 1.2, alerta: (x) => x.s === "vencido" },
-              { titulo: "Situação", valor: (x) => SITUACOES[x.s].nome, peso: 1.1, largura: 14, alerta: (x) => x.s === "vencido" },
-            ],
-            totais: { Valor: totalLista, Falta: saldoLista },
-          })}
-        />
-        {podeOperar && cliente && (
-          <button className="btn-primario" onClick={() => setJanela({ tipo: "novo" })} disabled={!cad.dados}>
-            Nova {T.conta}
-          </button>
-        )}
-      </div>
+      <CabecalhoPagina
+        titulo={T.titulo}
+        descricao={
+          tipo === "pagar"
+            ? "O que a empresa tem para pagar: vencimentos, pagamentos e atrasos."
+            : "O que a empresa tem para receber: vencimentos, recebimentos e atrasos."
+        }
+        acoes={
+          <>
+            <BotoesExportar
+              vazio={!lista.length}
+              avisar={mostrar}
+              montar={() => ({
+                titulo: T.titulo,
+                subtitulo: `${cliente ? nomeCliente(cliente) : ""} · ${rotuloPeriodo} · ${FILTROS_SITUACAO.find((x) => x.id === situacao)?.nome} · ${lista.length} lançamento(s)`,
+                arquivo: nomeArquivo(T.titulo, cliente ? nomeCliente(cliente) : "", hoje),
+                logoUrl: org.logo_url,
+                linhas: lista,
+                colunas: [
+                  { titulo: "Vencimento", valor: (x) => fmtData(x.t.vencimento), peso: 1, largura: 12 },
+                  { titulo: "Descrição", valor: (x) => x.t.descricao, peso: 3, largura: 40 },
+                  { titulo: T.pessoa, valor: (x) => nomes.pessoa.get(x.t.pessoa_id ?? "") ?? "", peso: 2, largura: 30 },
+                  { titulo: "Categoria", valor: (x) => nomes.categoria.get(x.t.categoria_id) ?? "", peso: 1.6, largura: 24 },
+                  { titulo: "Documento", valor: (x) => x.t.documento ?? "", peso: 1, largura: 14 },
+                  { titulo: "Valor", valor: (x) => Number(x.t.valor), formato: "moeda", peso: 1.2 },
+                  { titulo: T.feito, valor: (x) => Number(x.t.valor_pago), formato: "moeda", peso: 1.2 },
+                  { titulo: "Falta", valor: (x) => x.saldo, formato: "moeda", peso: 1.2, alerta: (x) => x.s === "vencido" },
+                  { titulo: "Situação", valor: (x) => SITUACOES[x.s].nome, peso: 1.1, largura: 14, alerta: (x) => x.s === "vencido" },
+                ],
+                totais: { Valor: totalLista, Falta: saldoLista },
+              })}
+            />
+            {podeOperar && cliente && (
+              <button className="btn-primario" onClick={() => setJanela({ tipo: "novo" })} disabled={!cad.dados}>
+                <Icone nome="mais" className="h-4 w-4" />
+                Nova {T.conta}
+              </button>
+            )}
+          </>
+        }
+      />
 
-      <div className="cartao flex flex-wrap items-end gap-3 p-4">
+      <CartaoFiltros ativos={filtrosAtivos} aoLimpar={limparFiltros}>
         <EscolhaCliente financeiro={financeiro} />
         <FiltroPeriodo
           rotulo="Vencimento"
@@ -224,81 +265,75 @@ export function TelaTitulos({ tipo }: { tipo: TipoTitulo }) {
             ))}
           </select>
         </label>
-        <details className="w-full sm:w-auto">
-          <summary className="cursor-pointer py-2 text-sm text-neutral-700">Mais filtros</summary>
-          <div className="mt-2 flex flex-wrap gap-3">
-            <label className="campo">
-              <span>{T.pessoa}</span>
-              <select value={pessoa} onChange={(e) => setPessoa(e.target.value)}>
-                <option value="">Todos</option>
-                {(cad.dados?.pessoas ?? []).map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.nome}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="campo">
-              <span>Categoria</span>
-              <select value={categoria} onChange={(e) => setCategoria(e.target.value)}>
-                <option value="">Todas</option>
-                {(cad.dados?.categorias ?? [])
-                  .filter((c) => c.tipo === (tipo === "pagar" ? "despesa" : "receita"))
-                  .map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.nome}
-                    </option>
-                  ))}
-              </select>
-            </label>
-          </div>
-        </details>
-        <label className="campo min-w-48 flex-1">
+        <label className="campo campo-largo">
           <span>Buscar</span>
           <input
+            type="search"
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
             placeholder={`Descrição, documento, ${T.pessoa.toLowerCase()} ou valor`}
           />
         </label>
-        {(pessoa || categoria || busca || situacao !== "abertos" || periodo !== "tudo") && (
-          <button
-            className="btn-link min-h-10 text-sm"
-            onClick={() => {
-              setPessoa("");
-              setCategoria("");
-              setBusca("");
-              setSituacao("abertos");
-              setPeriodo("tudo");
-            }}
-          >
-            Limpar filtros
-          </button>
-        )}
-      </div>
+        <MaisFiltros emUso={(pessoa ? 1 : 0) + (categoria ? 1 : 0)}>
+          <label className="campo">
+            <span>{T.pessoa}</span>
+            <select value={pessoa} onChange={(e) => setPessoa(e.target.value)}>
+              <option value="">Todos</option>
+              {(cad.dados?.pessoas ?? []).map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.nome}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="campo">
+            <span>Categoria</span>
+            <select value={categoria} onChange={(e) => setCategoria(e.target.value)}>
+              <option value="">Todas</option>
+              {(cad.dados?.categorias ?? [])
+                .filter((c) => c.tipo === (tipo === "pagar" ? "despesa" : "receita"))
+                .map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.nome}
+                  </option>
+                ))}
+            </select>
+          </label>
+        </MaisFiltros>
+      </CartaoFiltros>
 
       {aviso}
-      {(consulta.erro || cad.erro) && <p className="rounded-md bg-red-50 p-3 text-sm text-red-800">{consulta.erro ?? cad.erro}</p>}
+      {(consulta.erro || cad.erro) && (
+        <p role="alert" className="rounded-md bg-red-50 p-3 text-sm text-red-800">
+          {consulta.erro ?? cad.erro}
+        </p>
+      )}
 
       {!cliente ? (
-        <EstadoVazio>Escolha a empresa acima para ver as {T.titulo.toLowerCase()} dela.</EstadoVazio>
+        <EstadoVazio icone="moeda" titulo="Escolha a empresa">
+          Escolha a empresa nos filtros acima para ver as {T.titulo.toLowerCase()} dela.
+        </EstadoVazio>
       ) : consulta.carregando && !consulta.dados ? (
-        <Carregando />
+        <Esqueleto />
       ) : (
         <>
           {semCategoria && (
-            <p className="rounded-md bg-amber-50 p-3 text-sm text-amber-900">
-              Antes do primeiro lançamento, cadastre as {tipo === "pagar" ? "despesas" : "receitas"} da empresa em{" "}
-              <Link className="underline" href="/financeiro/cadastros">
-                Cadastros
-              </Link>{" "}
-              (cada uma ligada a uma conta do plano do Domínio).
+            <p className="flex items-start gap-2 rounded-lg bg-amber-50 p-3 text-sm text-amber-900">
+              <Icone nome="info" className="mt-0.5 h-4 w-4 shrink-0" />
+              <span>
+                Antes do primeiro lançamento, cadastre as {tipo === "pagar" ? "despesas" : "receitas"} da empresa em{" "}
+                <Link className="underline" href="/plano-contas/categorias">
+                  Plano de contas › Despesas e receitas
+                </Link>{" "}
+                (cada uma ligada a uma conta do plano do Domínio).
+              </span>
             </p>
           )}
-          <p className="text-sm text-neutral-700">{resumo}</p>
+          {resumo && <p className="text-sm text-[var(--texto)]">{resumo}</p>}
           <div className="grid gap-3 sm:grid-cols-3">
             <Indicador
               titulo="Vencido"
+              icone="alerta"
               valor={brl(vencido)}
               detalhe={`${qtdVencido} lançamento(s)`}
               tom={vencido ? "vermelho" : "neutro"}
@@ -307,6 +342,7 @@ export function TelaTitulos({ tipo }: { tipo: TipoTitulo }) {
             />
             <Indicador
               titulo="A vencer"
+              icone="calendario"
               valor={brl(aVencer)}
               tom="ambar"
               ativo={situacao === "a_vencer"}
@@ -314,6 +350,7 @@ export function TelaTitulos({ tipo }: { tipo: TipoTitulo }) {
             />
             <Indicador
               titulo={`${T.feito} (neste filtro)`}
+              icone="check"
               valor={brl(pago)}
               tom="verde"
               ativo={situacao === "quitado"}
@@ -323,107 +360,137 @@ export function TelaTitulos({ tipo }: { tipo: TipoTitulo }) {
 
           {!lista.length ? (
             <EstadoVazio
+              icone={consulta.dados?.length ? "filtro" : tipo === "pagar" ? "seta-saida" : "seta-entrada"}
+              titulo={consulta.dados?.length ? "Nada neste filtro" : `Nenhuma ${T.conta} lançada ainda`}
               acao={
-                podeOperar &&
-                !consulta.dados?.length &&
-                !semCategoria && (
-                  <button className="btn-primario" onClick={() => setJanela({ tipo: "novo" })}>
-                    Lançar a primeira
+                consulta.dados?.length ? (
+                  <button className="btn" onClick={limparFiltros}>
+                    Limpar filtros
                   </button>
+                ) : (
+                  podeOperar &&
+                  !semCategoria && (
+                    <button className="btn-primario" onClick={() => setJanela({ tipo: "novo" })}>
+                      <Icone nome="mais" className="h-4 w-4" />
+                      Lançar a primeira
+                    </button>
+                  )
                 )
               }
             >
-              {consulta.dados?.length ? "Nada neste filtro. Troque a situação ou o período." : `Nenhuma ${T.conta} lançada ainda.`}
+              {consulta.dados?.length
+                ? "Troque a situação ou o período, ou limpe os filtros para ver tudo."
+                : tipo === "pagar"
+                  ? "Lance boletos, aluguel, fornecedores e impostos. O HUB avisa o que vence e o que atrasou."
+                  : "Lance vendas, serviços e mensalidades. O HUB mostra o que entra e quem está atrasado."}
             </EstadoVazio>
           ) : (
-            <div className="cartao overflow-x-auto">
-              <table className="tabela">
-                <thead>
-                  <tr>
-                    <th>Vencimento</th>
-                    <th>Descrição</th>
-                    <th>{T.pessoa}</th>
-                    <th className="text-right">Valor</th>
-                    <th className="text-right">Falta</th>
-                    <th>Situação</th>
-                    <th />
-                  </tr>
-                </thead>
-                <tbody>
-                  {lista.slice(0, MOSTRAR).map(({ t, s, saldo }) => (
-                    <tr key={t.id} className={s === "cancelado" ? "opacity-60" : ""}>
-                      <td className={`whitespace-nowrap tabular-nums ${s === "vencido" ? "font-medium text-red-700" : ""}`}>
-                        {fmtData(t.vencimento)}
-                      </td>
-                      <td className="min-w-56">
-                        {t.descricao}
-                        <span className="block text-xs text-neutral-500">
-                          {nomes.categoria.get(t.categoria_id)}
-                          {t.documento && ` · doc. ${t.documento}`}
-                        </span>
-                      </td>
-                      <td className="min-w-32">{nomes.pessoa.get(t.pessoa_id ?? "") ?? "—"}</td>
-                      <td className="whitespace-nowrap text-right tabular-nums">{brl(Number(t.valor))}</td>
-                      <td className="whitespace-nowrap text-right font-medium tabular-nums">{s === "cancelado" ? "—" : brl(saldo)}</td>
-                      <td>
-                        <span className={`chip ${SITUACOES[s].tom}`}>{SITUACOES[s].nome}</span>
-                      </td>
-                      <td className="whitespace-nowrap text-right">
-                        <div className="flex justify-end gap-1">
-                          {podeOperar && t.situacao === "aberto" && (
-                            <button className="btn !min-h-8" onClick={() => setJanela({ tipo: "baixar", t })}>
-                              {T.verbo}
+            <QuadroTabela
+              rotulo={T.titulo}
+              rodape={lista.length > MOSTRAR ? `Mostrando ${MOSTRAR} de ${lista.length}. Os totais e a exportação consideram todos.` : undefined}
+            >
+              <thead>
+                <tr>
+                  <th>Vencimento</th>
+                  <th>Descrição</th>
+                  <th>{T.pessoa}</th>
+                  <th className="text-right">Valor</th>
+                  <th className="text-right">Falta</th>
+                  <th>Situação</th>
+                  <th>
+                    <span className="sr-only">Ações</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {lista.slice(0, MOSTRAR).map(({ t, s, saldo }) => (
+                  <tr key={t.id} className={s === "cancelado" ? "opacity-60" : ""}>
+                    <td data-rotulo="Vencimento" className={`num whitespace-nowrap ${s === "vencido" ? "font-medium text-red-700" : ""}`}>
+                      {fmtData(t.vencimento)}
+                    </td>
+                    <td className="celula-titulo min-w-56">
+                      {t.descricao}
+                      <span className="block text-xs font-normal text-[var(--texto-suave)]">
+                        {nomes.categoria.get(t.categoria_id)}
+                        {t.documento && ` · doc. ${t.documento}`}
+                      </span>
+                    </td>
+                    <td data-rotulo={T.pessoa} className="min-w-32">
+                      {nomes.pessoa.get(t.pessoa_id ?? "") ?? "—"}
+                    </td>
+                    <td data-rotulo="Valor" className="whitespace-nowrap text-right">
+                      <Valor v={Number(t.valor)} />
+                    </td>
+                    <td data-rotulo="Falta" className="whitespace-nowrap text-right font-medium">
+                      {s === "cancelado" ? "—" : <Valor v={saldo} />}
+                    </td>
+                    <td data-rotulo="Situação">
+                      <Chip tom={SITUACOES[s].tom}>{SITUACOES[s].nome}</Chip>
+                    </td>
+                    <td className="celula-acoes whitespace-nowrap text-right">
+                      <div className="flex justify-end gap-1">
+                        {podeOperar && t.situacao === "aberto" && (
+                          <button className="btn !min-h-8 !px-3" onClick={() => setJanela({ tipo: "baixar", t })}>
+                            <Icone nome="check" className="h-4 w-4" />
+                            {T.verbo}
+                          </button>
+                        )}
+                        <details className="relative">
+                          <summary
+                            className="btn !min-h-8 list-none !px-2.5 [&::-webkit-details-marker]:hidden"
+                            aria-label="Mais ações"
+                            title="Mais ações"
+                          >
+                            ⋯
+                          </summary>
+                          <div className="absolute right-0 z-10 mt-1 w-52 rounded-xl border border-[var(--borda)] bg-white p-1 text-left text-sm shadow-lg">
+                            <button
+                              className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left hover:bg-[var(--fundo)]"
+                              onClick={(e) => menu(e, { tipo: "historico", t })}
+                            >
+                              <Icone nome="relogio" className="h-4 w-4 text-[var(--texto-suave)]" />
+                              Histórico de pagamentos
                             </button>
-                          )}
-                          <details className="relative">
-                            <summary className="btn !min-h-8 list-none" aria-label="Mais ações">
-                              ⋯
-                            </summary>
-                            <div className="absolute right-0 z-10 mt-1 w-44 rounded-md border border-[var(--borda)] bg-white py-1 text-left text-sm shadow-lg">
+                            {podeOperar && t.situacao === "aberto" && (
                               <button
-                                className="block w-full px-3 py-1.5 text-left hover:bg-neutral-50"
-                                onClick={(e) => menu(e, { tipo: "historico", t })}
+                                className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left hover:bg-[var(--fundo)]"
+                                onClick={(e) => menu(e, { tipo: "editar", t })}
                               >
-                                Histórico de pagamentos
+                                <Icone nome="editar" className="h-4 w-4 text-[var(--texto-suave)]" />
+                                Editar
                               </button>
-                              {podeOperar && t.situacao === "aberto" && (
-                                <button
-                                  className="block w-full px-3 py-1.5 text-left hover:bg-neutral-50"
-                                  onClick={(e) => menu(e, { tipo: "editar", t })}
-                                >
-                                  Editar
-                                </button>
-                              )}
-                              {podeOperar && t.situacao === "aberto" && Number(t.valor_pago) === 0 && (
-                                <button
-                                  className="block w-full px-3 py-1.5 text-left text-[var(--perigo)] hover:bg-red-50"
-                                  onClick={(e) => menu(e, { tipo: "cancelar", t })}
-                                >
-                                  Cancelar lançamento
-                                </button>
-                              )}
-                            </div>
-                          </details>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-                <tfoot>
-                  <tr className="font-medium">
-                    <td colSpan={3}>Total ({lista.length})</td>
-                    <td className="text-right tabular-nums">{brl(totalLista)}</td>
-                    <td className="text-right tabular-nums">{brl(saldoLista)}</td>
-                    <td colSpan={2} />
+                            )}
+                            {podeOperar && t.situacao === "aberto" && Number(t.valor_pago) === 0 && (
+                              <button
+                                className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-[var(--perigo)] hover:bg-red-50"
+                                onClick={(e) => menu(e, { tipo: "cancelar", t })}
+                              >
+                                <Icone nome="fechar" className="h-4 w-4" />
+                                Cancelar lançamento
+                              </button>
+                            )}
+                          </div>
+                        </details>
+                      </div>
+                    </td>
                   </tr>
-                </tfoot>
-              </table>
-              {lista.length > MOSTRAR && (
-                <p className="p-3 text-xs text-neutral-500">
-                  Mostrando {MOSTRAR} de {lista.length}. Os totais e a exportação consideram todos.
-                </p>
-              )}
-            </div>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr className="font-medium">
+                  <td colSpan={3} className="celula-titulo">
+                    Total ({lista.length})
+                  </td>
+                  <td data-rotulo="Valor" className="text-right">
+                    <Valor v={totalLista} />
+                  </td>
+                  <td data-rotulo="Falta" className="text-right">
+                    <Valor v={saldoLista} />
+                  </td>
+                  <td colSpan={2} />
+                </tr>
+              </tfoot>
+            </QuadroTabela>
           )}
         </>
       )}

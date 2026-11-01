@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { useOrg } from "@/dominios/organizacao/OrgProvider";
-import { NAV } from "./navegacao";
+import { NAV, podeModulo } from "./navegacao";
 import type { Modulo } from "./navegacao";
 
 /** Bloqueia a tela de um módulo que não foi liberado para a pessoa. */
@@ -11,7 +11,7 @@ export function Guarda({ modulo, children }: { modulo: Modulo; children: React.R
   const { pode, appsCarregados } = useOrg();
   if (modulo === "hub") return <>{children}</>;
   if (!appsCarregados) return <p className="p-10 text-center text-sm text-neutral-500">Carregando…</p>;
-  if (!pode(modulo))
+  if (!podeModulo(modulo, pode))
     return (
       <div className="mx-auto max-w-lg p-10 text-center">
         <h1 className="text-lg font-semibold text-[var(--marca)]">Ferramenta não liberada</h1>

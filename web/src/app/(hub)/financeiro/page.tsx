@@ -1,399 +1,348 @@
-// Financeiro › Contas bancárias da empresa escolhida: saldo atual (saldo inicial + extratos importados), último
-// lançamento, a conta contábil do Domínio ligada a cada banco (usada na conciliação e na exportação, etapas 2 e 3)
-// e o cadastro/edição. Exporta a lista em PDF e Excel.
+// Financeiro › Início: o painel da empresa escolhida. Saldo dos bancos (pelos extratos), o que vence hoje, o que está
+// vencido, os próximos 7 dias, o fluxo de caixa previsto dos próximos 30 dias (saldo atual + contas em aberto), o
+// realizado dos últimos 6 meses (pagamentos e recebimentos), as maiores despesas do mês e atalhos. Empresa sem nada
+// cadastrado vê os primeiros passos (plano → banco → categorias → lançar). Só lê; as contas ficam em painel.ts.
 "use client";
 
 import Link from "next/link";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo } from "react";
 import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { nomeCliente } from "@/dominios/clientes/nome";
-import { EscolhaCliente, useClienteFinanceiro } from "@/dominios/financeiro/componentes/EscolhaCliente";
-import { lerContas, lerLinhas, lerPlano, rotuloConta } from "@/dominios/financeiro/leituras";
-import { BANCOS, saldoDaConta } from "@/dominios/financeiro/tipos";
-import { numeroBr } from "@/dominios/financeiro/regras";
-import type { ContaBancaria, ContaContabil } from "@/dominios/financeiro/tipos";
-import { supabase } from "@/lib/supabase";
+import { useClienteFinanceiro } from "@/dominios/financeiro/componentes/EscolhaCliente";
+import { Valor } from "@/dominios/financeiro/componentes/Comuns";
+import { BarrasCategorias, GraficoFluxo, GraficoMeses } from "@/dominios/financeiro/componentes/GraficosPainel";
+import { PrimeirosPassos } from "@/dominios/financeiro/componentes/PrimeirosPassos";
+import {
+  contarDoCliente,
+  lerBaixas,
+  lerCategorias,
+  lerContas,
+  lerLinhas,
+  lerTitulosAbertos,
+  lerTitulosPorId,
+  lerTransferencias,
+} from "@/dominios/financeiro/leituras";
+import {
+  despesasPorCategoria,
+  fluxoPrevisto,
+  menorSaldo,
+  primeirosPassos,
+  realizadoPorMes,
+  resumirPrazos,
+  saldoComTransferencias,
+  saudacao,
+} from "@/dominios/financeiro/painel";
+import type { Soma } from "@/dominios/financeiro/painel";
+
+
 import { useConsulta } from "@/lib/useConsulta";
-import { traduzirErro } from "@/lib/erros";
-import { hojeISO } from "@/lib/datas";
+import { hojeISO, somarMeses } from "@/lib/datas";
 import { brl } from "@/lib/formato/moeda";
 import { fmtData } from "@/lib/formato/datas";
-import { baixarBytes } from "@/lib/arquivos/baixar";
-import { exportarExcel } from "@/lib/arquivos/excel";
-import { gerarRelatorioPdf } from "@/lib/arquivos/relatorioPdf";
-import { carregarLogo } from "@/lib/marca";
-import { Modal } from "@/components/ui/Modal";
-import { Carregando } from "@/components/ui/Carregando";
+import { Icone } from "@/components/ui/Icone";
+import { Esqueleto } from "@/components/ui/Esqueleto";
 import { EstadoVazio } from "@/components/ui/EstadoVazio";
-import { useAviso } from "@/components/ui/Aviso";
 
-type Form = {
-  id?: string;
-  nome: string;
-  banco: string;
-  agencia: string;
-  numero: string;
-  conta_contabil_id: string;
-  saldo_inicial: string;
-  saldo_inicial_em: string;
-  ativo: boolean;
-};
-const VAZIO: Form = {
-  nome: "",
-  banco: "",
-  agencia: "",
-  numero: "",
-  conta_contabil_id: "",
-  saldo_inicial: "0,00",
-  saldo_inicial_em: "",
-  ativo: true,
-};
+const dataPorExtenso = (iso: string) =>
+  new Intl.DateTimeFormat("pt-BR", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" }).format(new Date(iso + "T12:00:00Z"));
 
-export default function PaginaContasBancarias() {
-  const { org, pode } = useOrg();
+const nomeDoMes = (mes: string) =>
+  new Intl.DateTimeFormat("pt-BR", { month: "long", timeZone: "UTC" }).format(new Date(`${mes}-15T12:00:00Z`));
+
+const horaNoFuso =
+ (fuso: string) => Number(new Date().toLocaleString("en-US", { hour: "numeric", hour12: false, timeZone: fuso })) % 24;
+
+export default function PainelFinanceiro() {
+  const { org, eu, pode } = useOrg();
   const financeiro = useClienteFinanceiro();
-  const cliente = financeiro.cliente;
+  const { cliente, ativos, escolher } = financeiro;
   const podeOperar = pode("financeiro", "operar");
-  const { aviso, mostrar } = useAviso();
-  const [form, setForm] = useState<Form | null>(null);
-  const [salvando, setSalvando] = useState(false);
-  const [mostrarInativas, setMostrarInativas] = useState(false);
+  const hoje = hojeISO(org.fuso);
 
   const consulta = useConsulta(
     useCallback(async () => {
       if (!cliente) return null;
-      const [contas, plano, linhas] = await Promise.all([lerContas(cliente.id), lerPlano(cliente.id), lerLinhas(cliente.id)]);
-      return { contas, plano, linhas };
-    }, [cliente]),
-  );
-  const dados = consulta.dados;
-  const analiticas = useMemo(() => (dados?.plano ?? []).filter((c) => c.analitica && c.ativo), [dados]);
-  const porId = useMemo(() => new Map((dados?.plano ?? []).map((c) => [c.id, c])), [dados]);
-
-  const lista = useMemo(() => {
-    if (!dados) return [];
-    return dados.contas
-      .filter((c) => mostrarInativas || c.ativo)
-      .map((c) => {
-        const daConta = dados.linhas.filter((l) => l.conta_id === c.id);
-        return {
-          conta: c,
-          saldo: saldoDaConta(c, daConta),
-          ultimo: daConta.length ? daConta[daConta.length - 1].data : null,
-          pendentes: daConta.filter((l) => l.situacao === "pendente").length,
-          contabil: c.conta_contabil_id ? porId.get(c.conta_contabil_id) : undefined,
-        };
-      });
-  }, [dados, mostrarInativas, porId]);
-  const total = lista.filter((x) => x.conta.ativo).reduce((a, x) => a + x.saldo, 0);
-
-  function abrir(c?: ContaBancaria) {
-    setForm(
-      c
-        ? {
-            id: c.id,
-            nome: c.nome,
-            banco: c.banco ?? "",
-            agencia: c.agencia ?? "",
-            numero: c.numero ?? "",
-            conta_contabil_id: c.conta_contabil_id ?? "",
-            saldo_inicial: Number(c.saldo_inicial).toLocaleString("pt-BR", { minimumFractionDigits: 2 }),
-            saldo_inicial_em: c.saldo_inicial_em ?? "",
-            ativo: c.ativo,
-          }
-        : { ...VAZIO },
-    );
-  }
-
-  async function salvar() {
-    if (!form || !cliente) return;
-    const saldo = Math.round(numeroBr(form.saldo_inicial || "0") * 100) / 100;
-    if (!form.nome.trim()) return mostrar("Dê um nome para a conta (ex.: Itaú movimento).", "erro");
-    if (Number.isNaN(saldo)) return mostrar("O saldo inicial não é um valor válido. Exemplo: 1.234,56 ou -500,00.", "erro");
-    setSalvando(true);
-    const dadosConta = {
-      nome: form.nome.trim(),
-      banco: form.banco.trim() || null,
-      agencia: form.agencia.trim() || null,
-      numero: form.numero.trim() || null,
-      conta_contabil_id: form.conta_contabil_id || null,
-      saldo_inicial: saldo,
-      saldo_inicial_em: form.saldo_inicial_em || null,
-      ativo: form.ativo,
-    };
-    const { error } = form.id
-      ? await supabase().from("fin_contas_bancarias").update(dadosConta).eq("id", form.id)
-      : await supabase()
-          .from("fin_contas_bancarias")
-          .insert({ ...dadosConta, org_id: org.id, cliente_id: cliente.id });
-    setSalvando(false);
-    if (error) return mostrar(traduzirErro(error), "erro");
-    setForm(null);
-    mostrar(form.id ? "Conta atualizada." : "Conta cadastrada. Agora importe o extrato dela em Extratos.");
-    consulta.recarregar();
-  }
-
-  const titulo = "Contas bancárias";
-  const subtitulo = cliente ? `${nomeCliente(cliente)} · saldo em ${fmtData(hojeISO(org.fuso))}` : "";
-  const linhaExp = (x: (typeof lista)[number]) => ({
-    nome: x.conta.nome,
-    banco: x.conta.banco ?? "",
-    agencia: x.conta.agencia ?? "",
-    numero: x.conta.numero ?? "",
-    contabil: x.contabil ? rotuloConta(x.contabil) : "Não ligada",
-    ultimo: x.ultimo ? fmtData(x.ultimo) : "Sem extrato",
-    pendentes: x.pendentes,
-    saldo: x.saldo,
-    situacao: x.conta.ativo ? "Ativa" : "Inativa",
-  });
-  const arquivoBase = `Contas-bancarias-${(cliente ? nomeCliente(cliente) : "").replace(/[^\w]+/g, "-")}-${hojeISO(org.fuso)}`;
-
-  async function pdf() {
-    try {
-      const bytes = await gerarRelatorioPdf({
-        titulo,
-        subtitulo,
-        paisagem: true,
-        logo: await carregarLogo(org.logo_url),
-        secoes: [
-          {
-            titulo: "Contas",
-            colunas: [
-              { titulo: "Conta", peso: 2 },
-              { titulo: "Banco", peso: 1.8 },
-              { titulo: "Agência / conta", peso: 1.4 },
-              { titulo: "Conta contábil", peso: 2.6 },
-              { titulo: "Último lançamento", peso: 1.2 },
-              { titulo: "A conciliar", peso: 0.9, direita: true },
-              { titulo: "Saldo", peso: 1.3, direita: true },
-            ],
-            linhas: [
-              ...lista.map((x) => {
-                const l = linhaExp(x);
-                return {
-                  celulas: [
-                    l.nome,
-                    l.banco || "—",
-                    [l.agencia, l.numero].filter(Boolean).join(" / ") || "—",
-                    l.contabil,
-                    l.ultimo,
-                    String(l.pendentes),
-                    brl(l.saldo),
-                  ],
-                  alerta: [false, false, false, !x.contabil, false, false, x.saldo < 0],
-                };
-              }),
-              { celulas: ["Total das contas ativas", "", "", "", "", "", brl(total)], negrito: true, fundo: true },
-            ],
-          },
-        ],
-      });
-      baixarBytes(bytes, `${arquivoBase}.pdf`);
-    } catch (e) {
-      mostrar(traduzirErro(e), "erro");
-    }
-  }
-
-  async function excel() {
-    try {
-      await exportarExcel(`${arquivoBase}.xlsx`, titulo, subtitulo, [
-        {
-          nome: "Contas",
-          colunas: [
-            { titulo: "Conta", chave: "nome", largura: 28 },
-            { titulo: "Banco", chave: "banco", largura: 28 },
-            { titulo: "Agência", chave: "agencia", largura: 10 },
-            { titulo: "Conta", chave: "numero", largura: 14 },
-            { titulo: "Conta contábil", chave: "contabil", largura: 44 },
-            { titulo: "Último lançamento", chave: "ultimo", largura: 16 },
-            { titulo: "A conciliar", chave: "pendentes", largura: 12, formato: "numero" },
-            { titulo: "Saldo", chave: "saldo", largura: 16, formato: "moeda" },
-            { titulo: "Situação", chave: "situacao", largura: 10 },
-          ],
-          linhas: lista.map(linhaExp),
-          totais: { nome: "Total das contas ativas", saldo: total },
-        },
+      const id = cliente.id;
+      const [contas, linhas, abertos, baixas, categorias, plano, titulos, transferencias] = await Promise.all([
+        lerContas(id),
+        lerLinhas(id),
+        lerTitulosAbertos(id),
+        lerBaixas(id, { de: `${somarMeses(hoje, -5)}-01`, ate: hoje }),
+        lerCategorias(id),
+        contarDoCliente("fin_plano_contas", id),
+        contarDoCliente("fin_titulos", id),
+        lerTransferencias(id),
       ]);
-    } catch (e) {
-      mostrar(traduzirErro(e), "erro");
+      const daBaixa = await lerTitulosPorId(baixas.map((b) => b.titulo_id));
+      return { contas, linhas, abertos, baixas, categorias, plano, titulos, daBaixa, transferencias };
+    }, [cliente, hoje]),
+  );
+  const d = consulta.dados;
+
+  const calc = useMemo(() => {
+    if (!d) return null;
+    const bancos = d.contas.filter((c) => c.ativo).map((c) => ({ conta: c, saldo: saldoComTransferencias(c, d.linhas, d.transferencias) }));
+    const saldo = Math.round(bancos.reduce((a, b) => a + b.saldo, 0) * 100) / 100;
+    const fluxo = fluxoPrevisto(saldo, d.abertos, hoje, 30);
+    const titulos = new Map(d.daBaixa.map((t) => [t.id, t]));
+    const cats = new Map(d.categorias.map((c) => [c.id, c]));
+    // no começo do mês (nada pago ainda) mostra o mês passado, para o quadro não abrir vazio
+    let mesDespesas = hoje.slice(0, 7);
+    let despesas = despesasPorCategoria(d.baixas, titulos, cats, mesDespesas);
+    if (!despesas.length) {
+      const anterior = somarMeses(hoje, -1);
+      const doAnterior = despesasPorCategoria(d.baixas, titulos, cats, anterior);
+      if (doAnterior.length) [mesDespesas, despesas] = [anterior, doAnterior];
     }
-  }
+    return {
+      bancos,
+      saldo,
+      prazos: resumirPrazos(d.abertos, hoje),
+      fluxo,
+      pior: menorSaldo(fluxo),
+      meses: realizadoPorMes(d.baixas, new Map(d.daBaixa.map((t) => [t.id, t.tipo])), hoje, 6),
+      despesas,
+      mesDespesas,
+      passos: primeirosPassos({ plano: d.plano, bancos: d.contas.length, categorias: d.categorias.length, titulos: d.titulos }),
+    };
+  }, [d, hoje]);
+
+  const primeiroNome = eu.nome.split(/\s+/)[0] ?? "";
+  const faltaPasso = calc?.passos.some((p) => !p.feito);
+  const semMovimento = !!d && !d.contas.length && !d.titulos;
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-start gap-2">
-        <div className="mr-auto">
-          <h1 className="text-xl font-semibold text-[var(--marca)]">Contas bancárias</h1>
-          <p className="text-sm text-neutral-600">Os bancos de cada empresa, com o saldo calculado pelos extratos importados.</p>
+    <div className="space-y-5">
+      {/* faixa de abertura: saudação, empresa e o saldo dos bancos */}
+      <section className="relative overflow-hidden rounded-2xl bg-[var(--marca)] text-[var(--nevoa)]">
+        <div
+          className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full border border-[var(--destaque)]/20"
+          aria-hidden="true"
+        />
+        <div
+          className="pointer-events-none absolute -right-10 -top-10 h-44 w-44 rounded-full border border-[var(--destaque)]/15"
+          aria-hidden="true"
+        />
+        <div className="relative grid gap-6 p-5 sm:p-7 lg:grid-cols-[1fr_auto] lg:items-end">
+          <div className="min-w-0 space-y-5">
+            <div>
+              <h1 className="text-[22px] font-semibold leading-tight text-white">
+                {saudacao(horaNoFuso(org.fuso))}, {primeiroNome}
+              </h1>
+              <p className="mt-0.5 text-sm first-letter:uppercase text-[var(--nevoa)]/75">{dataPorExtenso(hoje)}</p>
+            </div>
+            <label className="block max-w-md">
+              <span className="mb-1 block text-[12px] text-[var(--nevoa)]/70">Empresa</span>
+              <select
+                value={cliente?.id ?? ""}
+                onChange={(e) => escolher(e.target.value)}
+                className="w-full rounded-lg border border-white/15 bg-white/[0.07] px-3 py-2 text-[15px] font-medium text-white outline-none focus:border-[var(--destaque)]"
+              >
+                <option value="" className="text-black">
+                  Escolha a empresa…
+                </option>
+                {ativos.map((c) => (
+                  <option key={c.id} value={c.id} className="text-black">
+                    {nomeCliente(c)}
+                    {c.codigo_dominio ? ` · cód. ${c.codigo_dominio}` : ""}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+          {cliente && calc && (
+            <div className="min-w-0 lg:text-right">
+              <p className="text-[13px] text-[var(--nevoa)]/75">Dinheiro nos bancos hoje</p>
+              <p
+                className={`font-display num mt-1 text-[40px] leading-none tracking-tight sm:text-[52px] ${calc.saldo < 0 ? "text-[#ffb4a8]" : "text-white"}`}
+              >
+                {brl(calc.saldo)}
+              </p>
+              <div className="mt-3 flex flex-wrap gap-1.5 lg:justify-end">
+                {calc.bancos.slice(0, 4).map((b) => (
+                  <span key={b.conta.id} className="chip bg-white/[0.08] text-[var(--nevoa)]">
+                    <Icone nome="banco" className="h-3.5 w-3.5 text-[var(--destaque)]" />
+                    {b.conta.nome}
+                    <span className={`num ${b.saldo < 0 ? "text-[#ffb4a8]" : "text-white"}`}>{brl(b.saldo, { centavos: false })}</span>
+                  </span>
+                ))}
+                {!calc.bancos.length && <span className="text-[13px] text-[var(--nevoa)]/70">Nenhum banco cadastrado ainda.</span>}
+              </div>
+            </div>
+          )}
         </div>
-        <button className="btn" onClick={pdf} disabled={!lista.length}>
-          PDF
-        </button>
-        <button className="btn" onClick={excel} disabled={!lista.length}>
-          Excel
-        </button>
-        {podeOperar && cliente && (
-          <button className="btn-primario" onClick={() => abrir()}>
-            Nova conta
-          </button>
-        )}
-      </div>
-
-      <div className="cartao flex flex-wrap items-end gap-3 p-4">
-        <EscolhaCliente financeiro={financeiro} />
-        <label className="flex min-h-10 items-center gap-2 text-sm">
-          <input type="checkbox" checked={mostrarInativas} onChange={(e) => setMostrarInativas(e.target.checked)} />
-          Mostrar contas inativas
-        </label>
-      </div>
-
-      {aviso}
-      {consulta.erro && <p className="rounded-md bg-red-50 p-3 text-sm text-red-800">{consulta.erro}</p>}
+      </section>
 
       {!cliente ? (
-        <EstadoVazio>Escolha a empresa acima para ver as contas bancárias dela.</EstadoVazio>
-      ) : consulta.carregando && !dados ? (
-        <Carregando />
-      ) : !lista.length ? (
-        <EstadoVazio
-          acao={
-            podeOperar && (
-              <button className="btn-primario" onClick={() => abrir()}>
-                Cadastrar a primeira conta
-              </button>
-            )
-          }
-        >
-          {nomeCliente(cliente)} ainda não tem conta bancária cadastrada.
+        <EstadoVazio icone="moeda" titulo="Escolha a empresa">
+          Escolha a empresa na faixa acima para ver o saldo, as contas do dia e o fluxo de caixa dela.
         </EstadoVazio>
+      ) : consulta.erro ? (
+        <p role="alert" className="rounded-md bg-red-50 p-3 text-sm text-red-800">
+          {consulta.erro}
+        </p>
+      ) : !calc || !d ? (
+        <Esqueleto indicadores={3} linhas={4} />
       ) : (
         <>
-          {!dados?.plano.length && (
-            <p className="rounded-md bg-amber-50 p-3 text-sm text-amber-900">
-              O plano de contas desta empresa ainda não foi importado. Importe em{" "}
-              <Link className="underline" href="/financeiro/plano">
-                Plano de contas
-              </Link>{" "}
-              para ligar cada banco à conta contábil do Domínio.
-            </p>
-          )}
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            {lista.map((x) => (
-              <div key={x.conta.id} className={`cartao space-y-3 p-4 ${x.conta.ativo ? "" : "opacity-60"}`}>
-                <div className="flex items-start gap-2">
-                  <div className="mr-auto min-w-0">
-                    <h2 className="truncate font-semibold text-[var(--marca)]">{x.conta.nome}</h2>
-                    <p className="truncate text-xs text-neutral-600">
-                      {x.conta.banco ?? "Banco não informado"}
-                      {x.conta.agencia || x.conta.numero ? ` · ag. ${x.conta.agencia ?? "—"} · conta ${x.conta.numero ?? "—"}` : ""}
+          {podeOperar && <Atalhos />}
+
+          {faltaPasso && <PrimeirosPassos passos={calc.passos} podeOperar={podeOperar} />}
+
+          {!semMovimento && (
+            <>
+              <section className="grid gap-3 md:grid-cols-3" aria-label="Contas do dia">
+                <CartaoPrazo titulo="Hoje" icone="calendario" pagar={calc.prazos.hoje.pagar} receber={calc.prazos.hoje.receber} vazio="Nada vence hoje." />
+                <CartaoPrazo
+                  titulo="Vencidos"
+                  icone="alerta"
+                  alerta
+                  pagar={calc.prazos.vencidos.pagar}
+                  receber={calc.prazos.vencidos.receber}
+                  vazio="Nada vencido. Tudo em dia."
+                />
+                <CartaoPrazo
+                  titulo="Próximos 7 dias"
+                  icone="relogio"
+                  pagar={calc.prazos.semana.pagar}
+                  receber={calc.prazos.semana.receber}
+                  vazio="Nada vence nos próximos 7 dias."
+                />
+              </section>
+
+              <div className="grid gap-4 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+                <section className="cartao min-w-0 space-y-3 p-4 sm:p-5">
+                  <div>
+                    <h2 className="font-semibold text-[var(--marca)]">Fluxo de caixa dos próximos 30 dias</h2>
+                    <p className="text-sm text-[var(--texto-suave)]">
+                      Se tudo for pago e recebido no vencimento, o saldo chega a{" "}
+                      <Valor v={calc.fluxo.at(-1)?.saldo ?? 0} className="font-medium" /> em {fmtData(calc.fluxo.at(-1)?.data ?? hoje)}.
+                      {calc.prazos.vencidos.pagar.qtd + calc.prazos.vencidos.receber.qtd > 0 && " O que está vencido conta no dia de hoje."}
                     </p>
                   </div>
-                  {!x.conta.ativo && <span className="chip bg-neutral-100 text-neutral-700">Inativa</span>}
-                </div>
-                <div>
-                  <p className="text-xs text-neutral-500">Saldo pelos extratos</p>
-                  <p className={`text-2xl font-semibold tabular-nums ${x.saldo < 0 ? "text-red-700" : "text-neutral-900"}`}>
-                    {brl(x.saldo)}
-                  </p>
-                  <p className="text-xs text-neutral-500">
-                    {x.ultimo ? `Último lançamento em ${fmtData(x.ultimo)}` : "Nenhum extrato importado ainda"}
-                  </p>
-                </div>
-                <p className="text-xs">
-                  <span className="text-neutral-500">Conta contábil: </span>
-                  {x.contabil ? rotuloConta(x.contabil) : <span className="text-amber-800">não ligada</span>}
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {x.pendentes > 0 && <span className="chip bg-amber-50 text-amber-900">{x.pendentes} lançamento(s) a conciliar</span>}
-                  <Link href="/financeiro/extratos" className="btn !min-h-8">
-                    Ver extrato
-                  </Link>
-                  {podeOperar && (
-                    <button className="btn !min-h-8" onClick={() => abrir(x.conta)}>
-                      Editar
-                    </button>
+                  {calc.pior && calc.pior.saldo < 0 && (
+                    <p className="flex items-start gap-2 rounded-lg bg-red-50 p-3 text-sm text-red-800">
+                      <Icone nome="alerta" className="mt-0.5 h-4 w-4 shrink-0" />
+                      <span>
+                        Atenção: o saldo fica negativo em {fmtData(calc.pior.data)} ({brl(calc.pior.saldo)}). Antecipe recebimentos ou
+                        renegocie pagamentos.
+                      </span>
+                    </p>
                   )}
-                </div>
+                  <GraficoFluxo dias={calc.fluxo} />
+                </section>
+
+                <section className="cartao min-w-0 space-y-3 p-4 sm:p-5">
+                  <div className="flex items-start gap-2">
+                    <div className="mr-auto">
+                      <h2 className="font-semibold text-[var(--marca)]">
+                        {calc.mesDespesas === hoje.slice(0, 7) ? "Maiores despesas do mês" : `Maiores despesas de ${nomeDoMes(calc.mesDespesas)}`}
+                      </h2>
+                      <p className="text-sm text-[var(--texto-suave)]">O que já foi pago, por categoria.</p>
+                    </div>
+                  </div>
+                  {calc.despesas.length ? (
+                    <BarrasCategorias fatias={calc.despesas} />
+                  ) : (
+                    <p className="py-6 text-center text-sm text-[var(--texto-suave)]">Nenhum pagamento registrado neste mês.</p>
+                  )}
+                  <Link href="/financeiro/movimento" className="btn-link inline-block">
+                    Ver entradas e saídas
+                  </Link>
+                </section>
               </div>
-            ))}
-          </div>
-          <p className="text-right text-sm text-neutral-700">
-            Total das contas ativas: <b className="tabular-nums">{brl(total)}</b>
-          </p>
+
+              <section className="cartao space-y-3 p-4 sm:p-5">
+                <div>
+                  <h2 className="font-semibold text-[var(--marca)]">Últimos 6 meses</h2>
+                  <p className="text-sm text-[var(--texto-suave)]">O dinheiro que entrou e saiu de verdade (pagamentos e recebimentos registrados).</p>
+                </div>
+                <GraficoMeses meses={calc.meses} />
+              </section>
+            </>
+          )}
         </>
       )}
+    </div>
+  );
+}
 
-      {form && (
-        <Modal
-          titulo={form.id ? "Editar conta bancária" : "Nova conta bancária"}
-          descricao="Informe o saldo do banco no fim de um dia (como aparece no extrato). Os lançamentos dos dias seguintes somam a partir dele."
-          aoFechar={() => setForm(null)}
-          largura="lg"
+/** Atalhos grandes para o que mais se faz no dia a dia. */
+function Atalhos() {
+  const itens = [
+    { href: "/financeiro/pagar?nova=1", nome: "Nova conta a pagar", dica: "Boleto, aluguel, fornecedor", icone: "seta-saida" },
+    { href: "/financeiro/receber?nova=1", nome: "Nova conta a receber", dica: "Venda, serviço, mensalidade", icone: "seta-entrada" },
+    { href: "/financeiro/extratos", nome: "Importar extrato", dica: "Arquivo OFX ou planilha do banco", icone: "importar" },
+    { href: "/financeiro/estoque", nome: "Cadastrar item", dica: "Produto ou serviço", icone: "caixa" },
+  ];
+  return (
+    <nav aria-label="Atalhos" className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      {itens.map((a) => (
+        <Link
+          key={a.href}
+          href={a.href}
+          className="cartao group flex items-center gap-3 p-3.5 transition-colors hover:border-[var(--destaque-escuro)] sm:p-4"
         >
-          <label className="campo">
-            <span>Nome da conta</span>
-            <input value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} placeholder="Ex.: Itaú movimento" />
-          </label>
-          <label className="campo">
-            <span>Banco</span>
-            <input
-              list="lista-bancos"
-              value={form.banco}
-              onChange={(e) => setForm({ ...form, banco: e.target.value })}
-              placeholder="Comece a digitar…"
-            />
-            <datalist id="lista-bancos">
-              {BANCOS.map((b) => (
-                <option key={b} value={b} />
-              ))}
-            </datalist>
-          </label>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <label className="campo">
-              <span>Agência</span>
-              <input value={form.agencia} onChange={(e) => setForm({ ...form, agencia: e.target.value })} inputMode="numeric" />
-            </label>
-            <label className="campo">
-              <span>Número da conta</span>
-              <input value={form.numero} onChange={(e) => setForm({ ...form, numero: e.target.value })} />
-            </label>
-          </div>
-          <label className="campo">
-            <span>Conta contábil no Domínio</span>
-            <select value={form.conta_contabil_id} onChange={(e) => setForm({ ...form, conta_contabil_id: e.target.value })}>
-              <option value="">{analiticas.length ? "Escolha a conta do banco no plano…" : "Importe o plano de contas primeiro"}</option>
-              {analiticas.map((c: ContaContabil) => (
-                <option key={c.id} value={c.id}>
-                  {rotuloConta(c)}
-                </option>
-              ))}
-            </select>
-          </label>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <label className="campo">
-              <span>Saldo inicial (R$)</span>
-              <input value={form.saldo_inicial} onChange={(e) => setForm({ ...form, saldo_inicial: e.target.value })} inputMode="decimal" />
-            </label>
-            <label className="campo">
-              <span>Saldo no fim do dia</span>
-              <input type="date" value={form.saldo_inicial_em} onChange={(e) => setForm({ ...form, saldo_inicial_em: e.target.value })} />
-            </label>
-          </div>
-          {form.id && (
-            <label className="flex items-center gap-2 text-sm">
-              <input type="checkbox" checked={form.ativo} onChange={(e) => setForm({ ...form, ativo: e.target.checked })} />
-              Conta ativa (desmarque quando a empresa encerrar a conta; o histórico continua guardado)
-            </label>
-          )}
-          <div className="flex justify-end gap-2 pt-2">
-            <button className="btn" onClick={() => setForm(null)}>
-              Cancelar
-            </button>
-            <button className="btn-primario" onClick={salvar} disabled={salvando}>
-              {salvando ? "Salvando…" : "Salvar"}
-            </button>
-          </div>
-        </Modal>
+          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-[var(--marca)] text-[var(--destaque)] transition-transform group-hover:scale-105">
+            <Icone nome={a.icone} className="h-5 w-5" />
+          </span>
+          <span className="min-w-0">
+            <span className="block text-[14px] font-semibold leading-tight text-[var(--marca)]">{a.nome}</span>
+            <span className="hidden truncate text-xs text-[var(--texto-suave)] sm:block">{a.dica}</span>
+          </span>
+        </Link>
+      ))}
+    </nav>
+  );
+}
+
+/** Cartão de prazo (hoje, vencidos, próximos 7 dias): quanto há a pagar e a receber, com link para a lista. */
+function CartaoPrazo({
+  titulo,
+  icone,
+  pagar,
+  receber,
+  vazio,
+  alerta,
+}: {
+  titulo: string;
+  icone: string;
+  pagar: Soma;
+  receber: Soma;
+  vazio: string;
+  alerta?: boolean;
+}) {
+  const nada = !pagar.qtd && !receber.qtd;
+  const vermelho = alerta && !nada;
+  return (
+    <div className={`cartao p-4 ${vermelho ? "border-red-200" : ""}`}>
+      <div className="mb-3 flex items-center gap-2.5">
+        <span
+          className={`grid h-9 w-9 place-items-center rounded-xl ${vermelho ? "bg-red-50 text-red-700" : "bg-[var(--fundo)] text-[var(--marca)]"}`}
+          aria-hidden="true"
+        >
+          <Icone nome={icone} className="h-[18px] w-[18px]" />
+        </span>
+        <h2 className={`font-semibold ${vermelho ? "text-red-800" : "text-[var(--marca)]"}`}>{titulo}</h2>
+      </div>
+      {nada ? (
+        <p className="flex items-center gap-2 py-2 text-sm text-[var(--texto-suave)]">
+          <Icone nome="check" className="h-4 w-4 text-emerald-700" />
+          {vazio}
+        </p>
+      ) : (
+        <div className="space-y-1.5 text-sm">
+          <Link href="/financeiro/pagar" className="flex items-baseline gap-2 rounded-md px-1 py-0.5 hover:bg-[var(--fundo)]">
+            <span className="text-[var(--texto-suave)]">A pagar</span>
+            <span className="text-xs text-[var(--texto-suave)]">({pagar.qtd})</span>
+            <span className={`num ml-auto font-semibold ${vermelho && pagar.valor ? "text-red-700" : ""}`}>{brl(pagar.valor)}</span>
+          </Link>
+          <Link href="/financeiro/receber" className="flex items-baseline gap-2 rounded-md px-1 py-0.5 hover:bg-[var(--fundo)]">
+            <span className="text-[var(--texto-suave)]">A receber</span>
+            <span className="text-xs text-[var(--texto-suave)]">({receber.qtd})</span>
+            <span className="num ml-auto font-semibold text-emerald-800">{brl(receber.valor)}</span>
+          </Link>
+        </div>
       )}
     </div>
   );

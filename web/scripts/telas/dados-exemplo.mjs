@@ -25,6 +25,60 @@ const agora = new Date();
 const dia = (n) => new Date(agora.getTime() + n * 864e5).toISOString().slice(0, 10);
 const momento = (n) => new Date(agora.getTime() + n * 864e5).toISOString();
 
+/**
+ * Histórico do Financeiro para os gráficos do painel e os relatórios: 6 meses de vendas, aluguel e tarifas já
+ * pagos/recebidos, e contas em aberto espalhadas pelos próximos 30 dias. Gera títulos e as baixas (id, título, dia, valor).
+ */
+const HISTORICO = (() => {
+  const titulos = [];
+  const baixas = [];
+  const titulo = (k, tipo, categoria_id, descricao, d, valor, pago, centro) => {
+    const id = `f8200000-0000-4000-8000-${String(k).padStart(12, "0")}`;
+    titulos.push({
+      id,
+      org_id: ORG,
+      cliente_id: C1,
+      tipo,
+      pessoa_id: tipo === "receber" ? "f5000000-0000-4000-8000-000000000002" : "f5000000-0000-4000-8000-000000000001",
+      categoria_id,
+      centro_id: centro ? "f6000000-0000-4000-8000-000000000001" : null,
+      conta_prevista_id: "f2000000-0000-4000-8000-000000000001",
+      descricao,
+      documento: null,
+      emissao: null,
+      vencimento: dia(d),
+      valor,
+      valor_pago: pago ? valor : 0,
+      parcela: 1,
+      parcelas: 1,
+      grupo: null,
+      situacao: pago ? "quitado" : "aberto",
+      quitado_em: pago ? dia(d) : null,
+      cancelado_motivo: null,
+      observacao: null,
+    });
+    if (pago) baixas.push([100 + k, id, d, valor]);
+  };
+  const VENDA = "f7000000-0000-4000-8000-000000000003";
+  const ALUGUEL = "f7000000-0000-4000-8000-000000000002";
+  const TARIFA = "f7000000-0000-4000-8000-000000000001";
+  for (let m = 5; m >= 1; m--) {
+    const base = -30 * m;
+    titulo(m * 10 + 1, "receber", VENDA, `Vendas do mês (−${m})`, base + 5, 9000 + m * 850, true, true);
+    titulo(m * 10 + 2, "pagar", ALUGUEL, `Aluguel (−${m})`, base + 10, 2500, true, true);
+    titulo(m * 10 + 3, "pagar", TARIFA, `Tarifas (−${m})`, base + 12, 120 + m * 9, true, false);
+    titulo(m * 10 + 4, "pagar", ALUGUEL, `Manutenção (−${m})`, base + 18, 1800 + (m % 3) * 1400, true, false);
+  }
+  titulo(91, "receber", VENDA, "Venda NF 1290", 0, 1850, false, true);
+  titulo(92, "pagar", ALUGUEL, "Condomínio", 0, 640, false, true);
+  titulo(93, "pagar", TARIFA, "Fornecedor de embalagens", 4, 3900, false, false);
+  titulo(94, "receber", VENDA, "Venda NF 1301", 9, 7200, false, true);
+  titulo(95, "pagar", ALUGUEL, "Folha de pagamento", 14, 11800, false, true);
+  titulo(96, "receber", VENDA, "Venda NF 1315", 21, 6400, false, true);
+  titulo(97, "pagar", TARIFA, "Impostos do mês", 19, 2350, false, false);
+  return { titulos, baixas };
+})();
+
 export const USUARIO = { id: EU, email: "edvaldo@mdcassessoria.com", aud: "authenticated", role: "authenticated", user_metadata: {} };
 
 const org = {
@@ -51,6 +105,9 @@ const APPS = [
   ["entradas", "Entradas", "Pedidos de compra", "arquivo", "/entradas/compras", false, 38],
   ["comercial", "CRM Comercial", "Leads, proposta e contrato", "alvo", "/comercial", false, 80],
   ["licencas", "Licenças", "Módulos vendidos: contratos, mensalidades e bloqueio", "documento", "/licencas", false, 85],
+  ["centros_custo", "Centros de custo", "Centros de custo de cada empresa", "etiqueta", "/centros-custo", false, 39],
+  ["plano_contas", "Plano de contas", "Plano do Domínio e categorias", "lista", "/plano-contas", false, 40],
+  ["relatorios", "Relatórios", "Relatórios gerenciais", "grafico", "/relatorios", false, 41],
 ].map(([slug, nome, descricao, icone, rota, externo, ordem]) => ({
   slug,
   nome,
@@ -364,7 +421,27 @@ export const TABELAS = {
   fin_plano_importacoes: [
     { id: 1, org_id: ORG, cliente_id: C1, arquivo: "plano-greencore.xls", total: 7, novas: 7, inativadas: 0, por: EU, em: momento(-5) },
   ],
+  fin_transferencias: [
+    { id: 1, org_id: ORG, cliente_id: C1, origem_id: "f2000000-0000-4000-8000-000000000001", destino_id: "f2000000-0000-4000-8000-000000000002", data: dia(-6), valor: 3000, observacao: "Aplicação", estornada: false, estorno_motivo: null, por: EU, em: momento(-6) },
+    { id: 2, org_id: ORG, cliente_id: C1, origem_id: "f2000000-0000-4000-8000-000000000002", destino_id: "f2000000-0000-4000-8000-000000000001", data: dia(1), valor: 800, observacao: null, estornada: false, estorno_motivo: null, por: EU, em: momento(0) },
+    { id: 3, org_id: ORG, cliente_id: C1, origem_id: "f2000000-0000-4000-8000-000000000001", destino_id: "f2000000-0000-4000-8000-000000000002", data: dia(-20), valor: 50, observacao: "Lançada duas vezes", estornada: true, estorno_motivo: "duplicada", por: EU, em: momento(-20) },
+  ],
   fin_contas_bancarias: [
+    {
+      id: "f2000000-0000-4000-8000-000000000002",
+      org_id: ORG,
+      cliente_id: C1,
+      nome: "Sicoob aplicação",
+      banco: "756 · Sicoob",
+      agencia: "3001",
+      numero: "12345-6",
+      conta_contabil_id: "f1000000-0000-4000-8000-000000000003",
+      saldo_inicial: 20000,
+      saldo_inicial_em: dia(-60),
+      ativo: true,
+      criado_em: momento(-60),
+    },
+
     {
       id: "f2000000-0000-4000-8000-000000000001",
       org_id: ORG,
@@ -545,11 +622,12 @@ export const TABELAS = {
     quitado_em: situacao === "quitado" ? dia(d) : null,
     cancelado_motivo: null,
     observacao: null,
-  })),
+  })).concat(HISTORICO.titulos),
   fin_baixas: [
     [1, "f8000000-0000-4000-8000-000000000003", -2, 149.5],
     [2, "f8000000-0000-4000-8000-000000000004", -1, 2000],
     [3, "f8000000-0000-4000-8000-000000000005", -1, 300],
+    ...HISTORICO.baixas,
   ].map(([id, titulo_id, d, valor]) => ({
     id,
     org_id: ORG,

@@ -8,10 +8,21 @@ import { useCallback, useMemo, useState } from "react";
 import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { nomeCliente } from "@/dominios/clientes/nome";
 import { EscolhaCliente, useClienteFinanceiro } from "@/dominios/financeiro/componentes/EscolhaCliente";
-import { BotoesExportar, FiltroPeriodo, Indicador } from "@/dominios/financeiro/componentes/Comuns";
+import { BotoesExportar, Chip, FiltroPeriodo, Indicador, Valor } from "@/dominios/financeiro/componentes/Comuns";
 import { LancarTitulo } from "@/dominios/financeiro/componentes/LancarTitulo";
-import { lerBaixas, lerCategorias, lerCentros, lerContas, lerPessoas, lerTitulos, lerTitulosPorId } from "@/dominios/financeiro/leituras";
-import { intervaloDoPeriodo, saldoDoTitulo } from "@/dominios/financeiro/regras";
+import {
+  lerBaixas,
+  lerCategorias,
+  lerCentros,
+  lerContas,
+  lerPessoas,
+  lerTitulos,
+  lerTitulosPorId,
+  lerTransferencias,
+} from "@/dominios/financeiro/leituras";
+import { NovaTransferencia } from "@/dominios/financeiro/componentes/NovaTransferencia";
+
+import { intervaloDoPeriodo, PERIODOS, saldoDoTitulo } from "@/dominios/financeiro/regras";
 import type { Periodo } from "@/dominios/financeiro/regras";
 import { nomeArquivo } from "@/dominios/financeiro/exportar";
 import type { TipoTitulo } from "@/dominios/financeiro/tipos";
@@ -19,8 +30,14 @@ import { useConsulta } from "@/lib/useConsulta";
 import { hojeISO } from "@/lib/datas";
 import { brl } from "@/lib/formato/moeda";
 import { fmtData } from "@/lib/formato/datas";
-import { Carregando } from "@/components/ui/Carregando";
+import { CabecalhoPagina } from "@/components/ui/CabecalhoPagina";
+import { CartaoFiltros, MaisFiltros } from "@/components/ui/CartaoFiltros";
+import type { FiltroAtivo } from "@/components/ui/CartaoFiltros";
+import { Esqueleto } from "@/components/ui/Esqueleto";
 import { EstadoVazio } from "@/components/ui/EstadoVazio";
+import { Icone } from "@/components/ui/Icone";
+import { QuadroTabela } from "@/components/ui/QuadroTabela";
+
 import { useAviso } from "@/components/ui/Aviso";
 
 interface Linha {
@@ -35,6 +52,8 @@ interface Linha {
   conta: string;
   contaId: string | null;
   valor: number; // positivo = entrou, negativo = saiu
+  /** Transferência entre contas da empresa: aparece na lista, mas não conta como entrada nem saída. */
+  transferencia?: boolean;
 }
 const MOSTRAR = 500;
 
@@ -55,6 +74,7 @@ export default function PaginaEntradasSaidas() {
   const [busca, setBusca] = useState("");
   const [previsto, setPrevisto] = useState(false);
   const [novo, setNovo] = useState<TipoTitulo | null>(null);
+  const [transferindo, setTransferindo] = useState(false);
   const intervalo = useMemo(() => intervaloDoPeriodo(periodo, hoje, de, ate), [periodo, hoje, de, ate]);
 
   const cad = useConsulta(
@@ -80,7 +100,8 @@ export default function PaginaEntradasSaidas() {
             .flat()
             .filter((t) => t.situacao === "aberto")
         : [];
-      return { baixas, titulos, abertos };
+      const transferencias = (await lerTransferencias(cliente.id, intervalo)).filter((t) => !t.estornada);
+      return { baixas, titulos, abertos, transferencias };
     }, [cliente, intervalo, previsto]),
   );
 
@@ -151,7 +172,17 @@ export default function PaginaEntradasSaidas() {
       contaId: t.conta_prevista_id,
       valor: (t.tipo === "receber" ? 1 : -1) * saldoDoTitulo(t),
     }));
-    return [...reais, ...prev].sort((a, b) => a.data.localeCompare(b.data) || a.chave.localeCompare(b.chave));
+    // transferência: sai de uma conta e entra na outra (duas linhas; somadas dão zero)
+    const transf = d.transferencias.flatMap((t) => {
+      const comum = { data: t.data, previsto: false, pessoa: "", categoria: "Transferência entre contas", categoriaId: "_transferencia", transferencia: true };
+      const de = cta.get(t.origem_id) ?? "";
+      const para = cta.get(t.destino_id) ?? "";
+      return [
+        { ...comum, chave: `x${t.id}s`, entrada: false, descricao: `Transferência para ${para}`, conta: de, contaId: t.origem_id, valor: -Number(t.valor) },
+        { ...comum, chave: `x${t.id}e`, entrada: true, descricao: `Transferência de ${de}`, conta: para, contaId: t.destino_id, valor: Number(t.valor) },
+      ];
+    });
+    return [...reais, ...prev, ...transf].sort((a, b) => a.data.localeCompare(b.data) || a.chave.localeCompare(b.chave));
   }, [consulta.dados, cad.dados]);
 
   const lista = useMemo(() => {
@@ -165,7 +196,7 @@ export default function PaginaEntradasSaidas() {
     );
   }, [linhas, conta, tipo, categoria, busca]);
 
-  const real = useMemo(() => lista.filter((l) => !l.previsto), [lista]);
+  const real = useMemo(() => lista.filter((l) => !l.previsto && !l.transferencia), [lista]);
   const entrou = real.filter((l) => l.valor > 0).reduce((a, l) => a + l.valor, 0);
   const saiu = real.filter((l) => l.valor < 0).reduce((a, l) => a - l.valor, 0);
   const prevEntra = lista.filter((l) => l.previsto && l.valor > 0).reduce((a, l) => a + l.valor, 0);
@@ -195,54 +226,93 @@ export default function PaginaEntradasSaidas() {
         (previsto ? ` Ainda previsto: entrar ${brl(prevEntra)} e sair ${brl(prevSai)}.` : "")
       : "";
 
+  function limparFiltros() {
+    setPeriodo("mes");
+    setConta("");
+    setTipo("");
+    setCategoria("");
+    setBusca("");
+    setPrevisto(false);
+  }
+  const nomeCategoria = (id: string) =>
+    cad.dados?.categorias.find((c) => c.id === id)?.nome ?? linhas.find((l) => l.categoriaId === id)?.categoria ?? "—";
+  const filtrosAtivos: FiltroAtivo[] = [
+    periodo !== "mes" && {
+      id: "periodo",
+      rotulo: `Período: ${periodo === "escolher" ? rotuloPeriodo : PERIODOS.find((p) => p.id === periodo)?.nome}`,
+      aoTirar: () => setPeriodo("mes"),
+    },
+    tipo && { id: "tipo", rotulo: tipo === "entradas" ? "Só entradas" : "Só saídas", aoTirar: () => setTipo("") },
+    conta && { id: "conta", rotulo: `Conta: ${cad.dados?.contas.find((c) => c.id === conta)?.nome ?? "—"}`, aoTirar: () => setConta("") },
+    categoria && { id: "categoria", rotulo: `Categoria: ${nomeCategoria(categoria)}`, aoTirar: () => setCategoria("") },
+    busca.trim() && { id: "busca", rotulo: `Busca: "${busca.trim()}"`, aoTirar: () => setBusca("") },
+    previsto && { id: "previsto", rotulo: "Com o previsto", aoTirar: () => setPrevisto(false) },
+  ].filter((f): f is FiltroAtivo => !!f);
+
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-start gap-2">
-        <div className="mr-auto">
-          <h1 className="text-xl font-semibold text-[var(--marca)]">Entradas e saídas</h1>
-          <p className="text-sm text-neutral-600">O dinheiro que entrou e saiu da empresa, e para onde ele foi.</p>
-        </div>
-        <BotoesExportar
-          vazio={!lista.length}
-          avisar={mostrar}
-          montar={() => ({
-            titulo: "Entradas e saídas",
-            subtitulo: `${cliente ? nomeCliente(cliente) : ""} · ${rotuloPeriodo}${previsto ? " · com previstos" : ""} · ${lista.length} lançamento(s)`,
-            arquivo: nomeArquivo("Entradas-e-saidas", cliente ? nomeCliente(cliente) : "", hoje),
-            logoUrl: org.logo_url,
-            linhas: lista,
-            colunas: [
-              { titulo: "Data", valor: (l: Linha) => fmtData(l.data), peso: 1, largura: 12 },
-              { titulo: "Descrição", valor: (l: Linha) => l.descricao, peso: 3, largura: 40 },
-              { titulo: "Fornecedor/cliente", valor: (l: Linha) => l.pessoa, peso: 2, largura: 28 },
-              { titulo: "Categoria", valor: (l: Linha) => l.categoria, peso: 1.6, largura: 24 },
-              { titulo: "Conta", valor: (l: Linha) => l.conta, peso: 1.4, largura: 20 },
-              { titulo: "Entrada", valor: (l: Linha) => (l.valor > 0 ? l.valor : null), formato: "moeda", peso: 1.2 },
-              {
-                titulo: "Saída",
-                valor: (l: Linha) => (l.valor < 0 ? -l.valor : null),
-                formato: "moeda",
-                peso: 1.2,
-                alerta: (l: Linha) => l.valor < 0,
-              },
-              { titulo: "Situação", valor: (l: Linha) => (l.previsto ? "Previsto" : "Realizado"), peso: 1, largura: 12 },
-            ],
-            totais: { Entrada: entrou + prevEntra, Saída: saiu + prevSai },
-          })}
-        />
-        {podeOperar && cliente && (
+      <CabecalhoPagina
+        titulo="Entradas e saídas"
+        descricao="O dinheiro que entrou e saiu da empresa, e para onde ele foi."
+        acoes={
           <>
-            <button className="btn" onClick={() => setNovo("receber")} disabled={!cad.dados}>
-              + Entrada
-            </button>
-            <button className="btn-primario" onClick={() => setNovo("pagar")} disabled={!cad.dados}>
-              + Saída
-            </button>
+            <BotoesExportar
+              vazio={!lista.length}
+              avisar={mostrar}
+              montar={() => ({
+                titulo: "Entradas e saídas",
+                subtitulo: `${cliente ? nomeCliente(cliente) : ""} · ${rotuloPeriodo}${previsto ? " · com previstos" : ""} · ${lista.length} lançamento(s)`,
+                arquivo: nomeArquivo("Entradas-e-saidas", cliente ? nomeCliente(cliente) : "", hoje),
+                logoUrl: org.logo_url,
+                linhas: lista,
+                colunas: [
+                  { titulo: "Data", valor: (l: Linha) => fmtData(l.data), peso: 1, largura: 12 },
+                  { titulo: "Descrição", valor: (l: Linha) => l.descricao, peso: 3, largura: 40 },
+                  { titulo: "Fornecedor/cliente", valor: (l: Linha) => l.pessoa, peso: 2, largura: 28 },
+                  { titulo: "Categoria", valor: (l: Linha) => l.categoria, peso: 1.6, largura: 24 },
+                  { titulo: "Conta", valor: (l: Linha) => l.conta, peso: 1.4, largura: 20 },
+                  { titulo: "Entrada", valor: (l: Linha) => (l.valor > 0 ? l.valor : null), formato: "moeda", peso: 1.2 },
+                  {
+                    titulo: "Saída",
+                    valor: (l: Linha) => (l.valor < 0 ? -l.valor : null),
+                    formato: "moeda",
+                    peso: 1.2,
+                    alerta: (l: Linha) => l.valor < 0,
+                  },
+                  {
+                    titulo: "Situação",
+                    valor: (l: Linha) => (l.transferencia ? "Transferência" : l.previsto ? "Previsto" : "Realizado"),
+                    peso: 1,
+                    largura: 14,
+                  },
+                ],
+                // transferências entre contas não entram nos totais (não são receita nem despesa)
+                totais: { Entrada: entrou + prevEntra, Saída: saiu + prevSai },
+              })}
+            />
+            {podeOperar && cliente && (
+              <>
+                {(cad.dados?.contas.filter((c) => c.ativo).length ?? 0) >= 2 && (
+                  <button className="btn" onClick={() => setTransferindo(true)} title="Transferir entre contas da empresa">
+                    <Icone nome="transferir" className="h-4 w-4" />
+                    Transferência
+                  </button>
+                )}
+                <button className="btn" onClick={() => setNovo("receber")} disabled={!cad.dados}>
+                  <Icone nome="seta-entrada" className="h-4 w-4 text-emerald-700" />
+                  Entrada
+                </button>
+                <button className="btn-primario" onClick={() => setNovo("pagar")} disabled={!cad.dados}>
+                  <Icone nome="seta-saida" className="h-4 w-4" />
+                  Saída
+                </button>
+              </>
+            )}
           </>
-        )}
-      </div>
+        }
+      />
 
-      <div className="cartao flex flex-wrap items-end gap-3 p-4">
+      <CartaoFiltros ativos={filtrosAtivos} aoLimpar={limparFiltros}>
         <EscolhaCliente financeiro={financeiro} />
         <FiltroPeriodo
           periodo={periodo}
@@ -262,56 +332,60 @@ export default function PaginaEntradasSaidas() {
             <option value="saidas">Só saídas</option>
           </select>
         </label>
-        <details className="w-full sm:w-auto">
-          <summary className="cursor-pointer py-2 text-sm text-neutral-700">Mais filtros</summary>
-          <div className="mt-2 flex flex-wrap gap-3">
-            <label className="campo">
-              <span>Conta bancária</span>
-              <select value={conta} onChange={(e) => setConta(e.target.value)}>
-                <option value="">Todas</option>
-                {(cad.dados?.contas ?? []).map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.nome}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="campo">
-              <span>Categoria</span>
-              <select value={categoria} onChange={(e) => setCategoria(e.target.value)}>
-                <option value="">Todas</option>
-                {(cad.dados?.categorias ?? []).map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.tipo === "despesa" ? "Despesa" : "Receita"} › {c.nome}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
-        </details>
-        <label className="campo min-w-48 flex-1">
+        <label className="campo campo-largo">
           <span>Buscar</span>
-          <input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Descrição, fornecedor/cliente ou valor" />
+          <input type="search" value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Descrição, fornecedor/cliente ou valor" />
         </label>
-        <label className="flex min-h-10 items-center gap-2 text-sm" title="Mostra também as contas em aberto que vencem no período">
-          <input type="checkbox" checked={previsto} onChange={(e) => setPrevisto(e.target.checked)} />
-          Incluir o previsto
-        </label>
-      </div>
+        <MaisFiltros emUso={(conta ? 1 : 0) + (categoria ? 1 : 0) + (previsto ? 1 : 0)}>
+          <label className="campo">
+            <span>Conta bancária</span>
+            <select value={conta} onChange={(e) => setConta(e.target.value)}>
+              <option value="">Todas</option>
+              {(cad.dados?.contas ?? []).map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.nome}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="campo">
+            <span>Categoria</span>
+            <select value={categoria} onChange={(e) => setCategoria(e.target.value)}>
+              <option value="">Todas</option>
+              {(cad.dados?.categorias ?? []).map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.tipo === "despesa" ? "Despesa" : "Receita"} › {c.nome}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="flex min-h-10 items-center gap-2 text-sm" title="Mostra também as contas em aberto que vencem no período">
+            <input type="checkbox" checked={previsto} onChange={(e) => setPrevisto(e.target.checked)} />
+            Incluir o previsto (contas em aberto do período)
+          </label>
+        </MaisFiltros>
+      </CartaoFiltros>
 
       {aviso}
-      {(consulta.erro || cad.erro) && <p className="rounded-md bg-red-50 p-3 text-sm text-red-800">{consulta.erro ?? cad.erro}</p>}
+      {(consulta.erro || cad.erro) && (
+        <p role="alert" className="rounded-md bg-red-50 p-3 text-sm text-red-800">
+          {consulta.erro ?? cad.erro}
+        </p>
+      )}
 
       {!cliente ? (
-        <EstadoVazio>Escolha a empresa acima para ver as entradas e saídas dela.</EstadoVazio>
+        <EstadoVazio icone="moeda" titulo="Escolha a empresa">
+          Escolha a empresa nos filtros acima para ver as entradas e saídas dela.
+        </EstadoVazio>
       ) : (consulta.carregando && !consulta.dados) || !cad.dados ? (
-        <Carregando />
+        <Esqueleto />
       ) : (
         <>
-          {resumo && <p className="text-sm text-neutral-700">{resumo}</p>}
+          {resumo && <p className="text-sm text-[var(--texto)]">{resumo}</p>}
           <div className="grid gap-3 sm:grid-cols-3">
             <Indicador
               titulo="Entrou"
+              icone="seta-entrada"
               valor={brl(entrou)}
               detalhe={previsto ? `+ ${brl(prevEntra)} previsto` : undefined}
               tom="verde"
@@ -320,6 +394,7 @@ export default function PaginaEntradasSaidas() {
             />
             <Indicador
               titulo="Saiu"
+              icone="seta-saida"
               valor={brl(saiu)}
               detalhe={previsto ? `+ ${brl(prevSai)} previsto` : undefined}
               tom="vermelho"
@@ -328,6 +403,7 @@ export default function PaginaEntradasSaidas() {
             />
             <Indicador
               titulo="Resultado"
+              icone="tendencia"
               valor={brl(resultado)}
               detalhe={previsto ? `Com o previsto: ${brl(resultado + prevEntra - prevSai)}` : "Entradas menos saídas"}
               tom={resultado < 0 ? "vermelho" : "neutro"}
@@ -335,73 +411,119 @@ export default function PaginaEntradasSaidas() {
           </div>
 
           {porCategoria.length > 0 && (
-            <div className="cartao space-y-2 p-4">
-              <h2 className="text-sm font-semibold text-[var(--marca)]">Para onde foi o dinheiro</h2>
-              <p className="text-xs text-neutral-500">Clique numa categoria para ver só os lançamentos dela.</p>
+            <div className="cartao space-y-3 p-4 sm:p-5">
+              <div>
+                <h2 className="font-semibold text-[var(--marca)]">Para onde foi o dinheiro</h2>
+                <p className="text-xs text-[var(--texto-suave)]">Clique numa categoria para ver só os lançamentos dela.</p>
+              </div>
               {porCategoria.map((c) => (
                 <button
                   key={c.id}
                   type="button"
                   onClick={() => setCategoria(categoria === c.id ? "" : c.id)}
-                  className={`grid w-full grid-cols-[minmax(8rem,14rem)_1fr_auto] items-center gap-3 rounded px-1 text-left text-sm hover:bg-neutral-50 ${categoria === c.id ? "bg-amber-50" : ""}`}
+                  aria-pressed={categoria === c.id}
+                  className={`grid w-full grid-cols-[minmax(6rem,14rem)_1fr_auto] items-center gap-3 rounded-lg px-2 py-1 text-left text-sm hover:bg-[var(--fundo)] ${categoria === c.id ? "bg-[#faf5ea] ring-1 ring-[var(--destaque)]" : ""}`}
                 >
                   <span className="truncate">{c.nome}</span>
-                  <span className="h-3 rounded bg-neutral-100">
+                  <span className="h-2.5 rounded-full bg-[var(--fundo)]">
                     <span
-                      className="block h-3 rounded bg-[var(--destaque-escuro)]"
+                      className="block h-2.5 rounded-full bg-[#C0892A]"
                       style={{ width: `${Math.max(2, (c.total / maior) * 100)}%` }}
                     />
                   </span>
-                  <span className="tabular-nums">{brl(c.total)}</span>
+                  <span className="num">{brl(c.total)}</span>
                 </button>
               ))}
             </div>
           )}
 
           {!lista.length ? (
-            <EstadoVazio>
+            <EstadoVazio
+              icone={linhas.length ? "filtro" : "tendencia"}
+              titulo={linhas.length ? "Nada neste filtro" : "Nenhum pagamento ou recebimento neste período"}
+              acao={
+                linhas.length ? (
+                  <button className="btn" onClick={limparFiltros}>
+                    Limpar filtros
+                  </button>
+                ) : undefined
+              }
+            >
               {linhas.length
-                ? "Nada neste filtro."
-                : "Nenhum pagamento ou recebimento neste período. Dê baixa em Contas a pagar/receber ou lance uma entrada ou saída à vista."}
+                ? "Troque o período ou limpe os filtros para ver tudo."
+                : "Dê baixa em Contas a pagar ou a receber, ou lance uma entrada ou saída à vista nos botões acima."}
             </EstadoVazio>
           ) : (
-            <div className="cartao overflow-x-auto">
-              <table className="tabela">
-                <thead>
-                  <tr>
-                    <th>Data</th>
-                    <th>Descrição</th>
-                    <th>Conta</th>
-                    <th className="text-right">Valor</th>
+            <QuadroTabela
+              rotulo="Entradas e saídas"
+              rodape={lista.length > MOSTRAR ? `Mostrando ${MOSTRAR} de ${lista.length}. Os totais e a exportação consideram todos.` : undefined}
+            >
+              <thead>
+                <tr>
+                  <th>Data</th>
+                  <th>Descrição</th>
+                  <th>Conta</th>
+                  <th className="text-right">Valor</th>
+                </tr>
+              </thead>
+              <tbody>
+                {lista.slice(0, MOSTRAR).map((l) => (
+                  <tr key={l.chave} className={l.previsto ? "text-[var(--texto-suave)]" : ""}>
+                    <td data-rotulo="Data" className="num whitespace-nowrap">
+                      {fmtData(l.data)}
+                    </td>
+                    <td className="celula-titulo min-w-56">
+                      <span className="flex items-center gap-2">
+                        <span
+                          className={`grid h-6 w-6 shrink-0 place-items-center rounded-full ${l.valor < 0 ? "bg-red-50 text-red-700" : "bg-emerald-50 text-emerald-700"}`}
+                          aria-hidden="true"
+                        >
+                          <Icone nome={l.valor < 0 ? "seta-saida" : "seta-entrada"} className="h-3.5 w-3.5" />
+                        </span>
+                        <span className="min-w-0">
+                          {l.descricao}
+                          {l.previsto && (
+                            <span className="ml-2 align-middle">
+                              <Chip tom="azul">Previsto</Chip>
+                            </span>
+                          )}
+                          {l.transferencia && (
+                            <span className="ml-2 align-middle">
+                              <Chip tom="violeta">Transferência</Chip>
+                            </span>
+                          )}
+                          <span className="block text-xs font-normal text-[var(--texto-suave)]">
+                            {[l.categoria, l.pessoa].filter(Boolean).join(" · ")}
+                          </span>
+                        </span>
+                      </span>
+                    </td>
+                    <td data-rotulo="Conta" className="whitespace-nowrap">
+                      {l.conta || "—"}
+                    </td>
+                    <td data-rotulo="Valor" className="whitespace-nowrap text-right font-medium">
+                      <Valor v={l.valor} sinal />
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {lista.slice(0, MOSTRAR).map((l) => (
-                    <tr key={l.chave} className={l.previsto ? "text-neutral-500" : ""}>
-                      <td className="whitespace-nowrap tabular-nums">{fmtData(l.data)}</td>
-                      <td className="min-w-56">
-                        {l.descricao}
-                        {l.previsto && <span className="chip ml-2 bg-sky-50 text-sky-900">Previsto</span>}
-                        <span className="block text-xs text-neutral-500">{[l.categoria, l.pessoa].filter(Boolean).join(" · ")}</span>
-                      </td>
-                      <td className="whitespace-nowrap">{l.conta || "—"}</td>
-                      <td className={`whitespace-nowrap text-right tabular-nums ${l.valor < 0 ? "text-red-700" : "text-emerald-800"}`}>
-                        {brl(l.valor)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              {lista.length > MOSTRAR && (
-                <p className="p-3 text-xs text-neutral-500">
-                  Mostrando {MOSTRAR} de {lista.length}. Os totais e a exportação consideram todos.
-                </p>
-              )}
-            </div>
+                ))}
+              </tbody>
+            </QuadroTabela>
           )}
         </>
       )}
 
+      {transferindo && cad.dados && (
+        <NovaTransferencia
+          contas={cad.dados.contas}
+          hoje={hoje}
+          aoFechar={() => setTransferindo(false)}
+          aoSalvar={(msg) => {
+            setTransferindo(false);
+            mostrar(msg);
+            consulta.recarregar();
+          }}
+        />
+      )}
       {novo && cliente && cad.dados && (
         <LancarTitulo
           tipo={novo}

@@ -89,6 +89,19 @@ export async function estornarBaixa(baixa: number, motivo: string) {
   exigir(await supabase().rpc("fin_estornar_baixa", { p_baixa: baixa, p_motivo: motivo }));
 }
 
+// ------------------------------------------------------------------ transferências entre contas (migração 034)
+
+/** Transferência entre duas contas ativas da mesma empresa (a regra é conferida no banco, em fin_transferir). */
+export async function transferir(t: { origem: string; destino: string; data: string; valor: number; obs?: string }) {
+  return exigir(
+    await supabase().rpc("fin_transferir", { p_origem: t.origem, p_destino: t.destino, p_data: t.data, p_valor: t.valor, p_obs: t.obs }),
+  ) as number;
+}
+
+export async function estornarTransferencia(id: number, motivo: string) {
+  exigir(await supabase().rpc("fin_estornar_transferencia", { p_id: id, p_motivo: motivo }));
+}
+
 export async function cancelarTitulo(titulo: string, motivo: string) {
   exigir(await supabase().rpc("fin_cancelar_titulo", { p_titulo: titulo, p_motivo: motivo }));
 }

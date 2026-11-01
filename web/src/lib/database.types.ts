@@ -1827,6 +1827,84 @@ export type Database = {
           },
         ];
       };
+      // migração 034 (acrescentado à mão; regenerar depois de aplicar)
+      fin_transferencias: {
+        Row: {
+          cliente_id: string;
+          data: string;
+          destino_id: string;
+          em: string;
+          estornada: boolean;
+          estornada_em: string | null;
+          estorno_motivo: string | null;
+          id: number;
+          observacao: string | null;
+          org_id: string;
+          origem_id: string;
+          por: string | null;
+          valor: number;
+        };
+        Insert: {
+          cliente_id: string;
+          data: string;
+          destino_id: string;
+          em?: string;
+          estornada?: boolean;
+          estornada_em?: string | null;
+          estorno_motivo?: string | null;
+          id?: never;
+          observacao?: string | null;
+          org_id: string;
+          origem_id: string;
+          por?: string | null;
+          valor: number;
+        };
+        Update: {
+          cliente_id?: string;
+          data?: string;
+          destino_id?: string;
+          em?: string;
+          estornada?: boolean;
+          estornada_em?: string | null;
+          estorno_motivo?: string | null;
+          id?: never;
+          observacao?: string | null;
+          org_id?: string;
+          origem_id?: string;
+          por?: string | null;
+          valor?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "fin_transferencias_cliente_id_fkey";
+            columns: ["cliente_id"];
+            isOneToOne: false;
+            referencedRelation: "clientes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "fin_transferencias_destino_id_fkey";
+            columns: ["destino_id"];
+            isOneToOne: false;
+            referencedRelation: "fin_contas_bancarias";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "fin_transferencias_org_id_fkey";
+            columns: ["org_id"];
+            isOneToOne: false;
+            referencedRelation: "organizacoes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "fin_transferencias_origem_id_fkey";
+            columns: ["origem_id"];
+            isOneToOne: false;
+            referencedRelation: "fin_contas_bancarias";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       historico: {
         Row: {
           acao: string;
@@ -4448,6 +4526,15 @@ export type Database = {
       fin_estornar_baixa: {
         Args: { p_baixa: number; p_motivo: string };
         Returns: Json;
+      };
+      // migração 034 (acrescentado à mão; regenerar depois de aplicar)
+      fin_estornar_transferencia: {
+        Args: { p_id: number; p_motivo: string };
+        Returns: undefined;
+      };
+      fin_transferir: {
+        Args: { p_data: string; p_destino: string; p_obs?: string; p_origem: string; p_valor: number };
+        Returns: number;
       };
       fin_importar_extrato: {
         Args: {

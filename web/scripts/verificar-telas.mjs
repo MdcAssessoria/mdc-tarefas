@@ -237,17 +237,38 @@ async function abrirEFecharModal(pagina, botao, titulo) {
  */
 const INTERACOES = {
   "/vencimentos": (p) => abrirEFecharModal(p, "Novo vencimento", "Novo vencimento"),
-  "/financeiro": (p) => abrirEFecharModal(p, "Nova conta", "Nova conta bancária"),
+  "/financeiro/bancos": (p) => abrirEFecharModal(p, "Nova conta", "Nova conta bancária"),
   "/financeiro/pagar": (p) => abrirEFecharModal(p, "Nova conta a pagar", "Nova conta a pagar"),
   "/financeiro/receber": (p) => abrirEFecharModal(p, "Nova conta a receber", "Nova conta a receber"),
-  "/financeiro/movimento": (p) => abrirEFecharModal(p, "+ Saída", "Nova conta a pagar"),
-  "/financeiro/cadastros": async (p) => {
-    for (const aba of await p.getByRole("tab").all()) {
-      await aba.click();
-      if ((await aba.getAttribute("aria-selected")) !== "true") throw new Error(`a aba "${await aba.innerText()}" não ficou selecionada`);
-      await p.waitForTimeout(300);
+  "/financeiro/movimento": (p) => abrirEFecharModal(p, "Saída", "Nova conta a pagar"),
+  "/financeiro/transferencias": (p) => abrirEFecharModal(p, "Nova transferência", "Transferir entre contas"),
+  "/cadastros/pessoas": (p) => abrirEFecharModal(p, "Novo cadastro", "Novo fornecedor ou cliente"),
+  "/plano-contas/categorias": (p) => abrirEFecharModal(p, "Nova categoria", "Nova categoria"),
+  "/centros-custo": (p) => abrirEFecharModal(p, "Novo centro de custo", "Novo centro de custo"),
+  // painel do Financeiro: os atalhos e os primeiros passos estão lá, e o menu "Bancos" da barra abre e mostra as telas
+  "/financeiro": async (p, foto) => {
+    if (process.env.TELA !== "celular") {
+      await p.getByRole("button", { name: /^Bancos/ }).click();
+      await p.getByRole("link", { name: "Transferências" }).waitFor({ timeout: 3000 });
+      await p.waitForTimeout(250);
+      await foto("menu-bancos");
+      await p.keyboard.press("Escape");
+    } else {
+      await p.getByRole("button", { name: /Telas/ }).click();
+      await p.getByRole("link", { name: "Transferências" }).waitFor({ timeout: 3000 });
+      await p.waitForTimeout(250);
+      await foto("menu-telas");
     }
   },
+  // relatórios: cada um dos quatro abre sem erro
+  "/relatorios": async (p, foto) => {
+    for (const nome of ["Realizado x previsto", "Pagas e recebidas", "Centros de custo", "Resultado de caixa"]) {
+      await p.getByRole("button", { name: new RegExp(nome) }).click();
+      await p.waitForTimeout(300);
+      await foto(nome.toLowerCase().replace(/\W+/g, "-"));
+    }
+  },
+
   // Estoque (033): assistente em passos, cadastro rápido, importação, visão em lista e ficha do item
   "/estoque": async (p, foto) => {
     await p.getByRole("button", { name: "Novo item", exact: true }).click();

@@ -128,7 +128,7 @@ export function ImportarExtrato({
       {!ativas.length ? (
         <p className="text-sm text-amber-900">
           Cadastre antes a conta bancária em{" "}
-          <Link href="/financeiro" className="underline">
+          <Link href="/financeiro/bancos" className="underline">
             Contas bancárias
           </Link>
           .

@@ -1,4 +1,5 @@
-// Cadastros › Fornecedores e clientes da empresa escolhida: lista com busca e filtro, PDF/Excel, cadastro e edição.
+// Cadastro comum › Fornecedores e clientes da empresa escolhida (/cadastros/pessoas, serve a todos os módulos de gestão):
+// lista com busca e filtro, PDF/Excel, cadastro e edição.
 // CPF/CNPJ é conferido (dígitos verificadores) e não se repete na mesma empresa. Nada se apaga: inativa.
 "use client";
 
@@ -10,13 +11,18 @@ import { useConsulta } from "@/lib/useConsulta";
 import { traduzirErro } from "@/lib/erros";
 import { hojeISO } from "@/lib/datas";
 import { Modal } from "@/components/ui/Modal";
-import { Carregando } from "@/components/ui/Carregando";
+import { CabecalhoPagina } from "@/components/ui/CabecalhoPagina";
+import { CartaoFiltros } from "@/components/ui/CartaoFiltros";
+import type { FiltroAtivo } from "@/components/ui/CartaoFiltros";
+import { Esqueleto } from "@/components/ui/Esqueleto";
 import { EstadoVazio } from "@/components/ui/EstadoVazio";
+import { Icone } from "@/components/ui/Icone";
+import { QuadroTabela } from "@/components/ui/QuadroTabela";
 import { lerPessoas } from "../leituras";
 import { documentoValido, formatarDocumento, soDigitos } from "../regras";
 import { nomeArquivo } from "../exportar";
 import type { Pessoa, TipoPessoa } from "../tipos";
-import { BotoesExportar } from "./Comuns";
+import { BotoesExportar, Chip } from "./Comuns";
 import type { PropsAba } from "./Comuns";
 
 export const TIPOS_PESSOA: Record<TipoPessoa, string> = { fornecedor: "Fornecedor", cliente: "Cliente", ambos: "Fornecedor e cliente" };
@@ -35,7 +41,8 @@ const VAZIO: Form = {
   ativo: true,
 };
 
-export function CadPessoas({ cliente, podeOperar, avisar }: PropsAba) {
+export function CadPessoas({ cliente, podeOperar, avisar, seletor }: PropsAba) {
+
   const { org } = useOrg();
   const [busca, setBusca] = useState("");
   const [tipo, setTipo] = useState("");
@@ -87,13 +94,56 @@ export function CadPessoas({ cliente, podeOperar, avisar }: PropsAba) {
     consulta.recarregar();
   }
 
+  const filtrosAtivos: FiltroAtivo[] = [
+    tipo && { id: "tipo", rotulo: tipo === "fornecedor" ? "Só fornecedores" : "Só clientes", aoTirar: () => setTipo("") },
+    busca.trim() && { id: "busca", rotulo: `Busca: "${busca.trim()}"`, aoTirar: () => setBusca("") },
+    inativos && { id: "inativos", rotulo: "Com inativos", aoTirar: () => setInativos(false) },
+  ].filter((f): f is FiltroAtivo => !!f);
+  const limparFiltros = () => {
+    setTipo("");
+    setBusca("");
+    setInativos(false);
+  };
+
   return (
-    <div className="space-y-3">
-      <div className="cartao flex flex-wrap items-end gap-3 p-4">
-        <label className="campo min-w-48 flex-1">
-          <span>Buscar</span>
-          <input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Nome, CPF/CNPJ ou cidade" />
-        </label>
+    <div className="space-y-4">
+      <CabecalhoPagina
+        titulo="Fornecedores e clientes"
+        descricao="Um cadastro só para a empresa toda: vale no Financeiro, nas compras, nas vendas e no estoque."
+        acoes={
+          <>
+            <BotoesExportar
+              vazio={!lista.length}
+              avisar={avisar}
+              montar={() => ({
+                titulo: "Fornecedores e clientes",
+                subtitulo: `${nomeCliente(cliente)} · ${lista.length} cadastro(s)`,
+                arquivo: nomeArquivo("Fornecedores-e-clientes", nomeCliente(cliente), hojeISO(org.fuso)),
+                logoUrl: org.logo_url,
+                linhas: lista,
+                colunas: [
+                  { titulo: "Nome", valor: (p) => p.nome, peso: 3, largura: 40 },
+                  { titulo: "Tipo", valor: (p) => TIPOS_PESSOA[p.tipo], peso: 1.4, largura: 20 },
+                  { titulo: "CPF/CNPJ", valor: (p) => formatarDocumento(p.documento), peso: 1.6, largura: 20 },
+                  { titulo: "Telefone", valor: (p) => p.telefone ?? "", peso: 1.3 },
+                  { titulo: "E-mail", valor: (p) => p.email ?? "", peso: 2, largura: 30 },
+                  { titulo: "Cidade/UF", valor: (p) => [p.cidade, p.uf].filter(Boolean).join("/"), peso: 1.4, largura: 20 },
+                  { titulo: "Situação", valor: (p) => (p.ativo ? "Ativo" : "Inativo"), peso: 0.8, largura: 10 },
+                ],
+              })}
+            />
+            {podeOperar && (
+              <button className="btn-primario" onClick={() => setForm({ ...VAZIO })}>
+                <Icone nome="mais" className="h-4 w-4" />
+                Novo cadastro
+              </button>
+            )}
+          </>
+        }
+      />
+
+      <CartaoFiltros ativos={filtrosAtivos} aoLimpar={limparFiltros}>
+        {seletor}
         <label className="campo">
           <span>Tipo</span>
           <select value={tipo} onChange={(e) => setTipo(e.target.value)}>
@@ -102,94 +152,96 @@ export function CadPessoas({ cliente, podeOperar, avisar }: PropsAba) {
             <option value="cliente">Clientes</option>
           </select>
         </label>
+        <label className="campo campo-largo">
+          <span>Buscar</span>
+          <input type="search" value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Nome, CPF/CNPJ ou cidade" />
+        </label>
         <label className="flex min-h-10 items-center gap-2 text-sm">
           <input type="checkbox" checked={inativos} onChange={(e) => setInativos(e.target.checked)} />
           Mostrar inativos
         </label>
-        <div className="ml-auto flex gap-2">
-          <BotoesExportar
-            vazio={!lista.length}
-            avisar={avisar}
-            montar={() => ({
-              titulo: "Fornecedores e clientes",
-              subtitulo: `${nomeCliente(cliente)} · ${lista.length} cadastro(s)`,
-              arquivo: nomeArquivo("Fornecedores-e-clientes", nomeCliente(cliente), hojeISO(org.fuso)),
-              logoUrl: org.logo_url,
-              linhas: lista,
-              colunas: [
-                { titulo: "Nome", valor: (p) => p.nome, peso: 3, largura: 40 },
-                { titulo: "Tipo", valor: (p) => TIPOS_PESSOA[p.tipo], peso: 1.4, largura: 20 },
-                { titulo: "CPF/CNPJ", valor: (p) => formatarDocumento(p.documento), peso: 1.6, largura: 20 },
-                { titulo: "Telefone", valor: (p) => p.telefone ?? "", peso: 1.3 },
-                { titulo: "E-mail", valor: (p) => p.email ?? "", peso: 2, largura: 30 },
-                { titulo: "Cidade/UF", valor: (p) => [p.cidade, p.uf].filter(Boolean).join("/"), peso: 1.4, largura: 20 },
-                { titulo: "Situação", valor: (p) => (p.ativo ? "Ativo" : "Inativo"), peso: 0.8, largura: 10 },
-              ],
-            })}
-          />
-          {podeOperar && (
-            <button className="btn-primario" onClick={() => setForm({ ...VAZIO })}>
-              Novo cadastro
-            </button>
-          )}
-        </div>
-      </div>
+      </CartaoFiltros>
 
-      {consulta.erro && <p className="rounded-md bg-red-50 p-3 text-sm text-red-800">{consulta.erro}</p>}
+      {consulta.erro && (
+        <p role="alert" className="rounded-md bg-red-50 p-3 text-sm text-red-800">
+          {consulta.erro}
+        </p>
+      )}
       {consulta.carregando && !consulta.dados ? (
-        <Carregando />
+        <Esqueleto indicadores={0} linhas={5} />
       ) : !lista.length ? (
         <EstadoVazio
+          icone={consulta.dados?.length ? "filtro" : "pessoas"}
+          titulo={consulta.dados?.length ? "Nenhum cadastro neste filtro" : "Nenhum fornecedor ou cliente cadastrado"}
           acao={
-            podeOperar &&
-            !consulta.dados?.length && (
-              <button className="btn-primario" onClick={() => setForm({ ...VAZIO })}>
-                Cadastrar o primeiro
+            consulta.dados?.length ? (
+              <button className="btn" onClick={limparFiltros}>
+                Limpar filtros
               </button>
+            ) : (
+              podeOperar && (
+                <button className="btn-primario" onClick={() => setForm({ ...VAZIO })}>
+                  <Icone nome="mais" className="h-4 w-4" />
+                  Cadastrar o primeiro
+                </button>
+              )
             )
           }
         >
-          {consulta.dados?.length ? "Nenhum cadastro neste filtro." : "Nenhum fornecedor ou cliente cadastrado ainda."}
+          {consulta.dados?.length
+            ? "Troque o tipo ou a busca."
+            : "Cadastre aqui ou direto ao lançar uma conta: o fornecedor digitado na hora entra sozinho nesta lista."}
         </EstadoVazio>
       ) : (
-        <div className="cartao overflow-x-auto">
-          <table className="tabela">
-            <thead>
-              <tr>
-                <th>Nome</th>
-                <th>Tipo</th>
-                <th>CPF/CNPJ</th>
-                <th>Contato</th>
-                <th>Cidade</th>
-                {podeOperar && <th />}
-              </tr>
-            </thead>
-            <tbody>
-              {lista.map((p) => (
-                <tr key={p.id} className={p.ativo ? "" : "opacity-60"}>
-                  <td className="min-w-48 font-medium">
-                    {p.nome}
-                    {!p.ativo && <span className="chip ml-2 bg-neutral-100 text-neutral-600">Inativo</span>}
-                  </td>
-                  <td className="whitespace-nowrap">{TIPOS_PESSOA[p.tipo]}</td>
-                  <td className="whitespace-nowrap tabular-nums">{formatarDocumento(p.documento) || "—"}</td>
-                  <td className="text-xs">
+        <QuadroTabela rotulo="Fornecedores e clientes">
+          <thead>
+            <tr>
+              <th>Nome</th>
+              <th>Tipo</th>
+              <th>CPF/CNPJ</th>
+              <th>Contato</th>
+              <th>Cidade</th>
+              {podeOperar && (
+                <th>
+                  <span className="sr-only">Ações</span>
+                </th>
+              )}
+            </tr>
+          </thead>
+          <tbody>
+            {lista.map((p) => (
+              <tr key={p.id} className={p.ativo ? "" : "opacity-60"}>
+                <td className="celula-titulo min-w-48 font-medium">{p.nome}</td>
+                <td data-rotulo="Tipo">
+                  <span className="flex flex-wrap justify-end gap-1 sm:justify-start">
+                    <Chip tom={p.tipo === "fornecedor" ? "ambar" : p.tipo === "cliente" ? "azul" : "violeta"}>{TIPOS_PESSOA[p.tipo]}</Chip>
+                    {!p.ativo && <Chip tom="neutro">Inativo</Chip>}
+                  </span>
+                </td>
+                <td data-rotulo="CPF/CNPJ" className="num whitespace-nowrap">
+                  {formatarDocumento(p.documento) || "—"}
+                </td>
+                <td data-rotulo="Contato" className="text-xs">
+                  <span>
                     {p.telefone}
-                    {p.email && <span className="block text-neutral-500">{p.email}</span>}
+                    {p.email && <span className="block text-[var(--texto-suave)]">{p.email}</span>}
+                  </span>
+                </td>
+                <td data-rotulo="Cidade" className="whitespace-nowrap">
+                  {[p.cidade, p.uf].filter(Boolean).join("/") || "—"}
+                </td>
+                {podeOperar && (
+                  <td className="celula-acoes text-right">
+                    <button className="btn !min-h-8 !px-3" onClick={() => setForm({ ...p })}>
+                      <Icone nome="editar" className="h-4 w-4" />
+                      Editar
+                    </button>
                   </td>
-                  <td className="whitespace-nowrap">{[p.cidade, p.uf].filter(Boolean).join("/") || "—"}</td>
-                  {podeOperar && (
-                    <td className="text-right">
-                      <button className="btn !min-h-8" onClick={() => setForm({ ...p })}>
-                        Editar
-                      </button>
-                    </td>
-                  )}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                )}
+              </tr>
+            ))}
+          </tbody>
+        </QuadroTabela>
       )}
 
       {form && (

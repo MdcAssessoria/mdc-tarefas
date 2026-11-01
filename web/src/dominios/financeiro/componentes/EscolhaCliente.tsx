@@ -18,7 +18,7 @@ export function useClienteFinanceiro() {
 export function EscolhaCliente({ financeiro }: { financeiro: ReturnType<typeof useClienteFinanceiro> }) {
   const { cliente, ativos, escolher } = financeiro;
   return (
-    <label className="campo min-w-64 flex-1 sm:max-w-md">
+    <label className="campo campo-largo min-w-64 sm:max-w-md">
       <span>Empresa</span>
       <select value={cliente?.id ?? ""} onChange={(e) => escolher(e.target.value)}>
         <option value="">Escolha a empresa…</option>

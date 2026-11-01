@@ -10,6 +10,7 @@ import { PAPEIS_APP } from "@/dominios/acessos/tipos";
 import type { PapelApp } from "@/dominios/acessos/tipos";
 import { caminho } from "@/lib/caminho";
 import { Icone } from "@/components/ui/Icone";
+import { podeModulo } from "./navegacao";
 import type { Modulo } from "./navegacao";
 
 function Iniciais({ nome, className = "" }: { nome: string; className?: string }) {
@@ -31,7 +32,7 @@ function Iniciais({ nome, className = "" }: { nome: string; className?: string }
 }
 
 export function MenuLateral({ modulo, recolhido, aoRecolher }: { modulo: Modulo; recolhido: boolean; aoRecolher?: () => void }) {
-  const { apps, eu, papel, org, orgs, trocarOrg, podeEditarCadastros } = useOrg();
+  const { apps, eu, papel, org, orgs, trocarOrg, podeEditarCadastros, pode } = useOrg();
   const rota = usePathname();
   const ferramentas = apps.filter((a) => a.papel && a.status !== "em_breve");
 
@@ -86,6 +87,9 @@ export function MenuLateral({ modulo, recolhido, aoRecolher }: { modulo: Modulo;
             nivel: a.papel,
           }),
         )}
+        {/* cadastro comum a todos os módulos de gestão (Financeiro, Entradas, Saídas, Estoque) */}
+        {podeModulo("cadastros", pode) &&
+          item({ href: "/cadastros/pessoas", nome: "Fornecedores e clientes", icone: "pessoas", ativo: modulo === "cadastros" })}
         {(papel === "admin" || podeEditarCadastros) && (
           <>
             {!recolhido && <div className="px-3 pb-1.5 pt-5 text-[12px] text-[var(--nevoa)]/55">Administração</div>}
