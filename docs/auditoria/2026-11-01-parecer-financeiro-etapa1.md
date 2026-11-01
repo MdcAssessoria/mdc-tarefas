@@ -189,3 +189,92 @@ planilha reais por banco usado, comparando o saldo calculado com o saldo do extr
   coluna "Data Lançamento", o histórico aparece como a data; (3) em planilhas em que a saída vem marcada com "D" numa
   coluna separada, a saída entra como entrada; (4) não existe botão para desfazer uma importação errada. Também vale
   comparar o saldo calculado com o saldo que o banco informa no arquivo — isso mostra na hora quando algo saiu errado.
+
+---
+
+## Reauditoria (01/11/2026) — 027 revisada e commit `5da4a8a` do Financeiro
+
+- **Escopo:** `027_equipe_recusa_conta_de_cliente.sql` revisada (main, commit `610a518`, tabela `app.ex_clientes`) e
+  commit `5da4a8a` do branch `financeiro-etapa1` (correções de A-2 a A-5, M-1 a M-5, M-7, B-4, B-5). Nada aplicado
+  nem enviado.
+- **Como:** leitura dos diffs; consultas **somente leitura** ao banco `bulqqdgfrrpqquqvjjfa` (última migração
+  aplicada continua a 025; `portal_usuarios.email` e `portal_convites.email` são `NOT NULL`; hoje há 0 acessos de
+  cliente e 1 convite de cliente, nenhum deles com e-mail de membro ou de convite de equipe; `app.registrar` existe
+  com a assinatura usada pela 026); testes de sonda nos leitores numa cópia própria do branch (arquivo apagado depois).
+
+### Verificações automáticas (cópia própria do branch, `npm ci` limpo)
+
+| Comando | Resultado |
+| --- | --- |
+| `npm ci && npm run verificar` | Ok — 22 arquivos de teste, **122 testes** passando, lint sem erro (só avisos antigos de `setState` em efeito), build completo |
+| `npm run telas` | Ok — **29 de 29 telas** |
+
+### Situação dos achados
+
+| Achado | Situação | Evidência |
+| --- | --- | --- |
+| A-1 gestor apaga o cliente e some o rastro | **Resolvido** | `app.ex_clientes` sem chave estrangeira, sem acesso pela API (`revoke ... authenticated`), preenchida na própria migração e por gatilho em `portal_convites` (insert/update do e-mail) e `portal_usuarios` (insert/update, guarda também o e-mail da conta em `auth.users`); `adicionar_membro` consulta a marca antes de convites e acessos. Apagar cliente, acesso ou convite não apaga a marca. Preenchimento inicial não quebra: as colunas de e-mail são obrigatórias. Membros atuais não são afetados (a checagem só vale para quem ainda não é membro). |
+| A-2 FITID repetido descartado | **Resolvido** | Sonda: duas tarifas no mesmo dia com `FITID X1` (−0,50 e −12,00) → chaves diferentes; dois lançamentos idênticos → `|0` e `|1`. |
+| A-3 histórico vira a data | **Resolvido** | Sonda: `Data Lançamento | Histórico | Valor` → descrição "PIX"; `Data | Lançamento | Valor` → "PIX". |
+| A-4 sinal D/C ignorado | **Parcial** (ver R-M1) | Sonda: `Deb/Cred` com "D"/"C" → −50 / +70 (ok). Ainda viram entrada: cabeçalho `Débito/Crédito`, `Entrada/Saída`, `D / C`, `Tipo Lançamento`; valores "DB"/"CR". |
+| A-5 sem desfazer | **Resolvido** | `fin_desfazer_lote`: `security definer`, `search_path` fixo, `operar` conferido na organização do lote, recusa se houver linha não pendente, registra em `hub_auditoria`; botão com confirmação em `ListaLotes.tsx`. |
+| M-1 OFX com várias contas | **Resolvido** | Sonda: dois `<STMTRS>` → erro "Este arquivo traz 2 contas juntas…". Conta também `CCSTMTRS`. |
+| M-2 saldo do banco não conferido | **Resolvido para OFX** | `ImportarExtrato.tsx:25-41` compara, depois de gravar, o saldo calculado até o fim do arquivo com o `LEDGERBAL`. Planilha não traz saldo (`saldoFinal: null`), então não é conferida (R-B2). |
+| M-3 saldo inicial contado em dobro | **Resolvido** | `tipos.ts`: `l.data > saldo_inicial_em`; rótulo "Saldo no fim do dia" e texto do formulário coerentes. |
+| M-4 plano reimportado trava a conta | **Resolvido** | Gatilho só valida a conta contábil no INSERT ou quando ela muda. |
+| M-5 plano de outra empresa | **Resolvido** | Prévia mostra "X novas e Y ficarão inativas", em vermelho acima de 30%; o plano atual é lido inteiro (`lerTudo`, paginado). A confirmação é o mesmo botão (sem confirmação reforçada) — aceitável. |
+| M-6 saldo no navegador | **Adiado para a etapa 2** (aceito) | — |
+| M-7 arquivos grandes | **Parcial** | `extratos/page.tsx` 343 linhas; `financeiro/page.tsx` continua com 405. |
+| B-2 auditoria | **Parcial** | Importar e desfazer extrato agora registram; cadastro/edição de conta bancária ainda não. |
+| B-4 `distinct on` sem trim | **Resolvido** | — |
+| B-5 entidades XML | **Resolvido** | Sonda: `P&amp;G &#233;` → "P&G é". |
+| B-1, B-3, B-6, B-7, mistura OFX × planilha na mesma conta, cadastro aberto no Auth | Sem mudança | Continuam como antes (baixos / a confirmar). |
+
+### Achados novos ou restantes
+
+- **R-M1 (médio) — Variantes de planilha com D/C ainda entram como entrada.** `extratoPlanilha.ts:16` só reconhece o
+  cabeçalho exato (`D/C`, `TIPO`, `DEB/CRED`…) e `extratoPlanilha.ts:107-108` só os valores D/DEB/DEBITO/S/SAIDA e
+  C/CRED/CREDITO/E/ENTRADA. Sonda: `Débito/Crédito`, `Entrada/Saída`, `D / C`, `Tipo Lançamento` (cabeçalhos) e
+  "DB"/"CR" (valores) → valor positivo, sem aviso. Não é crítico porque a prévia mostra "Saídas R$ 0,00" e existe
+  o desfazer, mas planilha não tem conferência de saldo. Correção: aceitar cabeçalho que **contenha**
+  TIPO/NATUREZA/D-C/DEBITO+CREDITO/ENTRADA+SAIDA; aceitar DB/CR; e **avisar na prévia** quando houver coluna de
+  natureza com valor não reconhecido ou quando a planilha não tiver nenhuma saída. Testar com o CSV/Excel real de
+  cada banco do piloto antes de liberar planilha para a carteira.
+- **R-B1 (baixo) — Marca de ex-cliente é para sempre, inclusive por engano.** Um convite de cliente digitado com o
+  e-mail de um funcionário (erro ou má-fé de quem gere o Atendimento) impede para sempre esse e-mail de entrar na
+  equipe; só sai por SQL no painel. Documentar em `docs/05-seguranca-e-acessos.md` como o administrador retira a
+  marca e registrar `app.ex_clientes` em `docs/04-banco-de-dados.md` (hoje não aparece em nenhum capítulo).
+- **R-B2 (baixo) — Conferência de saldo só para OFX e só no momento da importação.** Planilha nunca é conferida e o
+  cartão da conta não mostra "HUB × banco". Desfazer um lote antigo pode abrir um buraco no período em que outro
+  arquivo foi contado como "repetido"; a mensagem do desfazer poderia lembrar de reimportar os arquivos do mesmo
+  período.
+- **A confirmar — FITID com data na chave.** Se algum banco muda a data (`DTPOSTED`) de um lançamento entre um
+  download e outro (lançamento agendado que vira efetivado), ele entra duas vezes. A conferência de saldo do OFX
+  acusa; testar com OFX real de dois downloads sobrepostos no piloto.
+- **A confirmar (027) — troca de e-mail da conta de cliente.** A marca guarda o e-mail da conta no momento do
+  acesso. Se a pessoa trocar o e-mail da conta depois e o cliente for apagado, o e-mail novo não está marcado.
+  Depende de troca de e-mail estar liberada no Auth (com "Secure email change" ligado, exige confirmar nas duas
+  caixas). Conferir no painel; se quiser fechar, gatilho em `auth.users` para marcar o e-mail novo de quem tem marca.
+
+### Veredito da reauditoria
+
+| Item | Veredito |
+| --- | --- |
+| **027** | **Aprovada. Pode aplicar.** |
+| **026** | **Aprovada. Pode aplicar** (antes do push do site, porque as telas leem as tabelas novas). Depois: regenerar `database.types.ts` e rodar os avisos de segurança do Supabase. |
+| **Site (Financeiro etapa 1)** | **Pode publicar, liberando a ferramenta só para o Piloto HUB** (MDC e Greencore). Antes de liberar para a carteira: corrigir R-M1 e validar um OFX e uma planilha reais por banco, conferindo o saldo com o do banco. |
+
+Críticos: 0 · Altos: 0 · Médios: 2 em aberto (R-M1; M-6 adiado) + M-7 parcial · Baixos: R-B1, R-B2 e os anteriores.
+
+### Resumo sem jargão
+
+- **Convites (027):** a brecha está fechada. O HUB agora guarda para sempre a lista de e-mails que já foram acesso
+  de cliente, e apagar o cliente não apaga essa lista. Pode aplicar. Só falta escrever no manual como tirar um
+  e-mail dessa lista caso alguém o coloque lá por engano.
+- **Financeiro:** os quatro erros graves foram corrigidos (lançamentos com o mesmo número do banco não somem mais, o
+  histórico não vira a data, a coluna "D" vira saída e existe botão de desfazer importação). O HUB também compara o
+  saldo calculado com o saldo que o banco informa no arquivo OFX.
+- **O que ainda pede cuidado:** em algumas planilhas de banco a coluna que diz se é entrada ou saída tem outro nome
+  (por exemplo "Entrada/Saída" ou "Tipo Lançamento") e aí as saídas ainda entram como entradas. Na tela de conferência
+  isso aparece como "Saídas R$ 0,00". Por isso: liberar primeiro só para MDC e Greencore, testar com os arquivos
+  reais de cada banco e só depois abrir para os demais clientes.
