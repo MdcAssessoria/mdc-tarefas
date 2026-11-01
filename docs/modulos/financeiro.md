@@ -19,7 +19,6 @@
 | `/financeiro/pagar` e `/financeiro/receber` | Equipe (ver; lançar e baixar com operar) | Contas a pagar / a receber: filtro de vencimento em um clique, situação (em aberto, vencidos, a vencer, pagos, cancelados), fornecedor/cliente, categoria e busca; frase de resumo; 3 indicadores que filtram ao clicar (vencido, a vencer, pago); lançar (parcelas mensais, "já foi pago", fornecedor novo cadastrado na hora), pagar/receber (total ou parcial), editar, histórico com estorno, cancelar com motivo; PDF e Excel |
 | `/financeiro/movimento` | Equipe | Entradas e saídas: pagamentos e recebimentos do período (realizado) e, se marcado, o previsto (contas em aberto que vencem no período); entrou, saiu, resultado; "para onde foi o dinheiro" por categoria (clique filtra); lançar entrada/saída à vista; PDF e Excel |
 | `/financeiro/cadastros` | Equipe (ver; cadastrar com operar) | Abas Fornecedores e clientes (CPF/CNPJ conferido), Despesas e receitas (cada uma ligada a conta analítica ativa do plano), Centros de custo; busca, filtros, PDF e Excel |
-| `/financeiro/estoque` | Equipe (ver; movimentar com operar; regra de negativo com gerir) | Abas Itens (produto/serviço, "controla estoque", mínimo, custo, preço, NCM, categorias de compra e venda; indicadores de valor em estoque e itens abaixo do mínimo), Estoques (locais, padrão, regra de estoque negativo) e Movimentações (entrada, saída, inventário, transferência, estorno); PDF e Excel |
 
 A empresa escolhida fica lembrada no navegador (`hub-mdc:financeiro:cliente`) e vale para as três telas.
 
@@ -27,8 +26,11 @@ Código: regras puras em `web/src/dominios/financeiro/` (`ofx.ts`, `extratoPlani
 `leitores.test.ts`), leituras paginadas em `leituras.ts`, gravações em `repositorio.ts`, telas em
 `web/src/app/(hub)/financeiro/`. Etapa 1B: regras puras em `regras.ts` (CPF/CNPJ, período, parcelas, situação; testes
 em `regras.test.ts`), exportação comum PDF/Excel em `exportar.ts`, telas compartilhadas em `componentes/`
-(`TelaTitulos`, `LancarTitulo`, `BaixaTitulo`, `CadPessoas`, `CadCategorias`, `CadCentros`, `EstoqueItens`, `EstoqueLocais`,
-`EstoqueMovimentos`, `estoqueBase`, `Comuns`).
+(`TelaTitulos`, `LancarTitulo`, `BaixaTitulo`, `CadPessoas`, `CadCategorias`, `CadCentros`, `EstoqueLocais`, `EstoqueMovimentos`, `estoqueBase`, `Comuns`).
+
+Itens, estoque e pedidos saíram do Financeiro em 01/11/2026 e viraram os módulos **Estoque** (`/estoque`),
+**Saídas** (`/saidas`, pedidos de venda) e **Entradas** (`/entradas/compras`, pedidos de compra): ver
+[Estoque e pedidos](estoque.md). `/financeiro/estoque` redireciona para `/estoque`.
 
 ## 2. Regras
 
@@ -84,7 +86,10 @@ com a permissão `financeiro` no Portal (ver e lançar; `gerir` só a equipe). O
 bancárias e o plano da própria empresa. **A tela do Portal ainda não existe** (próxima entrega); até lá, a permissão
 `financeiro` não aparece na lista de permissões do Portal.
 
-## 6. Itens e estoque (migração 029)
+## 6. Itens e estoque (migração 029; ampliado na 033)
+
+A 033 acrescentou grupos, unidade de compra, custo médio, ficha (kardex), inventário guiado e os pedidos de venda e
+de compra, que geram as contas a receber e a pagar por `fin_lancar`. Tudo em [Estoque e pedidos](estoque.md).
 
 | Regra | Onde |
 | --- | --- |

@@ -2,7 +2,17 @@
 // e o filtro de quais abas cada pessoa pode ver. Usado pelo menu, pela barra superior e pela busca rápida.
 import type { PapelApp } from "@/dominios/acessos/tipos";
 
-export type Modulo = "hub" | "tarefas" | "societario" | "demonstrativos" | "atendimento" | "vencimentos" | "comercial" | "financeiro";
+export type Modulo =
+  | "hub"
+  | "tarefas"
+  | "societario"
+  | "demonstrativos"
+  | "atendimento"
+  | "vencimentos"
+  | "comercial"
+  | "financeiro"
+  | "estoque"
+  | "saidas";
 
 /** Aba de um módulo. `minimo` exige um nível na ferramenta; `gestor` exige poder editar cadastros (admin ou gestor). */
 export interface LinkModulo {
@@ -55,10 +65,24 @@ export const NAV: Record<Modulo, { titulo: string; links: LinkModulo[] }> = {
       { href: "/financeiro/movimento", nome: "Entradas e saídas" },
       { href: "/financeiro", nome: "Bancos" },
       { href: "/financeiro/extratos", nome: "Extratos" },
-      { href: "/financeiro/estoque", nome: "Estoque" },
       { href: "/financeiro/cadastros", nome: "Cadastros" },
       { href: "/financeiro/plano", nome: "Plano de contas" },
     ],
+  },
+  estoque: {
+    titulo: "Estoque",
+    links: [
+      { href: "/estoque", nome: "Itens" },
+      { href: "/estoque/posicao", nome: "Posição" },
+      { href: "/estoque/ficha", nome: "Ficha do item" },
+      { href: "/estoque/movimentos", nome: "Movimentações" },
+      { href: "/estoque/inventario", nome: "Inventário", minimo: "operar" },
+      { href: "/estoque/locais", nome: "Estoques" },
+    ],
+  },
+  saidas: {
+    titulo: "Saídas",
+    links: [{ href: "/saidas", nome: "Pedidos de venda" }],
   },
   comercial: {
     titulo: "CRM Comercial",
@@ -87,6 +111,8 @@ export const MODULO_POR_PREFIXO: Record<string, Modulo> = {
   vencimentos: "vencimentos",
   comercial: "comercial",
   financeiro: "financeiro",
+  estoque: "estoque",
+  saidas: "saidas",
 };
 
 /** Módulo da rota atual (caminho sem o /hub-mdc, como devolve o usePathname). */

@@ -6,6 +6,8 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       { source: "/", destination: "/hub-mdc", basePath: false, permanent: false },
+      // o estoque saiu do Financeiro e virou módulo próprio (01/11/2026)
+      { source: "/financeiro/estoque", destination: "/estoque", permanent: false },
       // endereços antigos (antes do /hub-mdc) continuam funcionando
       {
         source: "/:mod(tarefas|tv|config|clientes|societario|demonstrativos|portal|atendimento|vencimentos|comercial|hub|login)/:resto*",

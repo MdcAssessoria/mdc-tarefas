@@ -176,6 +176,21 @@ export interface Item {
   categoria_despesa_id: string | null;
   observacao: string | null;
   ativo: boolean;
+  // migração 033
+  grupo_id: string | null;
+  marca: string | null;
+  unidade_compra: string | null;
+  fator_compra: number;
+  custo_medio: number | null;
+  markup: number | null;
+  foto_caminho: string | null;
+}
+
+export interface GrupoItem {
+  id: string;
+  cliente_id: string;
+  nome: string;
+  ativo: boolean;
 }
 
 export interface LocalEstoque {
@@ -200,6 +215,61 @@ export interface MovimentoEstoque {
   observacao: string | null;
   estornado: boolean;
   estorno_motivo: string | null;
+  // migração 033 (ficha de estoque)
+  origem_id: string | null;
+  saldo_apos: number | null;
+  custo_medio_apos: number | null;
+}
+
+// ------------------------------------------------------------------ pedidos (migração 033)
+
+export interface ParcelaPedido {
+  numero: number;
+  vencimento: string;
+  valor: number;
+}
+
+export interface Pedido {
+  id: string;
+  cliente_id: string;
+  tipo: "venda" | "compra";
+  numero: number;
+  pessoa_id: string | null;
+  data: string;
+  previsao: string | null;
+  local_id: string | null;
+  categoria_id: string | null;
+  centro_id: string | null;
+  total_itens: number;
+  desconto: number;
+  frete: number;
+  total: number;
+  condicao: string | null;
+  forma_pagamento: string | null;
+  parcelas: ParcelaPedido[];
+  documento: string | null;
+  observacao: string | null;
+  situacao: "rascunho" | "confirmado" | "faturado" | "recebido" | "cancelado";
+  lancado_em: string | null;
+  cancelado_em: string | null;
+  cancelado_motivo: string | null;
+  criado_em: string;
+}
+
+export interface PedidoItem {
+  id: number;
+  pedido_id: string;
+  ordem: number;
+  item_id: string;
+  descricao: string;
+  unidade: string;
+  fator: number;
+  quantidade: number;
+  preco_unitario: number;
+  desconto: number;
+  total: number;
+  custo_unitario: number | null;
+  movimento_id: number | null;
 }
 
 export interface SaldoEstoque {

@@ -3,7 +3,7 @@
 // aria-modal, fecha com Esc ou clique fora, põe o foco no primeiro campo, mantém o Tab dentro e devolve o foco ao sair.
 import { useEffect, useEffectEvent, useId, useRef } from "react";
 
-const LARGURAS = { sm: "max-w-sm", md: "max-w-md", lg: "max-w-lg", xl: "max-w-xl", "2xl": "max-w-2xl" } as const;
+const LARGURAS = { sm: "max-w-sm", md: "max-w-md", lg: "max-w-lg", xl: "max-w-xl", "2xl": "max-w-2xl", "4xl": "max-w-4xl" } as const;
 const FOCAVEIS =
   'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
@@ -66,7 +66,7 @@ export function Modal({
         aria-labelledby={idTitulo}
         tabIndex={-1}
         onClick={(e) => e.stopPropagation()}
-        className={`cartao w-full ${LARGURAS[largura]} ${espaco === 4 ? "space-y-4" : "space-y-3"} p-5 outline-none`}
+        className={`cartao max-h-[calc(100dvh-2rem)] w-full overflow-y-auto ${LARGURAS[largura]} ${espaco === 4 ? "space-y-4" : "space-y-3"} p-5 outline-none`}
       >
         <div>
           <h2 id={idTitulo} className="text-lg font-semibold text-[var(--marca)]">

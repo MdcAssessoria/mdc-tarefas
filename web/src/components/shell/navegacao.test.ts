@@ -13,6 +13,8 @@ describe("moduloDaRota", () => {
     expect(moduloDaRota("/vencimentos")).toBe("vencimentos");
     expect(moduloDaRota("/comercial/leads")).toBe("comercial");
     expect(moduloDaRota("/financeiro/extratos")).toBe("financeiro");
+    expect(moduloDaRota("/estoque/posicao")).toBe("estoque");
+    expect(moduloDaRota("/saidas")).toBe("saidas");
   });
 
   it("Configurações e importação de clientes ficam em Tarefas (como era o padrão do AppShell)", () => {
