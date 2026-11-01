@@ -13,6 +13,8 @@ describe("moduloDaRota", () => {
     expect(moduloDaRota("/vencimentos")).toBe("vencimentos");
     expect(moduloDaRota("/comercial/leads")).toBe("comercial");
     expect(moduloDaRota("/financeiro/extratos")).toBe("financeiro");
+    expect(moduloDaRota("/licencas")).toBe("licencas");
+    expect(moduloDaRota("/licencas/inadimplentes")).toBe("licencas");
   });
 
   it("Configurações e importação de clientes ficam em Tarefas (como era o padrão do AppShell)", () => {
@@ -27,5 +29,19 @@ describe("filtrarLinks", () => {
     expect(semGestao.map((l) => l.href)).not.toContain("/config");
     const soVer = filtrarLinks("demonstrativos", { pode: (_app, minimo = "ver") => minimo === "ver", podeEditarCadastros: true });
     expect(soVer.map((l) => l.href)).toEqual(["/demonstrativos", "/demonstrativos/importacoes", "/demonstrativos/riscos"]);
+  });
+});
+
+describe("Licenças", () => {
+  it("todas as abas aparecem para quem vê a ferramenta (as ações é que exigem operar/gerir)", () => {
+    const abas = filtrarLinks("licencas", { pode: (_app, minimo = "ver") => minimo === "ver", podeEditarCadastros: false });
+    expect(abas.map((l) => l.href)).toEqual([
+      "/licencas",
+      "/licencas/cobrancas",
+      "/licencas/inadimplentes",
+      "/licencas/contratos",
+      "/licencas/faturamento",
+      "/licencas/produtos",
+    ]);
   });
 });

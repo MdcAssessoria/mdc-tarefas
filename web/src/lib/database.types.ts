@@ -1931,6 +1931,561 @@ export type Database = {
           },
         ];
       };
+      lic_baixas: {
+        Row: {
+          cliente_id: string;
+          cobranca_id: string;
+          data: string;
+          desconto: number;
+          em: string;
+          estornada: boolean;
+          estornada_em: string | null;
+          estorno_motivo: string | null;
+          forma: string | null;
+          id: number;
+          juros: number;
+          observacao: string | null;
+          org_id: string;
+          por: string | null;
+          total: number | null;
+          valor: number;
+        };
+        Insert: {
+          cliente_id: string;
+          cobranca_id: string;
+          data: string;
+          desconto?: number;
+          em?: string;
+          estornada?: boolean;
+          estornada_em?: string | null;
+          estorno_motivo?: string | null;
+          forma?: string | null;
+          id?: never;
+          juros?: number;
+          observacao?: string | null;
+          org_id: string;
+          por?: string | null;
+          total?: never;
+          valor: number;
+        };
+        Update: {
+          cliente_id?: string;
+          cobranca_id?: string;
+          data?: string;
+          desconto?: number;
+          em?: string;
+          estornada?: boolean;
+          estornada_em?: string | null;
+          estorno_motivo?: string | null;
+          forma?: string | null;
+          id?: never;
+          juros?: number;
+          observacao?: string | null;
+          org_id?: string;
+          por?: string | null;
+          total?: never;
+          valor?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "lic_baixas_cliente_id_fkey";
+            columns: ["cliente_id"];
+            isOneToOne: false;
+            referencedRelation: "clientes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "lic_baixas_cobranca_id_fkey";
+            columns: ["cobranca_id"];
+            isOneToOne: false;
+            referencedRelation: "lic_cobrancas";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "lic_baixas_org_id_fkey";
+            columns: ["org_id"];
+            isOneToOne: false;
+            referencedRelation: "organizacoes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      lic_bloqueios: {
+        Row: {
+          bloqueado_em: string;
+          bloqueado_por: string | null;
+          cliente_id: string;
+          desbloqueado_em: string | null;
+          desbloqueado_por: string | null;
+          id: number;
+          motivo: string;
+          motivo_desbloqueio: string | null;
+          org_id: string;
+        };
+        Insert: {
+          bloqueado_em?: string;
+          bloqueado_por?: string | null;
+          cliente_id: string;
+          desbloqueado_em?: string | null;
+          desbloqueado_por?: string | null;
+          id?: never;
+          motivo: string;
+          motivo_desbloqueio?: string | null;
+          org_id: string;
+        };
+        Update: {
+          bloqueado_em?: string;
+          bloqueado_por?: string | null;
+          cliente_id?: string;
+          desbloqueado_em?: string | null;
+          desbloqueado_por?: string | null;
+          id?: never;
+          motivo?: string;
+          motivo_desbloqueio?: string | null;
+          org_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "lic_bloqueios_cliente_id_fkey";
+            columns: ["cliente_id"];
+            isOneToOne: false;
+            referencedRelation: "clientes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "lic_bloqueios_org_id_fkey";
+            columns: ["org_id"];
+            isOneToOne: false;
+            referencedRelation: "organizacoes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      lic_cobrancas: {
+        Row: {
+          cancelada_em: string | null;
+          cancelado_motivo: string | null;
+          cliente_id: string;
+          competencia: string;
+          contrato_id: string;
+          criado_em: string;
+          descricao: string;
+          id: string;
+          observacao: string | null;
+          org_id: string;
+          pago_em: string | null;
+          por: string | null;
+          situacao: string;
+          valor: number;
+          valor_pago: number | null;
+          vencimento: string;
+        };
+        Insert: {
+          cancelada_em?: string | null;
+          cancelado_motivo?: string | null;
+          cliente_id: string;
+          competencia: string;
+          contrato_id: string;
+          criado_em?: string;
+          descricao: string;
+          id?: string;
+          observacao?: string | null;
+          org_id: string;
+          pago_em?: string | null;
+          por?: string | null;
+          situacao?: string;
+          valor: number;
+          valor_pago?: number | null;
+          vencimento: string;
+        };
+        Update: {
+          cancelada_em?: string | null;
+          cancelado_motivo?: string | null;
+          cliente_id?: string;
+          competencia?: string;
+          contrato_id?: string;
+          criado_em?: string;
+          descricao?: string;
+          id?: string;
+          observacao?: string | null;
+          org_id?: string;
+          pago_em?: string | null;
+          por?: string | null;
+          situacao?: string;
+          valor?: number;
+          valor_pago?: number | null;
+          vencimento?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "lic_cobrancas_cliente_id_fkey";
+            columns: ["cliente_id"];
+            isOneToOne: false;
+            referencedRelation: "clientes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "lic_cobrancas_contrato_id_fkey";
+            columns: ["contrato_id"];
+            isOneToOne: false;
+            referencedRelation: "lic_contratos";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "lic_cobrancas_org_id_fkey";
+            columns: ["org_id"];
+            isOneToOne: false;
+            referencedRelation: "organizacoes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      lic_contrato_produtos: {
+        Row: {
+          contrato_id: string;
+          org_id: string;
+          produto_id: string;
+        };
+        Insert: {
+          contrato_id: string;
+          org_id: string;
+          produto_id: string;
+        };
+        Update: {
+          contrato_id?: string;
+          org_id?: string;
+          produto_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "lic_contrato_produtos_contrato_id_fkey";
+            columns: ["contrato_id"];
+            isOneToOne: false;
+            referencedRelation: "lic_contratos";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "lic_contrato_produtos_org_id_fkey";
+            columns: ["org_id"];
+            isOneToOne: false;
+            referencedRelation: "organizacoes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "lic_contrato_produtos_produto_id_fkey";
+            columns: ["produto_id"];
+            isOneToOne: false;
+            referencedRelation: "lic_produtos";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      lic_contratos: {
+        Row: {
+          cliente_id: string;
+          criado_em: string;
+          dia_vencimento: number;
+          encerrado_em: string | null;
+          encerrado_motivo: string | null;
+          fim: string | null;
+          id: string;
+          inicio: string;
+          observacao: string | null;
+          org_id: string;
+          plano_id: string | null;
+          por: string | null;
+          proporcional: boolean;
+          reajuste_indice: string;
+          reajuste_mes: number | null;
+          situacao: string;
+          ultimo_reajuste: string | null;
+          valor_mensal: number;
+          valor_tabela: number;
+        };
+        Insert: {
+          cliente_id: string;
+          criado_em?: string;
+          dia_vencimento: number;
+          encerrado_em?: string | null;
+          encerrado_motivo?: string | null;
+          fim?: string | null;
+          id?: string;
+          inicio: string;
+          observacao?: string | null;
+          org_id: string;
+          plano_id?: string | null;
+          por?: string | null;
+          proporcional?: boolean;
+          reajuste_indice?: string;
+          reajuste_mes?: number | null;
+          situacao?: string;
+          ultimo_reajuste?: string | null;
+          valor_mensal: number;
+          valor_tabela?: number;
+        };
+        Update: {
+          cliente_id?: string;
+          criado_em?: string;
+          dia_vencimento?: number;
+          encerrado_em?: string | null;
+          encerrado_motivo?: string | null;
+          fim?: string | null;
+          id?: string;
+          inicio?: string;
+          observacao?: string | null;
+          org_id?: string;
+          plano_id?: string | null;
+          por?: string | null;
+          proporcional?: boolean;
+          reajuste_indice?: string;
+          reajuste_mes?: number | null;
+          situacao?: string;
+          ultimo_reajuste?: string | null;
+          valor_mensal?: number;
+          valor_tabela?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "lic_contratos_cliente_id_fkey";
+            columns: ["cliente_id"];
+            isOneToOne: false;
+            referencedRelation: "clientes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "lic_contratos_org_id_fkey";
+            columns: ["org_id"];
+            isOneToOne: false;
+            referencedRelation: "organizacoes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "lic_contratos_plano_id_fkey";
+            columns: ["plano_id"];
+            isOneToOne: false;
+            referencedRelation: "lic_planos";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      lic_parametros: {
+        Row: {
+          atualizado_em: string;
+          dias_sugerir_bloqueio: number;
+          org_id: string;
+          ultimo_aviso: string | null;
+        };
+        Insert: {
+          atualizado_em?: string;
+          dias_sugerir_bloqueio?: number;
+          org_id: string;
+          ultimo_aviso?: string | null;
+        };
+        Update: {
+          atualizado_em?: string;
+          dias_sugerir_bloqueio?: number;
+          org_id?: string;
+          ultimo_aviso?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "lic_parametros_org_id_fkey";
+            columns: ["org_id"];
+            isOneToOne: true;
+            referencedRelation: "organizacoes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      lic_plano_produtos: {
+        Row: {
+          org_id: string;
+          plano_id: string;
+          produto_id: string;
+        };
+        Insert: {
+          org_id: string;
+          plano_id: string;
+          produto_id: string;
+        };
+        Update: {
+          org_id?: string;
+          plano_id?: string;
+          produto_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "lic_plano_produtos_org_id_fkey";
+            columns: ["org_id"];
+            isOneToOne: false;
+            referencedRelation: "organizacoes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "lic_plano_produtos_plano_id_fkey";
+            columns: ["plano_id"];
+            isOneToOne: false;
+            referencedRelation: "lic_planos";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "lic_plano_produtos_produto_id_fkey";
+            columns: ["produto_id"];
+            isOneToOne: false;
+            referencedRelation: "lic_produtos";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      lic_planos: {
+        Row: {
+          ativo: boolean;
+          criado_em: string;
+          descricao: string;
+          id: string;
+          nome: string;
+          org_id: string;
+          preco: number;
+        };
+        Insert: {
+          ativo?: boolean;
+          criado_em?: string;
+          descricao?: string;
+          id?: string;
+          nome: string;
+          org_id: string;
+          preco?: number;
+        };
+        Update: {
+          ativo?: boolean;
+          criado_em?: string;
+          descricao?: string;
+          id?: string;
+          nome?: string;
+          org_id?: string;
+          preco?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "lic_planos_org_id_fkey";
+            columns: ["org_id"];
+            isOneToOne: false;
+            referencedRelation: "organizacoes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      lic_produtos: {
+        Row: {
+          ativo: boolean;
+          criado_em: string;
+          descricao: string;
+          id: string;
+          nome: string;
+          ordem: number;
+          org_id: string;
+          preco: number;
+          slug: string;
+        };
+        Insert: {
+          ativo?: boolean;
+          criado_em?: string;
+          descricao?: string;
+          id?: string;
+          nome: string;
+          ordem?: number;
+          org_id: string;
+          preco?: number;
+          slug: string;
+        };
+        Update: {
+          ativo?: boolean;
+          criado_em?: string;
+          descricao?: string;
+          id?: string;
+          nome?: string;
+          ordem?: number;
+          org_id?: string;
+          preco?: number;
+          slug?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "lic_produtos_org_id_fkey";
+            columns: ["org_id"];
+            isOneToOne: false;
+            referencedRelation: "organizacoes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      lic_reajustes: {
+        Row: {
+          cliente_id: string;
+          contrato_id: string;
+          data: string;
+          em: string;
+          id: number;
+          indice: string;
+          observacao: string | null;
+          org_id: string;
+          percentual: number;
+          por: string | null;
+          valor_antes: number;
+          valor_depois: number;
+        };
+        Insert: {
+          cliente_id: string;
+          contrato_id: string;
+          data: string;
+          em?: string;
+          id?: never;
+          indice: string;
+          observacao?: string | null;
+          org_id: string;
+          percentual: number;
+          por?: string | null;
+          valor_antes: number;
+          valor_depois: number;
+        };
+        Update: {
+          cliente_id?: string;
+          contrato_id?: string;
+          data?: string;
+          em?: string;
+          id?: never;
+          indice?: string;
+          observacao?: string | null;
+          org_id?: string;
+          percentual?: number;
+          por?: string | null;
+          valor_antes?: number;
+          valor_depois?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "lic_reajustes_cliente_id_fkey";
+            columns: ["cliente_id"];
+            isOneToOne: false;
+            referencedRelation: "clientes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "lic_reajustes_contrato_id_fkey";
+            columns: ["contrato_id"];
+            isOneToOne: false;
+            referencedRelation: "lic_contratos";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "lic_reajustes_org_id_fkey";
+            columns: ["org_id"];
+            isOneToOne: false;
+            referencedRelation: "organizacoes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       membros: {
         Row: {
           ativo: boolean;
@@ -3645,6 +4200,52 @@ export type Database = {
         Args: { p_cliente: string; p_data: string; p_motivo?: string };
         Returns: Json;
       };
+      lic_baixar_cobranca: {
+        Args: {
+          p_cobranca: string;
+          p_data: string;
+          p_desconto?: number;
+          p_forma?: string;
+          p_juros?: number;
+          p_obs?: string;
+        };
+        Returns: Json;
+      };
+      lic_bloquear: {
+        Args: { p_cliente: string; p_motivo: string };
+        Returns: number;
+      };
+      lic_cancelar_cobranca: {
+        Args: { p_cobranca: string; p_motivo: string };
+        Returns: undefined;
+      };
+      lic_definir_parametros: {
+        Args: { p_dias_sugerir_bloqueio: number; p_org: string };
+        Returns: undefined;
+      };
+      lic_desbloquear: {
+        Args: { p_cliente: string; p_motivo: string };
+        Returns: undefined;
+      };
+      lic_desfazer_baixa: {
+        Args: { p_cobranca: string; p_motivo: string };
+        Returns: undefined;
+      };
+      lic_encerrar_contrato: {
+        Args: { p_contrato: string; p_data: string; p_motivo: string };
+        Returns: number;
+      };
+      lic_gerar_cobrancas: {
+        Args: { p_competencia: string; p_org: string };
+        Returns: number;
+      };
+      lic_reajustar_contrato: {
+        Args: { p_contrato: string; p_obs?: string; p_percentual: number };
+        Returns: number;
+      };
+      lic_salvar_contrato: { Args: { p: Json }; Returns: string };
+      lic_salvar_plano: { Args: { p: Json }; Returns: string };
+      lic_salvar_produto: { Args: { p: Json }; Returns: string };
       portal_abrir_conversa: {
         Args: {
           p_assunto: string;
@@ -3679,6 +4280,7 @@ export type Database = {
         };
         Returns: string;
       };
+      portal_licenca_situacao: { Args: { p_cliente: string }; Returns: Json };
       portal_minhas_empresas: {
         Args: never;
         Returns: {

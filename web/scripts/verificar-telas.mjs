@@ -258,6 +258,15 @@ const INTERACOES = {
     await abrirEFecharModal(p, "Lançar movimento", "Lançar movimento de estoque");
   },
   "/comercial": (p) => abrirEFecharModal(p, "Limpar funil", "Limpar funil"),
+  "/licencas/contratos": (p) => abrirEFecharModal(p, "Novo contrato", "Novo contrato de licença"),
+  "/licencas/produtos": async (p) => {
+    for (const aba of await p.getByRole("tab").all()) {
+      await aba.click();
+      if ((await aba.getAttribute("aria-selected")) !== "true") throw new Error(`a aba "${await aba.innerText()}" não ficou selecionada`);
+      await p.waitForTimeout(300);
+    }
+    await abrirEFecharModal(p, "Novo plano", "Novo plano");
+  },
   [`/demonstrativos/${IDS_EXEMPLO["demonstrativos/[id]"]}`]: trocarPeriodo,
   "/portal": trocarPeriodo,
   "/demonstrativos/importar": importarEmLote,

@@ -2,7 +2,16 @@
 // e o filtro de quais abas cada pessoa pode ver. Usado pelo menu, pela barra superior e pela busca rápida.
 import type { PapelApp } from "@/dominios/acessos/tipos";
 
-export type Modulo = "hub" | "tarefas" | "societario" | "demonstrativos" | "atendimento" | "vencimentos" | "comercial" | "financeiro";
+export type Modulo =
+  | "hub"
+  | "tarefas"
+  | "societario"
+  | "demonstrativos"
+  | "atendimento"
+  | "vencimentos"
+  | "comercial"
+  | "financeiro"
+  | "licencas";
 
 /** Aba de um módulo. `minimo` exige um nível na ferramenta; `gestor` exige poder editar cadastros (admin ou gestor). */
 export interface LinkModulo {
@@ -60,6 +69,17 @@ export const NAV: Record<Modulo, { titulo: string; links: LinkModulo[] }> = {
       { href: "/financeiro/plano", nome: "Plano de contas" },
     ],
   },
+  licencas: {
+    titulo: "Licenças",
+    links: [
+      { href: "/licencas", nome: "Painel" },
+      { href: "/licencas/cobrancas", nome: "Mensalidades" },
+      { href: "/licencas/inadimplentes", nome: "Inadimplentes" },
+      { href: "/licencas/contratos", nome: "Contratos" },
+      { href: "/licencas/faturamento", nome: "Faturamento do mês" },
+      { href: "/licencas/produtos", nome: "Produtos e planos" },
+    ],
+  },
   comercial: {
     titulo: "CRM Comercial",
     links: [
@@ -87,6 +107,7 @@ export const MODULO_POR_PREFIXO: Record<string, Modulo> = {
   vencimentos: "vencimentos",
   comercial: "comercial",
   financeiro: "financeiro",
+  licencas: "licencas",
 };
 
 /** Módulo da rota atual (caminho sem o /hub-mdc, como devolve o usePathname). */
