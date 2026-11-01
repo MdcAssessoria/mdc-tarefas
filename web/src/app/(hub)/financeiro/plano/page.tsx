@@ -217,7 +217,11 @@ export default function PaginaPlano() {
               arquivo aqui. Você confere antes de gravar. Importar de novo atualiza o plano sem apagar nada.
             </p>
           </div>
+          <label className="block text-sm font-medium" htmlFor="arquivo-plano">
+            1. Clique em <b>Escolher arquivo</b> e selecione o plano exportado do Domínio:
+          </label>
           <input
+            id="arquivo-plano"
             type="file"
             accept=".xls,.xlsx,.csv,.txt"
             disabled={lendo || gravando}
