@@ -2,7 +2,7 @@
 // e o filtro de quais abas cada pessoa pode ver. Usado pelo menu, pela barra superior e pela busca rápida.
 import type { PapelApp } from "@/dominios/acessos/tipos";
 
-export type Modulo = "hub" | "tarefas" | "societario" | "demonstrativos" | "atendimento" | "vencimentos" | "comercial";
+export type Modulo = "hub" | "tarefas" | "societario" | "demonstrativos" | "atendimento" | "vencimentos" | "comercial" | "financeiro";
 
 /** Aba de um módulo. `minimo` exige um nível na ferramenta; `gestor` exige poder editar cadastros (admin ou gestor). */
 export interface LinkModulo {
@@ -47,6 +47,14 @@ export const NAV: Record<Modulo, { titulo: string; links: LinkModulo[] }> = {
     ],
   },
   vencimentos: { titulo: "Vencimentos", links: [{ href: "/vencimentos", nome: "Vencimentos" }] },
+  financeiro: {
+    titulo: "Financeiro",
+    links: [
+      { href: "/financeiro", nome: "Contas bancárias" },
+      { href: "/financeiro/extratos", nome: "Extratos" },
+      { href: "/financeiro/plano", nome: "Plano de contas" },
+    ],
+  },
   comercial: {
     titulo: "CRM Comercial",
     links: [
@@ -73,6 +81,7 @@ export const MODULO_POR_PREFIXO: Record<string, Modulo> = {
   atendimento: "atendimento",
   vencimentos: "vencimentos",
   comercial: "comercial",
+  financeiro: "financeiro",
 };
 
 /** Módulo da rota atual (caminho sem o /hub-mdc, como devolve o usePathname). */

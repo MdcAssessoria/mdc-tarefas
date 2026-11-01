@@ -592,6 +592,225 @@ export type Database = {
           },
         ];
       };
+      fin_contas_bancarias: {
+        Row: {
+          agencia: string | null;
+          ativo: boolean;
+          banco: string | null;
+          cliente_id: string;
+          conta_contabil_id: string | null;
+          criado_em: string;
+          id: string;
+          nome: string;
+          numero: string | null;
+          org_id: string;
+          saldo_inicial: number;
+          saldo_inicial_em: string | null;
+        };
+        Insert: {
+          agencia?: string | null;
+          ativo?: boolean;
+          banco?: string | null;
+          cliente_id: string;
+          conta_contabil_id?: string | null;
+          criado_em?: string;
+          id?: string;
+          nome: string;
+          numero?: string | null;
+          org_id: string;
+          saldo_inicial?: number;
+          saldo_inicial_em?: string | null;
+        };
+        Update: {
+          agencia?: string | null;
+          ativo?: boolean;
+          banco?: string | null;
+          cliente_id?: string;
+          conta_contabil_id?: string | null;
+          criado_em?: string;
+          id?: string;
+          nome?: string;
+          numero?: string | null;
+          org_id?: string;
+          saldo_inicial?: number;
+          saldo_inicial_em?: string | null;
+        };
+        Relationships: [];
+      };
+      fin_extrato_linhas: {
+        Row: {
+          chave: string;
+          cliente_id: string;
+          conta_id: string;
+          criado_em: string;
+          data: string;
+          descricao: string;
+          documento: string | null;
+          fitid: string | null;
+          id: number;
+          lote_id: string;
+          org_id: string;
+          situacao: string;
+          valor: number;
+        };
+        Insert: {
+          chave: string;
+          cliente_id: string;
+          conta_id: string;
+          criado_em?: string;
+          data: string;
+          descricao: string;
+          documento?: string | null;
+          fitid?: string | null;
+          id?: never;
+          lote_id: string;
+          org_id: string;
+          situacao?: string;
+          valor: number;
+        };
+        Update: {
+          chave?: string;
+          cliente_id?: string;
+          conta_id?: string;
+          criado_em?: string;
+          data?: string;
+          descricao?: string;
+          documento?: string | null;
+          fitid?: string | null;
+          id?: never;
+          lote_id?: string;
+          org_id?: string;
+          situacao?: string;
+          valor?: number;
+        };
+        Relationships: [];
+      };
+      fin_extrato_lotes: {
+        Row: {
+          arquivo: string;
+          cliente_id: string;
+          conta_id: string;
+          em: string;
+          fim: string | null;
+          formato: string;
+          id: string;
+          inicio: string | null;
+          novas: number;
+          org_id: string;
+          por: string | null;
+          recebidas: number;
+          repetidas: number;
+          saldo_final: number | null;
+        };
+        Insert: {
+          arquivo: string;
+          cliente_id: string;
+          conta_id: string;
+          em?: string;
+          fim?: string | null;
+          formato: string;
+          id?: string;
+          inicio?: string | null;
+          novas?: number;
+          org_id: string;
+          por?: string | null;
+          recebidas?: number;
+          repetidas?: number;
+          saldo_final?: number | null;
+        };
+        Update: {
+          arquivo?: string;
+          cliente_id?: string;
+          conta_id?: string;
+          em?: string;
+          fim?: string | null;
+          formato?: string;
+          id?: string;
+          inicio?: string | null;
+          novas?: number;
+          org_id?: string;
+          por?: string | null;
+          recebidas?: number;
+          repetidas?: number;
+          saldo_final?: number | null;
+        };
+        Relationships: [];
+      };
+      fin_plano_contas: {
+        Row: {
+          analitica: boolean;
+          ativo: boolean;
+          atualizado_em: string;
+          classificacao: string;
+          cliente_id: string;
+          codigo: string | null;
+          descricao: string;
+          id: string;
+          nivel: number;
+          org_id: string;
+        };
+        Insert: {
+          analitica?: boolean;
+          ativo?: boolean;
+          atualizado_em?: string;
+          classificacao: string;
+          cliente_id: string;
+          codigo?: string | null;
+          descricao: string;
+          id?: string;
+          nivel?: number;
+          org_id: string;
+        };
+        Update: {
+          analitica?: boolean;
+          ativo?: boolean;
+          atualizado_em?: string;
+          classificacao?: string;
+          cliente_id?: string;
+          codigo?: string | null;
+          descricao?: string;
+          id?: string;
+          nivel?: number;
+          org_id?: string;
+        };
+        Relationships: [];
+      };
+      fin_plano_importacoes: {
+        Row: {
+          arquivo: string;
+          cliente_id: string;
+          em: string;
+          id: number;
+          inativadas: number;
+          novas: number;
+          org_id: string;
+          por: string | null;
+          total: number;
+        };
+        Insert: {
+          arquivo: string;
+          cliente_id: string;
+          em?: string;
+          id?: never;
+          inativadas: number;
+          novas: number;
+          org_id: string;
+          por?: string | null;
+          total: number;
+        };
+        Update: {
+          arquivo?: string;
+          cliente_id?: string;
+          em?: string;
+          id?: never;
+          inativadas?: number;
+          novas?: number;
+          org_id?: string;
+          por?: string | null;
+          total?: number;
+        };
+        Relationships: [];
+      };
       hub_apps: {
         Row: {
           descricao: string;
@@ -2502,6 +2721,19 @@ export type Database = {
         Args: { p_email: string; p_org: string };
         Returns: undefined;
       };
+      fin_importar_extrato: {
+        Args: {
+          p_arquivo: string;
+          p_conta: string;
+          p_fim: string | null;
+          p_formato: string;
+          p_inicio: string | null;
+          p_linhas: Json;
+          p_saldo_final: number | null;
+        };
+        Returns: Json;
+      };
+      fin_importar_plano: { Args: { p_arquivo: string; p_cliente: string; p_contas: Json }; Returns: Json };
       hub_conta_existe: { Args: { p_email: string }; Returns: boolean };
       hub_convidar: {
         Args: {

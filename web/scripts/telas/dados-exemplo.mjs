@@ -10,6 +10,8 @@ export const EU = "11111111-1111-4111-8111-111111111111";
 const OUTRO = "22222222-2222-4222-8222-222222222222";
 const SETOR = "33333333-3333-4333-8333-333333333333";
 const C1 = "44444444-4444-4444-8444-444444444441";
+/** Empresa já escolhida nas telas que lembram a empresa (Financeiro), para a verificação mostrar dados. */
+export const CLIENTE_LEMBRADO = { "hub-mdc:financeiro:cliente": C1 };
 const C2 = "44444444-4444-4444-8444-444444444442";
 
 /** Ids usados nas rotas dinâmicas ([id]). A chave é a pasta da rota. */
@@ -43,6 +45,7 @@ const APPS = [
   ["demonstrativos", "Demonstrativos", "Balancete, DRE, índices e parecer", "grafico", "/demonstrativos", false, 30],
   ["atendimento", "Atendimento", "Chat do Portal do Cliente", "chat", "/atendimento", false, 40],
   ["vencimentos", "Vencimentos", "Certificados, procurações e alvarás", "relogio", "/vencimentos", false, 50],
+  ["financeiro", "Financeiro", "Bancos, extratos e conciliação", "moeda", "/financeiro", false, 35],
   ["comercial", "CRM Comercial", "Leads, proposta e contrato", "alvo", "/comercial", false, 80],
 ].map(([slug, nome, descricao, icone, rota, externo, ordem]) => ({
   slug,
@@ -266,6 +269,80 @@ export const TABELAS = {
       em: momento(-2),
     },
   ],
+  fin_plano_contas: [
+    ["1", null, "ATIVO", false, 1],
+    ["1.1", null, "ATIVO CIRCULANTE", false, 2],
+    ["1.1.1", null, "DISPONÍVEL", false, 3],
+    ["1.1.1.01", "5", "CAIXA GERAL", true, 4],
+    ["1.1.1.02", "7", "BANCO ITAÚ CONTA MOVIMENTO", true, 4],
+    ["3.1.1.01", "301", "VENDAS DE MERCADORIAS", true, 4],
+    ["4.1.1.09", "455", "TARIFAS BANCÁRIAS", true, 4],
+  ].map(([classificacao, codigo, descricao, analitica, nivel], k) => ({
+    id: `f1000000-0000-4000-8000-00000000000${k}`,
+    org_id: ORG,
+    cliente_id: C1,
+    classificacao,
+    codigo,
+    descricao,
+    analitica,
+    nivel,
+    ativo: true,
+    atualizado_em: momento(-5),
+  })),
+  fin_plano_importacoes: [
+    { id: 1, org_id: ORG, cliente_id: C1, arquivo: "plano-greencore.xls", total: 7, novas: 7, inativadas: 0, por: EU, em: momento(-5) },
+  ],
+  fin_contas_bancarias: [
+    {
+      id: "f2000000-0000-4000-8000-000000000001",
+      org_id: ORG,
+      cliente_id: C1,
+      nome: "Itaú movimento",
+      banco: "341 · Itaú",
+      agencia: "1234",
+      numero: "56789-0",
+      conta_contabil_id: "f1000000-0000-4000-8000-000000000004",
+      saldo_inicial: 10000,
+      saldo_inicial_em: dia(-40),
+      ativo: true,
+      criado_em: momento(-40),
+    },
+  ],
+  fin_extrato_lotes: [
+    {
+      id: "f3000000-0000-4000-8000-000000000001",
+      org_id: ORG,
+      cliente_id: C1,
+      conta_id: "f2000000-0000-4000-8000-000000000001",
+      arquivo: "extrato-itau.ofx",
+      formato: "ofx",
+      inicio: dia(-10),
+      fim: dia(0),
+      saldo_final: 12350.5,
+      recebidas: 4,
+      novas: 4,
+      repetidas: 0,
+      por: EU,
+      em: momento(-1),
+    },
+  ],
+  fin_extrato_linhas: [
+    [-3, 5000, "PIX RECEBIDO CLIENTE ABC", "123"],
+    [-2, -1500, "PAGAMENTO FORNECEDOR XYZ", null],
+    [-1, -149.5, "TARIFA PACOTE DE SERVIÇOS", null],
+    [0, -1000, "PIX ENVIADO FOLHA", "456"],
+  ].map(([d, valor, descricao, documento], k) => ({
+    id: k + 1,
+    org_id: ORG,
+    cliente_id: C1,
+    conta_id: "f2000000-0000-4000-8000-000000000001",
+    lote_id: "f3000000-0000-4000-8000-000000000001",
+    data: dia(d),
+    valor,
+    descricao,
+    documento,
+    situacao: k === 0 ? "conciliado" : "pendente",
+  })),
   hub_arquivos: [],
   hub_certificados: [],
   portal_usuarios: [
