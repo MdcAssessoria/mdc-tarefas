@@ -10,7 +10,8 @@
     "format": "prettier --write src",
     "tipos": "tsc --noEmit",
     "teste": "vitest run",
-    "verificar": "npm run tipos && npm run lint && npm run teste && npm run build",
+    "verificar": "npm run tipos && npm run lint && npm run teste && npm run nucleo && npm run build",
+    "nucleo": "node scripts/conferir-nucleo.mjs",
     "telas": "node scripts/verificar-telas.mjs"
   },
   "dependencies": {

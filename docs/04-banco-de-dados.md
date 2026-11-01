@@ -16,6 +16,7 @@
 | Tarefas | `tarefas`, `comentarios`, `historico`, `modelos_recorrentes` | Tarefas, rotinas mensais geradas automaticamente, histórico |
 | Societário | `soc_tipos`, `soc_processos`, `soc_fases`, `soc_exigencias`, `soc_protocolos`, `soc_taxas`, `soc_eventos` | Alterações contratuais e aberturas, fase a fase |
 | Portal e demonstrativos | `portal_usuarios`, `portal_convites`, `portal_conversas`, `portal_mensagens`, `portal_balancetes`, `portal_balancete_linhas`, `portal_mapa_contas`, `portal_mapa_dfc`, `portal_pareceres` | Área do cliente: balancetes, demonstrações, parecer, chat |
+| Integrações e importações | `hub_integracoes`, `hub_importacoes` | Pasta do SharePoint lida pelo agente (só administrador) e histórico de tudo o que foi importado (tela, lote, pasta) |
 | Vencimentos | `venc_itens` | Certificados, alvarás, procurações e outros itens que vencem |
 | Comercial (CRM) | `crm_oportunidades`, `crm_atividades`, `crm_modelos`, `crm_contratos` | Funil de vendas, leads e contratos |
 

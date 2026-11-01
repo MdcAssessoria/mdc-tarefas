@@ -1,0 +1,20 @@
+# Configuração usada pela Supabase CLI ao publicar as Funções Edge (projeto bulqqdgfrrpqquqvjjfa).
+project_id = "bulqqdgfrrpqquqvjjfa"
+
+# O agendador do banco chama esta função com um token próprio (x-agente-token), não com login de usuário.
+# A função confere esse token ou o login do administrador; por isso a checagem padrão fica desligada.
+[functions.balancete-agente]
+verify_jwt = false
+import_map = "./functions/balancete-agente/deno.json"
+
+[functions.convite]
+verify_jwt = true
+import_map = "./functions/convite/deno.json"
+
+[functions.demonstrativo-pdf]
+verify_jwt = true
+import_map = "./functions/demonstrativo-pdf/deno.json"
+
+[functions.certificado]
+verify_jwt = true
+import_map = "./functions/certificado/deno.json"

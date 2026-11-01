@@ -60,6 +60,18 @@ npx supabase functions deploy convite --project-ref bulqqdgfrrpqquqvjjfa --impor
   só depois faça o push do site. A função nova aceita o site antigo; o site novo com a função antiga entrega PDF errado.
 - `demonstrativo-pdf` usa cópias de `balancete.ts` e `demonstracoes.ts` geradas por `scripts/sync-funcoes.sh` a
   partir de `web/src/dominios/demonstrativos/`. **Rode o script antes de publicar** sempre que mexer nesses cálculos.
+- `balancete-agente` (pasta de balancetes do SharePoint) usa a cópia do núcleo em `nucleo/`, também gerada por
+  `scripts/sync-funcoes.sh`. Publique **com a checagem de login do Supabase desligada** (a própria função confere o
+  token do agendador ou o login do administrador); isso já está em `supabase/config.toml`:
+  ```bash
+  sh scripts/sync-funcoes.sh
+  npx supabase functions deploy balancete-agente --project-ref bulqqdgfrrpqquqvjjfa --no-verify-jwt \
+    --import-map supabase/functions/balancete-agente/deno.json
+  ```
+  Publicada com o padrão (checagem ligada), o agendador é recusado e a pasta nunca é lida, sem aviso. Teste antes:
+  `cd supabase/functions/balancete-agente && deno test --allow-env agente_test.ts`.
+- `npm run verificar` confere se as cópias do núcleo nas funções estão iguais às da tela (`npm run nucleo`); se
+  acusar diferença, rode `sh scripts/sync-funcoes.sh` e publique as funções.
 - Segredos das funções (chave de serviço etc.) ficam no painel: Edge Functions › Secrets. Nunca no código.
 - As origens permitidas (CORS e link de convite) são `mdcassessoria.com`, `www.mdcassessoria.com` e
   `mdc-tarefas.vercel.app`. Para testar convite rodando local, publique uma versão de teste com `localhost`.
