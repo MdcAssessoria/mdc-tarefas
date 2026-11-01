@@ -39,7 +39,7 @@ export const ORIGENS = [
   "https://www.mdcassessoria.com",
   "https://mdc-tarefas.vercel.app",
 ];
-const POR_RODADA = 20; // arquivos por organização a cada chamada (o resto fica para a próxima, em 15 minutos)
+const POR_RODADA = 8; // arquivos por organização a cada chamada (o resto fica para a próxima, em 15 minutos; reauditoria R-M1)
 const EXTENSOES = /\.(xls|xlsx|csv|txt)$/i;
 const TAMANHO_MAXIMO = 5 * 1024 * 1024; // balancete do Domínio tem poucas centenas de KB; acima disso não é lido aqui
 

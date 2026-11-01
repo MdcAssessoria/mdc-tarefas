@@ -141,4 +141,4 @@ Detalhes de colunas e travas no [capítulo 4](../04-banco-de-dados.md); o fluxo 
 - Prazos médios do período são a média simples dos meses (regra de `periodos.ts`).
 - Balancete acumulado que não começa em janeiro é tratado a partir de janeiro do ano da competência.
 - Na tela da equipe as abas Balancete, Fragilidades e Parecer continuam sendo do arquivo aberto, não do período.
-- O agente lê até 20 arquivos por organização a cada 15 minutos; o resto entra na rodada seguinte.
+- O agente lê até 8 arquivos por organização a cada 15 minutos; o resto entra na rodada seguinte.
