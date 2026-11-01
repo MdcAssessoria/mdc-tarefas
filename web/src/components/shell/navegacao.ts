@@ -11,7 +11,9 @@ export type Modulo =
   | "vencimentos"
   | "comercial"
   | "financeiro"
-  | "licencas";
+  | "licencas"
+  | "estoque"
+  | "saidas";
 
 /** Aba de um módulo. `minimo` exige um nível na ferramenta; `gestor` exige poder editar cadastros (admin ou gestor). */
 export interface LinkModulo {
@@ -64,7 +66,6 @@ export const NAV: Record<Modulo, { titulo: string; links: LinkModulo[] }> = {
       { href: "/financeiro/movimento", nome: "Entradas e saídas" },
       { href: "/financeiro", nome: "Bancos" },
       { href: "/financeiro/extratos", nome: "Extratos" },
-      { href: "/financeiro/estoque", nome: "Estoque" },
       { href: "/financeiro/cadastros", nome: "Cadastros" },
       { href: "/financeiro/plano", nome: "Plano de contas" },
     ],
@@ -79,6 +80,21 @@ export const NAV: Record<Modulo, { titulo: string; links: LinkModulo[] }> = {
       { href: "/licencas/faturamento", nome: "Faturamento do mês" },
       { href: "/licencas/produtos", nome: "Produtos e planos" },
     ],
+  },
+  estoque: {
+    titulo: "Estoque",
+    links: [
+      { href: "/estoque", nome: "Itens" },
+      { href: "/estoque/posicao", nome: "Posição" },
+      { href: "/estoque/ficha", nome: "Ficha do item" },
+      { href: "/estoque/movimentos", nome: "Movimentações" },
+      { href: "/estoque/inventario", nome: "Inventário", minimo: "operar" },
+      { href: "/estoque/locais", nome: "Estoques" },
+    ],
+  },
+  saidas: {
+    titulo: "Saídas",
+    links: [{ href: "/saidas", nome: "Pedidos de venda" }],
   },
   comercial: {
     titulo: "CRM Comercial",
@@ -108,6 +124,8 @@ export const MODULO_POR_PREFIXO: Record<string, Modulo> = {
   comercial: "comercial",
   financeiro: "financeiro",
   licencas: "licencas",
+  estoque: "estoque",
+  saidas: "saidas",
 };
 
 /** Módulo da rota atual (caminho sem o /hub-mdc, como devolve o usePathname). */

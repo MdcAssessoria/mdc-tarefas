@@ -7,11 +7,14 @@ import type {
   CentroCusto,
   ContaBancaria,
   ContaContabil,
+  GrupoItem,
   Item,
   LinhaExtrato,
   LocalEstoque,
   LoteExtrato,
   MovimentoEstoque,
+  Pedido,
+  PedidoItem,
   Pessoa,
   SaldoEstoque,
   Titulo,
@@ -151,6 +154,66 @@ export const lerMovimentos = (cliente: string, filtro: { de?: string; ate?: stri
     if (filtro.item) q = q.eq("item_id", filtro.item);
     return q.order("data", { ascending: false }).order("id", { ascending: false }).range(de, ate);
   });
+
+export const lerGrupos = (cliente: string) =>
+  lerTudo<GrupoItem>((de, ate) =>
+    supabase().from("est_grupos").select("id,cliente_id,nome,ativo").eq("cliente_id", cliente).order("nome").order("id").range(de, ate),
+  );
+
+/** Ficha de estoque (kardex) de um item: movimentos em ordem de data, com saldo e custo médio depois de cada um. */
+export const lerFicha = (item: string, filtro: { de?: string; ate?: string } = {}) =>
+  lerTudo<MovimentoEstoque>((de, ate) => {
+    let q = supabase().from("est_movimentos").select("*").eq("item_id", item);
+    if (filtro.de) q = q.gte("data", filtro.de);
+    if (filtro.ate) q = q.lte("data", filtro.ate);
+    return q.order("data").order("id").range(de, ate);
+  });
+
+/** Último movimento válido antes da data (para o saldo anterior da ficha). */
+export async function lerSaldoAnterior(item: string, data: string): Promise<{ saldo: number; custo: number | null }> {
+  const { data: linhas, error } = await supabase()
+    .from("est_movimentos")
+    .select("saldo_apos,custo_medio_apos")
+    .eq("item_id", item)
+    .eq("estornado", false)
+    .lt("data", data)
+    .order("data", { ascending: false })
+    .order("id", { ascending: false })
+    .limit(1);
+  if (error) throw error;
+  const l = linhas?.[0];
+  return { saldo: Number(l?.saldo_apos ?? 0), custo: l?.custo_medio_apos == null ? null : Number(l.custo_medio_apos) };
+}
+
+// ------------------------------------------------------------------ pedidos
+
+/** Pedidos de venda ou de compra; com período, pela data do pedido. */
+export const lerPedidos = (cliente: string, tipo: "venda" | "compra", filtro: { de?: string; ate?: string } = {}) =>
+  lerTudo<Pedido>((de, ate) => {
+    let q = supabase().from("est_pedidos").select("*").eq("cliente_id", cliente).eq("tipo", tipo);
+    if (filtro.de) q = q.gte("data", filtro.de);
+    if (filtro.ate) q = q.lte("data", filtro.ate);
+    return q.order("data", { ascending: false }).order("numero", { ascending: false }).range(de, ate);
+  });
+
+/** Linhas de um pedido (sem as trocadas no rascunho). */
+export async function lerItensDoPedido(pedido: string): Promise<PedidoItem[]> {
+  const { data, error } = await supabase()
+    .from("est_pedido_itens")
+    .select("id,pedido_id,ordem,item_id,descricao,unidade,fator,quantidade,preco_unitario,desconto,total,custo_unitario,movimento_id")
+    .eq("pedido_id", pedido)
+    .eq("removido", false)
+    .order("ordem");
+  if (error) throw error;
+  return (data ?? []) as PedidoItem[];
+}
+
+/** Contas a receber/pagar geradas pelo pedido. */
+export async function lerTitulosDoPedido(pedido: string): Promise<Titulo[]> {
+  const { data, error } = await supabase().from("est_pedido_titulos").select("titulo_id").eq("pedido_id", pedido);
+  if (error) throw error;
+  return lerTitulosPorId((data ?? []).map((x) => x.titulo_id));
+}
 
 export async function lerPermiteNegativo(cliente: string): Promise<boolean> {
   const { data, error } = await supabase().from("est_parametros").select("permite_negativo").eq("cliente_id", cliente).maybeSingle();

@@ -21,6 +21,8 @@
 | Financeiro | `fin_plano_contas`, `fin_plano_importacoes`, `fin_contas_bancarias`, `fin_extrato_lotes`, `fin_extrato_linhas`, `fin_pessoas`, `fin_categorias`, `fin_centros_custo`, `fin_titulos`, `fin_baixas` | Plano de contas do Domínio, bancos, extratos, fornecedores/clientes, despesas/receitas ligadas ao plano, centros de custo, contas a pagar/receber e pagamentos de cada cliente ([módulo](modulos/financeiro.md)) |
 | Estoque | `est_itens`, `est_locais`, `est_parametros`, `est_movimentos`, visão `est_saldos` | Produtos e serviços (com "controla estoque"), estoques (locais), regra de estoque negativo, movimentos e saldo por item e local ([módulo](modulos/financeiro.md#6-itens-e-estoque)) |
 | Licenças | `lic_produtos`, `lic_planos`, `lic_plano_produtos`, `lic_contratos`, `lic_contrato_produtos`, `lic_cobrancas`, `lic_baixas`, `lic_reajustes`, `lic_bloqueios`, `lic_parametros` | Módulos do HUB vendidos aos clientes: contratos, mensalidades, recebimentos, reajustes e bloqueio manual ([módulo](modulos/licencas.md)) |
+| Estoque | `est_itens`, `est_grupos`, `est_locais`, `est_parametros`, `est_movimentos`, visão `est_saldos` | Produtos e serviços (com "controla estoque", grupo, unidade de compra, custo médio), estoques (locais), regra de estoque negativo, movimentos com saldo e custo médio depois de cada um (ficha/kardex) e saldo por item e local ([módulo](modulos/estoque.md)) |
+| Pedidos (Saídas e Entradas) | `est_pedidos`, `est_pedido_itens`, `est_pedido_titulos` | Pedidos de venda e de compra: confirmar/receber mexe no estoque e gera contas a receber/pagar ([módulo](modulos/estoque.md)) |
 | Vencimentos | `venc_itens` | Certificados, alvarás, procurações e outros itens que vencem |
 | Comercial (CRM) | `crm_oportunidades`, `crm_atividades`, `crm_modelos`, `crm_contratos` | Funil de vendas, leads e contratos |
 
@@ -207,6 +209,7 @@ pode fazer aquilo (normalmente com `app.hub_pode(org, app, nível)` ou `app.port
 | CRM | `crm_receber_lead` (página pública de leads), `crm_converter_cliente`, `crm_arquivar` |
 | Certificado | `cert_salvar`, `cert_obter`, `cert_remover` (segredos no Supabase Vault) |
 | Licenças | `lic_salvar_produto`, `lic_salvar_plano`, `lic_salvar_contrato`, `lic_encerrar_contrato`, `lic_reajustar_contrato`, `lic_gerar_cobrancas`, `lic_baixar_cobranca`, `lic_desfazer_baixa`, `lic_cancelar_cobranca`, `lic_bloquear`, `lic_desbloquear`, `lic_definir_parametros`, `portal_licenca_situacao` |
+| Estoque e pedidos (033) | `est_salvar_item`, `est_importar_itens`, `est_inventario`, `est_movimentar`, `est_estornar_movimento`, `est_pedido_salvar`, `est_pedido_confirmar`, `est_pedido_receber`, `est_pedido_faturar`, `est_pedido_cancelar` |
 
 ## 4.4 Funções internas e gatilhos (`app.*`)
 
@@ -227,6 +230,7 @@ pode fazer aquilo (normalmente com `app.hub_pode(org, app, nível)` ou `app.port
 | `portal_mensagens_antes` | `portal_mensagens` | Autor e tipo da mensagem vêm do usuário logado |
 | `tarefas_historico` | `tarefas` | Registra cada mudança da tarefa |
 | `crm_op_excluir` | `crm_oportunidades` | Não exclui oportunidade que virou cliente ou tem contrato assinado |
+| `est_item_valida_v2` | `est_itens` | Custo médio só o HUB grava; grupo da mesma empresa; foto só na pasta da empresa (033) |
 
 ## 4.5 Migrações: onde está a versão que vale
 

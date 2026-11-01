@@ -1,7 +1,8 @@
-// Peças comuns das abas de estoque: formato de quantidade, nomes dos tipos e origens, e os dados das três abas.
+// Peças comuns das telas de estoque: formato de quantidade, nomes dos tipos e origens, e os dados que todas usam
+// (itens, grupos, estoques, saldos e categorias da empresa escolhida).
 import { useCallback } from "react";
 import { useConsulta } from "@/lib/useConsulta";
-import { lerCategorias, lerItens, lerLocais, lerSaldos } from "../leituras";
+import { lerCategorias, lerGrupos, lerItens, lerLocais, lerSaldos } from "../leituras";
 import type { TipoMovimento } from "../tipos";
 
 export const qtd = (n: number | null | undefined) => Number(n ?? 0).toLocaleString("pt-BR", { maximumFractionDigits: 4 });
@@ -19,19 +20,22 @@ export const ORIGENS: Record<string, string> = {
   nota_saida: "Nota de saída",
 };
 
-/** Dados comuns às três abas (itens, locais, saldos). */
+/** Dados comuns às telas de estoque (itens, grupos, locais, saldos, categorias) e o saldo total por item. */
 export function useBaseEstoque(cliente: string) {
   return useConsulta(
     useCallback(async () => {
-      const [itens, locais, saldos, categorias] = await Promise.all([
+      const [itens, locais, saldos, categorias, grupos] = await Promise.all([
         lerItens(cliente),
         lerLocais(cliente),
         lerSaldos(cliente),
         lerCategorias(cliente),
+        lerGrupos(cliente),
       ]);
       const porItem = new Map<string, number>();
       for (const s of saldos) porItem.set(s.item_id, (porItem.get(s.item_id) ?? 0) + Number(s.saldo));
-      return { itens, locais, saldos, categorias, porItem };
+      return { itens, locais, saldos, categorias, grupos, porItem };
     }, [cliente]),
   );
 }
+
+export type BaseEstoque = NonNullable<ReturnType<typeof useBaseEstoque>["dados"]>;
