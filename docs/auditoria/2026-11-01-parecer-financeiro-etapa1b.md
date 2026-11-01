@@ -199,3 +199,83 @@ Críticos: 0 · Altos: 2 (A-1, A-2) · Médios: 7 · Baixos: 7.
 - **Atenção:** o banco foi atualizado antes da auditoria (sem dano, as tabelas estão vazias) e ainda não houve teste com
   MDC e Greencore. A permissão de Financeiro do cliente já pode ser dada por quem cuida do Atendimento, embora a tela do
   cliente ainda não exista — convém travar isso até a tela ficar pronta.
+
+## Reauditoria (01/11/2026) — commit `e79988d` (correções de A-1, A-2, M-1 a M-5, M-7)
+
+- **Escopo:** `git log 501c703..HEAD` = `e79988d`: migração nova `030_financeiro_correcoes_auditoria.sql` (**ainda não
+  aplicada**: no banco, a última é `029_estoque_itens` e não existe `app.tg_fin_sem_troca_empresa`), `regras.ts`
+  (`numeroBr`), `movimento/page.tsx`, `LancarTitulo.tsx`, `repositorio.ts`, divisão de `Estoque.tsx` em
+  `EstoqueItens`/`EstoqueLocais`/`EstoqueMovimentos`/`estoqueBase` e de `CadCategorias` em `CadCentros`, testes SQL e
+  docs 05, 06 e `modulos/financeiro.md`.
+- **Banco (só leitura):** tabelas do Financeiro e do estoque continuam vazias (0 categorias, centros, pessoas, títulos,
+  locais); 0 acessos e 0 convites de Portal com a permissão `financeiro`. Aplicar a 030 não mexe em dado existente.
+
+### Verificações automáticas
+
+| Comando | Resultado |
+| --- | --- |
+| `cd web && npm run verificar` | Ok — 23 arquivos, **139 testes**; lint 0 erros (40 avisos antigos); build completo |
+| `npm run telas` | Ok — 34 de 34 |
+| `TELA=celular npm run telas` | Ok — 34 de 34 |
+| `bash supabase/testes/rodar.sh` (agora com a 030) | Ok — todos os "(deve falhar)" com erro em português, inclusive os novos: fornecedor e estoque mudando de empresa, valor igual ao já pago, Portal criando categoria; "Posto Novo"/"posto novo" cadastrado **uma vez**; lançamento que falha **não** deixa o fornecedor "Fantasma" |
+
+### Situação dos achados
+
+| Achado | Situação | Evidência |
+| --- | --- | --- |
+| A-1 "1.250" lido como 1,25 | **Resolvido** (resta N-1, médio) | `regras.ts`: ponto seguido de grupos de 3 dígitos é milhar; testes "1.250", "1.000", "12.345.678", "-1.500", "1250.5", "0.35". Cópia em `financeiro/page.tsx` removida |
+| A-2 cadastro muda de empresa | **Resolvido** | `030`: `tg_fin_sem_troca_empresa` (`before update of cliente_id, org_id`) em `fin_pessoas`, `fin_centros_custo`, `est_locais`, `fin_baixas`, `est_movimentos`, `est_parametros`; com 028/029/026 todas as tabelas do módulo ficam travadas. Testes SQL novos |
+| M-1 título travado com saldo zero | **Resolvido** | `030` `tg_fin_titulo`: com pagamento, o valor precisa ficar **maior** que o já pago |
+| M-2 permissão `financeiro` do Portal | **Parcial** (rebaixado para baixo, R2-B1) | Categorias e centros de custo agora só a equipe grava (`hub_pode(org_id,'financeiro','operar')`; Portal recebe erro de RLS). Mas `portal_convidar` ainda aceita `financeiro` vindo de quem gere o Atendimento, e o cliente com ela grava fornecedores, títulos e itens pela API antes de existir a tela |
+| M-3 juros e desconto na categoria do título | **Resolvido na tela** (ressalvas R2-B2, R2-B3) | `movimento/page.tsx`: linha do título com `valor`, linha "Juros e multas pagos/recebidos" e linha "Descontos obtidos/concedidos"; soma das linhas = `total` da baixa. Contabilização em conta própria fica para a etapa 2 |
+| M-4 fornecedor criado fora da transação | **Resolvido no lançamento** (resta R2-B4 na edição) | `fin_lancar` aceita `pessoa_nome`, acha pelo nome (sem diferenciar maiúsculas) ou cadastra dentro da mesma transação |
+| M-5 arquivos grandes | **Parcial** | `Estoque.tsx` (978) dividido; maiores agora: `TelaTitulos.tsx` 462, `EstoqueItens.tsx` 454, `movimento/page.tsx` 423, `financeiro/page.tsx` 400 |
+| M-6 processo / piloto | **Melhorou** | A 030 veio para auditoria **antes** de ser aplicada. Validação com MDC e Greencore continua pendente |
+| M-7 documentação | **Resolvido** | Tabela de telas sem a linha em branco; mapa 6.4 com `fin_conta_bancaria_valida`, `fin_categoria_valida`, `fin_titulo_valida`, `est_item_valida`, `sem_troca_empresa`, `cliente_mesma_org`, `fin_auditar`; docs 05 e módulo citam a 030 |
+| B-1 a B-7 | Sem mudança | — |
+
+### O que a 030 em si faz bem
+
+Mantém `search_path` fixo em todas as funções; `create or replace` de `fin_lancar` e `tg_fin_titulo` preserva os grants
+(sem `execute` para `anon`; gatilho sem `execute` para ninguém da API); o gatilho novo não lê tabela, por isso não
+precisa de `security definer` e tem `execute` revogado; `fin_lancar` só procura e cria a pessoa **depois** de conferir
+`fin_pode(cliente,'operar')`, e só dentro da empresa informada. Não encontrei brecha nova.
+
+### Achados novos ou restantes
+
+- **N-1 (médio) — "0.500" vira 500.** A regra nova trata "0.500" como milhar: sonda `0.500 → 500`, `0.250 → 250`,
+  `-0.125 → -125`. No estoque a quantidade tem 4 casas (kg, litro), e quem cola "0.500" de outro sistema grava
+  **mil vezes mais**, sem aviso (`EstoqueMovimentos.tsx:68`, `EstoqueItens.tsx:127`). **Correção:** exigir que o primeiro
+  grupo não comece por zero (`/^-?[1-9]\d{0,2}(\.\d{3})+$/`), teste para "0.500", e mostrar ao lado do campo o valor
+  entendido ("= 0,5 kg", "= R$ 1.250,00"), como recomendado em A-1. Não impede a publicação para o piloto, mas
+  corrigir antes de abrir o estoque para a carteira.
+- **R2-B1 (baixo) — Quem concede `financeiro` no Portal.** Ver M-2. Hoje ninguém tem a permissão. Antes da tela do
+  Portal: exigir Financeiro › gerir para concedê-la, ou recusá-la em `portal_convidar` até lá.
+- **R2-B2 (baixo) — Desconto conta como "entrou".** Em "Entradas e saídas", o desconto obtido vira uma linha de
+  entrada (`entrada: !entrada`), e "Entrou"/"Saiu" ficam maiores que o dinheiro que passou no banco. O **resultado**
+  está certo. Sugestão: tirar descontos dos totais "Entrou"/"Saiu" e mostrá-los à parte, ou mudar o texto para
+  "Movimentado".
+- **R2-B3 (baixo) — Clique em "Juros e multas pagos" filtra, mas a caixa "Categoria" não mostra a opção.** Os
+  identificadores `_juros_*`/`_descontos_*` não estão na lista do `select` (`movimento/page.tsx:281-284`), então a
+  caixa aparece sem a categoria escolhida enquanto a lista está filtrada. Incluir essas quatro opções na lista.
+- **R2-B4 (baixo) — Na edição, o fornecedor novo ainda é criado antes de gravar o título** (`LancarTitulo.tsx`,
+  `idDaPessoa` no caminho `editar`). Se a edição falhar, sobra o cadastro. Menos frequente que no lançamento.
+
+### Veredito da reauditoria
+
+| Item | Veredito |
+| --- | --- |
+| **030** | **Aprovada. Pode aplicar** (antes do push do site, porque a tela passa a mandar `pessoa_nome` para `fin_lancar`). Depois: regenerar `database.types.ts` se mudar algo e rodar os avisos de segurança do Supabase |
+| **Site (Financeiro etapa 1B)** | **Pode publicar, liberando a ferramenta só ao Piloto HUB** (MDC e Greencore). Antes de abrir para a carteira: corrigir N-1 e fazer a validação com o piloto (um mês real de contas a pagar e a receber, baixa parcial com juros, estorno e um inventário) |
+
+Críticos: 0 · Altos: 0 (A-1 e A-2 resolvidos) · Médios: 1 novo (N-1) + M-5 parcial + R-M1 e M-6 da etapa 1 em aberto ·
+Baixos: R2-B1 a R2-B4, B-1 a B-7.
+
+### Resumo sem jargão
+
+- Os dois erros graves foram corrigidos: "1.250" agora vale mil duzentos e cinquenta, e um fornecedor, centro de custo
+  ou estoque não pode mais ser trocado de empresa. A alteração do banco ainda não foi aplicada e pode ser aplicada.
+- Também ficaram certos: o título que travava com saldo zero, os juros e descontos em linhas próprias, o fornecedor
+  digitado na hora (não duplica mais) e a documentação.
+- Ainda pede cuidado: no estoque, quem digitar "0.500" (meio quilo, com ponto) grava 500. Corrigir antes de liberar o
+  estoque para os demais clientes. Pode publicar já para MDC e Greencore testarem.

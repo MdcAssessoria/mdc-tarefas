@@ -42,6 +42,9 @@ describe("valores digitados", () => {
     expect(numeroBr("-1.500")).toBe(-1500);
     expect(numeroBr("1250.5")).toBe(1250.5);
     expect(numeroBr("0.35")).toBe(0.35);
+    expect(numeroBr("0.500")).toBe(0.5); // auditoria N-1: kg/litro colado com ponto
+    expect(numeroBr("0.250")).toBe(0.25);
+    expect(numeroBr("-0.750")).toBe(-0.75);
     expect(numeroBr("2,5")).toBe(2.5);
   });
 });

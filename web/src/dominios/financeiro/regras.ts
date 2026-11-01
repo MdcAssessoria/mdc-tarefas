@@ -41,14 +41,14 @@ export function formatarDocumento(doc: string | null | undefined): string {
 
 /**
  * Valor digitado no padrão brasileiro: "1.234,56" → 1234.56; "1.250" → 1250 (ponto é milhar); "1250.5" → 1250.5
- * (um ponto seguido de 1, 2 ou 4+ casas é decimal, como vem de copiar e colar); vazio → 0; inválido → NaN.
+ * (um ponto seguido de 1, 2 ou 4+ casas, ou depois de zero como em "0.500", é decimal, como vem de copiar e colar); vazio → 0; inválido → NaN.
  */
 export function numeroBr(s: string): number {
   const t = s.replace(/\s|R\$/g, "");
   if (!t) return 0;
   let normal: string;
   if (t.includes(",")) normal = t.replace(/\./g, "").replace(",", ".");
-  else if (/^-?\d{1,3}(\.\d{3})+$/.test(t)) normal = t.replace(/\./g, "");
+  else if (/^-?[1-9]\d{0,2}(\.\d{3})+$/.test(t)) normal = t.replace(/\./g, "");
   else normal = t;
   const n = Number(normal);
   return Number.isFinite(n) ? n : NaN;
