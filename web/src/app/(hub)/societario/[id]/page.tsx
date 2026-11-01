@@ -14,6 +14,7 @@ import type { SocFase, SocProcesso, SocTipo, StatusFase } from "@/dominios/socie
 import { brl } from "@/lib/formato/moeda";
 import { fmtData, fmtDataHora } from "@/lib/formato/datas";
 import { nomeCliente } from "@/dominios/clientes/nome";
+import { Icone } from "@/components/ui/Icone";
 
 export default function PaginaProcesso() {
   return <Ficha />;
@@ -320,7 +321,8 @@ function Ficha() {
                       </td>
                       <td className="whitespace-nowrap">
                         {podeOperar && (
-                          <label className="btn-link cursor-pointer" title="Anexar documento nesta fase">
+                          <label className="btn-link inline-flex cursor-pointer items-center gap-1" title="Anexar documento nesta fase">
+                            <Icone nome="clipe" className="h-4 w-4" />
                             anexar
                             <input type="file" multiple className="hidden" onChange={(e) => anexar(e.target.files, f.nome)} />
                           </label>
@@ -477,7 +479,8 @@ function Ficha() {
                 </li>
               ))}
               {podeOperar && (
-                <label className="btn mt-2 cursor-pointer">
+                <label className="btn mt-2 inline-flex cursor-pointer items-center gap-2">
+                  <Icone nome="enviar" className="h-4 w-4" />
                   Anexar documentos
                   <input type="file" multiple className="hidden" onChange={(e) => anexar(e.target.files)} />
                 </label>

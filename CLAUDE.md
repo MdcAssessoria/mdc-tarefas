@@ -11,8 +11,9 @@ Projeto da MDC Assessoria Contábil (dono: Edvaldo Ribeiro de Carvalho). Leia `d
 5. **Banco:** migração nova numerada em `supabase/migrations/`, nunca editar migração aplicada; regenerar
    `web/src/lib/database.types.ts`; rodar os avisos de segurança do Supabase.
 6. **Documentação junto com o código:** atualize o capítulo de `docs/` afetado no mesmo commit.
-7. **Auditoria obrigatória:** ao terminar qualquer implementação, rode a skill `auditoria-hub`
-   (`.claude/skills/auditoria-hub/SKILL.md`), que usa o agente independente `auditor-hub`, e grave o parecer em
-   `docs/auditoria/`. Vale para todas as implementações até o HUB estar 100% em operação.
+7. **Auditoria sob pedido (decisão do Edvaldo, 01/11/2026):** a auditoria independente (skill `auditoria-hub`,
+   agente `auditor-hub`, parecer em `docs/auditoria/`) roda **só quando o Edvaldo pedir**, para o projeto andar mais
+   rápido. Continuam valendo sempre: `npm run verificar`, `npm run telas`, testes SQL e os avisos de segurança do
+   Supabase antes de publicar.
 8. **Clientes de teste:** MDC e Grupo Greencore (grupo "Piloto HUB") validam toda novidade antes da carteira.
 9. **Nunca** digite senhas, chaves ou tokens; o Edvaldo faz logins e informa segredos diretamente nos painéis.

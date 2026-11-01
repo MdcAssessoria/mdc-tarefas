@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { SUPABASE_KEY, SUPABASE_URL, supabase } from "@/lib/supabase";
 import { fmtDataLocal } from "@/lib/formato/datas";
+import { CampoArquivo } from "@/components/ui/CampoArquivo";
 
 export default function PaginaCertificado() {
   return <Certificado />;
@@ -148,10 +149,16 @@ function Certificado() {
 
       <form onSubmit={enviar} className="cartao space-y-3 p-4">
         <h2 className="font-semibold">{cert ? "Substituir certificado" : "Cadastrar certificado A1"}</h2>
-        <label className="campo">
+        <div className="campo">
           <span>Arquivo do certificado (.pfx ou .p12)</span>
-          <input type="file" accept=".pfx,.p12,application/x-pkcs12" onChange={(e) => setArquivo(e.target.files?.[0] ?? null)} />
-        </label>
+          <CampoArquivo
+            compacto
+            accept=".pfx,.p12,application/x-pkcs12"
+            titulo="Arraste o certificado A1 aqui ou clique para escolher"
+            escolhido={arquivo?.name}
+            aoEscolher={(a) => setArquivo(a[0] ?? null)}
+          />
+        </div>
         <label className="campo">
           <span>Senha do certificado</span>
           <input type="password" autoComplete="off" value={senha} onChange={(e) => setSenha(e.target.value)} />

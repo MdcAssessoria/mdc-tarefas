@@ -6,6 +6,7 @@ import { traduzirErro } from "@/lib/erros";
 import { abrirArquivo, enviarArquivo } from "@/lib/arquivos/armazenamento";
 import { useMensagens } from "@/dominios/atendimento/chat";
 import type { Mensagem } from "@/dominios/atendimento/chat";
+import { Icone } from "@/components/ui/Icone";
 
 /** Conversa (lado equipe ou lado cliente): mensagens em tempo real, anexo e envio. */
 export function ChatMensagens({
@@ -133,7 +134,7 @@ export function ChatMensagens({
           className="grid h-9 w-9 shrink-0 cursor-pointer place-items-center rounded-md text-neutral-500 hover:bg-[var(--fundo)]"
           title="Anexar arquivo"
         >
-          📎
+          <Icone nome="clipe" className="h-5 w-5" />
           <input type="file" className="hidden" onChange={(e) => e.target.files?.[0] && enviar(undefined, e.target.files[0])} />
         </label>
         <textarea

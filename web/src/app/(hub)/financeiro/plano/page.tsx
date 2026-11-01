@@ -25,6 +25,7 @@ import { carregarLogo } from "@/lib/marca";
 import { Carregando } from "@/components/ui/Carregando";
 import { EstadoVazio } from "@/components/ui/EstadoVazio";
 import { useAviso } from "@/components/ui/Aviso";
+import { CampoArquivo } from "@/components/ui/CampoArquivo";
 
 const FILTROS = [
   { id: "ativas", nome: "Contas ativas" },
@@ -217,20 +218,13 @@ export default function PaginaPlano() {
               arquivo aqui. Você confere antes de gravar. Importar de novo atualiza o plano sem apagar nada.
             </p>
           </div>
-          <label className="block text-sm font-medium" htmlFor="arquivo-plano">
-            1. Clique em <b>Escolher arquivo</b> e selecione o plano exportado do Domínio:
-          </label>
-          <input
-            id="arquivo-plano"
-            type="file"
+          <CampoArquivo
             accept=".xls,.xlsx,.csv,.txt"
-            disabled={lendo || gravando}
-            onChange={(e) => {
-              void escolherArquivo(e.target.files?.[0]);
-              e.target.value = "";
-            }}
+            ocupado={lendo}
+            desabilitado={gravando}
+            titulo="Arraste aqui o plano exportado do Domínio ou clique para escolher"
+            aoEscolher={(a) => void escolherArquivo(a[0])}
           />
-          {lendo && <p className="text-sm text-neutral-600">Lendo o arquivo…</p>}
           {previa && (
             <div className="space-y-2 rounded-md bg-neutral-50 p-3 text-sm">
               <p>

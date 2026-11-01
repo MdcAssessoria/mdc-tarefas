@@ -78,6 +78,19 @@ const P: Record<string, React.ReactNode> = {
   ),
   externo: <path d="M14 4h6v6M20 4l-9 9M18 14v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4" />,
   clipe: <path d="M20 11.5l-8.2 8.2a5 5 0 0 1-7-7L13 4.5a3.4 3.4 0 0 1 4.8 4.8l-8.2 8.2a1.7 1.7 0 0 1-2.4-2.4L14.8 7.5" />,
+  enviar: (
+    <>
+      <path d="M7 18.5H6a4 4 0 0 1-.6-7.95A6 6 0 0 1 17 8.6a4.5 4.5 0 0 1 1 8.9" />
+      <path d="M12 12v8M8.8 15.2 12 12l3.2 3.2" />
+    </>
+  ),
+  arquivo: (
+    <>
+      <path d="M7 3h7l5 5v11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z" />
+      <path d="M14 3v5h5" />
+    </>
+  ),
+  fechar: <path d="M6 6l12 12M18 6 6 18" />,
   documento: (
     <>
       <path d="M7 3h7l5 5v11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z" />
