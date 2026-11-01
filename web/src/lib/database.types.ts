@@ -1,5 +1,3 @@
-// Gerado automaticamente a partir do banco (Supabase). NÃO edite à mão:
-// regenere depois de cada migração (veja docs/07-como-rodar-e-publicar.md).
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 export type Database = {
@@ -495,6 +493,328 @@ export type Database = {
           },
         ];
       };
+      fin_contas_bancarias: {
+        Row: {
+          agencia: string | null;
+          ativo: boolean;
+          banco: string | null;
+          cliente_id: string;
+          conta_contabil_id: string | null;
+          criado_em: string;
+          id: string;
+          nome: string;
+          numero: string | null;
+          org_id: string;
+          saldo_inicial: number;
+          saldo_inicial_em: string | null;
+        };
+        Insert: {
+          agencia?: string | null;
+          ativo?: boolean;
+          banco?: string | null;
+          cliente_id: string;
+          conta_contabil_id?: string | null;
+          criado_em?: string;
+          id?: string;
+          nome: string;
+          numero?: string | null;
+          org_id: string;
+          saldo_inicial?: number;
+          saldo_inicial_em?: string | null;
+        };
+        Update: {
+          agencia?: string | null;
+          ativo?: boolean;
+          banco?: string | null;
+          cliente_id?: string;
+          conta_contabil_id?: string | null;
+          criado_em?: string;
+          id?: string;
+          nome?: string;
+          numero?: string | null;
+          org_id?: string;
+          saldo_inicial?: number;
+          saldo_inicial_em?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "fin_contas_bancarias_cliente_id_fkey";
+            columns: ["cliente_id"];
+            isOneToOne: false;
+            referencedRelation: "clientes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "fin_contas_bancarias_conta_contabil_id_fkey";
+            columns: ["conta_contabil_id"];
+            isOneToOne: false;
+            referencedRelation: "fin_plano_contas";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "fin_contas_bancarias_org_id_fkey";
+            columns: ["org_id"];
+            isOneToOne: false;
+            referencedRelation: "organizacoes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      fin_extrato_linhas: {
+        Row: {
+          chave: string;
+          cliente_id: string;
+          conta_id: string;
+          criado_em: string;
+          data: string;
+          descricao: string;
+          documento: string | null;
+          fitid: string | null;
+          id: number;
+          lote_id: string;
+          org_id: string;
+          situacao: string;
+          valor: number;
+        };
+        Insert: {
+          chave: string;
+          cliente_id: string;
+          conta_id: string;
+          criado_em?: string;
+          data: string;
+          descricao: string;
+          documento?: string | null;
+          fitid?: string | null;
+          id?: never;
+          lote_id: string;
+          org_id: string;
+          situacao?: string;
+          valor: number;
+        };
+        Update: {
+          chave?: string;
+          cliente_id?: string;
+          conta_id?: string;
+          criado_em?: string;
+          data?: string;
+          descricao?: string;
+          documento?: string | null;
+          fitid?: string | null;
+          id?: never;
+          lote_id?: string;
+          org_id?: string;
+          situacao?: string;
+          valor?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "fin_extrato_linhas_cliente_id_fkey";
+            columns: ["cliente_id"];
+            isOneToOne: false;
+            referencedRelation: "clientes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "fin_extrato_linhas_conta_id_fkey";
+            columns: ["conta_id"];
+            isOneToOne: false;
+            referencedRelation: "fin_contas_bancarias";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "fin_extrato_linhas_lote_id_fkey";
+            columns: ["lote_id"];
+            isOneToOne: false;
+            referencedRelation: "fin_extrato_lotes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "fin_extrato_linhas_org_id_fkey";
+            columns: ["org_id"];
+            isOneToOne: false;
+            referencedRelation: "organizacoes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      fin_extrato_lotes: {
+        Row: {
+          arquivo: string;
+          cliente_id: string;
+          conta_id: string;
+          em: string;
+          fim: string | null;
+          formato: string;
+          id: string;
+          inicio: string | null;
+          novas: number;
+          org_id: string;
+          por: string | null;
+          recebidas: number;
+          repetidas: number;
+          saldo_final: number | null;
+        };
+        Insert: {
+          arquivo: string;
+          cliente_id: string;
+          conta_id: string;
+          em?: string;
+          fim?: string | null;
+          formato: string;
+          id?: string;
+          inicio?: string | null;
+          novas?: number;
+          org_id: string;
+          por?: string | null;
+          recebidas?: number;
+          repetidas?: number;
+          saldo_final?: number | null;
+        };
+        Update: {
+          arquivo?: string;
+          cliente_id?: string;
+          conta_id?: string;
+          em?: string;
+          fim?: string | null;
+          formato?: string;
+          id?: string;
+          inicio?: string | null;
+          novas?: number;
+          org_id?: string;
+          por?: string | null;
+          recebidas?: number;
+          repetidas?: number;
+          saldo_final?: number | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "fin_extrato_lotes_cliente_id_fkey";
+            columns: ["cliente_id"];
+            isOneToOne: false;
+            referencedRelation: "clientes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "fin_extrato_lotes_conta_id_fkey";
+            columns: ["conta_id"];
+            isOneToOne: false;
+            referencedRelation: "fin_contas_bancarias";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "fin_extrato_lotes_org_id_fkey";
+            columns: ["org_id"];
+            isOneToOne: false;
+            referencedRelation: "organizacoes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      fin_plano_contas: {
+        Row: {
+          analitica: boolean;
+          ativo: boolean;
+          atualizado_em: string;
+          classificacao: string;
+          cliente_id: string;
+          codigo: string | null;
+          descricao: string;
+          id: string;
+          nivel: number;
+          org_id: string;
+        };
+        Insert: {
+          analitica?: boolean;
+          ativo?: boolean;
+          atualizado_em?: string;
+          classificacao: string;
+          cliente_id: string;
+          codigo?: string | null;
+          descricao: string;
+          id?: string;
+          nivel?: number;
+          org_id: string;
+        };
+        Update: {
+          analitica?: boolean;
+          ativo?: boolean;
+          atualizado_em?: string;
+          classificacao?: string;
+          cliente_id?: string;
+          codigo?: string | null;
+          descricao?: string;
+          id?: string;
+          nivel?: number;
+          org_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "fin_plano_contas_cliente_id_fkey";
+            columns: ["cliente_id"];
+            isOneToOne: false;
+            referencedRelation: "clientes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "fin_plano_contas_org_id_fkey";
+            columns: ["org_id"];
+            isOneToOne: false;
+            referencedRelation: "organizacoes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      fin_plano_importacoes: {
+        Row: {
+          arquivo: string;
+          cliente_id: string;
+          em: string;
+          id: number;
+          inativadas: number;
+          novas: number;
+          org_id: string;
+          por: string | null;
+          total: number;
+        };
+        Insert: {
+          arquivo: string;
+          cliente_id: string;
+          em?: string;
+          id?: never;
+          inativadas: number;
+          novas: number;
+          org_id: string;
+          por?: string | null;
+          total: number;
+        };
+        Update: {
+          arquivo?: string;
+          cliente_id?: string;
+          em?: string;
+          id?: never;
+          inativadas?: number;
+          novas?: number;
+          org_id?: string;
+          por?: string | null;
+          total?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "fin_plano_importacoes_cliente_id_fkey";
+            columns: ["cliente_id"];
+            isOneToOne: false;
+            referencedRelation: "clientes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "fin_plano_importacoes_org_id_fkey";
+            columns: ["org_id"];
+            isOneToOne: false;
+            referencedRelation: "organizacoes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       historico: {
         Row: {
           acao: string;
@@ -591,225 +911,6 @@ export type Database = {
             referencedColumns: ["id"];
           },
         ];
-      };
-      fin_contas_bancarias: {
-        Row: {
-          agencia: string | null;
-          ativo: boolean;
-          banco: string | null;
-          cliente_id: string;
-          conta_contabil_id: string | null;
-          criado_em: string;
-          id: string;
-          nome: string;
-          numero: string | null;
-          org_id: string;
-          saldo_inicial: number;
-          saldo_inicial_em: string | null;
-        };
-        Insert: {
-          agencia?: string | null;
-          ativo?: boolean;
-          banco?: string | null;
-          cliente_id: string;
-          conta_contabil_id?: string | null;
-          criado_em?: string;
-          id?: string;
-          nome: string;
-          numero?: string | null;
-          org_id: string;
-          saldo_inicial?: number;
-          saldo_inicial_em?: string | null;
-        };
-        Update: {
-          agencia?: string | null;
-          ativo?: boolean;
-          banco?: string | null;
-          cliente_id?: string;
-          conta_contabil_id?: string | null;
-          criado_em?: string;
-          id?: string;
-          nome?: string;
-          numero?: string | null;
-          org_id?: string;
-          saldo_inicial?: number;
-          saldo_inicial_em?: string | null;
-        };
-        Relationships: [];
-      };
-      fin_extrato_linhas: {
-        Row: {
-          chave: string;
-          cliente_id: string;
-          conta_id: string;
-          criado_em: string;
-          data: string;
-          descricao: string;
-          documento: string | null;
-          fitid: string | null;
-          id: number;
-          lote_id: string;
-          org_id: string;
-          situacao: string;
-          valor: number;
-        };
-        Insert: {
-          chave: string;
-          cliente_id: string;
-          conta_id: string;
-          criado_em?: string;
-          data: string;
-          descricao: string;
-          documento?: string | null;
-          fitid?: string | null;
-          id?: never;
-          lote_id: string;
-          org_id: string;
-          situacao?: string;
-          valor: number;
-        };
-        Update: {
-          chave?: string;
-          cliente_id?: string;
-          conta_id?: string;
-          criado_em?: string;
-          data?: string;
-          descricao?: string;
-          documento?: string | null;
-          fitid?: string | null;
-          id?: never;
-          lote_id?: string;
-          org_id?: string;
-          situacao?: string;
-          valor?: number;
-        };
-        Relationships: [];
-      };
-      fin_extrato_lotes: {
-        Row: {
-          arquivo: string;
-          cliente_id: string;
-          conta_id: string;
-          em: string;
-          fim: string | null;
-          formato: string;
-          id: string;
-          inicio: string | null;
-          novas: number;
-          org_id: string;
-          por: string | null;
-          recebidas: number;
-          repetidas: number;
-          saldo_final: number | null;
-        };
-        Insert: {
-          arquivo: string;
-          cliente_id: string;
-          conta_id: string;
-          em?: string;
-          fim?: string | null;
-          formato: string;
-          id?: string;
-          inicio?: string | null;
-          novas?: number;
-          org_id: string;
-          por?: string | null;
-          recebidas?: number;
-          repetidas?: number;
-          saldo_final?: number | null;
-        };
-        Update: {
-          arquivo?: string;
-          cliente_id?: string;
-          conta_id?: string;
-          em?: string;
-          fim?: string | null;
-          formato?: string;
-          id?: string;
-          inicio?: string | null;
-          novas?: number;
-          org_id?: string;
-          por?: string | null;
-          recebidas?: number;
-          repetidas?: number;
-          saldo_final?: number | null;
-        };
-        Relationships: [];
-      };
-      fin_plano_contas: {
-        Row: {
-          analitica: boolean;
-          ativo: boolean;
-          atualizado_em: string;
-          classificacao: string;
-          cliente_id: string;
-          codigo: string | null;
-          descricao: string;
-          id: string;
-          nivel: number;
-          org_id: string;
-        };
-        Insert: {
-          analitica?: boolean;
-          ativo?: boolean;
-          atualizado_em?: string;
-          classificacao: string;
-          cliente_id: string;
-          codigo?: string | null;
-          descricao: string;
-          id?: string;
-          nivel?: number;
-          org_id: string;
-        };
-        Update: {
-          analitica?: boolean;
-          ativo?: boolean;
-          atualizado_em?: string;
-          classificacao?: string;
-          cliente_id?: string;
-          codigo?: string | null;
-          descricao?: string;
-          id?: string;
-          nivel?: number;
-          org_id?: string;
-        };
-        Relationships: [];
-      };
-      fin_plano_importacoes: {
-        Row: {
-          arquivo: string;
-          cliente_id: string;
-          em: string;
-          id: number;
-          inativadas: number;
-          novas: number;
-          org_id: string;
-          por: string | null;
-          total: number;
-        };
-        Insert: {
-          arquivo: string;
-          cliente_id: string;
-          em?: string;
-          id?: never;
-          inativadas: number;
-          novas: number;
-          org_id: string;
-          por?: string | null;
-          total: number;
-        };
-        Update: {
-          arquivo?: string;
-          cliente_id?: string;
-          em?: string;
-          id?: never;
-          inativadas?: number;
-          novas?: number;
-          org_id?: string;
-          por?: string | null;
-          total?: number;
-        };
-        Relationships: [];
       };
       hub_apps: {
         Row: {
@@ -2709,6 +2810,23 @@ export type Database = {
       };
       crm_converter_cliente: { Args: { p_op: string }; Returns: string };
       crm_receber_lead: { Args: { p: Json }; Returns: undefined };
+      fin_desfazer_lote: { Args: { p_lote: string }; Returns: Json };
+      fin_importar_extrato: {
+        Args: {
+          p_arquivo: string;
+          p_conta: string;
+          p_fim: string;
+          p_formato: string;
+          p_inicio: string;
+          p_linhas: Json;
+          p_saldo_final: number;
+        };
+        Returns: Json;
+      };
+      fin_importar_plano: {
+        Args: { p_arquivo: string; p_cliente: string; p_contas: Json };
+        Returns: Json;
+      };
       gerar_competencia: {
         Args: { p_competencia: string; p_org: string };
         Returns: number;
@@ -2721,20 +2839,6 @@ export type Database = {
         Args: { p_email: string; p_org: string };
         Returns: undefined;
       };
-      fin_desfazer_lote: { Args: { p_lote: string }; Returns: Json };
-      fin_importar_extrato: {
-        Args: {
-          p_arquivo: string;
-          p_conta: string;
-          p_fim: string | null;
-          p_formato: string;
-          p_inicio: string | null;
-          p_linhas: Json;
-          p_saldo_final: number | null;
-        };
-        Returns: Json;
-      };
-      fin_importar_plano: { Args: { p_arquivo: string; p_cliente: string; p_contas: Json }; Returns: Json };
       hub_conta_existe: { Args: { p_email: string }; Returns: boolean };
       hub_convidar: {
         Args: {
