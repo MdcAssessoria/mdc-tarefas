@@ -21,6 +21,10 @@ export interface DadosPdf {
   parecer?: { texto: string; contador_nome: string | null; contador_crc: string | null } | null;
   assinatura?: { titular: string; emissor: string; validade: string } | null;
   logo?: Uint8Array | null; // PNG branco com fundo transparente
+  /** PDF de um período escolhido na tela (trimestre, semestre, ano): "1º trimestre de 2024". */
+  rotulo?: string | null;
+  /** Quantos meses entraram no período, em linguagem simples ("3 de 3 meses publicados"). */
+  completude?: string | null;
 }
 
 const VERDE = rgb(11 / 255, 40 / 255, 32 / 255);
@@ -54,7 +58,7 @@ class Doc {
   static async criar(d: DadosPdf) {
     const o = new Doc();
     o.pdf = await PDFDocument.create();
-    o.pdf.setTitle(`Demonstrações contábeis — ${d.empresa} — ${mesExtenso(d.competencia)}`);
+    o.pdf.setTitle(`Demonstrações contábeis — ${d.empresa} — ${d.rotulo ?? mesExtenso(d.competencia)}`);
     o.pdf.setAuthor("MDC Assessoria Contábil");
     o.pdf.setCreator("HUB-MDC");
     o.pdf.setProducer("HUB-MDC");
@@ -236,7 +240,11 @@ export async function gerarPdf(d: DadosPdf): Promise<PDFDocument> {
   const o = await Doc.criar(d);
   const demo = d.demonstracoes;
   const multi = demo.periodo.dias > 31;
-  const periodo = multi ? `${dataBr(demo.periodo.inicio)} a ${dataBr(demo.periodo.fim)}` : mesExtenso(d.competencia);
+  const datas = `${dataBr(demo.periodo.inicio)} a ${dataBr(demo.periodo.fim)}`;
+  const periodo = d.rotulo ? `${d.rotulo} (${datas})` : multi ? datas : mesExtenso(d.competencia);
+  // coluna principal das tabelas e coluna de comparação (acumulado do ano no mês; mesmo período do ano anterior no período)
+  const tituloCol = d.rotulo ?? (multi ? "Período" : mesExtenso(d.competencia));
+  const comparar = !!d.acumulado && (!multi || !!d.rotulo);
   o.cabecalho = `${d.empresa} · ${periodo}`;
   const r = d.resumo, i = d.indices, m = r.mes, f = demo.dfc;
 
@@ -250,12 +258,16 @@ export async function gerarPdf(d: DadosPdf): Promise<PDFDocument> {
   let emp = d.empresa;
   while (emp.length > 10 && o.w(emp, 10, true) > W - 2 * M) emp = emp.slice(0, -1);
   o.text(emp === d.empresa ? emp : emp.trimEnd() + "…", M, H - 147, 10, { bold: true, cor: DOURADO });
-  o.text(`${d.cnpj ? `CNPJ ${d.cnpj} · ` : ""}${multi ? `Período: ${periodo}` : `Competência: ${periodo}`}`, M, H - 161, 9, { cor: CLARO });
+  o.text(`${d.cnpj ? `CNPJ ${d.cnpj} · ` : ""}${multi || d.rotulo ? `Período: ${periodo}` : `Competência: ${periodo}`}`, M, H - 161, 9, { cor: CLARO });
   if (d.status !== "publicado") {
     o.page.drawRectangle({ x: W - M - 150, y: H - 70, width: 150, height: 22, color: PERIGO });
     o.text("RASCUNHO · NÃO PUBLICADO", W - M - 75, H - 63, 8.5, { bold: true, cor: rgb(1, 1, 1), alinhar: "centro" });
   }
   o.y = H - 196;
+  if (d.completude) {
+    o.text(d.completude, M, o.y + 4, 8.5, { cor: SUAVE });
+    o.y -= 12;
+  }
 
   // termômetro + pilares
   const s = demo.saude;
@@ -360,7 +372,7 @@ export async function gerarPdf(d: DadosPdf): Promise<PDFDocument> {
   // ---------------- DRE
   o.novaPagina();
   o.titulo("Demonstração do Resultado (DRE)", "Regime de competência (Lei nº 6.404/1976, arts. 177 e 187; NBC TG 26). Entre parênteses, valores que reduzem o resultado.");
-  const colsDre = [{ d: m, t: multi ? "Período" : mesExtenso(d.competencia) }, ...(d.acumulado && !multi ? [{ d: d.acumulado.dre, t: d.acumulado.titulo }] : [])];
+  const colsDre = [{ d: m, t: tituloCol }, ...(comparar && d.acumulado ? [{ d: d.acumulado.dre, t: d.acumulado.titulo }] : [])];
   const ld = colsDre.map((c) => linhasDre(c.d));
   const largDre = colsDre.length === 1 ? [355, 110, 50] : [235, 100, 45, 100, 35];
   const cabDre = [{ titulo: "", largura: largDre[0] }];
@@ -377,7 +389,7 @@ export async function gerarPdf(d: DadosPdf): Promise<PDFDocument> {
 
   // ---------------- DFC
   o.titulo("Demonstração dos Fluxos de Caixa (DFC)", "Método indireto (NBC TG 03): parte do lucro e ajusta o que não movimentou o caixa e as variações das contas do balanço.");
-  const colsDfc = [{ f, t: multi ? "Período" : mesExtenso(d.competencia) }, ...(d.acumulado?.dfc && !multi ? [{ f: d.acumulado.dfc, t: d.acumulado.titulo }] : [])];
+  const colsDfc = [{ f, t: tituloCol }, ...(comparar && d.acumulado?.dfc ? [{ f: d.acumulado.dfc, t: d.acumulado.titulo }] : [])];
   const largDfc = colsDfc.length === 1 ? [395, 120] : [295, 110, 110];
   const linhasDfc: Parameters<Doc["tabela"]>[1] = [];
   const secs = [["operacional", "fco", "Atividades operacionais"], ["investimento", "fci", "Atividades de investimento"], ["financiamento", "fcf", "Atividades de financiamento"]] as const;
@@ -406,7 +418,7 @@ export async function gerarPdf(d: DadosPdf): Promise<PDFDocument> {
     8,
   );
   if (d.alertas.length) {
-    o.subtitulo("Pontos de atenção");
+    o.subtitulo(d.rotulo ? `Pontos de atenção (fechamento de ${mesExtenso(d.competencia)})` : "Pontos de atenção");
     for (const a of d.alertas)
       o.paragrafo(`**${a.nivel === "alto" ? "Risco alto" : "Atenção"} — ${a.texto}.** ${a.evidencia}. ${a.recomendacao}`, { size: 8.8, entre: 3 });
   }

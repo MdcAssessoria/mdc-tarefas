@@ -36,10 +36,16 @@ período que contém o balancete aberto (equipe) ou no último com dado (Portal)
 | Opção sem dado aparece desabilitada com o porquê | `opcoesDoAno`, `visoesDoAno` |
 | Balancete **acumulado** (vários meses num arquivo, ex.: jan–dez de MDC e Greencore): é usado direto no menor período do calendário que o contém (jan–dez → Ano; jan–mar → 1º trimestre). Mês/Trimestre/Semestre cobertos só por ele ficam indisponíveis: "este cliente enviou o balancete do ano inteiro de uma vez" | `ehAcumulado`, `selecionar` |
 
-Exportação: **PDF do período** e **Excel do período** (`componentes/ExportarPeriodo.tsx`) saem no navegador, no papel
-timbrado, exatamente com o período escolhido (DRE e índices com a coluna do ano anterior, DFC, balanço).
-O **PDF assinado** (botão "Baixar PDF", Função Edge `demonstrativo-pdf`) continua sendo de **um balancete**: o do último
-mês do período escolhido.
+Exportação:
+- **Baixar PDF · <período>** (`componentes/BotaoPdf.tsx` → Função Edge `demonstrativo-pdf`): o PDF **completo** (capa,
+  termômetro, balanço, DRE, DFC, índices, pontos de atenção e balancete de verificação) **do período escolhido**, assinado
+  com o certificado A1 quando tudo o que entra nele está publicado. O botão manda só a escolha (ano, visão, número); o
+  servidor refaz o período com as mesmas regras da tela (`selecaoPeriodo.ts`, `periodos.ts`, `linhasPeriodo.ts`, copiados
+  pelo `scripts/sync-funcoes.sh`) **usando só meses publicados**, para ninguém conseguir mandar números próprios para um
+  documento assinado. Mês único = PDF daquele mês (com acumulado do ano); trimestre/semestre/ano = coluna de comparação
+  com o mesmo período do ano anterior, balancete do período (abertura do 1º mês, movimento somado, fechamento do último)
+  e sem parecer (o parecer é mensal). Se houver mês do período em rascunho, a tela avisa antes de baixar.
+- **Excel do período** (`componentes/ExportarPeriodo.tsx`): planilha no navegador com os valores como número.
 
 ```mermaid
 flowchart LR
@@ -99,8 +105,8 @@ Detalhes de colunas e travas no [capítulo 4](../04-banco-de-dados.md); o fluxo 
 
 - O cálculo e a gravação ainda rodam no navegador (decisão 0003 prevê levar para o servidor); o lote grava arquivo a
   arquivo, sem transação única: se a conexão cair no meio, os que já foram ficam gravados e o resumo mostra o resto.
-- O PDF assinado (`demonstrativo-pdf`) aceita um balancete só; para trimestre, semestre ou ano use "PDF do período"
-  (sem assinatura digital).
+- O PDF de trimestre, semestre ou ano não traz parecer técnico nem comentário do contador (os dois são mensais); os
+  pontos de atenção são os do último mês do período.
 - Período com mês faltando soma só os meses importados (a completude avisa); o balanço é o do último mês importado.
 - Prazos médios do período são a média simples dos meses (regra de `periodos.ts`).
 - Balancete acumulado que não começa em janeiro é tratado a partir de janeiro do ano da competência.

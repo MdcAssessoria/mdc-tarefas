@@ -2,9 +2,26 @@
 
 import { useState } from "react";
 import { SUPABASE_KEY, SUPABASE_URL, supabase } from "@/lib/supabase";
+import type { Escolha } from "@/dominios/demonstrativos/selecaoPeriodo";
 
-/** Baixa o PDF das demonstrações no padrão MDC (assinado digitalmente quando o mês está publicado e há certificado). */
-export function BotaoPdf({ balanceteId, rascunho }: { balanceteId: string; rascunho?: boolean }) {
+/**
+ * Baixa o PDF completo das demonstrações no padrão MDC, do período escolhido na tela (mês, trimestre, semestre ou
+ * ano). O servidor refaz o cálculo do período só com meses publicados e assina digitalmente quando há certificado.
+ * `aviso` explica, antes de baixar, o que fica de fora (ex.: meses ainda em rascunho).
+ */
+export function BotaoPdf({
+  balanceteId,
+  periodo,
+  rotulo,
+  rascunho,
+  aviso,
+}: {
+  balanceteId: string;
+  periodo?: Escolha | null;
+  rotulo?: string;
+  rascunho?: boolean;
+  aviso?: string | null;
+}) {
   const [estado, setEstado] = useState<"livre" | "gerando" | "erro">("livre");
   const [msg, setMsg] = useState<string | null>(null);
 
@@ -18,7 +35,7 @@ export function BotaoPdf({ balanceteId, rascunho }: { balanceteId: string; rascu
       const r = await fetch(`${SUPABASE_URL}/functions/v1/demonstrativo-pdf`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}`, apikey: SUPABASE_KEY, "Content-Type": "application/json" },
-        body: JSON.stringify({ balancete_id: balanceteId }),
+        body: JSON.stringify({ balancete_id: balanceteId, periodo: periodo ?? null }),
       });
       if (!r.ok) {
         const j = await r.json().catch(() => null);
@@ -45,9 +62,15 @@ export function BotaoPdf({ balanceteId, rascunho }: { balanceteId: string; rascu
 
   return (
     <span className="inline-flex flex-col items-end gap-0.5">
-      <button className="btn" onClick={baixar} disabled={estado === "gerando"}>
-        {estado === "gerando" ? "Gerando PDF…" : rascunho ? "PDF (rascunho)" : "Baixar PDF"}
+      <button
+        className="btn"
+        onClick={baixar}
+        disabled={estado === "gerando"}
+        title={rotulo ? `PDF completo de ${rotulo}, no papel timbrado da MDC` : "PDF completo no papel timbrado da MDC"}
+      >
+        {estado === "gerando" ? "Gerando PDF…" : `${rascunho ? "PDF (rascunho)" : "Baixar PDF"}${rotulo ? ` · ${rotulo}` : ""}`}
       </button>
+      {aviso && !msg && <span className="max-w-72 text-right text-[11px] text-amber-800">{aviso}</span>}
       {msg && <span className={`text-[11px] ${estado === "erro" ? "text-red-700" : "text-emerald-700"}`}>{msg}</span>}
     </span>
   );

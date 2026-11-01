@@ -75,9 +75,49 @@ def bl(inicio):
 
 
 tipos = d[d.index("export interface Periodo") : d.index("const r2 =")]
-partes = [bl("const r2 ="), bl("const ROTULOS"), bl("export function somarDre("), bl("export function somarDfc("), bl("export function linhasDre(")]
+partes = [
+    bl("const r2 ="),
+    bl("const ROTULOS"),
+    bl("export function somarDre("),
+    bl("export function somarDfc("),
+    bl("export function cruzar("),
+    bl("const cents ="),
+    bl("export function saude("),
+    bl("export function linhasDre("),
+]
 open("supabase/functions/demonstrativo-pdf/demonstracoes.ts", "w").write(
-    "// Tipos e somas das demonstrações usados pela Edge Function (gerado de\n"
+    "// Tipos, somas, cruzamento DRE × DFC e termômetro usados pela Edge Function (gerado de\n"
     "// web/src/dominios/demonstrativos/calculosDemonstracoes.ts por scripts/sync-funcoes.sh).\n"
-    'import type { Dre } from "./balancete.ts";\n\n' + tipos + "\n".join(partes)
+    'import { brl, fmtIndice } from "./balancete.ts";\n'
+    'import type { Dre, Indices, Resumo } from "./balancete.ts";\n\n'
+    "/** Valores dos textos de análise em reais inteiros (brl da função já não mostra centavos). */\n"
+    "const reais = (v: number | null | undefined) => brl(v);\n\n" + tipos + "\n".join(partes)
 )
+
+# Arquivos copiados inteiros, só trocando os imports para os nomes da função (o Deno exige a extensão .ts).
+IMPORTS = {
+    "@/dominios/demonstrativos/balancete/resumo": "./balancete.ts",
+    "@/dominios/demonstrativos/balancete/indices": "./balancete.ts",
+    "@/dominios/demonstrativos/balancete/tipos": "./balancete.ts",
+    "@/dominios/demonstrativos/calculosDemonstracoes": "./demonstracoes.ts",
+    "./balancete/resumo": "./balancete.ts",
+    "./balancete/indices": "./balancete.ts",
+    "./balancete/tipos": "./balancete.ts",
+    "./calculosDemonstracoes": "./demonstracoes.ts",
+    "./periodos": "./periodos.ts",
+}
+
+
+def copiar(origem, destino):
+    s = open(WEB + "dominios/demonstrativos/" + origem).read()
+    for de, para in IMPORTS.items():
+        s = s.replace(f'from "{de}";', f'from "{para}";')
+    if re.search(r'from "(@/|\./(?!balancete\.ts|demonstracoes\.ts|periodos\.ts))', s):
+        raise SystemExit(f"{origem}: import sem tradução para a função")
+    aviso = f"// Gerado de web/src/dominios/demonstrativos/{origem} por scripts/sync-funcoes.sh. Não edite aqui.\n"
+    open("supabase/functions/demonstrativo-pdf/" + destino, "w").write(aviso + s)
+
+
+copiar("periodos.ts", "periodos.ts")
+copiar("selecaoPeriodo.ts", "selecaoPeriodo.ts")
+copiar("linhasPeriodo.ts", "linhasPeriodo.ts")

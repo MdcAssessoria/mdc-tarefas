@@ -1,6 +1,6 @@
-// Botões "PDF do período" e "Excel do período": exportam exatamente o período escolhido no topo da análise
-// (DRE e DFC somadas, balanço do fim do período, índices e a comparação com o mesmo período do ano anterior),
-// no papel timbrado da MDC. Gerado no navegador; o PDF assinado do balancete continua vindo do BotaoPdf.
+// Botão "Excel do período": exporta exatamente o período escolhido no topo da análise (DRE e DFC somadas,
+// balanço do fim do período, índices e a comparação com o mesmo período do ano anterior), com os valores como número.
+// O PDF do período é o completo e assinado, gerado no servidor pelo BotaoPdf.
 "use client";
 
 import { useState } from "react";
@@ -9,18 +9,13 @@ import { linhasDre } from "@/dominios/demonstrativos/calculosDemonstracoes";
 import type { Dfc, LinhaBp } from "@/dominios/demonstrativos/calculosDemonstracoes";
 import type { Selecao } from "@/dominios/demonstrativos/selecaoPeriodo";
 import type { BalanceteReg } from "@/dominios/demonstrativos/tipos";
-import { baixarBytes } from "@/lib/arquivos/baixar";
 import { exportarExcel } from "@/lib/arquivos/excel";
 import type { AbaExcel } from "@/lib/arquivos/excel";
-import { gerarRelatorioPdf } from "@/lib/arquivos/relatorioPdf";
-import type { SecaoPdf } from "@/lib/arquivos/relatorioPdf";
 import { traduzirErro } from "@/lib/erros";
 import { fmtData } from "@/lib/formato/datas";
-import { fmtIndice, fmtNumero } from "@/lib/formato/numero";
-import { carregarLogo } from "@/lib/marca";
+import { fmtIndice } from "@/lib/formato/numero";
 import { semAcento } from "@/lib/texto";
 
-const fmt = (v: number) => (Math.abs(v) < 0.5 ? "—" : (v < 0 ? "(" : "") + fmtNumero(Math.abs(v)) + (v < 0 ? ")" : ""));
 const SECOES_DFC: { titulo: string; chave: "operacional" | "investimento" | "financiamento"; total: "fco" | "fci" | "fcf" }[] = [
   { titulo: "Atividades operacionais", chave: "operacional", total: "fco" },
   { titulo: "Atividades de investimento", chave: "investimento", total: "fci" },
@@ -60,81 +55,18 @@ export function ExportarPeriodo({
   sel,
   anterior,
   empresa,
-  logoUrl,
 }: {
   sel: Selecao<BalanceteReg>;
   anterior: Selecao<BalanceteReg> | null;
   empresa: string;
-  logoUrl?: string | null;
 }) {
-  const [gerando, setGerando] = useState<"pdf" | "excel" | null>(null);
+  const [gerando, setGerando] = useState<"excel" | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const titulo = `Demonstrativos · ${empresa}`;
   const subtitulo = `${sel.rotulo} · ${sel.completude}${anterior ? ` · comparado com ${anterior.rotulo}` : ""}`;
   const arquivo = `Demonstrativos-${semAcento(empresa)
     .replace(/[^\w]+/g, "-")
     .slice(0, 40)}-${semAcento(sel.rotulo).replace(/[^\w]+/g, "-")}`;
-
-  async function pdf() {
-    setGerando("pdf");
-    setErro(null);
-    try {
-      const c = conteudo(sel, anterior);
-      const colsComp = (t: string) => [
-        { titulo: t, peso: 5 },
-        { titulo: sel.rotulo, peso: 2, direita: true },
-        ...(c.comp ? [{ titulo: c.comp, peso: 2, direita: true }] : []),
-      ];
-      const secoes: SecaoPdf[] = [
-        {
-          titulo: "Demonstração do resultado (DRE)",
-          texto: "Valores em R$; entre parênteses, negativos.",
-          colunas: colsComp("Linha"),
-          linhas: c.dre.map((l) => ({
-            celulas: [l.rotulo, fmt(l.valor), ...(c.comp ? [l.anterior == null ? "—" : fmt(l.anterior)] : [])],
-            negrito: l.total,
-            fundo: l.total,
-          })),
-        },
-        {
-          titulo: "Fluxo de caixa (DFC, método indireto)",
-          texto: sel.ag.dfc ? undefined : "Algum mês do período está sem fluxo de caixa gerado: reprocesse os balancetes do período.",
-          colunas: [
-            { titulo: "Linha", peso: 6 },
-            { titulo: sel.rotulo, peso: 2, direita: true },
-          ],
-          linhas: c.dfc.map((l) => ({ celulas: [l.rotulo, fmt(l.valor)], negrito: l.total, fundo: l.total })),
-        },
-        {
-          titulo: "Balanço patrimonial",
-          texto: `Fechamento em ${fmtData(sel.fim)} contra a abertura em ${fmtData(sel.inicio)}.`,
-          colunas: [
-            { titulo: "Conta", peso: 5 },
-            { titulo: fmtData(sel.fim), peso: 2, direita: true },
-            { titulo: `${fmtData(sel.inicio)} (abertura)`, peso: 2, direita: true },
-          ],
-          linhas: c.balanco.map((l) => ({
-            celulas: [`${"  ".repeat(Math.max(0, l.nivel - 1))}${l.rotulo}`, fmt(l.atual), fmt(l.abertura)],
-            negrito: l.nivel <= 2,
-            fundo: l.nivel <= 1,
-          })),
-        },
-        {
-          titulo: "Índices",
-          colunas: colsComp("Índice"),
-          linhas: c.indices.map((x) => ({
-            celulas: [x.nome, fmtIndice(x.valor, x.formato), ...(c.comp ? [fmtIndice(x.anterior, x.formato)] : [])],
-            alerta: [false, x.alerta, false],
-          })),
-        },
-      ];
-      const bytes = await gerarRelatorioPdf({ titulo, subtitulo, secoes, logo: await carregarLogo(logoUrl) });
-      baixarBytes(bytes, `${arquivo}.pdf`);
-    } catch (e) {
-      setErro(traduzirErro(e));
-    }
-    setGerando(null);
-  }
 
   async function excel() {
     setGerando("excel");
@@ -193,9 +125,6 @@ export function ExportarPeriodo({
   return (
     <span className="inline-flex flex-col items-end gap-0.5">
       <span className="flex gap-2">
-        <button className="btn" onClick={pdf} disabled={!!gerando} title="Relatório do período escolhido, no papel timbrado da MDC">
-          {gerando === "pdf" ? "Gerando…" : "PDF do período"}
-        </button>
         <button className="btn" onClick={excel} disabled={!!gerando} title="Planilha do período escolhido, com os valores como número">
           {gerando === "excel" ? "Gerando…" : "Excel do período"}
         </button>

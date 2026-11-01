@@ -295,15 +295,8 @@ function Demonstrativos({ emp, aba }: { emp: Empresa; aba: Aba }) {
   return (
     <div className="space-y-4">
       <SeletorPeriodo historico={historico} periodo={periodo}>
-        {periodo.sel && (
-          <ExportarPeriodo
-            sel={periodo.sel}
-            anterior={periodo.anterior}
-            empresa={emp.nome_fantasia || emp.razao_social}
-            logoUrl={emp.logo_url}
-          />
-        )}
-        <BotaoPdf balanceteId={atual.id} />
+        {periodo.sel && <ExportarPeriodo sel={periodo.sel} anterior={periodo.anterior} empresa={emp.nome_fantasia || emp.razao_social} />}
+        <BotaoPdf balanceteId={atual.id} periodo={periodo.escolha} rotulo={periodo.sel?.rotulo} />
       </SeletorPeriodo>
       {(aba === "balancete" || aba === "parecer") && periodo.sel && periodo.sel.escolha.visao !== "mensal" && (
         <p className="text-xs text-neutral-600">

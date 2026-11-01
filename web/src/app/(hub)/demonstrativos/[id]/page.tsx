@@ -21,6 +21,7 @@ import { ListaAlertas } from "@/dominios/demonstrativos/componentes/ListaAlertas
 import { PainelResumo } from "@/dominios/demonstrativos/componentes/PainelResumo";
 import { VisaoParecer } from "@/dominios/demonstrativos/componentes/VisaoParecer";
 import { SeletorPeriodo, usePeriodo } from "@/dominios/demonstrativos/componentes/SeletorPeriodo";
+import { listarMeses } from "@/dominios/demonstrativos/selecaoPeriodo";
 import { ExportarPeriodo } from "@/dominios/demonstrativos/componentes/ExportarPeriodo";
 import type { BalanceteReg, LinhaReg, ParecerReg } from "@/dominios/demonstrativos/tipos";
 import { hojeISO, somarDias } from "@/lib/datas";
@@ -96,6 +97,15 @@ function Detalhe() {
   const parecer = pareceres[0];
   const anterior = useMemo(() => (b ? historico.filter((x) => x.competencia < b.competencia).at(-1) : undefined), [b, historico]);
   const periodo = usePeriodo(historico, b?.competencia, id);
+  // PDF completo: segue o período escolhido; fora do mês, o servidor usa só meses publicados
+  const selPdf = periodo.sel;
+  const pdfDoMes = !selPdf || selPdf.escolha.visao === "mensal";
+  const emRascunho = selPdf && !pdfDoMes ? selPdf.registros.filter((r) => r.status !== "publicado") : [];
+  const avisoPdf = !emRascunho.length
+    ? null
+    : emRascunho.length === selPdf!.registros.length
+      ? "Nenhum mês deste período foi publicado: publique os meses para baixar o PDF do período."
+      : `O PDF usa só os meses publicados (${listarMeses(emRascunho.map((r) => r.competencia.slice(0, 7)))} ainda em rascunho).`;
 
   if (erro && !b) return <p className="text-sm text-red-700">{erro}</p>;
   if (!b) return <p className="text-sm text-neutral-500">Carregando…</p>;
@@ -214,7 +224,13 @@ function Detalhe() {
             {b.publicado_em && ` · publicado em ${new Date(b.publicado_em).toLocaleString("pt-BR")}`}
           </p>
         </div>
-        <BotaoPdf balanceteId={b.id} rascunho={b.status !== "publicado"} />
+        <BotaoPdf
+          balanceteId={b.id}
+          periodo={periodo.escolha}
+          rotulo={selPdf?.rotulo}
+          rascunho={pdfDoMes && (selPdf?.base ?? b).status !== "publicado"}
+          aviso={avisoPdf}
+        />
         {b.status === "publicado" ? (
           <>
             <span className="chip bg-emerald-50 text-emerald-800">Publicado para o cliente</span>
@@ -264,7 +280,7 @@ function Detalhe() {
 
       {(aba === "painel" || aba === "demonstracoes" || aba === "indices") && (
         <SeletorPeriodo historico={historico} periodo={periodo}>
-          {periodo.sel && <ExportarPeriodo sel={periodo.sel} anterior={periodo.anterior} empresa={nome} logoUrl={org.logo_url} />}
+          {periodo.sel && <ExportarPeriodo sel={periodo.sel} anterior={periodo.anterior} empresa={nome} />}
         </SeletorPeriodo>
       )}
       {(aba === "painel" || aba === "demonstracoes" || aba === "indices") && periodo.sel && periodo.sel.base.id !== b.id && (
