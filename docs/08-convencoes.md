@@ -60,11 +60,13 @@ Todo o HUB é pensado para **público leigo e de pouco conhecimento técnico**, 
 - [ ] Testes das funções puras; `npm run verificar` e `npm run telas` verdes.
 - [ ] Validado com os clientes do grupo **Piloto HUB** (MDC e Greencore).
 - [ ] Documentação: capítulo do módulo em `docs/modulos/` (telas, tabelas, funções, diagrama) e mapa de automações (6.4) atualizado.
-- [ ] **Auditoria independente executada e parecer salvo em `docs/auditoria/` (seção 8.6).**
+- [ ] Auditoria independente: só quando o Edvaldo pedir (seção 8.6).
 
 ## 8.6 Rotina de auditoria
 
-Até o HUB estar 100% em operação, **toda implementação termina com uma auditoria independente**:
+**Desde 01/11/2026 a auditoria independente roda só quando o Edvaldo pedir** (decisão dele, para o projeto andar
+mais rápido). Antes disso, toda implementação terminava com auditoria. As verificações automáticas (seção acima)
+continuam obrigatórias em toda publicação. Quando a auditoria for pedida:
 
 1. Quem implementou (pessoa ou IA) **não** se audita. A auditoria é feita pelo agente `auditor-hub`
    (definido em `.claude/agents/auditor-hub.md`), que lê o código sem saber o que foi planejado.
@@ -73,5 +75,5 @@ Até o HUB estar 100% em operação, **toda implementação termina com uma audi
    o que verificar (segurança, manutenção, documentação, regras de tela) e o formato do parecer.
 3. O parecer é salvo em `docs/auditoria/AAAA-MM-DD-parecer.md` e listado em [`auditoria/README.md`](auditoria/README.md).
    Achados críticos e altos viram correção antes de liberar a funcionalidade aos clientes.
-4. Além das auditorias por implementação, há uma **auditoria semanal agendada** (segunda-feira de manhã) que
-   audita tudo o que entrou na semana e entrega o parecer ao Edvaldo.
+4. A **auditoria semanal agendada** (segunda-feira de manhã) foi **pausada** em 01/11/2026 junto com essa mudança;
+   pode ser religada nas tarefas agendadas do Claude quando o Edvaldo quiser.

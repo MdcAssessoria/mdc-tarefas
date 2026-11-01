@@ -27,13 +27,13 @@ export function BarraSuperior({ modulo, aoMenu, aoBuscar }: { modulo: Modulo; ao
         </button>
         <span className="font-semibold text-[var(--marca)] lg:hidden">{NAV[modulo].titulo}</span>
         {links.length > 1 && (
-          <nav className="-mb-px hidden h-14 items-stretch gap-1 md:flex" aria-label={NAV[modulo].titulo}>
+          <nav className="-mb-px hidden h-14 min-w-0 items-stretch gap-1 overflow-x-auto md:flex" aria-label={NAV[modulo].titulo}>
             {links.map((l) => (
               <Link
                 key={l.href}
                 href={l.href}
                 aria-current={ativo(l.href) ? "page" : undefined}
-                className={`flex items-center border-b-2 px-3 text-[14px] ${
+                className={`flex items-center whitespace-nowrap border-b-2 px-3 text-[14px] ${
                   ativo(l.href)
                     ? "border-[var(--destaque-escuro)] font-medium text-[var(--marca)]"
                     : "border-transparent text-[var(--texto-suave)] hover:text-[var(--marca)]"

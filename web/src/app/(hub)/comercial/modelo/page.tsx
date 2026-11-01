@@ -10,6 +10,7 @@ import { mdParaHtml } from "@/lib/markdown";
 import { baixarBytes } from "@/lib/arquivos/baixar";
 import { gerarContratoPdf } from "@/dominios/comercial/contratoPdf";
 import { carregarLogo } from "@/lib/marca";
+import { Icone } from "@/components/ui/Icone";
 
 export default function PaginaModelo() {
   return <EditorModelo />;
@@ -154,7 +155,8 @@ function EditorModelo() {
             {!logoPrev && " A logo do site não pôde ser carregada aqui: envie o arquivo (PNG branco com fundo transparente)."}
           </div>
         </div>
-        <label className="btn cursor-pointer">
+        <label className="btn inline-flex cursor-pointer items-center gap-2">
+          <Icone nome="enviar" className="h-4 w-4" />
           Enviar logo
           <input
             type="file"

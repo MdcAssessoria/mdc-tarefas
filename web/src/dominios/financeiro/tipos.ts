@@ -78,3 +78,144 @@ export function saldoDaConta(c: ContaBancaria, linhas: Pick<LinhaExtrato, "conta
     .reduce((a, l) => a + Number(l.valor), 0);
   return Math.round((Number(c.saldo_inicial) + soma) * 100) / 100;
 }
+
+// ------------------------------------------------------------------ cadastros (migração 028)
+
+export type TipoPessoa = "fornecedor" | "cliente" | "ambos";
+export interface Pessoa {
+  id: string;
+  cliente_id: string;
+  tipo: TipoPessoa;
+  nome: string;
+  documento: string | null;
+  email: string | null;
+  telefone: string | null;
+  cidade: string | null;
+  uf: string | null;
+  observacao: string | null;
+  ativo: boolean;
+}
+
+export interface Categoria {
+  id: string;
+  cliente_id: string;
+  tipo: "despesa" | "receita";
+  nome: string;
+  grupo: string | null;
+  conta_contabil_id: string;
+  ativo: boolean;
+}
+
+export interface CentroCusto {
+  id: string;
+  cliente_id: string;
+  codigo: string | null;
+  nome: string;
+  ativo: boolean;
+}
+
+// ------------------------------------------------------------------ contas a pagar e a receber
+
+export type TipoTitulo = "pagar" | "receber";
+export interface Titulo {
+  id: string;
+  cliente_id: string;
+  tipo: TipoTitulo;
+  pessoa_id: string | null;
+  categoria_id: string;
+  centro_id: string | null;
+  conta_prevista_id: string | null;
+  descricao: string;
+  documento: string | null;
+  emissao: string | null;
+  vencimento: string;
+  valor: number;
+  valor_pago: number;
+  parcela: number;
+  parcelas: number;
+  grupo: string | null;
+  situacao: "aberto" | "quitado" | "cancelado";
+  quitado_em: string | null;
+  cancelado_motivo: string | null;
+  observacao: string | null;
+}
+
+export interface Baixa {
+  id: number;
+  titulo_id: string;
+  conta_id: string;
+  data: string;
+  valor: number;
+  juros: number;
+  multa: number;
+  desconto: number;
+  total: number;
+  forma: string | null;
+  observacao: string | null;
+  estornada: boolean;
+  estorno_motivo: string | null;
+  extrato_linha_id: number | null;
+}
+
+// ------------------------------------------------------------------ itens e estoque (migração 029)
+
+export interface Item {
+  id: string;
+  cliente_id: string;
+  codigo: string | null;
+  nome: string;
+  tipo: "produto" | "servico";
+  unidade: string;
+  controla_estoque: boolean;
+  estoque_minimo: number;
+  preco_venda: number | null;
+  custo: number | null;
+  ncm: string | null;
+  codigo_barras: string | null;
+  categoria_receita_id: string | null;
+  categoria_despesa_id: string | null;
+  observacao: string | null;
+  ativo: boolean;
+}
+
+export interface LocalEstoque {
+  id: string;
+  cliente_id: string;
+  nome: string;
+  padrao: boolean;
+  ativo: boolean;
+}
+
+export type TipoMovimento = "entrada" | "saida" | "ajuste" | "transferencia";
+export interface MovimentoEstoque {
+  id: number;
+  item_id: string;
+  local_id: string;
+  data: string;
+  tipo: TipoMovimento;
+  quantidade: number;
+  custo_unitario: number | null;
+  origem: string;
+  grupo: string | null;
+  observacao: string | null;
+  estornado: boolean;
+  estorno_motivo: string | null;
+}
+
+export interface SaldoEstoque {
+  item_id: string;
+  local_id: string;
+  saldo: number;
+  ultimo_movimento: string | null;
+}
+
+export const FORMAS_PAGAMENTO = [
+  "Pix",
+  "Boleto",
+  "Transferência",
+  "Cartão de crédito",
+  "Cartão de débito",
+  "Dinheiro",
+  "Débito automático",
+  "Cheque",
+];

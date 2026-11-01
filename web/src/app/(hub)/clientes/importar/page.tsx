@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { supabase } from "@/lib/supabase";
 import { REGIMES } from "@/dominios/clientes/tipos";
@@ -18,6 +18,7 @@ import {
 } from "@/dominios/clientes/importacao";
 import { carregarSheetJS, corrigirXlsDominio } from "@/lib/arquivos/planilha";
 import { fmtData } from "@/lib/formato/datas";
+import { CampoArquivo } from "@/components/ui/CampoArquivo";
 
 async function lerArquivo(arq: File): Promise<{ abas: string[]; dados: Record<string, string[][]> }> {
   const XLSX = await carregarSheetJS();
@@ -68,7 +69,6 @@ export default function Pagina() {
 
 function Importar() {
   const { org, clientes, podeEditarCadastros, recarregar } = useOrg();
-  const inputRef = useRef<HTMLInputElement>(null);
   const [arquivo, setArquivo] = useState<string | null>(null);
   const [abas, setAbas] = useState<string[]>([]);
   const [dados, setDados] = useState<Record<string, string[][]>>({});
@@ -88,7 +88,6 @@ function Importar() {
     erros: { razao_social: string; erro: string }[];
   } | null>(null);
   const [filtro, setFiltro] = useState<"todos" | "novo" | "atualizar" | "aviso" | "fora">("todos");
-  const [arrastando, setArrastando] = useState(false);
 
   const linhasBrutas = useMemo(() => dados[aba] ?? [], [dados, aba]);
   const colunas = linhasBrutas[cabecalho] ?? [];
@@ -239,39 +238,15 @@ function Importar() {
       </div>
 
       {/* 1. Arquivo */}
-      <section
-        className={`cartao grid place-items-center gap-2 border-2 border-dashed p-8 text-center transition ${arrastando ? "border-[var(--destaque)] bg-[var(--fundo)]" : ""}`}
-        onDragOver={(e) => {
-          e.preventDefault();
-          setArrastando(true);
-        }}
-        onDragLeave={() => setArrastando(false)}
-        onDrop={(e) => {
-          e.preventDefault();
-          setArrastando(false);
-          const f = e.dataTransfer.files?.[0];
-          if (f) void abrir(f);
-        }}
-      >
-        <p className="font-medium text-[var(--marca)]">
-          {lendo ? "Lendo arquivo…" : arquivo ? `Arquivo: ${arquivo}` : "Arraste o arquivo aqui"}
-        </p>
-        <p className="text-sm text-[var(--texto-suave)]">ou</p>
-        <button className="btn-primario" onClick={() => inputRef.current?.click()} disabled={lendo}>
-          {arquivo ? "Escolher outro arquivo" : "Escolher arquivo"}
-        </button>
-        <input
-          ref={inputRef}
-          type="file"
+      <section className="cartao space-y-3 p-4">
+        <CampoArquivo
           accept=".xlsx,.xls,.csv,.txt"
-          className="hidden"
-          onChange={(e) => {
-            const f = e.target.files?.[0];
-            if (f) void abrir(f);
-            e.target.value = "";
-          }}
+          ocupado={lendo}
+          escolhido={arquivo || null}
+          titulo={arquivo ? "Arraste outro arquivo ou clique para trocar" : "Arraste aqui a lista de empresas ou clique para escolher"}
+          aoEscolher={(a) => void abrir(a[0])}
         />
-        <details className="mt-2 max-w-2xl text-left text-sm text-[var(--texto-suave)]">
+        <details className="max-w-2xl text-left text-sm text-[var(--texto-suave)]">
           <summary className="cursor-pointer text-[var(--marca)]">Como tirar a lista do Domínio</summary>
           <ol className="mt-2 list-decimal space-y-1 pl-5">
             <li>

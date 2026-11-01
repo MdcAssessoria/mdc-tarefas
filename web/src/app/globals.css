@@ -230,3 +230,28 @@ body {
     margin: 16mm;
   }
 }
+
+/* Campo de arquivo: o botão "Escolher arquivo" do navegador vira um botão do HUB, para ficar claro que é clicável. */
+input[type="file"] {
+  font-size: 14px;
+  color: var(--texto-suave);
+  max-width: 100%;
+}
+input[type="file"]::file-selector-button {
+  margin-right: 0.75rem;
+  min-height: 2.5rem;
+  padding: 0 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--marca);
+  background: var(--marca);
+  color: #fff;
+  font-weight: 500;
+  cursor: pointer;
+}
+input[type="file"]:hover::file-selector-button {
+  filter: brightness(1.15);
+}
+input[type="file"]:disabled::file-selector-button {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

@@ -14,7 +14,9 @@ import { ListaLotes } from "@/dominios/financeiro/componentes/ListaLotes";
 import type { LinhaExtrato } from "@/dominios/financeiro/tipos";
 import { useConsulta } from "@/lib/useConsulta";
 import { traduzirErro } from "@/lib/erros";
-import { hojeISO, mesAtualISO, mesAnteriorISO, somarDias } from "@/lib/datas";
+import { hojeISO, somarDias } from "@/lib/datas";
+import { intervaloDoPeriodo } from "@/dominios/financeiro/regras";
+import type { Periodo } from "@/dominios/financeiro/regras";
 import { brl } from "@/lib/formato/moeda";
 import { fmtData } from "@/lib/formato/datas";
 import { baixarBytes } from "@/lib/arquivos/baixar";
@@ -32,12 +34,6 @@ const SITUACAO = {
 } as const;
 const MOSTRAR = 500;
 
-/** Último dia do mês de uma data AAAA-MM-01. */
-const fimDoMes = (mes: string) => {
-  const [a, m] = mes.split("-").map(Number);
-  return `${mes.slice(0, 8)}${String(new Date(a, m, 0).getDate()).padStart(2, "0")}`;
-};
-
 export default function PaginaExtratos() {
   const { org, pode } = useOrg();
   const financeiro = useClienteFinanceiro();
@@ -54,13 +50,8 @@ export default function PaginaExtratos() {
   const [situacao, setSituacao] = useState("");
   const [busca, setBusca] = useState("");
 
-  const intervalo = useMemo(() => {
-    if (periodo === "mes") return { de: mesAtualISO(org.fuso), ate: fimDoMes(mesAtualISO(org.fuso)) };
-    if (periodo === "anterior") return { de: mesAnteriorISO(org.fuso), ate: fimDoMes(mesAnteriorISO(org.fuso)) };
-    if (periodo === "90") return { de: somarDias(hoje, -90), ate: hoje };
-    if (periodo === "tudo") return { de: undefined, ate: undefined };
-    return { de: de || undefined, ate: ate || undefined };
-  }, [periodo, de, ate, hoje, org.fuso]);
+  // datas completas (AAAA-MM-DD): antes "Este mês" e "Mês passado" mandavam "AAAA-MM" e a consulta falhava
+  const intervalo = useMemo(() => intervaloDoPeriodo(periodo as Periodo, hoje, de, ate), [periodo, hoje, de, ate]);
 
   const contas = useConsulta(useCallback(async () => (cliente ? lerContas(cliente.id) : []), [cliente]));
   const nomeConta = useCallback((id: string) => contas.dados?.find((c) => c.id === id)?.nome ?? "—", [contas.dados]);

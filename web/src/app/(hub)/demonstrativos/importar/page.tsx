@@ -16,6 +16,7 @@ import { nomeCliente } from "@/dominios/clientes/nome";
 import { identificarEmpresa } from "@/dominios/demonstrativos/importacaoLote";
 import type { ItemLote } from "@/dominios/demonstrativos/importacaoLote";
 import { ImportacaoLote, lerLote } from "./_componentes/ImportacaoLote";
+import { CampoArquivo } from "@/components/ui/CampoArquivo";
 
 export default function PaginaImportarBalancete() {
   return <Importar />;
@@ -31,7 +32,6 @@ function Importar() {
   const [processando, setProcessando] = useState(false);
   const [mostrar, setMostrar] = useState<"todas" | "sem">("todas");
   const [lote, setLote] = useState<{ id: number; itens: ItemLote[] } | null>(null);
-  const [arrastando, setArrastando] = useState(false);
 
   const ativos = clientes.filter((c) => c.ativo || c.inativo_em);
 
@@ -61,7 +61,7 @@ function Importar() {
   }
 
   /** Um arquivo: revisão detalhada de sempre. Vários: lista do lote. */
-  async function escolher(lista: FileList | null | undefined) {
+  async function escolher(lista: FileList | File[] | null | undefined) {
     const arquivos = [...(lista ?? [])].filter((f) => /\.(xlsx?|csv|txt)$/i.test(f.name));
     if (!arquivos.length) return setErro(lista?.length ? "Escolha arquivos Excel (.xls ou .xlsx) exportados do Domínio." : null);
     if (arquivos.length === 1) {
@@ -137,34 +137,15 @@ function Importar() {
       </div>
 
       {!lote && (
-        <label
-          className={`cartao flex cursor-pointer flex-col items-center justify-center gap-2 border-dashed p-8 text-center hover:border-[var(--destaque-escuro)] ${arrastando ? "!border-[var(--destaque-escuro)] bg-[var(--fundo)]" : ""}`}
-          onDragOver={(e) => {
-            e.preventDefault();
-            setArrastando(true);
-          }}
-          onDragLeave={() => setArrastando(false)}
-          onDrop={(e) => {
-            e.preventDefault();
-            setArrastando(false);
-            void escolher(e.dataTransfer.files);
-          }}
-        >
-          <span className="font-medium">{arquivo || "Escolher ou arrastar os arquivos do balancete"}</span>
-          <span className="text-xs text-neutral-500">
-            .xls, .xlsx ou .csv · pode ser um arquivo só ou vários de uma vez, de várias empresas e meses
-          </span>
-          <input
-            type="file"
-            multiple
-            accept=".xls,.xlsx,.csv,.txt"
-            className="hidden"
-            onChange={(e) => {
-              void escolher(e.target.files);
-              e.target.value = "";
-            }}
-          />
-        </label>
+        <CampoArquivo
+          multiplo
+          accept=".xls,.xlsx,.csv,.txt"
+          ocupado={processando}
+          escolhido={arquivo || null}
+          titulo="Arraste aqui os arquivos do balancete ou clique para escolher"
+          dica="Excel (.xls, .xlsx) ou CSV · um arquivo só ou vários de uma vez, de várias empresas e meses"
+          aoEscolher={(a) => void escolher(a)}
+        />
       )}
 
       {lote && <ImportacaoLote key={lote.id} inicial={lote.itens} aoRecomecar={() => setLote(null)} />}

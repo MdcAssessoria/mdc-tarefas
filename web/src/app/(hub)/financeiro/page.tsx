@@ -10,6 +10,7 @@ import { nomeCliente } from "@/dominios/clientes/nome";
 import { EscolhaCliente, useClienteFinanceiro } from "@/dominios/financeiro/componentes/EscolhaCliente";
 import { lerContas, lerLinhas, lerPlano, rotuloConta } from "@/dominios/financeiro/leituras";
 import { BANCOS, saldoDaConta } from "@/dominios/financeiro/tipos";
+import { numeroBr } from "@/dominios/financeiro/regras";
 import type { ContaBancaria, ContaContabil } from "@/dominios/financeiro/tipos";
 import { supabase } from "@/lib/supabase";
 import { useConsulta } from "@/lib/useConsulta";
@@ -46,12 +47,6 @@ const VAZIO: Form = {
   saldo_inicial: "0,00",
   saldo_inicial_em: "",
   ativo: true,
-};
-
-const numeroBr = (s: string) => {
-  const t = s.replace(/\s|R\$/g, "");
-  const n = Number(t.includes(",") ? t.replace(/\./g, "").replace(",", ".") : t);
-  return Number.isFinite(n) ? Math.round(n * 100) / 100 : NaN;
 };
 
 export default function PaginaContasBancarias() {
@@ -112,7 +107,7 @@ export default function PaginaContasBancarias() {
 
   async function salvar() {
     if (!form || !cliente) return;
-    const saldo = numeroBr(form.saldo_inicial || "0");
+    const saldo = Math.round(numeroBr(form.saldo_inicial || "0") * 100) / 100;
     if (!form.nome.trim()) return mostrar("Dê um nome para a conta (ex.: Itaú movimento).", "erro");
     if (Number.isNaN(saldo)) return mostrar("O saldo inicial não é um valor válido. Exemplo: 1.234,56 ou -500,00.", "erro");
     setSalvando(true);

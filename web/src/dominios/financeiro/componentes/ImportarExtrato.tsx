@@ -16,6 +16,7 @@ import { traduzirErro } from "@/lib/erros";
 import { brl } from "@/lib/formato/moeda";
 import { fmtData } from "@/lib/formato/datas";
 import type { TomAviso } from "@/components/ui/Aviso";
+import { CampoArquivo } from "@/components/ui/CampoArquivo";
 
 type Previa = { arquivo: string; formato: "ofx" | "planilha"; extrato: ExtratoLido };
 
@@ -151,18 +152,19 @@ export function ImportarExtrato({
               ))}
             </select>
           </label>
-          <input
-            type="file"
-            accept=".ofx,.qfx,.xls,.xlsx,.csv,.txt"
-            disabled={!contaImportar || lendo || gravando}
-            onChange={(e) => {
-              void escolherArquivo(e.target.files?.[0]);
-              e.target.value = "";
-            }}
-          />
+          <div className="min-w-64 flex-1">
+            <CampoArquivo
+              compacto
+              accept=".ofx,.qfx,.xls,.xlsx,.csv,.txt"
+              ocupado={lendo}
+              desabilitado={!contaImportar || gravando}
+              titulo="Arraste aqui o extrato do banco ou clique para escolher"
+              dica={contaImportar ? "OFX (recomendado) ou planilha Excel/CSV" : "Escolha primeiro a conta bancária ao lado"}
+              aoEscolher={(a) => void escolherArquivo(a[0])}
+            />
+          </div>
         </div>
       )}
-      {lendo && <p className="text-sm text-neutral-600">Lendo o arquivo…</p>}
       {conferencia && (
         <p
           className={`rounded-md p-3 text-sm ${conferencia.tom === "sucesso" ? "bg-emerald-50 text-emerald-800" : "bg-amber-50 text-amber-900"}`}

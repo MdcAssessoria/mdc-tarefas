@@ -143,3 +143,23 @@ https://docs.oracle.com/en-us/iaas/Content/FreeTier/resourceref.htm
   2. Edvaldo cria a conta e faz o login (cartão e senha digitados por ele).
   3. Claude cria o projeto "hub-mdc-fiscal", alerta de orçamento, ativa Cloud Run/Secret Manager
      na região southamerica-east1 e conecta o serviço fiscal ao HUB.
+
+
+## Pedidos do Edvaldo em 01/11/2026 (registrados para as próximas fases)
+- Construídos na etapa 1B: contas a pagar, contas a receber, entradas e saídas, cadastro de despesas/receitas ligado
+  ao plano, cadastro de banco com saldo inicial (já existia), itens com "controla estoque?", estoques (locais),
+  movimentação e regra de estoque negativo. Usados pela equipe MDC e pelo cliente (Portal; tela do Portal a fazer).
+- Próximas, nesta ordem: pedidos de compra (dá entrada no estoque, gera conta a pagar) e de venda (baixa automática
+  do estoque pelo `app.est_saida`, gera conta a receber) → notas.
+- Notas de entrada: XML de NF-e pela Distribuição DF-e (SEFAZ, ambiente nacional) e de NFS-e pelo Ambiente de Dados
+  Nacional, com o certificado A1 (e-CNPJ) da empresa; XML avulso para municípios fora do padrão nacional.
+- Painel de controle dos XML com manifestação do destinatário: Ciência da operação, Confirmação da operação,
+  Desconhecimento da operação e Operação não realizada (com justificativa); prazo legal com aviso; protocolo guardado;
+  só nota confirmada gera conta a pagar e entrada de estoque.
+- Entrada de nota no modelo do Conta Azul: a pessoa escolhe o **tipo de entrada** (compra para revenda,
+  matéria-prima, uso e consumo, ativo imobilizado, serviço tomado, devolução de venda, remessa/retorno/bonificação) e a
+  regra da MDC por empresa decide estoque, conta a pagar e categoria; depois confere fornecedor, itens (de-para lembrado),
+  parcelas da fatura e categoria.
+- Emissão de NF-e/NFS-e com a regra fiscal vigente (inclui IBS/CBS).
+- **Decisão em aberto:** em 30/10 ficou "integração própria (Cloud Run), sem API paga"; em 01/11 o Edvaldo escolheu
+  "usar empresa emissora (Focus NFe, PlugNotas, NFE.io…)". Confirmar antes de iniciar a fase de notas.

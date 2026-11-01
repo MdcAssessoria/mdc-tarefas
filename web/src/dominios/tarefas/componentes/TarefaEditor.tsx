@@ -10,6 +10,7 @@ import { abrirArquivo, enviarArquivo, fmtTamanho } from "@/lib/arquivos/armazena
 import type { Arquivo } from "@/lib/arquivos/armazenamento";
 import { fmtData, fmtDataHora } from "@/lib/formato/datas";
 import { nomeCliente } from "@/dominios/clientes/nome";
+import { Icone } from "@/components/ui/Icone";
 
 interface Comentario {
   id: string;
@@ -324,7 +325,8 @@ export function TarefaEditor({
                 </li>
               ))}
             </ul>
-            <label className="btn cursor-pointer">
+            <label className="btn inline-flex cursor-pointer items-center gap-2">
+              <Icone nome="enviar" className="h-4 w-4" />
               Anexar (guia, recibo, holerite…)
               <input
                 type="file"
