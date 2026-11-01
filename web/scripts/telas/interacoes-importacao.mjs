@@ -1,16 +1,7 @@
 // Interação da verificação de telas para a importação em lote de balancetes (/demonstrativos/importar):
 // envia cinco arquivos de uma vez (pronto, já publicado, empresa desconhecida, ilegível e rascunho existente),
 // corrige a empresa de um, marca "substituir" noutro, clica "Importar todos" e espera o resumo por empresa.
-// O leitor de planilhas real (SheetJS) vem de um CDN que a verificação não acessa; aqui ele é trocado por um leitor
-// CSV mínimo com a mesma interface (read + utils.sheet_to_json), suficiente para os arquivos .csv do teste.
-
-const LEITOR_CSV = `window.XLSX = {
-  read(texto, o) {
-    const linhas = String(texto).split(/\\r?\\n/).filter((l) => l.trim()).map((l) => l.split(o.FS || ";"));
-    return { SheetNames: ["Balancete"], Sheets: { Balancete: linhas } };
-  },
-  utils: { sheet_to_json: (aba) => aba },
-};`;
+// Usa o leitor de planilhas real (SheetJS do próprio site, public/vendor), o mesmo da produção.
 
 /** Balancete no formato do Domínio, em CSV com ";". */
 function balanceteCsv(cnpj, inicio, fim) {
@@ -40,7 +31,6 @@ async function esperarTexto(p, texto, msg) {
 }
 
 export async function importarEmLote(p, foto = async () => {}) {
-  await p.route("**/xlsx.full.min.js", (r) => r.fulfill({ status: 200, contentType: "text/javascript", body: LEITOR_CSV }));
   await p
     .locator('input[type="file"]')
     .setInputFiles([

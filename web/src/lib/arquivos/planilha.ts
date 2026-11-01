@@ -1,8 +1,13 @@
-// Leitura de planilhas no navegador (SheetJS carregado na primeira vez, do CDN oficial da SheetJS).
-// 0.20.3 corrige as falhas publicadas da 0.18.5 (CVE-2023-30533 e CVE-2024-22363); o npm e o cdnjs só têm a 0.18.5.
-// O "integrity" garante que o navegador só executa exatamente este arquivo: se o CDN mudar o conteúdo, a leitura
-// falha com aviso em vez de rodar código diferente. Para atualizar a versão, recalcule o hash (SHA-384 em base64).
-const SHEETJS = "https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js";
+// Leitura de planilhas no navegador (SheetJS 0.20.3, carregado na primeira vez que alguém importa um arquivo).
+// O arquivo fica no próprio site (public/vendor/xlsx-0.20.3.full.min.js), sem depender de CDN de terceiro.
+// 0.20.3 corrige as falhas publicadas da 0.18.5 (CVE-2023-30533 e CVE-2024-22363); o npm oficial só tem a 0.18.5.
+// O arquivo é idêntico ao de https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js (mesmo hash abaixo,
+// conferido em 01/11/2026). O "integrity" faz o navegador recusar qualquer arquivo diferente deste.
+// Para atualizar: baixe a versão nova do CDN oficial, troque o arquivo, o nome e recalcule o hash
+// (openssl dgst -sha384 -binary arquivo | base64).
+import { caminho } from "@/lib/caminho";
+
+const SHEETJS = caminho("/vendor/xlsx-0.20.3.full.min.js");
 const SHEETJS_INTEGRIDADE = "sha384-EnyY0/GSHQGSxSgMwaIPzSESbqoOLSexfnSMN2AP+39Ckmn92stwABZynq1JyzdT";
 
 export type SheetJS = {
