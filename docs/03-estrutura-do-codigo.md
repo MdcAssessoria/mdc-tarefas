@@ -60,7 +60,7 @@ web/src/
 │   ├── atendimento/            chat e componentes/ChatMensagens
 │   └── vencimentos/            tipos de vencimento
 └── lib/                        INFRAESTRUTURA sem regra de negócio
-    ├── supabase.ts, database.types.ts, exigir.ts, useConsulta.ts, erros.ts
+    ├── supabase.ts, database.types.ts, exigir.ts, lerTudo.ts, useConsulta.ts, erros.ts
     ├── caminho.ts, datas.ts, formato/ (datas, moeda, numero), texto.ts, markdown.ts
     ├── identidade.ts, marca.ts, armazenamentoLocal.ts, useAgora.ts
     └── arquivos/               armazenamento (Storage), excel, relatorioPdf, planilha, baixar
@@ -150,6 +150,9 @@ do grupo faz isso). Dentro dela:
 
 1. **Ler:** `useConsulta(useCallback(async () => exigir(await supabase()…), [deps]))` devolve `dados`, `erro`,
    `carregando` e `recarregar`.
+   Lista que pode passar de 1.000 linhas (tarefas, contas do balancete, processos, vencimentos): use
+   `lerTudo((de, ate) => supabase()….order(...).order("id").range(de, ate))`. O Supabase corta cada consulta em
+   1.000 linhas **sem avisar**, mesmo com `.limit(20000)`.
 2. **Gravar:** `exigir(await supabase()…)` dentro de `try/catch`, avisando com `useAviso()` e chamando `recarregar()`.
 3. **Mostrar:** `Aviso`, `Carregando`, `EstadoVazio`, `Modal` e `Abas` de `components/ui/`; formatos de `lib/formato/`.
 4. **Regras e tipos** em `dominios/<modulo>/`, com teste quando for função pura.

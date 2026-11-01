@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { supabase } from "@/lib/supabase";
+import { lerTudo } from "@/lib/lerTudo";
 import { traduzirErro } from "@/lib/erros";
 import { ETAPAS, ORIGENS } from "@/dominios/comercial/crm";
 import type { Oportunidade } from "@/dominios/comercial/crm";
@@ -38,14 +39,21 @@ function Leads() {
   const podeGerir = pode("comercial", "gerir");
 
   const carregar = useCallback(async () => {
-    const { data, error } = await supabase()
-      .from("crm_oportunidades")
-      .select("*")
-      .eq("org_id", org.id)
-      .order("criado_em", { ascending: false })
-      .limit(2000);
-    if (error) return setErro(traduzirErro(error));
-    setLista((data as Oportunidade[]) ?? []);
+    try {
+      setLista(
+        await lerTudo<Oportunidade>((de, ate) =>
+          supabase()
+            .from("crm_oportunidades")
+            .select("*")
+            .eq("org_id", org.id)
+            .order("criado_em", { ascending: false })
+            .order("id")
+            .range(de, ate),
+        ),
+      );
+    } catch (e) {
+      setErro(traduzirErro(e));
+    }
   }, [org.id]);
 
   useEffect(() => {

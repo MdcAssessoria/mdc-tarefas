@@ -1,7 +1,7 @@
 // Edge Function: gera o PDF das demonstrações de um balancete no padrão MDC e,
 // quando o balancete está publicado e há certificado A1 cadastrado, assina digitalmente.
 // O acesso ao balancete segue as regras do banco (RLS) do usuário que pediu.
-import { createClient } from "@supabase/supabase-js";
+import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { gerarPdf } from "./pdf.ts";
 import { assinar } from "./assinatura.ts";
 import { somarDfc, somarDre } from "./demonstracoes.ts";
@@ -26,6 +26,27 @@ async function baixar(url: string): Promise<Uint8Array | null> {
     return new Uint8Array(await r.arrayBuffer());
   } catch {
     return null;
+  }
+}
+
+const CAMPOS_LINHA = "classificacao,codigo,descricao,nivel,analitica,saldo_anterior,debitos,creditos,saldo_atual,grupo";
+
+/** Todas as linhas do balancete, página por página: a API do Supabase corta cada consulta em 1.000 linhas sem avisar. */
+// deno-lint-ignore no-explicit-any
+async function lerTodasLinhas(sb: SupabaseClient<any>, balanceteId: string) {
+  const data: Record<string, unknown>[] = [];
+  for (;;) {
+    const r = await sb
+      .from("portal_balancete_linhas")
+      .select(CAMPOS_LINHA)
+      .eq("balancete_id", balanceteId)
+      .order("classificacao")
+      .order("id")
+      .range(data.length, data.length + 999);
+    if (r.error) return { data: null, error: r.error };
+    if (!r.data?.length) return { data, error: null };
+    data.push(...(r.data as Record<string, unknown>[]));
+    if (data.length > 200_000) return { data: null, error: new Error("balancete grande demais") };
   }
 }
 
@@ -56,11 +77,13 @@ Deno.serve(async (req) => {
 
   const ano = String(b.competencia).slice(0, 4);
   const [linhas, hist, cli, par] = await Promise.all([
-    usuario.from("portal_balancete_linhas").select("classificacao,codigo,descricao,nivel,analitica,saldo_anterior,debitos,creditos,saldo_atual,grupo").eq("balancete_id", id).order("classificacao").limit(20000),
-    usuario.from("portal_balancetes").select("competencia,resumo,demonstracoes").eq("cliente_id", b.cliente_id).gte("competencia", `${ano}-01-01`).lte("competencia", b.competencia).order("competencia"),
+    lerTodasLinhas(usuario, id),
+    // acumulado: só meses publicados (revisados) + o próprio mês; rascunho nunca entra no PDF
+    usuario.from("portal_balancetes").select("competencia,resumo,demonstracoes").eq("cliente_id", b.cliente_id).gte("competencia", `${ano}-01-01`).lte("competencia", b.competencia).or(`status.eq.publicado,id.eq.${id}`).order("competencia"),
     servico.from("clientes").select("razao_social,cnpj").eq("id", b.cliente_id).single(),
     usuario.from("portal_pareceres").select("texto,status,contador_nome,contador_crc,versao").eq("balancete_id", id).order("versao", { ascending: false }),
   ]);
+  if (linhas.error) return json(500, { erro: "Não foi possível ler todas as contas do balancete. Tente de novo em instantes." });
   const pareceres = (par.data ?? []) as { texto: string; status: string; contador_nome: string | null; contador_crc: string | null }[];
   const parecer = pareceres.find((p) => p.status === "publicado") ?? (b.status !== "publicado" ? pareceres[0] : undefined) ?? null;
 

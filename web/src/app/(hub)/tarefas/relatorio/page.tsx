@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { MultiSelecao } from "@/components/ui/MultiSelecao";
 import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { supabase } from "@/lib/supabase";
+import { lerTudo } from "@/lib/lerTudo";
 import { traduzirErro } from "@/lib/erros";
 import { hojeISO } from "@/lib/datas";
 import { carregarLogo } from "@/lib/marca";
@@ -95,6 +96,7 @@ function Relatorio() {
         .gte("concluida_em", de + "T03:00:00Z")
         .lt("concluida_em", fim + "T03:00:00Z")
         .order("concluida_em")
+        .order("id")
         .range(p * 1000, p * 1000 + 999);
       if (soEu) q = q.eq("responsavel_id", eu.user_id);
       const { data, error } = await q;
@@ -102,15 +104,22 @@ function Relatorio() {
       todas.push(...((data as Concluida[]) ?? []));
       if ((data ?? []).length < 1000) break;
     }
-    let qa = sb
-      .from("tarefas")
-      .select("responsavel_id,prazo")
-      .eq("org_id", org.id)
-      .in("status", ["a_fazer", "em_andamento", "aguardando"])
-      .limit(5000);
-    if (soEu) qa = qa.eq("responsavel_id", eu.user_id);
-    const ab = await qa;
-    setAbertas((ab.data as Aberta[]) ?? []);
+    let abertas: Aberta[];
+    try {
+      abertas = await lerTudo<Aberta>((de, ate) => {
+        const qa = sb
+          .from("tarefas")
+          .select("responsavel_id,prazo")
+          .eq("org_id", org.id)
+          .in("status", ["a_fazer", "em_andamento", "aguardando"])
+          .order("id")
+          .range(de, ate);
+        return soEu ? qa.eq("responsavel_id", eu.user_id) : qa;
+      });
+    } catch (e) {
+      return setErro(traduzirErro(e));
+    }
+    setAbertas(abertas);
     setFeitas(todas);
   }, [org.id, de, ate, soEu, eu.user_id]);
 

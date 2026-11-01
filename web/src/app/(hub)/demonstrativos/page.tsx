@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { supabase } from "@/lib/supabase";
+import { lerTudo } from "@/lib/lerTudo";
 import { traduzirErro } from "@/lib/erros";
 import type { BalanceteReg } from "@/dominios/demonstrativos/tipos";
 import { reprocessar } from "@/dominios/demonstrativos/repositorio";
@@ -45,15 +46,17 @@ function Lista() {
   }
 
   useEffect(() => {
-    supabase()
-      .from("portal_balancetes")
-      .select(
-        "id,org_id,cliente_id,competencia,status,arquivo_nome,resumo,indices,alertas,conferencias,comentario,importado_em,publicado_em",
-      )
-      .eq("org_id", org.id)
-      .order("competencia", { ascending: false })
-      .limit(2000)
-      .then(({ data, error }) => (error ? setErro(traduzirErro(error)) : setLista(data as BalanceteReg[])));
+    lerTudo<BalanceteReg>((de, ate) =>
+      supabase()
+        .from("portal_balancetes")
+        .select(
+          "id,org_id,cliente_id,competencia,status,arquivo_nome,resumo,indices,alertas,conferencias,comentario,importado_em,publicado_em",
+        )
+        .eq("org_id", org.id)
+        .order("competencia", { ascending: false })
+        .order("id")
+        .range(de, ate),
+    ).then(setLista, (e) => setErro(traduzirErro(e)));
   }, [org.id, recarga]);
 
   const filtrada = useMemo(() => {

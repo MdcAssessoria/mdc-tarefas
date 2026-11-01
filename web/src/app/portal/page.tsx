@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
+import { lerTudo } from "@/lib/lerTudo";
 import { traduzirErro } from "@/lib/erros";
 import { hojeISO, somarMeses } from "@/lib/datas";
 import { abrirArquivo, enviarArquivo, fmtTamanho } from "@/lib/arquivos/armazenamento";
@@ -266,12 +267,9 @@ function Demonstrativos({ emp, aba }: { emp: Empresa; aba: Aba }) {
   useEffect(() => {
     if (!atual) return;
     const sb = supabase();
-    sb.from("portal_balancete_linhas")
-      .select("*")
-      .eq("balancete_id", atual.id)
-      .order("classificacao")
-      .limit(20000)
-      .then(({ data }) => setLinhas((data as LinhaReg[]) ?? []));
+    lerTudo<LinhaReg>((de, ate) =>
+      sb.from("portal_balancete_linhas").select("*").eq("balancete_id", atual.id).order("classificacao").order("id").range(de, ate),
+    ).then(setLinhas, () => setLinhas([]));
     sb.from("portal_pareceres")
       .select("*")
       .eq("balancete_id", atual.id)

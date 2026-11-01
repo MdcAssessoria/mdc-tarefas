@@ -5,11 +5,11 @@ import type { Vencimento } from "@/dominios/vencimentos/tipos";
 import { useCallback, useMemo, useState } from "react";
 import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { supabase } from "@/lib/supabase";
+import { lerTudo } from "@/lib/lerTudo";
 import { traduzirErro } from "@/lib/erros";
 import { diasAte } from "@/lib/datas";
 import { fmtData } from "@/lib/formato/datas";
 import { nomeCliente } from "@/dominios/clientes/nome";
-import { exigir } from "@/lib/exigir";
 import { useConsulta } from "@/lib/useConsulta";
 import { Aviso } from "@/components/ui/Aviso";
 import { Modal } from "@/components/ui/Modal";
@@ -30,9 +30,9 @@ function Vencimentos() {
   const consulta = useConsulta(
     useCallback(
       async () =>
-        exigir(
-          await supabase().from("venc_itens").select("*").eq("org_id", org.id).eq("status", "ativo").order("vence_em").limit(3000),
-        ) as Vencimento[],
+        lerTudo<Vencimento>((de, ate) =>
+          supabase().from("venc_itens").select("*").eq("org_id", org.id).eq("status", "ativo").order("vence_em").order("id").range(de, ate),
+        ),
       [org.id],
     ),
   );

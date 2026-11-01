@@ -11,7 +11,7 @@ import { rascunhoParecer } from "@/dominios/demonstrativos/parecer";
 import { AbaDemonstracoes } from "@/dominios/demonstrativos/componentes/Demonstracoes";
 import { BotaoPdf } from "@/dominios/demonstrativos/componentes/BotaoPdf";
 import type { Grupo } from "@/dominios/demonstrativos/balancete/tipos";
-import { carregarMapaDfc, definirGrupo, definirLinhaDfc, recalcular } from "@/dominios/demonstrativos/repositorio";
+import { carregarMapaDfc, definirGrupo, definirLinhaDfc, lerLinhas, recalcular } from "@/dominios/demonstrativos/repositorio";
 import { LINHAS_DFC, linhaDfc, linhaDfcAuto } from "@/dominios/demonstrativos/calculosDemonstracoes";
 import type { MapaDfc } from "@/dominios/demonstrativos/calculosDemonstracoes";
 import { REGIMES } from "@/dominios/clientes/tipos";
@@ -57,11 +57,16 @@ function Detalhe() {
     const atual = a.data as BalanceteReg;
     setB(atual);
     setComentario(atual.comentario ?? "");
-    const [h, l, p] = await Promise.all([
-      sb.from("portal_balancetes").select("*").eq("cliente_id", atual.cliente_id).order("competencia"),
-      sb.from("portal_balancete_linhas").select("*").eq("balancete_id", id).order("classificacao").limit(20000),
-      sb.from("portal_pareceres").select("*").eq("balancete_id", id).order("versao", { ascending: false }),
-    ]);
+    let h, l, p;
+    try {
+      [h, l, p] = await Promise.all([
+        sb.from("portal_balancetes").select("*").eq("cliente_id", atual.cliente_id).order("competencia"),
+        lerLinhas(id).then((data) => ({ data })),
+        sb.from("portal_pareceres").select("*").eq("balancete_id", id).order("versao", { ascending: false }),
+      ]);
+    } catch (e) {
+      return setErro(traduzirErro(e));
+    }
     const hist = (h.data as BalanceteReg[]) ?? [];
     const md = await carregarMapaDfc(atual.org_id, atual.cliente_id);
     setMapaDfc(md);
@@ -72,7 +77,10 @@ function Detalhe() {
     setPareceres((p.data as ParecerReg[]) ?? []);
     const ant = hist.filter((x) => x.competencia < atual.competencia).at(-1);
     if (ant) {
-      const la = await sb.from("portal_balancete_linhas").select("classificacao,saldo_atual").eq("balancete_id", ant.id).limit(20000);
+      const la = await lerLinhas(ant.id).then(
+        (data) => ({ data }),
+        () => ({ data: null }),
+      );
       setAnteriores(
         new Map(((la.data as { classificacao: string; saldo_atual: number }[]) ?? []).map((x) => [x.classificacao, Number(x.saldo_atual)])),
       );

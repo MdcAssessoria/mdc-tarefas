@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase";
+import { lerTudo } from "@/lib/lerTudo";
 import { calcularIndices } from "@/dominios/demonstrativos/balancete/indices";
 import { classificar } from "@/dominios/demonstrativos/balancete/classificacao";
 import { conferir, fragilidades } from "@/dominios/demonstrativos/balancete/fragilidades";
@@ -114,6 +115,19 @@ export async function salvarBalancete(o: {
   return id;
 }
 
+/** Todas as linhas de um balancete, em ordem de classificação (paginado: o Supabase corta em 1.000). */
+export function lerLinhas(balanceteId: string) {
+  return lerTudo<Linha & { id: number }>((de, ate) =>
+    supabase()
+      .from("portal_balancete_linhas")
+      .select("*")
+      .eq("balancete_id", balanceteId)
+      .order("classificacao")
+      .order("id")
+      .range(de, ate),
+  );
+}
+
 /** Recalcula resumo, índices e alertas de um balancete já gravado (depois de ajustar grupos). */
 export async function recalcular(balanceteId: string) {
   const sb = supabase();
@@ -123,8 +137,7 @@ export async function recalcular(balanceteId: string) {
     .eq("id", balanceteId)
     .single();
   if (b.error) throw b.error;
-  const l = await sb.from("portal_balancete_linhas").select("*").eq("balancete_id", balanceteId).order("classificacao").limit(20000);
-  if (l.error) throw l.error;
+  const l = { data: await lerLinhas(balanceteId) };
   const { org_id, cliente_id, competencia, periodo_inicio, periodo_fim } = b.data as {
     org_id: string;
     cliente_id: string;
@@ -190,8 +203,12 @@ export async function reprocessar(balanceteId: string) {
     periodo_fim: string | null;
   };
   if (status === "publicado") throw new Error("Despublique o balancete antes de reprocessar.");
-  const l = await sb.from("portal_balancete_linhas").select("*").eq("balancete_id", balanceteId).order("classificacao").limit(20000);
-  if (l.error) throw l.error;
+  const l = { data: await lerLinhas(balanceteId) };
+  // trava de segurança: só apaga e regrava se leu todas as contas gravadas
+  const c = await sb.from("portal_balancete_linhas").select("id", { count: "exact", head: true }).eq("balancete_id", balanceteId);
+  if (c.error) throw c.error;
+  if (c.count !== l.data.length)
+    throw new Error("Não foi possível ler todas as contas deste balancete. Nada foi alterado; tente de novo em instantes.");
   const linhas = (l.data as (Linha & { id: number })[]).map(({ id: _id, ...x }) => ({
     ...x,
     saldo_anterior: Number(x.saldo_anterior),

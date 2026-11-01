@@ -8,6 +8,7 @@ import { CORES_RITMO, RitmoSemanal } from "@/dominios/tarefas/componentes/RitmoS
 import type { SemanaRitmo } from "@/dominios/tarefas/componentes/RitmoSemanal";
 import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { supabase } from "@/lib/supabase";
+import { lerTudo } from "@/lib/lerTudo";
 import { hojeISO, somarDias } from "@/lib/datas";
 import { caminho } from "@/lib/caminho";
 import { traduzirErro } from "@/lib/erros";
@@ -61,28 +62,38 @@ function Hub() {
     if (!temTarefas) return setAbertas([]);
     const sb = supabase();
     const campos = "id,titulo,prazo,status,prioridade,cliente_id,concluida_em";
-    const [a, f] = await Promise.all([
-      sb
-        .from("tarefas")
-        .select(campos)
-        .eq("org_id", org.id)
-        .eq("responsavel_id", eu.user_id)
-        .in("status", ABERTAS)
-        .order("prazo", { nullsFirst: false })
-        .limit(1000),
-      sb
-        .from("tarefas")
-        .select(campos)
-        .eq("org_id", org.id)
-        .eq("responsavel_id", eu.user_id)
-        .eq("status", "concluida")
-        .gte("concluida_em", inicioJanela + "T03:00:00Z")
-        .order("concluida_em", { ascending: false })
-        .limit(2000),
-    ]);
-    if (a.error) return setAviso(traduzirErro(a.error));
-    setAbertas((a.data as MinhaTarefa[]) ?? []);
-    setFeitas((f.data as MinhaTarefa[]) ?? []);
+    let a: MinhaTarefa[], f: MinhaTarefa[];
+    try {
+      [a, f] = await Promise.all([
+        lerTudo<MinhaTarefa>((de, ate) =>
+          sb
+            .from("tarefas")
+            .select(campos)
+            .eq("org_id", org.id)
+            .eq("responsavel_id", eu.user_id)
+            .in("status", ABERTAS)
+            .order("prazo", { nullsFirst: false })
+            .order("id")
+            .range(de, ate),
+        ),
+        lerTudo<MinhaTarefa>((de, ate) =>
+          sb
+            .from("tarefas")
+            .select(campos)
+            .eq("org_id", org.id)
+            .eq("responsavel_id", eu.user_id)
+            .eq("status", "concluida")
+            .gte("concluida_em", inicioJanela + "T03:00:00Z")
+            .order("concluida_em", { ascending: false })
+            .order("id")
+            .range(de, ate),
+        ),
+      ]);
+    } catch (e) {
+      return setAviso(traduzirErro(e));
+    }
+    setAbertas(a);
+    setFeitas(f);
   }, [temTarefas, org.id, eu.user_id, inicioJanela]);
 
   useEffect(() => {

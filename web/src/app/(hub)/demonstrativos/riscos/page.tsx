@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { supabase } from "@/lib/supabase";
+import { lerTudo } from "@/lib/lerTudo";
 import type { BalanceteReg } from "@/dominios/demonstrativos/tipos";
 import { caminho } from "@/lib/caminho";
 import { brl } from "@/lib/formato/moeda";
@@ -21,13 +22,15 @@ function Riscos() {
   const [area, setArea] = useState("");
 
   useEffect(() => {
-    supabase()
-      .from("portal_balancetes")
-      .select("id,cliente_id,competencia,status,resumo,indices,alertas")
-      .eq("org_id", org.id)
-      .order("competencia", { ascending: false })
-      .limit(3000)
-      .then(({ data }) => setLista((data as BalanceteReg[]) ?? []));
+    lerTudo<BalanceteReg>((de, ate) =>
+      supabase()
+        .from("portal_balancetes")
+        .select("id,cliente_id,competencia,status,resumo,indices,alertas")
+        .eq("org_id", org.id)
+        .order("competencia", { ascending: false })
+        .order("id")
+        .range(de, ate),
+    ).then(setLista, () => setLista([]));
   }, [org.id]);
 
   const ultimos = useMemo(() => {

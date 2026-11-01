@@ -41,6 +41,7 @@ Todo o HUB é pensado para **público leigo e de pouco conhecimento técnico**, 
 
 ## 8.4 Regras de código
 
+- Lista que pode crescer além de 1.000 linhas: leia com `lerTudo` (lib/lerTudo.ts), nunca com `.limit()` alto; o Supabase corta em 1.000 sem avisar.
 - Leitura de dados com o hook `useConsulta`; gravação sempre lendo o `error` (use `exigir()`), nunca promessa solta.
 - Datas "de hoje" sempre com `hojeISO(org.fuso)`; nunca `new Date().toISOString().slice(0, 10)`.
 - Dinheiro com `brl()` de `lib/formato/moeda.ts`.

@@ -194,7 +194,13 @@ function criarRespostaSupabase(avisos) {
           });
         return json(200, linhas[0], { "content-range": "0-0/1" });
       }
-      return json(200, linhas, { "content-range": intervalo });
+      // paginação (.range / .limit): respeita offset e limit, como o Supabase de verdade
+      const inicio = Number(url.searchParams.get("offset") ?? 0);
+      const qtd = url.searchParams.has("limit") ? Number(url.searchParams.get("limit")) : linhas.length;
+      const pagina = linhas.slice(inicio, inicio + qtd);
+      return json(200, pagina, {
+        "content-range": pagina.length ? `${inicio}-${inicio + pagina.length - 1}/${linhas.length}` : `*/${linhas.length}`,
+      });
     }
     return json(404, { message: "rota do Supabase não simulada" });
   };

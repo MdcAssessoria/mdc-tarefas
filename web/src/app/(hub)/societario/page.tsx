@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { supabase } from "@/lib/supabase";
+import { lerTudo } from "@/lib/lerTudo";
 import { traduzirErro } from "@/lib/erros";
 import { diasAte } from "@/lib/datas";
 import { COLUNAS, corStatusFase, diasParado, nomeStatusFase } from "@/dominios/societario/processos";
@@ -37,14 +38,21 @@ function Societario() {
 
   const carregar = useCallback(async () => {
     const sb = supabase();
-    const [p, f, t] = await Promise.all([
-      sb.from("soc_processos").select("*").eq("org_id", org.id).order("numero", { ascending: false }).limit(1000),
-      sb.from("soc_fases").select("*").eq("org_id", org.id).order("ordem").limit(10000),
-      sb.from("soc_tipos").select("*").eq("org_id", org.id).eq("ativo", true).order("ordem"),
-    ]);
-    if (p.error) return setErro(traduzirErro(p.error));
-    setProcessos(p.data as SocProcesso[]);
-    setFases((f.data as SocFase[]) ?? []);
+    let p: SocProcesso[], f: SocFase[];
+    const tq = sb.from("soc_tipos").select("*").eq("org_id", org.id).eq("ativo", true).order("ordem");
+    try {
+      [p, f] = await Promise.all([
+        lerTudo<SocProcesso>((de, ate) =>
+          sb.from("soc_processos").select("*").eq("org_id", org.id).order("numero", { ascending: false }).order("id").range(de, ate),
+        ),
+        lerTudo<SocFase>((de, ate) => sb.from("soc_fases").select("*").eq("org_id", org.id).order("ordem").order("id").range(de, ate)),
+      ]);
+    } catch (e) {
+      return setErro(traduzirErro(e));
+    }
+    const t = await tq;
+    setProcessos(p);
+    setFases(f);
     setTipos((t.data as SocTipo[]) ?? []);
   }, [org.id]);
 

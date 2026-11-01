@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { supabase } from "@/lib/supabase";
+import { lerTudo } from "@/lib/lerTudo";
 import { diasAte, hojeISO } from "@/lib/datas";
 import { COLUNAS, diasParado } from "@/dominios/societario/processos";
 import type { SocFase, SocProcesso, SocTipo } from "@/dominios/societario/processos";
@@ -22,13 +23,17 @@ function Painel() {
   useEffect(() => {
     const sb = supabase();
     const carregar = async () => {
+      const nada = () => null;
       const [p, f, t] = await Promise.all([
-        sb.from("soc_processos").select("*").eq("org_id", org.id).neq("status", "cancelado").limit(2000),
-        sb.from("soc_fases").select("*").eq("org_id", org.id).limit(20000),
+        lerTudo<SocProcesso>((de, ate) =>
+          sb.from("soc_processos").select("*").eq("org_id", org.id).neq("status", "cancelado").order("id").range(de, ate),
+        ).catch(nada),
+        lerTudo<SocFase>((de, ate) => sb.from("soc_fases").select("*").eq("org_id", org.id).order("id").range(de, ate)).catch(nada),
         sb.from("soc_tipos").select("*").eq("org_id", org.id),
       ]);
-      setProcessos((p.data as SocProcesso[]) ?? []);
-      setFases((f.data as SocFase[]) ?? []);
+      // painel de TV: se a leitura falhar, mantém o que já estava na tela até a próxima atualização
+      if (p) setProcessos(p);
+      if (f) setFases(f);
       setTipos((t.data as SocTipo[]) ?? []);
     };
     void carregar();

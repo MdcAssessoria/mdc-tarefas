@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { lerTudo } from "@/lib/lerTudo";
 import { hojeISO } from "@/lib/datas";
 import type { Tarefa } from "./tipos";
 import { traduzirErro } from "@/lib/erros";
@@ -20,17 +21,21 @@ export function useTarefas(orgId: string, fuso: string) {
   const carregar = useCallback(async () => {
     const corte = new Date(hojeISO(fuso) + "T00:00:00Z");
     corte.setUTCDate(corte.getUTCDate() - 45);
-    const { data, error } = await supabase()
-      .from("tarefas")
-      .select("*")
-      .eq("org_id", orgId)
-      .or(`status.in.(a_fazer,em_andamento,aguardando),atualizado_em.gte.${corte.toISOString()}`)
-      .order("prazo", { ascending: true, nullsFirst: false })
-      .limit(3000);
-    if (error) setErro(traduzirErro(error));
-    else {
+    try {
+      const lista = await lerTudo<Tarefa>((de, ate) =>
+        supabase()
+          .from("tarefas")
+          .select("*")
+          .eq("org_id", orgId)
+          .or(`status.in.(a_fazer,em_andamento,aguardando),atualizado_em.gte.${corte.toISOString()}`)
+          .order("prazo", { ascending: true, nullsFirst: false })
+          .order("id")
+          .range(de, ate),
+      );
       setErro(null);
-      setTarefas(data as Tarefa[]);
+      setTarefas(lista);
+    } catch (e) {
+      setErro(traduzirErro(e));
     }
     setCarregando(false);
   }, [orgId, fuso]);
