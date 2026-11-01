@@ -30,7 +30,9 @@ sequenceDiagram
 Regras: no lote, arquivo de mês já publicado fica de fora (precisa despublicar) e rascunho existente só é trocado
 quando marcado "Substituir"; o resumo por empresa sai em PDF e Excel. Na análise e no Portal, o período (mês,
 trimestre, semestre ou ano do calendário) é escolhido no topo e agrega os balancetes no navegador; o "Baixar PDF"
-segue esse período e o servidor refaz o cálculo só com meses publicados antes de assinar. Detalhes em [modulos/demonstrativos.md](modulos/demonstrativos.md).
+segue esse período e o servidor refaz o cálculo só com meses publicados: assina só período completo, período que só
+falta o fim sai parcial e sem assinatura, e mês faltando no meio bloqueia o PDF. A importação (um arquivo ou lote) e o
+"Reprocessar" gravam cabeçalho, cálculo e contas numa transação só (`portal_gravar_balancete`, `portal_regravar_contas`). Detalhes em [modulos/demonstrativos.md](modulos/demonstrativos.md).
 
 Balancete publicado e suas linhas não mudam (gatilhos `publicacao_protegida` e
 `linhas_balancete_protegidas`); para corrigir, despublique, ajuste e publique de novo.

@@ -219,7 +219,7 @@ async function pdfDoPeriodo(usuario: Sb, servico: Sb, ref: any, escolha: Escolha
       sel.fonte === "acumulado"
         ? sel.completude
         : parcial
-          ? `Período em andamento: ${listarMeses(sel.importados)} publicados · ainda não entraram ${listarMeses(sit.faltam)}`
+          ? `Período parcial: ${listarMeses(sel.importados)} publicados · ainda não entraram ${listarMeses(sit.faltam)}`
           : `${sel.meses.length} de ${sel.meses.length} meses publicados`,
     parcial,
   });

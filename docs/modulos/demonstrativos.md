@@ -44,7 +44,13 @@ Exportação:
   pelo `scripts/sync-funcoes.sh`) **usando só meses publicados**, para ninguém conseguir mandar números próprios para um
   documento assinado. Mês único = PDF daquele mês (com acumulado do ano); trimestre/semestre/ano = coluna de comparação
   com o mesmo período do ano anterior, balancete do período (abertura do 1º mês, movimento somado, fechamento do último)
-  e sem parecer (o parecer é mensal). Se houver mês do período em rascunho, a tela avisa antes de baixar.
+  e sem parecer (o parecer é mensal). Regra única para tela e servidor (`pdfPeriodo.ts`):
+  - **completo** (todos os meses do período publicados): sai assinado;
+  - **parcial** (só faltam os últimos meses): sai **sem assinatura**, com selo "período parcial" e "-parcial" no nome;
+  - **lacuna** (falta mês publicado no meio ou no começo): não gera, porque caixa e balancete não fechariam; o botão
+    fica desligado e diz o que publicar (no Portal: "fica disponível quando a MDC concluir …").
+  - A coluna de comparação com o ano anterior só aparece quando os dois períodos estão completos.
+  - Limitação conhecida: empresa aberta no meio do ano cai em "lacuna" no PDF anual do primeiro exercício.
 - **Excel do período** (`componentes/ExportarPeriodo.tsx`): planilha no navegador com os valores como número.
 
 ```mermaid

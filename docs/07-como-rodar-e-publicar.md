@@ -56,6 +56,8 @@ Cada pasta em `supabase/functions/` é uma função. Para publicar:
 npx supabase functions deploy convite --project-ref bulqqdgfrrpqquqvjjfa --import-map supabase/functions/convite/deno.json
 ```
 
+- **Ordem quando a mudança mexe na tela e na função:** publique a **função primeiro** e confira a versão nova no painel;
+  só depois faça o push do site. A função nova aceita o site antigo; o site novo com a função antiga entrega PDF errado.
 - `demonstrativo-pdf` usa cópias de `balancete.ts` e `demonstracoes.ts` geradas por `scripts/sync-funcoes.sh` a
   partir de `web/src/dominios/demonstrativos/`. **Rode o script antes de publicar** sempre que mexer nesses cálculos.
 - Segredos das funções (chave de serviço etc.) ficam no painel: Edge Functions › Secrets. Nunca no código.

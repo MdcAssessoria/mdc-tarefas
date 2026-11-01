@@ -321,7 +321,7 @@ function Detalhe() {
           linhas={linhas}
           anteriores={anteriores}
           editarGrupo={
-            podeOperar
+            podeOperar && b.status !== "publicado"
               ? (l) => (
                   <select
                     className="entrada !min-h-7 !py-0.5 text-xs"
@@ -346,7 +346,7 @@ function Detalhe() {
               : undefined
           }
           editarDfc={
-            podeOperar
+            podeOperar && b.status !== "publicado"
               ? (l) => {
                   const atualLinha = linhaDfc(l, mapaDfc);
                   const auto = linhaDfcAuto(l);

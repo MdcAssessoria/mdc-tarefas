@@ -181,7 +181,8 @@ export async function recalcular(balanceteId: string) {
 export async function definirGrupo(o: { org: string; cliente: string | null; balanceteId: string; classificacao: string; grupo: Grupo }) {
   const sb = supabase();
   const del = sb.from("portal_mapa_contas").delete().eq("org_id", o.org).eq("classificacao", o.classificacao);
-  await (o.cliente ? del.eq("cliente_id", o.cliente) : del.is("cliente_id", null));
+  const d = await (o.cliente ? del.eq("cliente_id", o.cliente) : del.is("cliente_id", null));
+  if (d.error) throw new Error(traduzirErro(d.error));
   const ins = await sb
     .from("portal_mapa_contas")
     .insert({ org_id: o.org, cliente_id: o.cliente, classificacao: o.classificacao, grupo: o.grupo });

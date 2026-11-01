@@ -11,20 +11,30 @@ import { situacaoPdf } from "@/dominios/demonstrativos/pdfPeriodo";
  * texto do botão, aviso antes de baixar e bloqueio quando o PDF não pode sair (mês publicado faltando no meio).
  * `historico` pode ter rascunhos (tela da equipe): o PDF de trimestre, semestre ou ano usa só os publicados.
  */
-export function estadoPdf<T extends RegPeriodo & { status: string }>(historico: T[], escolha: Escolha | null) {
+export function estadoPdf<T extends RegPeriodo & { status: string }>(historico: T[], escolha: Escolha | null, paraCliente = false) {
   if (!escolha || escolha.visao === "mensal") return { aviso: null, bloqueio: null };
   const rotulo = selecionar(historico, escolha)?.rotulo ?? "o período";
   const sel = selecionar(
     historico.filter((b) => b.status === "publicado"),
     escolha,
   );
-  if (!sel) return { aviso: null, bloqueio: `Nenhum mês de ${rotulo} foi publicado ainda: publique os meses para baixar o PDF.` };
+  // o cliente não publica nada: para ele a mensagem diz o que a MDC ainda vai fechar
+  const pedir = (meses: string) =>
+    paraCliente
+      ? `O PDF de ${rotulo} fica disponível quando a MDC concluir ${meses}.`
+      : `Para baixar o PDF de ${rotulo}, publique antes: ${meses}.`;
+  if (!sel)
+    return {
+      aviso: null,
+      bloqueio: paraCliente
+        ? `O PDF de ${rotulo} fica disponível quando a MDC concluir o período.`
+        : `Nenhum mês de ${rotulo} foi publicado ainda: publique os meses para baixar o PDF.`,
+    };
   const sit = situacaoPdf(sel.meses, sel.importados);
-  if (sit.tipo === "lacuna")
-    return { aviso: null, bloqueio: `Para baixar o PDF de ${sel.rotulo}, publique antes: ${listarMeses(sit.faltam)}.` };
+  if (sit.tipo === "lacuna") return { aviso: null, bloqueio: pedir(listarMeses(sit.faltam)) };
   if (sit.tipo === "parcial")
     return {
-      aviso: `Período em andamento: o PDF sai só com ${listarMeses(sel.importados)}, marcado como parcial e sem assinatura.`,
+      aviso: `Período parcial: o PDF sai só com ${listarMeses(sel.importados)}, marcado como parcial e sem assinatura.`,
       bloqueio: null,
     };
   return { aviso: null, bloqueio: null };

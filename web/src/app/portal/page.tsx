@@ -300,7 +300,7 @@ function Demonstrativos({ emp, aba }: { emp: Empresa; aba: Aba }) {
           balanceteId={atual.id}
           periodo={periodo.escolha}
           rotulo={periodo.sel?.rotulo}
-          {...estadoPdf(historico, periodo.escolha)}
+          {...estadoPdf(historico, periodo.escolha, true)}
         />
       </SeletorPeriodo>
       {(aba === "balancete" || aba === "parecer") && periodo.sel && periodo.sel.escolha.visao !== "mensal" && (

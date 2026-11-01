@@ -497,7 +497,7 @@ export async function gerarPdf(d: DadosPdf): Promise<PDFDocument> {
     o.text(`Assinado em ${new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })} · certificado válido até ${d.assinatura.validade} · confira em validar.iti.gov.br`, M + 10, o.y - 38, 8, { cor: SUAVE });
     o.y -= alt + 6;
   } else if (d.parcial) {
-    o.paragrafo("Período ainda em andamento: este PDF reúne só os meses já publicados e não leva assinatura digital.", { size: 8.5, cor: PERIGO });
+    o.paragrafo("Período parcial: este PDF reúne só os meses já publicados e não leva assinatura digital.", { size: 8.5, cor: PERIGO });
   } else if (d.status !== "publicado") {
     o.paragrafo("Rascunho para revisão interna: este documento ainda não foi publicado nem assinado.", { size: 8.5, cor: PERIGO });
   }

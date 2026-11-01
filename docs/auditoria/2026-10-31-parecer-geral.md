@@ -570,3 +570,156 @@ em rascunho. Os casos de C-P1/A-P1 não aparecem nos pilotos; aparecem na Nexus 
 | M-P1 a M-P3 | Abertos (M-P3 vem de antes do commit) · M-P4 resolvido (`519bfa8`) |
 | B-P1 a B-P3 | Abertos |
 | A-G2 | Resolvido em produção (v5 da função tem o filtro de publicados) |
+
+## Reauditoria 01/11/2026 — commits 519bfa8 e f77072b
+
+**Escopo:** `519bfa8` (migração 020 ajustada e aplicada) e `f77072b` (regra do PDF por período em `pdfPeriodo.ts`,
+migrações 021 e 022, leitura paginada dos mapas e do lote). Conferido no código, rodando a Função Edge de verdade em
+Deno contra um banco simulado, e no banco de produção **só leitura** (`pg_proc`, `pg_trigger`, `pg_policies`,
+`list_migrations`, `get_advisors`, `get_edge_function`). Nada foi alterado.
+
+### Veredito
+
+**Pode publicar, com duas condições.** C-P1, A-P1, M-P1, M-P2 e M-P3 estão resolvidos: o servidor não gera PDF de
+período com mês faltando antes do último publicado, só assina período completo e só compara com ano anterior completo.
+Condições: (1) **publicar a função `demonstrativo-pdf` antes do push** e conferir que a versão no ar passou da v5 (ver
+A-P2); (2) o push na `main` leva também o commit `88bf784` (SheetJS pelo CDN com verificação de integridade), que
+**não** foi auditado e fez `/demonstrativos/importar` falhar no `npm run telas` aqui (ver N-5): abrir a tela de
+importação num navegador normal e carregar um Excel antes de considerar publicado.
+
+### Verificações executadas
+
+| Verificação | Resultado |
+| --- | --- |
+| `cd web && npm ci && npm run verificar` | ok (saída 0): tipos ok, lint 0 erros / 40 avisos (os mesmos de antes), **21 arquivos / 109 testes** passando (inclui `pdfPeriodo.test.ts`, 5 testes), build ok |
+| `npm run telas` | 1ª rodada 22/25 (`/atendimento` e `/atendimento/portal` com erro 500 do servidor de teste; `/demonstrativos/importar`). 2ª rodada **24/25**: as de atendimento passaram (falha passageira); `/demonstrativos/importar` falha de novo: o navegador recusou `cdn.sheetjs.com/xlsx-0.20.3/.../xlsx.full.min.js` por hash diferente do `integrity`. Este ambiente bloqueia o CDN (`curl` → 403 no proxy), então é **provável** que seja só do ambiente — a confirmar (N-5) |
+| `deno check --config deno.json index.ts` | ok (saída 0) |
+| `sh scripts/sync-funcoes.sh && git diff --exit-code supabase/` | ok (saída 0): as cópias da função, incluindo a nova `pdfPeriodo.ts`, batem com a origem |
+| Banco (leitura) | 020, 021 e 022 aplicadas (`list_migrations`: `20261101115705`, `…115905`, `…121447`). Corpo de `portal_gravar_balancete`, `portal_regravar_contas`, `app.inserir_contas_balancete`, `app.tg_balancete_publicado_imutavel`, `app.tg_portal_usuario_nao_equipe`, `app.tg_arquivo_imutavel` **idêntico** ao do repositório; todas com `search_path=public`; `anon` sem execução; `app.*` sem execução para `authenticated`. Gatilho `balancete_publicado_imutavel` ativo em `portal_balancetes`. Políticas da 020 (`portal_usuarios_update`, `hub_arquivos_equipe_*`, `hub_storage_equipe_select` com a pasta `marca`) iguais ao arquivo |
+| `get_advisors security` | só os avisos esperados (funções `public.*` chamadas pelas telas, agora com as 2 novas; `crm_receber_lead` sem login; proteção de senha vazada desligada) |
+| Função publicada | **v5** (`updated_at` 01/11 08:39), sem `situacaoPdf`, `pdfDoPeriodo`, `lerEscolha` nem `combinarLinhas` (procurado no código baixado) |
+| Git | `origin/main` em `da665dd`; `9607018`, `519bfa8`, `f77072b` e `88bf784` **ainda não enviados** |
+
+### Teste da regra com a função real (Deno, banco simulado)
+
+A função `index.ts` foi executada sem mudança, apontando para um PostgREST falso com 24 meses encadeados (2024–2025)
+gerados pelas funções de cálculo da própria tela, e um acumulado jan–dez/2025. "Tentou assinar" = a função pediu o
+certificado (`cert_obter`), o que só acontece quando ela vai assinar.
+
+| Cenário | Resposta | Tentou assinar |
+| --- | --- | --- |
+| 1º trimestre/2025 completo | 200, `…-1-trimestre-de-2025.pdf` | sim |
+| Falta fev no meio (fev em rascunho) | **409** "publique antes: fev/2025" | não |
+| Faltando no começo (caso Nexus: só dez/2025 publicado), ano | **409** "publique antes: 11 meses" | não |
+| Faltando só o fim (jan–fev, mar não existe) | 200, `…-1-trimestre-de-2025-parcial.pdf` | **não** |
+| Faltando só o fim (jan–nov, dez em rascunho), ano | 200, `…-ano-de-2025-parcial.pdf` | **não** |
+| Balancete acumulado jan–dez/2025, ano | 200, `…-ano-de-2025.pdf` | sim |
+| Ano 2025 completo, 2024 com 6 meses | 200 (27.886 bytes: **sem** coluna do ano anterior) | sim |
+| Ano 2025 completo, 2024 completo | 200 (28.969 bytes: **com** a coluna) | sim |
+| Empresa aberta em mar/2025 (mar–dez publicados), ano | **409** "publique antes: jan e fev/2025" | não (ver N-2) |
+
+Conferência dos números com as cópias da função (`selecionar` + `combinarLinhas`): no completo e nos dois parciais,
+**0 de 23 contas** com saldo anterior ± movimento ≠ saldo final; o balanço fecha na data do último mês publicado
+(28/02 e 30/11). A tela usa a mesma composição (`BotaoPdf.tsx:14-31`: só publicados → `selecionar` → `situacaoPdf`),
+então botão e servidor dão a mesma resposta.
+
+### Situação dos achados da auditoria do PDF por período
+
+| Achado | Situação | Evidência |
+| --- | --- | --- |
+| C-P1 (mês faltando no meio assinado) | **Resolvido no código** | `index.ts:182-184` devolve 409 antes de ler contas; cenários 2 e 3 acima |
+| A-P1 (incompleto assinado com nome do período) | **Resolvido no código** | `index.ts:200` assina só `!parcial`; rótulo e arquivo com "(parcial)" (`:217`, `:281`); selo vermelho "PERÍODO PARCIAL · SEM ASSINATURA" e frase no fim (`pdf.ts:264-268`, `:499-500`) |
+| A-P2 (ordem de publicação) | **Aberto até o deploy** | função no ar = v5. Ver abaixo |
+| M-P1 (comparação com ano anterior incompleto) | **Resolvido** | `index.ts:195-196`; cenários 7 e 8 |
+| M-P2 (avisos da tela) | **Resolvido**, com ressalva de texto (N-3) | `BotaoPdf.tsx:20-29`: bloqueia o botão e diz o que publicar; avisa "parcial e sem assinatura"; agora também no Portal (`portal/page.tsx:303`) |
+| M-P3 (números de publicado alteráveis) | **Resolvido em produção** pela 022 | gatilho em `resumo`, `indices`, `alertas`, `conferencias`, `demonstracoes`, período, competência, cliente, org, arquivo; sem exceção para `app.publicando` nem para chave de serviço |
+| R-1 (lote sem paginação) | **Resolvido** | `ImportacaoLote.tsx:68-70` com `lerTudo` e `.order("id")` |
+| R-2 (mapas sem paginação, erro ignorado) | **Resolvido** | `repositorio.ts:21-48`: `lerTudo` + `order("id")`; erro agora interrompe (lança) |
+| M-N6 (gravação sem transação) | **Resolvido** para importar e reprocessar | `repositorio.ts:104-113` e `:244-250` usam as RPCs da 021 |
+| B-P1, B-P2, B-P3 | Abertos | sem teste do caminho do servidor; CORS `*` em `index.ts:18-23` |
+
+**022 e o que continua funcionando** (lido no código, sem escrever no banco): `portal_publicar_balancete`
+(`016:102-127`) só muda `status`, `publicado_por` e `publicado_em`, nenhum deles vigiado pela 022 — publicar,
+republicar e despublicar continuam. O comentário do contador (`demonstrativos/[id]/page.tsx:118-121`) grava só
+`comentario`, que não está na lista — continua editável (com `gerir`, pela 016).
+
+**021:** `portal_gravar_balancete` confere `hub_pode(...,'operar')` na primeira linha, exige cliente da mesma
+organização e competência no dia 1, trava o mês (`pg_advisory_xact_lock` + `for update`), recusa mês publicado e grava
+cabeçalho, cálculo e contas numa transação. `portal_regravar_contas` recusa publicado e faz a troca numa transação.
+`app.inserir_contas_balancete` não é executável pela API.
+
+**A-P2 — o plano "publicar a função antes do site" basta?** Sim, desde que nessa ordem e conferido:
+- Função nova + site antigo (o de hoje, `da665dd`): o site antigo manda só `balancete_id`; `lerEscolha(undefined)` →
+  `null` → caminho do mês, igual ao da v5. **Não quebra nada.**
+- Site novo + função antiga (v5) — o que precisa ser evitado: a v5 ignora `periodo` e devolve o PDF do **mês aberto**,
+  assinado se publicado, com o botão dizendo "Baixar PDF · ano de 2025". A tela nova bloqueia os casos de lacuna, mas
+  nos casos "completo" e "parcial" o cliente recebe o mês achando que é o período.
+- Passos: `sh scripts/sync-funcoes.sh` → `npx supabase functions deploy demonstrativo-pdf --project-ref
+  bulqqdgfrrpqquqvjjfa --import-map supabase/functions/demonstrativo-pdf/deno.json` → conferir que a versão passou a 6
+  (painel ou `get_edge_function` contendo `situacaoPdf`) → só então `git push`. Registrar isso em
+  `docs/07-como-rodar-e-publicar.md` (ainda não está, ver N-6).
+
+### Achados novos
+
+**N-1 · médio · Trocar grupo ou linha da DFC num balancete publicado muda a regra e depois falha**
+- `demonstrativos/[id]/page.tsx:322-362`: as listas de grupo e de linha da DFC aparecem para quem opera, também em
+  balancete publicado. `definirGrupo` (`repositorio.ts:181-196`) apaga a regra (erro do `delete` ignorado em `:184`),
+  grava a nova, e só então tenta mudar as contas (barrado pela 020); `definirLinhaDfc` (`:254-272`) grava a regra e
+  `recalcular` é barrado pela 022. Resultado: a regra (às vezes **de todas as empresas**, se a pessoa clicou OK) fica
+  trocada, o balancete não, e a tela mostra erro. Antes da 022 o caso da DFC passava em silêncio.
+- Correção: desligar as duas listas (e "Refazer verificações", `:420-429`) quando `b.status === "publicado"`, com a
+  frase "despublique para ajustar"; tratar o erro do `delete`; idealmente regra + contas + cálculo numa RPC.
+
+**N-2 · médio · Empresa que começou no meio do período nunca tem PDF do ano (nem do trimestre de abertura)**
+- `pdfPeriodo.ts:22-23`: falta antes do último publicado = lacuna, sem exceção. Empresa aberta em mar/2025 recebe
+  "publique antes: jan e fev/2025", meses que não existem (cenário 9). Balancete acumulado mar–dez cai no mesmo caso.
+- Não gera documento errado (falha segura), mas trava o primeiro exercício de toda empresa nova da carteira.
+- Correção: aceitar como início do período a data de abertura da empresa (ou o 1º balancete do cliente) e rotular
+  "de 01/03/2025 a 31/12/2025"; teste para o caso.
+
+**N-3 · baixo · Textos do PDF parcial e do bloqueio**
+- `index.ts:222` e `BotaoPdf.tsx:27` dizem "Período em andamento" também quando o período já acabou e só falta
+  publicar o último mês (cenário 5: ano de 2025 visto em nov/2026). Melhor: "Período parcial".
+- `BotaoPdf.tsx:24` no **Portal** diz ao cliente "publique antes: …", algo que só a MDC faz. No Portal: "A MDC ainda
+  não publicou …; o PDF do período sai quando todos os meses estiverem publicados."
+- Período com um mês coberto por acumulado de semestre e outro mensal pede para "publicar" meses que já estão
+  publicados dentro do acumulado (consequência da regra de `selecionar`, sem número errado).
+
+**N-4 · baixo · `portal_regravar_contas` lê e trava a linha antes de checar permissão**
+- `021:81-83`: `select … for update` vem antes de `hub_pode`; a mensagem difere entre "não encontrado" e "sem
+  permissão" (revela se um id existe, sem dado). Regra do repositório: checagem na primeira linha. Trocar a ordem
+  (ler sem `for update`, checar, depois travar).
+
+**N-5 · a confirmar · Commit `88bf784` (fora do escopo) vai junto no push e não passou no `npm run telas` aqui**
+- `web/src/lib/arquivos/planilha.ts:6` e `:65`: a SheetJS passou a vir de `cdn.sheetjs.com` com `integrity`. Aqui o
+  navegador recebeu outro conteúdo (o proxy deste ambiente bloqueia o CDN) e recusou o arquivo, então a importação
+  de Excel não abre. Como confirmar: em qualquer máquina, `curl -sL <url> | openssl dgst -sha384 -binary | base64`
+  deve dar `EnyY0/GSHQ…yzdT`; e abrir Demonstrativos › Importar e carregar um `.xlsx`. Também vale avaliar: a
+  importação passa a depender de um site de terceiro estar no ar, e a CSP do site precisa permitir esse endereço.
+
+**N-6 · médio · Documentação não acompanhou (regra 6)**
+- `docs/modulos/demonstrativos.md:40-46` e `docs/06-fluxos.md:31-33` ainda descrevem "assinado quando tudo publicado
+  … a tela avisa", sem as três situações (completo assina, parcial sem assinatura, lacuna não gera).
+- `docs/05-seguranca-e-acessos.md:95-104` não lista a trava da 022 nem as RPCs da 021; `docs/07` não tem a ordem
+  função → site.
+
+**N-7 · baixo · Testes**
+- `pdfPeriodo.test.ts` cobre só `situacaoPdf`. Falta teste de `estadoPdf` (filtrar publicados, acumulado) e do
+  caminho do servidor; o roteiro usado nesta reauditoria (PostgREST falso + `index.ts` real) pode virar teste
+  automático.
+
+### Clientes-piloto
+
+Sem mudança: MDC tem só o acumulado de 2025 publicado (cenário "acumulado", assina) e Greencore o acumulado em
+rascunho (botão bloqueado "Nenhum mês … publicado"). Os casos novos aparecem na Nexus (só dez/2025 publicado → ano
+bloqueado). Recomenda-se validar na MDC publicando dois meses de 2026 para ver o PDF parcial antes de abrir à carteira.
+
+### Situação após esta reauditoria
+
+| Achado | Situação |
+| --- | --- |
+| C-P1, A-P1, M-P1, M-P2, M-P3 | **Resolvidos** (no código; em produção só depois do deploy da função) |
+| A-P2 | **Aberto** até publicar a função (v6) antes do push |
+| R-1, R-2, M-N6 | **Resolvidos** |
+| B-P1, B-P2, B-P3 | Abertos |
+| Novos | N-1, N-2, N-6 (médios) · N-3, N-4, N-7 (baixos) · N-5 a confirmar (commit fora do escopo) |
