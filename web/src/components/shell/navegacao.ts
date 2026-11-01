@@ -53,7 +53,7 @@ export const NAV: Record<Modulo, { titulo: string; links: LinkModulo[] }> = {
       { href: "/financeiro/pagar", nome: "A pagar" },
       { href: "/financeiro/receber", nome: "A receber" },
       { href: "/financeiro/movimento", nome: "Entradas e saídas" },
-      { href: "/financeiro", nome: "Bancos" },
+      { href: "/financeiro/bancos", nome: "Bancos" },
       { href: "/financeiro/extratos", nome: "Extratos" },
       { href: "/financeiro/estoque", nome: "Estoque" },
       { href: "/financeiro/cadastros", nome: "Cadastros" },

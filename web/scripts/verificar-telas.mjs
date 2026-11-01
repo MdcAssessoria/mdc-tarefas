@@ -237,7 +237,7 @@ async function abrirEFecharModal(pagina, botao, titulo) {
  */
 const INTERACOES = {
   "/vencimentos": (p) => abrirEFecharModal(p, "Novo vencimento", "Novo vencimento"),
-  "/financeiro": (p) => abrirEFecharModal(p, "Nova conta", "Nova conta bancária"),
+  "/financeiro/bancos": (p) => abrirEFecharModal(p, "Nova conta", "Nova conta bancária"),
   "/financeiro/pagar": (p) => abrirEFecharModal(p, "Nova conta a pagar", "Nova conta a pagar"),
   "/financeiro/receber": (p) => abrirEFecharModal(p, "Nova conta a receber", "Nova conta a receber"),
   "/financeiro/movimento": (p) => abrirEFecharModal(p, "+ Saída", "Nova conta a pagar"),
