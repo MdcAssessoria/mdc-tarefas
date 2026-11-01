@@ -21,10 +21,10 @@ import {
 import type { Existente, ItemLote, ResultadoLote } from "@/dominios/demonstrativos/importacaoLote";
 import { carregarMapa, salvarBalancete } from "@/dominios/demonstrativos/repositorio";
 import { Aviso } from "@/components/ui/Aviso";
-import { exigir } from "@/lib/exigir";
 import { traduzirErro } from "@/lib/erros";
 import { lerPlanilha } from "@/lib/arquivos/planilha";
 import { supabase } from "@/lib/supabase";
+import { lerTudo } from "@/lib/lerTudo";
 import { useConsulta } from "@/lib/useConsulta";
 import { ResumoLote } from "./ResumoLote";
 
@@ -63,8 +63,11 @@ export function ImportacaoLote({ inicial, aoRecomecar }: { inicial: ItemLote[]; 
 
   const existentes = useConsulta(
     useCallback(
+      // todos os meses já gravados (paginado: passa de 1.000 com a carteira inteira)
       async () =>
-        exigir(await supabase().from("portal_balancetes").select("cliente_id,competencia,status").eq("org_id", org.id)) as Existente[],
+        lerTudo<Existente>((de, ate) =>
+          supabase().from("portal_balancetes").select("cliente_id,competencia,status").eq("org_id", org.id).order("id").range(de, ate),
+        ),
       [org.id],
     ),
   );

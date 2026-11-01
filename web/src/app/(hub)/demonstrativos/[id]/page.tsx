@@ -9,7 +9,7 @@ import { traduzirErro } from "@/lib/erros";
 import { GRUPOS } from "@/dominios/demonstrativos/balancete/classificacao";
 import { rascunhoParecer } from "@/dominios/demonstrativos/parecer";
 import { AbaDemonstracoes } from "@/dominios/demonstrativos/componentes/Demonstracoes";
-import { BotaoPdf } from "@/dominios/demonstrativos/componentes/BotaoPdf";
+import { BotaoPdf, estadoPdf } from "@/dominios/demonstrativos/componentes/BotaoPdf";
 import type { Grupo } from "@/dominios/demonstrativos/balancete/tipos";
 import { carregarMapaDfc, definirGrupo, definirLinhaDfc, lerLinhas, recalcular } from "@/dominios/demonstrativos/repositorio";
 import { LINHAS_DFC, linhaDfc, linhaDfcAuto } from "@/dominios/demonstrativos/calculosDemonstracoes";
@@ -21,7 +21,6 @@ import { ListaAlertas } from "@/dominios/demonstrativos/componentes/ListaAlertas
 import { PainelResumo } from "@/dominios/demonstrativos/componentes/PainelResumo";
 import { VisaoParecer } from "@/dominios/demonstrativos/componentes/VisaoParecer";
 import { SeletorPeriodo, usePeriodo } from "@/dominios/demonstrativos/componentes/SeletorPeriodo";
-import { listarMeses } from "@/dominios/demonstrativos/selecaoPeriodo";
 import { ExportarPeriodo } from "@/dominios/demonstrativos/componentes/ExportarPeriodo";
 import type { BalanceteReg, LinhaReg, ParecerReg } from "@/dominios/demonstrativos/tipos";
 import { hojeISO, somarDias } from "@/lib/datas";
@@ -100,12 +99,7 @@ function Detalhe() {
   // PDF completo: segue o período escolhido; fora do mês, o servidor usa só meses publicados
   const selPdf = periodo.sel;
   const pdfDoMes = !selPdf || selPdf.escolha.visao === "mensal";
-  const emRascunho = selPdf && !pdfDoMes ? selPdf.registros.filter((r) => r.status !== "publicado") : [];
-  const avisoPdf = !emRascunho.length
-    ? null
-    : emRascunho.length === selPdf!.registros.length
-      ? "Nenhum mês deste período foi publicado: publique os meses para baixar o PDF do período."
-      : `O PDF usa só os meses publicados (${listarMeses(emRascunho.map((r) => r.competencia.slice(0, 7)))} ainda em rascunho).`;
+  const situacao = useMemo(() => estadoPdf(historico, periodo.escolha), [historico, periodo.escolha]);
 
   if (erro && !b) return <p className="text-sm text-red-700">{erro}</p>;
   if (!b) return <p className="text-sm text-neutral-500">Carregando…</p>;
@@ -229,7 +223,8 @@ function Detalhe() {
           periodo={periodo.escolha}
           rotulo={selPdf?.rotulo}
           rascunho={pdfDoMes && (selPdf?.base ?? b).status !== "publicado"}
-          aviso={avisoPdf}
+          aviso={situacao.aviso}
+          bloqueio={situacao.bloqueio}
         />
         {b.status === "publicado" ? (
           <>

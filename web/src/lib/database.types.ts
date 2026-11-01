@@ -2505,6 +2505,17 @@ export type Database = {
         };
         Returns: string;
       };
+      portal_gravar_balancete: {
+        Args: {
+          p_analise: Json;
+          p_arquivo: string;
+          p_cliente: string;
+          p_competencia: string;
+          p_linhas: Json;
+          p_org: string;
+        };
+        Returns: string;
+      };
       portal_minhas_empresas: {
         Args: never;
         Returns: {
@@ -2544,6 +2555,10 @@ export type Database = {
       };
       portal_publicar_parecer: {
         Args: { p_parecer: string };
+        Returns: undefined;
+      };
+      portal_regravar_contas: {
+        Args: { p_analise: Json; p_balancete: string; p_linhas: Json };
         Returns: undefined;
       };
       portal_rotinas: {

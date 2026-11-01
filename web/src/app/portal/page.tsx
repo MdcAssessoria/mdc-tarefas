@@ -18,7 +18,7 @@ import { PainelResumo } from "@/dominios/demonstrativos/componentes/PainelResumo
 import { VisaoParecer } from "@/dominios/demonstrativos/componentes/VisaoParecer";
 import type { BalanceteReg, LinhaReg, ParecerReg } from "@/dominios/demonstrativos/tipos";
 import { AbaDemonstracoes } from "@/dominios/demonstrativos/componentes/Demonstracoes";
-import { BotaoPdf } from "@/dominios/demonstrativos/componentes/BotaoPdf";
+import { BotaoPdf, estadoPdf } from "@/dominios/demonstrativos/componentes/BotaoPdf";
 import { ExportarPeriodo } from "@/dominios/demonstrativos/componentes/ExportarPeriodo";
 import { SeletorPeriodo, usePeriodo } from "@/dominios/demonstrativos/componentes/SeletorPeriodo";
 import { caminho } from "@/lib/caminho";
@@ -296,7 +296,12 @@ function Demonstrativos({ emp, aba }: { emp: Empresa; aba: Aba }) {
     <div className="space-y-4">
       <SeletorPeriodo historico={historico} periodo={periodo}>
         {periodo.sel && <ExportarPeriodo sel={periodo.sel} anterior={periodo.anterior} empresa={emp.nome_fantasia || emp.razao_social} />}
-        <BotaoPdf balanceteId={atual.id} periodo={periodo.escolha} rotulo={periodo.sel?.rotulo} />
+        <BotaoPdf
+          balanceteId={atual.id}
+          periodo={periodo.escolha}
+          rotulo={periodo.sel?.rotulo}
+          {...estadoPdf(historico, periodo.escolha)}
+        />
       </SeletorPeriodo>
       {(aba === "balancete" || aba === "parecer") && periodo.sel && periodo.sel.escolha.visao !== "mensal" && (
         <p className="text-xs text-neutral-600">

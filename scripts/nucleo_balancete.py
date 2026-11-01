@@ -121,3 +121,4 @@ def copiar(origem, destino):
 copiar("periodos.ts", "periodos.ts")
 copiar("selecaoPeriodo.ts", "selecaoPeriodo.ts")
 copiar("linhasPeriodo.ts", "linhasPeriodo.ts")
+copiar("pdfPeriodo.ts", "pdfPeriodo.ts")

@@ -25,6 +25,8 @@ export interface DadosPdf {
   rotulo?: string | null;
   /** Quantos meses entraram no período, em linguagem simples ("3 de 3 meses publicados"). */
   completude?: string | null;
+  /** Período ainda em andamento (faltam os últimos meses): sai sem assinatura e marcado como parcial. */
+  parcial?: boolean;
 }
 
 const VERDE = rgb(11 / 255, 40 / 255, 32 / 255);
@@ -259,9 +261,10 @@ export async function gerarPdf(d: DadosPdf): Promise<PDFDocument> {
   while (emp.length > 10 && o.w(emp, 10, true) > W - 2 * M) emp = emp.slice(0, -1);
   o.text(emp === d.empresa ? emp : emp.trimEnd() + "…", M, H - 147, 10, { bold: true, cor: DOURADO });
   o.text(`${d.cnpj ? `CNPJ ${d.cnpj} · ` : ""}${multi || d.rotulo ? `Período: ${periodo}` : `Competência: ${periodo}`}`, M, H - 161, 9, { cor: CLARO });
-  if (d.status !== "publicado") {
-    o.page.drawRectangle({ x: W - M - 150, y: H - 70, width: 150, height: 22, color: PERIGO });
-    o.text("RASCUNHO · NÃO PUBLICADO", W - M - 75, H - 63, 8.5, { bold: true, cor: rgb(1, 1, 1), alinhar: "centro" });
+  if (d.status !== "publicado" || d.parcial) {
+    o.page.drawRectangle({ x: W - M - 170, y: H - 70, width: 170, height: 22, color: PERIGO });
+    const selo = d.parcial ? "PERÍODO PARCIAL · SEM ASSINATURA" : "RASCUNHO · NÃO PUBLICADO";
+    o.text(selo, W - M - 85, H - 63, 8.5, { bold: true, cor: rgb(1, 1, 1), alinhar: "centro" });
   }
   o.y = H - 196;
   if (d.completude) {
@@ -493,6 +496,8 @@ export async function gerarPdf(d: DadosPdf): Promise<PDFDocument> {
     o.text(`Titular: ${d.assinatura.titular} · Emissor: ${d.assinatura.emissor}`, M + 10, o.y - 27, 8, { cor: SUAVE });
     o.text(`Assinado em ${new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })} · certificado válido até ${d.assinatura.validade} · confira em validar.iti.gov.br`, M + 10, o.y - 38, 8, { cor: SUAVE });
     o.y -= alt + 6;
+  } else if (d.parcial) {
+    o.paragrafo("Período ainda em andamento: este PDF reúne só os meses já publicados e não leva assinatura digital.", { size: 8.5, cor: PERIGO });
   } else if (d.status !== "publicado") {
     o.paragrafo("Rascunho para revisão interna: este documento ainda não foi publicado nem assinado.", { size: 8.5, cor: PERIGO });
   }

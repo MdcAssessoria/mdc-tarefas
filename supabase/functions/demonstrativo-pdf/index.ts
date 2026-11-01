@@ -10,7 +10,8 @@ import { assinar } from "./assinatura.ts";
 import { somarDfc, somarDre } from "./demonstracoes.ts";
 import type { Demonstracoes, Dfc } from "./demonstracoes.ts";
 import type { Alerta, Linha, Resumo } from "./balancete.ts";
-import { VISOES, mesmoPeriodoAnoAnterior, quantosPeriodos, rotuloEscolha, selecionar } from "./selecaoPeriodo.ts";
+import { VISOES, listarMeses, mesmoPeriodoAnoAnterior, quantosPeriodos, rotuloEscolha, selecionar } from "./selecaoPeriodo.ts";
+import { situacaoPdf } from "./pdfPeriodo.ts";
 import type { Escolha, RegPeriodo, Visao } from "./selecaoPeriodo.ts";
 import { combinarLinhas } from "./linhasPeriodo.ts";
 
@@ -177,6 +178,11 @@ async function pdfDoPeriodo(usuario: Sb, servico: Sb, ref: any, escolha: Escolha
   const hist = (data ?? []) as Reg[];
   const sel = selecionar(hist, escolha);
   if (!sel) return json(404, { erro: `Nenhum mês de ${rotuloEscolha(escolha)} foi publicado ainda.` });
+  // período com mês publicado faltando antes do último: os números não fechariam, então não gera
+  const sit = situacaoPdf(sel.meses, sel.importados);
+  if (sit.tipo === "lacuna")
+    return json(409, { erro: `Para baixar o PDF de ${sel.rotulo}, publique antes: ${listarMeses(sit.faltam)}.` });
+  const parcial = sit.tipo === "parcial";
   const base = sel.base.demonstracoes;
   if (!base || !sel.ag.dfc || !sel.ag.balanco || sel.registros.some((r) => !r.demonstracoes))
     return json(409, { erro: `Algum mês de ${sel.rotulo} está sem as demonstrações geradas. Peça à MDC para reprocessar os balancetes do período.` });
@@ -185,10 +191,13 @@ async function pdfDoPeriodo(usuario: Sb, servico: Sb, ref: any, escolha: Escolha
   if (lidas.some((l) => l.error)) return json(500, { erro: "Não foi possível ler todas as contas do período. Tente de novo em instantes." });
   const linhas = combinarLinhas(lidas.map((l) => (l.data ?? []).map(num)));
 
-  const anterior = mesmoPeriodoAnoAnterior(hist, escolha);
+  // comparação só entre períodos inteiros (parcial contra ano completo não diz nada)
+  const ant = mesmoPeriodoAnoAnterior(hist, escolha);
+  const anterior = !parcial && ant && situacaoPdf(ant.meses, ant.importados).tipo === "completo" ? ant : null;
   const dias = Math.round((Date.parse(sel.fim) - Date.parse(sel.inicio)) / 864e5) + 1;
   const { data: cli } = await servico.from("clientes").select("razao_social,cnpj").eq("id", ref.cliente_id).single();
-  return await finalizar(servico, ref.org_id, true, (cli ?? null) as Cliente | null, {
+  // assina só período completo; parcial sai sem assinatura e com selo
+  return await finalizar(servico, ref.org_id, !parcial, (cli ?? null) as Cliente | null, {
     competencia: sel.base.competencia,
     status: "publicado",
     resumo: sel.ag.resumo,
@@ -205,8 +214,14 @@ async function pdfDoPeriodo(usuario: Sb, servico: Sb, ref: any, escolha: Escolha
     linhas,
     comentario: null,
     parecer: null,
-    rotulo: sel.rotulo,
-    completude: sel.completude.replace("importados", "publicados").replace("importado", "publicado"),
+    rotulo: parcial ? `${sel.rotulo} (parcial)` : sel.rotulo,
+    completude:
+      sel.fonte === "acumulado"
+        ? sel.completude
+        : parcial
+          ? `Período em andamento: ${listarMeses(sel.importados)} publicados · ainda não entraram ${listarMeses(sit.faltam)}`
+          : `${sel.meses.length} de ${sel.meses.length} meses publicados`,
+    parcial,
   });
 }
 

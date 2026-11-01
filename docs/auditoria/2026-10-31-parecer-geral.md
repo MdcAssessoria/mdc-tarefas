@@ -434,3 +434,139 @@ está correta e era necessária: sem respeitar `offset/limit`, o simulador devol
 | A-G1 | **Resolvido** nos pontos de risco (tarefas, balancete, PDF, portal, societário); **em aberto** só o lote (R-1 = M-N5) |
 | A-G2 | **Resolvido no código**; **em aberto em produção** até o deploy da `demonstrativo-pdf` |
 | Novos | R-1 e R-2 (médios), R-3 a R-5 (baixos) |
+
+## Auditoria 01/11/2026 — PDF por período (commit 9607018)
+
+**Escopo:** só o commit `9607018` ("Baixar PDF segue o período escolhido"): Função Edge `demonstrativo-pdf`
+(`index.ts`, `pdf.ts` e as cópias `periodos.ts`, `selecaoPeriodo.ts`, `linhasPeriodo.ts`, `demonstracoes.ts`),
+`BotaoPdf.tsx`, `ExportarPeriodo.tsx`, as duas telas que usam o botão, `linhasPeriodo.ts` (+ teste), `scripts/nucleo_balancete.py`
+e os capítulos `docs/06-fluxos.md` e `docs/modulos/demonstrativos.md`. Banco de produção consultado só para leitura.
+
+### Veredito
+
+**Não pode publicar ainda.** A parte de segurança está correta (ninguém obtém PDF assinado de outro cliente nem com
+números de rascunho ou enviados pela tela), mas o servidor **assina como "trimestre/semestre/ano" um período em que
+falta mês publicado**. Quando o mês que falta fica no meio do período, o documento assinado **não fecha**: o caixa
+inicial mais a variação não dá o caixa final, a DRE não tem o mês que o balanço já contém e o balancete de verificação
+não bate conta a conta (C-P1, reproduzido). Corrigir C-P1 e A-P1 e publicar a função **antes** do site (A-P2).
+
+### Verificações executadas
+
+| Verificação | Resultado |
+| --- | --- |
+| `cd web && npm ci && npm run verificar` | ok (tipos, lint, testes e build; saída 0) |
+| `npm run telas` | 25 de 25 telas ok |
+| `deno check --config deno.json index.ts` (demonstrativo-pdf) | ok (saída 0) |
+| `sh scripts/sync-funcoes.sh` + `git diff --exit-code supabase/` | as cópias da função **batem** com a origem; a única diferença era a `020`, alterada fora deste commit e depois commitada em `519bfa8` (ver M-P4) |
+| PDF de teste com Deno (`balancete-exemplo.json`, 3 meses encadeados de 2026, 1º trimestre) | completo: tudo fecha (DFC 1.000 + 9.600 = 10.600; 0 de 23 contas com diferença). **Sem fevereiro:** DFC 1.000 + 6.400 = 7.400 contra caixa final 10.600; **20 de 23 contas** com saldo anterior ± movimento ≠ saldo final; capa "1º trimestre de 2026 (01/01/2026 a 31/03/2026)", só uma linha cinza "2 de 3 meses publicados · falta fev/2026". Sem março: fecha (período vai até 28/02, rótulo continua "1º trimestre"). PDF gerado: 5 páginas |
+| Função publicada (`list_edge_functions` / `get_edge_function`) | no ar a **v5** (01/11 08:39), que é a do commit `6a709b3` (tem `lerTodasLinhas` e o filtro de publicados; **não** tem `pdfDoPeriodo` nem `combinarLinhas`). Este commit **ainda não foi publicado** e a `main` está 1 commit à frente de `origin/main` |
+| Banco (leitura) | 26 balancetes. Nexus: 24 meses (jan/2024–dez/2025), **só dez/2025 publicado**. MDC: acumulado jan–dez/2025 publicado. Greencore: acumulado jan–dez/2025 em **rascunho** |
+
+### Segurança da assinatura (pergunta 1): sem achado
+
+- O corpo só é aceito com `balancete_id` no formato UUID (`index.ts:98`) e `periodo` validado campo a campo
+  (`lerEscolha`, `:60-70`: visão da lista, ano 2000–2100, número dentro da visão). Números enviados pela tela não
+  entram em lugar nenhum.
+- O balancete de referência é lido **com o login de quem pediu** (`:106`); sem permissão → 404. O mês escolhido
+  (`:112`) e os meses do período (`:167-174`) são buscados pelo `cliente_id` desse balancete, também com o login do
+  usuário, e o período filtra `status = 'publicado'` (`:171`). Para o cliente do Portal a RLS já esconde rascunho
+  (`010_portal_cliente.sql:467` e `:474`); para a equipe vale `hub_pode(...,'demonstrativos','ver')`.
+- O cliente de serviço só lê razão social/CNPJ do cliente já autorizado (`:190`), o certificado da organização do
+  balancete (`:220`) e a logo da própria organização (`:228-236`). Não há como trocar de cliente ou de organização.
+- PDF do mês escolhido (`:110-117`): se o mês for rascunho (equipe), segue o caminho do mês, sem assinatura e com a
+  tarja "RASCUNHO", como antes.
+- Ressalva fora do commit (M-P3): o servidor **não refaz o cálculo a partir das contas**; ele soma os resultados
+  gravados (`resumo`, `demonstracoes`) que foram calculados no navegador na importação.
+
+### Achados
+
+**C-P1 · crítico · Período com mês faltando no meio é assinado e sai com números que não fecham**
+- `index.ts:178-191` monta o período só com os publicados e chama `finalizar(..., true, ...)` (`:191`), que assina
+  sempre. Não há checagem de `sel.completo` nem de buraco entre o primeiro e o último mês.
+- `selecaoPeriodo.ts` (origem `web/src/dominios/demonstrativos/selecaoPeriodo.ts:245-257`): o período usa os meses
+  existentes; a abertura vem do primeiro e o balanço do último. `somarDfc` (`calculosDemonstracoes.ts:358-359`) pega o
+  caixa inicial do primeiro e o final do último, mas soma só as variações dos meses presentes.
+  `linhasPeriodo.ts:19-22` faz o mesmo no balancete.
+- Cenário real: jan e mar publicados, fev em rascunho (ou despublicado para correção). Sai um PDF **assinado com o
+  certificado da MDC** "1º trimestre (01/01 a 31/03)" em que a DRE não tem fevereiro, a DFC não fecha (7.400 × 10.600
+  no teste) e o balancete não bate em 20 de 23 contas. É documento contábil assinado e internamente inconsistente.
+- Correção: no servidor, recusar (409, com mensagem simples) o período quando houver mês sem balancete publicado
+  **entre** o primeiro e o último mês usados; e não assinar quando `!sel.completo` (ver A-P1). Teste para os dois casos.
+
+**A-P1 · alto · Período incompleto é assinado com o nome do período inteiro**
+- Mesmo ponto (`index.ts:191`, `:208-209`). Com meses faltando no começo ou no fim, os números fecham, mas o PDF
+  assinado se chama "ano de 2025" e a única indicação é uma linha cinza de 8,5 pt (`pdf.ts`, bloco `d.completude`).
+- Caso real hoje: **Nexus** tem só dez/2025 publicado. "Ano de 2025" (inclusive pelo próprio cliente no Portal) gera
+  um PDF assinado "ano de 2025 (01/12/2025 a 31/12/2025)" com DRE, margens e termômetro de **um mês**, e "1 de 12 meses
+  publicados · faltam 11 meses".
+- Correção: assinar só período completo; período em andamento (faltam só os meses finais) sai sem assinatura ou com
+  rótulo explícito ("1º trimestre de 2026 — até fevereiro, parcial") em destaque na capa e no nome do arquivo.
+
+**A-P2 · alto · Publicar o site antes da função entrega PDF errado sem avisar**
+- A função no ar (v5) ignora `periodo`. Se o push na `main` for antes do deploy, o botão diz
+  "Baixar PDF · 1º trimestre de 2026" (`BotaoPdf.tsx`) e devolve o PDF do **mês aberto**; e o antigo "PDF do período"
+  foi retirado (`ExportarPeriodo.tsx`). Correção: `supabase functions deploy demonstrativo-pdf` **antes** do push
+  (depois de corrigir C-P1/A-P1) e registrar a ordem em `docs/07-como-rodar-e-publicar.md`.
+
+**M-P1 · médio · Comparação com o ano anterior pode ser de um período incompleto, sem aviso**
+- `index.ts:188` e `:204`: `mesmoPeriodoAnoAnterior` usa o que houver publicado no ano anterior; a coluna se chama
+  "1º trimestre de 2025" mesmo que tenha 1 mês, e a completude dele não vai para o PDF. Com buraco no meio, a DFC da
+  coluna também não fecha. Correção: só comparar com período anterior completo, ou mostrar a completude na coluna.
+
+**M-P2 · médio · Avisos da tela não dizem o que o usuário precisa saber**
+- `demonstrativos/[id]/page.tsx:103-108`: o aviso cita só meses **em rascunho** da tela; não fala que o PDF sairá
+  **assinado** mesmo incompleto. No PDF a completude diz "falta fev/2026" quando fevereiro existe e está em rascunho
+  (`index.ts:209` só troca "importados" por "publicados"). No Portal (`portal/page.tsx:299`) não há aviso nenhum.
+  Seção 8.3 item 4: dizer em português simples "o PDF do trimestre só é assinado com os 3 meses publicados".
+
+**M-P3 · médio (anterior ao commit) · "Cálculo refeito no servidor" soma valores gravados pelo navegador**
+- O servidor agrega `resumo`/`demonstracoes`/`indices` gravados; esses valores foram calculados no navegador
+  (ADR 0003 ainda pendente). As **linhas** do publicado estão travadas (`020`, `tg_linhas_balancete_protegidas`), mas
+  `tg_publicacao_protegida` (`016_endurecimento_auditoria.sql:89-91`) deixa quem **gere** Demonstrativos alterar
+  esses campos de um balancete publicado sem despublicar. O PDF assinado pode divergir das contas travadas.
+  Correção: travar também `resumo`, `indices`, `alertas` e `demonstracoes` quando publicado, ou recalcular das linhas.
+
+**M-P4 · sem achado (fora do commit) · Migração 020 alterada sem commit — resolvido durante a auditoria**
+- No início da auditoria a `020_seguranca_auditoria_2026_10.sql` estava modificada e não commitada. Durante a
+  auditoria entrou o commit `519bfa8` ("migração 020 ajustada pela auditoria geral e aplicada em produção"), com
+  essas mesmas mudanças. Como a 020 ainda não tinha sido aplicada, ajustar o arquivo antes de aplicar não fere a regra 5.
+  O `519bfa8` e o que está em andamento (`repositorio.ts`, `021_gravacao_atomica_balancete.sql`) **não** foram
+  auditados aqui.
+
+**B-P1 · baixo · Equipe perdeu a prévia do PDF do período com rascunho**
+- Com o "PDF do período" do navegador retirado, a equipe só vê o PDF do trimestre depois de publicar todos os meses
+  (antes de publicar só há o Excel). Considerar gerar no servidor sem assinatura e com tarja "RASCUNHO".
+
+**B-P2 · baixo · Sem teste do caminho novo do servidor**
+- `linhasPeriodo.test.ts` cobre a junção das contas, mas nenhum teste cobre `lerEscolha`, o filtro de publicados,
+  o mês escolhido diferente do aberto nem os casos de C-P1/A-P1. O teste de "conta que surge no meio" não cobre mês
+  faltando.
+
+**B-P3 · baixo (anterior) · CORS `*` continua na `demonstrativo-pdf`** (`index.ts:17-22`; B-G2 segue aberto).
+
+### Correção contábil (pergunta 2): o que está certo
+
+- Balancete do período (`linhasPeriodo.ts`): abertura do 1º mês, movimento somado e fechamento do último, com
+  arredondamento a centavos; conta que surge no meio abre zerada e a que some fecha zerada. Correto **quando não há
+  mês faltando** (teste com 3 meses: 0 de 23 contas com diferença).
+- DRE e DFC somadas, balanço do último mês contra a abertura do primeiro, índices refeitos: iguais às da tela
+  (cópias idênticas).
+- Mês único: gera o mês escolhido, não o aberto (`index.ts:110-117`), buscando pelo mesmo cliente.
+- Balancete acumulado (jan–dez num arquivo, caso MDC/Greencore): o período "Ano" usa o próprio acumulado
+  (`selecaoPeriodo.ts`, `usarAcumulado`), uma só leitura de linhas, sem soma. Mês/trimestre/semestre cobertos só por ele
+  ficam indisponíveis na tela.
+
+### Clientes-piloto
+
+Não houve validação com mensais publicados: na MDC só há o acumulado de 2025 publicado e na Greencore o acumulado está
+em rascunho. Os casos de C-P1/A-P1 não aparecem nos pilotos; aparecem na Nexus (24 meses, 1 publicado).
+
+### Situação após esta auditoria
+
+| Achado | Situação |
+| --- | --- |
+| C-P1 | **Aberto** (bloqueia publicar) |
+| A-P1, A-P2 | **Abertos** (A-P2: publicar a função antes do site) |
+| M-P1 a M-P3 | Abertos (M-P3 vem de antes do commit) · M-P4 resolvido (`519bfa8`) |
+| B-P1 a B-P3 | Abertos |
+| A-G2 | Resolvido em produção (v5 da função tem o filtro de publicados) |

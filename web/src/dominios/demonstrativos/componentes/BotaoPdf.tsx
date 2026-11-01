@@ -2,7 +2,33 @@
 
 import { useState } from "react";
 import { SUPABASE_KEY, SUPABASE_URL, supabase } from "@/lib/supabase";
-import type { Escolha } from "@/dominios/demonstrativos/selecaoPeriodo";
+import { listarMeses, selecionar } from "@/dominios/demonstrativos/selecaoPeriodo";
+import type { Escolha, RegPeriodo } from "@/dominios/demonstrativos/selecaoPeriodo";
+import { situacaoPdf } from "@/dominios/demonstrativos/pdfPeriodo";
+
+/**
+ * O que o botão do PDF vai entregar para o período escolhido, com a mesma regra do servidor (pdfPeriodo.ts):
+ * texto do botão, aviso antes de baixar e bloqueio quando o PDF não pode sair (mês publicado faltando no meio).
+ * `historico` pode ter rascunhos (tela da equipe): o PDF de trimestre, semestre ou ano usa só os publicados.
+ */
+export function estadoPdf<T extends RegPeriodo & { status: string }>(historico: T[], escolha: Escolha | null) {
+  if (!escolha || escolha.visao === "mensal") return { aviso: null, bloqueio: null };
+  const rotulo = selecionar(historico, escolha)?.rotulo ?? "o período";
+  const sel = selecionar(
+    historico.filter((b) => b.status === "publicado"),
+    escolha,
+  );
+  if (!sel) return { aviso: null, bloqueio: `Nenhum mês de ${rotulo} foi publicado ainda: publique os meses para baixar o PDF.` };
+  const sit = situacaoPdf(sel.meses, sel.importados);
+  if (sit.tipo === "lacuna")
+    return { aviso: null, bloqueio: `Para baixar o PDF de ${sel.rotulo}, publique antes: ${listarMeses(sit.faltam)}.` };
+  if (sit.tipo === "parcial")
+    return {
+      aviso: `Período em andamento: o PDF sai só com ${listarMeses(sel.importados)}, marcado como parcial e sem assinatura.`,
+      bloqueio: null,
+    };
+  return { aviso: null, bloqueio: null };
+}
 
 /**
  * Baixa o PDF completo das demonstrações no padrão MDC, do período escolhido na tela (mês, trimestre, semestre ou
@@ -15,12 +41,15 @@ export function BotaoPdf({
   rotulo,
   rascunho,
   aviso,
+  bloqueio,
 }: {
   balanceteId: string;
   periodo?: Escolha | null;
   rotulo?: string;
   rascunho?: boolean;
   aviso?: string | null;
+  /** Quando preenchido, o PDF não pode sair: botão desligado e o motivo embaixo. */
+  bloqueio?: string | null;
 }) {
   const [estado, setEstado] = useState<"livre" | "gerando" | "erro">("livre");
   const [msg, setMsg] = useState<string | null>(null);
@@ -65,12 +94,12 @@ export function BotaoPdf({
       <button
         className="btn"
         onClick={baixar}
-        disabled={estado === "gerando"}
+        disabled={estado === "gerando" || !!bloqueio}
         title={rotulo ? `PDF completo de ${rotulo}, no papel timbrado da MDC` : "PDF completo no papel timbrado da MDC"}
       >
         {estado === "gerando" ? "Gerando PDF…" : `${rascunho ? "PDF (rascunho)" : "Baixar PDF"}${rotulo ? ` · ${rotulo}` : ""}`}
       </button>
-      {aviso && !msg && <span className="max-w-72 text-right text-[11px] text-amber-800">{aviso}</span>}
+      {(bloqueio || aviso) && !msg && <span className="max-w-72 text-right text-[11px] text-amber-800">{bloqueio ?? aviso}</span>}
       {msg && <span className={`text-[11px] ${estado === "erro" ? "text-red-700" : "text-emerald-700"}`}>{msg}</span>}
     </span>
   );

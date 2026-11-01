@@ -10,39 +10,52 @@ import type { Resumo } from "@/dominios/demonstrativos/balancete/resumo";
 import { basePrazos, montar, periodoDe } from "./calculosDemonstracoes";
 import type { MapaDfc } from "./calculosDemonstracoes";
 import { hojeISO } from "@/lib/datas";
+import { exigir } from "@/lib/exigir";
+import { traduzirErro } from "@/lib/erros";
+import type { Json } from "@/lib/database.types";
 
-/** Regras de conta → grupo salvas (padrão da organização + específicas do cliente). */
+/**
+ * Regras de conta → grupo salvas (padrão da organização + específicas do cliente).
+ * Erro de leitura para a importação: sem as regras o balancete seria classificado errado sem aviso.
+ */
 export async function carregarMapa(org: string, cliente: string) {
-  const { data } = await supabase()
-    .from("portal_mapa_contas")
-    .select("classificacao,grupo,cliente_id")
-    .eq("org_id", org)
-    .or(`cliente_id.is.null,cliente_id.eq.${cliente}`);
-  const rows = (data as { classificacao: string; grupo: Grupo; cliente_id: string | null }[]) ?? [];
+  const rows = await lerTudo<{ classificacao: string; grupo: Grupo; cliente_id: string | null }>((de, ate) =>
+    supabase()
+      .from("portal_mapa_contas")
+      .select("id,classificacao,grupo,cliente_id")
+      .eq("org_id", org)
+      .or(`cliente_id.is.null,cliente_id.eq.${cliente}`)
+      .order("id")
+      .range(de, ate),
+  );
   // regra do cliente vence a padrão
   return [...rows.filter((r) => !r.cliente_id), ...rows.filter((r) => r.cliente_id)];
 }
 
 /** Linhas da DFC escolhidas pelo contador (padrão da organização + específicas do cliente; a do cliente vence). */
 export async function carregarMapaDfc(org: string, cliente: string): Promise<MapaDfc> {
-  const { data } = await supabase()
-    .from("portal_mapa_dfc")
-    .select("classificacao,linha,cliente_id")
-    .eq("org_id", org)
-    .or(`cliente_id.is.null,cliente_id.eq.${cliente}`);
-  const rows = (data as { classificacao: string; linha: string; cliente_id: string | null }[]) ?? [];
+  const rows = await lerTudo<{ classificacao: string; linha: string; cliente_id: string | null }>((de, ate) =>
+    supabase()
+      .from("portal_mapa_dfc")
+      .select("id,classificacao,linha,cliente_id")
+      .eq("org_id", org)
+      .or(`cliente_id.is.null,cliente_id.eq.${cliente}`)
+      .order("id")
+      .range(de, ate),
+  );
   // mesma classificação: a do cliente fica por último e prevalece no empate de tamanho
   return [...rows.filter((r) => !r.cliente_id), ...rows.filter((r) => r.cliente_id)];
 }
 
 async function resumoAnterior(cliente: string, competencia: string): Promise<Resumo | null> {
-  const { data } = await supabase()
+  const { data, error } = await supabase()
     .from("portal_balancetes")
     .select("resumo")
     .eq("cliente_id", cliente)
     .lt("competencia", competencia)
     .order("competencia", { ascending: false })
     .limit(1);
+  if (error) throw new Error(traduzirErro(error));
   return ((data?.[0] as { resumo: Resumo } | undefined)?.resumo ?? null) as Resumo | null;
 }
 
@@ -78,40 +91,26 @@ export async function salvarBalancete(o: {
   const sb = supabase();
   const existe = await sb
     .from("portal_balancetes")
-    .select("id,status")
+    .select("status")
     .eq("cliente_id", o.cliente)
     .eq("competencia", o.competencia)
     .maybeSingle();
+  if (existe.error) throw new Error(traduzirErro(existe.error));
   if (existe.data?.status === "publicado")
     throw new Error("Este mês já está publicado para o cliente. Despublique na tela do balancete antes de importar de novo.");
   const anterior = await resumoAnterior(o.cliente, o.competencia);
   const a = analisar(o.linhas, o.competencia, anterior, o.inicio, o.fim, await carregarMapaDfc(o.org, o.cliente));
-  const reg = {
-    org_id: o.org,
-    cliente_id: o.cliente,
-    competencia: o.competencia,
-    status: "rascunho",
-    arquivo_nome: o.arquivo,
-    ...a,
-    importado_em: new Date().toISOString(),
-  };
-  let id: string;
-  if (existe.data) {
-    id = existe.data.id;
-    const u = await sb.from("portal_balancetes").update(reg).eq("id", id);
-    if (u.error) throw u.error;
-    const d = await sb.from("portal_balancete_linhas").delete().eq("balancete_id", id);
-    if (d.error) throw d.error;
-  } else {
-    const i = await sb.from("portal_balancetes").insert(reg).select("id").single();
-    if (i.error) throw i.error;
-    id = (i.data as { id: string }).id;
-  }
-  const rows = o.linhas.map((l) => ({ ...l, balancete_id: id, org_id: o.org }));
-  for (let k = 0; k < rows.length; k += 500) {
-    const r = await sb.from("portal_balancete_linhas").insert(rows.slice(k, k + 500));
-    if (r.error) throw r.error;
-  }
+  // cabeçalho, cálculo e contas num pedido só: ou grava inteiro, ou não muda nada
+  const id = exigir(
+    await sb.rpc("portal_gravar_balancete", {
+      p_org: o.org,
+      p_cliente: o.cliente,
+      p_competencia: o.competencia,
+      p_arquivo: o.arquivo,
+      p_analise: a as unknown as Json,
+      p_linhas: o.linhas.map(somenteConta) as unknown as Json,
+    }),
+  ) as string;
   return id;
 }
 
@@ -127,6 +126,20 @@ export function lerLinhas(balanceteId: string) {
       .range(de, ate),
   );
 }
+
+/** Só os campos da conta (sem id, balancete ou organização), como a função do banco espera. */
+const somenteConta = (l: Linha): Linha => ({
+  codigo: l.codigo,
+  classificacao: l.classificacao,
+  descricao: l.descricao,
+  nivel: l.nivel,
+  analitica: l.analitica,
+  saldo_anterior: l.saldo_anterior,
+  debitos: l.debitos,
+  creditos: l.creditos,
+  saldo_atual: l.saldo_atual,
+  grupo: l.grupo,
+});
 
 /** Recalcula resumo, índices e alertas de um balancete já gravado (depois de ajustar grupos). */
 export async function recalcular(balanceteId: string) {
@@ -219,16 +232,6 @@ export async function reprocessar(balanceteId: string) {
   })) as Linha[];
   normalizarSinal(linhas);
   classificar(linhas, (await carregarMapa(org_id, cliente_id)) as { classificacao: string; grupo: Grupo }[]);
-  const d = await sb.from("portal_balancete_linhas").delete().eq("balancete_id", balanceteId);
-  if (d.error) throw d.error;
-  const rows = linhas.map((x) => {
-    const { balancete_id: _b, org_id: _o, ...resto } = x as Linha & { balancete_id?: string; org_id?: string };
-    return { ...resto, balancete_id: balanceteId, org_id };
-  });
-  for (let k = 0; k < rows.length; k += 500) {
-    const r = await sb.from("portal_balancete_linhas").insert(rows.slice(k, k + 500));
-    if (r.error) throw r.error;
-  }
   const a = analisar(
     linhas,
     competencia,
@@ -237,8 +240,14 @@ export async function reprocessar(balanceteId: string) {
     periodo_fim,
     await carregarMapaDfc(org_id, cliente_id),
   );
-  const u = await sb.from("portal_balancetes").update(a).eq("id", balanceteId);
-  if (u.error) throw u.error;
+  // troca as contas e o cálculo num pedido só: se a conexão cair, nada muda
+  exigir(
+    await sb.rpc("portal_regravar_contas", {
+      p_balancete: balanceteId,
+      p_analise: a as unknown as Json,
+      p_linhas: linhas.map(somenteConta) as unknown as Json,
+    }),
+  );
 }
 
 /** Guarda a linha da DFC escolhida para uma conta (do cliente ou padrão da MDC) e refaz os cálculos. */
