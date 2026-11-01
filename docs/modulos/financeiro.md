@@ -16,7 +16,6 @@
 | `/financeiro` | Equipe (ver; cadastro com operar) | Contas bancárias da empresa escolhida: saldo pelos extratos, último lançamento, lançamentos a conciliar, conta contábil ligada; cadastrar e editar; PDF e Excel |
 | `/financeiro/extratos` | Equipe (ver; importar com operar) | Importa OFX ou planilha numa conta (confere antes de gravar); lista com filtros de conta, período, entradas/saídas, situação e busca; totais; PDF e Excel |
 | `/financeiro/plano` | Equipe (ver; importar com operar) | Importa o plano de contas do Domínio (Excel/CSV); lista com busca e filtros; PDF e Excel |
-
 | `/financeiro/pagar` e `/financeiro/receber` | Equipe (ver; lançar e baixar com operar) | Contas a pagar / a receber: filtro de vencimento em um clique, situação (em aberto, vencidos, a vencer, pagos, cancelados), fornecedor/cliente, categoria e busca; frase de resumo; 3 indicadores que filtram ao clicar (vencido, a vencer, pago); lançar (parcelas mensais, "já foi pago", fornecedor novo cadastrado na hora), pagar/receber (total ou parcial), editar, histórico com estorno, cancelar com motivo; PDF e Excel |
 | `/financeiro/movimento` | Equipe | Entradas e saídas: pagamentos e recebimentos do período (realizado) e, se marcado, o previsto (contas em aberto que vencem no período); entrou, saiu, resultado; "para onde foi o dinheiro" por categoria (clique filtra); lançar entrada/saída à vista; PDF e Excel |
 | `/financeiro/cadastros` | Equipe (ver; cadastrar com operar) | Abas Fornecedores e clientes (CPF/CNPJ conferido), Despesas e receitas (cada uma ligada a conta analítica ativa do plano), Centros de custo; busca, filtros, PDF e Excel |
@@ -28,7 +27,8 @@ Código: regras puras em `web/src/dominios/financeiro/` (`ofx.ts`, `extratoPlani
 `leitores.test.ts`), leituras paginadas em `leituras.ts`, gravações em `repositorio.ts`, telas em
 `web/src/app/(hub)/financeiro/`. Etapa 1B: regras puras em `regras.ts` (CPF/CNPJ, período, parcelas, situação; testes
 em `regras.test.ts`), exportação comum PDF/Excel em `exportar.ts`, telas compartilhadas em `componentes/`
-(`TelaTitulos`, `LancarTitulo`, `BaixaTitulo`, `CadPessoas`, `CadCategorias`, `Estoque`, `Comuns`).
+(`TelaTitulos`, `LancarTitulo`, `BaixaTitulo`, `CadPessoas`, `CadCategorias`, `CadCentros`, `EstoqueItens`, `EstoqueLocais`,
+`EstoqueMovimentos`, `estoqueBase`, `Comuns`).
 
 ## 2. Regras
 
@@ -56,11 +56,16 @@ tudo ou nada, registradas na auditoria). A conta contábil do banco só é valid
 trava a edição da conta bancária).
 
 
-## 4. Etapa 1B: cadastros e contas a pagar/receber (migração 028)
+## 4. Etapa 1B: cadastros e contas a pagar/receber (migrações 028 e 030)
 
 | Regra | Onde |
 | --- | --- |
-| Categoria (despesa/receita) só liga em conta **analítica ativa** do plano da mesma empresa; não muda de empresa | `tg_fin_categoria` |
+| Categoria (despesa/receita) só liga em conta **analítica ativa** do plano da mesma empresa; não muda de empresa; só a equipe MDC cadastra (o cliente no Portal só lê), como os centros de custo | `tg_fin_categoria`, políticas `fin_incluir`/`fin_alterar` (030) |
+| Fornecedor/cliente, centro de custo e estoque (local) não mudam de empresa | `tg_fin_sem_troca_empresa` (030) |
+| Fornecedor digitado na hora no lançamento: o banco acha pelo nome ou cadastra, na mesma transação | `fin_lancar` (`pessoa_nome`, 030) |
+| Valor digitado: "1.250" = mil duzentos e cinquenta (ponto é milhar); "1.250,50" e "1250.50" também valem | `regras.numeroBr` |
+| Editar valor de título pago em parte: precisa ficar maior do que o já pago (senão daria baixa do restante) | `tg_fin_titulo` (030) |
+| Entradas e saídas: juros e multa e descontos aparecem em linhas próprias ("Juros e multas pagos/recebidos", "Descontos obtidos/concedidos"), não na categoria do título | `movimento/page.tsx` |
 | Conta a pagar usa categoria de despesa; a receber, de receita; fornecedor, centro e banco previsto da mesma empresa | `tg_fin_titulo` |
 | Lançar: valor dividido em parcelas mensais iguais, centavos na última; vencimento no mesmo dia (último dia do mês quando não existe, ex.: 31/01 → 28/02); "já foi pago" quita todas na hora | `fin_lancar`, prévia em `regras.dividirParcelas` |
 | Pagar/receber: baixa total ou parcial; `valor` = quanto do título foi baixado, `total` = o que passou no banco (valor + juros + multa − desconto); quita quando o baixado chega ao valor | `fin_baixar` |

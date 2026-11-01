@@ -107,7 +107,7 @@ export function LancarTitulo({
   const n = Math.max(1, Math.min(120, Math.floor(Number(f.parcelas) || 1)));
   const previa = !editar && n > 1 && valor > 0 && f.vencimento ? dividirParcelas(valor, n, f.vencimento) : [];
 
-  /** Acha o fornecedor/cliente pelo nome digitado; se não existir, cadastra. */
+  /** Na edição: acha o fornecedor/cliente pelo nome digitado; se não existir, cadastra. */
   async function idDaPessoa(): Promise<string | null> {
     const nome = f.pessoa.trim();
     if (!nome) return null;
@@ -131,8 +131,8 @@ export function LancarTitulo({
     if (f.jaPago && (!f.pagoData || !f.pagoConta)) return setErro("Para lançar como já pago, informe a data e a conta bancária.");
     setSalvando(true);
     try {
-      const pessoa = await idDaPessoa();
       if (editar) {
+        const pessoa = await idDaPessoa();
         const { error } = await supabase()
           .from("fin_titulos")
           .update({
@@ -154,7 +154,9 @@ export function LancarTitulo({
         await lancar({
           cliente: cliente.id,
           tipo,
-          pessoa,
+          // o banco acha o fornecedor pelo nome ou cadastra, na mesma transação (se o lançamento falhar, não sobra cadastro)
+          pessoa: cad.pessoas.find((p) => p.nome.toLowerCase() === f.pessoa.trim().toLowerCase())?.id ?? null,
+          pessoa_nome: f.pessoa.trim() || null,
           categoria: f.categoria,
           centro: f.centro || null,
           conta_prevista: f.conta_prevista || null,

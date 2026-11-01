@@ -35,6 +35,15 @@ describe("valores digitados", () => {
     expect(numeroBr("")).toBe(0);
     expect(numeroBr("abc")).toBeNaN();
   });
+  it("ponto sem vírgula é milhar (auditoria A-1: '1.250' virava R$ 1,25)", () => {
+    expect(numeroBr("1.250")).toBe(1250);
+    expect(numeroBr("1.000")).toBe(1000);
+    expect(numeroBr("12.345.678")).toBe(12345678);
+    expect(numeroBr("-1.500")).toBe(-1500);
+    expect(numeroBr("1250.5")).toBe(1250.5);
+    expect(numeroBr("0.35")).toBe(0.35);
+    expect(numeroBr("2,5")).toBe(2.5);
+  });
 });
 
 describe("período", () => {

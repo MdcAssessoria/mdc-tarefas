@@ -83,6 +83,9 @@ Concluir uma **baixa** (que inativa o cliente) é só para gestor ou administrad
 | `portal_usuario_nao_equipe` | Acesso de portal criado ou mudado | Impede equipe como usuário do portal e audita |
 | pg_cron `agente-balancetes` → Função `balancete-agente` | A cada 15 min, só com a pasta ligada em Configurações › Integrações | Lê a pasta de balancetes do SharePoint, cria rascunhos, move os arquivos e registra em `hub_importacoes` |
 | Simulador (projeto separado) → `crm_receber_lead` | Lead preenchido no site | Cria a oportunidade no CRM |
+| `fin_conta_bancaria_valida`, `fin_categoria_valida`, `fin_titulo_valida`, `est_item_valida` | Gravação de conta bancária, categoria, título ou item | Confere empresa, conta analítica ativa do plano, tipo da categoria x tipo do título, travas de situação do título e de item com saldo |
+| `sem_troca_empresa`, `cliente_mesma_org` (tabelas `fin_*` e `est_*`) | Cadastro do Financeiro/estoque alterado | Impede mudar de empresa ou de organização |
+| `fin_auditar` | Conta bancária, fornecedor/cliente, categoria, centro de custo, título, item ou estoque criado/alterado direto pela tela | Registra antes e depois na auditoria (as funções `fin_*`/`est_*` registram o próprio evento) |
 
 ## 6.5 Atendimento: conversa vira tarefa
 

@@ -7,7 +7,7 @@ su postgres -s /bin/bash -c "$B/initdb -D $D/data -A trust >/dev/null && $B/pg_c
 trap 'su postgres -s /bin/bash -c "$B/pg_ctl -D $D/data stop >/dev/null"' EXIT
 R=$(cd "$(dirname "$0")/.." && pwd)
 P="psql -h $D -p 5498 -U postgres -d postgres -q"
-for f in testes/00_base_simulada.sql migrations/026_financeiro_base.sql migrations/028_financeiro_cadastros_titulos.sql migrations/029_estoque_itens.sql testes/10_dados.sql; do
+for f in testes/00_base_simulada.sql migrations/026_financeiro_base.sql migrations/028_financeiro_cadastros_titulos.sql migrations/029_estoque_itens.sql migrations/030_financeiro_correcoes_auditoria.sql testes/10_dados.sql; do
   $P -v ON_ERROR_STOP=1 -f "$R/$f" 2>&1 | grep -v NOTICE || true
 done
 $P -f "$R/testes/20_titulos.sql" 2>&1 | grep -v "^SET$"

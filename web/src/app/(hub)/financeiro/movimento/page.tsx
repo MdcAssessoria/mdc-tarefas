@@ -96,21 +96,47 @@ export default function PaginaEntradasSaidas() {
       const t = tit.get(b.titulo_id);
       if (!t) return [];
       const entrada = t.tipo === "receber";
-      return [
+      const sinal = entrada ? 1 : -1;
+      const comum = {
+        data: b.data,
+        entrada,
+        previsto: false,
+        descricao: t.descricao,
+        pessoa: pessoa.get(t.pessoa_id ?? "") ?? "",
+        conta: cta.get(b.conta_id) ?? "",
+        contaId: b.conta_id,
+      };
+      // juros/multa e desconto ficam em linhas próprias (são resultado financeiro, não a despesa/receita do título)
+      const encargos = Number(b.juros) + Number(b.multa);
+      const linhasBaixa: Linha[] = [
         {
+          ...comum,
           chave: `b${b.id}`,
-          data: b.data,
-          entrada,
-          previsto: false,
-          descricao: t.descricao,
-          pessoa: pessoa.get(t.pessoa_id ?? "") ?? "",
           categoria: cat.get(t.categoria_id) ?? "",
           categoriaId: t.categoria_id,
-          conta: cta.get(b.conta_id) ?? "",
-          contaId: b.conta_id,
-          valor: (entrada ? 1 : -1) * Number(b.total),
+          valor: sinal * Number(b.valor),
         },
       ];
+      if (encargos > 0)
+        linhasBaixa.push({
+          ...comum,
+          chave: `b${b.id}j`,
+          descricao: `${t.descricao} (juros e multa)`,
+          categoria: entrada ? "Juros e multas recebidos" : "Juros e multas pagos",
+          categoriaId: entrada ? "_juros_recebidos" : "_juros_pagos",
+          valor: sinal * encargos,
+        });
+      if (Number(b.desconto) > 0)
+        linhasBaixa.push({
+          ...comum,
+          chave: `b${b.id}d`,
+          entrada: !entrada,
+          descricao: `${t.descricao} (desconto)`,
+          categoria: entrada ? "Descontos concedidos" : "Descontos obtidos",
+          categoriaId: entrada ? "_descontos_concedidos" : "_descontos_obtidos",
+          valor: -sinal * Number(b.desconto),
+        });
+      return linhasBaixa;
     });
     const prev = d.abertos.map((t) => ({
       chave: `t${t.id}`,

@@ -49,12 +49,25 @@ select fin_cancelar_titulo((select id from fin_titulos where parcela = 3 and tip
 \echo '--- apagar (deve apagar 0)'
 delete from fin_titulos;
 select count(*) titulos from fin_titulos;
+\echo '--- (030 A-2) fornecedor mudar de empresa (deve falhar)'
+update fin_pessoas set cliente_id = '00000000-0000-0000-0000-0000000000c2' where id = '00000000-0000-0000-0000-0000000000f1';
+\echo '--- (030 M-1) valor igual ao já pago (deve falhar)'
+update fin_titulos set valor = 200 where parcela = 1 and tipo = 'pagar';
+\echo '--- (030 M-4) fornecedor digitado na hora: cria uma vez e reaproveita'
+select fin_lancar('{"cliente":"00000000-0000-0000-0000-0000000000c1","tipo":"pagar","pessoa_nome":"Posto Novo","categoria":"00000000-0000-0000-0000-0000000000d1","descricao":"Combustível","vencimento":"2026-03-10","valor":100}'::jsonb) is not null as ok;
+select fin_lancar('{"cliente":"00000000-0000-0000-0000-0000000000c1","tipo":"pagar","pessoa_nome":"posto novo","categoria":"00000000-0000-0000-0000-0000000000d1","descricao":"Combustível 2","vencimento":"2026-03-11","valor":90}'::jsonb) is not null as ok;
+select count(*) as postos_cadastrados from fin_pessoas where lower(nome) = 'posto novo';
+\echo '--- (030 M-4) lançamento que falha não deixa fornecedor (deve falhar)'
+select fin_lancar('{"cliente":"00000000-0000-0000-0000-0000000000c1","tipo":"pagar","pessoa_nome":"Fantasma","categoria":"00000000-0000-0000-0000-0000000000d2","descricao":"x","vencimento":"2026-03-11","valor":90}'::jsonb);
+select count(*) as fantasma from fin_pessoas where nome = 'Fantasma';
 \echo '--- portal: usuário do cliente vê c1, não vê c2'
 set teste.papel = '';
 set teste.uid = '00000000-0000-0000-0000-0000000000e2';
 select count(*) as ve_c1 from fin_titulos;
 select count(*) as contas_portal from fin_contas_bancarias;
 insert into fin_categorias (org_id, cliente_id, tipo, nome, conta_contabil_id) values ('00000000-0000-0000-0000-0000000000a1','00000000-0000-0000-0000-0000000000c2','despesa','Hack','00000000-0000-0000-0000-000000000004');
+\echo '--- (030 M-2) portal cria categoria na própria empresa (deve falhar)'
+insert into fin_categorias (org_id, cliente_id, tipo, nome, conta_contabil_id) values ('00000000-0000-0000-0000-0000000000a1','00000000-0000-0000-0000-0000000000c1','despesa','Do cliente','00000000-0000-0000-0000-000000000001');
 \echo '--- portal lança no c1 (ok)'
 select fin_lancar('{"cliente":"00000000-0000-0000-0000-0000000000c1","tipo":"pagar","categoria":"00000000-0000-0000-0000-0000000000d1","descricao":"Luz","vencimento":"2026-03-10","valor":80}'::jsonb) is not null as ok;
 \echo '--- portal muda regra de estoque (deve falhar)'

@@ -5,7 +5,9 @@
 import { useState } from "react";
 import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { EscolhaCliente, useClienteFinanceiro } from "@/dominios/financeiro/componentes/EscolhaCliente";
-import { AbaItens, AbaLocais, AbaMovimentos } from "@/dominios/financeiro/componentes/Estoque";
+import { AbaItens } from "@/dominios/financeiro/componentes/EstoqueItens";
+import { AbaLocais } from "@/dominios/financeiro/componentes/EstoqueLocais";
+import { AbaMovimentos } from "@/dominios/financeiro/componentes/EstoqueMovimentos";
 import { Abas } from "@/components/ui/Abas";
 import { EstadoVazio } from "@/components/ui/EstadoVazio";
 import { useAviso } from "@/components/ui/Aviso";

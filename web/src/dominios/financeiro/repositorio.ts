@@ -39,6 +39,8 @@ export interface Lancamento {
   cliente: string;
   tipo: "pagar" | "receber";
   pessoa?: string | null;
+  /** Fornecedor/cliente digitado na hora: o banco acha pelo nome ou cadastra, junto com o lançamento. */
+  pessoa_nome?: string | null;
   categoria: string;
   centro?: string | null;
   conta_prevista?: string | null;

@@ -35,6 +35,8 @@ select est_estornar_movimento((select id from est_movimentos where tipo='transfe
 select l.nome, s.saldo from est_saldos s join est_locais l on l.id = s.local_id order by 1;
 \echo '--- inserir movimento direto (deve falhar)'
 insert into est_movimentos (org_id, cliente_id, item_id, local_id, data, tipo, quantidade) values ('00000000-0000-0000-0000-0000000000a1','00000000-0000-0000-0000-0000000000c1','00000000-0000-0000-0000-000000000011','00000000-0000-0000-0000-000000000021',current_date,'entrada',100);
+\echo '--- (030 A-2) estoque mudar de empresa (deve falhar)'
+update est_locais set cliente_id = '00000000-0000-0000-0000-0000000000c2' where id = '00000000-0000-0000-0000-000000000022';
 \echo '--- gerir libera negativo e sai 20'
 set teste.papel = 'gerir';
 select est_definir_negativo('00000000-0000-0000-0000-0000000000c1', true);
