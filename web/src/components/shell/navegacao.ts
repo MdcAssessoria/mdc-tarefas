@@ -13,6 +13,7 @@ export type Modulo =
   | "financeiro"
   | "licencas"
   | "estoque"
+  | "entradas"
   | "saidas"
   | "plano_contas"
   | "centros_custo"
@@ -128,6 +129,16 @@ export const NAV: Record<Modulo, { titulo: string; links: LinkModulo[]; grupos?:
     acesso: ["financeiro", "entradas", "saidas", "estoque"],
     links: [{ href: "/cadastros/pessoas", nome: "Fornecedores e clientes" }],
   },
+  entradas: {
+    titulo: "Entradas",
+    links: [
+      { href: "/entradas", nome: "Notas recebidas" },
+      { href: "/entradas/lancar", nome: "Lançar nota", minimo: "operar" },
+      { href: "/entradas/compras", nome: "Pedidos de compra" },
+      { href: "/entradas/carga-tributaria", nome: "Carga tributária" },
+      { href: "/entradas/certificado", nome: "Certificado digital" },
+    ],
+  },
   comercial: {
     titulo: "CRM Comercial",
     links: [
@@ -162,7 +173,15 @@ export const MODULO_POR_PREFIXO: Record<string, Modulo> = {
   "centros-custo": "centros_custo",
   relatorios: "relatorios",
   cadastros: "cadastros",
+  entradas: "entradas",
 };
+
+/**
+ * Ferramenta (hub_apps.slug) que libera cada módulo, quando é diferente do nome do módulo. Desde a migração 035 cada
+ * módulo de gestão tem a sua ferramenta (Entradas usa "entradas"); mapa vazio mantido para módulos futuros.
+ */
+export const APP_DO_MODULO: Partial<Record<Modulo, string>> = {};
+export const appDoModulo = (m: Modulo) => APP_DO_MODULO[m] ?? m;
 
 /** Módulo da rota atual (caminho sem o /hub-mdc, como devolve o usePathname). */
 export function moduloDaRota(rota: string): Modulo {

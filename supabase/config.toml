@@ -18,3 +18,17 @@ import_map = "./functions/demonstrativo-pdf/deno.json"
 [functions.certificado]
 verify_jwt = true
 import_map = "./functions/certificado/deno.json"
+
+# Notas fiscais (migração 032). fiscal-captura é chamada pelo agendador com token próprio (x-agente-token) ou pela
+# tela com o login (a função confere o login e a permissão no banco); por isso a checagem padrão fica desligada.
+[functions.fiscal-captura]
+verify_jwt = false
+import_map = "./functions/fiscal-captura/deno.json"
+
+[functions.fiscal-certificado]
+verify_jwt = true
+import_map = "./functions/fiscal-certificado/deno.json"
+
+[functions.fiscal-manifestar]
+verify_jwt = true
+import_map = "./functions/fiscal-manifestar/deno.json"

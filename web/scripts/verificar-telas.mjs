@@ -321,6 +321,24 @@ const INTERACOES = {
     await abrirEFecharModal(p, "Novo pedido", "Novo pedido de compra");
     await abrirEFecharModal(p, "Receber", "Receber a compra nº 2");
   },
+  "/entradas": async (p) => {
+    await abrirEFecharModal(p, "Enviar XML", "Enviar XML de nota");
+    await p.getByRole("button", { name: "Responder", exact: true }).first().click();
+    const dialogo = p.getByRole("dialog", { name: "Responder à SEFAZ" });
+    await dialogo.waitFor({ timeout: 3000 });
+    await p.keyboard.press("Escape");
+    await dialogo.waitFor({ state: "detached", timeout: 3000 });
+  },
+  "/entradas/lancar": async (p) => {
+    await p.getByRole("button", { name: "Lançar", exact: true }).first().click();
+    await p.getByRole("heading", { name: "O que é esta nota?" }).waitFor({ timeout: 3000 });
+    await p.getByRole("button", { name: "← Voltar à lista" }).click();
+    for (const aba of await p.getByRole("tab").all()) {
+      await aba.click();
+      if ((await aba.getAttribute("aria-selected")) !== "true") throw new Error(`a aba "${await aba.innerText()}" não ficou selecionada`);
+      await p.waitForTimeout(300);
+    }
+  },
   "/comercial": (p) => abrirEFecharModal(p, "Limpar funil", "Limpar funil"),
   "/licencas/contratos": (p) => abrirEFecharModal(p, "Novo contrato", "Novo contrato de licença"),
   "/licencas/produtos": async (p) => {

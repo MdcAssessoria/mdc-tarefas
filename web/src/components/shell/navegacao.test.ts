@@ -25,6 +25,7 @@ describe("moduloDaRota", () => {
     expect(moduloDaRota("/centros-custo")).toBe("centros_custo");
     expect(moduloDaRota("/relatorios")).toBe("relatorios");
     expect(moduloDaRota("/cadastros/pessoas")).toBe("cadastros");
+    expect(moduloDaRota("/entradas/lancar")).toBe("entradas");
   });
 
   it("Configurações e importação de clientes ficam em Tarefas (como era o padrão do AppShell)", () => {
@@ -40,6 +41,12 @@ describe("filtrarLinks", () => {
     const soVer = filtrarLinks("demonstrativos", { pode: (_app, minimo = "ver") => minimo === "ver", podeEditarCadastros: true });
     expect(soVer.map((l) => l.href)).toEqual(["/demonstrativos", "/demonstrativos/importacoes", "/demonstrativos/riscos"]);
   });
+
+  it("Entradas usa o nível da ferramenta Entradas", () => {
+    const soVer = filtrarLinks("entradas", { pode: (app, minimo = "ver") => app === "entradas" && minimo === "ver", podeEditarCadastros: false });
+    expect(soVer.map((l) => l.href)).not.toContain("/entradas/lancar");
+    expect(soVer.map((l) => l.href)).toContain("/entradas");
+  });
 });
 
 describe("Licenças", () => {
@@ -53,6 +60,9 @@ describe("Licenças", () => {
       "/licencas/faturamento",
       "/licencas/produtos",
     ]);
+  });
+});
+
 describe("linkAtivo", () => {
   it("a aba inicial do módulo só fica ativa na própria rota", () => {
     expect(linkAtivo("/financeiro", "/financeiro", "financeiro")).toBe(true);
