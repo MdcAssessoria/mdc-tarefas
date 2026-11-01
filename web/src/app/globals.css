@@ -255,3 +255,140 @@ input[type="file"]:disabled::file-selector-button {
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* ------------------------------------------------------------------ molde de lista (Financeiro e telas novas)
+   Uso: componente QuadroTabela (components/ui/QuadroTabela.tsx), que monta
+   <div class="quadro-tabela"><table class="tabela tabela-listrada tabela-cartoes">…
+   - cabeçalho (e total) fixos ao rolar: no computador a lista rola dentro do quadro;
+   - linhas zebradas suaves e destaque ao passar o mouse;
+   - no celular cada linha vira um cartão: a célula mostra o rótulo da coluna (atributo data-rotulo) à esquerda.
+   Fora das camadas do Tailwind de propósito: no celular estas regras vencem as classes utilitárias das células. */
+.quadro-tabela {
+  background: var(--superficie);
+  border: 1px solid var(--borda);
+  border-radius: 12px;
+  overflow: auto;
+}
+@media (min-width: 640px) {
+  .quadro-tabela {
+    max-height: min(72vh, 900px);
+  }
+}
+.quadro-tabela .tabela thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #f7f9f8;
+  box-shadow: inset 0 -1px 0 var(--borda);
+  border-bottom: 0;
+}
+.quadro-tabela .tabela tfoot td {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  background: #f7f9f8;
+  box-shadow: inset 0 1px 0 var(--borda);
+  border-bottom: 0;
+}
+.tabela-listrada tbody tr:nth-child(even) > td {
+  background: #f8faf9;
+}
+.tabela-listrada tbody tr:hover > td {
+  background: #f1f5f2;
+}
+.tabela-listrada td {
+  border-bottom-color: #edf1ee;
+}
+
+@media (max-width: 639px) {
+  .tabela-cartoes thead {
+    display: none;
+  }
+  .tabela-cartoes,
+  .tabela-cartoes tbody,
+  .tabela-cartoes tfoot,
+  .tabela-cartoes tr,
+  .tabela-cartoes td {
+    display: block;
+    width: 100%;
+  }
+  .tabela-cartoes tr {
+    display: flex;
+    flex-direction: column;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--borda);
+  }
+  .tabela-cartoes tbody tr:nth-child(even) > td,
+  .tabela-cartoes tbody tr:hover > td {
+    background: transparent;
+  }
+  .tabela-cartoes tbody tr:nth-child(even) {
+    background: #f8faf9;
+  }
+  .tabela-cartoes td {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    min-width: 0 !important;
+    padding: 2px 0 !important;
+    border: 0 !important;
+    text-align: right;
+    white-space: normal;
+  }
+  .tabela-cartoes td[data-rotulo]::before {
+    content: attr(data-rotulo);
+    flex-shrink: 0;
+    font-size: 12px;
+    color: var(--texto-suave);
+    text-align: left;
+  }
+  /* célula principal do cartão (descrição/nome): ocupa a linha toda, à esquerda e em destaque */
+  .tabela-cartoes td.celula-titulo {
+    order: -1;
+    display: block;
+    text-align: left;
+    font-weight: 500;
+    padding-bottom: 4px !important;
+  }
+  .tabela-cartoes td.celula-acoes {
+    justify-content: flex-end;
+    padding-top: 6px !important;
+  }
+  .tabela-cartoes td:empty {
+    display: none;
+  }
+  .tabela-cartoes tfoot td {
+    position: static;
+    box-shadow: none;
+  }
+}
+
+/* esqueleto enquanto os dados chegam (componente Esqueleto) */
+@keyframes brilho {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+.esqueleto {
+  border-radius: 6px;
+  background: linear-gradient(90deg, #e6ece8 25%, #f3f6f4 50%, #e6ece8 75%);
+  background-size: 200% 100%;
+  animation: brilho 1.4s linear infinite;
+}
+
+/* cartão de filtros (componente CartaoFiltros): no celular cada campo ocupa a linha toda */
+.cartao-filtros .campo {
+  flex: 1 1 11rem;
+}
+@media (min-width: 640px) {
+  .cartao-filtros .campo {
+    flex: 0 1 auto;
+  }
+  .cartao-filtros .campo.campo-largo {
+    flex: 1 1 14rem;
+  }
+}

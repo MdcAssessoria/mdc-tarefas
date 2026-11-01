@@ -2,17 +2,40 @@
 // e o filtro de quais abas cada pessoa pode ver. Usado pelo menu, pela barra superior e pela busca rápida.
 import type { PapelApp } from "@/dominios/acessos/tipos";
 
-export type Modulo = "hub" | "tarefas" | "societario" | "demonstrativos" | "atendimento" | "vencimentos" | "comercial" | "financeiro";
+export type Modulo =
+  | "hub"
+  | "tarefas"
+  | "societario"
+  | "demonstrativos"
+  | "atendimento"
+  | "vencimentos"
+  | "comercial"
+  | "financeiro"
+  | "plano_contas"
+  | "centros_custo"
+  | "relatorios"
+  | "cadastros";
 
-/** Aba de um módulo. `minimo` exige um nível na ferramenta; `gestor` exige poder editar cadastros (admin ou gestor). */
+/**
+ * Aba de um módulo. `minimo` exige um nível na ferramenta; `gestor` exige poder editar cadastros (admin ou gestor).
+ * `grupo` junta abas num menu suspenso da barra superior (ex.: Financeiro › Dinheiro › A pagar); sem grupo é aba solta.
+ */
 export interface LinkModulo {
   href: string;
   nome: string;
   minimo?: PapelApp;
   gestor?: boolean;
+  grupo?: string;
 }
 
-export const NAV: Record<Modulo, { titulo: string; links: LinkModulo[] }> = {
+/**
+ * `grupos` (opcional) dá a ordem dos menus do módulo. Grupo sem nenhuma aba visível não aparece, então dá para deixar
+ * o lugar reservado para telas que ainda vão chegar.
+ * `acesso` (opcional): ferramentas (slugs do hub_apps) que liberam o módulo, quando ele não tem ferramenta própria
+ * (ex.: o cadastro comum de fornecedores e clientes vale para quem tem qualquer módulo de gestão). Sem `acesso`, o
+ * módulo exige a ferramenta de mesmo nome.
+ */
+export const NAV: Record<Modulo, { titulo: string; links: LinkModulo[]; grupos?: string[]; acesso?: string[] }> = {
   hub: { titulo: "Início", links: [] },
   tarefas: {
     titulo: "Tarefas",
@@ -47,18 +70,36 @@ export const NAV: Record<Modulo, { titulo: string; links: LinkModulo[] }> = {
     ],
   },
   vencimentos: { titulo: "Vencimentos", links: [{ href: "/vencimentos", nome: "Vencimentos" }] },
+  // Gestão do cliente (modelo Conta Azul/Omie): cada módulo é um item do menu lateral, vendável e liberável por cliente.
+  // Entradas (/entradas), Saídas (/saidas) e Estoque (/estoque) entram aqui pelas frentes que os constroem.
   financeiro: {
     titulo: "Financeiro",
+    grupos: ["Bancos"],
     links: [
+      { href: "/financeiro", nome: "Início" },
       { href: "/financeiro/pagar", nome: "A pagar" },
       { href: "/financeiro/receber", nome: "A receber" },
       { href: "/financeiro/movimento", nome: "Entradas e saídas" },
-      { href: "/financeiro/bancos", nome: "Bancos" },
-      { href: "/financeiro/extratos", nome: "Extratos" },
+      { href: "/financeiro/bancos", nome: "Contas bancárias", grupo: "Bancos" },
+      { href: "/financeiro/transferencias", nome: "Transferências", grupo: "Bancos" },
+      { href: "/financeiro/extratos", nome: "Extratos", grupo: "Bancos" },
+      // provisório: sai daqui quando o módulo Estoque (/estoque, outra frente) entrar no menu lateral
       { href: "/financeiro/estoque", nome: "Estoque" },
-      { href: "/financeiro/cadastros", nome: "Cadastros" },
-      { href: "/financeiro/plano", nome: "Plano de contas" },
     ],
+  },
+  plano_contas: {
+    titulo: "Plano de contas",
+    links: [
+      { href: "/plano-contas", nome: "Plano do Domínio" },
+      { href: "/plano-contas/categorias", nome: "Despesas e receitas" },
+    ],
+  },
+  centros_custo: { titulo: "Centros de custo", links: [{ href: "/centros-custo", nome: "Centros de custo" }] },
+  relatorios: { titulo: "Relatórios", links: [{ href: "/relatorios", nome: "Relatórios" }] },
+  cadastros: {
+    titulo: "Cadastros",
+    acesso: ["financeiro", "entradas", "saidas", "estoque"],
+    links: [{ href: "/cadastros/pessoas", nome: "Fornecedores e clientes" }],
   },
   comercial: {
     titulo: "CRM Comercial",
@@ -87,6 +128,10 @@ export const MODULO_POR_PREFIXO: Record<string, Modulo> = {
   vencimentos: "vencimentos",
   comercial: "comercial",
   financeiro: "financeiro",
+  "plano-contas": "plano_contas",
+  "centros-custo": "centros_custo",
+  relatorios: "relatorios",
+  cadastros: "cadastros",
 };
 
 /** Módulo da rota atual (caminho sem o /hub-mdc, como devolve o usePathname). */
@@ -95,10 +140,62 @@ export function moduloDaRota(rota: string): Modulo {
   return MODULO_POR_PREFIXO[primeiro] ?? "tarefas";
 }
 
+/** Ferramentas (slugs) que liberam o módulo: as de `acesso` ou a de mesmo nome. */
+export const ferramentasDoModulo = (modulo: Modulo): string[] => NAV[modulo].acesso ?? [modulo];
+
+/** A pessoa pode abrir o módulo? Basta ter uma das ferramentas que o liberam, no nível pedido. */
+export function podeModulo(modulo: Modulo, pode: (app: string, minimo?: PapelApp) => boolean, minimo?: PapelApp): boolean {
+  return ferramentasDoModulo(modulo).some((app) => pode(app, minimo));
+}
+
 /** Abas do módulo que a pessoa pode ver, conforme o nível dela na ferramenta e se edita cadastros. */
 export function filtrarLinks(
   modulo: Modulo,
   permissoes: { pode: (app: string, minimo?: PapelApp) => boolean; podeEditarCadastros: boolean },
 ): LinkModulo[] {
-  return NAV[modulo].links.filter((l) => (l.gestor ? permissoes.podeEditarCadastros : l.minimo ? permissoes.pode(modulo, l.minimo) : true));
+  return NAV[modulo].links.filter((l) =>
+    l.gestor ? permissoes.podeEditarCadastros : l.minimo ? podeModulo(modulo, permissoes.pode, l.minimo) : true,
+  );
 }
+
+/** A aba está ativa na rota? A aba inicial do módulo (ex.: /financeiro) só vale na própria rota; as outras valem também nas subpáginas. */
+export function linkAtivo(rota: string, href: string, modulo: Modulo): boolean {
+  return rota === href || (href !== `/${modulo}` && rota.startsWith(href + "/"));
+}
+
+/** Entrada da barra do módulo: aba solta ou grupo (menu suspenso) com as abas dele. */
+export type EntradaMenu = { tipo: "link"; link: LinkModulo } | { tipo: "grupo"; nome: string; links: LinkModulo[] };
+
+/**
+ * Monta a barra do módulo a partir das abas já filtradas: abas soltas na ordem em que aparecem, cada grupo no lugar
+ * da sua primeira aba (ou na ordem de `grupos`, quando o módulo define). Grupo vazio some; grupo com uma aba só vira
+ * aba solta com o nome do grupo (ex.: "Estoque" enquanto Pedidos não chega).
+ */
+export function agruparLinks(links: LinkModulo[], grupos: string[] = []): EntradaMenu[] {
+  const porGrupo = new Map<string, LinkModulo[]>();
+  for (const l of links) if (l.grupo) porGrupo.set(l.grupo, [...(porGrupo.get(l.grupo) ?? []), l]);
+  const ordem = [...grupos.filter((g) => porGrupo.has(g)), ...[...porGrupo.keys()].filter((g) => !grupos.includes(g))];
+  const entradaDoGrupo = (g: string): EntradaMenu => {
+    const ls = porGrupo.get(g)!;
+    return ls.length === 1 ? { tipo: "link", link: { ...ls[0], nome: g } } : { tipo: "grupo", nome: g, links: ls };
+  };
+  const saida: EntradaMenu[] = [];
+  const postos = new Set<string>();
+  for (const l of links) {
+    if (!l.grupo) {
+      saida.push({ tipo: "link", link: l });
+      continue;
+    }
+    // ao achar a primeira aba de algum grupo, entram ali todos os grupos que vêm antes dele na ordem, e ele
+    if (postos.has(l.grupo)) continue;
+    for (const g of ordem.slice(0, ordem.indexOf(l.grupo) + 1)) {
+      if (postos.has(g)) continue;
+      postos.add(g);
+      saida.push(entradaDoGrupo(g));
+    }
+  }
+  return saida;
+}
+
+/** O módulo tem menus agrupados (barra com menus suspensos e, no celular, a lista em gaveta)? */
+export const temGrupos = (modulo: Modulo) => NAV[modulo].links.some((l) => l.grupo);

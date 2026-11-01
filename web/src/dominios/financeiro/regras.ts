@@ -129,13 +129,14 @@ export function dividirParcelas(
 // ------------------------------------------------------------------ situação exibida
 
 export type SituacaoExibida = "vencido" | "vence_hoje" | "a_vencer" | "parcial" | "quitado" | "cancelado";
-export const SITUACOES: Record<SituacaoExibida, { nome: string; tom: string }> = {
-  vencido: { nome: "Vencido", tom: "bg-red-50 text-red-800" },
-  vence_hoje: { nome: "Vence hoje", tom: "bg-amber-50 text-amber-900" },
-  a_vencer: { nome: "A vencer", tom: "bg-sky-50 text-sky-900" },
-  parcial: { nome: "Pago em parte", tom: "bg-violet-50 text-violet-900" },
-  quitado: { nome: "Pago", tom: "bg-emerald-50 text-emerald-800" },
-  cancelado: { nome: "Cancelado", tom: "bg-neutral-100 text-neutral-600" },
+/** Nome e cor do chip de cada situação (a cor é um tom de `Chip`, em componentes/Comuns.tsx). */
+export const SITUACOES: Record<SituacaoExibida, { nome: string; tom: "vermelho" | "ambar" | "azul" | "violeta" | "verde" | "neutro" }> = {
+  vencido: { nome: "Vencido", tom: "vermelho" },
+  vence_hoje: { nome: "Vence hoje", tom: "ambar" },
+  a_vencer: { nome: "A vencer", tom: "azul" },
+  parcial: { nome: "Pago em parte", tom: "violeta" },
+  quitado: { nome: "Pago", tom: "verde" },
+  cancelado: { nome: "Cancelado", tom: "neutro" },
 };
 
 export function situacaoDoTitulo(t: Pick<Titulo, "situacao" | "vencimento" | "valor_pago">, hoje: string): SituacaoExibida {

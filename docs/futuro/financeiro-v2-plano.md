@@ -22,8 +22,13 @@ regime tributário de cada cliente. Este documento é a referência comum das fr
 | 1. Licenças e cobrança | `031_licencas.sql` | Produtos/módulos vendáveis, planos, contratos por cliente, cobranças mensais (geradas sozinhas), baixa, inadimplência por faixa de atraso, bloqueio manual, acesso do Portal conforme contrato, relatório "faturamento do mês" para ir junto com o honorário |
 | 2. Notas fiscais (entrada) | `032_fiscal.sql` | Certificado A1 por cliente (Vault), captura automática de NF-e (Distribuição DF-e) e NFS-e (ADN), manifestação do destinatário (4 eventos, XML assinado), painel de notas recebidas, tipo de entrada (modelo Conta Azul), de-para de itens do fornecedor, geração de contas a pagar e entrada de estoque, análise por regime (Simples, Presumido, Real) e carga tributária das entradas |
 | 3. Itens, estoque e pedidos | `033_estoque_pedidos.sql` | Cadastro de itens fácil para o usuário final (assistente, importação por planilha, duplicar), custo médio, ficha de estoque (kardex), posição valorizada, inventário, pedidos de compra (entrada no estoque + conta a pagar) e de venda (baixa automática + conta a receber) |
-| 4. Painel e experiência | `034_painel.sql` (só se precisar) | Tela inicial do Financeiro (saldo, hoje, vencidos, fluxo dos próximos 30 dias, gráfico), menu reorganizado em grupos (Dinheiro · Notas · Estoque · Cadastros), consistência visual de todas as telas do módulo |
+| 4. Painel e experiência | `034_painel_transferencias.sql` | Painel inicial do Financeiro (saldo, hoje, vencidos, fluxo dos próximos 30 dias, últimos 6 meses), módulos separados no menu lateral (Financeiro, Plano de contas, Centros de custo, Relatórios, cadastro comum de fornecedores e clientes; `hub_apps` de Entradas, Saídas e Estoque), transferência entre contas, Relatórios gerenciais, molde visual único (08-convencoes 8.3.1) |
 | Depois | — | Emissão de NFS-e (padrão nacional, DPS assinada) e NF-e modelo 55 (layout 4.00, IBS/CBS), DANFE/DANFSe, cancelamento, CC-e; testes em homologação com certificado real |
+
+Mudança de estrutura (Edvaldo, 01/11/2026, 14h34): modelo Conta Azul/Omie, **módulos separados**, cada um com rota e
+item próprio no menu lateral, vendável e liberável por cliente: Financeiro (`/financeiro`), Entradas (`/entradas`),
+Saídas (`/saidas`), Estoque (`/estoque`), Centros de custo (`/centros-custo`), Plano de contas (`/plano-contas`, com as
+categorias) e Relatórios (`/relatorios`); fornecedores e clientes num cadastro comum (`/cadastros/pessoas`).
 
 ## Regras comuns a todas as frentes
 

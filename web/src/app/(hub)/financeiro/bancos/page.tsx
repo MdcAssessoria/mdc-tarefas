@@ -1,4 +1,4 @@
-// Financeiro › Contas bancárias da empresa escolhida: saldo atual (saldo inicial + extratos importados), último
+// Financeiro › Bancos: contas bancárias da empresa escolhida: saldo atual (saldo inicial + extratos importados), último
 // lançamento, a conta contábil do Domínio ligada a cada banco (usada na conciliação e na exportação, etapas 2 e 3)
 // e o cadastro/edição. Exporta a lista em PDF e Excel.
 "use client";
@@ -8,8 +8,10 @@ import { useCallback, useMemo, useState } from "react";
 import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { nomeCliente } from "@/dominios/clientes/nome";
 import { EscolhaCliente, useClienteFinanceiro } from "@/dominios/financeiro/componentes/EscolhaCliente";
-import { lerContas, lerLinhas, lerPlano, rotuloConta } from "@/dominios/financeiro/leituras";
-import { BANCOS, saldoDaConta } from "@/dominios/financeiro/tipos";
+import { lerContas, lerLinhas, lerPlano, lerTransferencias, rotuloConta } from "@/dominios/financeiro/leituras";
+import { saldoComTransferencias } from "@/dominios/financeiro/painel";
+import { NovaTransferencia } from "@/dominios/financeiro/componentes/NovaTransferencia";
+import { BANCOS } from "@/dominios/financeiro/tipos";
 import { numeroBr } from "@/dominios/financeiro/regras";
 import type { ContaBancaria, ContaContabil } from "@/dominios/financeiro/tipos";
 import { supabase } from "@/lib/supabase";
@@ -23,8 +25,12 @@ import { exportarExcel } from "@/lib/arquivos/excel";
 import { gerarRelatorioPdf } from "@/lib/arquivos/relatorioPdf";
 import { carregarLogo } from "@/lib/marca";
 import { Modal } from "@/components/ui/Modal";
-import { Carregando } from "@/components/ui/Carregando";
+import { CabecalhoPagina } from "@/components/ui/CabecalhoPagina";
+import { CartaoFiltros } from "@/components/ui/CartaoFiltros";
+import { Esqueleto } from "@/components/ui/Esqueleto";
 import { EstadoVazio } from "@/components/ui/EstadoVazio";
+import { Icone } from "@/components/ui/Icone";
+import { Chip, Indicador } from "@/dominios/financeiro/componentes/Comuns";
 import { useAviso } from "@/components/ui/Aviso";
 
 type Form = {
@@ -58,12 +64,18 @@ export default function PaginaContasBancarias() {
   const [form, setForm] = useState<Form | null>(null);
   const [salvando, setSalvando] = useState(false);
   const [mostrarInativas, setMostrarInativas] = useState(false);
+  const [transferindo, setTransferindo] = useState(false);
 
   const consulta = useConsulta(
     useCallback(async () => {
       if (!cliente) return null;
-      const [contas, plano, linhas] = await Promise.all([lerContas(cliente.id), lerPlano(cliente.id), lerLinhas(cliente.id)]);
-      return { contas, plano, linhas };
+      const [contas, plano, linhas, transferencias] = await Promise.all([
+        lerContas(cliente.id),
+        lerPlano(cliente.id),
+        lerLinhas(cliente.id),
+        lerTransferencias(cliente.id),
+      ]);
+      return { contas, plano, linhas, transferencias };
     }, [cliente]),
   );
   const dados = consulta.dados;
@@ -78,7 +90,7 @@ export default function PaginaContasBancarias() {
         const daConta = dados.linhas.filter((l) => l.conta_id === c.id);
         return {
           conta: c,
-          saldo: saldoDaConta(c, daConta),
+          saldo: saldoComTransferencias(c, daConta, dados.transferencias),
           ultimo: daConta.length ? daConta[daConta.length - 1].data : null,
           pendentes: daConta.filter((l) => l.situacao === "pendente").length,
           contabil: c.conta_contabil_id ? porId.get(c.conta_contabil_id) : undefined,
@@ -86,6 +98,8 @@ export default function PaginaContasBancarias() {
       });
   }, [dados, mostrarInativas, porId]);
   const total = lista.filter((x) => x.conta.ativo).reduce((a, x) => a + x.saldo, 0);
+  const aConciliar = lista.filter((x) => x.conta.ativo).reduce((a, x) => a + x.pendentes, 0);
+  const semContabil = lista.filter((x) => x.conta.ativo && !x.contabil).length;
 
   function abrir(c?: ContaBancaria) {
     setForm(
@@ -221,110 +235,173 @@ export default function PaginaContasBancarias() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-start gap-2">
-        <div className="mr-auto">
-          <h1 className="text-xl font-semibold text-[var(--marca)]">Contas bancárias</h1>
-          <p className="text-sm text-neutral-600">Os bancos de cada empresa, com o saldo calculado pelos extratos importados.</p>
-        </div>
-        <button className="btn" onClick={pdf} disabled={!lista.length}>
-          PDF
-        </button>
-        <button className="btn" onClick={excel} disabled={!lista.length}>
-          Excel
-        </button>
-        {podeOperar && cliente && (
-          <button className="btn-primario" onClick={() => abrir()}>
-            Nova conta
-          </button>
-        )}
-      </div>
+      <CabecalhoPagina
+        titulo="Contas bancárias"
+        descricao="Os bancos da empresa, com o saldo pelos extratos importados e as transferências entre contas."
+        acoes={
+          <>
+            <button className="btn" onClick={pdf} disabled={!lista.length} title="Baixar a lista em PDF">
+              <Icone nome="documento" className="h-4 w-4" />
+              PDF
+            </button>
+            <button className="btn" onClick={excel} disabled={!lista.length} title="Baixar a lista em Excel">
+              <Icone nome="planilha" className="h-4 w-4" />
+              Excel
+            </button>
+            {podeOperar && cliente && (dados?.contas.filter((c) => c.ativo).length ?? 0) >= 2 && (
+              <button className="btn" onClick={() => setTransferindo(true)}>
+                <Icone nome="transferir" className="h-4 w-4" />
+                Transferir entre contas
+              </button>
+            )}
+            {podeOperar && cliente && (
+              <button className="btn-primario" onClick={() => abrir()} aria-label="Nova conta">
+                <Icone nome="mais" className="h-4 w-4" />
+                Nova conta
+              </button>
+            )}
+          </>
+        }
+      />
 
-      <div className="cartao flex flex-wrap items-end gap-3 p-4">
+      <CartaoFiltros
+        ativos={mostrarInativas ? [{ id: "inativas", rotulo: "Com contas inativas", aoTirar: () => setMostrarInativas(false) }] : []}
+      >
         <EscolhaCliente financeiro={financeiro} />
         <label className="flex min-h-10 items-center gap-2 text-sm">
           <input type="checkbox" checked={mostrarInativas} onChange={(e) => setMostrarInativas(e.target.checked)} />
           Mostrar contas inativas
         </label>
-      </div>
+      </CartaoFiltros>
 
       {aviso}
-      {consulta.erro && <p className="rounded-md bg-red-50 p-3 text-sm text-red-800">{consulta.erro}</p>}
+      {consulta.erro && (
+        <p role="alert" className="rounded-md bg-red-50 p-3 text-sm text-red-800">
+          {consulta.erro}
+        </p>
+      )}
 
       {!cliente ? (
-        <EstadoVazio>Escolha a empresa acima para ver as contas bancárias dela.</EstadoVazio>
+        <EstadoVazio icone="banco" titulo="Escolha a empresa">
+          Escolha a empresa nos filtros acima para ver as contas bancárias dela.
+        </EstadoVazio>
       ) : consulta.carregando && !dados ? (
-        <Carregando />
+        <Esqueleto linhas={3} />
       ) : !lista.length ? (
         <EstadoVazio
+          icone="banco"
+          titulo="Nenhuma conta bancária cadastrada"
           acao={
             podeOperar && (
               <button className="btn-primario" onClick={() => abrir()}>
+                <Icone nome="mais" className="h-4 w-4" />
                 Cadastrar a primeira conta
               </button>
             )
           }
         >
-          {nomeCliente(cliente)} ainda não tem conta bancária cadastrada.
+          Cadastre as contas de {nomeCliente(cliente)} com o saldo de um dia. Depois é só importar o extrato do banco.
         </EstadoVazio>
       ) : (
         <>
           {!dados?.plano.length && (
-            <p className="rounded-md bg-amber-50 p-3 text-sm text-amber-900">
-              O plano de contas desta empresa ainda não foi importado. Importe em{" "}
-              <Link className="underline" href="/financeiro/plano">
-                Plano de contas
-              </Link>{" "}
-              para ligar cada banco à conta contábil do Domínio.
+            <p className="flex items-start gap-2 rounded-lg bg-amber-50 p-3 text-sm text-amber-900">
+              <Icone nome="info" className="mt-0.5 h-4 w-4 shrink-0" />
+              <span>
+                O plano de contas desta empresa ainda não foi importado. Importe em{" "}
+                <Link className="underline" href="/plano-contas">
+                  Plano de contas
+                </Link>{" "}
+                para ligar cada banco à conta contábil do Domínio.
+              </span>
             </p>
           )}
+          <div className="grid gap-3 sm:grid-cols-3">
+            <Indicador titulo="Saldo das contas ativas" icone="carteira" valor={brl(total)} tom={total < 0 ? "vermelho" : "neutro"} />
+            <Indicador
+              titulo="Lançamentos a conciliar"
+              icone="lista"
+              valor={String(aConciliar)}
+              detalhe="Linhas do extrato ainda não ligadas a uma conta"
+              tom={aConciliar ? "ambar" : "neutro"}
+            />
+            <Indicador
+              titulo="Sem conta contábil"
+              icone="alerta"
+              valor={String(semContabil)}
+              detalhe={semContabil ? "Edite o banco e escolha a conta do Domínio" : "Todos ligados ao plano"}
+              tom={semContabil ? "ambar" : "verde"}
+            />
+          </div>
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {lista.map((x) => (
-              <div key={x.conta.id} className={`cartao space-y-3 p-4 ${x.conta.ativo ? "" : "opacity-60"}`}>
-                <div className="flex items-start gap-2">
+              <div key={x.conta.id} className={`cartao flex flex-col gap-4 p-4 sm:p-5 ${x.conta.ativo ? "" : "opacity-60"}`}>
+                <div className="flex items-start gap-3">
+                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[var(--marca)] text-[var(--destaque)]" aria-hidden="true">
+                    <Icone nome="banco" className="h-5 w-5" />
+                  </span>
                   <div className="mr-auto min-w-0">
                     <h2 className="truncate font-semibold text-[var(--marca)]">{x.conta.nome}</h2>
-                    <p className="truncate text-xs text-neutral-600">
+                    <p className="truncate text-xs text-[var(--texto-suave)]">
                       {x.conta.banco ?? "Banco não informado"}
                       {x.conta.agencia || x.conta.numero ? ` · ag. ${x.conta.agencia ?? "—"} · conta ${x.conta.numero ?? "—"}` : ""}
                     </p>
                   </div>
-                  {!x.conta.ativo && <span className="chip bg-neutral-100 text-neutral-700">Inativa</span>}
+                  {!x.conta.ativo && <Chip tom="neutro">Inativa</Chip>}
                 </div>
                 <div>
-                  <p className="text-xs text-neutral-500">Saldo pelos extratos</p>
-                  <p className={`text-2xl font-semibold tabular-nums ${x.saldo < 0 ? "text-red-700" : "text-neutral-900"}`}>
+                  <p className="text-xs text-[var(--texto-suave)]" title="Saldo pelos extratos importados, mais as transferências registradas depois do último extrato">
+                    Saldo atual
+                  </p>
+                  <p className={`num text-[26px] font-semibold tracking-tight ${x.saldo < 0 ? "text-[var(--perigo)]" : "text-[var(--texto)]"}`}>
                     {brl(x.saldo)}
                   </p>
-                  <p className="text-xs text-neutral-500">
+                  <p className="text-xs text-[var(--texto-suave)]">
                     {x.ultimo ? `Último lançamento em ${fmtData(x.ultimo)}` : "Nenhum extrato importado ainda"}
                   </p>
                 </div>
                 <p className="text-xs">
-                  <span className="text-neutral-500">Conta contábil: </span>
+                  <span className="text-[var(--texto-suave)]">Conta contábil: </span>
                   {x.contabil ? rotuloConta(x.contabil) : <span className="text-amber-800">não ligada</span>}
                 </p>
-                <div className="flex flex-wrap gap-2">
-                  {x.pendentes > 0 && <span className="chip bg-amber-50 text-amber-900">{x.pendentes} lançamento(s) a conciliar</span>}
-                  <Link href="/financeiro/extratos" className="btn !min-h-8">
-                    Ver extrato
-                  </Link>
-                  {podeOperar && (
-                    <button className="btn !min-h-8" onClick={() => abrir(x.conta)}>
-                      Editar
-                    </button>
-                  )}
+                <div className="mt-auto flex flex-wrap items-center gap-2">
+                  {x.pendentes > 0 && <Chip tom="ambar">{x.pendentes} a conciliar</Chip>}
+                  <span className="ml-auto flex gap-2">
+                    <Link href="/financeiro/extratos" className="btn !min-h-8 !px-3">
+                      <Icone nome="lista" className="h-4 w-4" />
+                      Ver extrato
+                    </Link>
+                    {podeOperar && (
+                      <button className="btn !min-h-8 !px-3" onClick={() => abrir(x.conta)}>
+                        <Icone nome="editar" className="h-4 w-4" />
+                        Editar
+                      </button>
+                    )}
+                  </span>
                 </div>
               </div>
             ))}
           </div>
-          <p className="text-right text-sm text-neutral-700">
-            Total das contas ativas: <b className="tabular-nums">{brl(total)}</b>
-          </p>
         </>
+      )}
+
+
+      {transferindo && dados && (
+        <NovaTransferencia
+          contas={dados.contas}
+          hoje={hojeISO(org.fuso)}
+          aoFechar={() => setTransferindo(false)}
+          aoSalvar={(msg) => {
+            setTransferindo(false);
+            mostrar(msg);
+            consulta.recarregar();
+          }}
+        />
       )}
 
       {form && (
         <Modal
+
           titulo={form.id ? "Editar conta bancária" : "Nova conta bancária"}
           descricao="Informe o saldo do banco no fim de um dia (como aparece no extrato). Os lançamentos dos dias seguintes somam a partir dele."
           aoFechar={() => setForm(null)}

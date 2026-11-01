@@ -16,6 +16,7 @@ import type {
   SaldoEstoque,
   Titulo,
   TipoTitulo,
+  Transferencia,
 } from "./tipos";
 
 export const lerPlano = (cliente: string) =>
@@ -97,6 +98,26 @@ export const lerTitulos = (cliente: string, tipo: TipoTitulo, filtro: { de?: str
     return q.order("vencimento").order("id").range(de, ate);
   });
 
+/** Títulos em aberto (a pagar e a receber) da empresa, para o painel inicial. */
+export const lerTitulosAbertos = (cliente: string) =>
+  lerTudo<Titulo>((de, ate) =>
+    supabase()
+      .from("fin_titulos")
+      .select("*")
+      .eq("cliente_id", cliente)
+      .eq("situacao", "aberto")
+      .order("vencimento")
+      .order("id")
+      .range(de, ate),
+  );
+
+/** Quantas linhas a empresa tem numa tabela do Financeiro (só conta, não traz os dados). Usado nos primeiros passos. */
+export async function contarDoCliente(tabela: "fin_plano_contas" | "fin_categorias" | "fin_titulos", cliente: string): Promise<number> {
+  const { count, error } = await supabase().from(tabela).select("id", { count: "exact", head: true }).eq("cliente_id", cliente);
+  if (error) throw error;
+  return count ?? 0;
+}
+
 /** Títulos por id (para mostrar a origem das baixas em Entradas e saídas). */
 export async function lerTitulosPorId(ids: string[]): Promise<Titulo[]> {
   const unicos = [...new Set(ids)];
@@ -120,6 +141,18 @@ export const lerBaixas = (cliente: string, filtro: { de?: string; ate?: string; 
     if (filtro.ate) q = q.lte("data", filtro.ate);
     if (filtro.titulos) q = q.in("titulo_id", filtro.titulos);
     return q.order("data").order("id").range(de, ate);
+  });
+
+/** Transferências entre contas da empresa (com estornadas, para o histórico); com período, pela data. */
+export const lerTransferencias = (cliente: string, filtro: { de?: string; ate?: string } = {}) =>
+  lerTudo<Transferencia>((de, ate) => {
+    let q = supabase()
+      .from("fin_transferencias")
+      .select("id,cliente_id,origem_id,destino_id,data,valor,observacao,estornada,estorno_motivo")
+      .eq("cliente_id", cliente);
+    if (filtro.de) q = q.gte("data", filtro.de);
+    if (filtro.ate) q = q.lte("data", filtro.ate);
+    return q.order("data", { ascending: false }).order("id", { ascending: false }).range(de, ate);
   });
 
 // ------------------------------------------------------------------ itens e estoque

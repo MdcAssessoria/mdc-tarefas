@@ -13,6 +13,9 @@ const nextConfig: NextConfig = {
         basePath: false,
         permanent: false,
       },
+      // Financeiro v2 (01/11/2026): plano, categorias, centros de custo e fornecedores/clientes viraram módulos próprios
+      { source: "/financeiro/plano", destination: "/plano-contas", permanent: false },
+      { source: "/financeiro/cadastros", destination: "/cadastros/pessoas", permanent: false },
     ];
   },
   async headers() {

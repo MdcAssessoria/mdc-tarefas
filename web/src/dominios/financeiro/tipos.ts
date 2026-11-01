@@ -157,6 +157,19 @@ export interface Baixa {
   extrato_linha_id: number | null;
 }
 
+/** Transferência entre duas contas bancárias da mesma empresa (migração 034). */
+export interface Transferencia {
+  id: number;
+  cliente_id: string;
+  origem_id: string;
+  destino_id: string;
+  data: string;
+  valor: number;
+  observacao: string | null;
+  estornada: boolean;
+  estorno_motivo: string | null;
+}
+
 // ------------------------------------------------------------------ itens e estoque (migração 029)
 
 export interface Item {
