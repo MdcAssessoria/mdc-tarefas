@@ -12,10 +12,35 @@
 
 | Endereço | Quem usa | O que faz |
 | --- | --- | --- |
-| `/entradas` | Financeiro (ver; responder, enviar XML e buscar com operar) | **Notas recebidas**: situação em linguagem simples, dias para o prazo, filtros (emissão em um clique, situação, + fornecedor e tipo de nota), busca; 3 indicadores que filtram (aguardando, prazo vencendo, prontas para lançar); marcar várias e responder em lote; "Responder" por nota; ver itens e histórico com protocolos; baixar XML; "Buscar agora" (respeita a regra da SEFAZ); "Enviar XML"; PDF e Excel |
+| `/entradas` | Financeiro (ver; responder, enviar XML e buscar com operar) | **Notas recebidas**: situação em linguagem simples, dias para o prazo, filtros (emissão em um clique, situação, + fornecedor e tipo de nota), busca; 3 indicadores que filtram (aguardando, prazo vencendo, prontas para lançar); marcar várias e responder em lote; "Responder" por nota; ver itens e histórico com protocolos; **Ver a nota** (espelho DANFE/DANFSe com PDF, seção 1.1); baixar XML; "Buscar agora" (respeita a regra da SEFAZ); "Enviar XML"; PDF e Excel |
 | `/entradas/lancar` | Financeiro (ver; lançar com operar; regras com gerir) | **Lançar nota**: prontas para lançar → 1) tipo de entrada (com o efeito de cada um) 2) fornecedor (acha pelo CNPJ ou cadastra) 3) itens ligados ao estoque (de-para lembrado, fator de unidade, cadastrar item novo) 4) parcelas da fatura (lidas das duplicatas; NFS-e sugere valor líquido das retenções), categoria, centro, conta; aba **Lançadas** com "Desfazer lançamento" (motivo); aba **Regras dos tipos de entrada** da empresa; PDF e Excel. `?nota=<id>` abre direto |
 | `/entradas/carga-tributaria` | Financeiro (ver) | **Carga tributária das entradas**: por fornecedor, NCM, CFOP ou mês; ICMS(+ST), IPI, PIS/COFINS, ISS, IBS/CBS, carga % e crédito estimado; frase de resumo, 3 indicadores, gráfico que filtra a tabela; "Como o crédito é estimado" com a lei e a vigência de cada regra; PDF e Excel |
 | `/entradas/certificado` | Financeiro (gerir envia/remove; operar muda parâmetros) | **Certificado digital** da empresa: situação, CNPJ, emissor (ICP-Brasil?), vencimento; envio com `CampoArquivo` + senha; busca automática (por fonte: documentos recebidos, última e próxima consulta, último aviso) e parâmetros (busca ligada, ciência automática, contribuinte de ICMS/IPI, ambiente) |
+
+### 1.1 Ver a nota (espelho DANFE / DANFSe) — 02/11/2026
+
+No menu "⋯" de cada nota (e no botão **Ver a nota** da janela "Ver itens e histórico") abre uma janela grande com o
+**espelho** da nota montado do XML guardado no Storage (`leituras.lerXmlGuardado`, mesma permissão do bucket `fiscal`),
+com **Baixar PDF** (A4 retrato, `NFe-<número>-<emitente>.pdf`), **Imprimir** (abre a impressão do mesmo PDF) e Baixar XML.
+Toda tela e toda folha levam a faixa "Espelho gerado pelo HUB-MDC a partir do XML — não substitui o documento oficial"
+(o DANFE/DANFSe oficial é o do emitente).
+
+| Documento | Layout | O que mostra |
+| --- | --- | --- |
+| NF-e (55) e NFC-e (65) | DANFE | Emitente com endereço, "DANFE", entrada/saída, número 000.000.000, série, folha x/y, chave em blocos de 4 com **código de barras CODE-128C** (SVG na tela, retângulos no PDF), natureza, protocolo, IE/IE ST/CNPJ; destinatário; fatura/duplicatas e forma de pagamento; cálculo do imposto (ICMS, ST, PIS, COFINS, IPI, frete, seguro, desconto, outras, tributos aproximados, total; FCP, DIFAL, IBS/CBS quando houver); transportador e volumes (somados); produtos (código, descrição + informação adicional do item, NCM, O/CST ou CSOSN, CFOP, unidade, quantidade, unitário, total, BC ICMS, ICMS, IPI, alíquotas); dados adicionais e "reservado ao fisco"; tarja de cancelada/denegada/homologação |
+| NFS-e padrão nacional (NFSe/infNFSe/DPS) | DANFSe | Prestador e tomador (endereço, IM, contatos), intermediário, número, competência, emissão, DPS, chave de 50 dígitos (sem código de barras), códigos de tributação nacional/municipal e NBS, local da prestação e de incidência, discriminação completa, ISSQN (tributação, retenção, base, alíquota, apurado, retido), PIS/COFINS/IRRF/CSLL/INSS, valor líquido, informações complementares |
+| NFS-e municipal ABRASF 1.0/2.x (CompNfse/InfNfse) | estilo DANFSe | Número, código de verificação, RPS, prestador, tomador, item LC 116, CNAE, valores, ISS retido, retenções e líquido. Hoje o "Enviar XML" e a captura só aceitam a NFS-e nacional, então este layout só aparece se um XML ABRASF for guardado no futuro |
+| CT-e (57) | DACTE | Emitente, chave com código de barras, CFOP/natureza, protocolo, modal, início/fim, tomador, participantes, componentes do frete, ICMS, carga e chaves das NF-e transportadas |
+| Resumo da NF-e (resNFe) | Resumo | Dados do resumo e a explicação de que o XML completo chega depois da ciência/confirmação |
+| Qualquer outro XML (ou layout que falhe) | Genérico | Lista "campo › valor" de tudo que tem texto (até 200 linhas), com o aviso do motivo |
+
+Regras: o montador (`espelho.ts`) é função pura e reaproveita `xml.ts` e `documentos.ts` (lerNFe, lerNfse, lerResNFe)
+sem mudá-los (eles vão para as Funções Edge; `espelho.ts` não vai). Arquivo com várias notas (lote) usa a chave/número
+da nota escolhida. Datas aparecem como escritas no XML (sem troca de fuso). No PDF, a tabela de itens quebra de folha
+sozinha, repetindo o cabeçalho da nota e o título das colunas; no celular os quadros ficam em duas colunas e a tabela
+de itens rola na horizontal dentro do quadro. Testes: `espelho.test.ts`, `espelhoPdf.test.ts` (1 folha para a nota
+pequena, várias para 120 itens) e `lib/codigoBarras128.test.ts` (exemplo 123456 → controle 44 e leitura de volta da
+chave); `npm run telas` abre "Ver a nota" de uma NF-e e de uma NFS-e em `/entradas` e baixa o PDF.
 
 Módulo próprio no menu (`navegacao.ts`, módulo `entradas`). Enquanto as permissões por módulo não forem separadas,
 Entradas usa a ferramenta **Financeiro** (`APP_DO_MODULO`) e o banco confere com `app.fin_pode`. A empresa escolhida
@@ -24,7 +49,8 @@ Entradas usa a ferramenta **Financeiro** (`APP_DO_MODULO`) e o banco confere com
 Código: regras puras em `web/src/dominios/notas/` — `xml.ts` (leitor de XML sem dependências), `documentos.ts`
 (procNFe, resNFe, resEvento/procEventoNFe, NFS-e nacional → campos do banco), `sefaz.ts` (endereços, SOAP 1.2,
 retornos, gzip, eventos, ADN), `regras.ts` (prazos, situação, manifestações permitidas, decisão da captura),
-`creditos.ts` (estimativa por regime), `tiposEntrada.ts` (tipos, sugestão por CFOP, regra efetiva); testes em
+`creditos.ts` (estimativa por regime), `tiposEntrada.ts` (tipos, sugestão por CFOP, regra efetiva), `espelho.ts` (espelho da
+nota a partir do XML) e `espelhoPdf.ts` (PDF do espelho); código de barras em `web/src/lib/codigoBarras128.ts`; testes em
 `notas.test.ts` com XMLs fictícios de `exemplosXml.ts`. Leituras em `leituras.ts`, gravações em `repositorio.ts`,
 componentes em `componentes/`, telas em `web/src/app/(hub)/entradas/`.
 

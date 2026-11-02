@@ -96,6 +96,13 @@ export const lerDepara = (cliente: string) =>
       .range(de, ate),
   );
 
+/** Texto do XML guardado no Storage (para montar o espelho da nota na tela). A permissão é a do bucket "fiscal". */
+export async function lerXmlGuardado(caminho: string): Promise<string> {
+  const { data, error } = await supabase().storage.from("fiscal").download(caminho);
+  if (error || !data) throw new Error("Não foi possível abrir o XML da nota. Tente de novo.");
+  return data.text();
+}
+
 /** Endereço temporário (5 minutos) para baixar o XML guardado no Storage. */
 export async function enderecoDoXml(caminho: string): Promise<string> {
   const { data, error } = await supabase().storage.from("fiscal").createSignedUrl(caminho, 300, { download: true });

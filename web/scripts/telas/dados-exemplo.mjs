@@ -1531,3 +1531,50 @@ TABELAS.crm_contratos.push(
     crm_oportunidades: { empresa: "Pet Shop Amigo Fiel" },
   },
 );
+
+// ---------------------------------------------------------------- XML guardado das notas (janela "Ver a nota" em /entradas)
+// Conteúdo do Storage "fiscal" por caminho (fis_notas.xml_caminho): a NF-e 1188 e a NFS-e 52 de fis_notas (fictícias).
+const CHAVE_NFE_1188 = "35261011222333000181550010000011881123456781";
+const CHAVE_NFSE_52 = "35034012112223330001810000000000000526100000000001";
+export const XML_EXEMPLO = {
+  [`${ORG}/${C1}/nfe/2026/10/1188.xml`]: `<?xml version="1.0" encoding="UTF-8"?>
+<nfeProc xmlns="http://www.portalfiscal.inf.br/nfe" versao="4.00"><NFe><infNFe Id="NFe${CHAVE_NFE_1188}" versao="4.00">
+<ide><cUF>35</cUF><natOp>Venda de mercadoria</natOp><mod>55</mod><serie>1</serie><nNF>1188</nNF><dhEmi>${momento(-12).slice(0, 19)}-03:00</dhEmi>
+<dhSaiEnt>${momento(-12).slice(0, 19)}-03:00</dhSaiEnt><tpNF>1</tpNF><tpAmb>1</tpAmb></ide>
+<emit><CNPJ>11222333000181</CNPJ><xNome>Distribuidora Exemplo Ltda</xNome><enderEmit><xLgr>Rua das Indústrias</xLgr><nro>1500</nro>
+<xBairro>Distrito Industrial</xBairro><xMun>Atibaia</xMun><UF>SP</UF><CEP>12940000</CEP><fone>1144112233</fone></enderEmit><IE>111111111111</IE></emit>
+<dest><CNPJ>12345678000195</CNPJ><xNome>Empresa Exemplo Ltda</xNome><enderDest><xLgr>Avenida Central</xLgr><nro>200</nro><xBairro>Centro</xBairro>
+<xMun>Bragança Paulista</xMun><UF>SP</UF><CEP>12900000</CEP></enderDest><IE>333333333333</IE></dest>
+<det nItem="1"><prod><cProd>ABC-1</cProd><xProd>Parafuso sextavado (cx 100)</xProd><NCM>73181500</NCM><CFOP>5102</CFOP><uCom>CX</uCom>
+<qCom>10.0000</qCom><vUnCom>50.00</vUnCom><vProd>500.00</vProd></prod><imposto><ICMS><ICMS00><orig>0</orig><CST>00</CST><vBC>510.00</vBC>
+<pICMS>18.00</pICMS><vICMS>91.80</vICMS></ICMS00></ICMS><IPI><IPITrib><CST>50</CST><pIPI>5.00</pIPI><vIPI>25.00</vIPI></IPITrib></IPI>
+<PIS><PISAliq><CST>01</CST><vPIS>8.25</vPIS></PISAliq></PIS><COFINS><COFINSAliq><CST>01</CST><vCOFINS>38.00</vCOFINS></COFINSAliq></COFINS></imposto>
+<infAdProd>Lote 2026-10</infAdProd></det>
+<det nItem="2"><prod><cProd>XYZ-9</cProd><xProd>Óleo lubrificante 1L</xProd><NCM>27101932</NCM><CFOP>5405</CFOP><uCom>UN</uCom><qCom>4.0000</qCom>
+<vUnCom>25.00</vUnCom><vProd>100.00</vProd></prod><imposto><ICMS><ICMS60><orig>0</orig><CST>60</CST></ICMS60></ICMS></imposto></det>
+<total><ICMSTot><vBC>510.00</vBC><vICMS>91.80</vICMS><vBCST>0.00</vBCST><vST>0.00</vST><vProd>600.00</vProd><vFrete>20.00</vFrete><vSeg>0.00</vSeg>
+<vDesc>10.00</vDesc><vIPI>25.00</vIPI><vPIS>8.25</vPIS><vCOFINS>38.00</vCOFINS><vOutro>0.00</vOutro><vNF>635.00</vNF></ICMSTot></total>
+<transp><modFrete>0</modFrete><transporta><CNPJ>99888777000166</CNPJ><xNome>Transportadora Exemplo Ltda</xNome><xMun>Atibaia</xMun><UF>SP</UF></transporta>
+<vol><qVol>2</qVol><esp>CAIXA</esp><pesoL>40.000</pesoL><pesoB>42.000</pesoB></vol></transp>
+<cobr><dup><nDup>001</nDup><dVenc>${dia(18)}</dVenc><vDup>317.50</vDup></dup><dup><nDup>002</nDup><dVenc>${dia(48)}</dVenc><vDup>317.50</vDup></dup></cobr>
+<infAdic><infCpl>Pedido de compra 4521. Entrega no galpão 2.</infCpl></infAdic></infNFe></NFe>
+<protNFe versao="4.00"><infProt><tpAmb>1</tpAmb><chNFe>${CHAVE_NFE_1188}</chNFe><dhRecbto>${momento(-12).slice(0, 19)}-03:00</dhRecbto>
+<nProt>135260000000001</nProt><cStat>100</cStat><xMotivo>Autorizado o uso da NF-e</xMotivo></infProt></protNFe></nfeProc>`,
+  [`${ORG}/${C1}/nfe/2026/10/52.xml`]: `<?xml version="1.0" encoding="utf-8"?>
+<NFSe versao="1.00" xmlns="http://www.sped.fazenda.gov.br/nfse"><infNFSe Id="NFS${CHAVE_NFSE_52}">
+<xLocEmi>Atibaia</xLocEmi><xLocPrestacao>Bragança Paulista</xLocPrestacao><nNFSe>52</nNFSe><xLocIncid>Bragança Paulista</xLocIncid>
+<xTribNac>Assessoria ou consultoria de qualquer natureza</xTribNac><cStat>100</cStat><dhProc>${momento(-20).slice(0, 19)}-03:00</dhProc><nDFSe>998877</nDFSe>
+<emit><CNPJ>11222333000181</CNPJ><IM>12345</IM><xNome>Consultoria Exemplo Ltda</xNome><enderNac><xLgr>Rua do Comércio</xLgr><nro>45</nro>
+<xBairro>Centro</xBairro><UF>SP</UF><CEP>12940100</CEP></enderNac><email>contato@consultoria.exemplo</email></emit>
+<valores><vBC>2000.00</vBC><pAliqAplic>2.00</pAliqAplic><vISSQN>40.00</vISSQN><vTotalRet>143.00</vTotalRet><vLiq>1857.00</vLiq></valores>
+<DPS versao="1.00"><infDPS Id="DPS350340121122233300018100001000000000000052"><tpAmb>1</tpAmb><dhEmi>${momento(-20).slice(0, 19)}-03:00</dhEmi>
+<serie>1</serie><nDPS>52</nDPS><dCompet>${dia(-20)}</dCompet><prest><CNPJ>11222333000181</CNPJ></prest>
+<toma><CNPJ>12345678000195</CNPJ><xNome>Empresa Exemplo Ltda</xNome><end><endNac><cMun>3507605</cMun><CEP>12900000</CEP></endNac>
+<xLgr>Avenida Central</xLgr><nro>200</nro><xBairro>Centro</xBairro></end></toma>
+<serv><locPrest><cLocPrestacao>3507605</cLocPrestacao></locPrest><cServ><cTribNac>170101</cTribNac><xDescServ>Assessoria em gestão financeira do mês:
+- revisão do fluxo de caixa;
+- reunião com a diretoria.</xDescServ><cNBS>113011000</cNBS></cServ></serv>
+<valores><vServPrest><vServ>2000.00</vServ></vServPrest><trib><tribMun><tribISSQN>1</tribISSQN><tpRetISSQN>1</tpRetISSQN></tribMun>
+<tribFed><piscofins><CST>01</CST><vPis>13.00</vPis><vCofins>60.00</vCofins><tpRetPisCofins>1</tpRetPisCofins></piscofins>
+<vRetIRRF>30.00</vRetIRRF><vRetCSLL>40.00</vRetCSLL></tribFed></trib></valores></infDPS></DPS></infNFSe></NFSe>`,
+};
