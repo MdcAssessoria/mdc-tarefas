@@ -31,7 +31,7 @@ type Aba = "acompanhamento" | "contrato";
 
 function Ficha() {
   const { id } = useParams<{ id: string }>();
-  const { org, eu, membros, pode } = useOrg();
+  const { org, membros, pode } = useOrg();
   const podeOperar = pode("comercial", "operar");
   const podeGerir = pode("comercial", "gerir");
   const { aviso, mostrar } = useAviso();
@@ -210,7 +210,6 @@ function Ficha() {
               o={o}
               atividades={atividades}
               podeOperar={podeOperar}
-              eu={eu.user_id}
               autorNome={autorNome}
               aoMudar={consulta.recarregar}
               avisar={mostrar}

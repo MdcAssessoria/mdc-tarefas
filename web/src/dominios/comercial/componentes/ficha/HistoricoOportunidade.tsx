@@ -31,7 +31,6 @@ export function HistoricoOportunidade({
   o,
   atividades,
   podeOperar,
-  eu,
   autorNome,
   aoMudar,
   avisar,
@@ -39,7 +38,6 @@ export function HistoricoOportunidade({
   o: Oportunidade;
   atividades: Atividade[];
   podeOperar: boolean;
-  eu: string;
   autorNome: (u: string | null) => string;
   aoMudar: () => void;
   avisar: (msg: string, tom?: "erro" | "sucesso" | "atencao") => void;
@@ -57,10 +55,10 @@ export function HistoricoOportunidade({
     if (tipo === "tarefa" && !quando) return avisar("Escolha a data do próximo passo.", "atencao");
     setOcupado(true);
     try {
-      const falha = await registrarAtividade(o, eu, { tipo, texto: texto.trim(), quando: tipo === "tarefa" ? quando : "" });
+      await registrarAtividade(o, { tipo, texto: texto.trim(), quando: tipo === "tarefa" ? quando : "" });
       setTexto("");
       setQuando("");
-      avisar(falha ?? "Registrado no histórico.", falha ? "atencao" : "sucesso");
+      avisar("Registrado no histórico.", "sucesso");
       aoMudar();
     } catch (e) {
       avisar(traduzirErro(e), "erro");

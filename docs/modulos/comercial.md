@@ -36,14 +36,18 @@
 - `web/src/dominios/comercial/componentes/`: `QuadroFunil`, `JanelasFunil` (nova oportunidade, limpar funil),
   `useAcoesOportunidade` (mover, arquivar, voltar ao funil, virar cliente) e `ficha/` (dados, histórico, contrato).
 
-## 4. Pendência: gravações em várias etapas
+## 4. Gravações pelo banco (migração 038, 02/11/2026)
 
-Três ações gravam em mais de um passo a partir do navegador (a tela avisa se um passo depois do principal falhar). A
-auditoria pediu que virem funções do banco (uma transação):
+As três ações que gravavam em vários passos pelo navegador viraram funções do banco, cada uma numa transação só
+(tudo ou nada), conferindo Comercial (operar):
 
-- `crm_salvar_contrato(p_op uuid, p_modelo uuid, p_valores jsonb)` → numera com trava por organização/ano, monta o texto
-  no servidor, cria ou atualiza o rascunho, atualiza `valor_mensal` e registra no histórico.
-- `crm_marcar_contrato(p_contrato uuid, p_status text, p_converter boolean default false)` → muda a situação com as
-  datas, registra no histórico, leva a oportunidade para "Proposta" ao enviar e, se pedido, chama a conversão.
-- `crm_registrar_atividade(p_op uuid, p_tipo text, p_texto text, p_quando date)` → grava a atividade e atualiza
-  próximo retorno / etapa inicial.
+- `crm_salvar_contrato(p_op, p_modelo, p_valores, p_texto)` → rascunho existente: atualiza; sem rascunho: numera
+  `AAAA/NNN` com trava por organização e ano (índice único `crm_contratos_numero_uk`: duas pessoas salvando ao mesmo
+  tempo recebem números diferentes), cria, atualiza `valor_mensal` e registra no histórico. A tela monta o texto com
+  `{{numero}}` e o banco põe o número.
+- `crm_marcar_contrato(p_contrato, p_status, p_converter)` → enviado/assinado/cancelado com as datas, histórico,
+  "Proposta" ao enviar e, se pedido, cadastra o cliente ao assinar. Contrato cancelado não muda mais.
+- `crm_registrar_atividade(p_op, p_tipo, p_texto, p_quando)` → grava no histórico e atualiza próximo retorno / etapa
+  inicial. Tipos `contrato` e `etapa` são só do sistema.
+
+Testes: `supabase/testes/91_base_038.sql` e `92_crm_038.sql` (inclui a corrida pelo `dblink`).

@@ -29,3 +29,8 @@ for f in testes/89_base_036.sql migrations/036_seguranca_auditoria_2026_11.sql; 
   $P -v ON_ERROR_STOP=1 -f "$R/$f" 2>&1 | grep -v NOTICE || true
 done
 $P -v conexao="host=$D port=5498 dbname=postgres user=postgres" -f "$R/testes/90_auditoria_036.sql" 2>&1 | grep -v "^SET$"
+# 038: contrato do CRM pelo banco (número sem repetir, inclusive ao mesmo tempo)
+for f in testes/91_base_038.sql migrations/038_crm_contrato_no_banco.sql; do
+  $P -v ON_ERROR_STOP=1 -f "$R/$f" 2>&1 | grep -v NOTICE || true
+done
+$P -v conexao="host=$D port=5498 dbname=postgres user=postgres" -f "$R/testes/92_crm_038.sql" 2>&1 | grep -v "^SET$"

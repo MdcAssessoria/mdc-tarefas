@@ -66,10 +66,9 @@ export function SecaoContrato({
 
   /** Grava os valores (cria o contrato se ainda não há rascunho) e devolve o contrato salvo. */
   async function gravar(): Promise<Contrato> {
-    const r = await salvarContrato(o, modelo!, v, ultimo, hojeISO(org.fuso));
-    if (r.falha) avisar(r.falha, "atencao");
+    const c = await salvarContrato(o, modelo!, v);
     aoMudar();
-    return r.contrato;
+    return c;
   }
 
   const salvar = () =>
@@ -86,18 +85,16 @@ export function SecaoContrato({
 
   const marcar = (status: "enviado" | "assinado" | "cancelado", converter = false) =>
     fazer(status, async () => {
-      const falhas = await marcarContrato(o, ultimo!, status, converter);
-      if (falhas.length) avisar(`Contrato atualizado, mas houve falha em: ${falhas.join("; ")}.`, "atencao");
-      else
-        avisar(
-          status === "enviado"
-            ? "Marcado como enviado ao cliente."
-            : status === "assinado"
-              ? converter
-                ? "Contrato assinado e empresa cadastrada na carteira."
-                : "Contrato marcado como assinado."
-              : "Contrato cancelado. Ajuste os valores e salve para gerar a nova versão.",
-        );
+      await marcarContrato(ultimo!, status, converter);
+      avisar(
+        status === "enviado"
+          ? "Marcado como enviado ao cliente."
+          : status === "assinado"
+            ? converter
+              ? "Contrato assinado e empresa cadastrada na carteira."
+              : "Contrato marcado como assinado."
+            : "Contrato cancelado. Ajuste os valores e salve para gerar a nova versão.",
+      );
       aoMudar();
     });
 
