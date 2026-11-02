@@ -10,7 +10,8 @@ export const EU = "11111111-1111-4111-8111-111111111111";
 const OUTRO = "22222222-2222-4222-8222-222222222222";
 const SETOR = "33333333-3333-4333-8333-333333333333";
 const C1 = "44444444-4444-4444-8444-444444444441";
-/** Empresa já escolhida nas telas que lembram a empresa (Financeiro), para a verificação mostrar dados. */
+/** Empresa já escolhida nas telas de gestão, para a verificação mostrar dados. Usa de propósito a chave ANTIGA
+ * (hub-mdc:financeiro:cliente): confere que quem já tinha escolhido a empresa não perde a escolha (CHAVES.clienteGestao). */
 export const CLIENTE_LEMBRADO = { "hub-mdc:financeiro:cliente": C1 };
 const C2 = "44444444-4444-4444-8444-444444444442";
 
@@ -100,9 +101,9 @@ const APPS = [
   ["atendimento", "Atendimento", "Chat do Portal do Cliente", "chat", "/atendimento", false, 40],
   ["vencimentos", "Vencimentos", "Certificados, procurações e alvarás", "relogio", "/vencimentos", false, 50],
   ["financeiro", "Financeiro", "Bancos, extratos e conciliação", "moeda", "/financeiro", false, 35],
-  ["estoque", "Estoque", "Itens, posição, ficha e inventário", "grade", "/estoque", false, 36],
+  ["estoque", "Estoque", "Itens, saldos e movimentações de estoque", "caixa", "/estoque", false, 38], // ícones iguais aos da produção (034)
   ["saidas", "Saídas", "Pedidos de venda", "enviar", "/saidas", false, 37],
-  ["entradas", "Entradas", "Pedidos de compra", "arquivo", "/entradas/compras", false, 38],
+  ["entradas", "Entradas", "Notas recebidas e compras", "importar", "/entradas", false, 36],
   ["comercial", "CRM Comercial", "Leads, proposta e contrato", "alvo", "/comercial", false, 80],
   ["licencas", "Licenças", "Módulos vendidos: contratos, mensalidades e bloqueio", "documento", "/licencas", false, 85],
   ["centros_custo", "Centros de custo", "Centros de custo de cada empresa", "etiqueta", "/centros-custo", false, 39],

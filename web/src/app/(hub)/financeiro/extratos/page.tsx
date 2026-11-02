@@ -7,7 +7,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { nomeCliente } from "@/dominios/clientes/nome";
-import { EscolhaCliente, useClienteFinanceiro } from "@/dominios/financeiro/componentes/EscolhaCliente";
+import { EscolhaCliente, useClienteGestao } from "@/dominios/organizacao/componentes/EmpresaEmGestao";
 import { lerContas, lerLinhas, lerLotes } from "@/dominios/financeiro/leituras";
 import { ImportarExtrato } from "@/dominios/financeiro/componentes/ImportarExtrato";
 import { ListaLotes } from "@/dominios/financeiro/componentes/ListaLotes";
@@ -23,7 +23,10 @@ import { baixarBytes } from "@/lib/arquivos/baixar";
 import { exportarExcel } from "@/lib/arquivos/excel";
 import { gerarRelatorioPdf } from "@/lib/arquivos/relatorioPdf";
 import { carregarLogo } from "@/lib/marca";
-import { Chip, FiltroPeriodo, Indicador, Valor } from "@/dominios/financeiro/componentes/Comuns";
+import { Chip } from "@/components/ui/Chip";
+import { FiltroPeriodo } from "@/components/ui/FiltroPeriodo";
+import { Indicador } from "@/components/ui/Indicador";
+import { Valor } from "@/components/ui/Valor";
 import { CabecalhoPagina } from "@/components/ui/CabecalhoPagina";
 import { CartaoFiltros, MaisFiltros } from "@/components/ui/CartaoFiltros";
 import type { FiltroAtivo } from "@/components/ui/CartaoFiltros";
@@ -43,7 +46,7 @@ const MOSTRAR = 500;
 
 export default function PaginaExtratos() {
   const { org, pode } = useOrg();
-  const financeiro = useClienteFinanceiro();
+  const financeiro = useClienteGestao();
   const cliente = financeiro.cliente;
   const podeOperar = pode("financeiro", "operar");
   const { aviso, mostrar } = useAviso();
@@ -223,7 +226,7 @@ export default function PaginaExtratos() {
       />
 
       <CartaoFiltros ativos={filtrosAtivos} aoLimpar={limparFiltros}>
-        <EscolhaCliente financeiro={financeiro} />
+        <EscolhaCliente gestao={financeiro} />
         <label className="campo">
           <span>Conta</span>
           <select value={conta} onChange={(e) => setConta(e.target.value)} disabled={!cliente}>

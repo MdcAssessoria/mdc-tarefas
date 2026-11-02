@@ -1,5 +1,7 @@
-// Aba "Clientes (portal)" de Pessoas e acessos: quem de cada cliente acessa o Portal, com quais permissões,
-// convites pendentes e o editor de acesso.
+// Gestão dos acessos de clientes ao Portal: quem de cada cliente acessa, com quais permissões, convites pendentes e o
+// editor de acesso. Usada na aba "Clientes (portal)" de Pessoas e acessos e em Atendimento › Acessos do portal.
+// TODO: botão "Cancelar convite" pendente fica oculto até existir no banco uma função que cancele convite do portal
+// pedindo motivo (com registro no histórico); não apagar portal_convites direto da tela.
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";

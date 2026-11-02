@@ -13,8 +13,9 @@ import { CampoArquivo } from "@/components/ui/CampoArquivo";
 import { Carregando } from "@/components/ui/Carregando";
 import { EstadoVazio } from "@/components/ui/EstadoVazio";
 import { useAviso } from "@/components/ui/Aviso";
-import { EscolhaCliente, useClienteFinanceiro } from "@/dominios/financeiro/componentes/EscolhaCliente";
-import { formatarDocumento } from "@/dominios/financeiro/regras";
+import { useConfirmar } from "@/components/ui/JanelaConfirmar";
+import { EscolhaCliente, useClienteGestao } from "@/dominios/organizacao/componentes/EmpresaEmGestao";
+import { formatarDocumento } from "@/lib/documento";
 import { lerCertificado, lerControle, lerParametros } from "@/dominios/notas/leituras";
 import { enviarCertificado, removerCertificado, salvarParametros } from "@/dominios/notas/repositorio";
 import { quandoProximaBusca } from "@/dominios/notas/regras";
@@ -31,10 +32,11 @@ const PADRAO: Omit<ParametrosFiscais, "cliente_id"> = {
 export default function PaginaCertificadoEmpresa() {
   const { pode } = useOrg();
   const agora = useAgora();
-  const financeiro = useClienteFinanceiro();
+  const financeiro = useClienteGestao();
   const cliente = financeiro.cliente;
+  // certificado e parâmetros fiscais: no banco a regra é estrita ("gerir" no Financeiro, só a equipe MDC)
   const podeGerir = pode("financeiro", "gerir");
-  const podeOperar = pode("financeiro", "operar");
+  const podeOperar = pode("entradas", "operar");
   const { aviso, mostrar } = useAviso();
   const [arquivo, setArquivo] = useState<File | null>(null);
   const [senha, setSenha] = useState("");
@@ -79,8 +81,17 @@ export default function PaginaCertificadoEmpresa() {
     }
   }
 
+  const [janelaConfirmar, confirmar] = useConfirmar();
+
   async function remover() {
-    if (!cliente || !confirm("Remover o certificado desta empresa? A busca automática de notas para.")) return;
+    if (!cliente) return;
+    const sim = await confirmar({
+      titulo: "Remover o certificado desta empresa?",
+      descricao: "A busca automática de notas para até um novo certificado ser enviado.",
+      botao: "Remover",
+      perigo: true,
+    });
+    if (!sim) return;
     try {
       await removerCertificado(cliente.id);
       mostrar("Certificado removido.");
@@ -120,6 +131,7 @@ export default function PaginaCertificadoEmpresa() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-4">
+      {janelaConfirmar}
       <div>
         <h1 className="text-xl font-semibold text-[var(--marca)]">Certificado digital da empresa</h1>
         <p className="text-sm text-neutral-600">
@@ -128,7 +140,7 @@ export default function PaginaCertificadoEmpresa() {
         </p>
       </div>
       <div className="cartao flex flex-wrap items-end gap-3 p-4">
-        <EscolhaCliente financeiro={financeiro} />
+        <EscolhaCliente gestao={financeiro} />
       </div>
       {aviso}
       {consulta.erro && <p className="rounded-md bg-red-50 p-3 text-sm text-red-800">{consulta.erro}</p>}

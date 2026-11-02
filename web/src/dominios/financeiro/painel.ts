@@ -191,9 +191,6 @@ export function primeirosPassos(c: { plano: number; bancos: number; categorias: 
   ];
 }
 
-/** "Bom dia", "Boa tarde" ou "Boa noite" pela hora (0–23) no fuso da organização. */
-export const saudacao = (hora: number) => (hora < 12 ? "Bom dia" : hora < 18 ? "Boa tarde" : "Boa noite");
-
 /** Valor curto para eixos de gráfico: 1.500 → "1,5 mil"; 2.300.000 → "2,3 mi"; negativos com sinal. */
 export function valorCurto(v: number): string {
   const a = Math.abs(v);

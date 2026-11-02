@@ -1,15 +1,14 @@
 import { describe, expect, it } from "vitest";
 import {
   dividirParcelas,
-  documentoValido,
   fimDoMes,
-  formatarDocumento,
   intervaloDoPeriodo,
   numeroBr,
   saldoDoTitulo,
   situacaoDoTitulo,
   somarMesesData,
 } from "./regras";
+import { documentoValido, formatarDocumento } from "@/lib/documento";
 
 describe("CPF e CNPJ", () => {
   it("aceita documentos com dígitos certos, com ou sem máscara", () => {

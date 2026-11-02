@@ -15,9 +15,11 @@ import { lerMovimentos } from "../leituras";
 import { estornarMovimento, movimentarEstoque } from "../repositorio";
 import { intervaloDoPeriodo, numeroBr } from "../regras";
 import type { Periodo } from "../regras";
-import { nomeArquivo } from "../exportar";
+import { nomeArquivo } from "@/lib/arquivos/exportarLista";
 import type { LocalEstoque, MovimentoEstoque, TipoMovimento } from "../tipos";
-import { BotoesExportar, FiltroPeriodo, JanelaMotivo } from "./Comuns";
+import { BotoesExportar } from "@/components/ui/BotoesExportar";
+import { FiltroPeriodo } from "@/components/ui/FiltroPeriodo";
+import { JanelaMotivo } from "@/components/ui/JanelaMotivo";
 import type { PropsAba } from "./Comuns";
 import { ORIGENS, qtd, TIPOS_MOV, useBaseEstoque } from "./estoqueBase";
 

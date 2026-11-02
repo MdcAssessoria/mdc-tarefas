@@ -14,7 +14,7 @@ import { numeroBr, saldoDoTitulo, valorParaCampo } from "../regras";
 import { FORMAS_PAGAMENTO } from "../tipos";
 import type { Baixa, ContaBancaria, Titulo } from "../tipos";
 import { TEXTOS } from "./LancarTitulo";
-import { JanelaMotivo } from "./Comuns";
+import { JanelaMotivo } from "@/components/ui/JanelaMotivo";
 
 export function BaixarTitulo({
   titulo,

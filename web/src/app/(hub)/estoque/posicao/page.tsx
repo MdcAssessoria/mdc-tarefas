@@ -1,7 +1,7 @@
 // Estoque › Posição: saldo e valor de cada item por estoque (local).
 "use client";
 
-import { TelaEmpresa } from "@/dominios/financeiro/componentes/TelaEmpresa";
+import { TelaEmpresa } from "@/dominios/organizacao/componentes/EmpresaEmGestao";
 import { EstoquePosicao } from "@/dominios/financeiro/componentes/EstoquePosicao";
 
 export default function PaginaPosicao() {

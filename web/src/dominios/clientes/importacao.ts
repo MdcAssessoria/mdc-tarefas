@@ -1,4 +1,5 @@
 // Leitura e normalização de planilhas de clientes (relatório de empresas do Domínio, Excel ou CSV).
+import { cnpjValido, cpfValido, soDigitos } from "@/lib/documento";
 import { semAcento } from "@/lib/texto";
 
 export type Campo =
@@ -184,32 +185,6 @@ export function mapearSituacao(t: unknown): boolean | null {
   if (/^(a|s|sim|ativa|ativo|normal|em atividade|1)$/.test(s) || s.startsWith("ativ")) return true;
   if (/inativ|baixad|encerrad|suspens|paralisad|extint|^i$|^n$|nao|^0$/.test(s)) return false;
   return null;
-}
-
-export function soDigitos(t: unknown): string {
-  return String(t ?? "").replace(/\D/g, "");
-}
-
-function cnpjValido(d: string): boolean {
-  if (d.length !== 14 || /^(\d)\1+$/.test(d)) return false;
-  const calc = (n: number) => {
-    const pesos = n === 12 ? [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2] : [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
-    const soma = pesos.reduce((a, p, i) => a + Number(d[i]) * p, 0);
-    const r = soma % 11;
-    return r < 2 ? 0 : 11 - r;
-  };
-  return calc(12) === Number(d[12]) && calc(13) === Number(d[13]);
-}
-
-function cpfValido(d: string): boolean {
-  if (d.length !== 11 || /^(\d)\1+$/.test(d)) return false;
-  const calc = (n: number) => {
-    let soma = 0;
-    for (let i = 0; i < n; i++) soma += Number(d[i]) * (n + 1 - i);
-    const r = (soma * 10) % 11;
-    return r === 10 ? 0 : r;
-  };
-  return calc(9) === Number(d[9]) && calc(10) === Number(d[10]);
 }
 
 /** Valida e formata CNPJ/CPF. Planilhas do Excel às vezes perdem zeros à esquerda: completa quando o resultado fica válido. */

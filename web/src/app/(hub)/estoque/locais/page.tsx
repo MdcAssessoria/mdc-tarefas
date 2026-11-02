@@ -1,7 +1,7 @@
 // Estoque › Estoques (locais): depósito, loja, veículo; o padrão; a regra de estoque negativo.
 "use client";
 
-import { TelaEmpresa } from "@/dominios/financeiro/componentes/TelaEmpresa";
+import { TelaEmpresa } from "@/dominios/organizacao/componentes/EmpresaEmGestao";
 import { AbaLocais } from "@/dominios/financeiro/componentes/EstoqueLocais";
 
 export default function PaginaLocais() {

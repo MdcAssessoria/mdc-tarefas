@@ -16,10 +16,11 @@ import { Abas } from "@/components/ui/Abas";
 import { Carregando } from "@/components/ui/Carregando";
 import { EstadoVazio } from "@/components/ui/EstadoVazio";
 import { useAviso } from "@/components/ui/Aviso";
-import { EscolhaCliente, useClienteFinanceiro } from "@/dominios/financeiro/componentes/EscolhaCliente";
-import { BotoesExportar, JanelaMotivo } from "@/dominios/financeiro/componentes/Comuns";
+import { EscolhaCliente, useClienteGestao } from "@/dominios/organizacao/componentes/EmpresaEmGestao";
+import { BotoesExportar } from "@/components/ui/BotoesExportar";
+import { JanelaMotivo } from "@/components/ui/JanelaMotivo";
 import { lerCategorias, lerCentros, lerContas, lerItens, lerLocais, lerPessoas } from "@/dominios/financeiro/leituras";
-import { nomeArquivo } from "@/dominios/financeiro/exportar";
+import { nomeArquivo } from "@/lib/arquivos/exportarLista";
 import { lerDepara, lerNotas, lerTiposEntrada } from "@/dominios/notas/leituras";
 import { desfazerLancamento } from "@/dominios/notas/repositorio";
 import { prontaParaLancar } from "@/dominios/notas/regras";
@@ -42,9 +43,9 @@ export default function PaginaLancarNota() {
 function LancarNotaTela() {
   const { org, pode } = useOrg();
   const params = useSearchParams();
-  const financeiro = useClienteFinanceiro();
+  const financeiro = useClienteGestao();
   const cliente = financeiro.cliente;
-  const podeOperar = pode("financeiro", "operar");
+  const podeOperar = pode("entradas", "operar");
   const { aviso, mostrar } = useAviso();
   const hoje = hojeISO(org.fuso);
   const [aba, setAba] = useState<Aba>("prontas");
@@ -118,7 +119,7 @@ function LancarNotaTela() {
       </div>
 
       <div className="cartao flex flex-wrap items-end gap-3 p-4">
-        <EscolhaCliente financeiro={financeiro} />
+        <EscolhaCliente gestao={financeiro} />
       </div>
       {aviso}
       {consulta.erro && <p className="rounded-md bg-red-50 p-3 text-sm text-red-800">{consulta.erro}</p>}
@@ -153,7 +154,7 @@ function LancarNotaTela() {
             .
           </EstadoVazio>
         ) : !podeOperar ? (
-          <EstadoVazio>Você pode ver as notas, mas lançar exige o nível “operar” no Financeiro.</EstadoVazio>
+          <EstadoVazio>Você pode ver as notas, mas lançar exige o nível “operar” em Entradas. Peça ao administrador do Hub.</EstadoVazio>
         ) : (
           <LancarNota
             key={nota.id}
@@ -187,7 +188,7 @@ function LancarNotaTela() {
               orgId={org.id}
               regras={d?.cad.regras ?? []}
               categorias={d?.cad.categorias ?? []}
-              podeGerir={pode("financeiro", "gerir")}
+              podeGerir={pode("entradas", "gerir")}
               avisar={mostrar}
               aoMudar={consulta.recarregar}
             />

@@ -6,7 +6,7 @@ import { supabase } from "@/lib/supabase";
 import type { Cliente } from "@/dominios/clientes/tipos";
 import type { HubApp, PapelApp } from "@/dominios/acessos/tipos";
 import type { Membro, Organizacao, Papel, Setor } from "./tipos";
-import { PESO_PAPEL_APP } from "@/dominios/acessos/tipos";
+import { podeNoApp } from "@/dominios/acessos/permissoes";
 import { traduzirErro } from "@/lib/erros";
 import { caminho } from "@/lib/caminho";
 import { CHAVES, gravarLocal, lerLocal } from "@/lib/armazenamentoLocal";
@@ -184,11 +184,7 @@ export function OrgProvider({ children }: { children: React.ReactNode }) {
       clientePorId: (id) => (id ? mapC.get(id) : undefined),
       apps,
       appsCarregados,
-      pode: (app, minimo = "ver") => {
-        if (eu.papel === "admin") return true;
-        const a = apps.find((x) => x.slug === app);
-        return !!a?.papel && PESO_PAPEL_APP[a.papel] >= PESO_PAPEL_APP[minimo];
-      },
+      pode: (app, minimo = "ver") => podeNoApp(eu.papel, apps, app, minimo),
       recarregarApps,
     };
   }, [session, org, orgs, minhas, membros, setores, clientes, recarregar, apps, appsCarregados, recarregarApps]);

@@ -1,10 +1,14 @@
+// Certificado digital A1 da MDC: assina os PDFs dos demonstrativos publicados. Só administrador (a Guarda confere).
 "use client";
 
 import Link from "next/link";
 import { useAgora } from "@/lib/useAgora";
 import { useCallback, useEffect, useState } from "react";
 import { useOrg } from "@/dominios/organizacao/OrgProvider";
-import { SUPABASE_KEY, SUPABASE_URL, supabase } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase";
+import { chamarFuncao } from "@/lib/funcoesEdge";
+import { traduzirErro } from "@/lib/erros";
+import { useConfirmar } from "@/components/ui/JanelaConfirmar";
 import { fmtDataLocal } from "@/lib/formato/datas";
 import { CampoArquivo } from "@/components/ui/CampoArquivo";
 
@@ -23,7 +27,7 @@ interface Cert {
 }
 
 function Certificado() {
-  const { org, eu } = useOrg();
+  const { org } = useOrg();
   const agora = useAgora();
   const [cert, setCert] = useState<Cert | null | undefined>(undefined);
   const [arquivo, setArquivo] = useState<File | null>(null);
@@ -44,17 +48,9 @@ function Certificado() {
     void carregar();
   }, [carregar]);
 
-  async function chamar(metodo: "POST" | "DELETE", corpo?: FormData) {
-    const { data } = await supabase().auth.getSession();
-    const r = await fetch(`${SUPABASE_URL}/functions/v1/certificado${metodo === "DELETE" ? `?org=${org.id}` : ""}`, {
-      method: metodo,
-      headers: { Authorization: `Bearer ${data.session?.access_token ?? ""}`, apikey: SUPABASE_KEY },
-      body: corpo,
-    });
-    const j = await r.json().catch(() => ({}));
-    if (!r.ok) throw new Error(j.erro ?? "Falha ao falar com o servidor.");
-    return j;
-  }
+  const [janelaConfirmar, confirmar] = useConfirmar();
+  const chamar = (metodo: "POST" | "DELETE", form?: FormData) =>
+    chamarFuncao("certificado", { metodo, form, busca: metodo === "DELETE" ? { org: org.id } : undefined });
 
   async function enviar(e: React.FormEvent) {
     e.preventDefault();
@@ -73,28 +69,34 @@ function Certificado() {
       setAviso("Certificado cadastrado. Os PDFs dos meses publicados passam a sair assinados.");
       void carregar();
     } catch (x) {
-      setErro((x as Error).message);
+      setErro(traduzirErro(x));
     } finally {
       setEnviando(false);
     }
   }
 
   async function remover() {
-    if (!confirm("Remover o certificado? Os PDFs voltam a sair sem assinatura digital.")) return;
+    const sim = await confirmar({
+      titulo: "Remover o certificado?",
+      descricao: "Os PDFs voltam a sair sem assinatura digital.",
+      botao: "Remover",
+      perigo: true,
+    });
+    if (!sim) return;
     try {
       await chamar("DELETE");
       setAviso("Certificado removido.");
       void carregar();
     } catch (x) {
-      setErro((x as Error).message);
+      setErro(traduzirErro(x));
     }
   }
 
-  if (eu.papel !== "admin") return <p className="text-sm text-neutral-600">Só administradores gerenciam o certificado digital.</p>;
   const vence = cert?.valido_ate ? Math.round((Date.parse(cert.valido_ate) - agora) / 864e5) : null;
 
   return (
     <div className="mx-auto max-w-2xl space-y-5">
+      {janelaConfirmar}
       <div>
         <Link href="/demonstrativos" className="text-sm text-neutral-500 hover:underline">
           ← Balancetes

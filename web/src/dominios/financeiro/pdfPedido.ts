@@ -6,7 +6,7 @@ import { carregarLogo } from "@/lib/marca";
 import { brl } from "@/lib/formato/moeda";
 import { fmtData } from "@/lib/formato/datas";
 import { qtdBr } from "./estoqueRegras";
-import { nomeArquivo } from "./exportar";
+import { nomeArquivo } from "@/lib/arquivos/exportarLista";
 import { situacaoPedido } from "./pedidosRegras";
 import type { Pedido, PedidoItem, Pessoa } from "./tipos";
 

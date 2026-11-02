@@ -11,8 +11,9 @@ import { traduzirErro } from "@/lib/erros";
 import { Carregando } from "@/components/ui/Carregando";
 import { EstadoVazio } from "@/components/ui/EstadoVazio";
 import { useAviso } from "@/components/ui/Aviso";
-import { BotoesExportar, Indicador } from "@/dominios/financeiro/componentes/Comuns";
-import { nomeArquivo } from "@/dominios/financeiro/exportar";
+import { BotoesExportar } from "@/components/ui/BotoesExportar";
+import { Indicador } from "@/components/ui/Indicador";
+import { nomeArquivo } from "@/lib/arquivos/exportarLista";
 import { Cabecalho, useDadosLicencas } from "@/dominios/licencas/componentes/Base";
 import { GraficoMeses } from "@/dominios/licencas/componentes/GraficoMeses";
 import {
@@ -141,25 +142,25 @@ export default function PainelLicencas() {
       ) : (
         <>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-            <Indicador
+            <Indicador icone="tendencia"
               titulo="Receita mensal recorrente"
               valor={brl(numeros.mrr)}
               detalhe={`${numeros.vigentes} contrato(s) · ${numeros.clientes} cliente(s)`}
             />
-            <Indicador
+            <Indicador icone="calendario"
               titulo="A receber neste mês"
               valor={brl(numeros.aReceber)}
               detalhe={`${numeros.qtdAReceber} mensalidade(s)`}
               tom="ambar"
             />
-            <Indicador titulo="Recebido neste mês" valor={brl(numeros.recebido)} tom="verde" />
-            <Indicador
+            <Indicador icone="check" titulo="Recebido neste mês" valor={brl(numeros.recebido)} tom="verde" />
+            <Indicador icone="alerta"
               titulo="Em atraso"
               valor={brl(numeros.atraso)}
               detalhe={`${numeros.clientesAtraso} cliente(s)`}
               tom={numeros.atraso ? "vermelho" : "neutro"}
             />
-            <Indicador
+            <Indicador icone="cancelar"
               titulo="Clientes bloqueados"
               valor={String(dados.bloqueados.size)}
               detalhe="sem acesso aos módulos pagos"

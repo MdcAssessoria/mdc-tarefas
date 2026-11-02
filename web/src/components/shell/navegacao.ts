@@ -207,6 +207,58 @@ export function filtrarLinks(
   );
 }
 
+/** O que uma tela exige além de abrir o módulo. `admin`: só o administrador da organização. */
+export interface ExigenciaTela {
+  minimo?: PapelApp;
+  gestor?: boolean;
+  admin?: boolean;
+}
+
+/**
+ * Telas sem aba própria na barra que exigem mais do que abrir o módulo (as que têm aba usam `minimo`/`gestor` do NAV).
+ * A Guarda aplica a regra também nas subpáginas.
+ */
+export const TELAS_RESTRITAS: Record<string, ExigenciaTela> = {
+  "/clientes/importar": { gestor: true },
+  "/demonstrativos/certificado": { admin: true },
+};
+
+/**
+ * Exigência da rota atual: a de TELAS_RESTRITAS ou a da aba mais específica do módulo que contém a rota (a aba
+ * "/demonstrativos/importar" vence a "/demonstrativos"). Sem exigência, devolve null (basta abrir o módulo).
+ */
+export function exigenciaDaRota(rota: string, modulo: Modulo): ExigenciaTela | null {
+  const dentro = (href: string) => rota === href || rota.startsWith(href + "/");
+  const extra = Object.keys(TELAS_RESTRITAS)
+    .filter(dentro)
+    .sort((a, b) => b.length - a.length)[0];
+  if (extra) return TELAS_RESTRITAS[extra];
+  const aba = NAV[modulo].links
+    .filter((l) => linkAtivo(rota, l.href, modulo))
+    .sort((a, b) => b.href.length - a.href.length)[0];
+  if (!aba || (!aba.minimo && !aba.gestor)) return null;
+  return { minimo: aba.minimo, gestor: aba.gestor };
+}
+
+/**
+ * A pessoa pode abrir esta rota? Primeiro o módulo (alguma ferramenta que o libera), depois a exigência da tela.
+ * Mesma regra das abas visíveis (filtrarLinks), aplicada pela Guarda a quem chega pelo endereço direto.
+ */
+export function podeAbrirRota(
+  rota: string,
+  modulo: Modulo,
+  permissoes: { pode: (app: string, minimo?: PapelApp) => boolean; podeEditarCadastros: boolean; admin: boolean },
+): boolean {
+  if (modulo === "hub") return true;
+  if (!podeModulo(modulo, permissoes.pode)) return false;
+  const e = exigenciaDaRota(rota, modulo);
+  if (!e) return true;
+  if (e.admin && !permissoes.admin) return false;
+  if (e.gestor && !permissoes.podeEditarCadastros) return false;
+  if (e.minimo && !podeModulo(modulo, permissoes.pode, e.minimo)) return false;
+  return true;
+}
+
 /** A aba está ativa na rota? A aba inicial do módulo (ex.: /financeiro) só vale na própria rota; as outras valem também nas subpáginas. */
 export function linkAtivo(rota: string, href: string, modulo: Modulo): boolean {
   return rota === href || (href !== `/${modulo}` && rota.startsWith(href + "/"));

@@ -1,52 +1,36 @@
 // Gravações das notas fiscais. O que fala com a SEFAZ/ADN (certificado, captura, manifestação) vai pelas Funções Edge;
 // o resto por funções do banco (tudo ou nada, permissão conferida lá).
-import { SUPABASE_KEY, SUPABASE_URL, supabase } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase";
+import { chamarFuncao } from "@/lib/funcoesEdge";
 import { exigir } from "@/lib/exigir";
 import type { Json } from "@/lib/database.types";
 import { lerVariasNotas } from "./documentos";
 import type { NotaLida } from "./documentos";
 import type { CodigoManifestacao } from "./sefaz";
 
-/** Chama uma Função Edge com o login de quem está usando a tela. */
-async function funcao<T>(nome: string, init: { method?: string; corpo?: unknown; form?: FormData; busca?: string }): Promise<T> {
-  const { data } = await supabase().auth.getSession();
-  const r = await fetch(`${SUPABASE_URL}/functions/v1/${nome}${init.busca ?? ""}`, {
-    method: init.method ?? "POST",
-    headers: {
-      Authorization: `Bearer ${data.session?.access_token ?? ""}`,
-      apikey: SUPABASE_KEY,
-      ...(init.form ? {} : { "Content-Type": "application/json" }),
-    },
-    body: init.form ?? (init.corpo === undefined ? undefined : JSON.stringify(init.corpo)),
-  });
-  const j = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error((j as { erro?: string }).erro ?? "Falha ao falar com o servidor. Tente de novo em instantes.");
-  return j as T;
-}
-
 export async function enviarCertificado(cliente: string, arquivo: File, senha: string) {
   const fd = new FormData();
   fd.append("cliente", cliente);
   fd.append("arquivo", arquivo);
   fd.append("senha", senha);
-  return funcao<{ ok: boolean; aviso: string | null }>("fiscal-certificado", { form: fd });
+  return chamarFuncao<{ ok: boolean; aviso: string | null }>("fiscal-certificado", { form: fd });
 }
 
 export const removerCertificado = (cliente: string) =>
-  funcao<{ ok: boolean }>("fiscal-certificado", { method: "DELETE", busca: `?cliente=${encodeURIComponent(cliente)}` });
+  chamarFuncao<{ ok: boolean }>("fiscal-certificado", { metodo: "DELETE", busca: { cliente } });
 
 export interface ResultadoBusca {
   resultados: { fonte: string; documentos: number; ciencias?: number; erro?: string | null }[];
   mensagem?: string;
 }
-export const buscarAgora = (cliente: string) => funcao<ResultadoBusca>("fiscal-captura", { corpo: { cliente } });
+export const buscarAgora = (cliente: string) => chamarFuncao<ResultadoBusca>("fiscal-captura", { corpo: { cliente } });
 
 export interface ResultadoManifestar {
   resultados: { nota: string; aceito: boolean; cStat: string; motivo: string; protocolo: string | null }[];
   recusadas: { nota: string; motivo: string }[];
 }
 export const manifestar = (cliente: string, notas: string[], tipo: CodigoManifestacao, justificativa?: string) =>
-  funcao<ResultadoManifestar>("fiscal-manifestar", { corpo: { cliente, notas, tipo, justificativa } });
+  chamarFuncao<ResultadoManifestar>("fiscal-manifestar", { corpo: { cliente, notas, tipo, justificativa } });
 
 /**
  * XML avulso: lê no navegador (mesmo leitor da captura), guarda o arquivo no Storage em <org>/<cliente>/upload/AAAA/MM/

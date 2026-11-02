@@ -1,41 +1,11 @@
-// Regras puras do Financeiro (sem banco, testadas em regras.test.ts): CPF/CNPJ, período dos filtros, parcelas e
+// Regras puras do Financeiro (sem banco, testadas em regras.test.ts): valores digitados, período dos filtros, parcelas e
 // situação exibida dos títulos. As mesmas contas de parcelas são feitas no banco (fin_lancar); aqui servem à prévia.
-import { somarDias, somarMeses } from "@/lib/datas";
+import { somarMeses } from "@/lib/datas";
+import { fimDoMes } from "@/lib/periodo";
 import type { Titulo } from "./tipos";
 
 // ------------------------------------------------------------------ CPF / CNPJ
-
-export const soDigitos = (s: string) => s.replace(/\D/g, "");
-
-function digitoCpf(base: string, pesoInicial: number) {
-  let soma = 0;
-  for (let i = 0; i < base.length; i++) soma += Number(base[i]) * (pesoInicial - i);
-  const resto = (soma * 10) % 11;
-  return resto === 10 ? 0 : resto;
-}
-function digitoCnpj(base: string) {
-  const pesos = base.length === 12 ? [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2] : [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
-  const soma = base.split("").reduce((a, d, i) => a + Number(d) * pesos[i], 0);
-  const resto = soma % 11;
-  return resto < 2 ? 0 : 11 - resto;
-}
-
-/** CPF (11 dígitos) ou CNPJ (14) com dígitos verificadores corretos. */
-export function documentoValido(doc: string): boolean {
-  const d = soDigitos(doc);
-  if (/^(\d)\1+$/.test(d)) return false;
-  if (d.length === 11) return digitoCpf(d.slice(0, 9), 10) === Number(d[9]) && digitoCpf(d.slice(0, 10), 11) === Number(d[10]);
-  if (d.length === 14) return digitoCnpj(d.slice(0, 12)) === Number(d[12]) && digitoCnpj(d.slice(0, 13)) === Number(d[13]);
-  return false;
-}
-
-/** 12.345.678/0001-90 ou 123.456.789-01 (devolve como veio se não tiver 11 ou 14 dígitos). */
-export function formatarDocumento(doc: string | null | undefined): string {
-  const d = soDigitos(doc ?? "");
-  if (d.length === 11) return d.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
-  if (d.length === 14) return d.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, "$1.$2.$3/$4-$5");
-  return doc ?? "";
-}
+// Moram em lib/documento.ts (fonte única do site).
 
 // ------------------------------------------------------------------ valores digitados
 
@@ -58,48 +28,9 @@ export const valorParaCampo = (v: number | null | undefined, casas = 2) =>
   v == null ? "" : Number(v).toLocaleString("pt-BR", { minimumFractionDigits: casas, maximumFractionDigits: Math.max(casas, 4) });
 
 // ------------------------------------------------------------------ período dos filtros
-
-export type Periodo = "mes" | "anterior" | "proximo" | "90" | "ano" | "escolher" | "tudo";
-export const PERIODOS: { id: Periodo; nome: string }[] = [
-  { id: "mes", nome: "Este mês" },
-  { id: "anterior", nome: "Mês passado" },
-  { id: "proximo", nome: "Próximo mês" },
-  { id: "90", nome: "Últimos 90 dias" },
-  { id: "ano", nome: "Este ano" },
-  { id: "escolher", nome: "Escolher datas" },
-  { id: "tudo", nome: "Tudo" },
-];
-
-/** Último dia do mês "AAAA-MM" → "AAAA-MM-DD". */
-export function fimDoMes(mes: string): string {
-  const [a, m] = mes.slice(0, 7).split("-").map(Number);
-  return `${mes.slice(0, 7)}-${String(new Date(Date.UTC(a, m, 0)).getUTCDate()).padStart(2, "0")}`;
-}
-
-/** Datas (inclusive) de um período; "tudo" devolve sem limites. `hoje` = AAAA-MM-DD no fuso da organização. */
-export function intervaloDoPeriodo(p: Periodo, hoje: string, de = "", ate = ""): { de?: string; ate?: string } {
-  const mes = hoje.slice(0, 7);
-  switch (p) {
-    case "mes":
-      return { de: `${mes}-01`, ate: fimDoMes(mes) };
-    case "anterior": {
-      const m = somarMeses(mes, -1);
-      return { de: `${m}-01`, ate: fimDoMes(m) };
-    }
-    case "proximo": {
-      const m = somarMeses(mes, 1);
-      return { de: `${m}-01`, ate: fimDoMes(m) };
-    }
-    case "90":
-      return { de: somarDias(hoje, -90), ate: hoje };
-    case "ano":
-      return { de: `${hoje.slice(0, 4)}-01-01`, ate: `${hoje.slice(0, 4)}-12-31` };
-    case "escolher":
-      return { de: de || undefined, ate: ate || undefined };
-    default:
-      return {};
-  }
-}
+// Mora em lib/periodo.ts (o filtro de período é peça comum de tela); reexportado aqui para as telas do Financeiro.
+export { PERIODOS, fimDoMes, intervaloDoPeriodo } from "@/lib/periodo";
+export type { Periodo } from "@/lib/periodo";
 
 // ------------------------------------------------------------------ parcelas
 

@@ -14,11 +14,14 @@ import { fmtData, mesAno } from "@/lib/formato/datas";
 import { Carregando } from "@/components/ui/Carregando";
 import { EstadoVazio } from "@/components/ui/EstadoVazio";
 import { useAviso } from "@/components/ui/Aviso";
-import { EscolhaCliente, useClienteFinanceiro } from "@/dominios/financeiro/componentes/EscolhaCliente";
-import { BotoesExportar, FiltroPeriodo, Indicador } from "@/dominios/financeiro/componentes/Comuns";
-import { formatarDocumento, intervaloDoPeriodo } from "@/dominios/financeiro/regras";
+import { EscolhaCliente, useClienteGestao } from "@/dominios/organizacao/componentes/EmpresaEmGestao";
+import { BotoesExportar } from "@/components/ui/BotoesExportar";
+import { FiltroPeriodo } from "@/components/ui/FiltroPeriodo";
+import { Indicador } from "@/components/ui/Indicador";
+import { intervaloDoPeriodo } from "@/dominios/financeiro/regras";
+import { formatarDocumento } from "@/lib/documento";
 import type { Periodo } from "@/dominios/financeiro/regras";
-import { nomeArquivo } from "@/dominios/financeiro/exportar";
+import { nomeArquivo } from "@/lib/arquivos/exportarLista";
 import { lerItensDasNotas, lerNotas, lerParametros, lerRegrasCredito } from "@/dominios/notas/leituras";
 import { cargaPercentual, creditoDoItem, NOMES_TRIBUTO, regraVigente, TRIBUTOS_CREDITO } from "@/dominios/notas/creditos";
 import { sugerirTipoEntrada } from "@/dominios/notas/tiposEntrada";
@@ -52,7 +55,7 @@ const r2 = (v: number) => Math.round(v * 100) / 100;
 
 export default function PaginaCargaTributaria() {
   const { org } = useOrg();
-  const financeiro = useClienteFinanceiro();
+  const financeiro = useClienteGestao();
   const cliente = financeiro.cliente;
   const { aviso, mostrar } = useAviso();
   const hoje = hojeISO(org.fuso);
@@ -68,14 +71,14 @@ export default function PaginaCargaTributaria() {
     useCallback(async () => {
       if (!cliente) return null;
       const [notas, regras, parametros] = await Promise.all([
-        lerNotas(cliente.id, { ...intervalo, direcao: "entrada" }),
+        lerNotas(cliente.id, { ...intervalo, direcao: "entrada", fuso: org.fuso }),
         lerRegrasCredito(),
         lerParametros(cliente.id),
       ]);
       const validas = notas.filter((n) => n.situacao === "autorizada" && n.conteudo === "completa");
       const itens = await lerItensDasNotas(validas.map((n) => n.id));
       return { notas: validas, itens, regras, parametros };
-    }, [cliente, intervalo]),
+    }, [cliente, intervalo, org.fuso]),
   );
   const d = consulta.dados;
   const regime = cliente?.regime ?? null;
@@ -224,7 +227,7 @@ export default function PaginaCargaTributaria() {
       </div>
 
       <div className="cartao flex flex-wrap items-end gap-3 p-4">
-        <EscolhaCliente financeiro={financeiro} />
+        <EscolhaCliente gestao={financeiro} />
         <FiltroPeriodo
           rotulo="Emissão"
           periodo={periodo}
@@ -288,14 +291,14 @@ export default function PaginaCargaTributaria() {
         <>
           <p className="text-sm text-neutral-700">{resumo}</p>
           <div className="grid gap-3 sm:grid-cols-3">
-            <Indicador titulo="Valor das compras" valor={brl(valor)} detalhe={`${qtdNotas} nota(s)`} />
-            <Indicador
+            <Indicador icone="moeda" titulo="Valor das compras" valor={brl(valor)} detalhe={`${qtdNotas} nota(s)`} />
+            <Indicador icone="alerta"
               titulo="Impostos no preço"
               valor={brl(impostos)}
               detalhe={`${cargaPercentual(impostos, valor).toLocaleString("pt-BR")}% do valor`}
               tom="ambar"
             />
-            <Indicador
+            <Indicador icone="seta-entrada"
               titulo="Créditos estimados"
               valor={brl(credito)}
               detalhe={regime ? `pelo ${nomeRegime} · estimativa` : "informe o regime da empresa"}

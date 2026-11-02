@@ -7,7 +7,7 @@ import { CabecalhoPagina } from "@/components/ui/CabecalhoPagina";
 import { CartaoFiltros } from "@/components/ui/CartaoFiltros";
 import { EstadoVazio } from "@/components/ui/EstadoVazio";
 import { useAviso } from "@/components/ui/Aviso";
-import { EscolhaCliente, useClienteFinanceiro } from "./EscolhaCliente";
+import { EscolhaCliente, useClienteGestao } from "@/dominios/organizacao/componentes/EmpresaEmGestao";
 import type { PropsAba } from "./Comuns";
 
 export function PaginaCadastro({
@@ -25,10 +25,10 @@ export function PaginaCadastro({
   render: (props: PropsAba) => React.ReactNode;
 }) {
   const { pode } = useOrg();
-  const financeiro = useClienteFinanceiro();
+  const financeiro = useClienteGestao();
   const cliente = financeiro.cliente;
   const { aviso, mostrar } = useAviso();
-  const seletor = <EscolhaCliente financeiro={financeiro} />;
+  const seletor = <EscolhaCliente gestao={financeiro} />;
   return (
     <div className="space-y-4">
       {aviso}

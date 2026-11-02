@@ -20,9 +20,10 @@ import { EstadoVazio } from "@/components/ui/EstadoVazio";
 import { Icone } from "@/components/ui/Icone";
 import { QuadroTabela } from "@/components/ui/QuadroTabela";
 import { lerCategorias, lerPlano, rotuloConta } from "../leituras";
-import { nomeArquivo } from "../exportar";
+import { nomeArquivo } from "@/lib/arquivos/exportarLista";
 import type { Categoria, ContaContabil } from "../tipos";
-import { BotoesExportar, Chip } from "./Comuns";
+import { BotoesExportar } from "@/components/ui/BotoesExportar";
+import { Chip } from "@/components/ui/Chip";
 import type { PropsAba } from "./Comuns";
 
 export const TIPOS_CATEGORIA = { despesa: "Despesa", receita: "Receita" } as const;

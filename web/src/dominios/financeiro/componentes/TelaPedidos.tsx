@@ -20,10 +20,13 @@ import type { Periodo } from "../regras";
 import { situacaoPedido } from "../pedidosRegras";
 import type { SituacaoPedido } from "../pedidosRegras";
 import { normalizar } from "../estoqueRegras";
-import { nomeArquivo } from "../exportar";
+import { nomeArquivo } from "@/lib/arquivos/exportarLista";
 import { baixarPdfPedido } from "../pdfPedido";
 import type { Pedido, PedidoItem } from "../tipos";
-import { BotoesExportar, FiltroPeriodo, Indicador, JanelaMotivo } from "./Comuns";
+import { BotoesExportar } from "@/components/ui/BotoesExportar";
+import { FiltroPeriodo } from "@/components/ui/FiltroPeriodo";
+import { Indicador } from "@/components/ui/Indicador";
+import { JanelaMotivo } from "@/components/ui/JanelaMotivo";
 import type { PropsAba } from "./Comuns";
 import { useBaseEstoque } from "./estoqueBase";
 import { EditorPedido, TEXTOS_PEDIDO } from "./EditorPedido";
@@ -132,20 +135,20 @@ export function TelaPedidos({ tipo, cliente, podeOperar, avisar }: PropsAba & { 
   return (
     <div className="space-y-3">
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Indicador
+        <Indicador icone="moeda"
           titulo={tipo === "venda" ? "Vendido no período" : "Comprado no período"}
           valor={brl(lancados.reduce((a, p) => a + Number(p.total), 0))}
           detalhe={`${lancados.length} pedido(s) lançado(s)`}
           tom="verde"
         />
-        <Indicador
+        <Indicador icone="editar"
           titulo="Rascunhos"
           valor={String(rascunhos.length)}
           detalhe={brl(rascunhos.reduce((a, p) => a + Number(p.total), 0))}
           ativo={situacao === "rascunho"}
           aoClicar={() => alternar("rascunho")}
         />
-        <Indicador
+        <Indicador icone="relogio"
           titulo={tipo === "venda" ? "A faturar" : "Aguardando entrega"}
           valor={String(pendentes.length)}
           detalhe={brl(pendentes.reduce((a, p) => a + Number(p.total), 0))}
@@ -153,7 +156,7 @@ export function TelaPedidos({ tipo, cliente, podeOperar, avisar }: PropsAba & { 
           ativo={situacao === "confirmado"}
           aoClicar={() => alternar("confirmado")}
         />
-        <Indicador
+        <Indicador icone="grafico"
           titulo="Ticket médio"
           valor={lancados.length ? brl(lancados.reduce((a, p) => a + Number(p.total), 0) / lancados.length) : "—"}
           detalhe="valor médio por pedido lançado"
