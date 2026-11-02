@@ -15,6 +15,7 @@ import type { Cliente } from "@/dominios/clientes/tipos";
 import { traduzirErro } from "@/lib/erros";
 import { fmtData } from "@/lib/formato/datas";
 import { useMensagem } from "./useMensagem";
+import { ModulosDoCliente } from "@/dominios/licencas/componentes/ModulosDoCliente";
 
 interface Resp {
   cliente_id: string;
@@ -460,6 +461,7 @@ export function AbaClientes() {
                         <p className="pb-2 text-xs text-[var(--texto-suave)]">
                           As tarefas recorrentes deste cliente nascem atribuídas a essas pessoas.
                         </p>
+                        <ModulosDoCliente cliente={c.id} />
                       </td>
                     </tr>
                   )}

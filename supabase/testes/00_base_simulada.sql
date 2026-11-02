@@ -21,5 +21,12 @@ begin
   if new.cliente_id is not null and not exists (select 1 from clientes where id = new.cliente_id and org_id = new.org_id) then
     raise exception 'Cliente não pertence a esta organização'; end if;
   return new; end $$;
+-- stubs usados pela 031 (licenças): equipe, acessos e sino
+create table if not exists membros (org_id uuid, user_id uuid, nome text, papel text, ativo boolean default true);
+create table if not exists hub_acessos (org_id uuid, user_id uuid, app text, papel text);
+create table if not exists hub_notificacoes (id bigserial primary key, org_id uuid, user_id uuid, app text, titulo text, texto text, link text, criado_em timestamptz default now());
+create or replace function app.notificar(p_org uuid, p_user uuid, p_app text, p_titulo text, p_texto text, p_link text) returns void
+  language sql security definer set search_path = public as $$
+  insert into public.hub_notificacoes (org_id, user_id, app, titulo, texto, link) select p_org, p_user, p_app, p_titulo, p_texto, p_link where p_user is not null $$;
 grant select, insert, update, delete on all tables in schema public to authenticated;
 alter default privileges in schema public grant select, insert, update, delete on tables to authenticated;

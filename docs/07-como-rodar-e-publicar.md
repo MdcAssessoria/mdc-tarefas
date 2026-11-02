@@ -76,6 +76,24 @@ npx supabase functions deploy convite --project-ref bulqqdgfrrpqquqvjjfa --impor
   `npx esbuild@0.24.0 index.ts --bundle --format=esm --platform=neutral --target=es2022 --charset=ascii` marcando como
   `--external` os pacotes do `deno.json` (e `node:*`), e publique esse `index.js` com o `deno.json`. Foi assim que
   `balancete-agente` (v1) e `demonstrativo-pdf` (v7) foram publicadas em 01/11/2026; o código-fonte continua sendo os `.ts`.
+- **Funções fiscais (Entradas, migração 032): `fiscal-certificado`, `fiscal-captura`, `fiscal-manifestar`.** Usam a pasta
+  compartilhada `supabase/functions/_fiscal/` (mTLS, certificado, assinatura XMLDSig, captura, manifestação) e a cópia do
+  núcleo puro em `_fiscal/nucleo/` (gerada de `web/src/dominios/notas/` por `scripts/sync-funcoes.sh`; `npm run verificar`
+  confere). Ordem: aplicar a 032 → publicar as três funções → push do site.
+  ```bash
+  sh scripts/sync-funcoes.sh
+  cd supabase/functions/_fiscal && deno test --allow-run --allow-read --allow-write --allow-env --config deno.json fiscal_test.ts && cd -
+  npx supabase functions deploy fiscal-certificado --project-ref bulqqdgfrrpqquqvjjfa --import-map supabase/functions/fiscal-certificado/deno.json
+  npx supabase functions deploy fiscal-manifestar --project-ref bulqqdgfrrpqquqvjjfa --import-map supabase/functions/fiscal-manifestar/deno.json
+  npx supabase functions deploy fiscal-captura --project-ref bulqqdgfrrpqquqvjjfa --no-verify-jwt --import-map supabase/functions/fiscal-captura/deno.json
+  ```
+  `fiscal-captura` vai **com a checagem de login desligada** (o agendador manda `x-agente-token`; a própria função
+  confere o token no banco ou o login + `fis_pode(cliente,'operar')`). Pelo conector (sem CLI), gere o bundle de cada uma:
+  `npx esbuild@0.24.0 index.ts --bundle --format=esm --platform=neutral --target=es2022 --charset=ascii --external:@supabase/supabase-js --external:node-forge '--external:node:*' --outfile=index.js`
+  (dentro da pasta da função; o esbuild junta `../_fiscal`). Não precisam de segredo novo: usam `SUPABASE_URL`,
+  `SUPABASE_ANON_KEY` e `SUPABASE_SERVICE_ROLE_KEY`, que o Supabase já injeta. O teste da assinatura confere com o
+  `xmlsec1 --verify` (instale com `apt-get install xmlsec1`). Publicadas pelo conector em 02/11/2026 (v1 das três),
+  depois das migrações 031 a 035.
 - Segredos das funções (chave de serviço etc.) ficam no painel: Edge Functions › Secrets. Nunca no código.
 - As origens permitidas (CORS e link de convite) são `mdcassessoria.com`, `www.mdcassessoria.com` e
   `mdc-tarefas.vercel.app`. Para testar convite rodando local, publique uma versão de teste com `localhost`.
@@ -95,8 +113,14 @@ para validar qualquer novidade antes de liberar para a carteira.
 ## Testes SQL (Financeiro e estoque)
 
 `bash supabase/testes/rodar.sh` sobe um Postgres 16 temporário na máquina, cria uma base simulada (`auth.uid()` lido de
-`teste.uid`, `app.hub_pode` lido de `teste.papel`), aplica as migrações 026, 028 e 029 e roda os cenários de
-`supabase/testes/20_titulos.sql` e `30_estoque.sql`: parcelas, baixa parcial com juros e desconto, estorno, cancelamento,
+`teste.uid`, `app.hub_pode` lido de `teste.papel`), aplica as migrações 026, 028, 029, 030 e 033 e roda os cenários de
+`supabase/testes/20_titulos.sql`, `30_estoque.sql` e `60_estoque_pedidos.sql` (custo médio, pedidos, cancelamento e
+duas vendas ao mesmo tempo, com duas conexões pelo `dblink`): parcelas, baixa parcial com juros e desconto, estorno, cancelamento,
+`teste.uid`, `app.hub_pode` lido de `teste.papel`; Vault, Storage, pg_cron e Vencimentos simulados em
+`05_base_fiscal.sql`), aplica as migrações 026, 028, 029, 030 e 032 e roda os cenários de
+`supabase/testes/20_titulos.sql`, `30_estoque.sql` e `50_fiscal.sql` (notas: certificado no cofre, captura com 137,
+resumo que vira completa, cancelamento que chega antes da nota, manifestação aceita/recusada, lançamento com contas a
+pagar + estoque + de-para, desfazer, upload, Storage e acessos): parcelas, baixa parcial com juros e desconto, estorno, cancelamento,
 travas de situação, acesso do cliente pelo Portal e de quem não tem acesso, saldo de estoque, inventário,
 transferência, estorno e estoque negativo. Cada linha marcada "(deve falhar)" precisa terminar em erro com a mensagem
 em português. Rode antes de aplicar uma migração nova dessas tabelas.

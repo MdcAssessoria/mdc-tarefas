@@ -7,7 +7,7 @@ import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { nomeCliente } from "@/dominios/clientes/nome";
 import { semAcento } from "@/lib/texto";
 import { Icone } from "@/components/ui/Icone";
-import { NAV, filtrarLinks } from "./navegacao";
+import { NAV, filtrarLinks, podeModulo } from "./navegacao";
 import type { Modulo } from "./navegacao";
 
 interface ItemBusca {
@@ -56,6 +56,8 @@ export function BuscaRapida({ aoFechar }: { aoFechar: () => void }) {
           href: l.href,
         });
     }
+    if (podeModulo("cadastros", pode))
+      itens.push({ id: "/cadastros/pessoas", grupo: "Ferramentas", nome: "Fornecedores e clientes", icone: "pessoas", href: "/cadastros/pessoas" });
     if (papel === "admin")
       itens.push({ id: "acessos", grupo: "Administração", nome: "Pessoas e acessos", icone: "pessoas", href: "/hub/acessos" });
     if (podeEditarCadastros)

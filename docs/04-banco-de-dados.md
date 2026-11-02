@@ -18,8 +18,12 @@
 | Portal e demonstrativos | `portal_usuarios`, `portal_convites`, `portal_conversas`, `portal_mensagens`, `portal_balancetes`, `portal_balancete_linhas`, `portal_mapa_contas`, `portal_mapa_dfc`, `portal_pareceres` | Área do cliente: balancetes, demonstrações, parecer, chat |
 | Marca de ex-cliente (esquema `app`, sem acesso pela API) | `app.ex_clientes` | E-mails que já foram acesso de cliente; nunca entram na equipe (027). Para retirar uma marca feita por engano, o administrador roda no SQL do Supabase: `delete from app.ex_clientes where email = '...'` e registra o motivo |
 | Integrações e importações | `hub_integracoes`, `hub_importacoes` | Pasta do SharePoint lida pelo agente (só administrador) e histórico de tudo o que foi importado (tela, lote, pasta) |
-| Financeiro | `fin_plano_contas`, `fin_plano_importacoes`, `fin_contas_bancarias`, `fin_extrato_lotes`, `fin_extrato_linhas`, `fin_pessoas`, `fin_categorias`, `fin_centros_custo`, `fin_titulos`, `fin_baixas` | Plano de contas do Domínio, bancos, extratos, fornecedores/clientes, despesas/receitas ligadas ao plano, centros de custo, contas a pagar/receber e pagamentos de cada cliente ([módulo](modulos/financeiro.md)) |
+| Financeiro | `fin_plano_contas`, `fin_plano_importacoes`, `fin_contas_bancarias`, `fin_extrato_lotes`, `fin_extrato_linhas`, `fin_pessoas`, `fin_categorias`, `fin_centros_custo`, `fin_titulos`, `fin_baixas`, `fin_transferencias` (034) | Plano de contas do Domínio, bancos, extratos, fornecedores/clientes, despesas/receitas ligadas ao plano, centros de custo, contas a pagar/receber, pagamentos e transferências entre contas de cada cliente ([módulo](modulos/financeiro.md)) |
 | Estoque | `est_itens`, `est_locais`, `est_parametros`, `est_movimentos`, visão `est_saldos` | Produtos e serviços (com "controla estoque"), estoques (locais), regra de estoque negativo, movimentos e saldo por item e local ([módulo](modulos/financeiro.md#6-itens-e-estoque)) |
+| Licenças | `lic_produtos`, `lic_planos`, `lic_plano_produtos`, `lic_contratos`, `lic_contrato_produtos`, `lic_cobrancas`, `lic_baixas`, `lic_reajustes`, `lic_bloqueios`, `lic_parametros` | Módulos do HUB vendidos aos clientes: contratos, mensalidades, recebimentos, reajustes e bloqueio manual ([módulo](modulos/licencas.md)) |
+| Estoque | `est_itens`, `est_grupos`, `est_locais`, `est_parametros`, `est_movimentos`, visão `est_saldos` | Produtos e serviços (com "controla estoque", grupo, unidade de compra, custo médio), estoques (locais), regra de estoque negativo, movimentos com saldo e custo médio depois de cada um (ficha/kardex) e saldo por item e local ([módulo](modulos/estoque.md)) |
+| Pedidos (Saídas e Entradas) | `est_pedidos`, `est_pedido_itens`, `est_pedido_titulos` | Pedidos de venda e de compra: confirmar/receber mexe no estoque e gera contas a receber/pagar ([módulo](modulos/estoque.md)) |
+| Notas fiscais (Entradas) | `fis_parametros`, `fis_certificados`, `fis_dfe_controle`, `fis_notas`, `fis_nota_itens`, `fis_eventos`, `fis_depara_itens`, `fis_tipos_entrada`, `fis_regras_credito`; bucket privado `fiscal` | Certificado A1 por empresa (cofre), captura de NF-e/NFS-e com controle de NSU, notas e itens, manifestação e eventos com protocolo, de-para de itens do fornecedor, tipos de entrada e regras de crédito por regime com vigência ([módulo](modulos/notas-fiscais.md)) |
 | Vencimentos | `venc_itens` | Certificados, alvarás, procurações e outros itens que vencem |
 | Comercial (CRM) | `crm_oportunidades`, `crm_atividades`, `crm_modelos`, `crm_contratos` | Funil de vendas, leads e contratos |
 
@@ -205,11 +209,16 @@ pode fazer aquilo (normalmente com `app.hub_pode(org, app, nível)` ou `app.port
 | Vencimentos | `venc_renovar` |
 | CRM | `crm_receber_lead` (página pública de leads), `crm_converter_cliente`, `crm_arquivar` |
 | Certificado | `cert_salvar`, `cert_obter`, `cert_remover` (segredos no Supabase Vault) |
+| Licenças | `lic_salvar_produto`, `lic_salvar_plano`, `lic_salvar_contrato`, `lic_encerrar_contrato`, `lic_reajustar_contrato`, `lic_gerar_cobrancas`, `lic_baixar_cobranca`, `lic_desfazer_baixa`, `lic_cancelar_cobranca`, `lic_bloquear`, `lic_desbloquear`, `lic_definir_parametros`, `portal_licenca_situacao` |
+| Estoque e pedidos (033) | `est_salvar_item`, `est_importar_itens`, `est_inventario`, `est_movimentar`, `est_estornar_movimento`, `est_pedido_salvar`, `est_pedido_confirmar`, `est_pedido_receber`, `est_pedido_faturar`, `est_pedido_cancelar` |
+| Notas fiscais (Entradas, 032) | Tela: `fis_processar_nota`, `fis_desfazer_lancamento`, `fis_registrar_upload`, `fis_salvar_parametros`, `fis_salvar_tipo_entrada`, `fis_pode`, `fis_pode_certificado`. Só Funções Edge (service_role): `fis_cert_salvar`, `fis_cert_obter`, `fis_cert_remover`, `fis_gravar_documento`, `fis_registrar_evento`, `fis_captura_reservar`, `fis_captura_concluir`, `fis_token_confere` |
 
 ## 4.4 Funções internas e gatilhos (`app.*`)
 
-- **Permissão:** `hub_pode`, `papel`, `eh_gestor`, `portal_pode`, `minhas_orgs`, `meu_setor`, `hub_peso`.
-- **Rotinas:** `gerar_tarefas_recorrentes` (pg_cron diário), `venc_avisar` (avisos de vencimento),
+- **Permissão:** `hub_pode`, `papel`, `eh_gestor`, `portal_pode`, `minhas_orgs`, `meu_setor`, `hub_peso`; módulos pagos do
+  Portal: `cliente_tem_modulo(cliente, módulo)` e `cliente_bloqueado(cliente)` (031).
+- **Rotinas:** `gerar_tarefas_recorrentes` (pg_cron diário), `venc_avisar` (avisos de vencimento), `lic_rotina_diaria`
+  (mensalidades de licença e avisos de atraso),
   `vencimento` e `dia_util` (calculam prazo útil com feriados).
 - **Gatilhos que guardam regras** (não dá para contornar pela tela):
 
@@ -223,6 +232,13 @@ pode fazer aquilo (normalmente com `app.hub_pode(org, app, nível)` ou `app.port
 | `portal_mensagens_antes` | `portal_mensagens` | Autor e tipo da mensagem vêm do usuário logado |
 | `tarefas_historico` | `tarefas` | Registra cada mudança da tarefa |
 | `crm_op_excluir` | `crm_oportunidades` | Não exclui oportunidade que virou cliente ou tem contrato assinado |
+| `est_item_valida_v2` | `est_itens` | Custo médio só o HUB grava; grupo da mesma empresa; foto só na pasta da empresa (033) |
+| `fis_depara_valida` | `fis_depara_itens` | O item do estoque do de-para é da mesma empresa |
+
+Funções internas das notas (032): `app.fis_gravar_nota` (grava ou completa a nota a partir do XML lido),
+`app.fis_gravar_evento` (evento aceito muda manifestação/cancelamento), `app.fis_tipo_efetivo` (regra do tipo de
+entrada: empresa › organização › geral), `app.fis_caminho_pode` (acesso ao bucket `fiscal`), `app.fis_org_visivel`,
+`app.fis_direcao`, `app.fis_digitos`, `app.fis_manifestacao_do_tipo`.
 
 ## 4.5 Migrações: onde está a versão que vale
 

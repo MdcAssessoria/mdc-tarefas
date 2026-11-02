@@ -8,27 +8,54 @@
 > compra e venda (baixa automática do estoque), conciliação com o extrato, notas de entrada (XML da SEFAZ/NFS-e com o
 > certificado A1, manifestação do destinatário) e de saída (emissão). Cada etapa é auditada e testada com MDC e
 > Greencore (Piloto HUB) antes da carteira.
+> Financeiro v2 (01/11/2026, Frente 4): painel inicial, módulos separados no menu lateral (modelo Conta Azul/Omie:
+> Financeiro, Plano de contas, Centros de custo, Relatórios e o cadastro comum de fornecedores e clientes; Entradas,
+> Saídas e Estoque vêm das outras frentes), transferência entre contas (migração 034) e o molde visual único
+> (`docs/08-convencoes.md`, 8.3.1).
 
 ## 1. Telas
 
+Desde o Financeiro v2 a gestão do cliente é dividida em **módulos**, cada um com item próprio no menu lateral
+(`hub_apps`) e liberável por cliente. As abas da barra superior ficam curtas; no Financeiro, "Bancos ▾" junta contas
+bancárias, transferências e extratos (no celular, botão "Telas"). Rotas antigas redirecionam (`next.config.ts`):
+`/financeiro/plano` → `/plano-contas` e `/financeiro/cadastros` → `/cadastros/pessoas`.
+
+| Módulo · endereço | Quem usa | O que faz |
+| --- | --- | --- |
+| Financeiro · `/financeiro` | Equipe (ver; atalhos com operar) | **Painel** da empresa escolhida: saudação e data, dinheiro nos bancos hoje (soma das contas ativas, com o saldo de cada uma), atalhos (nova conta a pagar, a receber, importar extrato, cadastrar item), "Hoje", "Vencidos" e "Próximos 7 dias" (a pagar e a receber), fluxo de caixa previsto dos próximos 30 dias (saldo atual + contas em aberto; vencido conta hoje; aviso se o saldo ficar negativo), maiores despesas do mês por categoria (no começo do mês, sem nada pago, mostra o mês passado), últimos 6 meses realizados (entrou × saiu). Empresa nova vê os **primeiros passos** (plano → banco → categorias → lançar) |
+| Financeiro · `/financeiro/pagar` e `/financeiro/receber` | Equipe (ver; lançar e baixar com operar) | Contas a pagar / a receber: filtro de vencimento em um clique, situação (em aberto, vencidos, a vencer, pagos, cancelados), fornecedor/cliente e categoria em "Mais filtros", busca; etiquetas dos filtros em uso; frase de resumo; 3 indicadores que filtram ao clicar (vencido, a vencer, pago); lançar (parcelas mensais, "já foi pago", fornecedor novo cadastrado na hora), pagar/receber (total ou parcial), editar, histórico com estorno, cancelar com motivo; PDF e Excel. `?nova=1` abre "Nova conta" (atalho do painel) |
+| Financeiro · `/financeiro/movimento` | Equipe | Entradas e saídas: pagamentos e recebimentos do período (realizado) e, se marcado em "Mais filtros", o previsto; entrou, saiu, resultado; "para onde foi o dinheiro" por categoria (clique filtra); transferências entre contas aparecem na lista (chip "Transferência") mas **não** entram nos totais; lançar entrada/saída à vista e transferência; PDF e Excel |
+| Financeiro · `/financeiro/bancos` | Equipe (ver; cadastro e transferência com operar) | Contas bancárias: saldo atual, último lançamento, a conciliar, conta contábil ligada; indicadores (saldo, a conciliar, sem conta contábil); cadastrar, editar e "Transferir entre contas"; PDF e Excel |
+| Financeiro · `/financeiro/transferencias` | Equipe (ver; transferir e estornar com operar) | Transferências entre contas da mesma empresa por período e conta; nova transferência; estorno com motivo; PDF e Excel |
+| Financeiro · `/financeiro/extratos` | Equipe (ver; importar com operar) | Importa OFX ou planilha numa conta (confere antes de gravar); lista com filtros de conta, período, busca e (em "Mais filtros") entradas/saídas e situação; totais; PDF e Excel |
+| Financeiro · `/financeiro/estoque` (provisório) | Equipe (ver; movimentar com operar; regra de negativo com gerir) | Abas Itens, Estoques e Movimentações. Sai do Financeiro quando o módulo Estoque (`/estoque`, Frente 3) entrar |
+| Plano de contas · `/plano-contas` | Equipe (ver; importar com operar) | Importa o plano de contas do Domínio (Excel/CSV); lista com busca e filtros; PDF e Excel |
+| Plano de contas · `/plano-contas/categorias` | Equipe (ver; cadastrar com operar) | Despesas e receitas, cada uma ligada a conta analítica ativa do plano; filtros, PDF e Excel |
+| Centros de custo · `/centros-custo` | Equipe (ver; cadastrar com operar) | Centros de custo da empresa; PDF e Excel |
+| Fornecedores e clientes · `/cadastros/pessoas` | Quem tem Financeiro, Entradas, Saídas ou Estoque | Cadastro comum (CPF/CNPJ conferido) usado por todos os módulos; aparece no menu lateral como "Fornecedores e clientes" |
+| Relatórios · `/relatorios` | Equipe | Painel de relatórios gerenciais com período em um clique, PDF e Excel: **Resultado de caixa** (DRE gerencial por grupo e categoria, juros/multas e descontos à parte, "sobrou/faltou"), **Realizado x previsto** (mês a mês: previsto pelo vencimento, realizado pelos pagamentos, com gráfico), **Pagas e recebidas** (cada baixa, indicadores que filtram), **Centros de custo** (receitas, despesas, resultado e parte das despesas) |
+
 | Endereço | Quem usa | O que faz |
 | --- | --- | --- |
-| `/financeiro` | Equipe (ver; cadastro com operar) | Contas bancárias da empresa escolhida: saldo pelos extratos, último lançamento, lançamentos a conciliar, conta contábil ligada; cadastrar e editar; PDF e Excel |
-| `/financeiro/extratos` | Equipe (ver; importar com operar) | Importa OFX ou planilha numa conta (confere antes de gravar); lista com filtros de conta, período, entradas/saídas, situação e busca; totais; PDF e Excel |
-| `/financeiro/plano` | Equipe (ver; importar com operar) | Importa o plano de contas do Domínio (Excel/CSV); lista com busca e filtros; PDF e Excel |
-| `/financeiro/pagar` e `/financeiro/receber` | Equipe (ver; lançar e baixar com operar) | Contas a pagar / a receber: filtro de vencimento em um clique, situação (em aberto, vencidos, a vencer, pagos, cancelados), fornecedor/cliente, categoria e busca; frase de resumo; 3 indicadores que filtram ao clicar (vencido, a vencer, pago); lançar (parcelas mensais, "já foi pago", fornecedor novo cadastrado na hora), pagar/receber (total ou parcial), editar, histórico com estorno, cancelar com motivo; PDF e Excel |
-| `/financeiro/movimento` | Equipe | Entradas e saídas: pagamentos e recebimentos do período (realizado) e, se marcado, o previsto (contas em aberto que vencem no período); entrou, saiu, resultado; "para onde foi o dinheiro" por categoria (clique filtra); lançar entrada/saída à vista; PDF e Excel |
-| `/financeiro/cadastros` | Equipe (ver; cadastrar com operar) | Abas Fornecedores e clientes (CPF/CNPJ conferido), Despesas e receitas (cada uma ligada a conta analítica ativa do plano), Centros de custo; busca, filtros, PDF e Excel |
-| `/financeiro/estoque` | Equipe (ver; movimentar com operar; regra de negativo com gerir) | Abas Itens (produto/serviço, "controla estoque", mínimo, custo, preço, NCM, categorias de compra e venda; indicadores de valor em estoque e itens abaixo do mínimo), Estoques (locais, padrão, regra de estoque negativo) e Movimentações (entrada, saída, inventário, transferência, estorno); PDF e Excel |
 
-A empresa escolhida fica lembrada no navegador (`hub-mdc:financeiro:cliente`) e vale para as três telas.
+A empresa escolhida fica lembrada no navegador (`hub-mdc:financeiro:cliente`) e vale para todas as telas desses módulos.
+Permissão nas telas: cada módulo usa a própria ferramenta (`plano_contas`, `centros_custo`, `relatorios`); as tabelas
+ainda conferem `app.fin_pode` (ferramenta `financeiro`) até a separação de RLS por módulo, feita na integração.
 
 Código: regras puras em `web/src/dominios/financeiro/` (`ofx.ts`, `extratoPlanilha.ts`, `planoDominio.ts`, testes em
 `leitores.test.ts`), leituras paginadas em `leituras.ts`, gravações em `repositorio.ts`, telas em
 `web/src/app/(hub)/financeiro/`. Etapa 1B: regras puras em `regras.ts` (CPF/CNPJ, período, parcelas, situação; testes
 em `regras.test.ts`), exportação comum PDF/Excel em `exportar.ts`, telas compartilhadas em `componentes/`
-(`TelaTitulos`, `LancarTitulo`, `BaixaTitulo`, `CadPessoas`, `CadCategorias`, `CadCentros`, `EstoqueItens`, `EstoqueLocais`,
-`EstoqueMovimentos`, `estoqueBase`, `Comuns`).
+(`TelaTitulos`, `LancarTitulo`, `BaixaTitulo`, `CadPessoas`, `CadCategorias`, `CadCentros`, `EstoqueLocais`,
+`EstoqueMovimentos`, `estoqueBase`, `Comuns`). Financeiro v2: contas do painel em `painel.ts` (prazos, fluxo previsto,
+realizado por mês, despesas por categoria, primeiros passos, saldo com transferências; testes em `painel.test.ts`),
+dos relatórios em `relatorios.ts` (testes em `relatorios.test.ts`), gráficos SVG em `componentes/GraficosPainel.tsx`,
+visões dos relatórios em `componentes/RelatoriosVisoes.tsx`, `PrimeirosPassos`, `NovaTransferencia`, `PaginaCadastro`.
+
+Itens, estoque e pedidos saíram do Financeiro em 01/11/2026 e viraram os módulos **Estoque** (`/estoque`),
+**Saídas** (`/saidas`, pedidos de venda) e **Entradas** (`/entradas/compras`, pedidos de compra): ver
+[Estoque e pedidos](estoque.md). `/financeiro/estoque` redireciona para `/estoque`.
+
 
 ## 2. Regras
 
@@ -84,7 +111,10 @@ com a permissão `financeiro` no Portal (ver e lançar; `gerir` só a equipe). O
 bancárias e o plano da própria empresa. **A tela do Portal ainda não existe** (próxima entrega); até lá, a permissão
 `financeiro` não aparece na lista de permissões do Portal.
 
-## 6. Itens e estoque (migração 029)
+## 6. Itens e estoque (migração 029; ampliado na 033)
+
+A 033 acrescentou grupos, unidade de compra, custo médio, ficha (kardex), inventário guiado e os pedidos de venda e
+de compra, que geram as contas a receber e a pagar por `fin_lancar`. Tudo em [Estoque e pedidos](estoque.md).
 
 | Regra | Onde |
 | --- | --- |
@@ -96,3 +126,21 @@ bancárias e o plano da própria empresa. **A tela do Portal ainda não existe**
 | Estorno só de movimento manual, com motivo, e recusado se deixar o estoque negativo | `est_estornar_movimento` |
 | Saldo = soma dos movimentos não estornados, por item e local | visão `est_saldos` (security_invoker) |
 | Um estoque padrão por empresa | índice `est_locais_padrao` |
+
+## 7. Transferências entre contas e módulos no menu (migração 034, Financeiro v2)
+
+`034_painel_transferencias.sql` (**não aplicada pela frente**; testes em `supabase/testes/70_transferencias.sql`, no `rodar.sh`).
+
+| Regra | Onde |
+| --- | --- |
+| Transferência = dinheiro que sai de uma conta e entra em outra **da mesma empresa**; não é receita nem despesa | `fin_transferencias` |
+| Só pela função: contas diferentes, mesma empresa, ambas ativas, valor > 0, data obrigatória; equipe ou Portal com `operar` (`app.fin_pode`); fica na auditoria | `fin_transferir` |
+| Estorno marca (não apaga), exige motivo, não estorna duas vezes; fica na auditoria | `fin_estornar_transferencia` |
+| Sem insert/update/delete direto (RLS só de leitura) | políticas de `fin_transferencias` |
+| Saldo atual da conta = saldo pelos extratos + transferências registradas **depois** do último dia importado do extrato daquela conta (as anteriores já vieram no extrato; contar de novo seria em dobro). Sem extrato, vale a data do saldo inicial | `painel.saldoComTransferencias` (Bancos e painel) |
+| Em Entradas e saídas a transferência aparece como duas linhas (sai de uma, entra na outra) e fica fora dos totais e do "para onde foi o dinheiro" | `movimento/page.tsx` |
+
+A mesma migração cadastra no `hub_apps` os módulos `entradas`, `saidas`, `estoque`, `centros_custo`, `plano_contas` e
+`relatorios` (status `ativo`). A separação das permissões (RLS) por módulo é feita na integração; até lá as tabelas
+seguem a ferramenta `financeiro`. Tipos de `fin_transferencias`, `fin_transferir` e `fin_estornar_transferencia` foram
+acrescentados à mão em `web/src/lib/database.types.ts`: regenerar depois de aplicar.

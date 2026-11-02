@@ -1,4 +1,4 @@
-// Cadastros › Despesas e receitas (categorias) da empresa escolhida.
+// Plano de contas › Despesas e receitas (categorias) da empresa escolhida (/plano-contas/categorias).
 // Cada categoria aponta para uma conta ANALÍTICA ATIVA do plano do Domínio: é ela que vai para a contabilidade
 // quando a conta for paga ou recebida. Nada se apaga: inativa.
 "use client";
@@ -12,12 +12,17 @@ import { useConsulta } from "@/lib/useConsulta";
 import { traduzirErro } from "@/lib/erros";
 import { hojeISO } from "@/lib/datas";
 import { Modal } from "@/components/ui/Modal";
-import { Carregando } from "@/components/ui/Carregando";
+import { CabecalhoPagina } from "@/components/ui/CabecalhoPagina";
+import { CartaoFiltros } from "@/components/ui/CartaoFiltros";
+import type { FiltroAtivo } from "@/components/ui/CartaoFiltros";
+import { Esqueleto } from "@/components/ui/Esqueleto";
 import { EstadoVazio } from "@/components/ui/EstadoVazio";
+import { Icone } from "@/components/ui/Icone";
+import { QuadroTabela } from "@/components/ui/QuadroTabela";
 import { lerCategorias, lerPlano, rotuloConta } from "../leituras";
 import { nomeArquivo } from "../exportar";
 import type { Categoria, ContaContabil } from "../tipos";
-import { BotoesExportar } from "./Comuns";
+import { BotoesExportar, Chip } from "./Comuns";
 import type { PropsAba } from "./Comuns";
 
 export const TIPOS_CATEGORIA = { despesa: "Despesa", receita: "Receita" } as const;
@@ -51,7 +56,8 @@ export function EscolhaConta({ contas, valor, aoMudar }: { contas: ContaContabil
 
 type FormCat = { id?: string; tipo: "despesa" | "receita"; nome: string; grupo: string; conta_contabil_id: string; ativo: boolean };
 
-export function CadCategorias({ cliente, podeOperar, avisar }: PropsAba) {
+export function CadCategorias({ cliente, podeOperar, avisar, seletor }: PropsAba) {
+
   const { org } = useOrg();
   const [tipo, setTipo] = useState("");
   const [busca, setBusca] = useState("");
@@ -112,13 +118,64 @@ export function CadCategorias({ cliente, podeOperar, avisar }: PropsAba) {
 
   const nova = (t: "despesa" | "receita" = "despesa"): FormCat => ({ tipo: t, nome: "", grupo: "", conta_contabil_id: "", ativo: true });
 
+  const filtrosAtivos: FiltroAtivo[] = [
+    tipo && { id: "tipo", rotulo: tipo === "despesa" ? "Só despesas" : "Só receitas", aoTirar: () => setTipo("") },
+    busca.trim() && { id: "busca", rotulo: `Busca: "${busca.trim()}"`, aoTirar: () => setBusca("") },
+    inativos && { id: "inativos", rotulo: "Com inativas", aoTirar: () => setInativos(false) },
+  ].filter((f): f is FiltroAtivo => !!f);
+  const limparFiltros = () => {
+    setTipo("");
+    setBusca("");
+    setInativos(false);
+  };
+
   return (
-    <div className="space-y-3">
-      <div className="cartao flex flex-wrap items-end gap-3 p-4">
-        <label className="campo min-w-48 flex-1">
-          <span>Buscar</span>
-          <input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Nome ou grupo" />
-        </label>
+    <div className="space-y-4">
+      <CabecalhoPagina
+        titulo="Despesas e receitas"
+        descricao="As categorias de cada lançamento, cada uma ligada a uma conta do plano do Domínio."
+        acoes={
+          <>
+            <BotoesExportar
+              vazio={!lista.length}
+              avisar={avisar}
+              montar={() => ({
+                titulo: "Despesas e receitas",
+                subtitulo: `${nomeCliente(cliente)} · ${lista.length} categoria(s)`,
+                arquivo: nomeArquivo("Categorias", nomeCliente(cliente), hojeISO(org.fuso)),
+                logoUrl: org.logo_url,
+                linhas: lista,
+                colunas: [
+                  { titulo: "Tipo", valor: (c) => TIPOS_CATEGORIA[c.tipo], peso: 0.8, largura: 10 },
+                  { titulo: "Categoria", valor: (c) => c.nome, peso: 2, largura: 30 },
+                  { titulo: "Grupo", valor: (c) => c.grupo ?? "", peso: 1.5, largura: 24 },
+                  {
+                    titulo: "Conta contábil (Domínio)",
+                    valor: contaDe,
+                    peso: 3,
+                    largura: 50,
+                    alerta: (c) => !porId.get(c.conta_contabil_id)?.ativo,
+                  },
+                  { titulo: "Situação", valor: (c) => (c.ativo ? "Ativa" : "Inativa"), peso: 0.8, largura: 10 },
+                ],
+              })}
+            />
+            {podeOperar && (
+              <button
+                className="btn-primario"
+                onClick={() => setForm(nova(tipo === "receita" ? "receita" : "despesa"))}
+                disabled={!analiticas.length}
+              >
+                <Icone nome="mais" className="h-4 w-4" />
+                Nova categoria
+              </button>
+            )}
+          </>
+        }
+      />
+
+      <CartaoFiltros ativos={filtrosAtivos} aoLimpar={limparFiltros}>
+        {seletor}
         <label className="campo">
           <span>Tipo</span>
           <select value={tipo} onChange={(e) => setTipo(e.target.value)}>
@@ -127,119 +184,121 @@ export function CadCategorias({ cliente, podeOperar, avisar }: PropsAba) {
             <option value="receita">Só receitas</option>
           </select>
         </label>
+        <label className="campo campo-largo">
+          <span>Buscar</span>
+          <input type="search" value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Nome ou grupo" />
+        </label>
         <label className="flex min-h-10 items-center gap-2 text-sm">
           <input type="checkbox" checked={inativos} onChange={(e) => setInativos(e.target.checked)} />
           Mostrar inativas
         </label>
-        <div className="ml-auto flex gap-2">
-          <BotoesExportar
-            vazio={!lista.length}
-            avisar={avisar}
-            montar={() => ({
-              titulo: "Despesas e receitas",
-              subtitulo: `${nomeCliente(cliente)} · ${lista.length} categoria(s)`,
-              arquivo: nomeArquivo("Categorias", nomeCliente(cliente), hojeISO(org.fuso)),
-              logoUrl: org.logo_url,
-              linhas: lista,
-              colunas: [
-                { titulo: "Tipo", valor: (c) => TIPOS_CATEGORIA[c.tipo], peso: 0.8, largura: 10 },
-                { titulo: "Categoria", valor: (c) => c.nome, peso: 2, largura: 30 },
-                { titulo: "Grupo", valor: (c) => c.grupo ?? "", peso: 1.5, largura: 24 },
-                {
-                  titulo: "Conta contábil (Domínio)",
-                  valor: contaDe,
-                  peso: 3,
-                  largura: 50,
-                  alerta: (c) => !porId.get(c.conta_contabil_id)?.ativo,
-                },
-                { titulo: "Situação", valor: (c) => (c.ativo ? "Ativa" : "Inativa"), peso: 0.8, largura: 10 },
-              ],
-            })}
-          />
-          {podeOperar && (
-            <button
-              className="btn-primario"
-              onClick={() => setForm(nova(tipo === "receita" ? "receita" : "despesa"))}
-              disabled={!analiticas.length}
-            >
-              Nova categoria
-            </button>
-          )}
-        </div>
-      </div>
+      </CartaoFiltros>
 
       {consulta.dados && !analiticas.length && (
-        <p className="rounded-md bg-amber-50 p-3 text-sm text-amber-900">
-          Para cadastrar despesas e receitas, importe antes o plano de contas desta empresa em{" "}
-          <Link className="underline" href="/financeiro/plano">
-            Plano de contas
-          </Link>
-          . Cada categoria fica ligada a uma conta do Domínio.
+        <p className="flex items-start gap-2 rounded-lg bg-amber-50 p-3 text-sm text-amber-900">
+          <Icone nome="info" className="mt-0.5 h-4 w-4 shrink-0" />
+          <span>
+            Para cadastrar despesas e receitas, importe antes o plano de contas desta empresa em{" "}
+            <Link className="underline" href="/plano-contas">
+              Plano do Domínio
+            </Link>
+            . Cada categoria fica ligada a uma conta do Domínio.
+          </span>
         </p>
       )}
-      {consulta.erro && <p className="rounded-md bg-red-50 p-3 text-sm text-red-800">{consulta.erro}</p>}
+      {consulta.erro && (
+        <p role="alert" className="rounded-md bg-red-50 p-3 text-sm text-red-800">
+          {consulta.erro}
+        </p>
+      )}
       {consulta.carregando && !consulta.dados ? (
-        <Carregando />
+        <Esqueleto indicadores={0} linhas={5} />
       ) : !lista.length ? (
-        <EstadoVazio>
-          {consulta.dados?.categorias.length ? "Nenhuma categoria neste filtro." : "Nenhuma despesa ou receita cadastrada ainda."}
+        <EstadoVazio
+          icone={consulta.dados?.categorias.length ? "filtro" : "etiqueta"}
+          titulo={consulta.dados?.categorias.length ? "Nenhuma categoria neste filtro" : "Nenhuma despesa ou receita cadastrada"}
+          acao={
+            consulta.dados?.categorias.length ? (
+              <button className="btn" onClick={limparFiltros}>
+                Limpar filtros
+              </button>
+            ) : (
+              podeOperar &&
+              analiticas.length > 0 && (
+                <button className="btn-primario" onClick={() => setForm(nova())}>
+                  <Icone nome="mais" className="h-4 w-4" />
+                  Cadastrar a primeira
+                </button>
+              )
+            )
+          }
+        >
+          {consulta.dados?.categorias.length
+            ? "Troque o tipo ou a busca."
+            : "Exemplos: Aluguel, Energia, Folha de pagamento, Venda de produtos. Elas organizam as contas e os relatórios."}
         </EstadoVazio>
       ) : (
-        <div className="cartao overflow-x-auto">
-          <table className="tabela">
-            <thead>
-              <tr>
-                <th>Categoria</th>
-                <th>Tipo</th>
-                <th>Conta contábil (Domínio)</th>
-                {podeOperar && <th />}
-              </tr>
-            </thead>
-            <tbody>
-              {lista.map((c) => {
-                const conta = porId.get(c.conta_contabil_id);
-                return (
-                  <tr key={c.id} className={c.ativo ? "" : "opacity-60"}>
-                    <td className="min-w-48">
-                      <span className="font-medium">{c.nome}</span>
-                      {c.grupo && <span className="block text-xs text-neutral-500">{c.grupo}</span>}
-                    </td>
-                    <td>
-                      <span className={`chip ${c.tipo === "despesa" ? "bg-red-50 text-red-800" : "bg-emerald-50 text-emerald-800"}`}>
-                        {TIPOS_CATEGORIA[c.tipo]}
-                      </span>
-                    </td>
-                    <td className="text-sm">
+        <QuadroTabela rotulo="Despesas e receitas">
+          <thead>
+            <tr>
+              <th>Categoria</th>
+              <th>Tipo</th>
+              <th>Conta contábil (Domínio)</th>
+              {podeOperar && (
+                <th>
+                  <span className="sr-only">Ações</span>
+                </th>
+              )}
+            </tr>
+          </thead>
+          <tbody>
+            {lista.map((c) => {
+              const conta = porId.get(c.conta_contabil_id);
+              return (
+                <tr key={c.id} className={c.ativo ? "" : "opacity-60"}>
+                  <td className="celula-titulo min-w-48">
+                    <span className="font-medium">{c.nome}</span>
+                    {c.grupo && <span className="block text-xs font-normal text-[var(--texto-suave)]">{c.grupo}</span>}
+                  </td>
+                  <td data-rotulo="Tipo">
+                    <span className="flex flex-wrap justify-end gap-1 sm:justify-start">
+                      <Chip tom={c.tipo === "despesa" ? "vermelho" : "verde"}>{TIPOS_CATEGORIA[c.tipo]}</Chip>
+                      {!c.ativo && <Chip tom="neutro">Inativa</Chip>}
+                    </span>
+                  </td>
+                  <td data-rotulo="Conta contábil" className="text-sm">
+                    <span>
                       {contaDe(c)}
                       {conta && !conta.ativo && (
                         <span className="block text-xs text-amber-800">Conta inativa no plano: troque por uma ativa</span>
                       )}
+                    </span>
+                  </td>
+                  {podeOperar && (
+                    <td className="celula-acoes text-right">
+                      <button
+                        className="btn !min-h-8 !px-3"
+                        onClick={() =>
+                          setForm({
+                            id: c.id,
+                            tipo: c.tipo,
+                            nome: c.nome,
+                            grupo: c.grupo ?? "",
+                            conta_contabil_id: c.conta_contabil_id,
+                            ativo: c.ativo,
+                          })
+                        }
+                      >
+                        <Icone nome="editar" className="h-4 w-4" />
+                        Editar
+                      </button>
                     </td>
-                    {podeOperar && (
-                      <td className="text-right">
-                        <button
-                          className="btn !min-h-8"
-                          onClick={() =>
-                            setForm({
-                              id: c.id,
-                              tipo: c.tipo,
-                              nome: c.nome,
-                              grupo: c.grupo ?? "",
-                              conta_contabil_id: c.conta_contabil_id,
-                              ativo: c.ativo,
-                            })
-                          }
-                        >
-                          Editar
-                        </button>
-                      </td>
-                    )}
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+                  )}
+                </tr>
+              );
+            })}
+          </tbody>
+        </QuadroTabela>
       )}
 
       {form && (

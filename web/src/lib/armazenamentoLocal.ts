@@ -13,6 +13,7 @@ export const CHAVES = {
   filtrosTarefas: (orgId: string) => `mdc-tarefas:filtros:${orgId}`,
   empresaPortal: "mdc-portal:empresa",
   clienteFinanceiro: "hub-mdc:financeiro:cliente",
+  visaoItens: "hub-mdc:estoque:visao-itens",
 } as const;
 
 const memoria = new Map<string, string>();

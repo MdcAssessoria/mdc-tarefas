@@ -237,27 +237,118 @@ async function abrirEFecharModal(pagina, botao, titulo) {
  */
 const INTERACOES = {
   "/vencimentos": (p) => abrirEFecharModal(p, "Novo vencimento", "Novo vencimento"),
-  "/financeiro": (p) => abrirEFecharModal(p, "Nova conta", "Nova conta bancária"),
+  "/financeiro/bancos": (p) => abrirEFecharModal(p, "Nova conta", "Nova conta bancária"),
   "/financeiro/pagar": (p) => abrirEFecharModal(p, "Nova conta a pagar", "Nova conta a pagar"),
   "/financeiro/receber": (p) => abrirEFecharModal(p, "Nova conta a receber", "Nova conta a receber"),
-  "/financeiro/movimento": (p) => abrirEFecharModal(p, "+ Saída", "Nova conta a pagar"),
-  "/financeiro/cadastros": async (p) => {
-    for (const aba of await p.getByRole("tab").all()) {
-      await aba.click();
-      if ((await aba.getAttribute("aria-selected")) !== "true") throw new Error(`a aba "${await aba.innerText()}" não ficou selecionada`);
-      await p.waitForTimeout(300);
+  "/financeiro/movimento": (p) => abrirEFecharModal(p, "Saída", "Nova conta a pagar"),
+  "/financeiro/transferencias": (p) => abrirEFecharModal(p, "Nova transferência", "Transferir entre contas"),
+  "/cadastros/pessoas": (p) => abrirEFecharModal(p, "Novo cadastro", "Novo fornecedor ou cliente"),
+  "/plano-contas/categorias": (p) => abrirEFecharModal(p, "Nova categoria", "Nova categoria"),
+  "/centros-custo": (p) => abrirEFecharModal(p, "Novo centro de custo", "Novo centro de custo"),
+  // painel do Financeiro: os atalhos e os primeiros passos estão lá, e o menu "Bancos" da barra abre e mostra as telas
+  "/financeiro": async (p, foto) => {
+    if (process.env.TELA !== "celular") {
+      await p.getByRole("button", { name: /^Bancos/ }).click();
+      await p.getByRole("link", { name: "Transferências" }).waitFor({ timeout: 3000 });
+      await p.waitForTimeout(250);
+      await foto("menu-bancos");
+      await p.keyboard.press("Escape");
+    } else {
+      await p.getByRole("button", { name: /Telas/ }).click();
+      await p.getByRole("link", { name: "Transferências" }).waitFor({ timeout: 3000 });
+      await p.waitForTimeout(250);
+      await foto("menu-telas");
     }
   },
-  "/financeiro/estoque": async (p) => {
-    await abrirEFecharModal(p, "Novo item", "Novo item");
+  // relatórios: cada um dos quatro abre sem erro
+  "/relatorios": async (p, foto) => {
+    for (const nome of ["Realizado x previsto", "Pagas e recebidas", "Centros de custo", "Resultado de caixa"]) {
+      await p.getByRole("button", { name: new RegExp(nome) }).click();
+      await p.waitForTimeout(300);
+      await foto(nome.toLowerCase().replace(/\W+/g, "-"));
+    }
+  },
+
+  // Estoque (033): assistente em passos, cadastro rápido, importação, visão em lista e ficha do item
+  "/estoque": async (p, foto) => {
+    await p.getByRole("button", { name: "Novo item", exact: true }).click();
+    const assistente = p.getByRole("dialog", { name: "Novo item" });
+    await assistente.waitFor({ timeout: 3000 });
+    await assistente.getByLabel("Nome do item").fill("Item de teste");
+    for (let k = 0; k < 3; k++) await assistente.getByRole("button", { name: "Continuar", exact: true }).click();
+    await assistente.getByText("Lucro por unidade").or(assistente.getByLabel("Preço de venda (R$)")).first().waitFor({ timeout: 3000 });
+    await foto("assistente");
+    await p.keyboard.press("Escape");
+    await assistente.waitFor({ state: "detached", timeout: 3000 });
+    await abrirEFecharModal(p, "Cadastro rápido", "Cadastro rápido de item");
+    await abrirEFecharModal(p, "Importar planilha", "Importar itens de uma planilha");
+    await abrirEFecharModal(p, "Grupos", "Grupos de produto");
+    await p.getByRole("button", { name: "Lista", exact: true }).click();
+    await p.getByRole("button", { name: "Ficha", exact: true }).first().click();
+    const ficha = p.getByRole("dialog", { name: /Ficha de estoque/ });
+    await ficha.waitFor({ timeout: 3000 });
+    await ficha.getByText("Saldo anterior").waitFor({ timeout: 5000 });
+    await p.keyboard.press("Escape");
+    await p.getByRole("button", { name: "Cartões", exact: true }).click();
+  },
+  "/estoque/movimentos": (p) => abrirEFecharModal(p, "Lançar movimento", "Lançar movimento de estoque"),
+  "/estoque/inventario": async (p) => {
+    await p.getByLabel("Quantidade contada de Parafuso sextavado 10mm").fill("318");
+    await abrirEFecharModal(p, "Conferir e gravar", "Conferir o inventário");
+  },
+  "/estoque/posicao": async (p) => {
+    await p.getByRole("button", { name: "Tinta acrílica 18L", exact: true }).click();
+    await p.getByRole("dialog", { name: "Ficha de estoque · Tinta acrílica 18L" }).waitFor({ timeout: 3000 });
+    await p.keyboard.press("Escape");
+  },
+  // Pedidos (033): novo pedido com item pela busca, ver o lançado, confirmar/receber
+  "/saidas": async (p, foto) => {
+    await p.getByRole("button", { name: "Novo pedido", exact: true }).click();
+    const editor = p.getByRole("dialog", { name: "Novo pedido de venda" });
+    await editor.waitFor({ timeout: 3000 });
+    await editor.getByPlaceholder(/passe o leitor de código de barras/).fill("tinta");
+    await editor.getByRole("listbox").getByRole("button").first().click();
+    await editor.getByText("Total R$").waitFor({ timeout: 3000 });
+    await foto("novo-pedido");
+    await p.keyboard.press("Escape");
+    await editor.waitFor({ state: "detached", timeout: 3000 });
+    await p.getByRole("button", { name: "Ver", exact: true }).first().click();
+    await p.getByRole("dialog", { name: "Pedido de venda nº 1" }).waitFor({ timeout: 3000 });
+    await p.keyboard.press("Escape");
+    await abrirEFecharModal(p, "Confirmar", "Confirmar a venda nº 2");
+  },
+  "/entradas/compras": async (p) => {
+    await abrirEFecharModal(p, "Novo pedido", "Novo pedido de compra");
+    await abrirEFecharModal(p, "Receber", "Receber a compra nº 2");
+  },
+  "/entradas": async (p) => {
+    await abrirEFecharModal(p, "Enviar XML", "Enviar XML de nota");
+    await p.getByRole("button", { name: "Responder", exact: true }).first().click();
+    const dialogo = p.getByRole("dialog", { name: "Responder à SEFAZ" });
+    await dialogo.waitFor({ timeout: 3000 });
+    await p.keyboard.press("Escape");
+    await dialogo.waitFor({ state: "detached", timeout: 3000 });
+  },
+  "/entradas/lancar": async (p) => {
+    await p.getByRole("button", { name: "Lançar", exact: true }).first().click();
+    await p.getByRole("heading", { name: "O que é esta nota?" }).waitFor({ timeout: 3000 });
+    await p.getByRole("button", { name: "← Voltar à lista" }).click();
     for (const aba of await p.getByRole("tab").all()) {
       await aba.click();
       if ((await aba.getAttribute("aria-selected")) !== "true") throw new Error(`a aba "${await aba.innerText()}" não ficou selecionada`);
       await p.waitForTimeout(300);
     }
-    await abrirEFecharModal(p, "Lançar movimento", "Lançar movimento de estoque");
   },
   "/comercial": (p) => abrirEFecharModal(p, "Limpar funil", "Limpar funil"),
+  "/licencas/contratos": (p) => abrirEFecharModal(p, "Novo contrato", "Novo contrato de licença"),
+  "/licencas/produtos": async (p) => {
+    for (const aba of await p.getByRole("tab").all()) {
+      await aba.click();
+      if ((await aba.getAttribute("aria-selected")) !== "true") throw new Error(`a aba "${await aba.innerText()}" não ficou selecionada`);
+      await p.waitForTimeout(300);
+    }
+    await abrirEFecharModal(p, "Novo plano", "Novo plano");
+  },
   [`/demonstrativos/${IDS_EXEMPLO["demonstrativos/[id]"]}`]: trocarPeriodo,
   "/portal": trocarPeriodo,
   "/demonstrativos/importar": importarEmLote,

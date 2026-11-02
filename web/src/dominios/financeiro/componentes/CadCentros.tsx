@@ -1,4 +1,4 @@
-// Cadastros › Centros de custo da empresa escolhida (opcional em cada lançamento). Nada se apaga: inativa.
+// Centros de custo (módulo próprio, /centros-custo) da empresa escolhida (opcional em cada lançamento). Nada se apaga: inativa.
 "use client";
 
 import { useCallback, useState } from "react";
@@ -9,17 +9,22 @@ import { useConsulta } from "@/lib/useConsulta";
 import { traduzirErro } from "@/lib/erros";
 import { hojeISO } from "@/lib/datas";
 import { Modal } from "@/components/ui/Modal";
-import { Carregando } from "@/components/ui/Carregando";
+import { CabecalhoPagina } from "@/components/ui/CabecalhoPagina";
+import { CartaoFiltros } from "@/components/ui/CartaoFiltros";
+import { Esqueleto } from "@/components/ui/Esqueleto";
 import { EstadoVazio } from "@/components/ui/EstadoVazio";
+import { Icone } from "@/components/ui/Icone";
+import { QuadroTabela } from "@/components/ui/QuadroTabela";
 import { lerCentros } from "../leituras";
 import { nomeArquivo } from "../exportar";
 import type { CentroCusto } from "../tipos";
-import { BotoesExportar } from "./Comuns";
+import { BotoesExportar, Chip } from "./Comuns";
 import type { PropsAba } from "./Comuns";
 
 type FormCentro = { id?: string; codigo: string; nome: string; ativo: boolean };
 
-export function CadCentros({ cliente, podeOperar, avisar }: PropsAba) {
+export function CadCentros({ cliente, podeOperar, avisar, seletor }: PropsAba) {
+
   const { org } = useOrg();
   const [inativos, setInativos] = useState(false);
   const [form, setForm] = useState<FormCentro | null>(null);
@@ -45,76 +50,106 @@ export function CadCentros({ cliente, podeOperar, avisar }: PropsAba) {
   }
 
   return (
-    <div className="space-y-3">
-      <div className="cartao flex flex-wrap items-end gap-3 p-4">
-        <p className="mr-auto max-w-xl text-sm text-neutral-600">
-          Centro de custo separa os gastos e ganhos por área, loja ou obra. É opcional em cada lançamento.
-        </p>
+    <div className="space-y-4">
+      <CabecalhoPagina
+        titulo="Centros de custo"
+        descricao="Separe os gastos e ganhos por área, loja ou obra. É opcional em cada lançamento."
+        acoes={
+          <>
+            <BotoesExportar
+              vazio={!lista.length}
+              avisar={avisar}
+              montar={() => ({
+                titulo: "Centros de custo",
+                subtitulo: `${nomeCliente(cliente)} · ${lista.length} centro(s)`,
+                arquivo: nomeArquivo("Centros-de-custo", nomeCliente(cliente), hojeISO(org.fuso)),
+                logoUrl: org.logo_url,
+                paisagem: false,
+                linhas: lista,
+                colunas: [
+                  { titulo: "Código", valor: (c: CentroCusto) => c.codigo ?? "", peso: 1, largura: 12 },
+                  { titulo: "Centro de custo", valor: (c: CentroCusto) => c.nome, peso: 3, largura: 40 },
+                  { titulo: "Situação", valor: (c: CentroCusto) => (c.ativo ? "Ativo" : "Inativo"), peso: 1, largura: 12 },
+                ],
+              })}
+            />
+            {podeOperar && (
+              <button className="btn-primario" onClick={() => setForm({ codigo: "", nome: "", ativo: true })}>
+                <Icone nome="mais" className="h-4 w-4" />
+                Novo centro de custo
+              </button>
+            )}
+          </>
+        }
+      />
+      <CartaoFiltros ativos={inativos ? [{ id: "inativos", rotulo: "Com inativos", aoTirar: () => setInativos(false) }] : []}>
+        {seletor}
         <label className="flex min-h-10 items-center gap-2 text-sm">
           <input type="checkbox" checked={inativos} onChange={(e) => setInativos(e.target.checked)} />
           Mostrar inativos
         </label>
-        <BotoesExportar
-          vazio={!lista.length}
-          avisar={avisar}
-          montar={() => ({
-            titulo: "Centros de custo",
-            subtitulo: `${nomeCliente(cliente)} · ${lista.length} centro(s)`,
-            arquivo: nomeArquivo("Centros-de-custo", nomeCliente(cliente), hojeISO(org.fuso)),
-            logoUrl: org.logo_url,
-            paisagem: false,
-            linhas: lista,
-            colunas: [
-              { titulo: "Código", valor: (c: CentroCusto) => c.codigo ?? "", peso: 1, largura: 12 },
-              { titulo: "Centro de custo", valor: (c: CentroCusto) => c.nome, peso: 3, largura: 40 },
-              { titulo: "Situação", valor: (c: CentroCusto) => (c.ativo ? "Ativo" : "Inativo"), peso: 1, largura: 12 },
-            ],
-          })}
-        />
-        {podeOperar && (
-          <button className="btn-primario" onClick={() => setForm({ codigo: "", nome: "", ativo: true })}>
-            Novo centro de custo
-          </button>
-        )}
-      </div>
-      {consulta.erro && <p className="rounded-md bg-red-50 p-3 text-sm text-red-800">{consulta.erro}</p>}
+      </CartaoFiltros>
+      {consulta.erro && (
+        <p role="alert" className="rounded-md bg-red-50 p-3 text-sm text-red-800">
+          {consulta.erro}
+        </p>
+      )}
       {consulta.carregando && !consulta.dados ? (
-        <Carregando />
+        <Esqueleto indicadores={0} linhas={4} />
       ) : !lista.length ? (
-        <EstadoVazio>Nenhum centro de custo cadastrado.</EstadoVazio>
+        <EstadoVazio
+          icone="etiqueta"
+          titulo="Nenhum centro de custo cadastrado"
+          acao={
+            podeOperar && (
+              <button className="btn-primario" onClick={() => setForm({ codigo: "", nome: "", ativo: true })}>
+                <Icone nome="mais" className="h-4 w-4" />
+                Cadastrar o primeiro
+              </button>
+            )
+          }
+        >
+          Exemplos: Administrativo, Loja Centro, Obra 12. Depois, escolha o centro ao lançar uma conta a pagar ou a receber.
+        </EstadoVazio>
       ) : (
-        <div className="cartao overflow-x-auto">
-          <table className="tabela">
-            <thead>
-              <tr>
-                <th>Código</th>
-                <th>Centro de custo</th>
-                {podeOperar && <th />}
-              </tr>
-            </thead>
-            <tbody>
-              {lista.map((c) => (
-                <tr key={c.id} className={c.ativo ? "" : "opacity-60"}>
-                  <td className="w-24">{c.codigo ?? "—"}</td>
-                  <td className="font-medium">
-                    {c.nome}
-                    {!c.ativo && <span className="chip ml-2 bg-neutral-100 text-neutral-600">Inativo</span>}
+        <QuadroTabela rotulo="Centros de custo">
+          <thead>
+            <tr>
+              <th>Código</th>
+              <th>Centro de custo</th>
+              <th>Situação</th>
+              {podeOperar && (
+                <th>
+                  <span className="sr-only">Ações</span>
+                </th>
+              )}
+            </tr>
+          </thead>
+          <tbody>
+            {lista.map((c) => (
+              <tr key={c.id} className={c.ativo ? "" : "opacity-60"}>
+                <td data-rotulo="Código" className="num w-24">
+                  {c.codigo ?? "—"}
+                </td>
+                <td className="celula-titulo font-medium">{c.nome}</td>
+                <td data-rotulo="Situação">
+                  <Chip tom={c.ativo ? "verde" : "neutro"}>{c.ativo ? "Ativo" : "Inativo"}</Chip>
+                </td>
+                {podeOperar && (
+                  <td className="celula-acoes text-right">
+                    <button
+                      className="btn !min-h-8 !px-3"
+                      onClick={() => setForm({ id: c.id, codigo: c.codigo ?? "", nome: c.nome, ativo: c.ativo })}
+                    >
+                      <Icone nome="editar" className="h-4 w-4" />
+                      Editar
+                    </button>
                   </td>
-                  {podeOperar && (
-                    <td className="text-right">
-                      <button
-                        className="btn !min-h-8"
-                        onClick={() => setForm({ id: c.id, codigo: c.codigo ?? "", nome: c.nome, ativo: c.ativo })}
-                      >
-                        Editar
-                      </button>
-                    </td>
-                  )}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                )}
+              </tr>
+            ))}
+          </tbody>
+        </QuadroTabela>
       )}
       {form && (
         <Modal titulo={form.id ? "Editar centro de custo" : "Novo centro de custo"} aoFechar={() => setForm(null)}>
