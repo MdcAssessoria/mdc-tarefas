@@ -1,10 +1,11 @@
 // Detalhe de uma nota: dados principais, prazos da manifestação, itens com impostos, histórico de eventos (com
-// protocolo e código da SEFAZ) e o XML para baixar.
+// protocolo e código da SEFAZ), o XML para baixar e o botão "Ver a nota" (espelho DANFE/DANFSe em EspelhoNota).
 "use client";
 
 import { useCallback } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { Carregando } from "@/components/ui/Carregando";
+import { Icone } from "@/components/ui/Icone";
 import { useConsulta } from "@/lib/useConsulta";
 import { brl } from "@/lib/formato/moeda";
 import { fmtData, fmtDataLocal } from "@/lib/formato/datas";
@@ -20,11 +21,14 @@ export function DetalheNota({
   eventos,
   avisar,
   aoFechar,
+  aoVerNota,
 }: {
   nota: Nota;
   eventos: EventoNota[];
   avisar: (t: string, tom?: "erro") => void;
   aoFechar: () => void;
+  /** Abre o espelho da nota (layout DANFE/DANFSe com PDF). */
+  aoVerNota?: () => void;
 }) {
   const itens = useConsulta(useCallback(() => lerItensDasNotas([nota.id]), [nota.id]));
   const prazos = prazosDaNota(nota.autorizacao ?? nota.emissao);
@@ -125,7 +129,13 @@ export function DetalheNota({
           })}
         </ul>
       )}
-      <div className="flex justify-end gap-2 pt-2">
+      <div className="flex flex-wrap justify-end gap-2 pt-2">
+        {aoVerNota && nota.xml_caminho && (
+          <button className="btn" onClick={aoVerNota}>
+            <Icone nome="olho" className="h-4 w-4" />
+            Ver a nota
+          </button>
+        )}
         <BotaoXml caminho={nota.xml_caminho} avisar={avisar} />
         <button className="btn-primario" onClick={aoFechar}>
           Fechar

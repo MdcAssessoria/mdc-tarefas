@@ -1,6 +1,7 @@
 // Entradas › Notas recebidas: painel dos XML que chegaram (busca automática na SEFAZ e na NFS-e Nacional, ou XML
 // enviado), com a situação em linguagem simples (Aguardando sua resposta, Prazo vencendo, Confirmada, Recusada…),
-// resposta à SEFAZ em lote, itens, histórico com protocolos, XML para baixar, PDF e Excel do que está na tela.
+// resposta à SEFAZ em lote, itens, histórico com protocolos, "Ver a nota" (espelho no layout DANFE/DANFSe, com PDF),
+// XML para baixar, PDF e Excel do que está na tela.
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
@@ -39,6 +40,7 @@ import type { Nota } from "@/dominios/notas/tipos";
 import { BotaoXml, ChipSituacao, fornecedorDa, nomeModelo } from "@/dominios/notas/componentes/Comuns";
 import { JanelaManifestar } from "@/dominios/notas/componentes/JanelaManifestar";
 import { DetalheNota } from "@/dominios/notas/componentes/DetalheNota";
+import { EspelhoNota } from "@/dominios/notas/componentes/EspelhoNota";
 import { EnviarXml } from "@/dominios/notas/componentes/EnviarXml";
 
 type FiltroSit = "todas" | SituacaoPainel | "a_lancar";
@@ -55,7 +57,11 @@ const FILTROS: { id: FiltroSit; nome: string }[] = [
 ];
 const MOSTRAR = 500;
 
-type Janela = { tipo: "manifestar"; notas: Nota[]; inicial?: CodigoManifestacao } | { tipo: "detalhe"; nota: Nota } | { tipo: "xml" };
+type Janela =
+  | { tipo: "manifestar"; notas: Nota[]; inicial?: CodigoManifestacao }
+  | { tipo: "detalhe"; nota: Nota }
+  | { tipo: "espelho"; nota: Nota }
+  | { tipo: "xml" };
 
 export default function PaginaNotasRecebidas() {
   const { org, pode } = useOrg();
@@ -493,6 +499,15 @@ export default function PaginaNotasRecebidas() {
                                 ⋯
                               </summary>
                               <div className="absolute right-0 z-10 mt-1 w-48 rounded-md border border-[var(--borda)] bg-white py-1 text-left text-sm shadow-lg">
+                                {n.xml_caminho && (
+                                  <button
+                                    className="block w-full px-3 py-1.5 text-left hover:bg-neutral-50"
+                                    title="Mostra a nota no layout do DANFE / DANFSe e baixa em PDF"
+                                    onClick={(e) => menu(e, { tipo: "espelho", nota: n })}
+                                  >
+                                    Ver a nota
+                                  </button>
+                                )}
                                 <button
                                   className="block w-full px-3 py-1.5 text-left hover:bg-neutral-50"
                                   onClick={(e) => menu(e, { tipo: "detalhe", nota: n })}
@@ -536,8 +551,15 @@ export default function PaginaNotasRecebidas() {
         />
       )}
       {janela?.tipo === "detalhe" && (
-        <DetalheNota nota={janela.nota} eventos={d?.eventos ?? []} avisar={mostrar} aoFechar={() => fechar()} />
+        <DetalheNota
+          nota={janela.nota}
+          eventos={d?.eventos ?? []}
+          avisar={mostrar}
+          aoFechar={() => fechar()}
+          aoVerNota={() => setJanela({ tipo: "espelho", nota: janela.nota })}
+        />
       )}
+      {janela?.tipo === "espelho" && <EspelhoNota nota={janela.nota} avisar={mostrar} aoFechar={() => fechar()} />}
       {janela?.tipo === "xml" && cliente && <EnviarXml org={org.id} cliente={cliente.id} aoFechar={() => fechar()} aoConcluir={fechar} />}
     </div>
   );

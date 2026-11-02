@@ -26,7 +26,7 @@ import { createRequire } from "node:module";
 import { createServer } from "node:net";
 import { join, relative, sep } from "node:path";
 import { fileURLToPath } from "node:url";
-import { CLIENTE_LEMBRADO, EU, IDS_EXEMPLO, RPCS, TABELAS, USUARIO } from "./telas/dados-exemplo.mjs";
+import { CLIENTE_LEMBRADO, EU, IDS_EXEMPLO, RPCS, TABELAS, USUARIO, XML_EXEMPLO } from "./telas/dados-exemplo.mjs";
 import { importarEmLote } from "./telas/interacoes-importacao.mjs";
 import { trocarPeriodo } from "./telas/interacoes-periodo.mjs";
 
@@ -335,13 +335,40 @@ const INTERACOES = {
     await abrirEFecharModal(p, "Novo pedido", "Novo pedido de compra");
     await abrirEFecharModal(p, "Receber", "Receber a compra nº 2");
   },
-  "/entradas": async (p) => {
+  "/entradas": async (p, foto) => {
     await abrirEFecharModal(p, "Enviar XML", "Enviar XML de nota");
     await p.getByRole("button", { name: "Responder", exact: true }).first().click();
     const dialogo = p.getByRole("dialog", { name: "Responder à SEFAZ" });
     await dialogo.waitFor({ timeout: 3000 });
     await p.keyboard.press("Escape");
     await dialogo.waitFor({ state: "detached", timeout: 3000 });
+    // "Ver a nota": o XML guardado (Storage "fiscal") vem de XML_EXEMPLO; a janela mostra o espelho e baixa o PDF
+    await p.route(/\/storage\/v1\/object\/(authenticated\/)?fiscal\//, (r) => {
+      if (r.request().method() === "OPTIONS") return r.fulfill({ status: 204, headers: CORS });
+      const caminho = decodeURIComponent(new URL(r.request().url()).pathname);
+      const xml = Object.entries(XML_EXEMPLO).find(([k]) => caminho.endsWith(k))?.[1];
+      return r.fulfill({ status: xml ? 200 : 404, headers: { ...CORS, "content-type": "application/xml" }, body: xml ?? "{}" });
+    });
+    for (const [nota, sigla, nome] of [
+      ["NF-e 1188", "DANFE", "nfe"],
+      ["NFS-e 52", "DANFSe", "nfse"],
+    ]) {
+      const linha = p.getByRole("row").filter({ hasText: nota });
+      await linha.getByLabel("Mais ações").click();
+      await linha.getByRole("button", { name: "Ver a nota", exact: true }).click();
+      const janela = p.getByRole("dialog", { name: new RegExp(`^${nota}`) });
+      await janela.waitFor({ timeout: 3000 });
+      await janela.getByText(sigla, { exact: true }).waitFor({ timeout: 5000 });
+      await janela.getByText("não substitui o documento oficial", { exact: false }).first().waitFor({ timeout: 3000 });
+      const larga = await p.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
+      if (larga) throw new Error(`a janela "Ver a nota" (${nota}) fez a página rolar na horizontal`);
+      await foto(`ver-nota-${nome}`);
+      const [baixado] = await Promise.all([p.waitForEvent("download", { timeout: 10_000 }), janela.getByRole("button", { name: "Baixar PDF" }).click()]);
+      if (!/\.pdf$/.test(baixado.suggestedFilename())) throw new Error(`o PDF da nota saiu com nome estranho: ${baixado.suggestedFilename()}`);
+      if (process.env.FOTOS) await baixado.saveAs(join(process.env.FOTOS, `entradas-ver-nota-${nome}${process.env.TELA === "celular" ? "-celular" : ""}.pdf`));
+      await p.keyboard.press("Escape");
+      await janela.waitFor({ state: "detached", timeout: 3000 });
+    }
   },
   "/entradas/lancar": async (p) => {
     await p.getByRole("button", { name: "Lançar", exact: true }).first().click();
