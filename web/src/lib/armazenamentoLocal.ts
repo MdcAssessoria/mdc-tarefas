@@ -17,7 +17,7 @@ export const CHAVES = {
   /** Nome antigo da chave acima (até 02/11/2026): só lido, para não perder a escolha já feita. */
   clienteFinanceiroAntiga: "hub-mdc:financeiro:cliente",
   visaoItens: "hub-mdc:estoque:visao-itens",
-  /** Grupo "Gestão empresarial" do menu lateral aberto ("1") ou fechado ("0"). */
+  /** Grupo "Gestão" do menu lateral aberto ("1") ou fechado ("0"). */
   menuGestao: "hub-mdc:menu-gestao",
 } as const;
 

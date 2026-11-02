@@ -8,9 +8,8 @@ export const PERMISSOES_PORTAL = [
   { id: "documentos", nome: "Documentos e vencimentos" },
   { id: "societario", nome: "Processos societários" },
   { id: "folha", nome: "Folha (DP)" },
-  // Financeiro e demais módulos de gestão (precisa de contrato do módulo; só quem gere o Financeiro libera — migração 036)
-  { id: "financeiro", nome: "Financeiro: ver e lançar" },
-  { id: "financeiro_ver", nome: "Financeiro: só consultar" },
+  // Financeiro (financeiro / financeiro_ver) saiu da lista em 02/11/2026: os módulos de gestão foram desligados do HUB
+  // (o Ledgra é o produto para os clientes). O banco ainda aceita as duas permissões (036), para religar se preciso.
 ];
 // perfis de cliente prontos: o que cada função costuma ver no portal
 export const PERFIS_CLIENTE: { id: string; nome: string; perms: string[] }[] = [

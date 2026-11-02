@@ -48,21 +48,21 @@ export default function PaginaProdutos() {
     <div className="space-y-4">
       <Cabecalho
         titulo="Produtos e planos"
-        descricao="Os módulos do HUB que a MDC vende, com o preço de tabela mensal, e os pacotes (planos)."
+        descricao="Os produtos do Ledgra que a MDC cobra, com o preço de tabela mensal, e os pacotes (planos)."
       >
         {d && aba === "modulos" && (
           <BotoesExportar
             vazio={!d.produtos.length}
             avisar={mostrar}
             montar={() => ({
-              titulo: "Módulos vendáveis",
+              titulo: "Produtos do Ledgra",
               subtitulo: `${org.nome} · ${fmtData(hoje)}`,
               arquivo: nomeArquivo("Modulos-licenca", hoje),
               logoUrl: org.logo_url,
               paisagem: false,
               linhas: d.produtos,
               colunas: [
-                { titulo: "Módulo", valor: (p) => p.nome, peso: 2, largura: 28 },
+                { titulo: "Produto", valor: (p) => p.nome, peso: 2, largura: 28 },
                 { titulo: "Código", valor: (p) => p.slug, peso: 1.2, largura: 16 },
                 { titulo: "O que inclui", valor: (p) => p.descricao, peso: 3, largura: 50 },
                 { titulo: "Preço mensal", valor: (p) => p.preco, formato: "moeda", peso: 1.2 },
@@ -85,7 +85,7 @@ export default function PaginaProdutos() {
               linhas: d.planos,
               colunas: [
                 { titulo: "Plano", valor: (p) => p.nome, peso: 1.6, largura: 24 },
-                { titulo: "Módulos", valor: (p) => p.produtos.map((id) => dados.produtos.get(id)?.nome).join(", "), peso: 3, largura: 50 },
+                { titulo: "Produtos", valor: (p) => p.produtos.map((id) => dados.produtos.get(id)?.nome).join(", "), peso: 3, largura: 50 },
                 { titulo: "Preço mensal", valor: (p) => p.preco, formato: "moeda", peso: 1.2 },
                 { titulo: "Avulsos somariam", valor: (p) => somaTabela(p), formato: "moeda", peso: 1.2 },
                 { titulo: "Contratos ativos", valor: (p) => emUso((k) => k.plano_id === p.id), formato: "numero", peso: 1 },
@@ -96,7 +96,7 @@ export default function PaginaProdutos() {
         )}
         {podeGerir && d && (
           <button className="btn-primario" onClick={() => (aba === "modulos" ? setModulo("novo") : setPlano("novo"))}>
-            {aba === "modulos" ? "Novo módulo" : "Novo plano"}
+            {aba === "modulos" ? "Novo produto" : "Novo plano"}
           </button>
         )}
       </Cabecalho>
@@ -106,7 +106,7 @@ export default function PaginaProdutos() {
         valor={aba}
         aoMudar={setAba}
         itens={[
-          { id: "modulos", nome: "Módulos" },
+          { id: "modulos", nome: "Produtos" },
           { id: "planos", nome: "Planos (pacotes)" },
         ]}
       />
@@ -117,19 +117,19 @@ export default function PaginaProdutos() {
         <Carregando />
       ) : aba === "modulos" ? (
         !d.produtos.length ? (
-          <EstadoVazio>Nenhum módulo cadastrado.</EstadoVazio>
+          <EstadoVazio>Nenhum produto cadastrado. Cadastre os produtos do Ledgra com o preço mensal.</EstadoVazio>
         ) : (
           <>
             {d.produtos.some((p) => p.ativo && p.preco === 0) && (
               <p className="rounded-md bg-amber-50 p-3 text-sm text-amber-900">
-                Há módulo com preço zero. Defina o preço de tabela antes de cadastrar os contratos (o valor do contrato pode ter desconto).
+                Há produto com preço zero. Defina o preço de tabela antes de cadastrar os contratos (o valor do contrato pode ter desconto).
               </p>
             )}
             <div className="cartao overflow-x-auto">
               <table className="tabela">
                 <thead>
                   <tr>
-                    <th>Módulo</th>
+                    <th>Produto</th>
                     <th className="text-right">Preço mensal</th>
                     <th>Contratos ativos</th>
                     <th />
@@ -169,7 +169,7 @@ export default function PaginaProdutos() {
             )
           }
         >
-          Nenhum plano ainda. Um plano junta módulos com um preço mais em conta.
+          Nenhum plano ainda. Um plano junta produtos com um preço mais em conta.
         </EstadoVazio>
       ) : (
         <div className="grid gap-3 md:grid-cols-2">
@@ -246,7 +246,7 @@ function EditarModulo({
 
   async function salvar() {
     const preco = numeroBr(f.preco);
-    if (!f.nome.trim()) return setErro("Informe o nome do módulo.");
+    if (!f.nome.trim()) return setErro("Informe o nome do produto.");
     if (!modulo && !/^[a-z0-9_-]{2,30}$/.test(f.slug))
       return setErro("Código: só letras minúsculas sem acento, números, hífen ou sublinhado.");
     if (Number.isNaN(preco) || preco < 0) return setErro("Informe o preço mensal (pode ser zero).");
@@ -261,7 +261,7 @@ function EditarModulo({
         preco,
         ativo: f.ativo,
       });
-      aoSalvar(modulo ? "Módulo atualizado. Contratos já fechados mantêm o valor combinado." : "Módulo cadastrado.");
+      aoSalvar(modulo ? "Produto atualizado. Assinaturas já fechadas mantêm o valor combinado." : "Produto cadastrado.");
     } catch (e) {
       setErro(traduzirErro(e));
       setSalvando(false);
@@ -269,7 +269,7 @@ function EditarModulo({
   }
 
   return (
-    <Modal titulo={modulo ? "Editar módulo" : "Novo módulo"} aoFechar={aoFechar}>
+    <Modal titulo={modulo ? "Editar produto" : "Novo produto"} aoFechar={aoFechar}>
       <label className="campo">
         <span>Nome</span>
         <input value={f.nome} onChange={(e) => mudar({ nome: e.target.value })} autoFocus />
@@ -336,12 +336,12 @@ function EditarPlano({
   async function salvar() {
     const preco = numeroBr(f.preco);
     if (!f.nome.trim()) return setErro("Informe o nome do plano.");
-    if (!f.produtos.length) return setErro("Marque ao menos um módulo.");
+    if (!f.produtos.length) return setErro("Marque ao menos um produto.");
     if (Number.isNaN(preco) || preco < 0) return setErro("Informe o preço mensal do plano.");
     setSalvando(true);
     try {
       await salvarPlano({ id: plano?.id, org, nome: f.nome, descricao: f.descricao, preco, ativo: f.ativo, produtos: f.produtos });
-      aoSalvar(plano ? "Plano atualizado. Contratos já fechados continuam com os módulos e o valor combinados." : "Plano criado.");
+      aoSalvar(plano ? "Plano atualizado. Assinaturas já fechadas continuam com os produtos e o valor combinados." : "Plano criado.");
     } catch (e) {
       setErro(traduzirErro(e));
       setSalvando(false);
@@ -359,7 +359,7 @@ function EditarPlano({
         <input value={f.descricao} onChange={(e) => mudar({ descricao: e.target.value })} />
       </label>
       <fieldset className="space-y-1">
-        <legend className="text-sm text-neutral-600">Módulos do plano</legend>
+        <legend className="text-sm text-neutral-600">Produtos do plano</legend>
         <div className="grid gap-1 sm:grid-cols-2">
           {produtos
             .filter((p) => p.ativo || f.produtos.includes(p.id))
@@ -379,7 +379,7 @@ function EditarPlano({
         <span>Preço do plano por mês (R$)</span>
         <input inputMode="decimal" value={f.preco} onChange={(e) => mudar({ preco: e.target.value })} placeholder={valorParaCampo(soma)} />
       </label>
-      <p className="text-xs text-neutral-600">Os módulos avulsos somariam {brl(soma)} por mês.</p>
+      <p className="text-xs text-neutral-600">Os produtos avulsos somariam {brl(soma)} por mês.</p>
       <label className="flex items-center gap-2 text-sm">
         <input type="checkbox" checked={f.ativo} onChange={(e) => mudar({ ativo: e.target.checked })} /> À venda
       </label>

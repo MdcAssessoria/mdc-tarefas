@@ -1,4 +1,12 @@
-# Módulo Licenças
+# Módulo Cobrança Ledgra (antigo Licenças)
+
+> **Mudança de 02/11/2026 (migração 040):** o HUB deixou de vender módulos aos clientes. O produto para os clientes é o
+> **Ledgra**, desenvolvido do zero, à parte. Este módulo virou a **Cobrança Ledgra**, no grupo Gestão do menu: os
+> "produtos" e "planos" passam a ser os do Ledgra (cadastre em Produtos e planos), e contratos, mensalidades, baixas e
+> inadimplentes seguem iguais. Os módulos de gestão (Financeiro, Entradas, Saídas, Estoque, Centros de custo, Plano de
+> contas, Relatórios) continuam ligados, só para a gestão da própria MDC (financeiro, notas de entrada e de saída). Os
+> produtos antigos (módulos do HUB) foram inativados; o Financeiro saiu da lista de permissões do Portal. O texto
+> abaixo é a descrição original, de quando o módulo vendia os módulos do HUB.
 
 > **Resumo:** onde a MDC controla a venda dos módulos do HUB aos clientes (licença mensal): módulos e planos com preço
 > de tabela, contratos por cliente, mensalidades geradas sozinhas todo dia, baixa manual, inadimplência por faixa de

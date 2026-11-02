@@ -95,7 +95,7 @@ function Contratos() {
 
   return (
     <div className="space-y-4">
-      <Cabecalho titulo="Contratos de licença" descricao="Quem contratou quais módulos do HUB, por quanto e com que vencimento.">
+      <Cabecalho titulo="Assinaturas do Ledgra" descricao="Quem assina o Ledgra, com qual plano ou produto, por quanto e com que vencimento.">
         <BotoesExportar
           vazio={!lista.length}
           avisar={mostrar}
@@ -108,7 +108,7 @@ function Contratos() {
             colunas: [
               { titulo: "Cliente", valor: (k) => nomeDoCliente(k.cliente_id), peso: 2.4, largura: 36 },
               { titulo: "Contratou", valor: (k) => rotulo(k), peso: 2, largura: 28 },
-              { titulo: "Módulos", valor: (k) => nomeModulos(k), peso: 2, largura: 32 },
+              { titulo: "Plano / produtos", valor: (k) => nomeModulos(k), peso: 2, largura: 32 },
               { titulo: "Valor mensal", valor: (k) => k.valor_mensal, formato: "moeda", peso: 1.2 },
               { titulo: "Tabela", valor: (k) => k.valor_tabela, formato: "moeda", peso: 1.1 },
               { titulo: "Vence dia", valor: (k) => k.dia_vencimento, formato: "numero", peso: 0.7, largura: 10 },
@@ -142,7 +142,7 @@ function Contratos() {
           </select>
         </label>
         <label className="campo">
-          <span>Plano ou módulo</span>
+          <span>Plano ou produto</span>
           <select value={modulo} onChange={(e) => setModulo(e.target.value)}>
             <option value="">Todos</option>
             {(d?.planos ?? []).map((p) => (

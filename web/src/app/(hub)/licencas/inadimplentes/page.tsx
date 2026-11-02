@@ -90,7 +90,7 @@ export default function PaginaInadimplentes() {
     <div className="space-y-4">
       <Cabecalho
         titulo="Inadimplentes"
-        descricao="Clientes com mensalidade vencida e não paga. Cobre pelo WhatsApp e, se a MDC decidir, bloqueie o acesso aos módulos pagos."
+        descricao="Clientes com mensalidade vencida e não paga. Cobre pelo WhatsApp e, se a MDC decidir, suspenda o acesso pago."
       >
         <BotoesExportar
           vazio={!lista.length}
@@ -191,7 +191,7 @@ export default function PaginaInadimplentes() {
               detalhe="sugerido bloquear (ainda não bloqueados)"
               tom={todos.some((x) => x.sugerido) ? "ambar" : "neutro"}
             />
-            <Indicador icone="cancelar" titulo="Bloqueados" valor={String(bloqueados.size)} detalhe="sem acesso aos módulos pagos" />
+            <Indicador icone="cancelar" titulo="Bloqueados" valor={String(bloqueados.size)} detalhe="acesso pago suspenso" />
           </div>
 
           {!lista.length ? (

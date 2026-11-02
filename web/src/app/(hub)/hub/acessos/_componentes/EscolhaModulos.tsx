@@ -1,5 +1,5 @@
 // Escolha dos módulos de uma pessoa da equipe, um a um (sem acesso, ver, operar, gerir), separados em Escritório e
-// Gestão empresarial. Usada no cadastro e na edição da pessoa (acesso personalizado). Só o administrador chega aqui.
+// Gestão. Usada no cadastro e na edição da pessoa (acesso personalizado). Só o administrador chega aqui.
 "use client";
 
 import type { HubApp, PapelApp } from "@/dominios/acessos/tipos";
@@ -33,7 +33,7 @@ export function EscolhaModulos({
   const lista = modulosLiberaveis(apps);
   const grupos: [string, HubApp[]][] = [
     ["Escritório", lista.filter((a) => !ehModuloGestao(a.slug))],
-    ["Gestão empresarial (empresas clientes)", lista.filter((a) => ehModuloGestao(a.slug))],
+    ["Gestão (da MDC e Cobrança Ledgra)", lista.filter((a) => ehModuloGestao(a.slug))],
   ];
   const marcados = Object.keys(valor).length;
 

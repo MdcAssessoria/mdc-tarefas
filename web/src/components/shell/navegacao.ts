@@ -90,7 +90,7 @@ export const NAV: Record<Modulo, { titulo: string; links: LinkModulo[]; grupos?:
     ],
   },
   licencas: {
-    titulo: "Licenças",
+    titulo: "Cobrança Ledgra",
     links: [
       { href: "/licencas", nome: "Painel" },
       { href: "/licencas/cobrancas", nome: "Mensalidades" },
@@ -181,10 +181,21 @@ export const MODULO_POR_PREFIXO: Record<string, Modulo> = {
  * módulo de gestão tem a sua ferramenta (Entradas usa "entradas"); mapa vazio mantido para módulos futuros.
  */
 /**
- * Módulos de gestão das empresas clientes: no menu lateral ficam juntos no grupo "Gestão empresarial" (pedido do
- * Edvaldo, 02/11/2026). Cada um continua com permissão e licença próprias; o grupo é só apresentação.
+ * Módulos de gestão: no menu lateral ficam juntos no grupo "Gestão" (pedido do Edvaldo, 02/11/2026). Desde então a
+ * MDC usa esses módulos só para a própria gestão (o produto para clientes é o Ledgra, sistema à parte), mais a
+ * Cobrança Ledgra. Cada um continua com permissão própria; o grupo é só apresentação.
  */
-export const MODULOS_GESTAO = ["financeiro", "entradas", "saidas", "estoque", "centros_custo", "plano_contas", "relatorios"] as const;
+export const MODULOS_GESTAO = [
+  "financeiro",
+  "entradas",
+  "saidas",
+  "estoque",
+  "centros_custo",
+  "plano_contas",
+  "relatorios",
+  // Cobrança Ledgra (antigo Licenças): cobra os assinantes do Ledgra (decisão do Edvaldo, 02/11/2026)
+  "licencas",
+] as const;
 export const ehModuloGestao = (slug: string) => (MODULOS_GESTAO as readonly string[]).includes(slug);
 
 export const APP_DO_MODULO: Partial<Record<Modulo, string>> = {};

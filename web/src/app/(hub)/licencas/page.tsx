@@ -78,7 +78,7 @@ export default function PainelLicencas() {
 
   return (
     <div className="space-y-4">
-      <Cabecalho titulo="Licenças" descricao="Quanto a venda dos módulos do HUB rende por mês, o que falta receber e quem está atrasado.">
+      <Cabecalho titulo="Cobrança Ledgra" descricao="Quanto as assinaturas do Ledgra rendem por mês, o que falta receber e quem está atrasado.">
         {numeros && (
           <BotoesExportar
             vazio={false}
@@ -163,7 +163,7 @@ export default function PainelLicencas() {
             <Indicador icone="cancelar"
               titulo="Clientes bloqueados"
               valor={String(dados.bloqueados.size)}
-              detalhe="sem acesso aos módulos pagos"
+              detalhe="acesso pago suspenso"
               tom={dados.bloqueados.size ? "vermelho" : "neutro"}
             />
           </div>

@@ -38,9 +38,10 @@ export function MenuLateral({ modulo, recolhido, aoRecolher }: { modulo: Modulo;
   const ferramentas = apps.filter((a) => a.papel && a.status !== "em_breve");
   const escritorio = ferramentas.filter((a) => !ehModuloGestao(a.slug));
   const gestao = ferramentas.filter((a) => ehModuloGestao(a.slug));
-  const temCadastros = podeModulo("cadastros", pode);
+  // Fornecedores e clientes só faz sentido com algum módulo de gestão em uso no menu (Cobrança Ledgra não usa)
+  const temCadastros = gestao.some((a) => a.slug !== "licencas") && podeModulo("cadastros", pode);
   const naGestao = ehModuloGestao(modulo) || modulo === "cadastros";
-  // grupo "Gestão empresarial": começa aberto; abrir/fechar fica lembrado no navegador (fechado, o título acende na tela dele)
+  // grupo "Gestão": começa aberto; abrir/fechar fica lembrado no navegador (fechado, o título acende na tela dele)
   const [gestaoSalvo, setGestaoSalvo] = useEstadoLembrado<"1" | "0">(CHAVES.menuGestao, "1", (v) => v === "1" || v === "0");
   const abrirGestao = gestaoSalvo === "1";
   function alternarGestao() {
@@ -112,7 +113,7 @@ export function MenuLateral({ modulo, recolhido, aoRecolher }: { modulo: Modulo;
                 }`}
               >
                 <Icone nome="carteira" className={`h-[19px] w-[19px] shrink-0 ${naGestao ? "text-[var(--destaque)]" : ""}`} />
-                <span className="truncate">Gestão empresarial</span>
+                <span className="truncate">Gestão</span>
                 <Icone nome={abrirGestao ? "recolher" : "expandir"} className="ml-auto h-3.5 w-3.5 rotate-90 opacity-60" />
               </button>
             )}
