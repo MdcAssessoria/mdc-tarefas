@@ -34,7 +34,7 @@ export default function PaginaCertificadoEmpresa() {
   const financeiro = useClienteFinanceiro();
   const cliente = financeiro.cliente;
   const podeGerir = pode("financeiro", "gerir");
-  const podeOperar = pode("financeiro", "operar");
+  const podeOperar = pode("entradas", "operar") || pode("financeiro", "operar");
   const { aviso, mostrar } = useAviso();
   const [arquivo, setArquivo] = useState<File | null>(null);
   const [senha, setSenha] = useState("");

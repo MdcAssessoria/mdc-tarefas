@@ -13,6 +13,7 @@ import { nomeCliente } from "@/dominios/clientes/nome";
 import { useConsulta } from "@/lib/useConsulta";
 import { Aviso } from "@/components/ui/Aviso";
 import { Modal } from "@/components/ui/Modal";
+import { JanelaMotivo } from "@/dominios/financeiro/componentes/Comuns";
 
 export default function PaginaVencimentos() {
   return <Vencimentos />;
@@ -226,6 +227,7 @@ function Editor({
     observacao: item?.observacao ?? "",
   });
   const [erro, setErro] = useState<string | null>(null);
+  const [encerrando, setEncerrando] = useState(false);
 
   async function salvar(e: React.FormEvent) {
     e.preventDefault();
@@ -307,17 +309,8 @@ function Editor({
         {erro && <p className="text-sm text-red-700">{erro}</p>}
         <div className="flex justify-between gap-2">
           {item && podeExcluir ? (
-            <button
-              type="button"
-              className="btn text-[var(--perigo)]"
-              onClick={async () => {
-                if (!confirm("Excluir este vencimento?")) return;
-                const { error } = await supabase().from("venc_itens").delete().eq("id", item.id);
-                if (error) return setErro(traduzirErro(error));
-                aoSalvar();
-              }}
-            >
-              Excluir
+            <button type="button" className="btn text-[var(--perigo)]" onClick={() => setEncerrando(true)}>
+              Encerrar
             </button>
           ) : (
             <span />
@@ -330,6 +323,19 @@ function Editor({
           </div>
         </div>
       </form>
+      {encerrando && item && (
+        <JanelaMotivo
+          titulo="Encerrar vencimento"
+          descricao="O vencimento sai da lista e para de avisar. Ele fica guardado, com o motivo, no histórico."
+          botao="Encerrar"
+          aoConfirmar={async (motivo) => {
+            const { error } = await supabase().rpc("venc_encerrar", { p_item: item.id, p_motivo: motivo });
+            if (error) throw error;
+            aoSalvar();
+          }}
+          aoFechar={() => setEncerrando(false)}
+        />
+      )}
     </Modal>
   );
 }

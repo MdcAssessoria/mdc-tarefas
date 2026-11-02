@@ -44,7 +44,8 @@ export const lerLinhas = (cliente: string, filtro: { conta?: string; de?: string
     let q = supabase()
       .from("fin_extrato_linhas")
       .select("id,conta_id,lote_id,data,valor,descricao,documento,situacao")
-      .eq("cliente_id", cliente);
+      .eq("cliente_id", cliente)
+      .neq("situacao", "desfeita");
     if (filtro.conta) q = q.eq("conta_id", filtro.conta);
     if (filtro.de) q = q.gte("data", filtro.de);
     if (filtro.ate) q = q.lte("data", filtro.ate);
@@ -57,6 +58,7 @@ export const lerLotes = (cliente: string) =>
       .from("fin_extrato_lotes")
       .select("id,conta_id,arquivo,formato,inicio,fim,recebidas,novas,repetidas,em")
       .eq("cliente_id", cliente)
+      .is("desfeito_em", null)
       .order("em", { ascending: false })
       .order("id")
       .range(de, ate),

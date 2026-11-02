@@ -30,7 +30,7 @@ export function AcessosClientes({
     const sb = supabase();
     const [u, c] = await Promise.all([
       sb.from("portal_usuarios").select("user_id,cliente_id,nome,email,permissoes,ativo").eq("org_id", org.id),
-      sb.from("portal_convites").select("cliente_id,nome,email,permissoes").eq("org_id", org.id),
+      sb.from("portal_convites").select("cliente_id,nome,email,permissoes").eq("org_id", org.id).is("cancelado_em", null),
     ]);
     if (u.error) return setErroLista(traduzirErro(u.error));
     setErroLista(null);

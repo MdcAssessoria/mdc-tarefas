@@ -1,12 +1,12 @@
-// "Últimos extratos importados", com o botão de desfazer uma importação feita por engano (pede confirmação na linha).
+// "Últimos extratos importados", com o botão de desfazer uma importação feita por engano (pede o motivo; nada se apaga).
 "use client";
 
 import { useState } from "react";
 import { desfazerLote } from "@/dominios/financeiro/repositorio";
 import type { LoteExtrato } from "@/dominios/financeiro/tipos";
-import { traduzirErro } from "@/lib/erros";
 import { fmtDataHora } from "@/lib/formato/datas";
 import type { TomAviso } from "@/components/ui/Aviso";
+import { JanelaMotivo } from "./Comuns";
 
 export function ListaLotes({
   lotes,
@@ -21,22 +21,14 @@ export function ListaLotes({
   avisar: (texto: string, tom?: TomAviso) => void;
   aoDesfazer: () => void;
 }) {
-  const [confirmando, setConfirmando] = useState<string | null>(null);
-  const [ocupado, setOcupado] = useState(false);
+  const [confirmando, setConfirmando] = useState<LoteExtrato | null>(null);
   if (!lotes.length) return null;
 
-  async function desfazer(l: LoteExtrato) {
-    setOcupado(true);
-    try {
-      const r = await desfazerLote(l.id);
-      avisar(`Importação desfeita: ${r.apagadas} lançamento(s) de ${l.arquivo} foram retirados.`);
-      setConfirmando(null);
-      aoDesfazer();
-    } catch (e) {
-      avisar(traduzirErro(e), "erro");
-    } finally {
-      setOcupado(false);
-    }
+  async function desfazer(l: LoteExtrato, motivo: string) {
+    const r = await desfazerLote(l.id, motivo);
+    avisar(`Importação desfeita: ${r.desfeitas} lançamento(s) de ${l.arquivo} foram retirados (ficam guardados com o motivo).`);
+    setConfirmando(null);
+    aoDesfazer();
   }
 
   return (
@@ -53,29 +45,27 @@ export function ListaLotes({
             </span>
             {podeOperar && l.novas > 0 && (
               <span className="ml-auto flex gap-2">
-                {confirmando === l.id ? (
-                  <>
-                    <button className="btn !min-h-8 !border-red-300 !text-red-800" disabled={ocupado} onClick={() => desfazer(l)}>
-                      {ocupado ? "Desfazendo…" : `Sim, retirar ${l.novas} lançamento(s)`}
-                    </button>
-                    <button className="btn !min-h-8" disabled={ocupado} onClick={() => setConfirmando(null)}>
-                      Não
-                    </button>
-                  </>
-                ) : (
-                  <button
-                    className="btn !min-h-8"
-                    onClick={() => setConfirmando(l.id)}
-                    title="Retira os lançamentos que entraram com este arquivo"
-                  >
-                    Desfazer importação
-                  </button>
-                )}
+                <button
+                  className="btn !min-h-8"
+                  onClick={() => setConfirmando(l)}
+                  title="Retira os lançamentos que entraram com este arquivo"
+                >
+                  Desfazer importação
+                </button>
               </span>
             )}
           </li>
         ))}
       </ul>
+      {confirmando && (
+        <JanelaMotivo
+          titulo="Desfazer importação"
+          descricao={`Os ${confirmando.novas} lançamento(s) de ${confirmando.arquivo} saem do extrato. Eles ficam guardados, marcados como desfeitos, com o motivo.`}
+          botao={`Retirar ${confirmando.novas} lançamento(s)`}
+          aoConfirmar={(motivo) => desfazer(confirmando, motivo)}
+          aoFechar={() => setConfirmando(null)}
+        />
+      )}
     </div>
   );
 }

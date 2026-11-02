@@ -59,7 +59,7 @@ export default function PaginaNotasRecebidas() {
   const { org, pode } = useOrg();
   const financeiro = useClienteFinanceiro();
   const cliente = financeiro.cliente;
-  const podeOperar = pode("financeiro", "operar");
+  const podeOperar = pode("entradas", "operar") || pode("financeiro", "operar");
   const { aviso, mostrar } = useAviso();
   const hoje = hojeISO(org.fuso);
 

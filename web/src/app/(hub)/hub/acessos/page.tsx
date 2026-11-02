@@ -46,7 +46,7 @@ function Acessos() {
     const sb = supabase();
     const [a, p, h, c] = await Promise.all([
       sb.from("hub_acessos").select("user_id,app,papel").eq("org_id", org.id),
-      sb.from("hub_perfis").select("id,nome,apps").eq("org_id", org.id).order("nome"),
+      sb.from("hub_perfis").select("id,nome,apps").eq("org_id", org.id).eq("ativo", true).order("nome"),
       sb.from("hub_auditoria").select("*").eq("org_id", org.id).order("em", { ascending: false }).limit(60),
       sb.rpc("hub_situacao_contas", { p_org: org.id }),
     ]);

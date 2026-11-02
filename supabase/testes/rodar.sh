@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Sobe um Postgres 16 temporário, aplica a base simulada + migrações 026/028/029/030/031/032/033/034 e roda os testes do Financeiro,
-# Licenças, Notas fiscais, Estoque/pedidos e Transferências.
+# Licenças, Notas fiscais, Estoque/pedidos e Transferências; depois 035 (módulos) e 036 (auditoria de 02/11/2026).
 # Cada linha "(deve falhar)" precisa terminar em ERROR com a mensagem em português; as demais, sem erro.
 set -euo pipefail
 B=/usr/lib/postgresql/16/bin; D=$(mktemp -d); chown postgres "$D"
@@ -24,3 +24,8 @@ for f in testes/79_base_modulos.sql migrations/035_modulos_gestao.sql; do
   $P -v ON_ERROR_STOP=1 -f "$R/$f" 2>&1 | grep -v NOTICE || true
 done
 $P -f "$R/testes/80_modulos.sql" 2>&1 | grep -v "^SET$"
+# 036 por último: correções da auditoria de 02/11/2026 (provas P1–P12 viram testes de regressão e "nada se apaga")
+for f in testes/89_base_036.sql migrations/036_seguranca_auditoria_2026_11.sql; do
+  $P -v ON_ERROR_STOP=1 -f "$R/$f" 2>&1 | grep -v NOTICE || true
+done
+$P -v conexao="host=$D port=5498 dbname=postgres user=postgres" -f "$R/testes/90_auditoria_036.sql" 2>&1 | grep -v "^SET$"

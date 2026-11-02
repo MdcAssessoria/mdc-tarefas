@@ -65,6 +65,7 @@ set teste.papel = '';
 set teste.uid = '00000000-0000-0000-0000-0000000000e2';
 select count(*) as ve_c1 from fin_titulos;
 select count(*) as contas_portal from fin_contas_bancarias;
+\echo '--- portal cria categoria em outra empresa (deve falhar)'
 insert into fin_categorias (org_id, cliente_id, tipo, nome, conta_contabil_id) values ('00000000-0000-0000-0000-0000000000a1','00000000-0000-0000-0000-0000000000c2','despesa','Hack','00000000-0000-0000-0000-000000000004');
 \echo '--- (030 M-2) portal cria categoria na própria empresa (deve falhar)'
 insert into fin_categorias (org_id, cliente_id, tipo, nome, conta_contabil_id) values ('00000000-0000-0000-0000-0000000000a1','00000000-0000-0000-0000-0000000000c1','despesa','Do cliente','00000000-0000-0000-0000-000000000001');
@@ -75,6 +76,7 @@ select est_definir_negativo('00000000-0000-0000-0000-0000000000c1', true);
 \echo '--- sem acesso nenhum'
 set teste.uid = '00000000-0000-0000-0000-0000000000e9';
 select count(*) as nada from fin_titulos;
+\echo '--- sem acesso nenhum lança (deve falhar)'
 select fin_lancar('{"cliente":"00000000-0000-0000-0000-0000000000c1","tipo":"pagar","categoria":"00000000-0000-0000-0000-0000000000d1","descricao":"x","vencimento":"2026-03-10","valor":80}'::jsonb);
 reset role;
 select acao, count(*) from hub_auditoria group by acao order by 1;

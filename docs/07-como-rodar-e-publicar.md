@@ -124,3 +124,10 @@ pagar + estoque + de-para, desfazer, upload, Storage e acessos): parcelas, baixa
 travas de situação, acesso do cliente pelo Portal e de quem não tem acesso, saldo de estoque, inventário,
 transferência, estorno e estoque negativo. Cada linha marcada "(deve falhar)" precisa terminar em erro com a mensagem
 em português. Rode antes de aplicar uma migração nova dessas tabelas.
+
+No fim, o `rodar.sh` aplica a 035 e a 036 com as regras de acesso reais (`79_base_modulos.sql`, `89_base_036.sql`, que
+simula tarefas, feriados, perfis, CRM, convites do Portal e contas do Auth) e roda `80_modulos.sql` e
+`90_auditoria_036.sql`: as provas P1–P12 da auditoria de 02/11/2026 (cada exploração termina em erro), os fluxos normais
+por módulo (Entradas lança nota, Estoque movimenta, Relatórios só lê, Portal com contrato do Financeiro opera, cliente
+bloqueado não envia certificado), a corrida de dois contratos ao mesmo tempo (`dblink`) e o "nada se apaga" (DELETE
+direto falha; cancelar/encerrar/inativar com motivo funciona). Nenhum bloco sem a marca "(deve falhar)" pode ter ERROR.

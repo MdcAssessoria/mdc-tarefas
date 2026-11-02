@@ -100,23 +100,6 @@ function Leads() {
     void carregar();
   }
 
-  async function excluir(ids: string[]) {
-    const alvo = (lista ?? []).filter((o) => ids.includes(o.id) && !o.cliente_id);
-    if (!alvo.length) return setErro("Leads que viraram cliente não podem ser excluídos; arquive-os.");
-    if (!confirm(`Excluir ${alvo.length} lead(s) de vez? As atividades registradas também são apagadas.`)) return;
-    const { error } = await supabase()
-      .from("crm_oportunidades")
-      .delete()
-      .in(
-        "id",
-        alvo.map((o) => o.id),
-      );
-    if (error) return setErro(traduzirErro(error));
-    setSel(new Set());
-    setAviso(`${alvo.length} lead(s) excluído(s).`);
-    void carregar();
-  }
-
   async function exportar() {
     await exportarExcel(
       `Leads-MDC-${hojeISO(org.fuso)}.xlsx`,
@@ -243,11 +226,6 @@ function Leads() {
           {podeOperar && situacao !== "ativos" && (
             <button className="btn" onClick={() => arquivar([...sel], false)}>
               Restaurar ao funil
-            </button>
-          )}
-          {podeGerir && (
-            <button className="btn !border-red-200 !text-[var(--perigo)]" onClick={() => excluir([...sel])}>
-              Excluir
             </button>
           )}
           <button className="btn-link" onClick={() => setSel(new Set())}>

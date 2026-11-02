@@ -66,7 +66,12 @@ export function EditorCliente({
             .eq("org_id", orgId);
           if (error) throw error;
         } else {
-          const { error } = await sb.from("portal_convites").delete().eq("email", v.email).eq("cliente_id", cli).eq("org_id", orgId);
+          // nada se apaga: o convite pendente é cancelado com motivo (fica na auditoria)
+          const { error } = await sb.rpc("portal_cancelar_convite", {
+            p_cliente: cli,
+            p_email: v.email,
+            p_motivo: "Empresa desmarcada no acesso de " + (nome || email),
+          });
           if (error) throw error;
         }
       }
