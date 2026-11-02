@@ -1578,3 +1578,201 @@ export const XML_EXEMPLO = {
 <tribFed><piscofins><CST>01</CST><vPis>13.00</vPis><vCofins>60.00</vCofins><tpRetPisCofins>1</tpRetPisCofins></piscofins>
 <vRetIRRF>30.00</vRetIRRF><vRetCSLL>40.00</vRetCSLL></tribFed></trib></valores></infDPS></DPS></infNFSe></NFSe>`,
 };
+// ---------------------------------------------------------------- Contratos (041, 02/11/2026)
+// Contratos fixos da empresa C1: honorários a receber, aluguel (com reajuste de IGP-M pendente neste mês e contrato
+// anexado), sistema com vigência terminando em 20 dias (renova sozinho), limpeza suspensa e um encerrado. Algumas contas
+// do Financeiro passam a vir de contrato (selo "Contrato fixo"). Só acréscimos.
+(() => {
+  APPS.push({
+    slug: "contratos",
+    nome: "Contratos",
+    descricao: "Contratos fixos: cadastro, vigência, anexos e reajuste",
+    icone: "documento",
+    rota: "/contratos",
+    status: "ativo",
+    externo: false,
+    ordem: 42,
+    papel: "gerir",
+  });
+  const mes = dia(0).slice(0, 7) + "-01";
+  const mesesAtras = (n) => {
+    const d = new Date(agora.getFullYear(), agora.getMonth() - n, 1);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-01`;
+  };
+  const mmaaaa = (d) => `${d.slice(5, 7)}/${d.slice(0, 4)}`;
+  const K = (n) => `fc000000-0000-4000-8000-00000000000${n}`;
+  const contrato = (n, extra) => ({
+    id: K(n),
+    org_id: ORG,
+    cliente_id: C1,
+    numero: null,
+    objeto: null,
+    centro_id: null,
+    conta_prevista_id: "f2000000-0000-4000-8000-000000000001",
+    vigencia_fim: null,
+    renovacao_automatica: false,
+    aviso_dias: 30,
+    gera_contas: true,
+    fim: null,
+    percentual_fixo: null,
+    situacao: "ativo",
+    situacao_motivo: null,
+    situacao_em: null,
+    encerrado_em: null,
+    ultima_competencia: mes,
+    mes_cadastro: mesesAtras(14),
+    observacao: null,
+    criado_em: momento(-420),
+    ...extra,
+  });
+  const mesAtualNum = Number(mes.slice(5, 7));
+  TABELAS.fin_recorrentes = [
+    contrato(1, {
+      tipo: "receber",
+      pessoa_id: "f5000000-0000-4000-8000-000000000002",
+      descricao: "Honorários contábeis mensais",
+      numero: "2025/031",
+      objeto: "Escrituração contábil e fiscal, folha de pagamento e obrigações acessórias",
+      valor: 2400,
+      dia_vencimento: 10,
+      categoria_id: "f7000000-0000-4000-8000-000000000003",
+      vigencia_inicio: mesesAtras(20),
+      inicio: mesesAtras(20),
+      gerar_desde: mesesAtras(14),
+      indice: "IPCA",
+      mes_reajuste: Number(mesesAtras(8).slice(5, 7)),
+    }),
+    contrato(2, {
+      tipo: "pagar",
+      pessoa_id: "f5000000-0000-4000-8000-000000000001",
+      descricao: "Aluguel da sala",
+      objeto: "Locação da sala 12 do Edifício Central",
+      valor: 2500,
+      dia_vencimento: 5,
+      categoria_id: "f7000000-0000-4000-8000-000000000002",
+      vigencia_inicio: mesesAtras(24),
+      vigencia_fim: dia(400),
+      inicio: mesesAtras(24),
+      gerar_desde: mesesAtras(14),
+      indice: "IGP-M",
+      mes_reajuste: mesAtualNum,
+    }),
+    contrato(3, {
+      tipo: "pagar",
+      pessoa_id: "f5000000-0000-4000-8000-000000000001",
+      descricao: "Sistema contábil (licença)",
+      numero: "CT-889",
+      valor: 890,
+      dia_vencimento: 31,
+      categoria_id: "f7000000-0000-4000-8000-000000000001",
+      vigencia_inicio: mesesAtras(11),
+      vigencia_fim: dia(20),
+      renovacao_automatica: true,
+      inicio: mesesAtras(11),
+      gerar_desde: mesesAtras(11),
+      mes_cadastro: mesesAtras(11),
+      indice: "fixo",
+      percentual_fixo: 5,
+      mes_reajuste: (mesAtualNum % 12) + 1,
+    }),
+    contrato(4, {
+      tipo: "pagar",
+      pessoa_id: "f5000000-0000-4000-8000-000000000003",
+      descricao: "Limpeza do escritório",
+      valor: 450,
+      dia_vencimento: 15,
+      categoria_id: "f7000000-0000-4000-8000-000000000002",
+      vigencia_inicio: mesesAtras(6),
+      inicio: mesesAtras(6),
+      gerar_desde: mesesAtras(6),
+      indice: "nenhum",
+      mes_reajuste: null,
+      situacao: "suspenso",
+      situacao_motivo: "Prestadora de férias",
+      situacao_em: momento(-20),
+    }),
+    contrato(5, {
+      tipo: "pagar",
+      pessoa_id: "f5000000-0000-4000-8000-000000000001",
+      descricao: "Internet antiga",
+      valor: 199.9,
+      dia_vencimento: 20,
+      categoria_id: "f7000000-0000-4000-8000-000000000001",
+      vigencia_inicio: mesesAtras(18),
+      inicio: mesesAtras(18),
+      gerar_desde: mesesAtras(14),
+      fim: mesesAtras(3),
+      ultima_competencia: mesesAtras(3),
+      indice: "nenhum",
+      mes_reajuste: null,
+      situacao: "encerrado",
+      situacao_motivo: "Troca de operadora",
+      situacao_em: momento(-80),
+      encerrado_em: dia(-80),
+    }),
+  ];
+  TABELAS.fin_recorrente_reajustes = [
+    {
+      id: 1,
+      org_id: ORG,
+      cliente_id: C1,
+      recorrente_id: K(1),
+      origem: "reajuste",
+      referencia: mesesAtras(8),
+      indice: "IPCA",
+      percentual: 4.6812,
+      percentual_proposto: 4.6812,
+      valor_antes: 2292.7,
+      valor_depois: 2400,
+      titulos_atualizados: 0,
+      observacao: null,
+      em: momento(-270),
+    },
+  ];
+  TABELAS.fin_recorrente_eventos = [
+    [1, K(2), "criado", `Contrato cadastrado: R$ 2.500,00 por mês, primeira conta em ${mmaaaa(mesesAtras(14))}`, -420],
+    [2, K(2), "anexo", "Arquivo anexado: contrato-locacao-assinado.pdf", -269],
+    [3, K(2), "conta", `Conta de ${mmaaaa(mes)} lançada em Contas a pagar (R$ 2.500,00)`, -1],
+    [4, K(2), "aviso", `Aviso no sino: reajuste de ${mmaaaa(mes)} pendente`, -1],
+  ].map(([id, recorrente_id, tipo, texto, d]) => ({ id, org_id: ORG, cliente_id: C1, recorrente_id, tipo, texto, dados: null, por: d < -2 ? EU : null, em: momento(d) }));
+  TABELAS.hub_arquivos.push({
+    id: "fc100000-0000-4000-8000-000000000001",
+    org_id: ORG,
+    app: "contratos",
+    ref_id: K(2),
+    cliente_id: C1,
+    nome: "contrato-locacao-assinado.pdf",
+    caminho: `${ORG}/contratos/${K(2)}/contrato-locacao-assinado.pdf`,
+    tamanho: 284_000,
+    tipo: "application/pdf",
+    visivel_cliente: false,
+    enviado_por: EU,
+    enviado_em: momento(-269),
+  });
+  TABELAS.fin_indices = [];
+  // contas do Financeiro que vieram de contrato (selo "Contrato fixo")
+  for (const t of TABELAS.fin_titulos) {
+    if (t.descricao === "Condomínio") Object.assign(t, { recorrente_id: K(2), competencia: mes });
+    if (t.descricao === "Venda NF 1301") Object.assign(t, { recorrente_id: K(1), competencia: mes });
+  }
+  RPCS.fin_recorrente_proposta = ({ p_contrato }) => {
+    const k = TABELAS.fin_recorrentes.find((x) => x.id === p_contrato) ?? TABELAS.fin_recorrentes[1];
+    const percentual = k.indice === "fixo" ? 5 : 3.9187;
+    return {
+      contrato: k.id,
+      referencia: `${mes.slice(0, 4)}-${String(k.mes_reajuste ?? 1).padStart(2, "0")}-01`,
+      pendente: k.id === K(2),
+      tipo: k.indice,
+      indice: k.indice,
+      de: mesesAtras(12),
+      ate: mesesAtras(1),
+      meses: 12,
+      faltam: [],
+      percentual,
+      valor_atual: k.valor,
+      valor_novo: Math.round(k.valor * (1 + percentual / 100) * 100) / 100,
+      contas_em_aberto: k.id === K(2) ? [{ id: "f8200000-0000-4000-8000-000000000092", competencia: mes, valor: 2500 }] : [],
+      indices_atualizados_em: momento(0),
+    };
+  };
+})();

@@ -11,6 +11,7 @@
 //   ROTAS=/tarefas,/tv      verifica só essas rotas (caminho sem o /hub-mdc)
 //   FOTOS=/tmp/telas        salva uma captura de cada tela nessa pasta
 //   TELA=celular            abre as telas na largura de um celular (390 px) em vez de 1280 px
+//   LARGURA_TELA=1440       largura do computador (padrão 1280 px)
 //
 // Como funciona:
 //   - As rotas saem das pastas de src/app (cada page.tsx). Rotas com [id] usam os ids de IDS_EXEMPLO em
@@ -380,6 +381,49 @@ const INTERACOES = {
       await p.waitForTimeout(300);
     }
   },
+  // Contratos (041): novo contrato com "+ Nova categoria", reajuste pendente (índice → novo valor) e a ficha com as abas
+  "/contratos": async (p, foto) => {
+    await p.getByRole("button", { name: "Novo contrato", exact: true }).click();
+    const novo = p.getByRole("dialog", { name: "Novo contrato" });
+    await novo.waitFor({ timeout: 3000 });
+    await novo.getByRole("radio", { name: /A pagar/ }).click();
+    await novo.getByLabel("Nome do contrato").fill("Aluguel da sala");
+    await novo.getByLabel("Valor mensal (R$)").fill("2.500,00");
+    await novo.getByText("Todo dia 1º o HUB lança").waitFor({ timeout: 3000 });
+    await foto("novo-contrato");
+    await novo.getByRole("button", { name: "+ Nova categoria" }).click();
+    const cat = p.getByRole("dialog", { name: "Nova categoria de despesa" });
+    await cat.waitFor({ timeout: 3000 });
+    await cat.getByRole("button", { name: "Voltar" }).click();
+    await cat.waitFor({ state: "detached", timeout: 3000 });
+    await p.keyboard.press("Escape");
+    await novo.waitFor({ state: "detached", timeout: 3000 });
+    await p.getByRole("button", { name: "Reajustar", exact: true }).first().click();
+    const reaj = p.getByRole("dialog", { name: /^Reajuste · / });
+    await reaj.waitFor({ timeout: 3000 });
+    await reaj.getByText("Novo valor").waitFor({ timeout: 5000 });
+    await foto("reajuste");
+    await p.keyboard.press("Escape");
+    await reaj.waitFor({ state: "detached", timeout: 3000 });
+    await p.getByRole("button", { name: "Aluguel da sala", exact: true }).click();
+    const ficha = p.getByRole("dialog", { name: "Aluguel da sala" });
+    await ficha.waitFor({ timeout: 3000 });
+    for (const aba of ["Contas lançadas", "Anexos", "Histórico"]) {
+      await ficha.getByRole("tab", { name: aba }).click();
+      await p.waitForTimeout(300);
+    }
+    await ficha.getByText("Arquivo anexado").waitFor({ timeout: 3000 });
+    await foto("ficha");
+    await p.keyboard.press("Escape");
+  },
+  "/contratos/reajustes": async (p) => {
+    await p.getByRole("button", { name: "Conferir e confirmar", exact: true }).first().click();
+    const dialogo = p.getByRole("dialog", { name: /^Reajuste · / });
+    await dialogo.waitFor({ timeout: 3000 });
+    await dialogo.getByRole("button", { name: "Confirmar reajuste" }).waitFor({ timeout: 3000 });
+    await p.keyboard.press("Escape");
+    await dialogo.waitFor({ state: "detached", timeout: 3000 });
+  },
   "/comercial": (p) => abrirEFecharModal(p, "Limpar funil", "Limpar funil"),
   "/licencas/contratos": (p) => abrirEFecharModal(p, "Novo contrato", "Novo contrato de licença"),
   "/licencas/produtos": async (p) => {
@@ -458,7 +502,7 @@ async function verificarTela(navegador, porta, rota, pastaFotos) {
   const avisos = new Set();
   const celular = process.env.TELA === "celular";
   const contexto = await navegador.newContext({
-    viewport: celular ? { width: 390, height: 844 } : { width: 1280, height: 900 },
+    viewport: celular ? { width: 390, height: 844 } : { width: Number(process.env.LARGURA_TELA ?? 1280), height: 900 },
     isMobile: celular,
     hasTouch: celular,
     locale: "pt-BR",

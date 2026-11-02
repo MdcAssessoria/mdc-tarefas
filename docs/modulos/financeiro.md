@@ -38,6 +38,10 @@ bancárias, transferências e extratos (no celular, botão "Telas"). Rotas antig
 | Endereço | Quem usa | O que faz |
 | --- | --- | --- |
 
+Contas geradas pelo módulo [Contratos](contratos.md) (041) levam o selo **"Contrato fixo"** nas listas de A pagar e A
+receber (e "Contrato fixo" na coluna Documento da exportação). São contas normais: pagar, receber, editar e cancelar
+continuam aqui; só o vínculo com o contrato e o mês (`recorrente_id`, `competencia`) não mudam pela tela.
+
 A empresa escolhida fica lembrada no navegador (`hub-mdc:financeiro:cliente`) e vale para todas as telas desses módulos.
 Permissão nas telas: cada módulo usa a própria ferramenta (`plano_contas`, `centros_custo`, `relatorios`); as tabelas
 ainda conferem `app.fin_pode` (ferramenta `financeiro`) até a separação de RLS por módulo, feita na integração.

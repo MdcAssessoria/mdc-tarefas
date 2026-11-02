@@ -34,6 +34,7 @@ describe("moduloDaRota", () => {
     expect(moduloDaRota("/plano-contas/categorias")).toBe("plano_contas");
     expect(moduloDaRota("/centros-custo")).toBe("centros_custo");
     expect(moduloDaRota("/relatorios")).toBe("relatorios");
+    expect(moduloDaRota("/contratos/reajustes")).toBe("contratos");
     expect(moduloDaRota("/cadastros/pessoas")).toBe("cadastros");
     expect(moduloDaRota("/entradas/lancar")).toBe("entradas");
   });

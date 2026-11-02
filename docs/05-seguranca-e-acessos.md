@@ -141,6 +141,7 @@ e contrato de algum módulo. **Gravar** = o módulo do assunto (tabela), na equi
 | Plano de contas (importar) e categorias | Plano de contas, Financeiro (só equipe) | `fin_importar_plano`, políticas de `fin_categorias` |
 | Centros de custo | Centros de custo, Financeiro (só equipe) | políticas de `fin_centros_custo` |
 | Relatórios | ninguém grava (só leitura) | — |
+| Contratos fixos (041): cadastrar, editar, suspender, reativar, encerrar, reajustar, anexar | Contratos (só equipe; o Portal não vê). As contas do mês nascem no Financeiro pelo caminho interno `app.fin_lancar_titulos` | `app.contratos_pode`, `fin_recorrente_*`, `fin_indices_atualizar` |
 | **Sensível (estrito no Financeiro)**: certificado A1 (gerir), regras dos tipos de entrada (gerir), estoque negativo (gerir), contas bancárias, importar e desfazer extrato, parâmetros de notas (operar) | Financeiro | `fis_pode_certificado`, `fis_salvar_tipo_entrada`, `est_definir_negativo`, `fin_contas_bancarias`, `fin_importar_extrato`, `fin_desfazer_lote`, `fis_salvar_parametros` |
 
 Contas geradas por nota ou pedido nascem pela função interna `app.fin_lancar_titulos` (quem tem Entradas ou Saídas gera as

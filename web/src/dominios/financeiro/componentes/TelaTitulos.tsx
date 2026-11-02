@@ -228,7 +228,7 @@ export function TelaTitulos({ tipo }: { tipo: TipoTitulo }) {
                   { titulo: "Descrição", valor: (x) => x.t.descricao, peso: 3, largura: 40 },
                   { titulo: T.pessoa, valor: (x) => nomes.pessoa.get(x.t.pessoa_id ?? "") ?? "", peso: 2, largura: 30 },
                   { titulo: "Categoria", valor: (x) => nomes.categoria.get(x.t.categoria_id) ?? "", peso: 1.6, largura: 24 },
-                  { titulo: "Documento", valor: (x) => x.t.documento ?? "", peso: 1, largura: 14 },
+                  { titulo: "Documento", valor: (x) => x.t.documento ?? (x.t.recorrente_id ? "Contrato fixo" : ""), peso: 1, largura: 14 },
                   { titulo: "Valor", valor: (x) => Number(x.t.valor), formato: "moeda", peso: 1.2 },
                   { titulo: T.feito, valor: (x) => Number(x.t.valor_pago), formato: "moeda", peso: 1.2 },
                   { titulo: "Falta", valor: (x) => x.saldo, formato: "moeda", peso: 1.2, alerta: (x) => x.s === "vencido" },
@@ -417,6 +417,15 @@ export function TelaTitulos({ tipo }: { tipo: TipoTitulo }) {
                     </td>
                     <td className="celula-titulo min-w-56">
                       {t.descricao}
+                      {t.recorrente_id && (
+                        <span
+                          className="ml-1.5 inline-flex items-center gap-1 rounded-full border border-[var(--borda)] px-1.5 align-middle text-[11px] font-normal text-[var(--texto-suave)]"
+                          title="Lançada no dia 1 pelo contrato fixo (módulo Contratos)"
+                        >
+                          <Icone nome="atualizar" className="h-3 w-3" />
+                          Contrato fixo
+                        </span>
+                      )}
                       <span className="block text-xs font-normal text-[var(--texto-suave)]">
                         {nomes.categoria.get(t.categoria_id)}
                         {t.documento && ` · doc. ${t.documento}`}

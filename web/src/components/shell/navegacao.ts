@@ -18,6 +18,7 @@ export type Modulo =
   | "plano_contas"
   | "centros_custo"
   | "relatorios"
+  | "contratos"
   | "cadastros";
 
 /**
@@ -124,6 +125,14 @@ export const NAV: Record<Modulo, { titulo: string; links: LinkModulo[]; grupos?:
   },
   centros_custo: { titulo: "Centros de custo", links: [{ href: "/centros-custo", nome: "Centros de custo" }] },
   relatorios: { titulo: "Relatórios", links: [{ href: "/relatorios", nome: "Relatórios" }] },
+  // Contratos fixos (041): cadastro, vigência, anexos, contas do mês no Financeiro e reajuste anual
+  contratos: {
+    titulo: "Contratos",
+    links: [
+      { href: "/contratos", nome: "Contratos" },
+      { href: "/contratos/reajustes", nome: "Reajustes" },
+    ],
+  },
   cadastros: {
     titulo: "Cadastros",
     acesso: ["financeiro", "entradas", "saidas", "estoque"],
@@ -172,6 +181,7 @@ export const MODULO_POR_PREFIXO: Record<string, Modulo> = {
   "plano-contas": "plano_contas",
   "centros-custo": "centros_custo",
   relatorios: "relatorios",
+  contratos: "contratos",
   cadastros: "cadastros",
   entradas: "entradas",
 };
@@ -193,6 +203,8 @@ export const MODULOS_GESTAO = [
   "centros_custo",
   "plano_contas",
   "relatorios",
+  // Contratos fixos (041): honorários, aluguel, sistemas; lança as contas no Financeiro e propõe o reajuste anual
+  "contratos",
   // Cobrança Ledgra (antigo Licenças): cobra os assinantes do Ledgra (decisão do Edvaldo, 02/11/2026)
   "licencas",
 ] as const;

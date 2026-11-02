@@ -39,3 +39,8 @@ for f in testes/93_base_039.sql migrations/039_acesso_por_modulo.sql; do
   $P -v ON_ERROR_STOP=1 -f "$R/$f" 2>&1 | grep -v NOTICE || true
 done
 $P -f "$R/testes/94_acesso_039.sql" 2>&1 | grep -v "^SET$"
+# 041: contratos fixos (recorrentes) e reajuste anual pelo índice; "hoje" simulado por teste.hoje
+for f in testes/95_base_041.sql migrations/041_contratos_recorrentes.sql; do
+  $P -v ON_ERROR_STOP=1 -f "$R/$f" 2>&1 | grep -v NOTICE || true
+done
+$P -f "$R/testes/96_recorrentes_041.sql" 2>&1 | grep -v "^SET$"

@@ -1559,6 +1559,31 @@ export type Database = {
           },
         ];
       };
+      fin_indices: {
+        Row: {
+          atualizado_em: string;
+          fonte: string;
+          indice: string;
+          mes: string;
+          percentual: number;
+        };
+        Insert: {
+          atualizado_em?: string;
+          fonte?: string;
+          indice: string;
+          mes: string;
+          percentual: number;
+        };
+        Update: {
+          atualizado_em?: string;
+          fonte?: string;
+          indice?: string;
+          mes?: string;
+          percentual?: number;
+        };
+        Relationships: [
+        ];
+      };
       fin_pessoas: {
         Row: {
           ativo: boolean;
@@ -1727,6 +1752,289 @@ export type Database = {
           },
         ];
       };
+      fin_recorrente_eventos: {
+        Row: {
+          cliente_id: string;
+          dados: Json | null;
+          em: string;
+          id: number;
+          org_id: string;
+          por: string | null;
+          recorrente_id: string;
+          texto: string;
+          tipo: string;
+        };
+        Insert: {
+          cliente_id: string;
+          dados?: Json | null;
+          em?: string;
+          id?: never;
+          org_id: string;
+          por?: string | null;
+          recorrente_id: string;
+          texto: string;
+          tipo: string;
+        };
+        Update: {
+          cliente_id?: string;
+          dados?: Json | null;
+          em?: string;
+          id?: never;
+          org_id?: string;
+          por?: string | null;
+          recorrente_id?: string;
+          texto?: string;
+          tipo?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "fin_recorrente_eventos_recorrente_id_fkey";
+            columns: ["recorrente_id"];
+            isOneToOne: false;
+            referencedRelation: "fin_recorrentes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      fin_recorrente_reajustes: {
+        Row: {
+          cliente_id: string;
+          em: string;
+          id: number;
+          indice: string | null;
+          observacao: string | null;
+          org_id: string;
+          origem: string;
+          percentual: number | null;
+          percentual_proposto: number | null;
+          por: string | null;
+          recorrente_id: string;
+          referencia: string | null;
+          titulos_atualizados: number;
+          valor_antes: number;
+          valor_depois: number;
+        };
+        Insert: {
+          cliente_id: string;
+          em?: string;
+          id?: never;
+          indice?: string | null;
+          observacao?: string | null;
+          org_id: string;
+          origem: string;
+          percentual?: number | null;
+          percentual_proposto?: number | null;
+          por?: string | null;
+          recorrente_id: string;
+          referencia?: string | null;
+          titulos_atualizados?: number;
+          valor_antes: number;
+          valor_depois: number;
+        };
+        Update: {
+          cliente_id?: string;
+          em?: string;
+          id?: never;
+          indice?: string | null;
+          observacao?: string | null;
+          org_id?: string;
+          origem?: string;
+          percentual?: number | null;
+          percentual_proposto?: number | null;
+          por?: string | null;
+          recorrente_id?: string;
+          referencia?: string | null;
+          titulos_atualizados?: number;
+          valor_antes?: number;
+          valor_depois?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "fin_recorrente_reajustes_cliente_id_fkey";
+            columns: ["cliente_id"];
+            isOneToOne: false;
+            referencedRelation: "clientes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "fin_recorrente_reajustes_org_id_fkey";
+            columns: ["org_id"];
+            isOneToOne: false;
+            referencedRelation: "organizacoes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "fin_recorrente_reajustes_recorrente_id_fkey";
+            columns: ["recorrente_id"];
+            isOneToOne: false;
+            referencedRelation: "fin_recorrentes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      fin_recorrentes: {
+        Row: {
+          atualizado_em: string;
+          aviso_dias: number;
+          aviso_fim_enviado: string | null;
+          categoria_id: string;
+          centro_id: string | null;
+          cliente_id: string;
+          conta_prevista_id: string | null;
+          criado_em: string;
+          descricao: string;
+          dia_vencimento: number;
+          encerrado_em: string | null;
+          fim: string | null;
+          gera_contas: boolean;
+          gerar_desde: string;
+          id: string;
+          indice: string;
+          inicio: string;
+          mes_cadastro: string;
+          mes_reajuste: number | null;
+          numero: string | null;
+          objeto: string | null;
+          observacao: string | null;
+          org_id: string;
+          percentual_fixo: number | null;
+          pessoa_id: string;
+          por: string | null;
+          reajuste_avisado: string | null;
+          renovacao_automatica: boolean;
+          situacao: string;
+          situacao_em: string | null;
+          situacao_motivo: string | null;
+          situacao_por: string | null;
+          tipo: string;
+          ultima_competencia: string | null;
+          valor: number;
+          vigencia_fim: string | null;
+          vigencia_inicio: string;
+        };
+        Insert: {
+          atualizado_em?: string;
+          aviso_dias?: number;
+          aviso_fim_enviado?: string | null;
+          categoria_id: string;
+          centro_id?: string | null;
+          cliente_id: string;
+          conta_prevista_id?: string | null;
+          criado_em?: string;
+          descricao: string;
+          dia_vencimento: number;
+          encerrado_em?: string | null;
+          fim?: string | null;
+          gera_contas?: boolean;
+          gerar_desde: string;
+          id?: string;
+          indice?: string;
+          inicio: string;
+          mes_cadastro: string;
+          mes_reajuste?: number | null;
+          numero?: string | null;
+          objeto?: string | null;
+          observacao?: string | null;
+          org_id: string;
+          percentual_fixo?: number | null;
+          pessoa_id: string;
+          por?: string | null;
+          reajuste_avisado?: string | null;
+          renovacao_automatica?: boolean;
+          situacao?: string;
+          situacao_em?: string | null;
+          situacao_motivo?: string | null;
+          situacao_por?: string | null;
+          tipo: string;
+          ultima_competencia?: string | null;
+          valor: number;
+          vigencia_fim?: string | null;
+          vigencia_inicio: string;
+        };
+        Update: {
+          atualizado_em?: string;
+          aviso_dias?: number;
+          aviso_fim_enviado?: string | null;
+          categoria_id?: string;
+          centro_id?: string | null;
+          cliente_id?: string;
+          conta_prevista_id?: string | null;
+          criado_em?: string;
+          descricao?: string;
+          dia_vencimento?: number;
+          encerrado_em?: string | null;
+          fim?: string | null;
+          gera_contas?: boolean;
+          gerar_desde?: string;
+          id?: string;
+          indice?: string;
+          inicio?: string;
+          mes_cadastro?: string;
+          mes_reajuste?: number | null;
+          numero?: string | null;
+          objeto?: string | null;
+          observacao?: string | null;
+          org_id?: string;
+          percentual_fixo?: number | null;
+          pessoa_id?: string;
+          por?: string | null;
+          reajuste_avisado?: string | null;
+          renovacao_automatica?: boolean;
+          situacao?: string;
+          situacao_em?: string | null;
+          situacao_motivo?: string | null;
+          situacao_por?: string | null;
+          tipo?: string;
+          ultima_competencia?: string | null;
+          valor?: number;
+          vigencia_fim?: string | null;
+          vigencia_inicio?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "fin_recorrentes_categoria_id_fkey";
+            columns: ["categoria_id"];
+            isOneToOne: false;
+            referencedRelation: "fin_categorias";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "fin_recorrentes_centro_id_fkey";
+            columns: ["centro_id"];
+            isOneToOne: false;
+            referencedRelation: "fin_centros_custo";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "fin_recorrentes_cliente_id_fkey";
+            columns: ["cliente_id"];
+            isOneToOne: false;
+            referencedRelation: "clientes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "fin_recorrentes_conta_prevista_id_fkey";
+            columns: ["conta_prevista_id"];
+            isOneToOne: false;
+            referencedRelation: "fin_contas_bancarias";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "fin_recorrentes_org_id_fkey";
+            columns: ["org_id"];
+            isOneToOne: false;
+            referencedRelation: "organizacoes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "fin_recorrentes_pessoa_id_fkey";
+            columns: ["pessoa_id"];
+            isOneToOne: false;
+            referencedRelation: "fin_pessoas";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       fin_titulos: {
         Row: {
           cancelado_motivo: string | null;
@@ -1734,6 +2042,7 @@ export type Database = {
           centro_id: string | null;
           cliente_id: string;
           conta_prevista_id: string | null;
+          competencia: string | null;
           criado_em: string;
           descricao: string;
           documento: string | null;
@@ -1748,6 +2057,7 @@ export type Database = {
           pessoa_id: string | null;
           por: string | null;
           quitado_em: string | null;
+          recorrente_id: string | null;
           situacao: string;
           tipo: string;
           valor: number;
@@ -1760,6 +2070,7 @@ export type Database = {
           centro_id?: string | null;
           cliente_id: string;
           conta_prevista_id?: string | null;
+          competencia?: string | null;
           criado_em?: string;
           descricao: string;
           documento?: string | null;
@@ -1774,6 +2085,7 @@ export type Database = {
           pessoa_id?: string | null;
           por?: string | null;
           quitado_em?: string | null;
+          recorrente_id?: string | null;
           situacao?: string;
           tipo: string;
           valor: number;
@@ -1786,6 +2098,7 @@ export type Database = {
           centro_id?: string | null;
           cliente_id?: string;
           conta_prevista_id?: string | null;
+          competencia?: string | null;
           criado_em?: string;
           descricao?: string;
           documento?: string | null;
@@ -1800,6 +2113,7 @@ export type Database = {
           pessoa_id?: string | null;
           por?: string | null;
           quitado_em?: string | null;
+          recorrente_id?: string | null;
           situacao?: string;
           tipo?: string;
           valor?: number;
@@ -5436,7 +5750,35 @@ export type Database = {
         Args: { p_arquivo: string; p_cliente: string; p_contas: Json };
         Returns: Json;
       };
+      fin_indices_atualizar: { Args: { p_cliente: string }; Returns: Json };
       fin_lancar: { Args: { p: Json }; Returns: Json };
+      fin_recorrente_anexo: {
+        Args: { p_arquivo: string; p_contrato: string };
+        Returns: undefined;
+      };
+      fin_recorrente_encerrar: {
+        Args: { p_contrato: string; p_motivo: string };
+        Returns: undefined;
+      };
+      fin_recorrente_proposta: { Args: { p_contrato: string }; Returns: Json };
+      fin_recorrente_reajustar: {
+        Args: {
+          p_atualizar_abertas?: boolean;
+          p_contrato: string;
+          p_obs?: string;
+          p_percentual: number;
+        };
+        Returns: Json;
+      };
+      fin_recorrente_reativar: {
+        Args: { p_contrato: string; p_motivo: string };
+        Returns: Json;
+      };
+      fin_recorrente_salvar: { Args: { p: Json }; Returns: Json };
+      fin_recorrente_suspender: {
+        Args: { p_contrato: string; p_motivo: string };
+        Returns: undefined;
+      };
       fin_transferir: {
         Args: {
           p_data: string;

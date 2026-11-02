@@ -138,6 +138,9 @@ export interface Titulo {
   quitado_em: string | null;
   cancelado_motivo: string | null;
   observacao: string | null;
+  /** Contrato fixo que lançou esta conta (041) e o mês dele. */
+  recorrente_id?: string | null;
+  competencia?: string | null;
 }
 
 export interface Baixa {
