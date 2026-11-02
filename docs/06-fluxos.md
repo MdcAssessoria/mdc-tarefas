@@ -91,6 +91,8 @@ Os indicadores da lista (fase atrasada, previsão vencida, com exigência, parad
 | pg_cron `gerar-tarefas-recorrentes` | Todo dia 06h05 | Gera as tarefas do mês |
 | pg_cron `avisar-vencimentos` → `app.venc_avisar` | Todo dia 06h15 | Avisos de vencimento 60/30/7 dias no sino |
 | pg_cron `licencas-diaria` → `app.lic_rotina_diaria` | Todo dia 06h25 | Encerra contratos de licença com prazo vencido, gera as mensalidades do mês (sem duplicar) e, uma vez por dia, avisa no sino (administradores e quem tem Licenças) das mensalidades que venceram ontem e dos clientes que chegaram aos dias de atraso em que o HUB sugere bloquear. Bloquear é manual |
+| pg_cron `fin-indices-buscar` → `app.fin_indices_pedir` | Todo dia 06h20 | Pede ao Banco Central (API SGS, por `pg_net`) os últimos 24 meses de IPCA, INPC e IGP-M; a resposta é lida depois e grava `fin_indices` |
+| pg_cron `financeiro-recorrentes` → `app.fin_recorrentes_rotina` | Todo dia 06h30 | Lê os índices que chegaram; renova vigências com renovação automática; lança no Financeiro a conta do mês de cada contrato ativo (e recupera o mês anterior, sem duplicar); encerra contratos cujo fim passou; avisa no sino (administradores e Contratos gerir) reajustes do mês e fins de vigência chegando ([módulo](modulos/contratos.md)) |
 | `organizacoes_semear_licencas` | Organização criada | Cadastra os módulos vendáveis e o plano Gestão completa (preço zero) |
 | `tarefas_historico` | Toda mudança de tarefa | Grava o histórico |
 | `tarefas_fase_societario` | Tarefa de fase concluída | Avança o processo societário |
