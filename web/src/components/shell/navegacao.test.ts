@@ -92,7 +92,6 @@ describe("agruparLinks", () => {
       "A receber",
       "Entradas e saídas",
       "Bancos ▾",
-      "Estoque",
     ]);
     const bancos = e[4];
     expect(bancos.tipo === "grupo" && bancos.links.map((x) => x.href)).toEqual([

@@ -92,7 +92,8 @@ npx supabase functions deploy convite --project-ref bulqqdgfrrpqquqvjjfa --impor
   `npx esbuild@0.24.0 index.ts --bundle --format=esm --platform=neutral --target=es2022 --charset=ascii --external:@supabase/supabase-js --external:node-forge '--external:node:*' --outfile=index.js`
   (dentro da pasta da função; o esbuild junta `../_fiscal`). Não precisam de segredo novo: usam `SUPABASE_URL`,
   `SUPABASE_ANON_KEY` e `SUPABASE_SERVICE_ROLE_KEY`, que o Supabase já injeta. O teste da assinatura confere com o
-  `xmlsec1 --verify` (instale com `apt-get install xmlsec1`).
+  `xmlsec1 --verify` (instale com `apt-get install xmlsec1`). Publicadas pelo conector em 02/11/2026 (v1 das três),
+  depois das migrações 031 a 035.
 - Segredos das funções (chave de serviço etc.) ficam no painel: Edge Functions › Secrets. Nunca no código.
 - As origens permitidas (CORS e link de convite) são `mdcassessoria.com`, `www.mdcassessoria.com` e
   `mdc-tarefas.vercel.app`. Para testar convite rodando local, publique uma versão de teste com `localhost`.

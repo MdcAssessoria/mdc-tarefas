@@ -15,6 +15,10 @@
 -- =====================================================================================================
 
 -- ------------------------------------------------------------------------------------- módulos do menu
+-- o código das ferramentas passa a aceitar sublinhado (centros_custo, plano_contas: mesmos códigos das licenças, 031)
+alter table public.hub_apps drop constraint if exists hub_apps_slug_check;
+alter table public.hub_apps add constraint hub_apps_slug_check check (slug ~ '^[a-z0-9_-]{2,30}$');
+
 insert into public.hub_apps (slug, nome, descricao, icone, rota, status, externo, ordem) values
   ('entradas', 'Entradas', 'Notas recebidas e compras', 'importar', '/entradas', 'ativo', false, 36),
   ('saidas', 'Saídas', 'Vendas e notas emitidas', 'enviar', '/saidas', 'ativo', false, 37),

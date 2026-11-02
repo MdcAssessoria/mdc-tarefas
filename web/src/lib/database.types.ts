@@ -593,13 +593,6 @@ export type Database = {
         };
         Relationships: [
           {
-            foreignKeyName: "est_itens_grupo_id_fkey";
-            columns: ["grupo_id"];
-            isOneToOne: false;
-            referencedRelation: "est_grupos";
-            referencedColumns: ["id"];
-          },
-          {
             foreignKeyName: "est_itens_categoria_despesa_id_fkey";
             columns: ["categoria_despesa_id"];
             isOneToOne: false;
@@ -618,6 +611,13 @@ export type Database = {
             columns: ["cliente_id"];
             isOneToOne: false;
             referencedRelation: "clientes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "est_itens_grupo_id_fkey";
+            columns: ["grupo_id"];
+            isOneToOne: false;
+            referencedRelation: "est_grupos";
             referencedColumns: ["id"];
           },
           {
@@ -945,7 +945,7 @@ export type Database = {
           {
             foreignKeyName: "est_pedido_titulos_titulo_id_fkey";
             columns: ["titulo_id"];
-            isOneToOne: false;
+            isOneToOne: true;
             referencedRelation: "fin_titulos";
             referencedColumns: ["id"];
           },
@@ -1787,13 +1787,6 @@ export type Database = {
         };
         Relationships: [
           {
-            foreignKeyName: "fin_titulos_nota_id_fkey";
-            columns: ["nota_id"];
-            isOneToOne: false;
-            referencedRelation: "fis_notas";
-            referencedColumns: ["id"];
-          },
-          {
             foreignKeyName: "fin_titulos_categoria_id_fkey";
             columns: ["categoria_id"];
             isOneToOne: false;
@@ -1822,6 +1815,13 @@ export type Database = {
             referencedColumns: ["id"];
           },
           {
+            foreignKeyName: "fin_titulos_nota_id_fkey";
+            columns: ["nota_id"];
+            isOneToOne: false;
+            referencedRelation: "fis_notas";
+            referencedColumns: ["id"];
+          },
+          {
             foreignKeyName: "fin_titulos_org_id_fkey";
             columns: ["org_id"];
             isOneToOne: false;
@@ -1837,7 +1837,6 @@ export type Database = {
           },
         ];
       };
-      // migração 034 (acrescentado à mão; regenerar depois de aplicar)
       fin_transferencias: {
         Row: {
           cliente_id: string;
@@ -1887,6 +1886,34 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "fin_transferencias_cliente_id_fkey";
+            columns: ["cliente_id"];
+            isOneToOne: false;
+            referencedRelation: "clientes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "fin_transferencias_destino_id_fkey";
+            columns: ["destino_id"];
+            isOneToOne: false;
+            referencedRelation: "fin_contas_bancarias";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "fin_transferencias_org_id_fkey";
+            columns: ["org_id"];
+            isOneToOne: false;
+            referencedRelation: "organizacoes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "fin_transferencias_origem_id_fkey";
+            columns: ["origem_id"];
+            isOneToOne: false;
+            referencedRelation: "fin_contas_bancarias";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       fis_certificados: {
         Row: {
           cliente_id: string;
@@ -1987,14 +2014,6 @@ export type Database = {
             referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "fin_transferencias_destino_id_fkey";
-            columns: ["destino_id"];
-            isOneToOne: false;
-            referencedRelation: "fin_contas_bancarias";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "fin_transferencias_org_id_fkey";
             foreignKeyName: "fis_depara_itens_item_id_fkey";
             columns: ["item_id"];
             isOneToOne: false;
@@ -2483,10 +2502,6 @@ export type Database = {
             referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "fin_transferencias_origem_id_fkey";
-            columns: ["origem_id"];
-            isOneToOne: false;
-            referencedRelation: "fin_contas_bancarias";
             foreignKeyName: "fis_notas_pessoa_id_fkey";
             columns: ["pessoa_id"];
             isOneToOne: false;
@@ -3168,7 +3183,7 @@ export type Database = {
           observacao?: string | null;
           org_id: string;
           por?: string | null;
-          total?: never;
+          total?: number | null;
           valor: number;
         };
         Update: {
@@ -3186,7 +3201,7 @@ export type Database = {
           observacao?: string | null;
           org_id?: string;
           por?: string | null;
-          total?: never;
+          total?: number | null;
           valor?: number;
         };
         Relationships: [
@@ -5262,13 +5277,28 @@ export type Database = {
         Args: { p_motivo: string; p_mov: number };
         Returns: undefined;
       };
-      est_importar_itens: { Args: { p_cliente: string; p_itens: Json }; Returns: Json };
+      est_importar_itens: {
+        Args: { p_cliente: string; p_itens: Json };
+        Returns: Json;
+      };
       est_inventario: { Args: { p: Json }; Returns: Json };
       est_movimentar: { Args: { p: Json }; Returns: Json };
-      est_pedido_cancelar: { Args: { p_motivo: string; p_pedido: string }; Returns: undefined };
-      est_pedido_confirmar: { Args: { p?: Json; p_pedido: string }; Returns: Json };
-      est_pedido_faturar: { Args: { p_documento: string; p_pedido: string }; Returns: undefined };
-      est_pedido_receber: { Args: { p?: Json; p_pedido: string }; Returns: Json };
+      est_pedido_cancelar: {
+        Args: { p_motivo: string; p_pedido: string };
+        Returns: undefined;
+      };
+      est_pedido_confirmar: {
+        Args: { p?: Json; p_pedido: string };
+        Returns: Json;
+      };
+      est_pedido_faturar: {
+        Args: { p_documento: string; p_pedido: string };
+        Returns: undefined;
+      };
+      est_pedido_receber: {
+        Args: { p?: Json; p_pedido: string };
+        Returns: Json;
+      };
       est_pedido_salvar: { Args: { p: Json }; Returns: Json };
       est_salvar_item: { Args: { p: Json }; Returns: string };
       fin_baixar: {
@@ -5294,14 +5324,9 @@ export type Database = {
         Args: { p_baixa: number; p_motivo: string };
         Returns: Json;
       };
-      // migração 034 (acrescentado à mão; regenerar depois de aplicar)
       fin_estornar_transferencia: {
         Args: { p_id: number; p_motivo: string };
         Returns: undefined;
-      };
-      fin_transferir: {
-        Args: { p_data: string; p_destino: string; p_obs?: string; p_origem: string; p_valor: number };
-        Returns: number;
       };
       fin_importar_extrato: {
         Args: {
@@ -5320,19 +5345,84 @@ export type Database = {
         Returns: Json;
       };
       fin_lancar: { Args: { p: Json }; Returns: Json };
+      fin_transferir: {
+        Args: {
+          p_data: string;
+          p_destino: string;
+          p_obs?: string;
+          p_origem: string;
+          p_valor: number;
+        };
+        Returns: number;
+      };
+      fis_captura_concluir: {
+        Args: { p: Json; p_cliente: string; p_fonte: string };
+        Returns: undefined;
+      };
+      fis_captura_reservar: {
+        Args: { p_cliente?: string; p_limite?: number };
+        Returns: {
+          ambiente: string;
+          ciencia_automatica: boolean;
+          cliente_id: string;
+          cnpj: string;
+          fonte: string;
+          org_id: string;
+          uf: string;
+          ult_nsu: number;
+        }[];
+      };
+      fis_cert_obter: {
+        Args: { p_cliente: string };
+        Returns: {
+          cnpj: string;
+          pfx: string;
+          senha: string;
+          titular: string;
+          valido_ate: string;
+        }[];
+      };
+      fis_cert_remover: {
+        Args: { p_cliente: string; p_user: string };
+        Returns: undefined;
+      };
+      fis_cert_salvar: {
+        Args: {
+          p_cliente: string;
+          p_info: Json;
+          p_pfx: string;
+          p_senha: string;
+          p_user: string;
+        };
+        Returns: undefined;
+      };
       fis_desfazer_lancamento: {
         Args: { p_motivo: string; p_nota: string };
         Returns: undefined;
       };
-      fis_pode: { Args: { p_cliente: string; p_nivel?: string }; Returns: boolean };
+      fis_gravar_documento: { Args: { p: Json }; Returns: Json };
+      fis_pode: {
+        Args: { p_cliente: string; p_nivel?: string };
+        Returns: boolean;
+      };
       fis_pode_certificado: { Args: { p_cliente: string }; Returns: boolean };
       fis_processar_nota: { Args: { p: Json }; Returns: Json };
+      fis_registrar_evento: {
+        Args: {
+          p_cliente: string;
+          p_evento: Json;
+          p_por: string;
+          p_xml: string;
+        };
+        Returns: number;
+      };
       fis_registrar_upload: { Args: { p: Json }; Returns: Json };
       fis_salvar_parametros: {
         Args: { p: Json; p_cliente: string };
         Returns: undefined;
       };
       fis_salvar_tipo_entrada: { Args: { p: Json }; Returns: string };
+      fis_token_confere: { Args: { p_token: string }; Returns: boolean };
       gerar_competencia: {
         Args: { p_competencia: string; p_org: string };
         Returns: number;
