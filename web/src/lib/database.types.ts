@@ -5530,6 +5530,7 @@ export type Database = {
       hub_conta_existe: { Args: { p_email: string }; Returns: boolean };
       hub_convidar: {
         Args: {
+          p_apps?: Json;
           p_email: string;
           p_nome: string;
           p_org: string;
@@ -5549,12 +5550,17 @@ export type Database = {
         };
         Returns: undefined;
       };
+      hub_definir_acessos: {
+        Args: { p_apps: Json; p_org: string; p_user: string };
+        Returns: number;
+      };
       hub_definir_perfil: {
         Args: { p_org: string; p_perfil: string; p_user: string };
         Returns: undefined;
       };
       hub_editar_membro: {
         Args: {
+          p_apps?: Json;
           p_ativo: boolean;
           p_nome: string;
           p_org: string;

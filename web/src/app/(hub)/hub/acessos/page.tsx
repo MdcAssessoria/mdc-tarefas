@@ -10,6 +10,7 @@ import { enviarConvite, gerarLinkConvite } from "@/dominios/acessos/convite";
 import type { Membro, Papel } from "@/dominios/organizacao/tipos";
 import { fmtDataHora } from "@/lib/formato/datas";
 import type { Acesso, Auditoria, Conta, Perfil } from "@/dominios/acessos/tipos";
+import type { Json } from "@/lib/database.types";
 import { ADMIN } from "./_componentes/niveis";
 import { LinkCopiavel } from "./_componentes/LinkCopiavel";
 import { LinhaPessoa } from "./_componentes/LinhaPessoa";
@@ -181,8 +182,9 @@ function Acessos() {
         <div>
           <h1 className="text-xl font-semibold text-[var(--marca)]">Pessoas e acessos</h1>
           <p className="max-w-3xl text-sm text-neutral-600">
-            O acesso é definido pelo <b>perfil</b>: ele diz quais ferramentas a pessoa vê e em que nível. Mudou o perfil, muda para todos
-            que o seguem. A pessoa só enxerga no Hub o que o perfil libera. Administradores têm acesso total.
+            Só o administrador define o que cada pessoa vê: ao cadastrar ou editar, escolha os <b>módulos</b> um a um (ver, operar ou gerir)
+            ou use um <b>perfil</b> pronto, que muda para todos que o seguem. A pessoa só enxerga no HUB os módulos liberados.
+            Administradores veem tudo.
           </p>
         </div>
         <button className="btn-primario" onClick={() => setConvite(true)}>
@@ -320,12 +322,29 @@ function Acessos() {
           m={editando}
           perfis={perfis}
           setores={setores}
+          ferramentas={ferramentas}
+          acessos={acessos.filter((a) => a.user_id === editando.user_id)}
           souEu={editando.user_id === eu.user_id}
           aoFechar={() => setEditando(null)}
-          aoSalvar={async (campos) => {
+          aoSalvar={async ({ modulos, ...campos }) => {
             const m = editando;
             setEditando(null);
-            await salvarMembro(m, campos, m.ativo ? `Dados de ${campos.nome ?? m.nome} salvos.` : `${m.nome} foi reativado.`);
+            const texto = m.ativo ? `Dados de ${campos.nome ?? m.nome} salvos.` : `${m.nome} foi reativado.`;
+            if (!modulos) return salvarMembro(m, campos, texto);
+            // acesso personalizado: dados e módulos numa transação só
+            const { error } = await supabase().rpc("hub_editar_membro", {
+              p_org: org.id,
+              p_user: m.user_id,
+              p_nome: campos.nome,
+              p_papel: campos.papel,
+              p_setor: campos.setor,
+              p_perfil: null,
+              p_ativo: true,
+              p_apps: modulos as unknown as Json,
+            });
+            if (error) return falhar(error);
+            avisar(`${texto} ${campos.nome} vê ${Object.keys(modulos).length} módulo(s).`);
+            await depois();
           }}
         />
       )}
@@ -334,6 +353,7 @@ function Acessos() {
         <Cadastro
           perfis={perfis}
           setores={setores}
+          ferramentas={ferramentas}
           aoFechar={() => setConvite(false)}
           aoCadastrar={async (txt, link) => {
             avisar(txt, link);

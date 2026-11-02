@@ -1,15 +1,32 @@
-// Janela para editar os dados de uma pessoa da equipe (nome, e-mail, papel, setor, perfil).
+// Janela para editar uma pessoa da equipe: nome, papel, setor e os módulos que ela vê (escolhidos um a um ou por
+// perfil pronto). Só o administrador chega aqui.
 "use client";
 
 import { useState } from "react";
 import { PAPEIS } from "@/dominios/organizacao/tipos";
 import type { Membro, Papel } from "@/dominios/organizacao/tipos";
-import type { Perfil } from "@/dominios/acessos/tipos";
+import type { Acesso, HubApp, Perfil } from "@/dominios/acessos/tipos";
+import { Modal } from "@/components/ui/Modal";
+import { Icone } from "@/components/ui/Icone";
+import { EscolhaModulos } from "./EscolhaModulos";
+import type { Modulos } from "./EscolhaModulos";
+
+export interface EdicaoPessoa {
+  nome: string;
+  papel: Papel;
+  setor: string | null;
+  perfil: string | null;
+  ativo: boolean;
+  /** Acesso personalizado: os módulos escolhidos um a um (sem perfil). */
+  modulos?: Modulos;
+}
 
 export function EditarPessoa({
   m,
   perfis,
   setores,
+  ferramentas,
+  acessos,
   souEu,
   aoFechar,
   aoSalvar,
@@ -17,34 +34,46 @@ export function EditarPessoa({
   m: Membro;
   perfis: Perfil[];
   setores: { id: string; nome: string }[];
+  ferramentas: HubApp[];
+  acessos: Acesso[];
   souEu: boolean;
   aoFechar: () => void;
-  aoSalvar: (c: { nome: string; papel: Papel; setor: string | null; perfil: string | null; ativo: boolean }) => void;
+  aoSalvar: (c: EdicaoPessoa) => void;
 }) {
   const [nome, setNome] = useState(m.nome);
   const [papel, setPapel] = useState<Papel>(m.papel);
   const [setor, setSetor] = useState(m.setor_id ?? "");
-  const [perfil, setPerfil] = useState(m.perfil_id ?? "");
+  const [modo, setModo] = useState<"modulos" | "perfil">(m.perfil_id ? "perfil" : "modulos");
+  const [perfil, setPerfil] = useState(m.perfil_id ?? perfis[0]?.id ?? "");
+  const [modulos, setModulos] = useState<Modulos>(() => Object.fromEntries(acessos.map((a) => [a.app, a.papel])));
+  const [erro, setErro] = useState<string | null>(null);
   const reativando = !m.ativo;
+  const admin = papel === "admin";
+
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4" onClick={aoFechar}>
+    <Modal titulo={reativando ? `Reativar ${m.nome}` : `Editar ${m.nome}`} descricao={m.email} aoFechar={aoFechar} largura="2xl">
       <form
-        onClick={(e) => e.stopPropagation()}
+        className="space-y-3"
         onSubmit={(e) => {
           e.preventDefault();
-          aoSalvar({ nome, papel, setor: setor || null, perfil: papel === "admin" ? null : perfil || null, ativo: true });
+          setErro(null);
+          if (!admin && modo === "modulos" && Object.keys(modulos).length === 0) return setErro("Marque ao menos um módulo.");
+          if (!admin && modo === "perfil" && !perfil) return setErro("Escolha o perfil de acesso.");
+          aoSalvar({
+            nome,
+            papel,
+            setor: setor || null,
+            perfil: admin || modo === "modulos" ? null : perfil,
+            ativo: true,
+            modulos: !admin && modo === "modulos" ? modulos : undefined,
+          });
         }}
-        className="cartao w-full max-w-md space-y-3 p-5"
       >
-        <div>
-          <h2 className="text-lg font-semibold text-[var(--marca)]">{reativando ? `Reativar ${m.nome}` : `Editar ${m.nome}`}</h2>
-          <p className="text-xs text-neutral-500">{m.email}</p>
-        </div>
         <label className="campo">
           <span>Nome</span>
           <input required value={nome} onChange={(e) => setNome(e.target.value)} />
         </label>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid gap-3 sm:grid-cols-2">
           <label className="campo">
             <span>Papel nas tarefas</span>
             <select value={papel} disabled={souEu} onChange={(e) => setPapel(e.target.value as Papel)}>
@@ -67,32 +96,69 @@ export function EditarPessoa({
             </select>
           </label>
         </div>
-        {papel === "admin" ? (
-          <p className="rounded-md bg-[var(--fundo)] p-2 text-xs text-neutral-600">
-            Administrador acessa todas as ferramentas e esta tela de acessos.
+        {admin ? (
+          <p className="rounded-md bg-[var(--fundo)] p-3 text-sm text-neutral-700">
+            Administrador vê todos os módulos e esta tela de acessos.
           </p>
         ) : (
-          <label className="campo">
-            <span>Perfil de acesso</span>
-            <select required value={perfil} onChange={(e) => setPerfil(e.target.value)}>
-              <option value="" disabled>
-                Escolha…
-              </option>
-              {perfis.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.nome}
-                </option>
+          <>
+            <div role="radiogroup" aria-label="Como liberar os módulos" className="grid gap-2 sm:grid-cols-2">
+              {(
+                [
+                  ["modulos", "Escolher os módulos", "Um a um, só para esta pessoa."],
+                  ["perfil", "Seguir um perfil pronto", "Mudou o perfil, muda para todos que o seguem."],
+                ] as const
+              ).map(([id, titulo, texto]) => (
+                <button
+                  key={id}
+                  type="button"
+                  role="radio"
+                  aria-checked={modo === id}
+                  onClick={() => setModo(id)}
+                  className={`rounded-lg border p-3 text-left text-sm ${modo === id ? "border-[var(--marca)] bg-[var(--fundo)]" : "border-[var(--borda)] bg-white"}`}
+                >
+                  <span className="flex items-center gap-2 font-medium text-[var(--texto)]">
+                    <Icone nome={modo === id ? "check" : id === "modulos" ? "lista" : "pessoas"} className="h-4 w-4" />
+                    {titulo}
+                  </span>
+                  <span className="mt-1 block text-xs text-[var(--texto-suave)]">{texto}</span>
+                </button>
               ))}
-            </select>
-          </label>
+            </div>
+            {modo === "modulos" ? (
+              <EscolhaModulos apps={ferramentas} valor={modulos} aoMudar={setModulos} perfis={perfis} />
+            ) : (
+              <label className="campo">
+                <span>Perfil de acesso</span>
+                <select value={perfil} onChange={(e) => setPerfil(e.target.value)}>
+                  <option value="" disabled>
+                    Escolha…
+                  </option>
+                  {perfis.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.nome}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+          </>
         )}
-        <div className="flex justify-end gap-2 pt-2">
+        {erro && (
+          <p role="alert" className="rounded-md bg-red-50 p-3 text-sm text-red-800">
+            {erro}
+          </p>
+        )}
+        <div className="flex flex-wrap justify-end gap-2 pt-1">
           <button type="button" className="btn" onClick={aoFechar}>
-            Cancelar
+            Voltar
           </button>
-          <button className="btn-primario">{reativando ? "Reativar" : "Salvar"}</button>
+          <button className="btn-primario">
+            <Icone nome="check" className="h-4 w-4" />
+            {reativando ? "Reativar" : "Salvar"}
+          </button>
         </div>
       </form>
-    </div>
+    </Modal>
   );
 }

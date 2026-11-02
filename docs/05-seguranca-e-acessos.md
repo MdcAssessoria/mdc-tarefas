@@ -41,6 +41,13 @@ Cada ferramenta do HUB (`hub_apps.slug`: `tarefas`, `clientes`, `societario`, `d
 O **perfil** (`hub_perfis.apps`, ex.: `{"tarefas":"operar","demonstrativos":"ver"}`) é a forma normal de dar
 acesso: ao trocar o perfil de uma pessoa, gatilhos regravam `hub_acessos` dela. O administrador não usa perfil.
 
+**Desde a 039 (02/11/2026)**, só o administrador define o que cada pessoa vê, de dois jeitos, no cadastro e na edição
+(Pessoas e acessos): **módulos escolhidos um a um** (`hub_convidar(..., p_apps)`, `hub_editar_membro(..., p_apps)` e
+`hub_definir_acessos`, que troca todos de uma vez e tira a pessoa do perfil) ou **perfil pronto** (muda junto com o
+perfil). Convite com módulos escolhidos não ganha o Tarefas padrão. O banco também passou a exigir o módulo em duas
+tabelas que só olhavam o papel: `tarefas` (ver para ler, operar para criar e mudar) e `hub_arquivos` (anexo só para
+quem tem o módulo dele, por `app.arquivo_pode`). Testes: `supabase/testes/93_base_039.sql` e `94_acesso_039.sql`.
+
 ## 5.3 Como uma tela lê um dado (o caminho da segurança)
 
 ```mermaid

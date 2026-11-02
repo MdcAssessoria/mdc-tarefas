@@ -34,3 +34,8 @@ for f in testes/91_base_038.sql migrations/038_crm_contrato_no_banco.sql; do
   $P -v ON_ERROR_STOP=1 -f "$R/$f" 2>&1 | grep -v NOTICE || true
 done
 $P -v conexao="host=$D port=5498 dbname=postgres user=postgres" -f "$R/testes/92_crm_038.sql" 2>&1 | grep -v "^SET$"
+# 039: acesso por módulo (papel vira o tipo real; roda por último porque troca app.papel)
+for f in testes/93_base_039.sql migrations/039_acesso_por_modulo.sql; do
+  $P -v ON_ERROR_STOP=1 -f "$R/$f" 2>&1 | grep -v NOTICE || true
+done
+$P -f "$R/testes/94_acesso_039.sql" 2>&1 | grep -v "^SET$"

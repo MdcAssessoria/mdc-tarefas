@@ -387,6 +387,20 @@ const INTERACOES = {
     await foto("novo-processo-cnpj");
     await p.keyboard.press("Escape");
   },
+  // Cadastrar pessoa: o administrador escolhe os módulos um a um (ou um perfil pronto)
+  "/hub/acessos": async (p, foto) => {
+    await p.getByRole("button", { name: /Cadastrar pessoa/ }).click();
+    const janela = p.getByRole("dialog", { name: "Cadastrar pessoa da equipe" });
+    await janela.waitFor({ timeout: 3000 });
+    await janela.getByRole("radiogroup", { name: "Acesso a Tarefas" }).waitFor({ timeout: 3000 });
+    await janela.getByRole("radiogroup", { name: "Acesso a Societário" }).getByRole("radio", { name: "Gerir" }).click();
+    if ((await janela.getByRole("radiogroup", { name: "Acesso a Societário" }).getByRole("radio", { name: "Gerir" }).getAttribute("aria-checked")) !== "true")
+      throw new Error("a escolha do nível do módulo não ficou marcada");
+    await foto("cadastrar-pessoa");
+    await janela.getByRole("radio", { name: /Usar um perfil pronto/ }).click();
+    await janela.getByLabel("Perfil de acesso").waitFor({ timeout: 3000 });
+    await p.keyboard.press("Escape");
+  },
   "/config": async (p) => {
     for (const aba of await p.getByRole("tab").all()) {
       await aba.click();
