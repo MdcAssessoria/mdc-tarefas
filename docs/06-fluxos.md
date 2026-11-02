@@ -112,3 +112,8 @@ Os indicadores da lista (fase atrasada, previsão vencida, com exigência, parad
 O cliente abre uma conversa no Portal (`portal_abrir_conversa`); a equipe responde em `/atendimento`. Se o pedido
 der trabalho, o botão "virar tarefa" chama `portal_conversa_para_tarefa`, que cria a tarefa ligada à conversa e
 avisa o cliente com uma mensagem de sistema.
+
+Telas (molde 8.3.1, desde 02/11/2026): `/atendimento` tem indicadores que filtram (novas, resposta atrasada, minhas),
+filtros de busca/situação/assunto e PDF/Excel da lista. A lista e a conversa usam a mesma moldura do "Fale com a MDC"
+do Portal (`dominios/atendimento/componentes/PainelConversas`): no computador ficam lado a lado; no celular aparece uma
+de cada vez, com o botão "Voltar". Nova conversa (equipe ou cliente) abre na janela `NovaConversa`.

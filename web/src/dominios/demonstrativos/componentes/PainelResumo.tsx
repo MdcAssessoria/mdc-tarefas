@@ -33,9 +33,13 @@ function Kpi({
     <div className="cartao p-4" title={dica}>
       <div className="flex items-start justify-between gap-2">
         <div className="text-xs text-neutral-500">{rotulo}</div>
-        {serie && <Faisca valores={serie} alerta={negativo} />}
+        {serie && <Faisca valores={serie} alerta={negativo} className="h-6 w-14 sm:h-8 sm:w-28" />}
       </div>
-      <div className={`mt-1 text-2xl font-semibold tabular-nums ${negativo ? "text-[var(--perigo)]" : "text-[var(--marca)]"}`}>{valor}</div>
+      <div
+        className={`mt-1 break-words text-xl font-semibold tabular-nums sm:text-2xl ${negativo ? "text-[var(--perigo)]" : "text-[var(--marca)]"}`}
+      >
+        {valor}
+      </div>
       {sub && <div className="mt-0.5 text-xs text-neutral-500">{sub}</div>}
       {dica && <div className="mt-1 text-[11px] leading-snug text-neutral-500">{dica}</div>}
     </div>

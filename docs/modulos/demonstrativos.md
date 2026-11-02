@@ -8,16 +8,25 @@
 
 | Endereço | Quem usa | O que faz |
 | --- | --- | --- |
-| `/demonstrativos` | Equipe | Lista de balancetes por cliente e competência; reprocessar rascunhos |
+| `/demonstrativos` | Equipe | Lista de balancetes no molde 8.3.1: indicadores que filtram (a revisar, publicados, conferência pendente), filtros de empresa/competência/situação (+ fragilidades em "Mais filtros"), PDF e Excel do que está na tela; reprocessar rascunhos |
 | `/demonstrativos/importar` | Equipe (operar) | Importa **um** arquivo (revisão conta a conta antes de gravar) ou **vários** de uma vez (lote) |
-| `/demonstrativos/[id]` | Equipe | Análise do cliente: Painel, Balanço/DRE/DFC, Balancete, Índices, Fragilidades, Parecer; publicar |
-| `/demonstrativos/riscos` | Equipe | Riscos da carteira (fragilidades de todos os clientes) |
+| `/demonstrativos/[id]` | Equipe | Análise do cliente: Painel, Balanço/DRE/DFC, Balancete, Índices, Fragilidades, Parecer; publicar (pede confirmação se há conferência pendente) e despublicar (confirma). Ajuste de grupo ou de linha da DFC abre a janela "Só para esta empresa" / "Para todas as empresas" (`JanelaEscolha`) |
+| `/demonstrativos/importacoes` | Equipe | Histórico de importações: indicadores por resultado, período em um clique, PDF/Excel |
+| `/demonstrativos/riscos` | Equipe | Riscos da carteira (último balancete de cada cliente), indicadores que filtram, PDF/Excel |
 | `/demonstrativos/certificado` | Administrador | Certificado A1 usado para assinar o PDF |
-| `/portal` (abas Resumo, Balanço/DRE/DFC, Balancete, Índices, Parecer) | Cliente | Só os balancetes publicados |
+| `/portal` (abas Resumo, Balanço/DRE/DFC, Balancete, Índices, Parecer) | Cliente | Só os balancetes publicados (`dominios/portal/componentes/PortalDemonstrativos`) |
+
+**Gráficos (desde 02/11/2026):** `componentes/Graficos.tsx` desenha cascata, evolução e colunas na largura real do
+quadro (`lib/useLargura`), com letra de 11–12 px de verdade no computador e no celular. Abaixo de 520 px a cascata
+vira barras deitadas com o nome e o valor escritos em cada linha, e os gráficos de mês pulam rótulos do eixo para não
+encavalar; as legendas são HTML e quebram linha. Antes o SVG tinha 720 px fixos e encolhia: a letra chegava a 5 px no
+celular (auditoria de 02/11/2026). As cores continuam as de `componentes/paletas.ts`.
 
 Código: regras em `web/src/dominios/demonstrativos/` (leitura e cálculos em `balancete/`, `calculosDemonstracoes.ts`,
 `periodos.ts`, `selecaoPeriodo.ts`, `importacaoLote.ts`, gravação em `repositorio.ts`, peças de tela em `componentes/`);
-pedaços da tela de importação em `web/src/app/(hub)/demonstrativos/importar/_componentes/`.
+pedaços da tela de importação em `web/src/app/(hub)/demonstrativos/importar/_componentes/`; editor do parecer em
+`componentes/EditorParecer.tsx`. As telas não mexem nos arquivos de cálculo copiados para a função Edge
+(`scripts/sync-funcoes.sh`).
 
 ## 2. Visão por período
 

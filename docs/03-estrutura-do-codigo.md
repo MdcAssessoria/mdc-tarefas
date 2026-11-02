@@ -62,7 +62,7 @@ web/src/
 │   ├── clientes/               tipos, nomeCliente, importação do Domínio, "Colar lista", grupos
 │   ├── acessos/                níveis por ferramenta, ferramentas do HUB, permissoes.ts (podeNoApp: o pode() da
 │   │                           tela), convite, texto do histórico
-│   ├── portal/                 permissões do Portal do Cliente e a gestão dos acessos de clientes
+│   ├── portal/                 permissões do Portal do Cliente, a gestão dos acessos de clientes e as abas do Portal
 │   ├── societario/             processos, fases e órgãos
 │   ├── demonstrativos/         balancete/ (leitura, classificacao, resumo, indices, fragilidades), calculosDemonstracoes,
 │   │                           periodos, tendencia, parecer, repositorio, componentes/ (painel, gráficos, índices…)
