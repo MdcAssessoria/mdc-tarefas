@@ -1,6 +1,16 @@
 // Testes do mapa de navegação: qual módulo fica ativo em cada rota e quais abas cada pessoa vê.
 import { describe, expect, it } from "vitest";
-import { agruparLinks, exigenciaDaRota, filtrarLinks, linkAtivo, moduloDaRota, NAV, podeAbrirRota, podeModulo, temGrupos } from "./navegacao";
+import {
+  agruparLinks,
+  exigenciaDaRota,
+  filtrarLinks,
+  linkAtivo,
+  moduloDaRota,
+  NAV,
+  podeAbrirRota,
+  podeModulo,
+  temGrupos,
+} from "./navegacao";
 import type { LinkModulo } from "./navegacao";
 
 describe("moduloDaRota", () => {
@@ -43,7 +53,10 @@ describe("filtrarLinks", () => {
   });
 
   it("Entradas usa o nível da ferramenta Entradas", () => {
-    const soVer = filtrarLinks("entradas", { pode: (app, minimo = "ver") => app === "entradas" && minimo === "ver", podeEditarCadastros: false });
+    const soVer = filtrarLinks("entradas", {
+      pode: (app, minimo = "ver") => app === "entradas" && minimo === "ver",
+      podeEditarCadastros: false,
+    });
     expect(soVer.map((l) => l.href)).not.toContain("/entradas/lancar");
     expect(soVer.map((l) => l.href)).toContain("/entradas");
   });
@@ -111,17 +124,18 @@ describe("agruparLinks", () => {
   });
 
   it("grupo cujas abas a pessoa não pode ver some; grupo fora da ordem vai para o fim", () => {
-    expect(agruparLinks([l("/a"), l("/b", "X"), l("/c", "Y"), l("/d", "Y")], ["Y"]).map((x) => (x.tipo === "link" ? x.link.nome : x.nome))).toEqual([
-      "a",
-      "Y",
-      "X",
-    ]);
+    expect(
+      agruparLinks([l("/a"), l("/b", "X"), l("/c", "Y"), l("/d", "Y")], ["Y"]).map((x) => (x.tipo === "link" ? x.link.nome : x.nome)),
+    ).toEqual(["a", "Y", "X"]);
     expect(agruparLinks([l("/a")], ["Y"])).toEqual([{ tipo: "link", link: l("/a") }]);
   });
 });
 
 describe("podeModulo", () => {
-  const so = (...apps: string[]) => (app: string) => apps.includes(app);
+  const so =
+    (...apps: string[]) =>
+    (app: string) =>
+      apps.includes(app);
   it("módulo com ferramenta própria exige ela", () => {
     expect(podeModulo("plano_contas", so("plano_contas"))).toBe(true);
     expect(podeModulo("plano_contas", so("financeiro"))).toBe(false);

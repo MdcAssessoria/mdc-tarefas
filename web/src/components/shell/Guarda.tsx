@@ -12,7 +12,8 @@ export function Guarda({ modulo, rota, children }: { modulo: Modulo; rota: strin
   const { pode, appsCarregados, podeEditarCadastros, papel } = useOrg();
   if (modulo === "hub") return <>{children}</>;
   if (!appsCarregados) return <p className="p-10 text-center text-sm text-neutral-500">Carregando…</p>;
-  if (!podeAbrirRota(rota, modulo, { pode, podeEditarCadastros, admin: papel === "admin" })) return <TelaNaoLiberada nome={NAV[modulo].titulo} />;
+  if (!podeAbrirRota(rota, modulo, { pode, podeEditarCadastros, admin: papel === "admin" }))
+    return <TelaNaoLiberada nome={NAV[modulo].titulo} />;
   return <>{children}</>;
 }
 

@@ -10,7 +10,8 @@ import { PAPEIS_APP } from "@/dominios/acessos/tipos";
 import type { PapelApp } from "@/dominios/acessos/tipos";
 import { caminho } from "@/lib/caminho";
 import { Icone } from "@/components/ui/Icone";
-import { podeModulo } from "./navegacao";
+import { CHAVES, useEstadoLembrado } from "@/lib/armazenamentoLocal";
+import { ehModuloGestao, podeModulo } from "./navegacao";
 import type { Modulo } from "./navegacao";
 
 function Iniciais({ nome, className = "" }: { nome: string; className?: string }) {
@@ -35,6 +36,16 @@ export function MenuLateral({ modulo, recolhido, aoRecolher }: { modulo: Modulo;
   const { apps, eu, papel, org, orgs, trocarOrg, podeEditarCadastros, pode } = useOrg();
   const rota = usePathname();
   const ferramentas = apps.filter((a) => a.papel && a.status !== "em_breve");
+  const escritorio = ferramentas.filter((a) => !ehModuloGestao(a.slug));
+  const gestao = ferramentas.filter((a) => ehModuloGestao(a.slug));
+  const temCadastros = podeModulo("cadastros", pode);
+  const naGestao = ehModuloGestao(modulo) || modulo === "cadastros";
+  // grupo "Gestão empresarial": começa aberto; abrir/fechar fica lembrado no navegador (fechado, o título acende na tela dele)
+  const [gestaoSalvo, setGestaoSalvo] = useEstadoLembrado<"1" | "0">(CHAVES.menuGestao, "1", (v) => v === "1" || v === "0");
+  const abrirGestao = gestaoSalvo === "1";
+  function alternarGestao() {
+    setGestaoSalvo(abrirGestao ? "0" : "1");
+  }
 
   const item = (o: { href: string; nome: string; icone: string; ativo: boolean; externo?: boolean; nivel?: PapelApp | null }) => {
     const conteudo = (
@@ -76,7 +87,7 @@ export function MenuLateral({ modulo, recolhido, aoRecolher }: { modulo: Modulo;
         {item({ href: "/", nome: "Início", icone: "casa", ativo: modulo === "hub" && rota === "/" })}
         {!recolhido && <div className="px-3 pb-1.5 pt-5 text-[12px] text-[var(--nevoa)]/55">Suas ferramentas</div>}
         {recolhido && <div className="mx-3 my-3 h-px bg-white/10" />}
-        {ferramentas.map((a) =>
+        {escritorio.map((a) =>
           item({
             href: a.rota,
             // TODO: o nome deveria vir só de hub_apps.nome; mantido fixo para não mudar o menu atual
@@ -87,9 +98,36 @@ export function MenuLateral({ modulo, recolhido, aoRecolher }: { modulo: Modulo;
             nivel: a.papel,
           }),
         )}
-        {/* cadastro comum a todos os módulos de gestão (Financeiro, Entradas, Saídas, Estoque) */}
-        {podeModulo("cadastros", pode) &&
-          item({ href: "/cadastros/pessoas", nome: "Fornecedores e clientes", icone: "pessoas", ativo: modulo === "cadastros" })}
+        {(gestao.length > 0 || temCadastros) && (
+          <div className="pt-1">
+            {recolhido ? (
+              <div className="mx-3 my-3 h-px bg-white/10" />
+            ) : (
+              <button
+                type="button"
+                onClick={alternarGestao}
+                aria-expanded={abrirGestao}
+                className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-[14px] transition-colors hover:bg-white/[0.05] hover:text-white ${
+                  naGestao && !abrirGestao ? "font-medium text-white" : ""
+                }`}
+              >
+                <Icone nome="carteira" className={`h-[19px] w-[19px] shrink-0 ${naGestao ? "text-[var(--destaque)]" : ""}`} />
+                <span className="truncate">Gestão empresarial</span>
+                <Icone nome={abrirGestao ? "recolher" : "expandir"} className="ml-auto h-3.5 w-3.5 rotate-90 opacity-60" />
+              </button>
+            )}
+            {(abrirGestao || recolhido) && (
+              <div className={recolhido ? "space-y-0.5" : "ml-4 space-y-0.5 border-l border-white/10 pl-2"}>
+                {gestao.map((a) =>
+                  item({ href: a.rota, nome: a.nome, icone: a.icone, ativo: modulo === a.slug, externo: a.externo, nivel: a.papel }),
+                )}
+                {/* cadastro comum a todos os módulos de gestão (Financeiro, Entradas, Saídas, Estoque) */}
+                {temCadastros &&
+                  item({ href: "/cadastros/pessoas", nome: "Fornecedores e clientes", icone: "pessoas", ativo: modulo === "cadastros" })}
+              </div>
+            )}
+          </div>
+        )}
         {(papel === "admin" || podeEditarCadastros) && (
           <>
             {!recolhido && <div className="px-3 pb-1.5 pt-5 text-[12px] text-[var(--nevoa)]/55">Administração</div>}

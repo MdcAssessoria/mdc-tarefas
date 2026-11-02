@@ -57,7 +57,13 @@ export function BuscaRapida({ aoFechar }: { aoFechar: () => void }) {
         });
     }
     if (podeModulo("cadastros", pode))
-      itens.push({ id: "/cadastros/pessoas", grupo: "Ferramentas", nome: "Fornecedores e clientes", icone: "pessoas", href: "/cadastros/pessoas" });
+      itens.push({
+        id: "/cadastros/pessoas",
+        grupo: "Ferramentas",
+        nome: "Fornecedores e clientes",
+        icone: "pessoas",
+        href: "/cadastros/pessoas",
+      });
     if (papel === "admin")
       itens.push({ id: "acessos", grupo: "Administração", nome: "Pessoas e acessos", icone: "pessoas", href: "/hub/acessos" });
     if (podeEditarCadastros)

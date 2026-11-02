@@ -58,7 +58,9 @@ export function Moldura({ children }: { children: React.ReactNode }) {
       <div className="min-w-0 flex-1">
         <BarraSuperior modulo={modulo} aoMenu={() => setGaveta(true)} aoBuscar={() => setBusca(true)} />
         <main className="mx-auto max-w-[1400px] px-4 py-6 sm:px-6 lg:px-8">
-          <Guarda modulo={modulo} rota={rota}>{children}</Guarda>
+          <Guarda modulo={modulo} rota={rota}>
+            {children}
+          </Guarda>
         </main>
       </div>
 

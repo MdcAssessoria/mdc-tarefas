@@ -31,7 +31,9 @@ function useFecharFora(aberto: boolean, fechar: () => void) {
 
 const classeAba = (ativa: boolean) =>
   `flex items-center gap-1 whitespace-nowrap border-b-2 px-3 text-[14px] ${
-    ativa ? "border-[var(--destaque-escuro)] font-medium text-[var(--marca)]" : "border-transparent text-[var(--texto-suave)] hover:text-[var(--marca)]"
+    ativa
+      ? "border-[var(--destaque-escuro)] font-medium text-[var(--marca)]"
+      : "border-transparent text-[var(--texto-suave)] hover:text-[var(--marca)]"
   }`;
 
 /** Aba que abre um menu com as telas do grupo (computador). Mostra "Grupo · Tela atual" quando uma delas está aberta. */
@@ -41,13 +43,7 @@ function MenuGrupo({ nome, links, ativo }: { nome: string; links: LinkModulo[]; 
   const atual = links.find((l) => ativo(l.href));
   return (
     <div ref={caixa} className="relative flex" onClick={(e) => (e.target as HTMLElement).closest("a") && setAberto(false)}>
-      <button
-        type="button"
-        className={classeAba(!!atual)}
-        aria-expanded={aberto}
-        aria-haspopup="true"
-        onClick={() => setAberto((x) => !x)}
-      >
+      <button type="button" className={classeAba(!!atual)} aria-expanded={aberto} aria-haspopup="true" onClick={() => setAberto((x) => !x)}>
         {nome}
         {atual && <span className="font-normal text-[var(--texto-suave)]">· {atual.nome}</span>}
         <Icone nome="chevron-baixo" className={`h-4 w-4 transition-transform ${aberto ? "rotate-180" : ""}`} />

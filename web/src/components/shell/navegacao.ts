@@ -180,6 +180,13 @@ export const MODULO_POR_PREFIXO: Record<string, Modulo> = {
  * Ferramenta (hub_apps.slug) que libera cada módulo, quando é diferente do nome do módulo. Desde a migração 035 cada
  * módulo de gestão tem a sua ferramenta (Entradas usa "entradas"); mapa vazio mantido para módulos futuros.
  */
+/**
+ * Módulos de gestão das empresas clientes: no menu lateral ficam juntos no grupo "Gestão empresarial" (pedido do
+ * Edvaldo, 02/11/2026). Cada um continua com permissão e licença próprias; o grupo é só apresentação.
+ */
+export const MODULOS_GESTAO = ["financeiro", "entradas", "saidas", "estoque", "centros_custo", "plano_contas", "relatorios"] as const;
+export const ehModuloGestao = (slug: string) => (MODULOS_GESTAO as readonly string[]).includes(slug);
+
 export const APP_DO_MODULO: Partial<Record<Modulo, string>> = {};
 export const appDoModulo = (m: Modulo) => APP_DO_MODULO[m] ?? m;
 
@@ -233,9 +240,7 @@ export function exigenciaDaRota(rota: string, modulo: Modulo): ExigenciaTela | n
     .filter(dentro)
     .sort((a, b) => b.length - a.length)[0];
   if (extra) return TELAS_RESTRITAS[extra];
-  const aba = NAV[modulo].links
-    .filter((l) => linkAtivo(rota, l.href, modulo))
-    .sort((a, b) => b.href.length - a.href.length)[0];
+  const aba = NAV[modulo].links.filter((l) => linkAtivo(rota, l.href, modulo)).sort((a, b) => b.href.length - a.href.length)[0];
   if (!aba || (!aba.minimo && !aba.gestor)) return null;
   return { minimo: aba.minimo, gestor: aba.gestor };
 }

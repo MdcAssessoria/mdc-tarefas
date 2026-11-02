@@ -4,11 +4,9 @@
 
 import type { HubApp, PapelApp } from "@/dominios/acessos/tipos";
 import type { Perfil } from "@/dominios/acessos/tipos";
+import { ehModuloGestao } from "@/components/shell/navegacao";
 
 export type Modulos = Record<string, PapelApp>;
-
-/** Módulos de gestão das empresas clientes (o resto é do escritório). */
-const GESTAO = new Set(["financeiro", "entradas", "saidas", "estoque", "centros_custo", "plano_contas", "relatorios"]);
 
 const NIVEIS: { id: PapelApp | ""; nome: string; dica: string }[] = [
   { id: "", nome: "Não vê", dica: "O módulo nem aparece no menu" },
@@ -34,8 +32,8 @@ export function EscolhaModulos({
 }) {
   const lista = modulosLiberaveis(apps);
   const grupos: [string, HubApp[]][] = [
-    ["Escritório", lista.filter((a) => !GESTAO.has(a.slug))],
-    ["Gestão empresarial (empresas clientes)", lista.filter((a) => GESTAO.has(a.slug))],
+    ["Escritório", lista.filter((a) => !ehModuloGestao(a.slug))],
+    ["Gestão empresarial (empresas clientes)", lista.filter((a) => ehModuloGestao(a.slug))],
   ];
   const marcados = Object.keys(valor).length;
 
