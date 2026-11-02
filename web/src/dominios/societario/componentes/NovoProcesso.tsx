@@ -9,6 +9,9 @@ import { supabase } from "@/lib/supabase";
 import { traduzirErro } from "@/lib/erros";
 import { Modal } from "@/components/ui/Modal";
 import { Icone } from "@/components/ui/Icone";
+import { CampoCnpj, ResumoCnpj } from "@/components/ui/CampoCnpj";
+import { resumoCnpj } from "@/lib/consultaCnpj";
+import type { DadosCnpj } from "@/lib/consultaCnpj";
 import type { SocTipo } from "../processos";
 
 /** Valor do seletor de cliente para "empresa ainda não cadastrada" (não é um id). */
@@ -26,6 +29,8 @@ export function NovoProcesso({ tipos, aoFechar, aoCriar }: { tipos: SocTipo[]; a
   const [cnpj, setCnpj] = useState("");
   const [uf, setUf] = useState("SP");
   const [descricao, setDescricao] = useState("");
+  const [receita, setReceita] = useState<DadosCnpj | null>(null);
+  const [anotado, setAnotado] = useState(false);
   const [resp, setResp] = useState(eu.user_id);
   const [previsao, setPrevisao] = useState("");
   const [dispensar, setDispensar] = useState<string[]>(() => dispensaPadrao(ativos[0]));
@@ -100,6 +105,41 @@ export function NovoProcesso({ tipos, aoFechar, aoCriar }: { tipos: SocTipo[]; a
         )}
         {semCliente && (
           <>
+            {foraDoCadastro && (
+              <CampoCnpj
+                valor={cnpj}
+                aoMudar={(v) => {
+                  setCnpj(v);
+                  setReceita(null);
+                }}
+                aoCarregar={(d) => {
+                  setReceita(d);
+                  setAnotado(false);
+                  setFuturo(d.razaoSocial);
+                  if (d.uf) setUf(d.uf);
+                }}
+              />
+            )}
+            {foraDoCadastro && receita && (
+              <ResumoCnpj
+                d={receita}
+                acao={
+                  <button
+                    type="button"
+                    className="btn text-sm"
+                    disabled={anotado}
+                    onClick={() => {
+                      const r = resumoCnpj(receita, new Date().toLocaleDateString("pt-BR"));
+                      setDescricao((t) => (t.trim() ? `${t.trim()}\n\n${r}` : r));
+                      setAnotado(true);
+                    }}
+                  >
+                    <Icone nome={anotado ? "check" : "editar"} className="h-4 w-4" />
+                    {anotado ? "Anotado nas observações" : "Anotar estes dados nas observações"}
+                  </button>
+                }
+              />
+            )}
             <div className="grid grid-cols-3 gap-3">
               <label className="campo col-span-2">
                 <span>{abertura ? "Nome da empresa a abrir" : "Razão social da empresa"}</span>
@@ -110,10 +150,12 @@ export function NovoProcesso({ tipos, aoFechar, aoCriar }: { tipos: SocTipo[]; a
                 <input maxLength={2} value={uf} onChange={(e) => setUf(e.target.value.toUpperCase())} />
               </label>
             </div>
-            <label className="campo">
-              <span>{abertura ? "CNPJ (quando sair)" : "CNPJ"}</span>
-              <input value={cnpj} onChange={(e) => setCnpj(e.target.value)} placeholder="00.000.000/0000-00" inputMode="numeric" />
-            </label>
+            {abertura && (
+              <label className="campo">
+                <span>CNPJ (quando sair)</span>
+                <input value={cnpj} onChange={(e) => setCnpj(e.target.value)} placeholder="00.000.000/0000-00" inputMode="numeric" />
+              </label>
+            )}
             {foraDoCadastro && (
               <p className="flex items-start gap-2 rounded-lg bg-amber-50 p-3 text-sm text-amber-900">
                 <Icone nome="info" className="mt-0.5 h-4 w-4 shrink-0" />

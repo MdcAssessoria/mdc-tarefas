@@ -69,7 +69,9 @@ flowchart TB
 Concluir uma **baixa** (que inativa o cliente) é só para gestor ou administrador.
 
 **Empresa ainda não cadastrada** (ex.: chega à MDC já precisando de alteração contratual): no "Novo processo", em
-Cliente, escolha "Empresa ainda não cadastrada no HUB" e informe razão social, CNPJ e UF. O processo anda normalmente.
+Cliente, escolha "Empresa ainda não cadastrada no HUB", digite o CNPJ e clique em **Buscar dados**: a razão social e a
+UF vêm da Receita (BrasilAPI) e o quadro mostra situação, endereço, CNAE e sócios, com o botão para anotar esses dados
+nas observações. Tudo continua editável à mão. O processo anda normalmente.
 Quando um gestor cadastrar a empresa em Tarefas › Configurações › Clientes, a ficha do processo oferece **Ligar ao
 cliente** (`soc_vincular_cliente`, migração 037): o processo e as tarefas das fases passam para o cliente, com registro
 no histórico e na auditoria. Na abertura nada muda: concluir o processo cadastra a empresa sozinho.

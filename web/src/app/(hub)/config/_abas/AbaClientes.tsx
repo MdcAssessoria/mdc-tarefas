@@ -16,6 +16,7 @@ import { traduzirErro } from "@/lib/erros";
 import { fmtData } from "@/lib/formato/datas";
 import { useMensagem } from "./useMensagem";
 import { ModulosDoCliente } from "@/dominios/licencas/componentes/ModulosDoCliente";
+import { CampoCnpj } from "@/components/ui/CampoCnpj";
 
 interface Resp {
   cliente_id: string;
@@ -28,7 +29,7 @@ export function AbaClientes() {
   const [busca, setBusca] = useState("");
   const [resps, setResps] = useState<Resp[]>([]);
   const [aberto, setAberto] = useState<string | null>(null);
-  const [novo, setNovo] = useState({ razao_social: "", nome_fantasia: "", cnpj: "", regime: "simples" });
+  const [novo, setNovo] = useState({ razao_social: "", nome_fantasia: "", cnpj: "", regime: "simples", cidade: "", uf: "" });
   const [csv, setCsv] = useState<string | null>(null);
   const [situacao, setSituacao] = useState<"ativos" | "inativos" | "todos">("ativos");
   const [inativando, setInativando] = useState<{ id: string; data: string; motivo: string; outro: string } | null>(null);
@@ -93,9 +94,16 @@ export function AbaClientes() {
     e.preventDefault();
     const { error } = await supabase()
       .from("clientes")
-      .insert({ ...novo, org_id: org.id, nome_fantasia: novo.nome_fantasia || null, cnpj: novo.cnpj || null });
+      .insert({
+        ...novo,
+        org_id: org.id,
+        nome_fantasia: novo.nome_fantasia || null,
+        cnpj: novo.cnpj || null,
+        cidade: novo.cidade || null,
+        uf: novo.uf || null,
+      });
     if (error) return mostrar(error.message.includes("clientes_org_cnpj_uk") ? "CNPJ já cadastrado." : traduzirErro(error), true);
-    setNovo({ razao_social: "", nome_fantasia: "", cnpj: "", regime: novo.regime });
+    setNovo({ razao_social: "", nome_fantasia: "", cnpj: "", regime: novo.regime, cidade: "", uf: "" });
     void recarregar();
   }
 
@@ -146,7 +154,22 @@ export function AbaClientes() {
 
   return (
     <div className="space-y-4">
-      <form onSubmit={adicionar} className="cartao grid gap-3 p-4 md:grid-cols-[2fr_1.5fr_1.2fr_1.2fr_auto] md:items-end">
+      <form onSubmit={adicionar} className="cartao grid gap-3 p-4 md:grid-cols-[1.6fr_2fr_1.5fr_1.2fr_auto] md:items-start">
+        <CampoCnpj
+          rotulo="CNPJ/CPF"
+          valor={novo.cnpj}
+          aoMudar={(v) => setNovo((n) => ({ ...n, cnpj: v }))}
+          aoCarregar={(d) =>
+            setNovo((n) => ({
+              ...n,
+              razao_social: d.razaoSocial,
+              nome_fantasia: d.nomeFantasia ?? n.nome_fantasia,
+              cidade: d.municipio ?? "",
+              uf: d.uf ?? "",
+              regime: d.mei ? "mei" : d.simples ? "simples" : n.regime,
+            }))
+          }
+        />
         <label className="campo">
           <span>Razão social</span>
           <input required value={novo.razao_social} onChange={(e) => setNovo({ ...novo, razao_social: e.target.value })} />
@@ -154,10 +177,6 @@ export function AbaClientes() {
         <label className="campo">
           <span>Nome curto (aparece na TV)</span>
           <input value={novo.nome_fantasia} onChange={(e) => setNovo({ ...novo, nome_fantasia: e.target.value })} />
-        </label>
-        <label className="campo">
-          <span>CNPJ/CPF</span>
-          <input value={novo.cnpj} onChange={(e) => setNovo({ ...novo, cnpj: e.target.value })} />
         </label>
         <label className="campo">
           <span>Regime</span>
@@ -169,7 +188,7 @@ export function AbaClientes() {
             ))}
           </select>
         </label>
-        <button className="btn-primario">Adicionar</button>
+        <button className="btn-primario md:mt-[21px]">Adicionar</button>
       </form>
 
       <div className="flex flex-wrap gap-2">

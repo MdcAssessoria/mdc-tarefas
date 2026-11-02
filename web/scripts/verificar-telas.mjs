@@ -352,6 +352,41 @@ const INTERACOES = {
   [`/demonstrativos/${IDS_EXEMPLO["demonstrativos/[id]"]}`]: trocarPeriodo,
   "/portal": trocarPeriodo,
   "/demonstrativos/importar": importarEmLote,
+  // Novo processo de empresa fora do cadastro: "Buscar dados" do CNPJ (Receita simulada) preenche razão social e UF
+  "/societario": async (p, foto) => {
+    await p.route("**/brasilapi.com.br/**", (r) =>
+      r.fulfill({
+        json: {
+          cnpj: "11222333000181",
+          razao_social: "EMPRESA DE TESTE LTDA",
+          descricao_situacao_cadastral: "ATIVA",
+          logradouro: "RUA A",
+          numero: "1",
+          municipio: "EXTREMA",
+          uf: "MG",
+          cnae_fiscal: 6920601,
+          cnae_fiscal_descricao: "Atividades de contabilidade",
+          qsa: [{ nome_socio: "FULANO DE TAL", qualificacao_socio: "Sócio-Administrador" }],
+        },
+      }),
+    );
+    await p.getByRole("button", { name: "Novo processo", exact: true }).first().click();
+    const janela = p.getByRole("dialog", { name: "Novo processo societário" });
+    await janela.waitFor({ timeout: 3000 });
+    await janela.getByLabel("Tipo").selectOption({ label: "Alteração contratual" });
+    await janela.getByLabel("Cliente").selectOption({ label: "➕ Empresa ainda não cadastrada no HUB" });
+    await janela.getByLabel("CNPJ").fill("11222333000181");
+    await janela.getByRole("button", { name: "Buscar dados" }).click();
+    await janela.getByText("Sócio-Administrador", { exact: false }).waitFor({ timeout: 3000 });
+    const razao = await janela.getByLabel("Razão social da empresa").inputValue();
+    const uf = await janela.getByLabel("UF").inputValue();
+    if (razao !== "EMPRESA DE TESTE LTDA" || uf !== "MG") throw new Error(`a busca do CNPJ não preencheu os campos (${razao} / ${uf})`);
+    await janela.getByRole("button", { name: "Anotar estes dados nas observações" }).click();
+    if (!(await janela.getByLabel("O que muda / observações").inputValue()).includes("FULANO DE TAL"))
+      throw new Error("os dados da Receita não foram anotados nas observações");
+    await foto("novo-processo-cnpj");
+    await p.keyboard.press("Escape");
+  },
   "/config": async (p) => {
     for (const aba of await p.getByRole("tab").all()) {
       await aba.click();
