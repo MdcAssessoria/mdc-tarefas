@@ -7,6 +7,7 @@ import { useState } from "react";
 import { traduzirErro } from "@/lib/erros";
 import { AcessosClientes } from "@/dominios/portal/componentes/AcessosClientes";
 import { Aviso } from "@/components/ui/Aviso";
+import { CabecalhoPagina } from "@/components/ui/CabecalhoPagina";
 import { LinkCopiavel } from "@/app/(hub)/hub/acessos/_componentes/LinkCopiavel";
 
 export default function PaginaAcessosPortal() {
@@ -14,13 +15,10 @@ export default function PaginaAcessosPortal() {
   const [erro, setErro] = useState<string | null>(null);
   return (
     <div className="space-y-4">
-      <div>
-        <h1 className="text-xl font-semibold text-[var(--marca)]">Acessos ao Portal do Cliente</h1>
-        <p className="text-sm text-neutral-600">
-          Quem de cada cliente (sócio, financeiro, RH) entra no Portal, em quais empresas e com qual perfil. Cliente inativado perde o
-          acesso depois do mês de saída.
-        </p>
-      </div>
+      <CabecalhoPagina
+        titulo="Acessos ao Portal do Cliente"
+        descricao="Quem de cada cliente (sócio, financeiro, RH) entra no Portal, em quais empresas e com qual perfil. Cliente inativado perde o acesso depois do mês de saída."
+      />
       {erro && <Aviso tom="erro">{erro}</Aviso>}
       {aviso && (
         <div role="status" className="rounded-md bg-emerald-50 p-3 text-sm text-emerald-900">

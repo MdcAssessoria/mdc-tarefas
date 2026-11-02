@@ -1,8 +1,10 @@
 "use client";
 
-// Gráficos em SVG puro (sem bibliotecas), na paleta validada da MDC.
+// Gráficos em SVG puro (sem bibliotecas), na paleta validada da MDC. Os de eixo (cascata, evolução, colunas) medem a
+// largura do quadro (useLargura) e desenham nela: a letra fica com 11–12 px reais no computador e no celular.
 import { useState } from "react";
 import { brl } from "@/lib/formato/moeda";
+import { saltoRotulos, useLargura } from "@/lib/useLargura";
 import { COR } from "./paletas";
 
 const curto = (v: number) => {
@@ -47,14 +49,16 @@ function quebrar(t: string, max: number) {
   return linhas;
 }
 
-function Dica({ x, y, linhas }: { x: number | string; y: number; linhas: string[] }) {
+/** Dica ao passar o dedo/mouse: fica dentro do quadro (perto das bordas encosta para dentro). `esquerda` em %. */
+function Dica({ esquerda, linhas }: { esquerda: number; linhas: string[] }) {
+  const desloca = esquerda < 20 ? "0%" : esquerda > 80 ? "-100%" : "-50%";
   return (
     <div
-      className="pointer-events-none absolute z-10 rounded-md border border-[var(--borda)] bg-white px-2 py-1 text-xs shadow"
-      style={{ left: x, top: y, transform: "translate(-50%, calc(-100% - 8px))" }}
+      className="pointer-events-none absolute top-0 z-10 rounded-lg border border-[var(--borda)] bg-white px-2.5 py-1.5 text-xs shadow-md"
+      style={{ left: `${esquerda}%`, transform: `translateX(${desloca})` }}
     >
       {linhas.map((l, i) => (
-        <div key={i} className={i === 0 ? "font-semibold" : ""}>
+        <div key={i} className={`whitespace-nowrap ${i === 0 ? "font-semibold" : ""}`}>
           {l}
         </div>
       ))}
@@ -62,21 +66,47 @@ function Dica({ x, y, linhas }: { x: number | string; y: number; linhas: string[
   );
 }
 
+/** Legenda em HTML: quebra linha sozinha quando não cabe (celular). */
+function Legenda({ itens }: { itens: { nome: string; cor: string; linha?: boolean }[] }) {
+  return (
+    <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-neutral-600">
+      {itens.map((s) => (
+        <span key={s.nome} className="flex items-center gap-1.5">
+          <span className={s.linha ? "h-0.5 w-4 shrink-0 rounded" : "h-2.5 w-2.5 shrink-0 rounded-sm"} style={{ background: s.cor }} />
+          {s.nome}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+/** Índice da coluna sob o dedo/mouse (gráficos com colunas de largura igual). */
+function colunaSob(e: React.PointerEvent<SVGSVGElement>, W: number, ml: number, passo: number, n: number) {
+  const r = e.currentTarget.getBoundingClientRect();
+  const px = ((e.clientX - r.left) / r.width) * W;
+  return Math.max(0, Math.min(n - 1, Math.floor((px - ml) / passo)));
+}
+
+/** Rótulo do eixo X só a cada `k` colunas (e sempre o último), para não encavalar no celular. */
+const mostrarRotulo = (i: number, total: number, k: number) => i === total - 1 || (i % k === 0 && total - 1 - i >= Math.ceil(k * 0.6));
+
+/** Abaixo desta largura (px) a cascata vira barras deitadas e os gráficos de linha/coluna ficam mais baixos. */
+const LARGURA_ESTREITA = 520;
+
 interface CascataPasso {
   rotulo: string;
   valor: number;
   total?: boolean;
 }
 
-/** Cascata da DRE: da receita bruta ao lucro líquido. */
+/**
+ * Cascata da DRE: da receita bruta ao lucro líquido. O SVG usa a largura real do quadro (useLargura), então a
+ * letra tem sempre 11–12 px na tela. Em quadro estreito (celular) vira barras deitadas, uma por linha, com o nome
+ * e o valor escritos — nada de rótulo espremido embaixo de coluna fina.
+ */
 export function Cascata({ passos }: { passos: CascataPasso[] }) {
   const [hover, setHover] = useState<number | null>(null);
-  const W = 720,
-    H = 260,
-    ml = 56,
-    mr = 12,
-    mt = 12,
-    mb = 48;
+  const { ref, largura: W } = useLargura();
   // cada passo começa onde o anterior terminou; passos "total" recomeçam do zero
   const barras: (CascataPasso & { de: number; ate: number })[] = [];
   for (const p of passos) {
@@ -85,11 +115,70 @@ export function Cascata({ passos }: { passos: CascataPasso[] }) {
   }
   const vals = barras.flatMap((b) => [b.de, b.ate]);
   const { ini, fim, ticks } = escala(Math.min(...vals), Math.max(...vals));
+  const cor = (b: (typeof barras)[number]) => (b.total ? (b.ate < 0 ? COR.negativo : COR.lucro) : b.valor >= 0 ? COR.receita : COR.despesa);
+  const descricao = "Cascata: " + barras.map((b) => `${b.rotulo} ${brl(b.total ? b.ate : b.valor, { centavos: false })}`).join("; ");
+
+  if (W < LARGURA_ESTREITA) {
+    const linhaH = 44,
+      H = barras.length * linhaH,
+      ml = 2,
+      mr = 2;
+    const x = (v: number) => ml + ((v - ini) / (fim - ini)) * (W - ml - mr);
+    const letras = Math.max(10, Math.floor((W - 96) / 6.6));
+    return (
+      <div ref={ref}>
+        <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img" aria-label={descricao}>
+          <line x1={x(0)} x2={x(0)} y1={18} y2={H} stroke={COR.grade} strokeWidth="1.5" />
+          {barras.map((b, i) => {
+            const y0 = i * linhaH;
+            const nome = b.rotulo.length > letras ? b.rotulo.slice(0, letras - 1) + "…" : b.rotulo;
+            const valor = (b.total ? b.ate : b.valor) || 0; // "|| 0" evita "-R$ 0" (zero negativo)
+            return (
+              <g key={i}>
+                <text x={ml} y={y0 + 14} fontSize="12" fontWeight={b.total ? 600 : 400} fill="#1c2420">
+                  {nome}
+                </text>
+                <text x={W - mr} y={y0 + 14} textAnchor="end" fontSize="12" fontWeight="600" fill={valor < 0 ? COR.negativo : "#1c2420"}>
+                  {!b.total && valor > 0 ? "+" : ""}
+                  {brl(valor, { centavos: false })}
+                </text>
+                <rect
+                  x={x(Math.min(b.de, b.ate))}
+                  y={y0 + 21}
+                  width={Math.max(2, Math.abs(x(b.ate) - x(b.de)))}
+                  height={14}
+                  rx="3"
+                  fill={cor(b)}
+                />
+                {i < barras.length - 1 && (
+                  <line x1={x(b.ate)} x2={x(b.ate)} y1={y0 + 35} y2={y0 + linhaH + 21} stroke={COR.eixo} strokeDasharray="2 3" />
+                )}
+              </g>
+            );
+          })}
+        </svg>
+      </div>
+    );
+  }
+
+  const H = 260,
+    ml = 52,
+    mr = 12,
+    mt = 12,
+    mb = 48;
   const y = (v: number) => mt + (1 - (v - ini) / (fim - ini)) * (H - mt - mb);
   const bw = (W - ml - mr) / barras.length;
+  const letras = Math.max(6, Math.floor(bw / 6.4));
   return (
-    <div className="relative">
-      <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img" aria-label="Demonstração do resultado em cascata">
+    <div className="relative" ref={ref}>
+      <svg
+        viewBox={`0 0 ${W} ${H}`}
+        className="w-full touch-pan-y"
+        role="img"
+        aria-label={descricao}
+        onPointerMove={(e) => setHover(colunaSob(e, W, ml, bw, barras.length))}
+        onPointerLeave={() => setHover(null)}
+      >
         {ticks.map((t) => (
           <g key={t}>
             <line x1={ml} x2={W - mr} y1={y(t)} y2={y(t)} stroke={COR.grade} strokeWidth={t === 0 ? 1.5 : 1} />
@@ -99,17 +188,17 @@ export function Cascata({ passos }: { passos: CascataPasso[] }) {
           </g>
         ))}
         {barras.map((b, i) => {
-          const x = ml + i * bw + bw * 0.18;
+          const xb = ml + i * bw + bw * 0.18;
           const w = bw * 0.64;
           const topo = y(Math.max(b.de, b.ate));
           const alt = Math.max(1.5, Math.abs(y(b.de) - y(b.ate)));
-          const cor = b.total ? (b.ate < 0 ? COR.negativo : COR.lucro) : b.valor >= 0 ? COR.receita : COR.despesa;
           return (
-            <g key={i} onMouseEnter={() => setHover(i)} onMouseLeave={() => setHover(null)}>
-              <rect x={ml + i * bw} y={mt} width={bw} height={H - mt - mb} fill="transparent" />
-              <rect x={x} y={topo} width={w} height={alt} rx="3" fill={cor} opacity={hover === null || hover === i ? 1 : 0.55} />
-              {i < barras.length - 1 && <line x1={x + w} x2={x + bw} y1={y(b.ate)} y2={y(b.ate)} stroke={COR.eixo} strokeDasharray="2 3" />}
-              {quebrar(b.rotulo, Math.max(8, Math.floor(bw / 6.5))).map((ln, k) => (
+            <g key={i}>
+              <rect x={xb} y={topo} width={w} height={alt} rx="3" fill={cor(b)} opacity={hover === null || hover === i ? 1 : 0.55} />
+              {i < barras.length - 1 && (
+                <line x1={xb + w} x2={xb + bw} y1={y(b.ate)} y2={y(b.ate)} stroke={COR.eixo} strokeDasharray="2 3" />
+              )}
+              {quebrar(b.rotulo, letras).map((ln, k) => (
                 <text
                   key={k}
                   x={ml + i * bw + bw / 2}
@@ -127,8 +216,7 @@ export function Cascata({ passos }: { passos: CascataPasso[] }) {
       </svg>
       {hover !== null && (
         <Dica
-          x={`${((ml + hover * bw + bw / 2) / W) * 100}%`}
-          y={0}
+          esquerda={((ml + hover * bw + bw / 2) / W) * 100}
           linhas={[barras[hover].rotulo, brl(barras[hover].total ? barras[hover].ate : barras[hover].valor, { centavos: false })]}
         />
       )}
@@ -136,13 +224,13 @@ export function Cascata({ passos }: { passos: CascataPasso[] }) {
   );
 }
 
-/** Linhas de evolução mensal (uma escala, até 3 séries). */
+/** Linhas de evolução mensal (uma escala, até 3 séries). Acompanha a largura do quadro; no celular mostra menos meses no eixo. */
 export function Evolucao({ meses, series }: { meses: string[]; series: { nome: string; cor: string; valores: (number | null)[] }[] }) {
   const [hover, setHover] = useState<number | null>(null);
-  const W = 720,
-    H = 240,
-    ml = 56,
-    mr = 24,
+  const { ref, largura: W } = useLargura();
+  const H = W < LARGURA_ESTREITA ? 210 : 240,
+    ml = 48,
+    mr = 22,
     mt = 12,
     mb = 28;
   const todos = series.flatMap((s) => s.valores.filter((v): v is number => v !== null));
@@ -150,99 +238,102 @@ export function Evolucao({ meses, series }: { meses: string[]; series: { nome: s
   const n = Math.max(1, meses.length - 1);
   const x = (i: number) => ml + (meses.length === 1 ? (W - ml - mr) / 2 : (i / n) * (W - ml - mr));
   const y = (v: number) => mt + (1 - (v - ini) / (fim - ini)) * (H - mt - mb);
+  const k = saltoRotulos((W - ml - mr) / n);
   return (
-    <div className="relative">
-      <div className="mb-2 flex flex-wrap gap-4 text-xs text-neutral-600">
-        {series.map((s) => (
-          <span key={s.nome} className="flex items-center gap-1.5">
-            <span className="h-0.5 w-4 rounded" style={{ background: s.cor }} />
-            {s.nome}
-          </span>
-        ))}
-      </div>
-      <svg
-        viewBox={`0 0 ${W} ${H}`}
-        className="w-full"
-        role="img"
-        aria-label="Evolução mensal"
-        onMouseLeave={() => setHover(null)}
-        onMouseMove={(e) => {
-          const r = (e.currentTarget as SVGSVGElement).getBoundingClientRect();
-          const px = ((e.clientX - r.left) / r.width) * W;
-          const i = Math.round(((px - ml) / (W - ml - mr)) * n);
-          setHover(Math.max(0, Math.min(meses.length - 1, i)));
-        }}
-      >
-        {ticks.map((t) => (
-          <g key={t}>
-            <line x1={ml} x2={W - mr} y1={y(t)} y2={y(t)} stroke={COR.grade} strokeWidth={t === 0 ? 1.5 : 1} />
-            <text x={ml - 6} y={y(t) + 4} textAnchor="end" fontSize="11" fill={COR.eixo}>
-              {curto(t)}
-            </text>
-          </g>
-        ))}
-        {meses.map((m, i) => (
-          <text key={m} x={x(i)} y={H - 8} textAnchor="middle" fontSize="11" fill={COR.eixo}>
-            {m}
-          </text>
-        ))}
-        {hover !== null && <line x1={x(hover)} x2={x(hover)} y1={mt} y2={H - mb} stroke={COR.eixo} strokeDasharray="3 3" />}
-        {series.map((s) => {
-          const pts = s.valores.map((v, i) => (v === null ? null : [x(i), y(v)])).filter(Boolean) as number[][];
-          return (
-            <g key={s.nome}>
-              {pts.length > 1 && (
-                <polyline
-                  points={pts.map((p) => p.join(",")).join(" ")}
-                  fill="none"
-                  stroke={s.cor}
-                  strokeWidth="2"
-                  strokeLinejoin="round"
-                />
-              )}
-              {s.valores.map((v, i) =>
-                v === null ? null : (
-                  <circle key={i} cx={x(i)} cy={y(v)} r={hover === i ? 5 : 4} fill={s.cor} stroke="#fff" strokeWidth="2" />
-                ),
-              )}
+    <div className="space-y-2">
+      <Legenda itens={series.map((s) => ({ nome: s.nome, cor: s.cor, linha: true }))} />
+      <div className="relative" ref={ref}>
+        <svg
+          viewBox={`0 0 ${W} ${H}`}
+          className="w-full touch-pan-y"
+          role="img"
+          aria-label={`Evolução de ${meses[0]} a ${meses.at(-1)}: ${series.map((s) => s.nome).join(", ")}`}
+          onPointerLeave={() => setHover(null)}
+          onPointerMove={(e) => {
+            const r = e.currentTarget.getBoundingClientRect();
+            const px = ((e.clientX - r.left) / r.width) * W;
+            const i = Math.round(((px - ml) / (W - ml - mr)) * n);
+            setHover(Math.max(0, Math.min(meses.length - 1, i)));
+          }}
+        >
+          {ticks.map((t) => (
+            <g key={t}>
+              <line x1={ml} x2={W - mr} y1={y(t)} y2={y(t)} stroke={COR.grade} strokeWidth={t === 0 ? 1.5 : 1} />
+              <text x={ml - 6} y={y(t) + 4} textAnchor="end" fontSize="11" fill={COR.eixo}>
+                {curto(t)}
+              </text>
             </g>
-          );
-        })}
-      </svg>
-      {hover !== null && (
-        <Dica
-          x={`${(x(hover) / W) * 100}%`}
-          y={0}
-          linhas={[meses[hover], ...series.map((s) => `${s.nome}: ${brl(s.valores[hover], { centavos: false })}`)]}
-        />
-      )}
+          ))}
+          {meses.map((m, i) =>
+            mostrarRotulo(i, meses.length, k) ? (
+              <text key={m} x={x(i)} y={H - 8} textAnchor="middle" fontSize="11" fill={COR.eixo}>
+                {m}
+              </text>
+            ) : null,
+          )}
+          {hover !== null && <line x1={x(hover)} x2={x(hover)} y1={mt} y2={H - mb} stroke={COR.eixo} strokeDasharray="3 3" />}
+          {series.map((s) => {
+            const pts = s.valores.map((v, i) => (v === null ? null : [x(i), y(v)])).filter(Boolean) as number[][];
+            return (
+              <g key={s.nome}>
+                {pts.length > 1 && (
+                  <polyline
+                    points={pts.map((p) => p.join(",")).join(" ")}
+                    fill="none"
+                    stroke={s.cor}
+                    strokeWidth="2"
+                    strokeLinejoin="round"
+                  />
+                )}
+                {s.valores.map((v, i) =>
+                  v === null ? null : (
+                    <circle
+                      key={i}
+                      cx={x(i)}
+                      cy={y(v)}
+                      r={hover === i ? 5 : k > 1 ? 2.5 : 4}
+                      fill={s.cor}
+                      stroke="#fff"
+                      strokeWidth={k > 1 ? 1 : 2}
+                    />
+                  ),
+                )}
+              </g>
+            );
+          })}
+        </svg>
+        {hover !== null && (
+          <Dica
+            esquerda={(x(hover) / W) * 100}
+            linhas={[meses[hover], ...series.map((s) => `${s.nome}: ${brl(s.valores[hover], { centavos: false })}`)]}
+          />
+        )}
+      </div>
     </div>
   );
 }
 
-/** Barras horizontais (composição de despesas, tributos). */
+/** Barras horizontais (composição de despesas, tributos): nome e valor em cima, barra embaixo (lê bem no celular). */
 export function Barras({ itens, cor = COR.despesa }: { itens: { rotulo: string; valor: number }[]; cor?: string }) {
   const max = Math.max(1, ...itens.map((i) => i.valor));
   const total = itens.reduce((s, i) => s + i.valor, 0);
   return (
-    <div className="space-y-1.5">
+    <ul className="space-y-3">
       {itens.map((i) => (
-        <div
-          key={i.rotulo}
-          className="grid grid-cols-[minmax(0,180px)_1fr_auto] items-center gap-2 text-sm"
-          title={`${i.rotulo}: ${brl(i.valor, { centavos: false })}`}
-        >
-          <span className="truncate text-neutral-700">{i.rotulo}</span>
-          <div className="h-3.5 rounded bg-[var(--fundo)]">
-            <div className="h-3.5 rounded" style={{ width: `${(i.valor / max) * 100}%`, background: cor }} />
+        <li key={i.rotulo} title={`${i.rotulo}: ${brl(i.valor, { centavos: false })}`}>
+          <div className="flex items-baseline gap-2 text-sm">
+            <span className="min-w-0 flex-1 break-words text-neutral-700">{i.rotulo}</span>
+            <span className="whitespace-nowrap font-medium tabular-nums">{brl(i.valor, { centavos: false })}</span>
+            <span className="w-9 text-right text-xs tabular-nums text-neutral-500">
+              {total ? `${Math.round((i.valor / total) * 100)}%` : ""}
+            </span>
           </div>
-          <span className="whitespace-nowrap text-right tabular-nums text-neutral-600">
-            {brl(i.valor, { centavos: false })}{" "}
-            <span className="text-xs text-neutral-400">{total ? `${Math.round((i.valor / total) * 100)}%` : ""}</span>
-          </span>
-        </div>
+          <div className="mt-1 h-2.5 rounded-full bg-[var(--fundo)]">
+            <div className="h-2.5 rounded-full" style={{ width: `${Math.max(1, (i.valor / max) * 100)}%`, background: cor }} />
+          </div>
+        </li>
       ))}
-    </div>
+    </ul>
   );
 }
 
@@ -251,10 +342,13 @@ export function Faisca({
   valores,
   alerta,
   reta,
+  className = "h-8 w-28",
 }: {
   valores: (number | null)[];
   alerta?: boolean;
   reta?: { a: number; b: number } | null;
+  /** Tamanho na tela (padrão 112 × 32 px). */
+  className?: string;
 }) {
   const v = valores.filter((x): x is number => x !== null && Number.isFinite(x));
   if (v.length < 2) return null;
@@ -270,7 +364,7 @@ export function Faisca({
     .filter(Boolean)
     .join(" ");
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="h-8 w-28" aria-hidden="true">
+    <svg viewBox={`0 0 ${W} ${H}`} className={`shrink-0 ${className}`} aria-hidden="true">
       {reta && <line x1={0} x2={W} y1={py(yReta[0])} y2={py(yReta[1])} stroke={COR.eixo} strokeWidth="1.2" strokeDasharray="3 3" />}
       <polyline points={pts} fill="none" stroke={alerta ? COR.negativo : COR.lucro} strokeWidth="2" strokeLinejoin="round" />
     </svg>
@@ -286,7 +380,7 @@ export const STATUS_SAUDE = {
   critico: { cor: "#B42318", fundo: "#FEF3F2", icone: "✖", rotulo: "Crítico" },
 } as const;
 
-/** Termômetro (meio círculo) de 0 a 100 com três faixas. */
+/** Termômetro (meio círculo) de 0 a 100 com três faixas. Desenhado em ~240 px, mostrado com até 260 px. */
 export function Termometro({ nota, faixa }: { nota: number; faixa: string }) {
   const W = 240,
     H = 140,
@@ -321,10 +415,10 @@ export function Termometro({ nota, faixa }: { nota: number; faixa: string }) {
       <text x={cx} y={cy - 34} textAnchor="middle" fontSize="30" fontWeight="700" fill="#1c2420">
         {nota}
       </text>
-      <text x={14} y={H - 2} fontSize="10" fill={COR.eixo}>
+      <text x={14} y={H - 2} fontSize="12" fill={COR.eixo}>
         0
       </text>
-      <text x={W - 14} y={H - 2} textAnchor="end" fontSize="10" fill={COR.eixo}>
+      <text x={W - 14} y={H - 2} textAnchor="end" fontSize="12" fill={COR.eixo}>
         100
       </text>
     </svg>
@@ -350,7 +444,7 @@ export function Pilha100({ partes }: { partes: { rotulo: string; valor: number; 
               onMouseLeave={() => setHover(null)}
               title={`${p.rotulo}: R$ ${w.toFixed(1).replace(".", ",")} de cada R$ 100 (${brl(p.valor, { centavos: false })})`}
             >
-              {w >= 7 ? `R$ ${Math.round(w)}` : ""}
+              {w >= 9 ? `R$ ${Math.round(w)}` : ""}
             </div>
           );
         })}
@@ -358,7 +452,7 @@ export function Pilha100({ partes }: { partes: { rotulo: string; valor: number; 
       <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-neutral-700">
         {pos.map((p) => (
           <span key={p.rotulo} className="flex items-center gap-1.5">
-            <span className="h-2.5 w-2.5 rounded-sm" style={{ background: p.cor }} />
+            <span className="h-2.5 w-2.5 shrink-0 rounded-sm" style={{ background: p.cor }} />
             {p.rotulo} <b className="tabular-nums">R$ {((p.valor / total) * 100).toFixed(1).replace(".", ",")}</b>
           </span>
         ))}
@@ -442,7 +536,7 @@ function ColunaComposicao({
             return (
               <div
                 key={x.rotulo}
-                className="flex items-center justify-center rounded-sm px-1 text-center text-[11px] font-semibold leading-tight text-white"
+                className="flex items-center justify-center rounded-sm px-1 text-center text-xs font-semibold leading-tight text-white"
                 style={{ height: `${h}%`, background: x.cor }}
                 title={`${x.rotulo}: ${brl(x.valor, { centavos: false })} (${h.toFixed(0)}%)`}
               >
@@ -451,14 +545,13 @@ function ColunaComposicao({
             );
           })}
       </div>
-      <div className="mt-2 space-y-0.5 text-[11px] text-neutral-700">
+      {/* nome quebra linha em vez de ser cortado (no celular cada coluna tem ~160 px) */}
+      <div className="mt-2 space-y-1 text-xs leading-tight text-neutral-700">
         {[...itens].reverse().map((x) => (
-          <div key={x.rotulo} className="flex items-center gap-1.5">
-            <span className="h-2.5 w-2.5 shrink-0 rounded-sm" style={{ background: x.cor }} />
-            <span className="min-w-0 truncate" title={x.rotulo}>
-              {x.rotulo}
-            </span>
-            <b className={`ml-auto whitespace-nowrap tabular-nums ${x.valor < 0 ? "text-[var(--perigo)]" : ""}`}>
+          <div key={x.rotulo} className="flex items-start gap-1.5">
+            <span className="mt-0.5 h-2.5 w-2.5 shrink-0 rounded-sm" style={{ background: x.cor }} />
+            <span className="min-w-0 flex-1 break-words">{x.rotulo}</span>
+            <b className={`whitespace-nowrap tabular-nums ${x.valor < 0 ? "text-[var(--perigo)]" : ""}`}>
               {brl(x.valor, { centavos: false })}
             </b>
           </div>
@@ -482,14 +575,14 @@ export function Composicao({
     passivo.reduce((a, x) => a + Math.max(0, x.valor), 0),
   );
   return (
-    <div className="flex gap-5">
+    <div className="flex gap-3 sm:gap-5">
       <ColunaComposicao titulo="O que a empresa tem" itens={ativo} total={tot} />
       <ColunaComposicao titulo="Quem financia" itens={passivo} total={tot} />
     </div>
   );
 }
 
-/** Colunas agrupadas por mês (até 2 séries, mesma escala). */
+/** Colunas agrupadas por mês (até 2 séries, mesma escala). Acompanha a largura do quadro; no celular pula rótulos do eixo. */
 export function ColunasPareadas({
   meses,
   series,
@@ -498,9 +591,9 @@ export function ColunasPareadas({
   series: { nome: string; cor: string; valores: (number | null)[] }[];
 }) {
   const [hover, setHover] = useState<number | null>(null);
-  const W = 720,
-    H = 240,
-    ml = 56,
+  const { ref, largura: W } = useLargura();
+  const H = W < LARGURA_ESTREITA ? 210 : 240,
+    ml = 48,
     mr = 12,
     mt = 12,
     mb = 28;
@@ -508,63 +601,68 @@ export function ColunasPareadas({
   const { ini, fim, ticks } = escala(Math.min(0, ...todos), Math.max(0, ...todos));
   const y = (v: number) => mt + (1 - (v - ini) / (fim - ini)) * (H - mt - mb);
   const gw = (W - ml - mr) / Math.max(1, meses.length);
-  const bw = Math.min(22, (gw * 0.7) / series.length);
+  const vao = gw < 20 ? 1 : 2;
+  const bw = Math.max(2, Math.min(22, (gw * 0.72) / series.length));
+  const k = saltoRotulos(gw);
   return (
-    <div className="relative">
-      <div className="mb-2 flex flex-wrap gap-4 text-xs text-neutral-600">
-        {series.map((s) => (
-          <span key={s.nome} className="flex items-center gap-1.5">
-            <span className="h-2.5 w-2.5 rounded-sm" style={{ background: s.cor }} />
-            {s.nome}
-          </span>
-        ))}
-      </div>
-      <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img" aria-label="Comparação mensal" onMouseLeave={() => setHover(null)}>
-        {ticks.map((t) => (
-          <g key={t}>
-            <line x1={ml} x2={W - mr} y1={y(t)} y2={y(t)} stroke={COR.grade} strokeWidth={t === 0 ? 1.5 : 1} />
-            <text x={ml - 6} y={y(t) + 4} textAnchor="end" fontSize="11" fill={COR.eixo}>
-              {curto(t)}
-            </text>
-          </g>
-        ))}
-        {meses.map((m, i) => {
-          const x0 = ml + i * gw + (gw - bw * series.length - 2 * (series.length - 1)) / 2;
-          return (
-            <g key={m} onMouseEnter={() => setHover(i)}>
-              <rect x={ml + i * gw} y={mt} width={gw} height={H - mt - mb} fill="transparent" />
-              {series.map((s, k) => {
-                const v = s.valores[i];
-                if (v === null) return null;
-                const top = y(Math.max(0, v)),
-                  alt = Math.max(1.5, Math.abs(y(v) - y(0)));
-                return (
-                  <rect
-                    key={s.nome}
-                    x={x0 + k * (bw + 2)}
-                    y={top}
-                    width={bw}
-                    height={alt}
-                    rx="3"
-                    fill={v < 0 && series.length === 1 ? COR.negativo : s.cor}
-                    opacity={hover === null || hover === i ? 1 : 0.55}
-                  />
-                );
-              })}
-              <text x={ml + i * gw + gw / 2} y={H - 8} textAnchor="middle" fontSize="11" fill={COR.eixo}>
-                {m}
+    <div className="space-y-2">
+      <Legenda itens={series.map((s) => ({ nome: s.nome, cor: s.cor }))} />
+      <div className="relative" ref={ref}>
+        <svg
+          viewBox={`0 0 ${W} ${H}`}
+          className="w-full touch-pan-y"
+          role="img"
+          aria-label={`Comparação de ${meses[0]} a ${meses.at(-1)}: ${series.map((s) => s.nome).join(" e ")}`}
+          onPointerMove={(e) => setHover(colunaSob(e, W, ml, gw, meses.length))}
+          onPointerLeave={() => setHover(null)}
+        >
+          {ticks.map((t) => (
+            <g key={t}>
+              <line x1={ml} x2={W - mr} y1={y(t)} y2={y(t)} stroke={COR.grade} strokeWidth={t === 0 ? 1.5 : 1} />
+              <text x={ml - 6} y={y(t) + 4} textAnchor="end" fontSize="11" fill={COR.eixo}>
+                {curto(t)}
               </text>
             </g>
-          );
-        })}
-      </svg>
-      {hover !== null && (
-        <Dica
-          x={`${((ml + hover * gw + gw / 2) / W) * 100}%`}
-          y={0}
-          linhas={[meses[hover], ...series.map((s) => `${s.nome}: ${brl(s.valores[hover], { centavos: false })}`)]}
-        />
-      )}
+          ))}
+          {meses.map((m, i) => {
+            const x0 = ml + i * gw + (gw - bw * series.length - vao * (series.length - 1)) / 2;
+            return (
+              <g key={m}>
+                {hover === i && <rect x={ml + i * gw} y={mt} width={gw} height={H - mt - mb} fill="#0b2820" opacity="0.05" />}
+                {series.map((s, j) => {
+                  const v = s.valores[i];
+                  if (v === null) return null;
+                  const top = y(Math.max(0, v)),
+                    alt = Math.max(1.5, Math.abs(y(v) - y(0)));
+                  return (
+                    <rect
+                      key={s.nome}
+                      x={x0 + j * (bw + vao)}
+                      y={top}
+                      width={bw}
+                      height={alt}
+                      rx={bw > 6 ? 3 : 1}
+                      fill={v < 0 && series.length === 1 ? COR.negativo : s.cor}
+                      opacity={hover === null || hover === i ? 1 : 0.55}
+                    />
+                  );
+                })}
+                {mostrarRotulo(i, meses.length, k) && (
+                  <text x={ml + i * gw + gw / 2} y={H - 8} textAnchor="middle" fontSize="11" fill={COR.eixo}>
+                    {m}
+                  </text>
+                )}
+              </g>
+            );
+          })}
+        </svg>
+        {hover !== null && (
+          <Dica
+            esquerda={((ml + hover * gw + gw / 2) / W) * 100}
+            linhas={[meses[hover], ...series.map((s) => `${s.nome}: ${brl(s.valores[hover], { centavos: false })}`)]}
+          />
+        )}
+      </div>
     </div>
   );
 }

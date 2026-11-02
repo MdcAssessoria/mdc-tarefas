@@ -28,10 +28,12 @@ export function ChatMensagens({
   const [erro, setErro] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
   const [anexos, setAnexos] = useState<Record<string, { nome: string; caminho: string }>>({});
-  const fim = useRef<HTMLDivElement>(null);
+  const caixa = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    fim.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+    // rola só a caixa de mensagens até a última (scrollIntoView rolaria a página inteira no celular)
+    const el = caixa.current;
+    if (el) el.scrollTop = el.scrollHeight;
     const ids = mensagens.map((m) => m.anexo_id).filter((x): x is string => !!x && !anexos[x]);
     if (ids.length)
       supabase()
@@ -119,9 +121,9 @@ export function ChatMensagens({
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="flex-1 space-y-2 overflow-y-auto bg-[var(--fundo)] p-3">
+      <div ref={caixa} className="flex-1 space-y-2 overflow-y-auto bg-[var(--fundo)] p-3">
+        {mensagens.length === 0 && <p className="py-6 text-center text-xs text-neutral-500">Nenhuma mensagem ainda.</p>}
         {mensagens.map(bolha)}
-        <div ref={fim} />
       </div>
       {erro && <p className="bg-red-50 px-3 py-1 text-xs text-red-800">{erro}</p>}
       {fechada && lado === "cliente" ? (
@@ -135,10 +137,16 @@ export function ChatMensagens({
           title="Anexar arquivo"
         >
           <Icone nome="clipe" className="h-5 w-5" />
-          <input type="file" className="hidden" onChange={(e) => e.target.files?.[0] && enviar(undefined, e.target.files[0])} />
+          <input
+            type="file"
+            className="hidden"
+            aria-label="Anexar arquivo"
+            onChange={(e) => e.target.files?.[0] && enviar(undefined, e.target.files[0])}
+          />
         </label>
         <textarea
-          className="entrada min-h-9 flex-1 resize-none"
+          className="entrada min-h-9 min-w-0 flex-1 resize-none"
+          aria-label="Mensagem"
           rows={1}
           placeholder={lado === "equipe" && interna ? "Nota interna (o cliente não vê)…" : "Escreva sua mensagem…"}
           value={texto}
@@ -155,8 +163,9 @@ export function ChatMensagens({
             <input type="checkbox" checked={interna} onChange={(e) => setInterna(e.target.checked)} /> interna
           </label>
         )}
-        <button className="btn-primario shrink-0" disabled={enviando}>
-          Enviar
+        <button className="btn-primario shrink-0" disabled={enviando} aria-label="Enviar mensagem">
+          <Icone nome="enviar" className="h-4 w-4" />
+          <span className="hidden sm:inline">{enviando ? "Enviando…" : "Enviar"}</span>
         </button>
       </form>
     </div>

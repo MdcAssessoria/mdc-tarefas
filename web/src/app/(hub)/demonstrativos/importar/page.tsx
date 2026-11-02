@@ -1,5 +1,8 @@
+// Demonstrativos › Importar: lê o balancete exportado do Domínio (um arquivo, com revisão dos grupos, ou vários de
+// uma vez em lote) e grava como rascunho. A publicação para o cliente é feita depois, na tela do balancete.
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { traduzirErro } from "@/lib/erros";
@@ -17,6 +20,9 @@ import { identificarEmpresa } from "@/dominios/demonstrativos/importacaoLote";
 import type { ItemLote } from "@/dominios/demonstrativos/importacaoLote";
 import { ImportacaoLote, lerLote } from "./_componentes/ImportacaoLote";
 import { CampoArquivo } from "@/components/ui/CampoArquivo";
+import { Aviso } from "@/components/ui/Aviso";
+import { CabecalhoPagina } from "@/components/ui/CabecalhoPagina";
+import { Icone } from "@/components/ui/Icone";
 
 export default function PaginaImportarBalancete() {
   return <Importar />;
@@ -124,14 +130,35 @@ function Importar() {
 
   return (
     <div className="space-y-5">
-      <div>
-        <h1 className="text-xl font-semibold text-[var(--marca)]">Importar balancete do Domínio</h1>
-        <p className="max-w-3xl text-sm text-neutral-600">
-          No Domínio: Relatórios › Contabilidade › Balancete, empresa e mês, e exporte em Excel (.xls ou .xlsx). O Hub reconhece a empresa
-          pelo CNPJ ou código, o mês pelo período e cada conta pelo plano de contas. Pode mandar vários arquivos de uma vez, de várias
-          empresas e meses. Nada vai para o cliente antes de você revisar e publicar.
-        </p>
-      </div>
+      <CabecalhoPagina
+        titulo="Importar balancete do Domínio"
+        descricao="Mande um ou vários arquivos de uma vez. Nada vai para o cliente antes de você revisar e publicar."
+        acoes={
+          <Link href="/demonstrativos/importacoes" className="btn">
+            <Icone nome="lista" className="h-4 w-4" />
+            Histórico de importações
+          </Link>
+        }
+      />
+      {!lote && !leitura && (
+        <ol className="cartao grid gap-3 p-4 text-sm sm:grid-cols-3">
+          {[
+            ["1", "No Domínio", "Relatórios › Contabilidade › Balancete: escolha a empresa e o mês e exporte em Excel (.xls ou .xlsx)."],
+            ["2", "Aqui no HUB", "Arraste os arquivos abaixo. O HUB reconhece a empresa pelo CNPJ ou código e o mês pelo período."],
+            ["3", "Revise e publique", "Confira os grupos das contas e as conferências. Só depois de publicar o cliente vê no Portal."],
+          ].map(([n, t, d]) => (
+            <li key={n} className="flex gap-3">
+              <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-[var(--marca)] text-xs font-semibold text-white">
+                {n}
+              </span>
+              <span>
+                <b className="block text-[var(--marca)]">{t}</b>
+                <span className="text-neutral-600">{d}</span>
+              </span>
+            </li>
+          ))}
+        </ol>
+      )}
 
       {!lote && (
         <CampoArquivo
@@ -147,8 +174,13 @@ function Importar() {
 
       {lote && <ImportacaoLote key={lote.id} inicial={lote.itens} aoRecomecar={() => setLote(null)} />}
 
-      {processando && <p className="text-sm text-neutral-500">Lendo os arquivos…</p>}
-      {erro && <p className="rounded-md bg-red-50 p-3 text-sm text-red-800">{erro}</p>}
+      {processando && (
+        <p role="status" className="flex items-center gap-2 text-sm text-neutral-600">
+          <Icone nome="atualizar" className="h-4 w-4 animate-spin" />
+          Lendo os arquivos…
+        </p>
+      )}
+      {erro && <Aviso tom="erro">{erro}</Aviso>}
 
       {!lote && leitura && analise && (
         <>
@@ -179,9 +211,9 @@ function Importar() {
           </section>
 
           {leitura.avisos.map((a, i) => (
-            <p key={i} className="rounded-md bg-amber-50 p-3 text-sm text-amber-900">
+            <Aviso key={i} tom="atencao">
               {a}
-            </p>
+            </Aviso>
           ))}
 
           <div className="grid gap-5 lg:grid-cols-[1fr_340px]">
@@ -284,6 +316,7 @@ function Importar() {
                 </div>
               </section>
               <button className="btn-primario w-full" disabled={!cliente || !competencia || processando} onClick={gravar}>
+                <Icone nome="check" className="h-4 w-4" />
                 {processando ? "Gravando…" : `Gravar rascunho${clienteEscolhido ? ` de ${nomeCliente(clienteEscolhido)}` : ""}`}
               </button>
               {!cliente && <p className="text-xs text-amber-800">Escolha a empresa para gravar.</p>}

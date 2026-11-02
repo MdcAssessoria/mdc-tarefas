@@ -11,6 +11,11 @@ import { traduzirErro } from "@/lib/erros";
 import { useConfirmar } from "@/components/ui/JanelaConfirmar";
 import { fmtDataLocal } from "@/lib/formato/datas";
 import { CampoArquivo } from "@/components/ui/CampoArquivo";
+import { Aviso } from "@/components/ui/Aviso";
+import { CabecalhoPagina } from "@/components/ui/CabecalhoPagina";
+import { Chip } from "@/components/ui/Chip";
+import { Esqueleto } from "@/components/ui/Esqueleto";
+import { Icone } from "@/components/ui/Icone";
 
 export default function PaginaCertificado() {
   return <Certificado />;
@@ -97,28 +102,35 @@ function Certificado() {
   return (
     <div className="mx-auto max-w-2xl space-y-5">
       {janelaConfirmar}
-      <div>
-        <Link href="/demonstrativos" className="text-sm text-neutral-500 hover:underline">
-          ← Balancetes
+      <div className="space-y-2">
+        <Link href="/demonstrativos" className="inline-flex items-center gap-1 text-sm text-neutral-600 hover:underline">
+          <Icone nome="voltar" className="h-4 w-4" />
+          Balancetes
         </Link>
-        <h1 className="text-xl font-semibold text-[var(--marca)]">Certificado digital para assinar os demonstrativos</h1>
-        <p className="mt-1 text-sm text-neutral-600">
-          Com o certificado cadastrado, o PDF de cada mês publicado sai assinado digitalmente pelo contador responsável (ICP-Brasil, MP nº
-          2.200-2/2001). O cliente baixa o arquivo já assinado no portal.
-        </p>
+        <CabecalhoPagina
+          titulo="Certificado digital"
+          descricao="Com o certificado A1 cadastrado, o PDF de cada mês publicado sai assinado digitalmente pelo contador (ICP-Brasil, MP nº 2.200-2/2001). O cliente baixa o arquivo já assinado no Portal."
+        />
       </div>
 
-      {erro && <p className="rounded-md bg-red-50 p-3 text-sm text-red-800">{erro}</p>}
-      {aviso && <p className="rounded-md bg-emerald-50 p-3 text-sm text-emerald-800">{aviso}</p>}
+      {erro && <Aviso tom="erro">{erro}</Aviso>}
+      {aviso && <Aviso tom="sucesso">{aviso}</Aviso>}
 
       <section className="cartao p-4">
-        <h2 className="font-semibold">Certificado atual</h2>
+        <h2 className="flex items-center gap-2 font-semibold text-[var(--marca)]">
+          <Icone nome="escudo" className="h-4 w-4" />
+          Certificado atual
+        </h2>
         {cert === undefined ? (
-          <p className="text-sm text-neutral-500">Carregando…</p>
+          <div className="mt-3">
+            <Esqueleto indicadores={0} linhas={3} />
+          </div>
         ) : !cert ? (
-          <p className="mt-1 text-sm text-neutral-600">Nenhum certificado cadastrado. Os PDFs saem sem assinatura digital.</p>
+          <p className="mt-1 text-sm text-neutral-600">
+            Nenhum certificado cadastrado. Os PDFs saem sem assinatura digital. Cadastre abaixo.
+          </p>
         ) : (
-          <dl className="mt-2 grid grid-cols-[140px_1fr] gap-y-1 text-sm">
+          <dl className="mt-2 grid grid-cols-1 gap-y-1 text-sm sm:grid-cols-[140px_1fr]">
             <dt className="text-neutral-500">Titular</dt>
             <dd className="font-medium">
               {cert.titular}
@@ -126,12 +138,7 @@ function Certificado() {
             </dd>
             <dt className="text-neutral-500">Emissor</dt>
             <dd>
-              {cert.emissor}{" "}
-              {cert.icp_brasil ? (
-                <span className="chip bg-emerald-50 text-emerald-800">ICP-Brasil</span>
-              ) : (
-                <span className="chip bg-amber-50 text-amber-800">fora da ICP-Brasil</span>
-              )}
+              {cert.emissor} {cert.icp_brasil ? <Chip tom="verde">ICP-Brasil</Chip> : <Chip tom="ambar">fora da ICP-Brasil</Chip>}
             </dd>
             <dt className="text-neutral-500">Validade</dt>
             <dd className={vence !== null && vence < 30 ? "font-medium text-[var(--perigo)]" : ""}>
@@ -144,13 +151,14 @@ function Certificado() {
         )}
         {cert && (
           <button className="btn mt-3" onClick={remover}>
+            <Icone nome="lixeira" className="h-4 w-4" />
             Remover certificado
           </button>
         )}
       </section>
 
       <form onSubmit={enviar} className="cartao space-y-3 p-4">
-        <h2 className="font-semibold">{cert ? "Substituir certificado" : "Cadastrar certificado A1"}</h2>
+        <h2 className="font-semibold text-[var(--marca)]">{cert ? "Substituir certificado" : "Cadastrar certificado A1"}</h2>
         <div className="campo">
           <span>Arquivo do certificado (.pfx ou .p12)</span>
           <CampoArquivo
@@ -174,6 +182,7 @@ function Certificado() {
           <li>O Hub avisa quando faltar menos de 30 dias para o certificado vencer.</li>
         </ul>
         <button className="btn-primario" disabled={!arquivo || !senha || enviando}>
+          <Icone nome="check" className="h-4 w-4" />
           {enviando ? "Validando…" : "Validar e guardar"}
         </button>
       </form>
