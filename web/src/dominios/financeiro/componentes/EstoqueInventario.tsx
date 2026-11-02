@@ -15,8 +15,8 @@ import { EstadoVazio } from "@/components/ui/EstadoVazio";
 import { numeroBr } from "../regras";
 import { combinaBusca, custoBase, qtdBr } from "../estoqueRegras";
 import { gravarInventario } from "../repositorio";
-import { nomeArquivo } from "../exportar";
-import { BotoesExportar } from "./Comuns";
+import { nomeArquivo } from "@/lib/arquivos/exportarLista";
+import { BotoesExportar } from "@/components/ui/BotoesExportar";
 import type { PropsAba } from "./Comuns";
 import { useBaseEstoque } from "./estoqueBase";
 

@@ -19,15 +19,20 @@ import { EstadoVazio } from "@/components/ui/EstadoVazio";
 import { Icone } from "@/components/ui/Icone";
 import { QuadroTabela } from "@/components/ui/QuadroTabela";
 import { useAviso } from "@/components/ui/Aviso";
-import { EscolhaCliente, useClienteFinanceiro } from "./EscolhaCliente";
-import { BotoesExportar, Chip, FiltroPeriodo, Indicador, JanelaMotivo, Valor } from "./Comuns";
+import { EscolhaCliente, useClienteGestao } from "@/dominios/organizacao/componentes/EmpresaEmGestao";
+import { BotoesExportar } from "@/components/ui/BotoesExportar";
+import { Chip } from "@/components/ui/Chip";
+import { FiltroPeriodo } from "@/components/ui/FiltroPeriodo";
+import { Indicador } from "@/components/ui/Indicador";
+import { JanelaMotivo } from "@/components/ui/JanelaMotivo";
+import { Valor } from "@/components/ui/Valor";
 import { LancarTitulo, TEXTOS } from "./LancarTitulo";
 import { BaixarTitulo, HistoricoTitulo } from "./BaixaTitulo";
 import { lerCategorias, lerCentros, lerContas, lerPessoas, lerTitulos } from "../leituras";
 import { cancelarTitulo } from "../repositorio";
 import { intervaloDoPeriodo, PERIODOS, saldoDoTitulo, SITUACOES, situacaoDoTitulo } from "../regras";
 import type { Periodo, SituacaoExibida } from "../regras";
-import { nomeArquivo } from "../exportar";
+import { nomeArquivo } from "@/lib/arquivos/exportarLista";
 import type { Titulo, TipoTitulo } from "../tipos";
 
 type FiltroSituacao = "abertos" | "vencido" | "a_vencer" | "quitado" | "cancelado" | "todos";
@@ -58,7 +63,7 @@ type Janela =
 
 export function TelaTitulos({ tipo }: { tipo: TipoTitulo }) {
   const { org, pode } = useOrg();
-  const financeiro = useClienteFinanceiro();
+  const financeiro = useClienteGestao();
   const cliente = financeiro.cliente;
   const podeOperar = pode("financeiro", "operar");
   const { aviso, mostrar } = useAviso();
@@ -243,7 +248,7 @@ export function TelaTitulos({ tipo }: { tipo: TipoTitulo }) {
       />
 
       <CartaoFiltros ativos={filtrosAtivos} aoLimpar={limparFiltros}>
-        <EscolhaCliente financeiro={financeiro} />
+        <EscolhaCliente gestao={financeiro} />
         <FiltroPeriodo
           rotulo="Vencimento"
           periodo={periodo}
@@ -344,7 +349,7 @@ export function TelaTitulos({ tipo }: { tipo: TipoTitulo }) {
               titulo="A vencer"
               icone="calendario"
               valor={brl(aVencer)}
-              tom="ambar"
+              tom="azul"
               ativo={situacao === "a_vencer"}
               aoClicar={() => setSituacao(situacao === "a_vencer" ? "abertos" : "a_vencer")}
             />

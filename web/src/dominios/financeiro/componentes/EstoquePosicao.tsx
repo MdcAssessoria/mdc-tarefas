@@ -12,9 +12,10 @@ import { Modal } from "@/components/ui/Modal";
 import { Carregando } from "@/components/ui/Carregando";
 import { EstadoVazio } from "@/components/ui/EstadoVazio";
 import { combinaBusca, custoBase, qtdBr, situacaoSaldo, SITUACOES_SALDO } from "../estoqueRegras";
-import { nomeArquivo } from "../exportar";
+import { nomeArquivo } from "@/lib/arquivos/exportarLista";
 import type { Item } from "../tipos";
-import { BotoesExportar, Indicador } from "./Comuns";
+import { BotoesExportar } from "@/components/ui/BotoesExportar";
+import { Indicador } from "@/components/ui/Indicador";
 import type { PropsAba } from "./Comuns";
 import { useBaseEstoque } from "./estoqueBase";
 import { FichaItem } from "./FichaItem";
@@ -70,26 +71,26 @@ export function EstoquePosicao({ cliente, avisar }: PropsAba) {
   return (
     <div className="space-y-3">
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Indicador
+        <Indicador icone="moeda"
           titulo={`Valor em estoque (${nomeLocal})`}
           valor={brl(todos.reduce((a, x) => a + x.valor, 0))}
           detalhe="saldo × custo médio"
           tom="verde"
         />
-        <Indicador
+        <Indicador icone="caixa"
           titulo="Itens com saldo"
           valor={String(todos.filter((x) => x.saldo > 0).length)}
           ativo={filtro === "com_saldo"}
           aoClicar={() => setFiltro(filtro === "com_saldo" ? "" : "com_saldo")}
         />
-        <Indicador
+        <Indicador icone="alerta"
           titulo="Abaixo do mínimo"
           valor={String(todos.filter((x) => x.situacao === "baixo").length)}
           tom="ambar"
           ativo={filtro === "baixo"}
           aoClicar={() => setFiltro(filtro === "baixo" ? "" : "baixo")}
         />
-        <Indicador
+        <Indicador icone="cancelar"
           titulo="Sem estoque"
           valor={String(todos.filter((x) => x.situacao === "zerado" || x.situacao === "negativo").length)}
           tom="vermelho"

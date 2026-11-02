@@ -2,9 +2,64 @@
 // Regra: "hoje" é sempre o dia no fuso da organização (hojeISO), nunca o dia em UTC, e contas com mês/dia
 // são feitas sobre o texto AAAA-MM-DD, sem objetos Date no fuso do navegador.
 
+const FUSO_PADRAO = "America/Sao_Paulo";
+
 /** Data de hoje (YYYY-MM-DD) no fuso da organização. */
-export function hojeISO(fuso = "America/Sao_Paulo"): string {
-  return new Intl.DateTimeFormat("en-CA", { timeZone: fuso }).format(new Date());
+export function hojeISO(fuso = FUSO_PADRAO): string {
+  return diaNoFuso(new Date(), fuso);
+}
+
+/** Dia (AAAA-MM-DD) de um instante no fuso da organização. Ex.: "2026-11-01T01:30:00Z" em São Paulo é 31/10. */
+export function diaNoFuso(instante: Date | string | number, fuso = FUSO_PADRAO): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: fuso }).format(new Date(instante));
+}
+
+/** Hora (0 a 23) de um instante (padrão: agora) no fuso da organização. */
+export function horaNoFuso(fuso = FUSO_PADRAO, agora: Date = new Date()): number {
+  const h = new Intl.DateTimeFormat("en-GB", { timeZone: fuso, hour: "2-digit", hourCycle: "h23" }).format(agora);
+  return Number(h) % 24;
+}
+
+/**
+ * Saudação única do HUB (tela, WhatsApp, e-mail): das 5h às 11h59 "Bom dia"; das 12h às 17h59 "Boa tarde";
+ * das 18h às 4h59 "Boa noite". Use com horaNoFuso(org.fuso).
+ */
+export function saudacao(hora: number): "Bom dia" | "Boa tarde" | "Boa noite" {
+  if (hora >= 5 && hora < 12) return "Bom dia";
+  if (hora >= 12 && hora < 18) return "Boa tarde";
+  return "Boa noite";
+}
+
+/** Relógio de parede (no fuso) do instante `t`, escrito como se fosse UTC, em milissegundos. */
+function paredeEmMs(t: number, fuso: string): number {
+  const p = Object.fromEntries(
+    new Intl.DateTimeFormat("en-CA", {
+      timeZone: fuso,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hourCycle: "h23",
+    })
+      .formatToParts(new Date(t))
+      .map((x) => [x.type, x.value]),
+  );
+  return Date.UTC(+p.year, +p.month - 1, +p.day, +p.hour % 24, +p.minute, +p.second);
+}
+
+/**
+ * Instante (ISO em UTC) em que o dia "AAAA-MM-DD" começa no fuso. Use para filtrar colunas de data e hora pelo dia da
+ * organização, no lugar de "T03:00:00Z" ou "-03:00" fixos: ".gte(col, inicioDoDiaUtc(de, fuso))" e
+ * ".lt(col, inicioDoDiaUtc(somarDias(ate, 1), fuso))".
+ */
+export function inicioDoDiaUtc(data: string, fuso = FUSO_PADRAO): string {
+  const alvo = Date.parse(data.slice(0, 10) + "T00:00:00Z");
+  let t = alvo;
+  // duas voltas acertam o deslocamento do fuso (e a troca de horário de verão, quando houver)
+  for (let i = 0; i < 2; i++) t += alvo - paredeEmMs(t, fuso);
+  return new Date(t).toISOString();
 }
 
 /** Mês atual (AAAA-MM) no fuso da organização. */

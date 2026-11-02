@@ -34,27 +34,46 @@ Todo o HUB é pensado para **público leigo e de pouco conhecimento técnico**, 
 2. Filtros fáceis: período em um clique (Este mês, Mês passado, Últimos 3 meses, Este ano, Escolher datas),
    no máximo três filtros à vista, o resto em "Mais filtros", e "Limpar".
 3. Exportar sempre em **PDF** (papel timbrado da MDC) e **Excel** (formatado, valores como número) exatamente o que está na tela.
-4. Tela vazia ensina o próximo passo; erro diz o que fazer em português (use `traduzirErro`).
+4. Tela vazia ensina o próximo passo; erro diz o que fazer em português (use `traduzirErro`). Só chegam à pessoa como
+   vieram as mensagens do próprio HUB (`raise exception` das funções do banco, código P0001, e `ErroApp`/`new Error`
+   do site); erro técnico desconhecido vira "Não foi possível concluir. Tente de novo; se continuar, avise a equipe MDC."
 5. Funciona no celular.
-6. Componentes prontos: `components/ui/` (Modal, Abas, Aviso, Carregando, EstadoVazio), identidade em `lib/identidade.ts`,
-   formatos em `lib/formato/`. Não recrie o que já existe.
+6. Componentes prontos: `components/ui/` (Modal, Abas, Aviso, Carregando, EstadoVazio e as peças da 8.3.1), identidade
+   em `lib/identidade.ts`, formatos em `lib/formato/`, CPF/CNPJ em `lib/documento.ts`, saudação e fuso em `lib/datas.ts`.
+   Não recrie o que já existe.
+7. **Proibido `window.confirm`, `window.prompt` e `window.alert`** (feios, sem acessibilidade, bloqueados em alguns
+   celulares). Use `JanelaConfirmar` ou `useConfirmar()` (sim/não), `JanelaMotivo` (quando o motivo fica no histórico)
+   e `useAviso()` (mensagem). O ESLint avisa (`no-restricted-globals`); vira erro depois que as telas antigas forem trocadas.
+8. **Quem pode abrir a tela é a Guarda** (`components/shell/Guarda.tsx`): confere a ferramenta do módulo e o nível da
+   aba da rota (`minimo`/`gestor` em `navegacao.ts`; telas sem aba em `TELAS_RESTRITAS`), com uma mensagem padrão.
+   A página não repete essa checagem; dentro dela, `pode("<ferramenta do módulo>", nível)` só esconde botões. Cada
+   módulo confere a própria ferramenta (Entradas usa `pode("entradas", …)`); `pode("financeiro", "gerir")` só onde o
+   banco é estrito (certificado digital da empresa, estoque negativo).
+9. Saudação ("Bom dia", "Boa tarde", "Boa noite") sempre por `saudacao(horaNoFuso(org.fuso))`; datas e horas filtradas
+   pelo dia da organização com `inicioDoDiaUtc(data, org.fuso)`, nunca `T03:00:00Z` ou `-03:00` fixos.
 
 ### 8.3.1 Molde visual das telas de lista (desde o Financeiro v2, 01/11/2026)
 
 Toda tela nova de lista ou relatório segue este molde (já aplicado no Financeiro, Plano de contas, Centros de custo,
-Fornecedores e clientes e Relatórios). As peças:
+Fornecedores e clientes e Relatórios). As peças moram em `components/ui/` (desde 02/11/2026; antes ficavam em
+`dominios/financeiro/componentes/Comuns`, que só reexporta enquanto o trabalho paralelo é integrado). A escolha da
+empresa (lembrada no navegador e a mesma em todos os módulos de gestão) é `EscolhaCliente`/`useClienteGestao`/
+`TelaEmpresa` de `dominios/organizacao/componentes/EmpresaEmGestao`. As peças:
 
 | Peça | Onde | Como usar |
 | --- | --- | --- |
 | Cabeçalho de página | `components/ui/CabecalhoPagina` | `titulo`, `descricao` (uma frase do que a tela faz) e `acoes` à direita: exportar primeiro, o botão principal (`btn-primario`) por último. No celular as ações descem para baixo do título |
 | Cartão de filtros | `components/ui/CartaoFiltros` + `MaisFiltros` | Empresa, período e no máximo mais um ou dois campos à vista; o resto em `MaisFiltros` (mostra quantos estão em uso). Passe `ativos` (etiquetas "Situação: Vencidos" com X para tirar) e `aoLimpar` ("Limpar filtros"). Campo de busca e seletor de empresa levam a classe `campo-largo` |
-| Indicadores | `Indicador` em `dominios/financeiro/componentes/Comuns` | Sempre com `icone` e `tom` (verde, vermelho, âmbar, azul, violeta, neutro). Com `aoClicar` vira filtro da lista (`ativo` mostra "Filtrando") |
+| Período | `components/ui/FiltroPeriodo` (+ `lib/periodo.ts`) | Este mês, Mês passado, Próximo mês, Últimos 90 dias, Este ano, Escolher datas, Tudo |
+| Exportar | `components/ui/BotoesExportar` (+ `lib/arquivos/exportarLista.ts`) | PDF e Excel do que está filtrado; as colunas são definidas uma vez para os dois |
+| Indicadores | `components/ui/Indicador` | `icone` é **obrigatório** (tipo `NomeIcone`) e `tom` (verde, vermelho, âmbar, azul, violeta, neutro; mesmos significados do Chip: "A vencer" é azul). Com `aoClicar` vira filtro da lista (`ativo` mostra "Filtrando") |
 | Lista | `components/ui/QuadroTabela` | Cabeçalho e total fixos ao rolar, linhas zebradas suaves. No celular cada linha vira cartão: cada `td` leva `data-rotulo="Coluna"`, a célula principal `className="celula-titulo"` (vai para o topo do cartão) e a de botões `celula-acoes`. Tabela de duas colunas pode ficar tabela (`cartoes={false}`) |
-| Situação | `Chip` em `Comuns` | Chip com bolinha de cor; use o mesmo tom para o mesmo significado (vermelho = vencido/problema, âmbar = atenção/a conciliar, azul = a vencer/previsto, verde = pago/feito, cinza = inativo/cancelado) |
-| Dinheiro | `Valor` em `Comuns` | `brl()` com negativo em vermelho; `sinal` pinta entrada positiva de verde |
+| Situação | `components/ui/Chip` (tons em `Tons.ts`) | Chip com bolinha de cor; use o mesmo tom para o mesmo significado (vermelho = vencido/problema, âmbar = atenção/a conciliar, azul = a vencer/previsto, verde = pago/feito, cinza = inativo/cancelado) |
+| Dinheiro | `components/ui/Valor` | `brl()` com negativo em vermelho; `sinal` pinta entrada positiva de verde |
 | Vazio | `components/ui/EstadoVazio` com `icone` e `titulo` | Ilustração + o que fazer agora + botão da ação (ou "Limpar filtros" quando é o filtro que esvaziou) |
 | Carregando | `components/ui/Esqueleto` | Blocos no formato da tela (indicadores + linhas). Mantém "Carregando…" para leitores de tela e para o `npm run telas` |
-| Botões | classes `btn` / `btn-primario` + `Icone` | Todo botão de ação tem ícone (`mais`, `editar`, `documento` para PDF, `planilha` para Excel, `transferir`, `check`…) |
+| Botões | classes `btn` / `btn-primario` + `Icone` | Todo botão de ação tem ícone (`mais`, `editar`, `documento` para PDF, `planilha` para Excel, `transferir`, `check`, `lixeira`, `cancelar`, `olho`, `copiar`, `voltar`, `imprimir`, `atualizar`…). Ícone novo: mesmo traço (24×24, 1,7) em `components/ui/Icone.tsx`; nome inexistente avisa no console em desenvolvimento |
+| Confirmar | `components/ui/JanelaConfirmar` / `useConfirmar()` | Sim ou não, em janela acessível; `perigo` deixa o botão vermelho. Com motivo para o histórico: `JanelaMotivo` |
 | Gráficos | `dominios/financeiro/componentes/GraficosPainel` | SVG puro nas cores de `demonstrativos/componentes/paletas.ts`; o SVG acompanha a largura do quadro (letra legível no celular) |
 
 Navegação dos módulos: cada módulo é um item do menu lateral (linha em `hub_apps`) com abas curtas na barra superior

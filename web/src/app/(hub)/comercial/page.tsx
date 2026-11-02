@@ -30,7 +30,6 @@ function Funil() {
   const [verArquivados, setVerArquivados] = useState(false);
   const [limpar, setLimpar] = useState(false);
   const [aviso, setAviso] = useState<string | null>(null);
-  const podeGerir = pode("comercial", "gerir");
   const [arrastando, setArrastando] = useState<string | null>(null);
   const [novo, setNovo] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
@@ -115,17 +114,6 @@ function Funil() {
         ? `${data} oportunidade(s) arquivada(s). Ficam em "Arquivados" e podem ser restauradas.`
         : `${data} oportunidade(s) de volta ao funil.`,
     );
-    void carregar();
-  }
-
-  async function excluir(o: Oportunidade) {
-    if (
-      !confirm(`Excluir ${o.empresa} de vez? Atividades e contratos em rascunho também são apagados. Para só tirar do funil, use Arquivar.`)
-    )
-      return;
-    const { error } = await supabase().from("crm_oportunidades").delete().eq("id", o.id);
-    if (error) return setErro(traduzirErro(error));
-    setAviso(`${o.empresa} excluída.`);
     void carregar();
   }
 
@@ -253,11 +241,6 @@ function Funil() {
                         Restaurar
                       </button>
                     )}
-                    {podeGerir && !o.cliente_id && (
-                      <button className="btn-link !text-[var(--perigo)]" onClick={() => excluir(o)}>
-                        Excluir
-                      </button>
-                    )}
                   </td>
                 </tr>
               ))}
@@ -318,7 +301,6 @@ function Funil() {
                                 );
                                 if (m !== null) void arquivar([o.id], m);
                               }}
-                              aoExcluir={podeGerir && !o.cliente_id ? () => excluir(o) : undefined}
                             />
                           )}
                         </div>
@@ -497,7 +479,8 @@ function NovaOportunidade({ aoFechar, aoCriar }: { aoFechar: () => void; aoCriar
   );
 }
 
-function MenuCartao({ aoArquivar, aoExcluir }: { aoArquivar: () => void; aoExcluir?: () => void }) {
+// Nada se apaga (migração 036): oportunidade sai do funil arquivando, com motivo.
+function MenuCartao({ aoArquivar }: { aoArquivar: () => void }) {
   const [aberto, setAberto] = useState(false);
   return (
     <div className="relative -mr-1 -mt-1" onClick={(e) => e.stopPropagation()}>
@@ -514,11 +497,6 @@ function MenuCartao({ aoArquivar, aoExcluir }: { aoArquivar: () => void; aoExclu
           <button className="block w-full px-3 py-1.5 text-left hover:bg-[var(--fundo)]" onMouseDown={aoArquivar}>
             Arquivar (dar baixa)
           </button>
-          {aoExcluir && (
-            <button className="block w-full px-3 py-1.5 text-left text-[var(--perigo)] hover:bg-red-50" onMouseDown={aoExcluir}>
-              Excluir
-            </button>
-          )}
         </div>
       )}
     </div>

@@ -1,7 +1,7 @@
 // Estoque › Movimentações: entrada, saída, inventário, transferência e estorno manuais.
 "use client";
 
-import { TelaEmpresa } from "@/dominios/financeiro/componentes/TelaEmpresa";
+import { TelaEmpresa } from "@/dominios/organizacao/componentes/EmpresaEmGestao";
 import { AbaMovimentos } from "@/dominios/financeiro/componentes/EstoqueMovimentos";
 
 export default function PaginaMovimentos() {

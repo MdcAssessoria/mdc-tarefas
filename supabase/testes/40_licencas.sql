@@ -151,7 +151,9 @@ select lic_salvar_contrato(jsonb_build_object('cliente', '00000000-0000-0000-000
 \echo '--- nada se apaga nem muda por fora das funções'
 delete from lic_cobrancas;
 update lic_contratos set valor_mensal = 1;
+\echo '--- bloqueio gravado direto (deve falhar)'
 insert into lic_bloqueios (org_id, cliente_id, motivo) values ('00000000-0000-0000-0000-0000000000a1', '00000000-0000-0000-0000-0000000000c2', 'direto');
+\echo '--- nada mudou: as mensalidades continuam e nenhum contrato foi alterado'
 select count(*) as mensalidades, (select count(*) from lic_contratos where valor_mensal = 1) as alterados from lic_cobrancas;
 reset role;
 

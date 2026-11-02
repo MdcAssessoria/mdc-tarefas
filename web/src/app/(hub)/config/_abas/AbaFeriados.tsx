@@ -8,6 +8,7 @@ import { hojeISO } from "@/lib/datas";
 import { traduzirErro } from "@/lib/erros";
 import { fmtData } from "@/lib/formato/datas";
 import { useMensagem } from "./useMensagem";
+import { JanelaMotivo } from "@/dominios/financeiro/componentes/Comuns";
 
 interface Feriado {
   id: string;
@@ -20,12 +21,14 @@ export function AbaFeriados() {
   const { org } = useOrg();
   const [lista, setLista] = useState<Feriado[]>([]);
   const [novo, setNovo] = useState({ data: "", descricao: "" });
+  const [tirando, setTirando] = useState<Feriado | null>(null);
   const { mostrar, el } = useMensagem();
 
   const carregar = useCallback(async () => {
     const { data, error } = await supabase()
       .from("feriados")
       .select("*")
+      .eq("ativo", true)
       .gte("data", hojeISO(org.fuso).slice(0, 4) + "-01-01")
       .order("data");
     if (error) return mostrar(traduzirErro(error), true);
@@ -68,15 +71,8 @@ export function AbaFeriados() {
                 <td>{f.descricao}</td>
                 <td className="text-right text-xs text-[var(--texto-suave)]">
                   {f.org_id ? (
-                    <button
-                      className="btn-link"
-                      onClick={async () => {
-                        const { error } = await supabase().from("feriados").delete().eq("id", f.id);
-                        if (error) return mostrar(traduzirErro(error), true);
-                        void carregar();
-                      }}
-                    >
-                      remover
+                    <button className="btn-link" onClick={() => setTirando(f)}>
+                      tirar
                     </button>
                   ) : (
                     "nacional"
@@ -87,6 +83,24 @@ export function AbaFeriados() {
           </tbody>
         </table>
       </div>
+      {tirando && (
+        <JanelaMotivo
+          titulo="Tirar feriado"
+          descricao={
+            <>
+              {fmtData(tirando.data)} · {tirando.descricao} deixa de contar nos prazos. Ele fica guardado, com o motivo.
+            </>
+          }
+          botao="Tirar feriado"
+          aoConfirmar={async (motivo) => {
+            const { error } = await supabase().rpc("feriado_inativar", { p_feriado: tirando.id, p_motivo: motivo });
+            if (error) throw error;
+            setTirando(null);
+            void carregar();
+          }}
+          aoFechar={() => setTirando(null)}
+        />
+      )}
     </div>
   );
 }

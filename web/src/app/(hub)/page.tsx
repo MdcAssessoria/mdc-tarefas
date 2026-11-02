@@ -9,7 +9,7 @@ import type { SemanaRitmo } from "@/dominios/tarefas/componentes/RitmoSemanal";
 import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { supabase } from "@/lib/supabase";
 import { lerTudo } from "@/lib/lerTudo";
-import { hojeISO, somarDias } from "@/lib/datas";
+import { hojeISO, horaNoFuso, inicioDoDiaUtc, saudacao, somarDias } from "@/lib/datas";
 import { caminho } from "@/lib/caminho";
 import { traduzirErro } from "@/lib/erros";
 import type { Prioridade, Status } from "@/dominios/tarefas/tipos";
@@ -31,11 +31,6 @@ interface MinhaTarefa {
 }
 
 const ABERTAS: Status[] = ["a_fazer", "em_andamento", "aguardando"];
-
-function saudacao(fuso: string) {
-  const h = Number(new Date().toLocaleString("en-US", { hour: "numeric", hour12: false, timeZone: fuso }));
-  return h < 12 ? "Bom dia" : h < 18 ? "Boa tarde" : "Boa noite";
-}
 
 const segunda = (iso: string) => {
   const d = new Date(iso + "T12:00:00Z").getUTCDay(); // 0 = domingo
@@ -83,7 +78,7 @@ function Hub() {
             .eq("org_id", org.id)
             .eq("responsavel_id", eu.user_id)
             .eq("status", "concluida")
-            .gte("concluida_em", inicioJanela + "T03:00:00Z")
+            .gte("concluida_em", inicioDoDiaUtc(inicioJanela, org.fuso))
             .order("concluida_em", { ascending: false })
             .order("id")
             .range(de, ate),
@@ -94,7 +89,7 @@ function Hub() {
     }
     setAbertas(a);
     setFeitas(f);
-  }, [temTarefas, org.id, eu.user_id, inicioJanela]);
+  }, [temTarefas, org.id, org.fuso, eu.user_id, inicioJanela]);
 
   useEffect(() => {
     void carregar();
@@ -206,7 +201,7 @@ function Hub() {
         <div>
           <p className="text-[14px] text-[var(--texto-suave)]">{data.charAt(0).toUpperCase() + data.slice(1)}</p>
           <h1 className="font-display mt-1 text-[40px] font-medium leading-[1.05] text-[var(--marca)] sm:text-[48px]">
-            {saudacao(org.fuso)}, {primeiroNome}
+            {saudacao(horaNoFuso(org.fuso))}, {primeiroNome}
           </h1>
         </div>
         {temTarefas && (

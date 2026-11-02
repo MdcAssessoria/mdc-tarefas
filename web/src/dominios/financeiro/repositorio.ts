@@ -12,9 +12,9 @@ export async function importarPlano(cliente: string, arquivo: string, contas: Co
   ) as { total: number; novas: number; inativadas: number };
 }
 
-/** Desfaz um extrato importado por engano (só se nenhum lançamento dele foi conciliado). */
-export async function desfazerLote(lote: string) {
-  return exigir(await supabase().rpc("fin_desfazer_lote", { p_lote: lote })) as { apagadas: number };
+/** Desfaz um extrato importado por engano (só se nenhum lançamento dele foi conciliado): marca como desfeito, com motivo. */
+export async function desfazerLote(lote: string, motivo: string) {
+  return exigir(await supabase().rpc("fin_desfazer_lote", { p_lote: lote, p_motivo: motivo })) as { desfeitas: number };
 }
 
 export async function importarExtrato(conta: string, arquivo: string, formato: "ofx" | "planilha", e: ExtratoLido) {

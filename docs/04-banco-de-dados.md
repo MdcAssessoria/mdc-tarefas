@@ -71,6 +71,8 @@ erDiagram
         uuid org_id
         text nome
         jsonb apps
+        bool ativo
+        text inativado_motivo
     }
     hub_apps {
         text slug PK
@@ -125,6 +127,7 @@ erDiagram
         uuid setor_id
         uuid responsavel_id
         status_tarefa status
+        text cancelado_motivo
         date prazo
         date competencia
         uuid modelo_id
@@ -205,8 +208,9 @@ pode fazer aquilo (normalmente com `app.hub_pode(org, app, nível)` ou `app.port
 | Clientes | `importar_clientes`, `inativar_cliente`, `reativar_cliente` |
 | Tarefas | `gerar_competencia`, `prever_rotina` |
 | Societário | `soc_abrir_processo`, `soc_mudar_fase`, `soc_registrar_exigencia`, `soc_concluir_processo`, `soc_cancelar_processo` |
-| Portal | `portal_convidar`, `portal_minhas_empresas`, `portal_rotinas`, `portal_processos`, `portal_abrir_conversa`, `portal_conversa_para_tarefa`, `portal_publicar_balancete`, `portal_publicar_parecer` |
-| Vencimentos | `venc_renovar` |
+| Portal | `portal_convidar` (036: lista fechada de permissões), `portal_minhas_empresas`, `portal_rotinas`, `portal_processos`, `portal_abrir_conversa`, `portal_conversa_para_tarefa`, `portal_publicar_balancete`, `portal_publicar_parecer` |
+| Vencimentos | `venc_renovar`, `venc_encerrar` (036) |
+| Tarefas e configurações (036, nada se apaga) | `tarefa_cancelar`, `feriado_inativar`, `hub_inativar_perfil`, `portal_cancelar_convite` |
 | CRM | `crm_receber_lead` (página pública de leads), `crm_converter_cliente`, `crm_arquivar` |
 | Certificado | `cert_salvar`, `cert_obter`, `cert_remover` (segredos no Supabase Vault) |
 | Licenças | `lic_salvar_produto`, `lic_salvar_plano`, `lic_salvar_contrato`, `lic_encerrar_contrato`, `lic_reajustar_contrato`, `lic_gerar_cobrancas`, `lic_baixar_cobranca`, `lic_desfazer_baixa`, `lic_cancelar_cobranca`, `lic_bloquear`, `lic_desbloquear`, `lic_definir_parametros`, `portal_licenca_situacao` |
@@ -215,8 +219,11 @@ pode fazer aquilo (normalmente com `app.hub_pode(org, app, nível)` ou `app.port
 
 ## 4.4 Funções internas e gatilhos (`app.*`)
 
-- **Permissão:** `hub_pode`, `papel`, `eh_gestor`, `portal_pode`, `minhas_orgs`, `meu_setor`, `hub_peso`; módulos pagos do
-  Portal: `cliente_tem_modulo(cliente, módulo)` e `cliente_bloqueado(cliente)` (031).
+- **Permissão:** `hub_pode` (só a ferramenta pedida), `hub_pode_algum` (alguma das ferramentas), `papel`, `eh_gestor`,
+  `portal_pode`, `minhas_orgs`, `meu_setor`, `hub_peso`; módulos pagos do Portal: `cliente_tem_modulo(cliente, módulo)`
+  (módulo ativo, contrato vigente, sem bloqueio) e `cliente_bloqueado(cliente)` (031); dados de gestão:
+  `gestao_pode(cliente, nível, módulos[])`, `fin_pode(cliente, nível)`, `portal_gestao`, `modulos_gestao`,
+  `modulos_operar` (036, ver [5.7](05-seguranca-e-acessos.md)); permissões do Portal: `portal_perm_validas` (036).
 - **Rotinas:** `gerar_tarefas_recorrentes` (pg_cron diário), `venc_avisar` (avisos de vencimento), `lic_rotina_diaria`
   (mensalidades de licença e avisos de atraso),
   `vencimento` e `dia_util` (calculam prazo útil com feriados).
@@ -231,14 +238,27 @@ pode fazer aquilo (normalmente com `app.hub_pode(org, app, nível)` ou `app.port
 | `publicacao_protegida` | `portal_balancetes`, `portal_pareceres` | Publicar só pela função de publicação |
 | `portal_mensagens_antes` | `portal_mensagens` | Autor e tipo da mensagem vêm do usuário logado |
 | `tarefas_historico` | `tarefas` | Registra cada mudança da tarefa |
-| `crm_op_excluir` | `crm_oportunidades` | Não exclui oportunidade que virou cliente ou tem contrato assinado |
+| `nada_se_apaga` | `tarefas`, `venc_itens`, `crm_oportunidades`, `crm_atividades`, `crm_contratos`, `feriados`, `hub_perfis`, `portal_convites`, `clientes` | Recusa apagar (036); o DELETE também foi revogado da API. Use cancelar/encerrar/inativar/arquivar |
+| `est_pedido_permissao` | `est_pedidos` | Venda grava com Saídas ou Financeiro; compra com Entradas ou Financeiro (036) |
+| `lic_contrato_produto_unico` | `lic_contrato_produtos` | Trava o cliente e recusa o mesmo módulo em dois contratos ativos, mesmo ao mesmo tempo (036) |
+| `portal_perm_valida` | `portal_usuarios`, `portal_convites` | Só permissões da lista; liberar Financeiro exige Financeiro (gerir) (036) |
+| `cliente_cnpj` | `clientes` | CNPJ não muda se há certificado ou nota fiscal (salvo administrador); mudança vai para a auditoria (036) |
+| `perfil_ativo` | `membros` | Pessoa só recebe perfil ativo (036) |
 | `est_item_valida_v2` | `est_itens` | Custo médio só o HUB grava; grupo da mesma empresa; foto só na pasta da empresa (033) |
 | `fis_depara_valida` | `fis_depara_itens` | O item do estoque do de-para é da mesma empresa |
 
 Funções internas das notas (032): `app.fis_gravar_nota` (grava ou completa a nota a partir do XML lido),
 `app.fis_gravar_evento` (evento aceito muda manifestação/cancelamento), `app.fis_tipo_efetivo` (regra do tipo de
 entrada: empresa › organização › geral), `app.fis_caminho_pode` (acesso ao bucket `fiscal`), `app.fis_org_visivel`,
-`app.fis_direcao`, `app.fis_digitos`, `app.fis_manifestacao_do_tipo`.
+`app.fis_direcao`, `app.fis_digitos`, `app.fis_manifestacao_do_tipo`; 036: `app.fis_modelo_da_chave` e
+`app.fis_dv_chave` (confere a chave da nota enviada à mão), `app.fin_lancar_titulos` (lança contas sem conferir
+permissão; usada por `fin_lancar`, pelas notas e pelos pedidos).
+
+Colunas novas da 036 ("nada se apaga" e auditoria): `tarefas.cancelado_em/por/motivo`, `venc_itens.encerrado_em/por/motivo`,
+`feriados.ativo` e `inativado_em/por/motivo` (o índice único de data vale só entre os ativos), `hub_perfis.ativo` e
+`inativado_em/por/motivo`, `portal_convites.cancelado_em/por/motivo`, `fin_extrato_lotes.desfeito_em/por/motivo` (linhas
+do lote ficam com situação `desfeita`; a chave do extrato só impede duplicidade entre as que valem),
+`lic_cobrancas.aviso_bloqueio_em` (aviso de sugerir bloqueio sai uma vez só).
 
 ## 4.5 Migrações: onde está a versão que vale
 

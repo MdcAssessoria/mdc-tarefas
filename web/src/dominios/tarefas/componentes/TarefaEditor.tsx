@@ -11,6 +11,7 @@ import type { Arquivo } from "@/lib/arquivos/armazenamento";
 import { fmtData, fmtDataHora } from "@/lib/formato/datas";
 import { nomeCliente } from "@/dominios/clientes/nome";
 import { Icone } from "@/components/ui/Icone";
+import { JanelaMotivo } from "@/dominios/financeiro/componentes/Comuns";
 
 interface Comentario {
   id: string;
@@ -66,6 +67,7 @@ export function TarefaEditor({
   const [arquivos, setArquivos] = useState<Arquivo[]>([]);
   const [erro, setErro] = useState<string | null>(null);
   const [salvando, setSalvando] = useState(false);
+  const [cancelando, setCancelando] = useState(false);
   const [comentarios, setComentarios] = useState<Comentario[]>([]);
   const [historico, setHistorico] = useState<Historico[]>([]);
   const [novoComentario, setNovoComentario] = useState("");
@@ -130,10 +132,11 @@ export function TarefaEditor({
     aoFechar();
   }
 
-  async function excluir() {
-    if (!tarefa || !confirm("Excluir esta tarefa? Essa ação não pode ser desfeita.")) return;
-    const { error } = await supabase().from("tarefas").delete().eq("id", tarefa.id);
-    if (error) return setErro(traduzirErro(error));
+  // nada se apaga: a tarefa é cancelada com motivo (fica no histórico)
+  async function cancelarTarefa(motivo: string) {
+    if (!tarefa) return;
+    const { error } = await supabase().rpc("tarefa_cancelar", { p_tarefa: tarefa.id, p_motivo: motivo });
+    if (error) throw error;
     aoSalvar();
     aoFechar();
   }
@@ -273,9 +276,9 @@ export function TarefaEditor({
             <button type="button" className="btn" onClick={aoFechar}>
               Cancelar
             </button>
-            {tarefa && podeEditarCadastros && (
-              <button type="button" className="btn ml-auto text-[var(--perigo)]" onClick={excluir}>
-                Excluir
+            {tarefa && podeEditarCadastros && tarefa.status !== "cancelada" && (
+              <button type="button" className="btn ml-auto text-[var(--perigo)]" onClick={() => setCancelando(true)}>
+                Cancelar tarefa
               </button>
             )}
           </div>
@@ -393,6 +396,15 @@ export function TarefaEditor({
           </section>
         )}
       </aside>
+      {cancelando && tarefa && (
+        <JanelaMotivo
+          titulo="Cancelar tarefa"
+          descricao={<>A tarefa “{tarefa.titulo}” fica guardada como cancelada, com o motivo no histórico.</>}
+          botao="Cancelar tarefa"
+          aoConfirmar={cancelarTarefa}
+          aoFechar={() => setCancelando(false)}
+        />
+      )}
     </div>
   );
 }

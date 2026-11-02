@@ -45,6 +45,11 @@ O GitHub roda `verificar` a cada push e pull request (`.github/workflows/web.yml
    `npx supabase gen types typescript --project-id bulqqdgfrrpqquqvjjfa > web/src/lib/database.types.ts`
 5. Faça commit da migração e dos tipos juntos.
 
+> **Migração grande:** se a ferramenta recusar ou cancelar uma migração muito longa, aplique em partes, na ordem, cada
+> uma com nome próprio (`NNN_assunto_parte1`, `_parte2`…), sem mudar o texto do arquivo. A 036 (auditoria de 02/11/2026)
+> foi aplicada assim em 3 partes no dia 02/11/2026: linhas 1–609 (regras de acesso e Financeiro), 610–1232 (notas,
+> estoque e pedidos) e 1233–fim (licenças, Portal, Storage, índices, "nada se apaga" e clientes).
+
 > **Próximo passo recomendado pela auditoria:** adotar a Supabase CLI com um projeto de **homologação**, para não
 > testar migração direto em produção. Veja [`decisoes/0002-homologacao-e-cli.md`](decisoes/0002-homologacao-e-cli.md).
 
@@ -124,3 +129,10 @@ pagar + estoque + de-para, desfazer, upload, Storage e acessos): parcelas, baixa
 travas de situação, acesso do cliente pelo Portal e de quem não tem acesso, saldo de estoque, inventário,
 transferência, estorno e estoque negativo. Cada linha marcada "(deve falhar)" precisa terminar em erro com a mensagem
 em português. Rode antes de aplicar uma migração nova dessas tabelas.
+
+No fim, o `rodar.sh` aplica a 035 e a 036 com as regras de acesso reais (`79_base_modulos.sql`, `89_base_036.sql`, que
+simula tarefas, feriados, perfis, CRM, convites do Portal e contas do Auth) e roda `80_modulos.sql` e
+`90_auditoria_036.sql`: as provas P1–P12 da auditoria de 02/11/2026 (cada exploração termina em erro), os fluxos normais
+por módulo (Entradas lança nota, Estoque movimenta, Relatórios só lê, Portal com contrato do Financeiro opera, cliente
+bloqueado não envia certificado), a corrida de dois contratos ao mesmo tempo (`dblink`) e o "nada se apaga" (DELETE
+direto falha; cancelar/encerrar/inativar com motivo funciona). Nenhum bloco sem a marca "(deve falhar)" pode ter ERROR.

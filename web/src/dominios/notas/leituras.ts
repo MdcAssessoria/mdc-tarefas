@@ -2,6 +2,7 @@
 import { supabase } from "@/lib/supabase";
 import { lerTudo } from "@/lib/lerTudo";
 import { exigir } from "@/lib/exigir";
+import { inicioDoDiaUtc, somarDias } from "@/lib/datas";
 import type { RegraCredito } from "./creditos";
 import type {
   CertificadoEmpresa,
@@ -14,13 +15,16 @@ import type {
   TipoEntradaRegra,
 } from "./tipos";
 
-/** Notas da empresa; com período, pela data de emissão (inclusive). */
-export const lerNotas = (cliente: string, filtro: { de?: string; ate?: string; direcao?: "entrada" | "saida" } = {}) =>
+/** Notas da empresa; com período, pela data de emissão (inclusive), contando o dia no fuso da organização. */
+export const lerNotas = (
+  cliente: string,
+  filtro: { de?: string; ate?: string; direcao?: "entrada" | "saida"; fuso?: string } = {},
+) =>
   lerTudo<Nota>((de, ate) => {
     let q = supabase().from("fis_notas").select("*").eq("cliente_id", cliente);
     if (filtro.direcao) q = q.eq("direcao", filtro.direcao);
-    if (filtro.de) q = q.gte("emissao", `${filtro.de}T00:00:00-03:00`);
-    if (filtro.ate) q = q.lte("emissao", `${filtro.ate}T23:59:59-03:00`);
+    if (filtro.de) q = q.gte("emissao", inicioDoDiaUtc(filtro.de, filtro.fuso));
+    if (filtro.ate) q = q.lt("emissao", inicioDoDiaUtc(somarDias(filtro.ate, 1), filtro.fuso));
     return q.order("emissao", { ascending: false }).order("id").range(de, ate);
   });
 

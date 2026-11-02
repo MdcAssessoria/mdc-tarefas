@@ -1,7 +1,7 @@
 // Entradas › Pedidos de compra: receber a mercadoria põe no estoque (com custo médio) e lança as contas a pagar.
 "use client";
 
-import { TelaEmpresa } from "@/dominios/financeiro/componentes/TelaEmpresa";
+import { TelaEmpresa } from "@/dominios/organizacao/componentes/EmpresaEmGestao";
 import { TelaPedidos } from "@/dominios/financeiro/componentes/TelaPedidos";
 
 export default function PaginaPedidosCompra() {

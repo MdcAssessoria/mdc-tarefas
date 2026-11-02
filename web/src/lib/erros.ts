@@ -1,4 +1,8 @@
 // Traduz para português as mensagens de erro do Supabase, do Postgres e do navegador.
+// Regra (auditoria de 02/11/2026): mensagem crua só chega à pessoa quando é nossa e já está em português:
+// - `raise exception` das funções do HUB (código Postgres P0001);
+// - erro do próprio site (texto, `new Error("…")` ou ErroApp).
+// Qualquer outra coisa sem regra conhecida (Postgres, PostgREST, rede, erro de programação) vira a MENSAGEM_GENERICA.
 const REGRAS: [RegExp, string][] = [
   [
     /failed to fetch|networkerror|network request failed|load failed|fetch failed/i,
@@ -45,6 +49,27 @@ const REGRAS: [RegExp, string][] = [
   [/internal server error|unexpected failure|database error/i, "Erro no servidor. Tente novamente; se continuar, avise o suporte."],
 ];
 
+export const MENSAGEM_GENERICA = "Não foi possível concluir. Tente de novo; se continuar, avise a equipe MDC.";
+
+/** Erro com mensagem escrita pelo site, em português, para mostrar à pessoa como está. */
+export class ErroApp extends Error {
+  constructor(mensagem: string) {
+    super(mensagem);
+    this.name = "ErroApp";
+  }
+}
+
+/** A mensagem é nossa (em português) e pode ser mostrada como veio? */
+function mensagemPropria(e: unknown): boolean {
+  if (typeof e === "string") return true;
+  if (e instanceof ErroApp) return true;
+  if (!e || typeof e !== "object") return false;
+  const codigo = "code" in e ? (e as { code: unknown }).code : undefined;
+  if (codigo === "P0001") return true; // raise exception das funções app.* / public.* do HUB
+  // new Error("…") do próprio site (inclusive o que exigir() já traduziu); TypeError, PostgrestError etc. não
+  return e instanceof Error && e.name === "Error" && codigo === undefined;
+}
+
 export function traduzirErro(e: unknown): string {
   const msg =
     typeof e === "string" ? e : e && typeof e === "object" && "message" in e ? String((e as { message: unknown }).message ?? "") : "";
@@ -53,6 +78,7 @@ export function traduzirErro(e: unknown): string {
     const m = msg.match(re);
     if (m) return pt.replace("$1", m[1] ?? "");
   }
-  // Mensagens já em português (geradas pelo próprio banco/app) passam direto.
-  return msg;
+  if (mensagemPropria(e)) return msg;
+  if (process.env.NODE_ENV !== "production") console.warn("Erro sem tradução (mostrado como mensagem genérica):", e);
+  return MENSAGEM_GENERICA;
 }

@@ -1,7 +1,7 @@
 // Saídas › Pedidos de venda: confirmar dá baixa no estoque e lança as contas a receber.
 "use client";
 
-import { TelaEmpresa } from "@/dominios/financeiro/componentes/TelaEmpresa";
+import { TelaEmpresa } from "@/dominios/organizacao/componentes/EmpresaEmGestao";
 import { TelaPedidos } from "@/dominios/financeiro/componentes/TelaPedidos";
 
 export default function PaginaPedidosVenda() {

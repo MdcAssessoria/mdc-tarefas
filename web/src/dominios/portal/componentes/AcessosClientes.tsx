@@ -1,5 +1,6 @@
-// Aba "Clientes (portal)" de Pessoas e acessos: quem de cada cliente acessa o Portal, com quais permissões,
-// convites pendentes e o editor de acesso.
+// Gestão dos acessos de clientes ao Portal: quem de cada cliente acessa, com quais permissões, convites pendentes e o
+// editor de acesso. Usada na aba "Clientes (portal)" de Pessoas e acessos e em Atendimento › Acessos do portal.
+// Convite pendente se cancela com motivo pela função portal_cancelar_convite (036); nada é apagado da tela.
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -11,6 +12,8 @@ import { perfilDasPerms } from "@/dominios/portal/permissoes";
 import type { VinculoCliente } from "@/dominios/portal/tipos";
 import { EditorCliente } from "./EditorCliente";
 import { gerarLinkConvite } from "@/dominios/acessos/convite";
+import { JanelaMotivo } from "@/components/ui/JanelaMotivo";
+import { exigir } from "@/lib/exigir";
 
 export function AcessosClientes({
   aoAviso,
@@ -25,12 +28,13 @@ export function AcessosClientes({
   const [editar, setEditar] = useState<string | null>(null); // e-mail
   const [busca, setBusca] = useState("");
   const [erroLista, setErroLista] = useState<string | null>(null);
+  const [cancelar, setCancelar] = useState<{ email: string; nome: string; clientes: string[] } | null>(null);
 
   const carregar = useCallback(async () => {
     const sb = supabase();
     const [u, c] = await Promise.all([
       sb.from("portal_usuarios").select("user_id,cliente_id,nome,email,permissoes,ativo").eq("org_id", org.id),
-      sb.from("portal_convites").select("cliente_id,nome,email,permissoes").eq("org_id", org.id),
+      sb.from("portal_convites").select("cliente_id,nome,email,permissoes").eq("org_id", org.id).is("cancelado_em", null),
     ]);
     if (u.error) return setErroLista(traduzirErro(u.error));
     setErroLista(null);
@@ -117,6 +121,12 @@ export function AcessosClientes({
                         <button className="btn-link block text-sm" onClick={() => linkWhats(p.email, p.nome)}>
                           Link para WhatsApp
                         </button>
+                        <button
+                          className="btn-link block text-sm !text-[var(--perigo)]"
+                          onClick={() => setCancelar({ email: p.email, nome: p.nome, clientes: p.vs.map((v) => v.cliente_id) })}
+                        >
+                          Cancelar convite
+                        </button>
                       </div>
                     )}
                   </td>
@@ -144,6 +154,27 @@ export function AcessosClientes({
           </tbody>
         </table>
       </div>
+      {cancelar && (
+        <JanelaMotivo
+          titulo="Cancelar convite"
+          descricao={
+            <>
+              O convite de <b>{cancelar.nome}</b> deixa de valer. Se a pessoa ainda não criou a senha, não vai conseguir entrar. O motivo fica no
+              histórico.
+            </>
+          }
+          botao="Cancelar convite"
+          aoFechar={() => setCancelar(null)}
+          aoConfirmar={async (motivo) => {
+            for (const cliente of cancelar.clientes) {
+              exigir(await supabase().rpc("portal_cancelar_convite", { p_cliente: cliente, p_email: cancelar.email, p_motivo: motivo }));
+            }
+            setCancelar(null);
+            aoAviso(`Convite de ${cancelar.nome} cancelado.`);
+            await carregar();
+          }}
+        />
+      )}
       {(novo || pessoaEditada) && (
         <EditorCliente
           pessoa={pessoaEditada}

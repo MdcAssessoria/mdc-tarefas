@@ -18,7 +18,8 @@ import {
   valorDoMes,
   vencimentoDaCompetencia,
 } from "./regras";
-import { horaNoFuso, mensagemCobranca, saudacao } from "./mensagem";
+import { mensagemCobranca } from "./mensagem";
+import { horaNoFuso, saudacao } from "@/lib/datas";
 import type { Cobranca, Contrato } from "./tipos";
 
 const cob = (p: Partial<Cobranca>): Cobranca => ({

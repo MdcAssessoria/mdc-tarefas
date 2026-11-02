@@ -45,13 +45,21 @@ web/src/
 │   ├── portal/                 fora do grupo: Portal do Cliente (o cliente não é membro da equipe)
 │   └── tv/                     fora do grupo: Painel TV em tela cheia
 ├── components/
-│   ├── ui/                     Modal, Abas, Aviso, Carregando, EstadoVazio, Etiquetas, MultiSelecao, Icone
-│   └── shell/                  Moldura, MenuLateral, BarraSuperior, BuscaRapida, Sino, Guarda, navegacao.ts
+│   ├── ui/                     peças de tela sem domínio (recebem tudo por props):
+│   │                           Modal, Abas, Aviso (useAviso), Carregando, Esqueleto, EstadoVazio, Etiquetas,
+│   │                           MultiSelecao, CampoArquivo, Icone (NomeIcone), CabecalhoPagina, CartaoFiltros,
+│   │                           QuadroTabela, e as peças das listas (desde 02/11/2026): BotoesExportar,
+│   │                           FiltroPeriodo, Indicador, Chip, Valor, Tons, JanelaMotivo, JanelaConfirmar (useConfirmar)
+│   └── shell/                  Moldura, MenuLateral, BarraSuperior, BuscaRapida, Sino, Guarda (bloqueia módulo e
+│                               nível da aba), navegacao.ts (NAV, TELAS_RESTRITAS, podeAbrirRota)
 ├── dominios/                   REGRAS DE NEGÓCIO, um assunto por pasta (tipos, cálculos, acesso ao banco, componentes/)
-│   ├── organizacao/            OrgProvider (useOrg), tipos de organização, membro, setor, papel
+│   ├── organizacao/            OrgProvider (useOrg), tipos de organização, membro, setor, papel e
+│   │                           componentes/EmpresaEmGestao (useClienteGestao, EscolhaCliente, TelaEmpresa: a empresa
+│   │                           em uso no Financeiro, Estoque, Saídas, Entradas, Plano de contas e Relatórios)
 │   ├── tarefas/                tipos, useTarefas, componentes/ (TarefaEditor, PainelTV, Badges, RitmoSemanal)
 │   ├── clientes/               tipos, nomeCliente, importação do Domínio, "Colar lista", grupos
-│   ├── acessos/                níveis por ferramenta, ferramentas do HUB, convite, texto do histórico
+│   ├── acessos/                níveis por ferramenta, ferramentas do HUB, permissoes.ts (podeNoApp: o pode() da
+│   │                           tela), convite, texto do histórico
 │   ├── portal/                 permissões do Portal do Cliente e a gestão dos acessos de clientes
 │   ├── societario/             processos, fases e órgãos
 │   ├── demonstrativos/         balancete/ (leitura, classificacao, resumo, indices, fragilidades), calculosDemonstracoes,
@@ -60,10 +68,16 @@ web/src/
 │   ├── atendimento/            chat e componentes/ChatMensagens
 │   └── vencimentos/            tipos de vencimento
 └── lib/                        INFRAESTRUTURA sem regra de negócio
-    ├── supabase.ts, database.types.ts, exigir.ts, lerTudo.ts, useConsulta.ts, erros.ts
-    ├── caminho.ts, datas.ts, formato/ (datas, moeda, numero), texto.ts, markdown.ts
-    ├── identidade.ts, marca.ts, armazenamentoLocal.ts, useAgora.ts
-    └── arquivos/               armazenamento (Storage), excel, relatorioPdf, planilha, baixar
+    ├── supabase.ts, database.types.ts, exigir.ts, lerTudo.ts, useConsulta.ts
+    ├── erros.ts                traduzirErro (só P0001 e erro do próprio site passam crus), ErroApp, MENSAGEM_GENERICA
+    ├── funcoesEdge.ts          chamarFuncao / chamarFuncaoBruta: Funções Edge com a sessão e erro em português
+    ├── datas.ts                hojeISO, diaNoFuso, horaNoFuso, saudacao (regra única), inicioDoDiaUtc, somarDias…
+    ├── documento.ts            soDigitos, cpfValido, cnpjValido, documentoValido, formatarDocumento
+    ├── periodo.ts              períodos dos filtros (Este mês, Mês passado…) e as datas de cada um
+    ├── caminho.ts, formato/ (datas, moeda, numero), texto.ts, markdown.ts
+    ├── identidade.ts, marca.ts, armazenamentoLocal.ts (CHAVES), useAgora.ts
+    └── arquivos/               armazenamento (Storage), excel, relatorioPdf, planilha, baixar, exportarLista (PDF e
+                                Excel de uma lista de tela, usado pelo BotoesExportar)
 ```
 
 Convenções de pasta:
@@ -130,13 +144,17 @@ import proibido quebra o `npm run verificar` com a explicação.
 
 | Assunto | Onde |
 | --- | --- |
-| Menu lateral, abas de cada módulo, módulo ativo por rota | `web/src/components/shell/navegacao.ts` |
+| Menu lateral, abas de cada módulo, módulo ativo por rota, nível exigido por tela | `web/src/components/shell/navegacao.ts` |
+| Bloqueio de tela não liberada (uma mensagem só para todo o HUB) | `web/src/components/shell/Guarda.tsx` |
+| Peças comuns das telas de lista (indicador, chip, exportar, período, janelas de confirmação) | `web/src/components/ui/` |
 | Sessão, organização, membros, clientes e permissões na tela (`useOrg`) | `web/src/dominios/organizacao/OrgProvider.tsx` |
 | Leitura e classificação do balancete, índices, fragilidades | `web/src/dominios/demonstrativos/balancete/` |
 | Balanço, DFC, saúde financeira | `web/src/dominios/demonstrativos/calculosDemonstracoes.ts` |
 | Gravar e recalcular balancete no banco | `web/src/dominios/demonstrativos/repositorio.ts` |
 | Permissões do Portal do Cliente | `web/src/dominios/portal/permissoes.ts` |
-| Dinheiro, datas, números | `web/src/lib/formato/` |
+| Dinheiro, datas, números | `web/src/lib/formato/` (formatação) e `web/src/lib/datas.ts` (cálculo e fuso) |
+| CPF e CNPJ | `web/src/lib/documento.ts` |
+| Chamar uma Função Edge | `web/src/lib/funcoesEdge.ts` |
 | Dados oficiais da MDC (CNPJ, telefone, responsável técnico) | `web/src/lib/identidade.ts` |
 | Excel e PDF de relatório | `web/src/lib/arquivos/` |
 | Regras de acesso de verdade (quem lê e grava o quê) | banco: RLS e funções `app.*` em `supabase/migrations/` (cap. 5) |

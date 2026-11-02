@@ -7,7 +7,7 @@ import Link from "next/link";
 import { useCallback, useMemo, useState } from "react";
 import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { nomeCliente } from "@/dominios/clientes/nome";
-import { EscolhaCliente, useClienteFinanceiro } from "@/dominios/financeiro/componentes/EscolhaCliente";
+import { EscolhaCliente, useClienteGestao } from "@/dominios/organizacao/componentes/EmpresaEmGestao";
 import { lerContas, lerLinhas, lerPlano, lerTransferencias, rotuloConta } from "@/dominios/financeiro/leituras";
 import { saldoComTransferencias } from "@/dominios/financeiro/painel";
 import { NovaTransferencia } from "@/dominios/financeiro/componentes/NovaTransferencia";
@@ -30,7 +30,8 @@ import { CartaoFiltros } from "@/components/ui/CartaoFiltros";
 import { Esqueleto } from "@/components/ui/Esqueleto";
 import { EstadoVazio } from "@/components/ui/EstadoVazio";
 import { Icone } from "@/components/ui/Icone";
-import { Chip, Indicador } from "@/dominios/financeiro/componentes/Comuns";
+import { Chip } from "@/components/ui/Chip";
+import { Indicador } from "@/components/ui/Indicador";
 import { useAviso } from "@/components/ui/Aviso";
 
 type Form = {
@@ -57,7 +58,7 @@ const VAZIO: Form = {
 
 export default function PaginaContasBancarias() {
   const { org, pode } = useOrg();
-  const financeiro = useClienteFinanceiro();
+  const financeiro = useClienteGestao();
   const cliente = financeiro.cliente;
   const podeOperar = pode("financeiro", "operar");
   const { aviso, mostrar } = useAviso();
@@ -267,7 +268,7 @@ export default function PaginaContasBancarias() {
       <CartaoFiltros
         ativos={mostrarInativas ? [{ id: "inativas", rotulo: "Com contas inativas", aoTirar: () => setMostrarInativas(false) }] : []}
       >
-        <EscolhaCliente financeiro={financeiro} />
+        <EscolhaCliente gestao={financeiro} />
         <label className="flex min-h-10 items-center gap-2 text-sm">
           <input type="checkbox" checked={mostrarInativas} onChange={(e) => setMostrarInativas(e.target.checked)} />
           Mostrar contas inativas

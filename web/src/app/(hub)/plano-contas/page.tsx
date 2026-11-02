@@ -6,7 +6,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { nomeCliente } from "@/dominios/clientes/nome";
-import { EscolhaCliente, useClienteFinanceiro } from "@/dominios/financeiro/componentes/EscolhaCliente";
+import { EscolhaCliente, useClienteGestao } from "@/dominios/organizacao/componentes/EmpresaEmGestao";
 import { lerPlano } from "@/dominios/financeiro/leituras";
 import { lerPlanoDominio } from "@/dominios/financeiro/planoDominio";
 import type { ContaPlano } from "@/dominios/financeiro/planoDominio";
@@ -25,7 +25,7 @@ import { carregarLogo } from "@/lib/marca";
 import { CabecalhoPagina } from "@/components/ui/CabecalhoPagina";
 import { CartaoFiltros } from "@/components/ui/CartaoFiltros";
 import type { FiltroAtivo } from "@/components/ui/CartaoFiltros";
-import { Chip } from "@/dominios/financeiro/componentes/Comuns";
+import { Chip } from "@/components/ui/Chip";
 import { Esqueleto } from "@/components/ui/Esqueleto";
 import { EstadoVazio } from "@/components/ui/EstadoVazio";
 import { Icone } from "@/components/ui/Icone";
@@ -46,7 +46,7 @@ type Previa = { arquivo: string; contas: ContaPlano[]; avisos: string[] };
 
 export default function PaginaPlano() {
   const { org, pode } = useOrg();
-  const financeiro = useClienteFinanceiro();
+  const financeiro = useClienteGestao();
   const cliente = financeiro.cliente;
   const podeOperar = pode("plano_contas", "operar");
   const { aviso, mostrar } = useAviso();
@@ -210,7 +210,7 @@ export default function PaginaPlano() {
       />
 
       <CartaoFiltros ativos={filtrosAtivos} aoLimpar={limparFiltros}>
-        <EscolhaCliente financeiro={financeiro} />
+        <EscolhaCliente gestao={financeiro} />
         <label className="campo">
           <span>Mostrar</span>
           <select value={filtro} onChange={(e) => setFiltro(e.target.value)}>

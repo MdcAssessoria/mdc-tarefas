@@ -8,10 +8,13 @@ export const PERMISSOES_PORTAL = [
   { id: "documentos", nome: "Documentos e vencimentos" },
   { id: "societario", nome: "Processos societários" },
   { id: "folha", nome: "Folha (DP)" },
+  // Financeiro e demais módulos de gestão (precisa de contrato do módulo; só quem gere o Financeiro libera — migração 036)
+  { id: "financeiro", nome: "Financeiro: ver e lançar" },
+  { id: "financeiro_ver", nome: "Financeiro: só consultar" },
 ];
 // perfis de cliente prontos: o que cada função costuma ver no portal
 export const PERFIS_CLIENTE: { id: string; nome: string; perms: string[] }[] = [
-  { id: "socio", nome: "Sócio / diretor (tudo)", perms: PERMISSOES_PORTAL.map((p) => p.id) },
+  { id: "socio", nome: "Sócio / diretor (tudo)", perms: ["demonstrativos", "rotinas", "chat", "documentos", "societario", "folha"] },
   { id: "financeiro", nome: "Financeiro", perms: ["demonstrativos", "rotinas", "chat", "documentos"] },
   { id: "rh", nome: "RH / Departamento Pessoal", perms: ["folha", "rotinas", "chat", "documentos"] },
   { id: "consulta", nome: "Só consulta de demonstrativos", perms: ["demonstrativos"] },

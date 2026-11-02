@@ -1089,21 +1089,33 @@ export type Database = {
       };
       feriados: {
         Row: {
+          ativo: boolean;
           data: string;
           descricao: string;
           id: string;
+          inativado_em: string | null;
+          inativado_motivo: string | null;
+          inativado_por: string | null;
           org_id: string | null;
         };
         Insert: {
+          ativo?: boolean;
           data: string;
           descricao: string;
           id?: string;
+          inativado_em?: string | null;
+          inativado_motivo?: string | null;
+          inativado_por?: string | null;
           org_id?: string | null;
         };
         Update: {
+          ativo?: boolean;
           data?: string;
           descricao?: string;
           id?: string;
+          inativado_em?: string | null;
+          inativado_motivo?: string | null;
+          inativado_por?: string | null;
           org_id?: string | null;
         };
         Relationships: [
@@ -1470,6 +1482,9 @@ export type Database = {
           arquivo: string;
           cliente_id: string;
           conta_id: string;
+          desfeito_em: string | null;
+          desfeito_motivo: string | null;
+          desfeito_por: string | null;
           em: string;
           fim: string | null;
           formato: string;
@@ -1486,6 +1501,9 @@ export type Database = {
           arquivo: string;
           cliente_id: string;
           conta_id: string;
+          desfeito_em?: string | null;
+          desfeito_motivo?: string | null;
+          desfeito_por?: string | null;
           em?: string;
           fim?: string | null;
           formato: string;
@@ -1502,6 +1520,9 @@ export type Database = {
           arquivo?: string;
           cliente_id?: string;
           conta_id?: string;
+          desfeito_em?: string | null;
+          desfeito_motivo?: string | null;
+          desfeito_por?: string | null;
           em?: string;
           fim?: string | null;
           formato?: string;
@@ -3123,19 +3144,31 @@ export type Database = {
       hub_perfis: {
         Row: {
           apps: Json;
+          ativo: boolean;
           id: string;
+          inativado_em: string | null;
+          inativado_motivo: string | null;
+          inativado_por: string | null;
           nome: string;
           org_id: string;
         };
         Insert: {
           apps?: Json;
+          ativo?: boolean;
           id?: string;
+          inativado_em?: string | null;
+          inativado_motivo?: string | null;
+          inativado_por?: string | null;
           nome: string;
           org_id: string;
         };
         Update: {
           apps?: Json;
+          ativo?: boolean;
           id?: string;
+          inativado_em?: string | null;
+          inativado_motivo?: string | null;
+          inativado_por?: string | null;
           nome?: string;
           org_id?: string;
         };
@@ -3281,6 +3314,7 @@ export type Database = {
       };
       lic_cobrancas: {
         Row: {
+          aviso_bloqueio_em: string | null;
           cancelada_em: string | null;
           cancelado_motivo: string | null;
           cliente_id: string;
@@ -3299,6 +3333,7 @@ export type Database = {
           vencimento: string;
         };
         Insert: {
+          aviso_bloqueio_em?: string | null;
           cancelada_em?: string | null;
           cancelado_motivo?: string | null;
           cliente_id: string;
@@ -3317,6 +3352,7 @@ export type Database = {
           vencimento: string;
         };
         Update: {
+          aviso_bloqueio_em?: string | null;
           cancelada_em?: string | null;
           cancelado_motivo?: string | null;
           cliente_id?: string;
@@ -4139,6 +4175,9 @@ export type Database = {
       };
       portal_convites: {
         Row: {
+          cancelado_em: string | null;
+          cancelado_motivo: string | null;
+          cancelado_por: string | null;
           cliente_id: string;
           criado_em: string;
           email: string;
@@ -4147,6 +4186,9 @@ export type Database = {
           permissoes: string[];
         };
         Insert: {
+          cancelado_em?: string | null;
+          cancelado_motivo?: string | null;
+          cancelado_por?: string | null;
           cliente_id: string;
           criado_em?: string;
           email: string;
@@ -4155,6 +4197,9 @@ export type Database = {
           permissoes?: string[];
         };
         Update: {
+          cancelado_em?: string | null;
+          cancelado_motivo?: string | null;
+          cancelado_por?: string | null;
           cliente_id?: string;
           criado_em?: string;
           email?: string;
@@ -4885,6 +4930,9 @@ export type Database = {
         Row: {
           atualizado_em: string;
           cancelada_por_inativacao: boolean;
+          cancelado_em: string | null;
+          cancelado_motivo: string | null;
+          cancelado_por: string | null;
           cliente_id: string | null;
           competencia: string | null;
           concluida_em: string | null;
@@ -4906,6 +4954,9 @@ export type Database = {
         Insert: {
           atualizado_em?: string;
           cancelada_por_inativacao?: boolean;
+          cancelado_em?: string | null;
+          cancelado_motivo?: string | null;
+          cancelado_por?: string | null;
           cliente_id?: string | null;
           competencia?: string | null;
           concluida_em?: string | null;
@@ -4927,6 +4978,9 @@ export type Database = {
         Update: {
           atualizado_em?: string;
           cancelada_por_inativacao?: boolean;
+          cancelado_em?: string | null;
+          cancelado_motivo?: string | null;
+          cancelado_por?: string | null;
           cliente_id?: string | null;
           competencia?: string | null;
           concluida_em?: string | null;
@@ -5004,6 +5058,9 @@ export type Database = {
           criado_em: string;
           criado_por: string | null;
           descricao: string | null;
+          encerrado_em: string | null;
+          encerrado_motivo: string | null;
+          encerrado_por: string | null;
           id: string;
           observacao: string | null;
           org_id: string;
@@ -5021,6 +5078,9 @@ export type Database = {
           criado_em?: string;
           criado_por?: string | null;
           descricao?: string | null;
+          encerrado_em?: string | null;
+          encerrado_motivo?: string | null;
+          encerrado_por?: string | null;
           id?: string;
           observacao?: string | null;
           org_id: string;
@@ -5038,6 +5098,9 @@ export type Database = {
           criado_em?: string;
           criado_por?: string | null;
           descricao?: string | null;
+          encerrado_em?: string | null;
+          encerrado_motivo?: string | null;
+          encerrado_por?: string | null;
           id?: string;
           observacao?: string | null;
           org_id?: string;
@@ -5301,6 +5364,10 @@ export type Database = {
       };
       est_pedido_salvar: { Args: { p: Json }; Returns: Json };
       est_salvar_item: { Args: { p: Json }; Returns: string };
+      feriado_inativar: {
+        Args: { p_feriado: string; p_motivo: string };
+        Returns: undefined;
+      };
       fin_baixar: {
         Args: {
           p_conta: string;
@@ -5319,7 +5386,10 @@ export type Database = {
         Args: { p_motivo: string; p_titulo: string };
         Returns: undefined;
       };
-      fin_desfazer_lote: { Args: { p_lote: string }; Returns: Json };
+      fin_desfazer_lote: {
+        Args: { p_lote: string; p_motivo: string };
+        Returns: Json;
+      };
       fin_estornar_baixa: {
         Args: { p_baixa: number; p_motivo: string };
         Returns: Json;
@@ -5473,6 +5543,10 @@ export type Database = {
         };
         Returns: undefined;
       };
+      hub_inativar_perfil: {
+        Args: { p_motivo: string; p_perfil: string };
+        Returns: number;
+      };
       hub_ler_arquivo_temp: { Args: { p_chave: string }; Returns: string };
       hub_meus_apps: {
         Args: { p_org: string };
@@ -5577,6 +5651,10 @@ export type Database = {
           p_titulo: string;
         };
         Returns: string;
+      };
+      portal_cancelar_convite: {
+        Args: { p_cliente: string; p_email: string; p_motivo: string };
+        Returns: undefined;
       };
       portal_conversa_para_tarefa: {
         Args: { p_conversa: string; p_prazo?: string };
@@ -5698,6 +5776,14 @@ export type Database = {
       };
       soc_registrar_exigencia: {
         Args: { p_orgao: string; p_proc: string; p_texto: string };
+        Returns: undefined;
+      };
+      tarefa_cancelar: {
+        Args: { p_motivo: string; p_tarefa: string };
+        Returns: undefined;
+      };
+      venc_encerrar: {
+        Args: { p_item: string; p_motivo: string };
         Returns: undefined;
       };
       venc_renovar: {

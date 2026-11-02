@@ -7,6 +7,7 @@ import { supabase } from "@/lib/supabase";
 import type { Perfil } from "@/dominios/acessos/tipos";
 import { Chips } from "./Chips";
 import { EditorPerfil } from "./EditorPerfil";
+import { JanelaMotivo } from "@/dominios/financeiro/componentes/Comuns";
 
 export function Perfis({
   perfis,
@@ -23,6 +24,7 @@ export function Perfis({
 }) {
   const { org } = useOrg();
   const [editando, setEditando] = useState<Perfil | null>(null);
+  const [inativando, setInativando] = useState<Perfil | null>(null);
 
   async function salvar(p: Perfil) {
     const sb = supabase();
@@ -34,19 +36,12 @@ export function Perfis({
     await aoMudar(p.id ? `Perfil ${p.nome} salvo. ${uso(p.id)} pessoa(s) atualizada(s).` : `Perfil ${p.nome} criado.`);
   }
 
-  async function excluir(p: Perfil) {
-    const n = uso(p.id);
-    if (
-      !window.confirm(
-        n
-          ? `${n} pessoa(s) seguem ${p.nome} e passarão a ter acesso manual (mantêm o que têm hoje). Excluir o perfil?`
-          : `Excluir o perfil ${p.nome}?`,
-      )
-    )
-      return;
-    const { error } = await supabase().from("hub_perfis").delete().eq("id", p.id);
-    if (error) return aoErro(error);
-    await aoMudar(`Perfil ${p.nome} excluído.`);
+  // nada se apaga (migração 036): o perfil é inativado com motivo; quem o segue passa a acesso manual
+  async function inativar(p: Perfil, motivo: string) {
+    const { error } = await supabase().rpc("hub_inativar_perfil", { p_perfil: p.id, p_motivo: motivo });
+    if (error) throw error;
+    setInativando(null);
+    await aoMudar(`Perfil ${p.nome} inativado.`);
   }
 
   return (
@@ -68,8 +63,8 @@ export function Perfis({
                 <button className="btn-link" onClick={() => setEditando(structuredClone(p))}>
                   Editar
                 </button>
-                <button className="btn-link !text-[var(--perigo)]" onClick={() => excluir(p)}>
-                  Excluir
+                <button className="btn-link !text-[var(--perigo)]" onClick={() => setInativando(p)}>
+                  Inativar
                 </button>
               </div>
             </div>
@@ -78,6 +73,19 @@ export function Perfis({
         ))}
       </div>
       {editando && <EditorPerfil perfil={editando} ferramentas={ferramentas} aoFechar={() => setEditando(null)} aoSalvar={salvar} />}
+      {inativando && (
+        <JanelaMotivo
+          titulo={`Inativar o perfil ${inativando.nome}`}
+          descricao={
+            uso(inativando.id)
+              ? `${uso(inativando.id)} pessoa(s) seguem este perfil e passarão a ter acesso manual (mantêm o que têm hoje).`
+              : "O perfil sai da lista e fica guardado, com o motivo."
+          }
+          botao="Inativar perfil"
+          aoConfirmar={(motivo) => inativar(inativando, motivo)}
+          aoFechar={() => setInativando(null)}
+        />
+      )}
     </div>
   );
 }

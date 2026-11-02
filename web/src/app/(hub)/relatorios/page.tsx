@@ -6,8 +6,8 @@
 import { useCallback, useMemo, useState } from "react";
 import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { nomeCliente } from "@/dominios/clientes/nome";
-import { EscolhaCliente, useClienteFinanceiro } from "@/dominios/financeiro/componentes/EscolhaCliente";
-import { FiltroPeriodo } from "@/dominios/financeiro/componentes/Comuns";
+import { EscolhaCliente, useClienteGestao } from "@/dominios/organizacao/componentes/EmpresaEmGestao";
+import { FiltroPeriodo } from "@/components/ui/FiltroPeriodo";
 import { VisaoCentros, VisaoFluxo, VisaoPagos, VisaoResultado } from "@/dominios/financeiro/componentes/RelatoriosVisoes";
 import type { BaseVisao } from "@/dominios/financeiro/componentes/RelatoriosVisoes";
 import {
@@ -22,7 +22,7 @@ import {
 import { fluxoPorMes, linhasDoResultado, pagosERecebidos, porCentroDeCusto, resultadoDeCaixa } from "@/dominios/financeiro/relatorios";
 import { intervaloDoPeriodo, PERIODOS } from "@/dominios/financeiro/regras";
 import type { Periodo } from "@/dominios/financeiro/regras";
-import { nomeArquivo } from "@/dominios/financeiro/exportar";
+import { nomeArquivo } from "@/lib/arquivos/exportarLista";
 import { useConsulta } from "@/lib/useConsulta";
 import { hojeISO } from "@/lib/datas";
 import { fmtData } from "@/lib/formato/datas";
@@ -44,7 +44,7 @@ const RELATORIOS: { id: Rel; nome: string; texto: string; icone: string }[] = [
 
 export default function PaginaRelatorios() {
   const { org } = useOrg();
-  const financeiro = useClienteFinanceiro();
+  const financeiro = useClienteGestao();
   const cliente = financeiro.cliente;
   const { aviso, mostrar } = useAviso();
   const hoje = hojeISO(org.fuso);
@@ -127,7 +127,7 @@ export default function PaginaRelatorios() {
       />
 
       <CartaoFiltros ativos={filtrosAtivos} aoLimpar={() => setPeriodo("ano")}>
-        <EscolhaCliente financeiro={financeiro} />
+        <EscolhaCliente gestao={financeiro} />
         <FiltroPeriodo
           periodo={periodo}
           de={de}
