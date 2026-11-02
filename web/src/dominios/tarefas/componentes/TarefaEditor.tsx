@@ -11,7 +11,7 @@ import type { Arquivo } from "@/lib/arquivos/armazenamento";
 import { fmtData, fmtDataHora } from "@/lib/formato/datas";
 import { nomeCliente } from "@/dominios/clientes/nome";
 import { Icone } from "@/components/ui/Icone";
-import { JanelaMotivo } from "@/dominios/financeiro/componentes/Comuns";
+import { JanelaMotivo } from "@/components/ui/JanelaMotivo";
 
 interface Comentario {
   id: string;
@@ -237,9 +237,10 @@ export function TarefaEditor({
               </select>
             </label>
             <label className="campo">
-              <span>Status</span>
+              <span>Situação</span>
               <select value={f.status} onChange={(e) => set("status", e.target.value as Status)}>
-                {STATUS.map((s) => (
+                {/* cancelar só pelo botão "Cancelar tarefa", que pede o motivo (tarefa_cancelar) */}
+                {STATUS.filter((s) => s.id !== "cancelada" || tarefa?.status === "cancelada").map((s) => (
                   <option key={s.id} value={s.id}>
                     {s.nome}
                   </option>
@@ -271,13 +272,16 @@ export function TarefaEditor({
           {erro && <p className="text-sm text-[var(--perigo)]">{erro}</p>}
           <div className="flex items-center gap-2">
             <button className="btn-primario" disabled={salvando}>
+              <Icone nome="check" className="h-4 w-4" />
               {salvando ? "Salvando…" : "Salvar"}
             </button>
             <button type="button" className="btn" onClick={aoFechar}>
-              Cancelar
+              <Icone nome="voltar" className="h-4 w-4" />
+              Voltar
             </button>
             {tarefa && podeEditarCadastros && tarefa.status !== "cancelada" && (
               <button type="button" className="btn ml-auto text-[var(--perigo)]" onClick={() => setCancelando(true)}>
+                <Icone nome="cancelar" className="h-4 w-4" />
                 Cancelar tarefa
               </button>
             )}

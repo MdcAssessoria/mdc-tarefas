@@ -345,7 +345,13 @@ export const TABELAS = {
     cliente(C2, "NEXUS GESTAO DE PESSOAS LTDA", "Nexus", "44.537.381/0001-18", "presumido"),
   ],
   cliente_responsaveis: [{ org_id: ORG, cliente_id: C1, setor_id: SETOR, user_id: EU }],
-  tarefas: Array.from({ length: 8 }, (_, k) => tarefa(k)),
+  tarefas: [
+    ...Array.from({ length: 8 }, (_, k) => tarefa(k)),
+    // concluídas (relatório de tarefas): no prazo, com atraso e sem prazo
+    tarefa(8, { status: "concluida", prazo: dia(-2), concluida_em: momento(-2) }),
+    tarefa(9, { status: "concluida", prazo: dia(-6), concluida_em: momento(-1), responsavel_id: OUTRO }),
+    tarefa(10, { status: "concluida", prazo: null, concluida_em: momento(-1), responsavel_id: OUTRO }),
+  ],
   comentarios: [],
   historico: [],
   modelos_recorrentes: [

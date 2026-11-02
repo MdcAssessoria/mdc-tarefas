@@ -56,7 +56,9 @@ web/src/
 │   ├── organizacao/            OrgProvider (useOrg), tipos de organização, membro, setor, papel e
 │   │                           componentes/EmpresaEmGestao (useClienteGestao, EscolhaCliente, TelaEmpresa: a empresa
 │   │                           em uso no Financeiro, Estoque, Saídas, Entradas, Plano de contas e Relatórios)
-│   ├── tarefas/                tipos, useTarefas, componentes/ (TarefaEditor, PainelTV, Badges, RitmoSemanal)
+│   ├── tarefas/                tipos, useTarefas, regras (situação, contagens, tons), relatorio (cálculos do relatório
+│   │                           de concluídas) e exportarRelatorio, componentes/ (TarefaEditor, VisoesTarefas, PainelTV,
+│   │                           Badges, RitmoSemanal)
 │   ├── clientes/               tipos, nomeCliente, importação do Domínio, "Colar lista", grupos
 │   ├── acessos/                níveis por ferramenta, ferramentas do HUB, permissoes.ts (podeNoApp: o pode() da
 │   │                           tela), convite, texto do histórico
@@ -66,7 +68,7 @@ web/src/
 │   │                           periodos, tendencia, parecer, repositorio, componentes/ (painel, gráficos, índices…)
 │   ├── comercial/              CRM e contrato em PDF
 │   ├── atendimento/            chat e componentes/ChatMensagens
-│   └── vencimentos/            tipos de vencimento
+│   └── vencimentos/            tipos, regras (prazo, contagens, situação), componentes/JanelasVencimento
 └── lib/                        INFRAESTRUTURA sem regra de negócio
     ├── supabase.ts, database.types.ts, exigir.ts, lerTudo.ts, useConsulta.ts
     ├── erros.ts                traduzirErro (só P0001 e erro do próprio site passam crus), ErroApp, MENSAGEM_GENERICA
