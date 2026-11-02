@@ -5364,7 +5364,10 @@ export type Database = {
       };
       est_pedido_salvar: { Args: { p: Json }; Returns: Json };
       est_salvar_item: { Args: { p: Json }; Returns: string };
-      feriado_inativar: { Args: { p_feriado: string; p_motivo: string }; Returns: undefined };
+      feriado_inativar: {
+        Args: { p_feriado: string; p_motivo: string };
+        Returns: undefined;
+      };
       fin_baixar: {
         Args: {
           p_conta: string;
@@ -5383,7 +5386,10 @@ export type Database = {
         Args: { p_motivo: string; p_titulo: string };
         Returns: undefined;
       };
-      fin_desfazer_lote: { Args: { p_lote: string; p_motivo: string }; Returns: Json };
+      fin_desfazer_lote: {
+        Args: { p_lote: string; p_motivo: string };
+        Returns: Json;
+      };
       fin_estornar_baixa: {
         Args: { p_baixa: number; p_motivo: string };
         Returns: Json;
@@ -5537,7 +5543,10 @@ export type Database = {
         };
         Returns: undefined;
       };
-      hub_inativar_perfil: { Args: { p_motivo: string; p_perfil: string }; Returns: number };
+      hub_inativar_perfil: {
+        Args: { p_motivo: string; p_perfil: string };
+        Returns: number;
+      };
       hub_ler_arquivo_temp: { Args: { p_chave: string }; Returns: string };
       hub_meus_apps: {
         Args: { p_org: string };
@@ -5769,8 +5778,14 @@ export type Database = {
         Args: { p_orgao: string; p_proc: string; p_texto: string };
         Returns: undefined;
       };
-      tarefa_cancelar: { Args: { p_motivo: string; p_tarefa: string }; Returns: undefined };
-      venc_encerrar: { Args: { p_item: string; p_motivo: string }; Returns: undefined };
+      tarefa_cancelar: {
+        Args: { p_motivo: string; p_tarefa: string };
+        Returns: undefined;
+      };
+      venc_encerrar: {
+        Args: { p_item: string; p_motivo: string };
+        Returns: undefined;
+      };
       venc_renovar: {
         Args: { p_item: string; p_nova_data: string; p_obs?: string };
         Returns: string;

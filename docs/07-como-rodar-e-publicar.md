@@ -45,6 +45,11 @@ O GitHub roda `verificar` a cada push e pull request (`.github/workflows/web.yml
    `npx supabase gen types typescript --project-id bulqqdgfrrpqquqvjjfa > web/src/lib/database.types.ts`
 5. Faça commit da migração e dos tipos juntos.
 
+> **Migração grande:** se a ferramenta recusar ou cancelar uma migração muito longa, aplique em partes, na ordem, cada
+> uma com nome próprio (`NNN_assunto_parte1`, `_parte2`…), sem mudar o texto do arquivo. A 036 (auditoria de 02/11/2026)
+> foi aplicada assim em 3 partes no dia 02/11/2026: linhas 1–609 (regras de acesso e Financeiro), 610–1232 (notas,
+> estoque e pedidos) e 1233–fim (licenças, Portal, Storage, índices, "nada se apaga" e clientes).
+
 > **Próximo passo recomendado pela auditoria:** adotar a Supabase CLI com um projeto de **homologação**, para não
 > testar migração direto em produção. Veja [`decisoes/0002-homologacao-e-cli.md`](decisoes/0002-homologacao-e-cli.md).
 
