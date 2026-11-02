@@ -20,6 +20,72 @@ export default function PaginaProcesso() {
   return <Ficha />;
 }
 
+/**
+ * Processo de empresa que ainda não está no cadastro de clientes: aviso e, para quem opera o Societário, a escolha do
+ * cliente já cadastrado para ligar o processo (as tarefas das fases vão junto). Na abertura, concluir o processo já
+ * cadastra a empresa sozinho; ligar antes só serve se ela já foi cadastrada à mão.
+ */
+function LigarCliente({
+  abertura,
+  podeOperar,
+  aoLigar,
+}: {
+  abertura: boolean;
+  podeOperar: boolean;
+  aoLigar: (cliente: string) => Promise<boolean>;
+}) {
+  const { clientes } = useOrg();
+  const [cli, setCli] = useState("");
+  const [enviando, setEnviando] = useState(false);
+  return (
+    <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+      <p>
+        {abertura ? (
+          <>
+            Empresa em abertura: ao <b>concluir o processo</b>, o HUB cadastra a empresa em Clientes sozinho.
+          </>
+        ) : (
+          <>
+            <b>Esta empresa ainda não está no cadastro de clientes.</b> Peça a um gestor para cadastrá-la em Tarefas › Configurações ›
+            Clientes e depois ligue o processo a ela aqui.
+          </>
+        )}
+      </p>
+      {podeOperar && (
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          <select
+            className="entrada min-w-64 flex-1 bg-white"
+            value={cli}
+            onChange={(e) => setCli(e.target.value)}
+            aria-label="Cliente cadastrado"
+          >
+            <option value="">{abertura ? "Já cadastrou à mão? Escolha o cliente…" : "Escolha o cliente já cadastrado…"}</option>
+            {clientes
+              .filter((c) => c.ativo)
+              .map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.codigo_dominio ? `${c.codigo_dominio} · ` : ""}
+                  {nomeCliente(c)}
+                </option>
+              ))}
+          </select>
+          <button
+            className="btn-primario"
+            disabled={!cli || enviando}
+            onClick={async () => {
+              setEnviando(true);
+              await aoLigar(cli);
+              setEnviando(false);
+            }}
+          >
+            {enviando ? "Ligando…" : "Ligar ao cliente"}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 interface Protocolo {
   id: string;
   orgao: string;
@@ -235,6 +301,14 @@ function Ficha() {
           )}
         </div>
       </div>
+
+      {!p.cliente_id && p.status !== "cancelado" && (
+        <LigarCliente
+          abertura={tipo?.codigo === "abertura"}
+          podeOperar={podeOperar}
+          aoLigar={(cli) => rpc("soc_vincular_cliente", { p_proc: p.id, p_cliente: cli })}
+        />
+      )}
 
       {erro && <p className="rounded-md bg-red-50 p-3 text-sm text-red-800">{erro}</p>}
 

@@ -314,6 +314,9 @@ function Societario() {
   );
 }
 
+/** Valor do seletor de cliente para "empresa ainda não cadastrada" (não é um id). */
+const FORA_DO_CADASTRO = "__fora_do_cadastro__";
+
 function NovoProcesso({ tipos, aoFechar, aoCriar }: { tipos: SocTipo[]; aoFechar: () => void; aoCriar: (id: string) => void }) {
   const { org, eu, clientes, membros } = useOrg();
   const [tipoId, setTipoId] = useState(tipos[0]?.id ?? "");
@@ -329,6 +332,9 @@ function NovoProcesso({ tipos, aoFechar, aoCriar }: { tipos: SocTipo[]; aoFechar
   const [enviando, setEnviando] = useState(false);
   const tipo = tipos.find((t) => t.id === tipoId);
   const abertura = tipo?.codigo === "abertura";
+  // empresa que ainda não está no cadastro (ex.: chegou à MDC já precisando de alteração); liga ao cliente depois
+  const foraDoCadastro = !abertura && cliente === FORA_DO_CADASTRO;
+  const semCliente = abertura || foraDoCadastro;
 
   useEffect(() => {
     // viabilidade só quando muda endereço/CNAE ou na abertura
@@ -342,8 +348,8 @@ function NovoProcesso({ tipos, aoFechar, aoCriar }: { tipos: SocTipo[]; aoFechar
     const { data, error } = await supabase().rpc("soc_abrir_processo", {
       p_org: org.id,
       p_tipo: tipoId,
-      p_cliente: abertura ? null : cliente || null,
-      p_futuro: abertura ? futuro : null,
+      p_cliente: semCliente ? null : cliente || null,
+      p_futuro: semCliente ? futuro : null,
       p_cnpj: cnpj || null,
       p_uf: uf || null,
       p_descricao: descricao,
@@ -374,22 +380,12 @@ function NovoProcesso({ tipos, aoFechar, aoCriar }: { tipos: SocTipo[]; aoFechar
             ))}
           </select>
         </label>
-        {abertura ? (
-          <div className="grid grid-cols-3 gap-3">
-            <label className="campo col-span-2">
-              <span>Nome da empresa a abrir</span>
-              <input required value={futuro} onChange={(e) => setFuturo(e.target.value)} />
-            </label>
-            <label className="campo">
-              <span>UF</span>
-              <input maxLength={2} value={uf} onChange={(e) => setUf(e.target.value.toUpperCase())} />
-            </label>
-          </div>
-        ) : (
+        {!abertura && (
           <label className="campo">
             <span>Cliente</span>
             <select required value={cliente} onChange={(e) => setCliente(e.target.value)}>
               <option value="">Escolha…</option>
+              <option value={FORA_DO_CADASTRO}>➕ Empresa ainda não cadastrada no HUB</option>
               {clientes
                 .filter((c) => c.ativo)
                 .map((c) => (
@@ -401,11 +397,29 @@ function NovoProcesso({ tipos, aoFechar, aoCriar }: { tipos: SocTipo[]; aoFechar
             </select>
           </label>
         )}
-        {abertura && (
-          <label className="campo">
-            <span>CNPJ (quando sair)</span>
-            <input value={cnpj} onChange={(e) => setCnpj(e.target.value)} />
-          </label>
+        {semCliente && (
+          <>
+            <div className="grid grid-cols-3 gap-3">
+              <label className="campo col-span-2">
+                <span>{abertura ? "Nome da empresa a abrir" : "Razão social da empresa"}</span>
+                <input required value={futuro} onChange={(e) => setFuturo(e.target.value)} />
+              </label>
+              <label className="campo">
+                <span>UF</span>
+                <input maxLength={2} value={uf} onChange={(e) => setUf(e.target.value.toUpperCase())} />
+              </label>
+            </div>
+            <label className="campo">
+              <span>{abertura ? "CNPJ (quando sair)" : "CNPJ"}</span>
+              <input value={cnpj} onChange={(e) => setCnpj(e.target.value)} placeholder="00.000.000/0000-00" />
+            </label>
+            {foraDoCadastro && (
+              <p className="rounded-md bg-amber-50 p-3 text-sm text-amber-900">
+                O processo anda normalmente sem o cadastro. Quando a empresa for cadastrada em Clientes, abra o processo e use{" "}
+                <b>Ligar ao cliente</b> para juntar tudo (tarefas e histórico).
+              </p>
+            )}
+          </>
         )}
         <label className="campo">
           <span>O que muda / observações</span>

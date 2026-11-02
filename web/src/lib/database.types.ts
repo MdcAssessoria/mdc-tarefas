@@ -5778,6 +5778,10 @@ export type Database = {
         Args: { p_orgao: string; p_proc: string; p_texto: string };
         Returns: undefined;
       };
+      soc_vincular_cliente: {
+        Args: { p_cliente: string; p_proc: string };
+        Returns: undefined;
+      };
       tarefa_cancelar: {
         Args: { p_motivo: string; p_tarefa: string };
         Returns: undefined;

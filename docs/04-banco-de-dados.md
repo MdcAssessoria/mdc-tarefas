@@ -207,7 +207,7 @@ pode fazer aquilo (normalmente com `app.hub_pode(org, app, nível)` ou `app.port
 | Equipe e acessos | `hub_convidar`, `hub_editar_membro`, `hub_definir_perfil`, `hub_definir_acesso`, `hub_cancelar_convite`, `hub_transferir_trabalho`, `hub_pendencias_membro`, `hub_situacao_contas`, `hub_meus_apps`, `hub_pode_enviar_convite` |
 | Clientes | `importar_clientes`, `inativar_cliente`, `reativar_cliente` |
 | Tarefas | `gerar_competencia`, `prever_rotina` |
-| Societário | `soc_abrir_processo`, `soc_mudar_fase`, `soc_registrar_exigencia`, `soc_concluir_processo`, `soc_cancelar_processo` |
+| Societário | `soc_abrir_processo` (cliente do cadastro, ou nome/CNPJ de empresa ainda não cadastrada), `soc_vincular_cliente` (037: liga depois ao cliente cadastrado, com as tarefas das fases), `soc_mudar_fase`, `soc_registrar_exigencia`, `soc_concluir_processo`, `soc_cancelar_processo` |
 | Portal | `portal_convidar` (036: lista fechada de permissões), `portal_minhas_empresas`, `portal_rotinas`, `portal_processos`, `portal_abrir_conversa`, `portal_conversa_para_tarefa`, `portal_publicar_balancete`, `portal_publicar_parecer` |
 | Vencimentos | `venc_renovar`, `venc_encerrar` (036) |
 | Tarefas e configurações (036, nada se apaga) | `tarefa_cancelar`, `feriado_inativar`, `hub_inativar_perfil`, `portal_cancelar_convite` |
