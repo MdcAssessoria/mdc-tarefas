@@ -1,23 +1,28 @@
-import { diasAte, rotuloPrazo } from "@/lib/datas";
+// Etiquetas das tarefas: prazo e situação (Chip com os tons padrão de components/ui/Tons), prioridade e setor.
+import { hojeISO } from "@/lib/datas";
 import type { Prioridade, Status } from "@/dominios/tarefas/tipos";
 import type { Setor } from "@/dominios/organizacao/tipos";
-import { nomePrioridade } from "@/dominios/tarefas/tipos";
+import { nomePrioridade, nomeStatus } from "@/dominios/tarefas/tipos";
 import { fmtData } from "@/lib/formato/datas";
+import { Chip } from "@/components/ui/Chip";
+import { textoDoPrazo, tomDoPrazo, TOM_STATUS } from "@/dominios/tarefas/regras";
 
+/** Prazo da tarefa: "Atrasada 2 dias" (vermelho), "Vence hoje" (âmbar), "Em 5 dias" (azul); fechada mostra a data. */
 export function PrazoBadge({ prazo, status, fuso }: { prazo: string | null; status: Status; fuso?: string }) {
   const fechada = status === "concluida" || status === "cancelada";
-  const d = diasAte(prazo, fuso);
-  let cls = "bg-neutral-100 text-neutral-600";
-  if (!fechada && d !== null) {
-    if (d < 0) cls = "bg-red-50 text-red-700 ring-1 ring-red-200";
-    else if (d === 0) cls = "bg-amber-50 text-amber-800 ring-1 ring-amber-200";
-    else if (d <= 3) cls = "bg-yellow-50 text-yellow-800";
-  }
+  const hoje = hojeISO(fuso);
   return (
-    <span className={`chip ${cls}`} title={fmtData(prazo)}>
-      {fechada ? fmtData(prazo) : rotuloPrazo(d)}
+    <span title={prazo ? `Prazo: ${fmtData(prazo)}` : "Sem prazo"} className="whitespace-nowrap">
+      <Chip tom={fechada ? "neutro" : tomDoPrazo(prazo, status, hoje)}>
+        {fechada ? (prazo ? fmtData(prazo) : "Sem prazo") : textoDoPrazo(prazo, hoje)}
+      </Chip>
     </span>
   );
+}
+
+/** Situação da tarefa (A fazer, Em andamento, Aguardando, Concluída, Cancelada). */
+export function StatusChip({ status }: { status: Status }) {
+  return <Chip tom={TOM_STATUS[status]}>{nomeStatus(status)}</Chip>;
 }
 
 const COR_PRIORIDADE: Record<Prioridade, string> = {
