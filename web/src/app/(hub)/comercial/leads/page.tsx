@@ -1,348 +1,468 @@
+// Comercial › Leads: quem chegou pelo Simulador de Regime e pelos demais canais, com o que o Simulador apurou
+// (regime atual, melhor regime, economia estimada). Seleção em lote para arquivar ou devolver ao funil.
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { useCallback, useMemo, useState } from "react";
 import { useOrg } from "@/dominios/organizacao/OrgProvider";
-import { supabase } from "@/lib/supabase";
-import { lerTudo } from "@/lib/lerTudo";
-import { traduzirErro } from "@/lib/erros";
-import { ETAPAS, ORIGENS } from "@/dominios/comercial/crm";
-import type { Oportunidade } from "@/dominios/comercial/crm";
-import { exportarExcel } from "@/lib/arquivos/excel";
+import { useConsulta } from "@/lib/useConsulta";
 import { hojeISO } from "@/lib/datas";
 import { brl } from "@/lib/formato/moeda";
-import { fmtDataLocal } from "@/lib/formato/datas";
+import { fmtData, fmtDataLocal } from "@/lib/formato/datas";
+import { intervaloDoPeriodo, PERIODOS } from "@/lib/periodo";
+import type { Periodo } from "@/lib/periodo";
+import { nomeArquivo } from "@/lib/arquivos/exportarLista";
+import { useAviso } from "@/components/ui/Aviso";
+import { BotoesExportar } from "@/components/ui/BotoesExportar";
+import { CabecalhoPagina } from "@/components/ui/CabecalhoPagina";
+import { CartaoFiltros, MaisFiltros } from "@/components/ui/CartaoFiltros";
+import type { FiltroAtivo } from "@/components/ui/CartaoFiltros";
+import { Chip } from "@/components/ui/Chip";
+import { Esqueleto } from "@/components/ui/Esqueleto";
+import { EstadoVazio } from "@/components/ui/EstadoVazio";
+import { FiltroPeriodo } from "@/components/ui/FiltroPeriodo";
+import { Icone } from "@/components/ui/Icone";
+import { Indicador } from "@/components/ui/Indicador";
+import { QuadroTabela } from "@/components/ui/QuadroTabela";
+import { Valor } from "@/components/ui/Valor";
+import { ETAPAS, ORIGENS } from "@/dominios/comercial/crm";
+import type { Oportunidade } from "@/dominios/comercial/crm";
+import { lerOportunidades } from "@/dominios/comercial/leituras";
+import { TOM_ETAPA, linkWhatsapp, nomeEtapa, nomeOrigem, nomeRegime, numero } from "@/dominios/comercial/rotulos";
+import { useAcoesOportunidade } from "@/dominios/comercial/componentes/useAcoesOportunidade";
 
 export default function PaginaLeads() {
   return <Leads />;
 }
 
-const REGIME: Record<string, string> = { simples: "Simples", presumido: "Presumido", real: "Real", mei: "MEI" };
-const nomeRegime = (r: unknown) => (typeof r === "string" ? (REGIME[r.toLowerCase()] ?? r) : "—");
-const num = (v: unknown) => (typeof v === "number" ? v : typeof v === "string" && v.trim() !== "" && !isNaN(Number(v)) ? Number(v) : null);
-
 type Situacao = "ativos" | "arquivados" | "todos";
+const SITUACOES: { id: Situacao; nome: string }[] = [
+  { id: "ativos", nome: "No funil" },
+  { id: "arquivados", nome: "Arquivados" },
+  { id: "todos", nome: "Todos" },
+];
+/** "andamento" junta as etapas do meio (já contatados, sem desfecho). */
+type FiltroEtapa = "" | "andamento" | Oportunidade["etapa"];
+const passaEtapa = (o: Oportunidade, f: FiltroEtapa) =>
+  !f || (f === "andamento" ? !["novo", "ganho", "perdido"].includes(o.etapa) : o.etapa === f);
+const MOSTRAR = 500;
 
 function Leads() {
   const { org, pode } = useOrg();
-  const router = useRouter();
-  const [lista, setLista] = useState<Oportunidade[] | null>(null);
-  const [busca, setBusca] = useState("");
-  const [origem, setOrigem] = useState("simulador");
-  const [etapa, setEtapa] = useState("");
-  const [situacao, setSituacao] = useState<Situacao>("ativos");
-  const [desde, setDesde] = useState("");
-  const [sel, setSel] = useState<Set<string>>(new Set());
-  const [erro, setErro] = useState<string | null>(null);
-  const [aviso, setAviso] = useState<string | null>(null);
   const podeOperar = pode("comercial", "operar");
-  const podeGerir = pode("comercial", "gerir");
+  const { aviso, mostrar } = useAviso();
+  const hoje = hojeISO(org.fuso);
 
-  const carregar = useCallback(async () => {
-    try {
-      setLista(
-        await lerTudo<Oportunidade>((de, ate) =>
-          supabase()
-            .from("crm_oportunidades")
-            .select("*")
-            .eq("org_id", org.id)
-            .order("criado_em", { ascending: false })
-            .order("id")
-            .range(de, ate),
-        ),
-      );
-    } catch (e) {
-      setErro(traduzirErro(e));
-    }
-  }, [org.id]);
+  const [busca, setBusca] = useState("");
+  const [periodo, setPeriodo] = useState<Periodo>("tudo");
+  const [de, setDe] = useState("");
+  const [ate, setAte] = useState("");
+  const [origem, setOrigem] = useState("simulador");
+  const [etapa, setEtapa] = useState<FiltroEtapa>("");
+  const [situacao, setSituacao] = useState<Situacao>("ativos");
+  const [sel, setSel] = useState<Set<string>>(new Set());
 
-  useEffect(() => {
-    void carregar();
-  }, [carregar]);
-
-  const filtrada = useMemo(() => {
-    const q = busca.trim().toLowerCase();
-    return (lista ?? []).filter((o) => {
-      if (situacao === "ativos" && o.arquivado_em) return false;
-      if (situacao === "arquivados" && !o.arquivado_em) return false;
-      if (origem && o.origem !== origem) return false;
-      if (etapa && o.etapa !== etapa) return false;
-      if (desde && o.criado_em.slice(0, 10) < desde) return false;
-      if (q) {
-        const d = o.dados_origem ?? {};
-        const alvo = `${o.empresa} ${o.razao_social ?? ""} ${o.cnpj ?? ""} ${o.contato_nome ?? ""} ${o.email ?? ""} ${o.whatsapp ?? ""} ${o.cidade ?? ""} ${d.cnae_descricao ?? ""}`;
-        if (!alvo.toLowerCase().includes(q)) return false;
-      }
-      return true;
-    });
-  }, [lista, busca, origem, etapa, situacao, desde]);
-
-  const resumo = useMemo(() => {
-    const l = filtrada;
-    const econ = l.reduce((a, o) => a + (num(o.dados_origem?.economia_estimada) ?? 0), 0);
-    return {
-      total: l.length,
-      novos: l.filter((o) => o.etapa === "novo").length,
-      andamento: l.filter((o) => !["novo", "ganho", "perdido"].includes(o.etapa)).length,
-      ganhos: l.filter((o) => o.etapa === "ganho").length,
-      economia: econ,
-    };
-  }, [filtrada]);
-
-  async function arquivar(ids: string[], arquivarSim: boolean) {
-    if (!ids.length) return;
-    const motivo = arquivarSim ? prompt("Motivo (opcional): sem retorno, sem interesse, duplicado…", "Sem retorno") : null;
-    if (arquivarSim && motivo === null) return;
-    const { data, error } = await supabase().rpc("crm_arquivar", { p_ids: ids, p_motivo: motivo, p_arquivar: arquivarSim });
-    if (error) return setErro(traduzirErro(error));
+  const consulta = useConsulta(useCallback(() => lerOportunidades(org.id), [org.id]));
+  const acoes = useAcoesOportunidade(() => {
     setSel(new Set());
-    setAviso(arquivarSim ? `${data} lead(s) arquivado(s).` : `${data} lead(s) de volta ao funil.`);
-    void carregar();
-  }
+    consulta.recarregar();
+  }, mostrar);
+  const intervalo = useMemo(() => intervaloDoPeriodo(periodo, hoje, de, ate), [periodo, hoje, de, ate]);
 
-  async function exportar() {
-    await exportarExcel(
-      `Leads-MDC-${hojeISO(org.fuso)}.xlsx`,
-      "Leads do CRM",
-      `${filtrada.length} lead(s) · gerado em ${new Date().toLocaleString("pt-BR")}`,
-      [
-        {
-          nome: "Leads",
-          colunas: [
-            { titulo: "Recebido em", chave: "data", formato: "data", largura: 13 },
-            { titulo: "Empresa", chave: "empresa", largura: 34 },
-            { titulo: "CNPJ", chave: "cnpj", largura: 20 },
-            { titulo: "Contato", chave: "contato", largura: 22 },
-            { titulo: "WhatsApp", chave: "whatsapp", largura: 16 },
-            { titulo: "E-mail", chave: "email", largura: 28 },
-            { titulo: "Atividade", chave: "atividade", largura: 34 },
-            { titulo: "Regime atual", chave: "regime", largura: 13 },
-            { titulo: "Melhor regime", chave: "melhor", largura: 14 },
-            { titulo: "Economia estimada", chave: "economia", formato: "moeda", largura: 16 },
-            { titulo: "Etapa", chave: "etapa", largura: 13 },
-            { titulo: "Situação", chave: "situacao", largura: 22 },
-          ],
-          linhas: filtrada.map((o) => ({
-            data: o.criado_em,
-            empresa: o.empresa,
-            cnpj: o.cnpj,
-            contato: o.contato_nome,
-            whatsapp: o.whatsapp,
-            email: o.email,
-            atividade: (o.dados_origem?.cnae_descricao as string) ?? o.atividade,
-            regime: nomeRegime(o.regime_atual),
-            melhor: nomeRegime(o.dados_origem?.melhor_regime),
-            economia: num(o.dados_origem?.economia_estimada),
-            etapa: ETAPAS.find((e) => e.id === o.etapa)?.nome,
-            situacao: o.arquivado_em ? `Arquivado: ${o.motivo_arquivo ?? ""}` : "No funil",
-          })),
-        },
-      ],
-    );
-  }
+  // recorte sem a etapa: base dos indicadores (que filtram por etapa ao clicar)
+  const base = useMemo(() => {
+    const q = busca.trim().toLowerCase();
+    return [...(consulta.dados ?? [])]
+      .sort((a, b) => b.criado_em.localeCompare(a.criado_em))
+      .filter((o) => {
+        const dia = o.criado_em.slice(0, 10);
+        if (situacao === "ativos" && o.arquivado_em) return false;
+        if (situacao === "arquivados" && !o.arquivado_em) return false;
+        if (origem && o.origem !== origem) return false;
+        if (intervalo.de && dia < intervalo.de) return false;
+        if (intervalo.ate && dia > intervalo.ate) return false;
+        if (q) {
+          const d = o.dados_origem ?? {};
+          const alvo = `${o.empresa} ${o.razao_social ?? ""} ${o.cnpj ?? ""} ${o.contato_nome ?? ""} ${o.email ?? ""} ${o.whatsapp ?? ""} ${o.cidade ?? ""} ${d.cnae_descricao ?? ""}`;
+          if (!alvo.toLowerCase().includes(q)) return false;
+        }
+        return true;
+      });
+  }, [consulta.dados, busca, origem, situacao, intervalo]);
+  const lista = useMemo(() => base.filter((o) => passaEtapa(o, etapa)), [base, etapa]);
 
-  const todosSel = filtrada.length > 0 && filtrada.every((o) => sel.has(o.id));
+  const resumo = useMemo(
+    () => ({
+      total: base.length,
+      novos: base.filter((o) => o.etapa === "novo").length,
+      andamento: base.filter((o) => passaEtapa(o, "andamento")).length,
+      ganhos: base.filter((o) => o.etapa === "ganho").length,
+      economia: lista.reduce((a, o) => a + (numero(o.dados_origem?.economia_estimada) ?? 0), 0),
+    }),
+    [base, lista],
+  );
+
+  const rotuloPeriodo =
+    periodo === "escolher"
+      ? `${fmtData(de) === "—" ? "início" : fmtData(de)} a ${fmtData(ate) === "—" ? "hoje" : fmtData(ate)}`
+      : PERIODOS.find((p) => p.id === periodo)?.nome;
+  const nomeFiltroEtapa = (f: FiltroEtapa) => (f === "andamento" ? "Em andamento" : nomeEtapa(f));
+
+  function limparFiltros() {
+    setBusca("");
+    setPeriodo("tudo");
+    setOrigem("simulador");
+    setEtapa("");
+    setSituacao("ativos");
+  }
+  const filtrosAtivos: FiltroAtivo[] = [
+    periodo !== "tudo" && { id: "periodo", rotulo: `Recebido: ${rotuloPeriodo}`, aoTirar: () => setPeriodo("tudo") },
+    origem !== "simulador" && {
+      id: "origem",
+      rotulo: `Origem: ${origem ? nomeOrigem(origem) : "todas"}`,
+      aoTirar: () => setOrigem("simulador"),
+    },
+    etapa && { id: "etapa", rotulo: `Etapa: ${nomeFiltroEtapa(etapa)}`, aoTirar: () => setEtapa("") },
+    situacao !== "ativos" && {
+      id: "situacao",
+      rotulo: `Mostrando: ${SITUACOES.find((s) => s.id === situacao)?.nome}`,
+      aoTirar: () => setSituacao("ativos"),
+    },
+    busca.trim() && { id: "busca", rotulo: `Busca: "${busca.trim()}"`, aoTirar: () => setBusca("") },
+  ].filter((f): f is FiltroAtivo => !!f);
+
+  const selecionados = lista.filter((o) => sel.has(o.id));
+  const todosSel = lista.length > 0 && lista.every((o) => sel.has(o.id));
+  const alternar = (id: string, marcar: boolean) =>
+    setSel((x) => {
+      const n = new Set(x);
+      if (marcar) n.add(id);
+      else n.delete(id);
+      return n;
+    });
+  const filtrarEtapa = (f: FiltroEtapa) => setEtapa(etapa === f ? "" : f);
+  const carregando = consulta.carregando && !consulta.dados;
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-end gap-3">
-        <div className="mr-auto">
-          <h1 className="text-xl font-semibold text-[var(--marca)]">Leads</h1>
-          <p className="text-sm text-neutral-600">
-            Quem chegou pelo Simulador de Regime e pelos demais canais. Cada lead já entra no funil como “Novo lead”.
-          </p>
-        </div>
-        <button className="btn" onClick={exportar} disabled={!filtrada.length}>
-          Exportar Excel
-        </button>
-      </div>
+      <CabecalhoPagina
+        titulo="Leads"
+        descricao="Quem chegou pelo Simulador de Regime e pelos demais canais. Cada lead já entra no funil como “Novo lead”."
+        acoes={
+          <BotoesExportar
+            vazio={!lista.length}
+            avisar={mostrar}
+            montar={() => ({
+              titulo: "Leads do CRM",
+              subtitulo: `${org.nome} · origem: ${origem ? nomeOrigem(origem) : "todas"}${periodo !== "tudo" ? ` · recebidos: ${rotuloPeriodo}` : ""} · ${lista.length} lead(s)`,
+              arquivo: nomeArquivo("Leads", hoje),
+              logoUrl: org.logo_url,
+              linhas: lista,
+              colunas: [
+                { titulo: "Recebido em", valor: (o) => fmtDataLocal(o.criado_em), peso: 1, largura: 13 },
+                { titulo: "Empresa", valor: (o) => o.empresa, peso: 2.2, largura: 34 },
+                { titulo: "CNPJ", valor: (o) => o.cnpj ?? "", peso: 1.4, largura: 20 },
+                { titulo: "Contato", valor: (o) => o.contato_nome ?? "", peso: 1.3, largura: 22 },
+                { titulo: "WhatsApp", valor: (o) => o.whatsapp ?? "", peso: 1.2, largura: 16 },
+                { titulo: "E-mail", valor: (o) => o.email ?? "", peso: 1.6, largura: 28 },
+                {
+                  titulo: "Atividade",
+                  valor: (o) => (o.dados_origem?.cnae_descricao as string) ?? o.atividade ?? "",
+                  peso: 1.8,
+                  largura: 34,
+                },
+                { titulo: "Regime atual", valor: (o) => nomeRegime(o.regime_atual), peso: 0.9, largura: 13 },
+                { titulo: "Melhor regime", valor: (o) => nomeRegime(o.dados_origem?.melhor_regime), peso: 0.9, largura: 14 },
+                {
+                  titulo: "Economia estimada",
+                  valor: (o) => numero(o.dados_origem?.economia_estimada),
+                  formato: "moeda",
+                  peso: 1.1,
+                  largura: 16,
+                },
+                { titulo: "Etapa", valor: (o) => nomeEtapa(o.etapa), peso: 0.9, largura: 13 },
+                {
+                  titulo: "Situação",
+                  valor: (o) => (o.arquivado_em ? `Arquivado: ${o.motivo_arquivo ?? ""}` : "No funil"),
+                  peso: 1.2,
+                  largura: 22,
+                },
+              ],
+              totais: { "Economia estimada": resumo.economia },
+            })}
+          />
+        }
+      />
 
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
-        {[
-          ["Leads na lista", String(resumo.total)],
-          ["Ainda não contatados", String(resumo.novos)],
-          ["Em andamento", String(resumo.andamento)],
-          ["Viraram cliente", String(resumo.ganhos)],
-          ["Economia estimada somada", brl(resumo.economia)],
-        ].map(([r, v]) => (
-          <div key={r} className="cartao p-3">
-            <div className="text-xs text-neutral-500">{r}</div>
-            <div className="mt-1 text-xl font-semibold tabular-nums text-[var(--marca)]">{v}</div>
-          </div>
-        ))}
-      </div>
-
-      <div className="flex flex-wrap items-center gap-2">
-        <input
-          className="entrada w-64"
-          placeholder="Empresa, CNPJ, contato, atividade…"
-          value={busca}
-          onChange={(e) => setBusca(e.target.value)}
-        />
-        <select className="entrada" value={origem} onChange={(e) => setOrigem(e.target.value)} aria-label="Origem">
-          <option value="">Todas as origens</option>
-          {ORIGENS.map((o) => (
-            <option key={o.id} value={o.id}>
-              {o.nome}
-            </option>
-          ))}
-        </select>
-        <select className="entrada" value={etapa} onChange={(e) => setEtapa(e.target.value)} aria-label="Etapa">
-          <option value="">Todas as etapas</option>
-          {ETAPAS.map((e) => (
-            <option key={e.id} value={e.id}>
-              {e.nome}
-            </option>
-          ))}
-        </select>
-        <label className="flex items-center gap-2 text-sm text-neutral-600">
-          Desde
-          <input type="date" className="entrada" value={desde} onChange={(e) => setDesde(e.target.value)} />
+      <CartaoFiltros ativos={filtrosAtivos} aoLimpar={limparFiltros}>
+        <label className="campo campo-largo">
+          <span>Buscar</span>
+          <input type="search" value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Empresa, CNPJ, contato ou atividade" />
         </label>
-        <div className="ml-auto flex overflow-hidden rounded-lg border border-[var(--borda)] text-sm">
-          {(["ativos", "arquivados", "todos"] as Situacao[]).map((s) => (
-            <button
-              key={s}
-              onClick={() => setSituacao(s)}
-              className={`px-3 py-1.5 ${situacao === s ? "bg-[var(--marca)] text-white" : "bg-white"}`}
-            >
-              {s === "ativos" ? "No funil" : s === "arquivados" ? "Arquivados" : "Todos"}
-            </button>
-          ))}
-        </div>
-      </div>
+        <FiltroPeriodo
+          rotulo="Recebido"
+          periodo={periodo}
+          de={de}
+          ate={ate}
+          aoMudar={(v) => {
+            if (v.periodo) setPeriodo(v.periodo);
+            if (v.de !== undefined) setDe(v.de);
+            if (v.ate !== undefined) setAte(v.ate);
+          }}
+        />
+        <label className="campo">
+          <span>Como chegou</span>
+          <select value={origem} onChange={(e) => setOrigem(e.target.value)}>
+            <option value="">Todas as origens</option>
+            {ORIGENS.map((o) => (
+              <option key={o.id} value={o.id}>
+                {o.nome}
+              </option>
+            ))}
+          </select>
+        </label>
+        <MaisFiltros emUso={(etapa ? 1 : 0) + (situacao !== "ativos" ? 1 : 0)}>
+          <label className="campo">
+            <span>Etapa</span>
+            <select value={etapa} onChange={(e) => setEtapa(e.target.value as FiltroEtapa)}>
+              <option value="">Todas as etapas</option>
+              <option value="andamento">Em andamento (já contatados)</option>
+              {ETAPAS.map((e) => (
+                <option key={e.id} value={e.id}>
+                  {e.nome}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="campo">
+            <span>Mostrar</span>
+            <select value={situacao} onChange={(e) => setSituacao(e.target.value as Situacao)}>
+              {SITUACOES.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.nome}
+                </option>
+              ))}
+            </select>
+          </label>
+        </MaisFiltros>
+      </CartaoFiltros>
 
-      {erro && <p className="rounded-md bg-red-50 p-3 text-sm text-red-800">{erro}</p>}
-      {aviso && <p className="rounded-md bg-emerald-50 p-3 text-sm text-emerald-900">{aviso}</p>}
-
-      {sel.size > 0 && (podeOperar || podeGerir) && (
-        <div className="cartao sticky top-16 z-20 flex flex-wrap items-center gap-3 border-[var(--destaque-escuro)] p-3 text-sm">
-          <b className="text-[var(--marca)]">{sel.size} selecionado(s)</b>
-          {podeOperar && situacao !== "arquivados" && (
-            <button className="btn" onClick={() => arquivar([...sel], true)}>
-              Arquivar (dar baixa)
-            </button>
-          )}
-          {podeOperar && situacao !== "ativos" && (
-            <button className="btn" onClick={() => arquivar([...sel], false)}>
-              Restaurar ao funil
-            </button>
-          )}
-          <button className="btn-link" onClick={() => setSel(new Set())}>
-            Limpar seleção
-          </button>
-        </div>
+      {aviso}
+      {acoes.janela}
+      {consulta.erro && (
+        <p role="alert" className="rounded-md bg-red-50 p-3 text-sm text-red-800">
+          {consulta.erro}
+        </p>
       )}
 
-      <div className="cartao overflow-x-auto">
-        <table className="tabela">
-          <thead>
-            <tr>
-              <th className="w-8">
-                <input
-                  type="checkbox"
-                  className="h-4 w-4 accent-[var(--marca)]"
-                  aria-label="Selecionar todos"
-                  checked={todosSel}
-                  onChange={(e) => setSel(e.target.checked ? new Set(filtrada.map((o) => o.id)) : new Set())}
-                />
-              </th>
-              <th>Recebido</th>
-              <th>Empresa</th>
-              <th>Contato</th>
-              <th>Regime → melhor</th>
-              <th className="text-right">Economia estimada</th>
-              <th>Etapa</th>
-            </tr>
-          </thead>
-          <tbody>
-            {lista === null && (
-              <tr>
-                <td colSpan={7} className="py-6 text-center text-sm text-neutral-500">
-                  Carregando…
-                </td>
-              </tr>
-            )}
-            {lista !== null && filtrada.length === 0 && (
-              <tr>
-                <td colSpan={7} className="py-6 text-center text-sm text-neutral-500">
-                  Nenhum lead com esses filtros.
-                </td>
-              </tr>
-            )}
-            {filtrada.map((o) => {
-              const d = o.dados_origem ?? {};
-              const econ = num(d.economia_estimada);
-              const zap = (o.whatsapp ?? "").replace(/\D/g, "");
-              return (
-                <tr
-                  key={o.id}
-                  className={`cursor-pointer hover:bg-[var(--fundo)] ${o.arquivado_em ? "opacity-60" : ""}`}
-                  onClick={() => router.push(`/comercial/${o.id}`)}
-                >
-                  <td onClick={(e) => e.stopPropagation()}>
-                    <input
-                      type="checkbox"
-                      className="h-4 w-4 accent-[var(--marca)]"
-                      aria-label={`Selecionar ${o.empresa}`}
-                      checked={sel.has(o.id)}
-                      onChange={(e) =>
-                        setSel((x) => {
-                          const n = new Set(x);
-                          if (e.target.checked) n.add(o.id);
-                          else n.delete(o.id);
-                          return n;
-                        })
-                      }
-                    />
-                  </td>
-                  <td className="whitespace-nowrap text-sm text-neutral-600">{fmtDataLocal(o.criado_em)}</td>
-                  <td>
-                    <div className="font-medium">{o.empresa}</div>
-                    <div className="text-xs text-neutral-500">
-                      {[o.cnpj, (d.cnae_descricao as string) ?? o.atividade].filter(Boolean).join(" · ")}
-                    </div>
-                  </td>
-                  <td className="text-sm">
-                    <div>{o.contato_nome ?? "—"}</div>
-                    <div className="flex gap-2 text-xs" onClick={(e) => e.stopPropagation()}>
-                      {zap && (
-                        <a
-                          className="text-[var(--destaque-escuro)] hover:underline"
-                          href={`https://wa.me/${zap.length <= 11 ? "55" + zap : zap}`}
-                          target="_blank"
-                          rel="noopener"
-                        >
-                          WhatsApp
-                        </a>
-                      )}
-                      {o.email && (
-                        <a className="text-[var(--destaque-escuro)] hover:underline" href={`mailto:${o.email}`}>
-                          E-mail
-                        </a>
-                      )}
-                    </div>
-                  </td>
-                  <td className="whitespace-nowrap text-sm">
-                    {nomeRegime(o.regime_atual)} → <b>{nomeRegime(d.melhor_regime)}</b>
-                  </td>
-                  <td className="text-right tabular-nums">{econ ? brl(econ) : "—"}</td>
-                  <td>
-                    <span
-                      className={`chip ${o.etapa === "ganho" ? "bg-emerald-50 text-emerald-800" : o.etapa === "perdido" ? "bg-red-50 text-red-800" : "bg-[var(--fundo)] text-neutral-700"}`}
-                    >
-                      {ETAPAS.find((e) => e.id === o.etapa)?.nome}
-                    </span>
-                    {o.arquivado_em && (
-                      <div className="mt-0.5 text-[11px] text-neutral-500">arquivado{o.motivo_arquivo ? `: ${o.motivo_arquivo}` : ""}</div>
+      {carregando ? (
+        <Esqueleto indicadores={4} />
+      ) : (
+        <>
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <Indicador
+              titulo="Ainda não contatados"
+              icone="sino"
+              tom={resumo.novos ? "violeta" : "neutro"}
+              valor={String(resumo.novos)}
+              detalhe={`de ${resumo.total} lead(s) neste filtro`}
+              ativo={etapa === "novo"}
+              aoClicar={() => filtrarEtapa("novo")}
+            />
+            <Indicador
+              titulo="Em andamento"
+              icone="funil"
+              tom="azul"
+              valor={String(resumo.andamento)}
+              detalhe="Já contatados, sem desfecho"
+              ativo={etapa === "andamento"}
+              aoClicar={() => filtrarEtapa("andamento")}
+            />
+            <Indicador
+              titulo="Viraram cliente"
+              icone="check"
+              tom="verde"
+              valor={String(resumo.ganhos)}
+              detalhe={resumo.total ? `${Math.round((resumo.ganhos / resumo.total) * 100)}% dos leads` : undefined}
+              ativo={etapa === "ganho"}
+              aoClicar={() => filtrarEtapa("ganho")}
+            />
+            <Indicador
+              titulo="Economia estimada somada"
+              icone="moeda"
+              tom="ambar"
+              valor={brl(resumo.economia)}
+              detalhe="O que o Simulador mostrou de economia/ano para a lista"
+            />
+          </div>
+
+          {selecionados.length > 0 && podeOperar && (
+            <div className="cartao sticky top-16 z-20 flex flex-wrap items-center gap-2 border-[var(--destaque-escuro)] p-3 text-sm">
+              <b className="mr-1 text-[var(--marca)]">{selecionados.length} selecionado(s)</b>
+              {selecionados.some((o) => !o.arquivado_em) && (
+                <button className="btn" onClick={() => acoes.arquivar(selecionados.filter((o) => !o.arquivado_em))}>
+                  <Icone nome="caixa" className="h-4 w-4" />
+                  Arquivar (dar baixa)
+                </button>
+              )}
+              {selecionados.some((o) => o.arquivado_em) && (
+                <button className="btn" onClick={() => acoes.restaurar(selecionados.filter((o) => o.arquivado_em))}>
+                  <Icone nome="atualizar" className="h-4 w-4" />
+                  Voltar ao funil
+                </button>
+              )}
+              <button className="btn-link" onClick={() => setSel(new Set())}>
+                Limpar seleção
+              </button>
+            </div>
+          )}
+
+          {!lista.length ? (
+            <EstadoVazio
+              icone={consulta.dados?.length ? "filtro" : "pessoas"}
+              titulo={consulta.dados?.length ? "Nenhum lead neste filtro" : "Nenhum lead ainda"}
+              acao={
+                consulta.dados?.length ? (
+                  <button className="btn" onClick={limparFiltros}>
+                    Limpar filtros
+                  </button>
+                ) : (
+                  <Link className="btn" href="/comercial">
+                    <Icone nome="funil" className="h-4 w-4" />
+                    Ir para o funil
+                  </Link>
+                )
+              }
+            >
+              {consulta.dados?.length
+                ? "O padrão mostra só quem veio do Simulador de Regime. Troque “Como chegou” para “Todas as origens” ou limpe os filtros."
+                : "Quem preencher o Simulador de Regime aparece aqui sozinho. Contatos de indicação, WhatsApp ou evento você cadastra no funil."}
+            </EstadoVazio>
+          ) : (
+            <QuadroTabela
+              rotulo="Leads"
+              rodape={lista.length > MOSTRAR ? `Mostrando ${MOSTRAR} de ${lista.length}. A exportação considera todos.` : undefined}
+            >
+              <thead>
+                <tr>
+                  <th className="w-8">
+                    {podeOperar && (
+                      <input
+                        type="checkbox"
+                        className="h-4 w-4 accent-[var(--marca)]"
+                        aria-label="Selecionar todos"
+                        checked={todosSel}
+                        onChange={(e) => setSel(e.target.checked ? new Set(lista.map((o) => o.id)) : new Set())}
+                      />
                     )}
-                  </td>
+                  </th>
+                  <th>Recebido</th>
+                  <th>Empresa</th>
+                  <th>Contato</th>
+                  <th>Regime → melhor</th>
+                  <th className="text-right">Economia estimada</th>
+                  <th>Etapa</th>
+                  <th>
+                    <span className="sr-only">Ações</span>
+                  </th>
                 </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+              </thead>
+              <tbody>
+                {lista.slice(0, MOSTRAR).map((o) => {
+                  const d = o.dados_origem ?? {};
+                  const econ = numero(d.economia_estimada);
+                  const zap = linkWhatsapp(o.whatsapp);
+                  return (
+                    <tr key={o.id} className={o.arquivado_em ? "opacity-70" : ""}>
+                      <td data-rotulo={podeOperar ? "Selecionar" : undefined}>
+                        {podeOperar && (
+                          <input
+                            type="checkbox"
+                            className="h-4 w-4 accent-[var(--marca)]"
+                            aria-label={`Selecionar ${o.empresa}`}
+                            checked={sel.has(o.id)}
+                            onChange={(e) => alternar(o.id, e.target.checked)}
+                          />
+                        )}
+                      </td>
+                      <td data-rotulo="Recebido" className="num whitespace-nowrap">
+                        {fmtDataLocal(o.criado_em)}
+                      </td>
+                      <td className="celula-titulo min-w-56">
+                        <Link href={`/comercial/${o.id}`} className="hover:underline">
+                          {o.empresa}
+                        </Link>
+                        <span className="block text-xs font-normal text-[var(--texto-suave)]">
+                          {[o.cnpj, (d.cnae_descricao as string) ?? o.atividade].filter(Boolean).join(" · ") || "—"}
+                        </span>
+                      </td>
+                      <td data-rotulo="Contato">
+                        <span className="block">
+                          <span className="block">{o.contato_nome ?? "—"}</span>
+                          {(zap || o.email) && (
+                            <span className="flex justify-end gap-3 text-xs sm:justify-start">
+                              {zap && (
+                                <a
+                                  className="text-[var(--destaque-escuro)] hover:underline"
+                                  href={zap}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                >
+                                  WhatsApp
+                                </a>
+                              )}
+                              {o.email && (
+                                <a className="text-[var(--destaque-escuro)] hover:underline" href={`mailto:${o.email}`}>
+                                  E-mail
+                                </a>
+                              )}
+                            </span>
+                          )}
+                        </span>
+                      </td>
+                      <td data-rotulo="Regime → melhor" className="whitespace-nowrap">
+                        <span>
+                          {nomeRegime(o.regime_atual)} → <b>{nomeRegime(d.melhor_regime)}</b>
+                        </span>
+                      </td>
+                      <td data-rotulo="Economia estimada" className="text-right">
+                        {econ ? <Valor v={econ} /> : "—"}
+                      </td>
+                      <td data-rotulo="Etapa">
+                        <span className="block">
+                          <Chip tom={TOM_ETAPA[o.etapa]}>{nomeEtapa(o.etapa)}</Chip>
+                          {o.arquivado_em && (
+                            <span className="block text-[11px] text-[var(--texto-suave)]">
+                              arquivado{o.motivo_arquivo ? `: ${o.motivo_arquivo}` : ""}
+                            </span>
+                          )}
+                        </span>
+                      </td>
+                      <td className="celula-acoes whitespace-nowrap text-right">
+                        <Link href={`/comercial/${o.id}`} className="btn !min-h-8 !px-3">
+                          <Icone nome="olho" className="h-4 w-4" />
+                          Abrir
+                        </Link>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+              <tfoot>
+                <tr className="font-medium">
+                  <td colSpan={5} className="celula-titulo">
+                    Total ({lista.length})
+                  </td>
+                  <td data-rotulo="Economia estimada" className="text-right">
+                    <Valor v={resumo.economia} />
+                  </td>
+                  <td colSpan={2} />
+                </tr>
+              </tfoot>
+            </QuadroTabela>
+          )}
+        </>
+      )}
     </div>
   );
 }
