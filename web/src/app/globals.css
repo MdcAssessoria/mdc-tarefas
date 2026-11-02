@@ -129,6 +129,12 @@ body {
   .btn-primario:hover {
     filter: brightness(1.25);
   }
+  /* Janelas e formulários: o botão principal (Salvar, Confirmar…) vem antes do Cancelar/Voltar (pedido do Edvaldo,
+     02/11/2026). Vale para todo rodapé alinhado à direita, inclusive janelas novas, sem mexer em cada tela. */
+  [role="dialog"] .justify-end > .btn-primario,
+  form .justify-end > .btn-primario {
+    order: -1;
+  }
   .btn-primario:disabled,
   .btn:disabled {
     opacity: 0.55;
