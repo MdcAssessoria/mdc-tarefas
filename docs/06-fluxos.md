@@ -74,6 +74,14 @@ Quando um gestor cadastrar a empresa em Tarefas › Configurações › Clientes
 cliente** (`soc_vincular_cliente`, migração 037): o processo e as tarefas das fases passam para o cliente, com registro
 no histórico e na auditoria. Na abertura nada muda: concluir o processo cadastra a empresa sozinho.
 
+**Avançar no quadro** (desde 02/11/2026, molde 8.3.1): no computador, arrastar o cartão para uma coluna à frente
+abre a janela "Avançar o processo" já com a fase escolhida; o botão **Avançar** do cartão abre a mesma janela (é o
+caminho no celular, onde o quadro vira a lista de cartões por fase com o seletor "Ver a fase", e no teclado). Ao
+confirmar, as fases do meio ainda pendentes são dispensadas e a atual é concluída (`soc_mudar_fase`, nessa ordem;
+regra em `dominios/societario/processos.ts`, `passosParaAvancar`). Voltar uma fase só pela ficha do processo.
+Na ficha, concluir pede confirmação (`useConfirmar`) e cancelar pede o motivo (`JanelaMotivo`, vai para o histórico).
+Os indicadores da lista (fase atrasada, previsão vencida, com exigência, parados há 5+ dias) filtram a lista ao clicar.
+
 ## 6.4 Mapa de automações (o que acontece sem ninguém clicar)
 
 | Gatilho ou agenda | Quando | O que faz |

@@ -1295,3 +1295,96 @@ export const RPCS = {
   prever_rotina: () => 2,
   portal_licenca_situacao: () => ({ bloqueado: true, modulos: [{ slug: "financeiro", nome: "Financeiro" }] }),
 };
+
+// ---------------------------------------------------------------- Societário (02/11/2026)
+// Mais processos em andamento, em fases diferentes, para o quadro, a lista e o painel terem o que mostrar
+// (um com exigência, um parado, um com previsão vencida, um de empresa fora do cadastro e um concluído).
+(() => {
+  const FASES_ALTERACAO = [
+    ["documentos", "Documentos", 3],
+    ["elaboracao", "Elaboração", 3],
+    ["aprovacao", "Aprovação do cliente", 5],
+    ["assinaturas", "Assinaturas", 5],
+    ["protocolo", "Protocolo", 2],
+    ["exigencias", "Exigências", 5],
+    ["deferimento", "Deferimento", 10],
+    ["entrega", "Entrega", 2],
+  ];
+  TABELAS.soc_tipos.push({
+    id: "t2",
+    org_id: ORG,
+    codigo: "abertura",
+    nome: "Abertura de empresa",
+    ordem: 2,
+    ativo: true,
+    fases: FASES_ALTERACAO.map(([codigo, nome, prazo_dias]) => ({ codigo, nome, prazo_dias })),
+  });
+  const SOC = (k) => `77777777-7777-4777-8777-77777777780${k}`;
+  // [k, número, tipo, cliente, futuro, fase atual (ordem), status da fase, dias na fase, prazo da fase, previsão, exigências, situação]
+  const exemplos = [
+    [1, 21, "t2", null, "Padaria Pão Quente Ltda", 1, "aguardando_cliente", 2, 1, 30, 0, "aberto"],
+    [2, 20, "t1", C2, null, 2, "em_andamento", 1, 2, 15, 0, "aberto"],
+    [3, 19, "t1", C1, null, 4, "aguardando_cliente", 12, -4, 8, 0, "aberto"],
+    [4, 18, "t1", C2, null, 6, "em_andamento", 3, 2, -3, 2, "aberto"],
+    [5, 17, "t1", null, "Comercial Bragança Ltda", 7, "aguardando_orgao", 6, -1, 20, 1, "aberto"],
+    [6, 15, "t1", C1, null, 8, "concluida", 0, null, -10, 0, "concluido"],
+  ];
+  for (const [k, numero, tipo_id, cliente_id, futuro, atual, status, naFase, prazo, previsao, exigencias, situacao] of exemplos) {
+    TABELAS.soc_processos.push({
+      id: SOC(k),
+      org_id: ORG,
+      numero,
+      tipo_id,
+      cliente_id,
+      futuro_cliente: futuro,
+      cnpj: cliente_id ? "12.345.678/0001-95" : null,
+      uf: k === 5 ? "MG" : "SP",
+      descricao: tipo_id === "t2" ? "Abertura de padaria, Simples Nacional" : "Entrada de sócio e aumento de capital",
+      status: situacao,
+      fase_atual: atual,
+      exigencias,
+      responsavel_id: k % 2 ? EU : OUTRO,
+      pedido_em: dia(-20 - k * 3),
+      previsao_em: dia(previsao),
+      concluido_em: situacao === "concluido" ? momento(-2) : null,
+      visivel_cliente: !!cliente_id,
+      criado_em: momento(-20 - k * 3),
+      criado_por: EU,
+      atualizado_em: momento(-naFase),
+    });
+    FASES_ALTERACAO.forEach(([codigo, nome, prazo_dias], i) => {
+      const ordem = i + 1;
+      const antes = ordem < atual || situacao === "concluido";
+      TABELAS.soc_fases.push({
+        id: `${SOC(k)}-f${ordem}`,
+        org_id: ORG,
+        processo_id: SOC(k),
+        codigo,
+        nome,
+        ordem,
+        status: antes ? (codigo === "exigencias" && !exigencias ? "dispensada" : "concluida") : ordem === atual ? status : "a_fazer",
+        responsavel_id: ordem === atual ? (k % 2 ? EU : OUTRO) : null,
+        inicio_em: antes || ordem === atual ? dia(-20 - k * 3 + ordem) : null,
+        fim_em: antes ? dia(-20 - k * 3 + ordem + 1) : null,
+        prazo_dias,
+        prazo_em: ordem === atual && prazo !== null ? dia(prazo) : null,
+        mudou_em: momento(ordem === atual ? -naFase : -30),
+        tarefa_id: ordem === atual ? "t-soc" : null,
+      });
+    });
+  }
+  const P4 = SOC(4);
+  TABELAS.soc_protocolos.push({ id: "sp1", org_id: ORG, processo_id: P4, orgao: "JUCESP", numero: "2.345.678/26-1", data: dia(-6), link: "https://exemplo.com" });
+  TABELAS.soc_exigencias.push(
+    { id: "se1", org_id: ORG, processo_id: P4, data: dia(-3), orgao: "JUCESP", texto: "Corrigir a cláusula de administração.", resposta: null, reprotocolo_em: null },
+    { id: "se2", org_id: ORG, processo_id: P4, data: dia(-5), orgao: "JUCESP", texto: "Falta assinatura do sócio entrante.", resposta: "Assinatura colhida pelo gov.br", reprotocolo_em: dia(-4) },
+  );
+  TABELAS.soc_taxas.push(
+    { id: "st1", org_id: ORG, processo_id: P4, descricao: "DARE Junta Comercial", valor: 189.07, vencimento: dia(-8), pago_por: "cliente", pago_em: dia(-8) },
+    { id: "st2", org_id: ORG, processo_id: P4, descricao: "Taxa municipal", valor: 92.5, vencimento: dia(-1), pago_por: "mdc", pago_em: null },
+  );
+  TABELAS.soc_eventos.push(
+    { id: 901, org_id: ORG, processo_id: P4, user_id: EU, tipo: "exigencias", texto: "Exigência registrada (JUCESP)", visivel_cliente: true, em: momento(-3) },
+    { id: 902, org_id: ORG, processo_id: P4, user_id: OUTRO, tipo: "comentario", texto: "Cliente avisado por WhatsApp.", visivel_cliente: false, em: momento(-2) },
+  );
+})();
