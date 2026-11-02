@@ -1,16 +1,13 @@
 // CRM Comercial: gravações feitas pelas telas. Nada do CRM se apaga (migração 036): oportunidade se arquiva com
 // motivo (crm_arquivar), atividade fica no histórico (pode ser editada) e contrato muda para "cancelado".
 //
-// Atenção: salvarContrato, marcarContrato e registrarAtividade gravam em mais de uma etapa a partir do navegador
-// (a auditoria pediu que virem funções do banco, uma transação só). Enquanto isso não existe, cada função devolve
-// o que falhou depois da gravação principal, para a tela avisar a pessoa.
+// salvarContrato, marcarContrato e registrarAtividade chamam funções do banco (migração 038): cada uma grava tudo
+// numa transação só (contrato, funil e histórico), e o número do contrato (AAAA/NNN) é dado pelo banco, sem repetir.
 import { supabase } from "@/lib/supabase";
+import type { Json } from "@/lib/database.types";
 import { exigir } from "@/lib/exigir";
-import { traduzirErro } from "@/lib/erros";
-import { brl } from "@/lib/formato/moeda";
-import { montarContrato, numeroContrato } from "./crm";
+import { montarContrato } from "./crm";
 import type { Atividade, Contrato, Etapa, Modelo, Oportunidade, Valores } from "./crm";
-import { SITUACOES_CONTRATO } from "./rotulos";
 
 /** Arquiva (ou devolve ao funil) várias oportunidades; devolve quantas mudaram. */
 export async function arquivarOportunidades(ids: string[], motivo: string, arquivar: boolean): Promise<number> {
@@ -58,31 +55,17 @@ export async function criarOportunidade(orgId: string, eu: string, d: NovaOportu
 
 /**
  * Registra uma conversa ou próximo passo e atualiza a oportunidade (data do retorno ou "mexida agora"; o primeiro
- * contato tira do "Novo lead"). Duas gravações: devolve a mensagem se a segunda falhar.
+ * contato tira do "Novo lead"). Uma transação no banco (crm_registrar_atividade).
  */
-export async function registrarAtividade(
-  o: Oportunidade,
-  eu: string,
-  a: { tipo: string; texto: string; quando: string },
-): Promise<string | null> {
-  const sb = supabase();
+export async function registrarAtividade(o: Oportunidade, a: { tipo: string; texto: string; quando: string }) {
   exigir(
-    await sb.from("crm_atividades").insert({
-      org_id: o.org_id,
-      oportunidade_id: o.id,
-      tipo: a.tipo,
-      texto: a.texto,
-      quando: a.quando ? new Date(a.quando + "T09:00:00").toISOString() : null,
-      concluida: a.tipo !== "tarefa",
-      autor_id: eu,
+    await supabase().rpc("crm_registrar_atividade", {
+      p_op: o.id,
+      p_tipo: a.tipo,
+      p_texto: a.texto,
+      p_quando: a.quando || undefined,
     }),
   );
-  const campos: Record<string, unknown> =
-    a.tipo === "tarefa" && a.quando ? { proximo_contato: a.quando } : { atualizado_em: new Date().toISOString() };
-  if (o.etapa === "novo" && ["ligacao", "whatsapp", "email", "reuniao"].includes(a.tipo))
-    campos.etapa = a.tipo === "reuniao" ? "reuniao" : "contato";
-  const op = await sb.from("crm_oportunidades").update(campos).eq("id", o.id);
-  return op.error ? `Registro salvo, mas a oportunidade não foi atualizada: ${traduzirErro(op.error)}` : null;
 }
 
 export async function editarAtividade(id: string, texto: string) {
@@ -96,110 +79,27 @@ export async function concluirAtividade(a: Atividade) {
 // ---------------------------------------------------------------- contrato
 
 /**
- * Salva os valores negociados. Rascunho existente: atualiza o texto e o valor do funil. Sem rascunho: numera
- * (contratos do ano + 1), cria o contrato, atualiza o valor do funil e registra no histórico.
+ * Salva os valores negociados (crm_salvar_contrato, uma transação). Rascunho existente: atualiza o texto e o valor do
+ * funil. Sem rascunho: o banco numera (AAAA/NNN, sem repetir mesmo com duas pessoas ao mesmo tempo), cria o contrato,
+ * atualiza o valor do funil e registra no histórico. O texto vai com {{numero}} e o banco põe o número.
  */
-export async function salvarContrato(
-  o: Oportunidade,
-  modelo: Modelo,
-  v: Valores,
-  ultimo: Contrato | undefined,
-  hoje: string,
-): Promise<{ contrato: Contrato; falha: string | null }> {
-  const sb = supabase();
-  if (ultimo && ultimo.status === "rascunho") {
-    const contrato = exigir(
-      await sb
-        .from("crm_contratos")
-        .update({
-          valores: v,
-          texto: montarContrato(modelo.texto, v, ultimo.numero ?? ""),
-          modelo_id: modelo.id,
-          modelo_versao: modelo.versao,
-        })
-        .eq("id", ultimo.id)
-        .select("*")
-        .single(),
-    ) as Contrato;
-    const op = await sb
-      .from("crm_oportunidades")
-      .update({ valor_mensal: v.honorario_mensal || null })
-      .eq("id", o.id);
-    return { contrato, falha: op.error ? `Contrato salvo, mas o valor do funil não foi atualizado: ${traduzirErro(op.error)}` : null };
-  }
-  const { count, error } = await sb
-    .from("crm_contratos")
-    .select("id", { count: "exact", head: true })
-    .eq("org_id", o.org_id)
-    .gte("criado_em", `${hoje.slice(0, 4)}-01-01`);
-  if (error) throw new Error(traduzirErro(error));
-  const numero = numeroContrato((count ?? 0) + 1, new Date(hoje + "T12:00:00Z"));
-  const contrato = exigir(
-    await sb
-      .from("crm_contratos")
-      .insert({
-        org_id: o.org_id,
-        oportunidade_id: o.id,
-        modelo_id: modelo.id,
-        modelo_versao: modelo.versao,
-        numero,
-        valores: v,
-        texto: montarContrato(modelo.texto, v, numero),
-      })
-      .select("*")
-      .single(),
-  ) as Contrato;
-  const [op, at] = await Promise.all([
-    sb
-      .from("crm_oportunidades")
-      .update({ valor_mensal: v.honorario_mensal || null })
-      .eq("id", o.id),
-    sb.from("crm_atividades").insert({
-      org_id: o.org_id,
-      oportunidade_id: o.id,
-      tipo: "contrato",
-      texto: `Contrato ${numero} criado (${brl(v.honorario_mensal)}/mês)`,
-      concluida: true,
+export async function salvarContrato(o: Oportunidade, modelo: Modelo, v: Valores): Promise<Contrato> {
+  return exigir(
+    await supabase().rpc("crm_salvar_contrato", {
+      p_op: o.id,
+      p_modelo: modelo.id,
+      p_valores: v as unknown as Json,
+      p_texto: montarContrato(modelo.texto, v, "{{numero}}"),
     }),
-  ]);
-  const falha = op.error ?? at.error;
-  return { contrato, falha: falha ? `Contrato criado, mas o funil ou o histórico não foram atualizados: ${traduzirErro(falha)}` : null };
+  ) as unknown as Contrato;
 }
 
 /**
  * Muda a situação do contrato (enviado, assinado ou cancelado), registra no histórico, leva a oportunidade para
- * "Proposta" quando o contrato sai e, se pedido, cadastra o cliente ao assinar. Devolve o que falhou depois da
- * mudança principal.
+ * "Proposta" quando o contrato sai e, se pedido, cadastra o cliente ao assinar. Tudo ou nada (crm_marcar_contrato).
  */
-export async function marcarContrato(
-  o: Oportunidade,
-  c: Contrato,
-  status: "enviado" | "assinado" | "cancelado",
-  converter = false,
-): Promise<string[]> {
-  const sb = supabase();
-  const campos: Record<string, unknown> = { status };
-  if (status === "enviado") campos.enviado_em = new Date().toISOString();
-  if (status === "assinado") campos.assinado_em = new Date().toISOString();
-  exigir(await sb.from("crm_contratos").update(campos).eq("id", c.id));
-  const falhas: string[] = [];
-  const at = await sb.from("crm_atividades").insert({
-    org_id: o.org_id,
-    oportunidade_id: o.id,
-    tipo: "contrato",
-    texto: `Contrato ${c.numero}: ${SITUACOES_CONTRATO[status].nome.toLowerCase()}`,
-    concluida: true,
-  });
-  if (at.error) falhas.push(`histórico (${traduzirErro(at.error)})`);
-  if (status === "enviado" && ["novo", "contato", "reuniao"].includes(o.etapa)) {
-    const op = await sb.from("crm_oportunidades").update({ etapa: "proposta" }).eq("id", o.id);
-    if (op.error) falhas.push(`etapa do funil (${traduzirErro(op.error)})`);
-  }
-  if (converter) {
-    const cv = await sb.rpc("crm_converter_cliente", { p_op: o.id });
-    if (cv.error) falhas.push(`cadastro do cliente (${traduzirErro(cv.error)})`);
-  }
-  return falhas;
+export async function marcarContrato(c: Contrato, status: "enviado" | "assinado" | "cancelado", converter = false) {
+  exigir(await supabase().rpc("crm_marcar_contrato", { p_contrato: c.id, p_status: status, p_converter: converter }));
 }
 
 // ---------------------------------------------------------------- modelo

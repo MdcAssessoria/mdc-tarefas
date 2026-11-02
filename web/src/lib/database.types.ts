@@ -5331,7 +5331,29 @@ export type Database = {
         Returns: number;
       };
       crm_converter_cliente: { Args: { p_op: string }; Returns: string };
+      crm_marcar_contrato: {
+        Args: { p_contrato: string; p_converter?: boolean; p_status: string };
+        Returns: undefined;
+      };
       crm_receber_lead: { Args: { p: Json }; Returns: undefined };
+      crm_registrar_atividade: {
+        Args: {
+          p_op: string;
+          p_quando?: string;
+          p_texto: string;
+          p_tipo: string;
+        };
+        Returns: string;
+      };
+      crm_salvar_contrato: {
+        Args: {
+          p_modelo: string;
+          p_op: string;
+          p_texto: string;
+          p_valores: Json;
+        };
+        Returns: Json;
+      };
       est_definir_negativo: {
         Args: { p_cliente: string; p_permite: boolean };
         Returns: undefined;
