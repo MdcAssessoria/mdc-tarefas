@@ -29,13 +29,13 @@ flowchart TB
 | Módulo | Para quem | O que faz | Rotas |
 | --- | --- | --- | --- |
 | Início | Equipe | Resumo das tarefas da pessoa, gráfico semanal | `/` |
-| Tarefas | Equipe, TV | Tarefas e rotinas mensais por cliente, quadro, relatório PDF/Excel, painel da TV | `/tarefas`, `/tarefas/relatorio`, `/tv` |
+| Tarefas | Equipe, TV | Tarefas e rotinas mensais por cliente (lista ou quadro, indicadores clicáveis, PDF/Excel do filtro), relatório de concluídas por pessoa no fuso da organização, painel da TV | `/tarefas`, `/tarefas/relatorio`, `/tv` |
 | Configurações | Gestores | Organização, setores, clientes (segmento, grupos), obrigações recorrentes, feriados | `/config` |
 | Clientes | Gestores | Importar a carteira do Domínio | `/clientes/importar` |
 | Societário | Equipe | Alterações, aberturas e baixas, fase a fase, com exigências e taxas | `/societario`, `/societario/[id]` |
 | Demonstrativos | Equipe | Importa o balancete do Domínio, gera BP/DRE/DFC, índices, fragilidades, parecer e PDF assinado | `/demonstrativos/...` |
 | Atendimento | Equipe | Chat com os clientes do Portal | `/atendimento` |
-| Vencimentos | Equipe | Certificados, alvarás, procurações com avisos | `/vencimentos` |
+| Vencimentos | Equipe | Certificados, alvarás, procurações com avisos; renovar (nova data) e encerrar (com motivo) em janelas, PDF/Excel | `/vencimentos` |
 | Comercial (CRM) | Equipe comercial | Funil, leads, contratos com modelo | `/comercial/...` |
 | Pessoas e acessos | Administrador | Equipe, perfis, acessos do Portal, transferência de trabalho, histórico | `/hub/acessos` |
 | Portal do Cliente | Cliente | Demonstrativos publicados, rotinas do mês, processos, documentos, chat | `/portal` |

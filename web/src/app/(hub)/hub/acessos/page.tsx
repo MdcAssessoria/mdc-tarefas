@@ -19,6 +19,7 @@ import { EditarPessoa } from "./_componentes/EditarPessoa";
 import { TransferirTrabalho } from "./_componentes/TransferirTrabalho";
 import { AcessosClientes } from "@/dominios/portal/componentes/AcessosClientes";
 import { descrever } from "@/dominios/acessos/auditoria";
+import { useConfirmar } from "@/components/ui/JanelaConfirmar";
 
 export default function PaginaAcessos() {
   return <Acessos />;
@@ -38,6 +39,7 @@ function Acessos() {
   const [convite, setConvite] = useState(false);
   const [editando, setEditando] = useState<Membro | null>(null);
   const [transferir, setTransferir] = useState<{ m: Membro; inativar: boolean } | null>(null);
+  const [janela, confirmar] = useConfirmar();
 
   // ferramentas que um perfil pode liberar (o catálogo, menos as desligadas)
   const ferramentas = useMemo(() => apps.filter((a) => a.status !== "desligado"), [apps]);
@@ -100,7 +102,12 @@ function Acessos() {
 
   async function vincular(m: Membro, valor: string) {
     if (valor === ADMIN) {
-      if (!window.confirm(`${m.nome} passará a ser Administrador, com acesso total ao Hub, inclusive a esta tela. Confirmar?`)) return;
+      const sim = await confirmar({
+        titulo: `Tornar ${m.nome} Administrador?`,
+        descricao: "Administrador tem acesso total ao Hub, inclusive a esta tela de pessoas e acessos.",
+        botao: "Tornar Administrador",
+      });
+      if (!sim) return;
       return salvarMembro(m, { papel: "admin" }, `${m.nome} agora é Administrador.`);
     }
     if (m.papel === "admin")
@@ -117,7 +124,13 @@ function Acessos() {
 
   async function inativar(m: Membro, pendente: boolean) {
     if (pendente) {
-      if (!window.confirm(`Cancelar o convite de ${m.nome}? O link enviado deixa de dar acesso.`)) return;
+      const sim = await confirmar({
+        titulo: `Cancelar o convite de ${m.nome}?`,
+        descricao: "O link enviado deixa de dar acesso. Se precisar, cadastre a pessoa de novo depois.",
+        botao: "Cancelar convite",
+        perigo: true,
+      });
+      if (!sim) return;
       return salvarMembro(m, { ativo: false }, `Convite de ${m.nome} cancelado.`);
     }
     // inativar passa pela tela de transferência: quem tem trabalho em aberto precisa passá-lo adiante
@@ -163,6 +176,7 @@ function Acessos() {
 
   return (
     <div className="space-y-5">
+      {janela}
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-xl font-semibold text-[var(--marca)]">Pessoas e acessos</h1>

@@ -3,6 +3,7 @@
 // Convite pendente se cancela com motivo pela função portal_cancelar_convite (036); nada é apagado da tela.
 "use client";
 
+import { Icone } from "@/components/ui/Icone";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { supabase } from "@/lib/supabase";
@@ -81,10 +82,17 @@ export function AcessosClientes({
           Cada pessoa do cliente entra com o próprio e-mail e vê <b>só as empresas vinculadas</b> a ela, com o perfil de cliente escolhido
           (o que pode ver no portal). Um sócio de um grupo pode ter várias empresas.
         </p>
-        <div className="flex gap-2">
-          <input className="entrada w-56" placeholder="Buscar pessoa ou empresa" value={busca} onChange={(e) => setBusca(e.target.value)} />
+        <div className="flex w-full flex-wrap gap-2 sm:w-auto">
+          <input
+            className="entrada min-w-0 flex-1 sm:w-56 sm:flex-none"
+            aria-label="Buscar pessoa ou empresa"
+            placeholder="Buscar pessoa ou empresa"
+            value={busca}
+            onChange={(e) => setBusca(e.target.value)}
+          />
           <button className="btn-primario" onClick={() => setNovo(true)}>
-            + Acesso de cliente
+            <Icone nome="mais" className="h-4 w-4" />
+            Acesso de cliente
           </button>
         </div>
       </div>
@@ -159,8 +167,8 @@ export function AcessosClientes({
           titulo="Cancelar convite"
           descricao={
             <>
-              O convite de <b>{cancelar.nome}</b> deixa de valer. Se a pessoa ainda não criou a senha, não vai conseguir entrar. O motivo fica no
-              histórico.
+              O convite de <b>{cancelar.nome}</b> deixa de valer. Se a pessoa ainda não criou a senha, não vai conseguir entrar. O motivo
+              fica no histórico.
             </>
           }
           botao="Cancelar convite"

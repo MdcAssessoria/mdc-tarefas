@@ -73,8 +73,8 @@ empresa (lembrada no navegador e a mesma em todos os módulos de gestão) é `Es
 | Vazio | `components/ui/EstadoVazio` com `icone` e `titulo` | Ilustração + o que fazer agora + botão da ação (ou "Limpar filtros" quando é o filtro que esvaziou) |
 | Carregando | `components/ui/Esqueleto` | Blocos no formato da tela (indicadores + linhas). Mantém "Carregando…" para leitores de tela e para o `npm run telas` |
 | Botões | classes `btn` / `btn-primario` + `Icone` | Todo botão de ação tem ícone (`mais`, `editar`, `documento` para PDF, `planilha` para Excel, `transferir`, `check`, `lixeira`, `cancelar`, `olho`, `copiar`, `voltar`, `imprimir`, `atualizar`…). Ícone novo: mesmo traço (24×24, 1,7) em `components/ui/Icone.tsx`; nome inexistente avisa no console em desenvolvimento |
-| Confirmar | `components/ui/JanelaConfirmar` / `useConfirmar()` | Sim ou não, em janela acessível; `perigo` deixa o botão vermelho. Com motivo para o histórico: `JanelaMotivo` |
-| Gráficos | `dominios/financeiro/componentes/GraficosPainel` | SVG puro nas cores de `demonstrativos/componentes/paletas.ts`; o SVG acompanha a largura do quadro (letra legível no celular) |
+| Confirmar | `components/ui/JanelaConfirmar` / `useConfirmar()` | Sim ou não, em janela acessível; `perigo` deixa o botão vermelho. Com motivo para o histórico: `JanelaMotivo`. Duas ou mais escolhas ("Só para esta empresa" / "Para todas"): `JanelaEscolha` / `useEscolha()` |
+| Gráficos | `dominios/financeiro/componentes/GraficosPainel`, `dominios/demonstrativos/componentes/Graficos` | SVG puro nas cores de `demonstrativos/componentes/paletas.ts`; o SVG acompanha a largura do quadro com `lib/useLargura` (viewBox = largura real, letra de 11 px de verdade no celular); rótulos do eixo com `saltoRotulos`; legenda em HTML |
 
 Navegação dos módulos: cada módulo é um item do menu lateral (linha em `hub_apps`) com abas curtas na barra superior
 (`components/shell/navegacao.ts`). Módulo com muitas telas junta as parecidas num grupo (`grupo` no link): no computador

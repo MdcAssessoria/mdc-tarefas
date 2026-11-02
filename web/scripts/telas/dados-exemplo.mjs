@@ -345,7 +345,13 @@ export const TABELAS = {
     cliente(C2, "NEXUS GESTAO DE PESSOAS LTDA", "Nexus", "44.537.381/0001-18", "presumido"),
   ],
   cliente_responsaveis: [{ org_id: ORG, cliente_id: C1, setor_id: SETOR, user_id: EU }],
-  tarefas: Array.from({ length: 8 }, (_, k) => tarefa(k)),
+  tarefas: [
+    ...Array.from({ length: 8 }, (_, k) => tarefa(k)),
+    // concluídas (relatório de tarefas): no prazo, com atraso e sem prazo
+    tarefa(8, { status: "concluida", prazo: dia(-2), concluida_em: momento(-2) }),
+    tarefa(9, { status: "concluida", prazo: dia(-6), concluida_em: momento(-1), responsavel_id: OUTRO }),
+    tarefa(10, { status: "concluida", prazo: null, concluida_em: momento(-1), responsavel_id: OUTRO }),
+  ],
   comentarios: [],
   historico: [],
   modelos_recorrentes: [
@@ -816,6 +822,64 @@ export const TABELAS = {
       criado_em: momento(-1),
       atualizado_em: momento(0),
     },
+    {
+      id: "cv2",
+      org_id: ORG,
+      cliente_id: C2,
+      titulo: "Admissão da Maria em 10/11",
+      assunto: "admissao_demissao",
+      status: "aguardando_cliente",
+      aberto_por: OUTRO,
+      responsavel_id: EU,
+      setor_id: SETOR,
+      processo_id: null,
+      tarefa_id: null,
+      prazo_resposta: momento(-1),
+      respondida_em: null,
+      resolvida_em: null,
+      avaliacao: null,
+      criado_em: momento(-3),
+      atualizado_em: momento(-2),
+    },
+  ],
+  // histórico de importações de balancete (Demonstrativos › Histórico de importações)
+  hub_importacoes: [
+    {
+      id: 1,
+      org_id: ORG,
+      origem: "lote",
+      arquivo: "balancete_greencore_09.xlsx",
+      cliente_id: C1,
+      competencia: "2026-09-01",
+      balancete_id: IDS_EXEMPLO["demonstrativos/[id]"],
+      resultado: "importado",
+      motivo: null,
+      em: momento(-2),
+    },
+    {
+      id: 2,
+      org_id: ORG,
+      origem: "pasta",
+      arquivo: "Balancete 08-2026 padaria.xlsx",
+      cliente_id: C2,
+      competencia: "2026-08-01",
+      balancete_id: null,
+      resultado: "revisar",
+      motivo: "Contas sem grupo: confira a classificação antes de publicar.",
+      em: momento(-3),
+    },
+    {
+      id: 3,
+      org_id: ORG,
+      origem: "arquivo",
+      arquivo: "planilha_qualquer.xlsx",
+      cliente_id: null,
+      competencia: null,
+      balancete_id: null,
+      resultado: "erro",
+      motivo: "Não parece um balancete do Domínio (faltam as colunas de saldo).",
+      em: momento(-4),
+    },
   ],
   portal_mensagens: [
     {
@@ -877,7 +941,7 @@ export const TABELAS = {
       cnpj: "12.345.678/0001-95",
       uf: "SP",
       descricao: "Alteração de endereço",
-      status: "andamento",
+      status: "aberto",
       fase_atual: 1,
       exigencias: 0,
       responsavel_id: EU,
@@ -898,7 +962,7 @@ export const TABELAS = {
       codigo: "viabilidade",
       nome: "Viabilidade",
       ordem: 1,
-      status: "andamento",
+      status: "em_andamento",
       responsavel_id: EU,
       inicio_em: dia(-10),
       fim_em: null,
@@ -1278,6 +1342,22 @@ export const RPCS = {
       cor_destaque: "#E2C17E",
       permissoes: ["tarefas", "demonstrativos", "societario", "atendimento", "vencimentos", "folha"],
     },
+    // segunda empresa com todas as partes do Portal liberadas (Rotinas, Fale com a MDC, Documentos) e sem fechamento
+    // publicado: serve para ver as telas vazias que ensinam (escolha "mdc-portal:empresa" = C2 no navegador)
+    {
+      org_id: ORG,
+      org_nome: "MDC Assessoria",
+      cliente_id: C2,
+      razao_social: "PADARIA EXEMPLO LTDA",
+      nome_fantasia: "Padaria Exemplo",
+      cnpj: "11.222.333/0001-81",
+      regime: "simples",
+      uf: "SP",
+      logo_url: null,
+      cor_primaria: "#0B2820",
+      cor_destaque: "#E2C17E",
+      permissoes: ["demonstrativos", "rotinas", "chat", "societario", "documentos"],
+    },
   ],
   portal_rotinas: () => [
     {
@@ -1295,3 +1375,159 @@ export const RPCS = {
   prever_rotina: () => 2,
   portal_licenca_situacao: () => ({ bloqueado: true, modulos: [{ slug: "financeiro", nome: "Financeiro" }] }),
 };
+
+// ---------------------------------------------------------------- Societário (02/11/2026)
+// Mais processos em andamento, em fases diferentes, para o quadro, a lista e o painel terem o que mostrar
+// (um com exigência, um parado, um com previsão vencida, um de empresa fora do cadastro e um concluído).
+(() => {
+  const FASES_ALTERACAO = [
+    ["documentos", "Documentos", 3],
+    ["elaboracao", "Elaboração", 3],
+    ["aprovacao", "Aprovação do cliente", 5],
+    ["assinaturas", "Assinaturas", 5],
+    ["protocolo", "Protocolo", 2],
+    ["exigencias", "Exigências", 5],
+    ["deferimento", "Deferimento", 10],
+    ["entrega", "Entrega", 2],
+  ];
+  TABELAS.soc_tipos.push({
+    id: "t2",
+    org_id: ORG,
+    codigo: "abertura",
+    nome: "Abertura de empresa",
+    ordem: 2,
+    ativo: true,
+    fases: FASES_ALTERACAO.map(([codigo, nome, prazo_dias]) => ({ codigo, nome, prazo_dias })),
+  });
+  const SOC = (k) => `77777777-7777-4777-8777-77777777780${k}`;
+  // [k, número, tipo, cliente, futuro, fase atual (ordem), status da fase, dias na fase, prazo da fase, previsão, exigências, situação]
+  const exemplos = [
+    [1, 21, "t2", null, "Padaria Pão Quente Ltda", 1, "aguardando_cliente", 2, 1, 30, 0, "aberto"],
+    [2, 20, "t1", C2, null, 2, "em_andamento", 1, 2, 15, 0, "aberto"],
+    [3, 19, "t1", C1, null, 4, "aguardando_cliente", 12, -4, 8, 0, "aberto"],
+    [4, 18, "t1", C2, null, 6, "em_andamento", 3, 2, -3, 2, "aberto"],
+    [5, 17, "t1", null, "Comercial Bragança Ltda", 7, "aguardando_orgao", 6, -1, 20, 1, "aberto"],
+    [6, 15, "t1", C1, null, 8, "concluida", 0, null, -10, 0, "concluido"],
+  ];
+  for (const [k, numero, tipo_id, cliente_id, futuro, atual, status, naFase, prazo, previsao, exigencias, situacao] of exemplos) {
+    TABELAS.soc_processos.push({
+      id: SOC(k),
+      org_id: ORG,
+      numero,
+      tipo_id,
+      cliente_id,
+      futuro_cliente: futuro,
+      cnpj: cliente_id ? "12.345.678/0001-95" : null,
+      uf: k === 5 ? "MG" : "SP",
+      descricao: tipo_id === "t2" ? "Abertura de padaria, Simples Nacional" : "Entrada de sócio e aumento de capital",
+      status: situacao,
+      fase_atual: atual,
+      exigencias,
+      responsavel_id: k % 2 ? EU : OUTRO,
+      pedido_em: dia(-20 - k * 3),
+      previsao_em: dia(previsao),
+      concluido_em: situacao === "concluido" ? momento(-2) : null,
+      visivel_cliente: !!cliente_id,
+      criado_em: momento(-20 - k * 3),
+      criado_por: EU,
+      atualizado_em: momento(-naFase),
+    });
+    FASES_ALTERACAO.forEach(([codigo, nome, prazo_dias], i) => {
+      const ordem = i + 1;
+      const antes = ordem < atual || situacao === "concluido";
+      TABELAS.soc_fases.push({
+        id: `${SOC(k)}-f${ordem}`,
+        org_id: ORG,
+        processo_id: SOC(k),
+        codigo,
+        nome,
+        ordem,
+        status: antes ? (codigo === "exigencias" && !exigencias ? "dispensada" : "concluida") : ordem === atual ? status : "a_fazer",
+        responsavel_id: ordem === atual ? (k % 2 ? EU : OUTRO) : null,
+        inicio_em: antes || ordem === atual ? dia(-20 - k * 3 + ordem) : null,
+        fim_em: antes ? dia(-20 - k * 3 + ordem + 1) : null,
+        prazo_dias,
+        prazo_em: ordem === atual && prazo !== null ? dia(prazo) : null,
+        mudou_em: momento(ordem === atual ? -naFase : -30),
+        tarefa_id: ordem === atual ? "t-soc" : null,
+      });
+    });
+  }
+  const P4 = SOC(4);
+  TABELAS.soc_protocolos.push({ id: "sp1", org_id: ORG, processo_id: P4, orgao: "JUCESP", numero: "2.345.678/26-1", data: dia(-6), link: "https://exemplo.com" });
+  TABELAS.soc_exigencias.push(
+    { id: "se1", org_id: ORG, processo_id: P4, data: dia(-3), orgao: "JUCESP", texto: "Corrigir a cláusula de administração.", resposta: null, reprotocolo_em: null },
+    { id: "se2", org_id: ORG, processo_id: P4, data: dia(-5), orgao: "JUCESP", texto: "Falta assinatura do sócio entrante.", resposta: "Assinatura colhida pelo gov.br", reprotocolo_em: dia(-4) },
+  );
+  TABELAS.soc_taxas.push(
+    { id: "st1", org_id: ORG, processo_id: P4, descricao: "DARE Junta Comercial", valor: 189.07, vencimento: dia(-8), pago_por: "cliente", pago_em: dia(-8) },
+    { id: "st2", org_id: ORG, processo_id: P4, descricao: "Taxa municipal", valor: 92.5, vencimento: dia(-1), pago_por: "mdc", pago_em: null },
+  );
+  TABELAS.soc_eventos.push(
+    { id: 901, org_id: ORG, processo_id: P4, user_id: EU, tipo: "exigencias", texto: "Exigência registrada (JUCESP)", visivel_cliente: true, em: momento(-3) },
+    { id: 902, org_id: ORG, processo_id: P4, user_id: OUTRO, tipo: "comentario", texto: "Cliente avisado por WhatsApp.", visivel_cliente: false, em: momento(-2) },
+  );
+})();
+// ---------------------------------------------------------------- CRM Comercial: mais exemplos (02/11/2026)
+// Oportunidades em várias etapas (quadro por etapa no computador e no celular), um lead do Simulador com retorno
+// atrasado, uma ganha, uma perdida e uma arquivada; contratos enviado e assinado para a lista de Contratos.
+const crmOp = (n, campos = {}) => ({
+  ...oportunidade,
+  id: `55555555-5555-4555-8555-5555555556${String(n).padStart(2, "0")}`,
+  cnpj: null,
+  email: null,
+  observacoes: null,
+  ...campos,
+});
+TABELAS.crm_oportunidades.push(
+  crmOp(1, {
+    empresa: "Oficina Mecânica Bom Pistão",
+    contato_nome: "Carlos",
+    cidade: "Bragança Paulista",
+    etapa: "novo",
+    etapa_desde: momento(-1),
+    origem: "simulador",
+    regime_atual: "presumido",
+    valor_mensal: null,
+    proximo_contato: dia(-2),
+    dados_origem: { melhor_regime: "simples", economia_estimada: 18400, cnae_descricao: "Manutenção de veículos" },
+    criado_em: momento(-1),
+  }),
+  crmOp(2, { empresa: "Clínica Sorriso Feliz", contato_nome: "Dra. Ana", etapa: "contato", etapa_desde: momento(-9), valor_mensal: 1200, origem: "site", proximo_contato: dia(1) }),
+  crmOp(3, { empresa: "Mercadinho Central", contato_nome: "João", etapa: "reuniao", etapa_desde: momento(-2), valor_mensal: 750, origem: "whatsapp", responsavel_id: null }),
+  crmOp(4, { empresa: "Transportadora Serra Azul", contato_nome: "Paulo", etapa: "negociacao", etapa_desde: momento(-4), valor_mensal: 2400, origem: "evento" }),
+  crmOp(5, { empresa: "Pet Shop Amigo Fiel", etapa: "ganho", etapa_desde: momento(-6), valor_mensal: 680, origem: "instagram", cliente_id: C1 }),
+  crmOp(6, { empresa: "Loja de Roupas Estilo", etapa: "perdido", etapa_desde: momento(-12), valor_mensal: 900, motivo_perda: "Escolheu outro escritório (preço)" }),
+  crmOp(7, {
+    empresa: "Construtora Alicerce",
+    etapa: "contato",
+    etapa_desde: momento(-40),
+    origem: "simulador",
+    arquivado_em: momento(-3),
+    motivo_arquivo: "Sem retorno",
+    dados_origem: { melhor_regime: "presumido", economia_estimada: 5200 },
+  }),
+);
+TABELAS.crm_contratos.push(
+  {
+    ...TABELAS.crm_contratos[0],
+    id: "k2",
+    oportunidade_id: crmOp(4).id,
+    numero: "2026/002",
+    status: "enviado",
+    valores: { ...TABELAS.crm_contratos[0].valores, razao_social: "TRANSPORTADORA SERRA AZUL LTDA", honorario_mensal: 2400 },
+    enviado_em: momento(-1),
+    crm_oportunidades: { empresa: "Transportadora Serra Azul" },
+  },
+  {
+    ...TABELAS.crm_contratos[0],
+    id: "k3",
+    oportunidade_id: crmOp(5).id,
+    numero: "2026/003",
+    status: "assinado",
+    valores: { ...TABELAS.crm_contratos[0].valores, razao_social: "PET SHOP AMIGO FIEL LTDA", honorario_mensal: 680 },
+    enviado_em: momento(-8),
+    assinado_em: momento(0),
+    crm_oportunidades: { empresa: "Pet Shop Amigo Fiel" },
+  },
+);

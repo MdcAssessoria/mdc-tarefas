@@ -7,42 +7,50 @@ import { hojeISO } from "@/lib/datas";
 import type { Tarefa } from "./tipos";
 import { traduzirErro } from "@/lib/erros";
 
+/** Lê as abertas + as concluídas/canceladas mexidas nos últimos 45 dias (por inteiro, sem o corte de 1.000 linhas). */
+function lerTarefas(orgId: string, fuso: string): Promise<Tarefa[]> {
+  const corte = new Date(hojeISO(fuso) + "T00:00:00Z");
+  corte.setUTCDate(corte.getUTCDate() - 45);
+  return lerTudo<Tarefa>((de, ate) =>
+    supabase()
+      .from("tarefas")
+      .select("*")
+      .eq("org_id", orgId)
+      .or(`status.in.(a_fazer,em_andamento,aguardando),atualizado_em.gte.${corte.toISOString()}`)
+      .order("prazo", { ascending: true, nullsFirst: false })
+      .order("id")
+      .range(de, ate),
+  );
+}
+
 /**
  * Carrega as tarefas visíveis da organização e mantém a lista viva via Supabase Realtime.
  * Por padrão traz as abertas + as concluídas/canceladas dos últimos 45 dias.
  */
 export function useTarefas(orgId: string, fuso: string) {
   const [tarefas, setTarefas] = useState<Tarefa[]>([]);
-  const [carregando, setCarregando] = useState(true);
+  // organização cuja lista já chegou: "carregando" é derivado (troca de organização volta a mostrar o esqueleto)
+  const [carregadoPara, setCarregadoPara] = useState<string | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [online, setOnline] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const carregar = useCallback(async () => {
-    const corte = new Date(hojeISO(fuso) + "T00:00:00Z");
-    corte.setUTCDate(corte.getUTCDate() - 45);
-    try {
-      const lista = await lerTudo<Tarefa>((de, ate) =>
-        supabase()
-          .from("tarefas")
-          .select("*")
-          .eq("org_id", orgId)
-          .or(`status.in.(a_fazer,em_andamento,aguardando),atualizado_em.gte.${corte.toISOString()}`)
-          .order("prazo", { ascending: true, nullsFirst: false })
-          .order("id")
-          .range(de, ate),
-      );
-      setErro(null);
-      setTarefas(lista);
-    } catch (e) {
-      setErro(traduzirErro(e));
-    }
-    setCarregando(false);
+  const carregar = useCallback(() => {
+    lerTarefas(orgId, fuso).then(
+      (lista) => {
+        setErro(null);
+        setTarefas(lista);
+        setCarregadoPara(orgId);
+      },
+      (e: unknown) => {
+        setErro(traduzirErro(e));
+        setCarregadoPara(orgId);
+      },
+    );
   }, [orgId, fuso]);
 
   useEffect(() => {
-    setCarregando(true);
-    void carregar();
+    carregar();
     const canal = supabase()
       .channel(`tarefas-${orgId}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "tarefas", filter: `org_id=eq.${orgId}` }, (p) => {
@@ -81,5 +89,6 @@ export function useTarefas(orgId: string, fuso: string) {
     [tarefas],
   );
 
+  const carregando = carregadoPara !== orgId;
   return { tarefas, carregando, erro, online, recarregar: carregar, atualizar };
 }
