@@ -238,7 +238,21 @@ async function abrirEFecharModal(pagina, botao, titulo) {
 const INTERACOES = {
   "/vencimentos": (p) => abrirEFecharModal(p, "Novo vencimento", "Novo vencimento"),
   "/financeiro/bancos": (p) => abrirEFecharModal(p, "Nova conta", "Nova conta bancária"),
-  "/financeiro/pagar": (p) => abrirEFecharModal(p, "Nova conta a pagar", "Nova conta a pagar"),
+  // conta a pagar com "+ Nova categoria": a janela da categoria abre por cima e fecha voltando para a conta
+  "/financeiro/pagar": async (p, foto) => {
+    await p.getByRole("button", { name: "Nova conta a pagar", exact: true }).click();
+    const conta = p.getByRole("dialog", { name: "Nova conta a pagar" });
+    await conta.waitFor({ timeout: 3000 });
+    await conta.getByRole("button", { name: "+ Nova categoria" }).click();
+    const cat = p.getByRole("dialog", { name: "Nova categoria de despesa" });
+    await cat.waitFor({ timeout: 3000 });
+    await cat.getByLabel("Conta contábil").waitFor({ timeout: 3000 });
+    await foto("nova-categoria");
+    await cat.getByRole("button", { name: "Voltar" }).click();
+    await cat.waitFor({ state: "detached", timeout: 3000 });
+    await conta.waitFor({ timeout: 3000 });
+    await p.keyboard.press("Escape");
+  },
   "/financeiro/receber": (p) => abrirEFecharModal(p, "Nova conta a receber", "Nova conta a receber"),
   "/financeiro/movimento": (p) => abrirEFecharModal(p, "Saída", "Nova conta a pagar"),
   "/financeiro/transferencias": (p) => abrirEFecharModal(p, "Nova transferência", "Transferir entre contas"),

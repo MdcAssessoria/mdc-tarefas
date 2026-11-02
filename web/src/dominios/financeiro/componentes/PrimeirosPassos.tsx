@@ -69,7 +69,9 @@ export function PrimeirosPassos({ passos, podeOperar }: { passos: PassoInicial[]
               >
                 {p.feito ? <Icone nome="check" className="h-4 w-4" /> : i + 1}
               </span>
-              <h3 className={`text-[15px] font-semibold ${p.feito ? "text-[var(--texto-suave)] line-through decoration-1" : "text-[var(--marca)]"}`}>
+              <h3
+                className={`text-[15px] font-semibold ${p.feito ? "text-[var(--texto-suave)] line-through decoration-1" : "text-[var(--marca)]"}`}
+              >
                 {t.titulo}
                 <span className="sr-only">{p.feito ? " (feito)" : " (falta)"}</span>
               </h3>

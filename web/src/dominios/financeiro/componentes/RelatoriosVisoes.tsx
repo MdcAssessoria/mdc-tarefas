@@ -27,7 +27,17 @@ export interface BaseVisao {
 
 const pct = (v?: number) => (v === undefined ? "" : `${(v * 100).toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%`);
 
-function Topo<L>({ titulo, frase, exportar, avisar }: { titulo: string; frase: string; exportar: () => ListaExportavel<L>; avisar: Avisar }) {
+function Topo<L>({
+  titulo,
+  frase,
+  exportar,
+  avisar,
+}: {
+  titulo: string;
+  frase: string;
+  exportar: () => ListaExportavel<L>;
+  avisar: Avisar;
+}) {
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
       <div className="min-w-0 flex-1">
@@ -101,9 +111,7 @@ export function VisaoResultado({ r, linhas, base }: { r: ResultadoDeCaixa; linha
               <td data-rotulo="Valor" className={`whitespace-nowrap text-right ${l.nivel === 0 ? "font-semibold" : ""}`}>
                 <Valor v={l.valor} />
               </td>
-              <td className="num hidden text-right text-[var(--texto-suave)] sm:table-cell">
-                {pct(l.parte)}
-              </td>
+              <td className="num hidden text-right text-[var(--texto-suave)] sm:table-cell">{pct(l.parte)}</td>
             </tr>
           ))}
         </tbody>

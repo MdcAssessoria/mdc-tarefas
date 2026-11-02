@@ -9,6 +9,8 @@ import { brl } from "@/lib/formato/moeda";
 import { fmtData } from "@/lib/formato/datas";
 import { Modal } from "@/components/ui/Modal";
 import type { Cliente } from "@/dominios/clientes/tipos";
+import { useOrg } from "@/dominios/organizacao/OrgProvider";
+import { NovaCategoriaRapida } from "./NovaCategoriaRapida";
 import { lancar } from "../repositorio";
 import { dividirParcelas, numeroBr, valorParaCampo } from "../regras";
 import { FORMAS_PAGAMENTO } from "../tipos";
@@ -60,6 +62,7 @@ export function LancarTitulo({
   jaPago = false,
   aoFechar,
   aoSalvar,
+  aoRecarregarCadastros,
 }: {
   tipo: TipoTitulo;
   cliente: Cliente;
@@ -71,8 +74,13 @@ export function LancarTitulo({
   jaPago?: boolean;
   aoFechar: () => void;
   aoSalvar: (msg: string) => void;
+  /** Relê os cadastros depois de criar uma categoria sem sair da janela. */
+  aoRecarregarCadastros?: () => void;
 }) {
   const t = TEXTOS[tipo];
+  const { pode } = useOrg();
+  const podeCriarCategoria = pode("plano_contas", "operar") || pode("financeiro", "operar");
+  const [novaCategoria, setNovaCategoria] = useState(false);
   const tipoCat = tipo === "pagar" ? "despesa" : "receita";
   const pessoasDoTipo = useMemo(
     () => cad.pessoas.filter((p) => p.ativo && (p.tipo === "ambos" || p.tipo === (tipo === "pagar" ? "fornecedor" : "cliente"))),
@@ -205,10 +213,10 @@ export function LancarTitulo({
             <small className="text-xs text-neutral-500">Novo: será cadastrado ao salvar.</small>
           )}
         </label>
-        <label className="campo">
+        <div className="campo">
           <span>Categoria ({tipoCat})</span>
-          <select value={f.categoria} onChange={(e) => mudar({ categoria: e.target.value })}>
-            <option value="">{categorias.length ? "Escolha…" : `Cadastre uma ${tipoCat} em Cadastros`}</option>
+          <select value={f.categoria} onChange={(e) => mudar({ categoria: e.target.value })} aria-label={`Categoria (${tipoCat})`}>
+            <option value="">{categorias.length ? "Escolha…" : `Nenhuma categoria de ${tipoCat} cadastrada`}</option>
             {categorias.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.grupo ? `${c.grupo} › ` : ""}
@@ -216,7 +224,24 @@ export function LancarTitulo({
               </option>
             ))}
           </select>
-        </label>
+          {podeCriarCategoria && (
+            <button type="button" className="btn-link self-start text-xs" onClick={() => setNovaCategoria(true)}>
+              + Nova categoria
+            </button>
+          )}
+          {novaCategoria && (
+            <NovaCategoriaRapida
+              cliente={cliente}
+              tipo={tipoCat}
+              aoFechar={() => setNovaCategoria(false)}
+              aoCriar={(id) => {
+                setNovaCategoria(false);
+                mudar({ categoria: id });
+                aoRecarregarCadastros?.();
+              }}
+            />
+          )}
+        </div>
       </div>
       <div className="grid gap-3 sm:grid-cols-3">
         <label className="campo">

@@ -33,9 +33,7 @@ export function PaginaCadastro({
     <div className="space-y-4">
       {aviso}
       {cliente ? (
-        <div key={cliente.id}>
-          {render({ cliente, podeOperar: ferramentas.some((f) => pode(f, "operar")), avisar: mostrar, seletor })}
-        </div>
+        <div key={cliente.id}>{render({ cliente, podeOperar: ferramentas.some((f) => pode(f, "operar")), avisar: mostrar, seletor })}</div>
       ) : (
         <>
           <CabecalhoPagina titulo={titulo} descricao={descricao} />

@@ -140,7 +140,8 @@ export function FichaItem({
             <Indicador icone="calendario" titulo="Saldo anterior" valor={`${qtd(ficha.dados?.anterior.saldo)} ${it?.unidade ?? ""}`} />
             <Indicador icone="seta-entrada" titulo="Entradas no período" valor={qtd(entradas)} tom="verde" />
             <Indicador icone="seta-saida" titulo="Saídas no período" valor={qtd(saidas)} tom={saidas ? "vermelho" : "neutro"} />
-            <Indicador icone="caixa"
+            <Indicador
+              icone="caixa"
               titulo="Saldo final e valor"
               valor={`${qtd(saldoFinal)} ${it?.unidade ?? ""}`}
               detalhe={

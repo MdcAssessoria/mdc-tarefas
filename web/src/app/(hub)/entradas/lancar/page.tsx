@@ -163,6 +163,7 @@ function LancarNotaTela() {
             orgId={org.id}
             tipoAnterior={tipoAnterior}
             aoVoltar={() => setEscolhida(null)}
+            aoRecarregarCadastros={consulta.recarregar}
             aoLancar={(msg) => {
               setEscolhida(null);
               mostrar(msg);

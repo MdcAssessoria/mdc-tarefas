@@ -392,7 +392,9 @@ export function TelaTitulos({ tipo }: { tipo: TipoTitulo }) {
           ) : (
             <QuadroTabela
               rotulo={T.titulo}
-              rodape={lista.length > MOSTRAR ? `Mostrando ${MOSTRAR} de ${lista.length}. Os totais e a exportação consideram todos.` : undefined}
+              rodape={
+                lista.length > MOSTRAR ? `Mostrando ${MOSTRAR} de ${lista.length}. Os totais e a exportação consideram todos.` : undefined
+              }
             >
               <thead>
                 <tr>
@@ -505,6 +507,7 @@ export function TelaTitulos({ tipo }: { tipo: TipoTitulo }) {
           tipo={tipo}
           cliente={cliente}
           cad={cad.dados}
+          aoRecarregarCadastros={cad.recarregar}
           hoje={hoje}
           editar={janela.tipo === "editar" ? janela.t : undefined}
           aoFechar={() => fechar()}

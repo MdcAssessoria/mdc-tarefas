@@ -21,6 +21,8 @@ import { regraDoTipo, sugerirTipoEntrada, TIPOS_ENTRADA } from "../tiposEntrada"
 import type { CodigoTipoEntrada } from "../tiposEntrada";
 import type { DeParaItem, Nota, TipoEntradaRegra } from "../tipos";
 import { fornecedorDa, nomeModelo } from "./Comuns";
+import { useOrg } from "@/dominios/organizacao/OrgProvider";
+import { NovaCategoriaRapida } from "@/dominios/financeiro/componentes/NovaCategoriaRapida";
 
 export interface CadastrosLancamento {
   itens: Item[];
@@ -51,6 +53,7 @@ export function LancarNota({
   tipoAnterior,
   aoVoltar,
   aoLancar,
+  aoRecarregarCadastros,
 }: {
   nota: Nota;
   cad: CadastrosLancamento;
@@ -58,7 +61,12 @@ export function LancarNota({
   tipoAnterior: CodigoTipoEntrada | null;
   aoVoltar: () => void;
   aoLancar: (msg: string) => void;
+  /** Relê categorias, centros e contas (depois de cadastrar uma categoria nova sem sair da tela). */
+  aoRecarregarCadastros?: () => void;
 }) {
+  const { pode } = useOrg();
+  const podeCriarCategoria = pode("plano_contas", "operar") || pode("financeiro", "operar");
+  const [novaCategoria, setNovaCategoria] = useState(false);
   const itensNota = useConsulta(useCallback(() => lerItensDasNotas([nota.id]), [nota.id]));
   const [tipo, setTipo] = useState<CodigoTipoEntrada | null>(null);
   const tipoEfetivo: CodigoTipoEntrada =
@@ -342,23 +350,44 @@ export function LancarNota({
         ),
       )}
 
+      {novaCategoria && (
+        <NovaCategoriaRapida
+          cliente={{ id: nota.cliente_id, org_id: orgId }}
+          tipo="despesa"
+          aoFechar={() => setNovaCategoria(false)}
+          aoCriar={(id) => {
+            setNovaCategoria(false);
+            setCategoria(id);
+            aoRecarregarCadastros?.();
+          }}
+        />
+      )}
       {regra.gera_pagar ? (
         passo(
           4,
           "Contas a pagar",
           <>
             <div className="flex flex-wrap gap-3">
-              <label className="campo min-w-56">
+              <div className="campo min-w-56">
                 <span>Categoria (despesa)</span>
-                <select value={categoriaEfetiva} onChange={(e) => setCategoria(e.target.value)}>
-                  <option value="">Escolha…</option>
+                <select value={categoriaEfetiva} onChange={(e) => setCategoria(e.target.value)} aria-label="Categoria (despesa)">
+                  <option value="">{despesas.length ? "Escolha…" : "Nenhuma categoria cadastrada"}</option>
                   {despesas.map((c) => (
                     <option key={c.id} value={c.id}>
                       {c.nome}
                     </option>
                   ))}
                 </select>
-              </label>
+                {podeCriarCategoria ? (
+                  <button type="button" className="btn-link self-start text-xs" onClick={() => setNovaCategoria(true)}>
+                    + Nova categoria
+                  </button>
+                ) : (
+                  despesas.length === 0 && (
+                    <small className="text-xs">Peça a quem cuida do Plano de contas para cadastrar as categorias.</small>
+                  )
+                )}
+              </div>
               <label className="campo">
                 <span>Centro de custo</span>
                 <select value={centro} onChange={(e) => setCentro(e.target.value)}>

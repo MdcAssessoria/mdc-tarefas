@@ -43,7 +43,6 @@ const VAZIO: Form = {
 };
 
 export function CadPessoas({ cliente, podeOperar, avisar, seletor }: PropsAba) {
-
   const { org } = useOrg();
   const [busca, setBusca] = useState("");
   const [tipo, setTipo] = useState("");

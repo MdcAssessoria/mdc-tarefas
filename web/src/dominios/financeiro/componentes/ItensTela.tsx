@@ -146,20 +146,23 @@ export function ItensTela({ cliente, podeOperar, avisar }: PropsAba) {
   return (
     <div className="space-y-3">
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Indicador icone="caixa"
+        <Indicador
+          icone="caixa"
           titulo="Itens ativos"
           valor={String(ativos.length)}
           detalhe={`${ativos.filter((x) => x.i.controla_estoque).length} controlam estoque`}
         />
         <Indicador icone="moeda" titulo="Valor em estoque" valor={brl(valorEstoque)} detalhe="pelo custo médio" tom="verde" />
-        <Indicador icone="alerta"
+        <Indicador
+          icone="alerta"
           titulo="Abaixo do mínimo"
           valor={String(qtdBaixo)}
           tom={qtdBaixo ? "ambar" : "neutro"}
           ativo={mostrar === "baixo"}
           aoClicar={() => alternar("baixo")}
         />
-        <Indicador icone="cancelar"
+        <Indicador
+          icone="cancelar"
           titulo="Sem estoque"
           valor={String(qtdZerado)}
           tom={qtdZerado ? "vermelho" : "neutro"}

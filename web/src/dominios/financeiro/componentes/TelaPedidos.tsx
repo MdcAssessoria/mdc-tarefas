@@ -135,20 +135,23 @@ export function TelaPedidos({ tipo, cliente, podeOperar, avisar }: PropsAba & { 
   return (
     <div className="space-y-3">
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Indicador icone="moeda"
+        <Indicador
+          icone="moeda"
           titulo={tipo === "venda" ? "Vendido no período" : "Comprado no período"}
           valor={brl(lancados.reduce((a, p) => a + Number(p.total), 0))}
           detalhe={`${lancados.length} pedido(s) lançado(s)`}
           tom="verde"
         />
-        <Indicador icone="editar"
+        <Indicador
+          icone="editar"
           titulo="Rascunhos"
           valor={String(rascunhos.length)}
           detalhe={brl(rascunhos.reduce((a, p) => a + Number(p.total), 0))}
           ativo={situacao === "rascunho"}
           aoClicar={() => alternar("rascunho")}
         />
-        <Indicador icone="relogio"
+        <Indicador
+          icone="relogio"
           titulo={tipo === "venda" ? "A faturar" : "Aguardando entrega"}
           valor={String(pendentes.length)}
           detalhe={brl(pendentes.reduce((a, p) => a + Number(p.total), 0))}
@@ -156,7 +159,8 @@ export function TelaPedidos({ tipo, cliente, podeOperar, avisar }: PropsAba & { 
           ativo={situacao === "confirmado"}
           aoClicar={() => alternar("confirmado")}
         />
-        <Indicador icone="grafico"
+        <Indicador
+          icone="grafico"
           titulo="Ticket médio"
           valor={lancados.length ? brl(lancados.reduce((a, p) => a + Number(p.total), 0) / lancados.length) : "—"}
           detalhe="valor médio por pedido lançado"

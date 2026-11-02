@@ -58,7 +58,6 @@ export function EscolhaConta({ contas, valor, aoMudar }: { contas: ContaContabil
 type FormCat = { id?: string; tipo: "despesa" | "receita"; nome: string; grupo: string; conta_contabil_id: string; ativo: boolean };
 
 export function CadCategorias({ cliente, podeOperar, avisar, seletor }: PropsAba) {
-
   const { org } = useOrg();
   const [tipo, setTipo] = useState("");
   const [busca, setBusca] = useState("");

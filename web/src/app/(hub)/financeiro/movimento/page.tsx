@@ -178,12 +178,35 @@ export default function PaginaEntradasSaidas() {
     }));
     // transferência: sai de uma conta e entra na outra (duas linhas; somadas dão zero)
     const transf = d.transferencias.flatMap((t) => {
-      const comum = { data: t.data, previsto: false, pessoa: "", categoria: "Transferência entre contas", categoriaId: "_transferencia", transferencia: true };
+      const comum = {
+        data: t.data,
+        previsto: false,
+        pessoa: "",
+        categoria: "Transferência entre contas",
+        categoriaId: "_transferencia",
+        transferencia: true,
+      };
       const de = cta.get(t.origem_id) ?? "";
       const para = cta.get(t.destino_id) ?? "";
       return [
-        { ...comum, chave: `x${t.id}s`, entrada: false, descricao: `Transferência para ${para}`, conta: de, contaId: t.origem_id, valor: -Number(t.valor) },
-        { ...comum, chave: `x${t.id}e`, entrada: true, descricao: `Transferência de ${de}`, conta: para, contaId: t.destino_id, valor: Number(t.valor) },
+        {
+          ...comum,
+          chave: `x${t.id}s`,
+          entrada: false,
+          descricao: `Transferência para ${para}`,
+          conta: de,
+          contaId: t.origem_id,
+          valor: -Number(t.valor),
+        },
+        {
+          ...comum,
+          chave: `x${t.id}e`,
+          entrada: true,
+          descricao: `Transferência de ${de}`,
+          conta: para,
+          contaId: t.destino_id,
+          valor: Number(t.valor),
+        },
       ];
     });
     return [...reais, ...prev, ...transf].sort((a, b) => a.data.localeCompare(b.data) || a.chave.localeCompare(b.chave));
@@ -338,7 +361,12 @@ export default function PaginaEntradasSaidas() {
         </label>
         <label className="campo campo-largo">
           <span>Buscar</span>
-          <input type="search" value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Descrição, fornecedor/cliente ou valor" />
+          <input
+            type="search"
+            value={busca}
+            onChange={(e) => setBusca(e.target.value)}
+            placeholder="Descrição, fornecedor/cliente ou valor"
+          />
         </label>
         <MaisFiltros emUso={(conta ? 1 : 0) + (categoria ? 1 : 0) + (previsto ? 1 : 0)}>
           <label className="campo">
@@ -430,10 +458,7 @@ export default function PaginaEntradasSaidas() {
                 >
                   <span className="truncate">{c.nome}</span>
                   <span className="h-2.5 rounded-full bg-[var(--fundo)]">
-                    <span
-                      className="block h-2.5 rounded-full bg-[#C0892A]"
-                      style={{ width: `${Math.max(2, (c.total / maior) * 100)}%` }}
-                    />
+                    <span className="block h-2.5 rounded-full bg-[#C0892A]" style={{ width: `${Math.max(2, (c.total / maior) * 100)}%` }} />
                   </span>
                   <span className="num">{brl(c.total)}</span>
                 </button>
@@ -460,7 +485,9 @@ export default function PaginaEntradasSaidas() {
           ) : (
             <QuadroTabela
               rotulo="Entradas e saídas"
-              rodape={lista.length > MOSTRAR ? `Mostrando ${MOSTRAR} de ${lista.length}. Os totais e a exportação consideram todos.` : undefined}
+              rodape={
+                lista.length > MOSTRAR ? `Mostrando ${MOSTRAR} de ${lista.length}. Os totais e a exportação consideram todos.` : undefined
+              }
             >
               <thead>
                 <tr>
@@ -533,6 +560,7 @@ export default function PaginaEntradasSaidas() {
           tipo={novo}
           cliente={cliente}
           cad={cad.dados}
+          aoRecarregarCadastros={cad.recarregar}
           hoje={hoje}
           jaPago
           aoFechar={() => setNovo(null)}

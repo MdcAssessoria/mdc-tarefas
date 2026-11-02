@@ -225,7 +225,9 @@ export function GraficoMeses({ meses }: { meses: MesRealizado[] }) {
             const res = m.entrou - m.saiu;
             return (
               <g key={m.mes}>
-                {hover === i && <rect x={ml + passo * i} y={mt - 18} width={passo} height={H - mt - mb + 18} fill="#0b2820" opacity="0.05" />}
+                {hover === i && (
+                  <rect x={ml + passo * i} y={mt - 18} width={passo} height={H - mt - mb + 18} fill="#0b2820" opacity="0.05" />
+                )}
                 <rect x={cx(i) - bw - 2} y={y(m.entrou)} width={bw} height={Math.max(0, y(0) - y(m.entrou))} rx="3" fill={COR.receita} />
                 <rect x={cx(i) + 2} y={y(m.saiu)} width={bw} height={Math.max(0, y(0) - y(m.saiu))} rx="3" fill={COR.despesa} />
                 {(m.entrou || m.saiu) > 0 && (

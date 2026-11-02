@@ -25,7 +25,6 @@ import type { PropsAba } from "./Comuns";
 type FormCentro = { id?: string; codigo: string; nome: string; ativo: boolean };
 
 export function CadCentros({ cliente, podeOperar, avisar, seletor }: PropsAba) {
-
   const { org } = useOrg();
   const [inativos, setInativos] = useState(false);
   const [form, setForm] = useState<FormCentro | null>(null);
