@@ -8,8 +8,8 @@ import Link from "next/link";
 import { useCallback, useMemo } from "react";
 import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { nomeCliente } from "@/dominios/clientes/nome";
-import { useClienteFinanceiro } from "@/dominios/financeiro/componentes/EscolhaCliente";
-import { Valor } from "@/dominios/financeiro/componentes/Comuns";
+import { useClienteGestao } from "@/dominios/organizacao/componentes/EmpresaEmGestao";
+import { Valor } from "@/components/ui/Valor";
 import { BarrasCategorias, GraficoFluxo, GraficoMeses } from "@/dominios/financeiro/componentes/GraficosPainel";
 import { PrimeirosPassos } from "@/dominios/financeiro/componentes/PrimeirosPassos";
 import {
@@ -30,13 +30,12 @@ import {
   realizadoPorMes,
   resumirPrazos,
   saldoComTransferencias,
-  saudacao,
 } from "@/dominios/financeiro/painel";
 import type { Soma } from "@/dominios/financeiro/painel";
 
 
 import { useConsulta } from "@/lib/useConsulta";
-import { hojeISO, somarMeses } from "@/lib/datas";
+import { hojeISO, horaNoFuso, saudacao, somarMeses } from "@/lib/datas";
 import { brl } from "@/lib/formato/moeda";
 import { fmtData } from "@/lib/formato/datas";
 import { Icone } from "@/components/ui/Icone";
@@ -49,12 +48,9 @@ const dataPorExtenso = (iso: string) =>
 const nomeDoMes = (mes: string) =>
   new Intl.DateTimeFormat("pt-BR", { month: "long", timeZone: "UTC" }).format(new Date(`${mes}-15T12:00:00Z`));
 
-const horaNoFuso =
- (fuso: string) => Number(new Date().toLocaleString("en-US", { hour: "numeric", hour12: false, timeZone: fuso })) % 24;
-
 export default function PainelFinanceiro() {
   const { org, eu, pode } = useOrg();
-  const financeiro = useClienteFinanceiro();
+  const financeiro = useClienteGestao();
   const { cliente, ativos, escolher } = financeiro;
   const podeOperar = pode("financeiro", "operar");
   const hoje = hojeISO(org.fuso);

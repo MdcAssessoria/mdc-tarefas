@@ -9,7 +9,6 @@ import {
   resumirPrazos,
   rotuloMes,
   saldoComTransferencias,
-  saudacao,
   valorCurto,
 } from "./painel";
 import type { ContaBancaria, Titulo } from "./tipos";
@@ -180,12 +179,6 @@ describe("primeiros passos e textos", () => {
       { id: "categorias", feito: true },
       { id: "lancar", feito: false },
     ]);
-  });
-
-  it("saudação pela hora", () => {
-    expect(saudacao(8)).toBe("Bom dia");
-    expect(saudacao(12)).toBe("Boa tarde");
-    expect(saudacao(18)).toBe("Boa noite");
   });
 
   it("valor curto e rótulo do mês", () => {

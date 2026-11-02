@@ -5,14 +5,19 @@
 import { useCallback, useMemo, useState } from "react";
 import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { nomeCliente } from "@/dominios/clientes/nome";
-import { EscolhaCliente, useClienteFinanceiro } from "@/dominios/financeiro/componentes/EscolhaCliente";
-import { BotoesExportar, Chip, FiltroPeriodo, Indicador, JanelaMotivo, Valor } from "@/dominios/financeiro/componentes/Comuns";
+import { EscolhaCliente, useClienteGestao } from "@/dominios/organizacao/componentes/EmpresaEmGestao";
+import { BotoesExportar } from "@/components/ui/BotoesExportar";
+import { Chip } from "@/components/ui/Chip";
+import { FiltroPeriodo } from "@/components/ui/FiltroPeriodo";
+import { Indicador } from "@/components/ui/Indicador";
+import { JanelaMotivo } from "@/components/ui/JanelaMotivo";
+import { Valor } from "@/components/ui/Valor";
 import { NovaTransferencia } from "@/dominios/financeiro/componentes/NovaTransferencia";
 import { lerContas, lerTransferencias } from "@/dominios/financeiro/leituras";
 import { estornarTransferencia } from "@/dominios/financeiro/repositorio";
 import { intervaloDoPeriodo, PERIODOS } from "@/dominios/financeiro/regras";
 import type { Periodo } from "@/dominios/financeiro/regras";
-import { nomeArquivo } from "@/dominios/financeiro/exportar";
+import { nomeArquivo } from "@/lib/arquivos/exportarLista";
 import type { Transferencia } from "@/dominios/financeiro/tipos";
 import { useConsulta } from "@/lib/useConsulta";
 import { hojeISO } from "@/lib/datas";
@@ -29,7 +34,7 @@ import { useAviso } from "@/components/ui/Aviso";
 
 export default function PaginaTransferencias() {
   const { org, pode } = useOrg();
-  const financeiro = useClienteFinanceiro();
+  const financeiro = useClienteGestao();
   const cliente = financeiro.cliente;
   const podeOperar = pode("financeiro", "operar");
   const { aviso, mostrar } = useAviso();
@@ -117,7 +122,7 @@ export default function PaginaTransferencias() {
       />
 
       <CartaoFiltros ativos={filtrosAtivos} aoLimpar={limpar}>
-        <EscolhaCliente financeiro={financeiro} />
+        <EscolhaCliente gestao={financeiro} />
         <FiltroPeriodo
           periodo={periodo}
           de={de}

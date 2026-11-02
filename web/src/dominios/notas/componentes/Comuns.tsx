@@ -5,7 +5,7 @@
 import { useState } from "react";
 import { brl } from "@/lib/formato/moeda";
 import { traduzirErro } from "@/lib/erros";
-import { formatarDocumento } from "@/dominios/financeiro/regras";
+import { formatarDocumento } from "@/lib/documento";
 import { enderecoDoXml } from "../leituras";
 import { SITUACOES_PAINEL } from "../regras";
 import type { SituacaoPainel } from "../regras";

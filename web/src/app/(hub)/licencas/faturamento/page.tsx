@@ -10,8 +10,9 @@ import { fmtData, mesExtenso } from "@/lib/formato/datas";
 import { Carregando } from "@/components/ui/Carregando";
 import { EstadoVazio } from "@/components/ui/EstadoVazio";
 import { useAviso } from "@/components/ui/Aviso";
-import { BotoesExportar, Indicador } from "@/dominios/financeiro/componentes/Comuns";
-import { nomeArquivo } from "@/dominios/financeiro/exportar";
+import { BotoesExportar } from "@/components/ui/BotoesExportar";
+import { Indicador } from "@/components/ui/Indicador";
+import { nomeArquivo } from "@/lib/arquivos/exportarLista";
 import { Cabecalho, EtiquetaBloqueado, useDadosLicencas } from "@/dominios/licencas/componentes/Base";
 import { faturamentoDoMes, mesesAte } from "@/dominios/licencas/regras";
 
@@ -98,14 +99,14 @@ export default function PaginaFaturamento() {
       ) : (
         <>
           <div className="grid gap-3 sm:grid-cols-3">
-            <Indicador
+            <Indicador icone="moeda"
               titulo="Acrescentar aos honorários"
               valor={brl(total)}
               detalhe={`${linhas.filter((l) => l.total > 0).length} cliente(s)`}
               tom="verde"
             />
-            <Indicador titulo={`Mensalidades de ${mesExtenso(mes)}`} valor={brl(doMes)} />
-            <Indicador titulo="Atrasados de meses anteriores" valor={brl(atrasado)} tom={atrasado ? "vermelho" : "neutro"} />
+            <Indicador icone="calendario" titulo={`Mensalidades de ${mesExtenso(mes)}`} valor={brl(doMes)} />
+            <Indicador icone="alerta" titulo="Atrasados de meses anteriores" valor={brl(atrasado)} tom={atrasado ? "vermelho" : "neutro"} />
           </div>
           {!linhas.length ? (
             <EstadoVazio>Nada a acrescentar aos honorários de {mesExtenso(mes)}. Se faltam mensalidades, gere em Mensalidades.</EstadoVazio>

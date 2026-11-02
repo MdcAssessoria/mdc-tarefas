@@ -14,9 +14,11 @@ import { EstadoVazio } from "@/components/ui/EstadoVazio";
 import { lerFicha, lerSaldoAnterior } from "../leituras";
 import { intervaloDoPeriodo } from "../regras";
 import type { Periodo } from "../regras";
-import { nomeArquivo } from "../exportar";
+import { nomeArquivo } from "@/lib/arquivos/exportarLista";
 import type { MovimentoEstoque } from "../tipos";
-import { BotoesExportar, FiltroPeriodo, Indicador } from "./Comuns";
+import { BotoesExportar } from "@/components/ui/BotoesExportar";
+import { FiltroPeriodo } from "@/components/ui/FiltroPeriodo";
+import { Indicador } from "@/components/ui/Indicador";
 import type { PropsAba } from "./Comuns";
 import { ORIGENS, qtd, TIPOS_MOV } from "./estoqueBase";
 import type { BaseEstoque } from "./estoqueBase";
@@ -135,10 +137,10 @@ export function FichaItem({
       ) : (
         <>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <Indicador titulo="Saldo anterior" valor={`${qtd(ficha.dados?.anterior.saldo)} ${it?.unidade ?? ""}`} />
-            <Indicador titulo="Entradas no período" valor={qtd(entradas)} tom="verde" />
-            <Indicador titulo="Saídas no período" valor={qtd(saidas)} tom={saidas ? "vermelho" : "neutro"} />
-            <Indicador
+            <Indicador icone="calendario" titulo="Saldo anterior" valor={`${qtd(ficha.dados?.anterior.saldo)} ${it?.unidade ?? ""}`} />
+            <Indicador icone="seta-entrada" titulo="Entradas no período" valor={qtd(entradas)} tom="verde" />
+            <Indicador icone="seta-saida" titulo="Saídas no período" valor={qtd(saidas)} tom={saidas ? "vermelho" : "neutro"} />
+            <Indicador icone="caixa"
               titulo="Saldo final e valor"
               valor={`${qtd(saldoFinal)} ${it?.unidade ?? ""}`}
               detalhe={

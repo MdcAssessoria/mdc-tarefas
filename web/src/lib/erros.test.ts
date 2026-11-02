@@ -1,6 +1,6 @@
 // Testes de caracterização de lib/erros.ts (tradução das mensagens de erro para português).
 import { describe, expect, it } from "vitest";
-import { traduzirErro } from "./erros";
+import { ErroApp, MENSAGEM_GENERICA, traduzirErro } from "./erros";
 
 describe("traduzirErro", () => {
   it("aceita string, objeto com message ou qualquer outra coisa", () => {
@@ -30,7 +30,27 @@ describe("traduzirErro", () => {
     );
     expect(traduzirErro("Too many requests")).toBe("Muitas tentativas seguidas. Aguarde um pouco e tente novamente.");
   });
-  it("mensagens desconhecidas (ex.: já em português) passam direto", () => {
+  it("mensagens do próprio site passam direto (texto, new Error, ErroApp)", () => {
     expect(traduzirErro("Cliente sem CNPJ.")).toBe("Cliente sem CNPJ.");
+    expect(traduzirErro(new Error("Escolha o arquivo do balancete."))).toBe("Escolha o arquivo do balancete.");
+    expect(traduzirErro(new ErroApp("Certificado vencido."))).toBe("Certificado vencido.");
+  });
+  it("raise exception das funções do HUB (P0001) passa direto", () => {
+    expect(traduzirErro({ code: "P0001", message: "O título já foi pago; estorne o pagamento antes." })).toBe(
+      "O título já foi pago; estorne o pagamento antes.",
+    );
+  });
+  it("Postgres, PostgREST e erros de programação desconhecidos viram mensagem genérica", () => {
+    expect(traduzirErro({ code: "42883", message: "function app.xyz(uuid) does not exist" })).toBe(MENSAGEM_GENERICA);
+    expect(traduzirErro({ code: "PGRST116", message: "JSON object requested, multiple (or no) rows returned" })).toBe(MENSAGEM_GENERICA);
+    expect(traduzirErro(new TypeError("Cannot read properties of undefined (reading 'id')"))).toBe(MENSAGEM_GENERICA);
+    expect(traduzirErro({ message: "something odd happened" })).toBe(MENSAGEM_GENERICA);
+    expect(MENSAGEM_GENERICA).toBe("Não foi possível concluir. Tente de novo; se continuar, avise a equipe MDC.");
+  });
+  it("sem internet (Failed to fetch como TypeError do navegador)", () => {
+    expect(traduzirErro(new TypeError("Failed to fetch"))).toBe("Sem conexão com o servidor. Verifique sua internet e tente novamente.");
+    expect(traduzirErro({ code: "", message: "TypeError: NetworkError when attempting to fetch resource." })).toBe(
+      "Sem conexão com o servidor. Verifique sua internet e tente novamente.",
+    );
   });
 });

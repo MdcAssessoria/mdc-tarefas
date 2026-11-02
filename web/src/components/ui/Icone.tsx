@@ -1,5 +1,6 @@
-// Ícones de traço simples (24×24) usados no Hub.
-const P: Record<string, React.ReactNode> = {
+// Ícones de traço simples (24×24, traço 1,7) usados no Hub. Ícone novo: desenhe no mesmo traço e acrescente aqui.
+// O nome também pode vir do banco (hub_apps.icone); nome desconhecido mostra "grade" e avisa no console em desenvolvimento.
+const P = {
   casa: <path d="M4 11l8-6.5 8 6.5V19a1.5 1.5 0 0 1-1.5 1.5H15v-6h-6v6H5.5A1.5 1.5 0 0 1 4 19z" />,
   busca: (
     <>
@@ -162,9 +163,62 @@ const P: Record<string, React.ReactNode> = {
       <path d="M12 11v5.5M12 7.8v.1" />
     </>
   ),
-};
+  // Ações de linha e de janela
+  lixeira: (
+    <>
+      <path d="M4.5 6.5h15M9.5 6.5V4.5h5v2" />
+      <path d="M6.5 6.5l.8 12.2a1.5 1.5 0 0 0 1.5 1.3h6.4a1.5 1.5 0 0 0 1.5-1.3l.8-12.2M10 10.5v6M14 10.5v6" />
+    </>
+  ),
+  cancelar: (
+    <>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M6 6l12 12" />
+    </>
+  ),
+  olho: (
+    <>
+      <path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z" />
+      <circle cx="12" cy="12" r="3" />
+    </>
+  ),
+  copiar: (
+    <>
+      <rect x="8.5" y="8.5" width="11.5" height="11.5" rx="2" />
+      <path d="M15.5 8.5V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v7.5a2 2 0 0 0 2 2h2.5" />
+    </>
+  ),
+  voltar: <path d="M10 6l-6 6 6 6M4 12h16" />,
+  imprimir: (
+    <>
+      <path d="M7 8.5V4h10v4.5" />
+      <rect x="3.5" y="8.5" width="17" height="8" rx="2" />
+      <path d="M7 14h10v6H7z" />
+    </>
+  ),
+  atualizar: (
+    <>
+      <path d="M19.5 12a7.5 7.5 0 0 1-13.3 4.7M4.5 12a7.5 7.5 0 0 1 13.3-4.7" />
+      <path d="M18 3.5v4h-4M6 20.5v-4h4" />
+    </>
+  ),
+} satisfies Record<string, React.ReactNode>;
 
-export function Icone({ nome, className = "h-5 w-5" }: { nome: string; className?: string }) {
+/** Nomes de ícone que existem. Use este tipo em props novas; `nome` aceita texto livre por causa do banco. */
+export type NomeIcone = keyof typeof P;
+
+const avisados = new Set<string>();
+
+export function existeIcone(nome: string): nome is NomeIcone {
+  return Object.prototype.hasOwnProperty.call(P, nome);
+}
+
+export function Icone({ nome, className = "h-5 w-5" }: { nome: NomeIcone | (string & {}); className?: string }) {
+  const conhecido = existeIcone(nome);
+  if (!conhecido && process.env.NODE_ENV !== "production" && !avisados.has(nome)) {
+    avisados.add(nome);
+    console.warn(`Icone: o nome "${nome}" não existe em components/ui/Icone.tsx; mostrando "grade".`);
+  }
   return (
     <svg
       viewBox="0 0 24 24"
@@ -176,7 +230,7 @@ export function Icone({ nome, className = "h-5 w-5" }: { nome: string; className
       className={className}
       aria-hidden="true"
     >
-      {P[nome] ?? P.grade}
+      {conhecido ? P[nome] : P.grade}
     </svg>
   );
 }

@@ -7,10 +7,10 @@ import {
   mapearSituacao,
   montarLinhas,
   normalizar,
-  soDigitos,
   tratarData,
   tratarDocumento,
 } from "./importacao";
+import { soDigitos } from "@/lib/documento";
 
 describe("normalizar e soDigitos", () => {
   it("normalizar tira acento, pontuação e caixa", () => {

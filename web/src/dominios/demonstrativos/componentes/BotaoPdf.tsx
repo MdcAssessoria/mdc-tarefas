@@ -1,7 +1,9 @@
+// Botão "Baixar PDF" dos demonstrativos: pede o PDF oficial (timbrado, assinado quando publicado) à Função Edge demonstrativo-pdf.
 "use client";
 
 import { useState } from "react";
-import { SUPABASE_KEY, SUPABASE_URL, supabase } from "@/lib/supabase";
+import { chamarFuncaoBruta } from "@/lib/funcoesEdge";
+import { traduzirErro } from "@/lib/erros";
 import { listarMeses, selecionar } from "@/dominios/demonstrativos/selecaoPeriodo";
 import type { Escolha, RegPeriodo } from "@/dominios/demonstrativos/selecaoPeriodo";
 import { situacaoPdf } from "@/dominios/demonstrativos/pdfPeriodo";
@@ -68,18 +70,7 @@ export function BotaoPdf({
     setEstado("gerando");
     setMsg(null);
     try {
-      const { data } = await supabase().auth.getSession();
-      const token = data.session?.access_token;
-      if (!token) throw new Error("Sua sessão expirou. Entre de novo.");
-      const r = await fetch(`${SUPABASE_URL}/functions/v1/demonstrativo-pdf`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}`, apikey: SUPABASE_KEY, "Content-Type": "application/json" },
-        body: JSON.stringify({ balancete_id: balanceteId, periodo: periodo ?? null }),
-      });
-      if (!r.ok) {
-        const j = await r.json().catch(() => null);
-        throw new Error(j?.erro ?? "Não foi possível gerar o PDF agora. Tente de novo em instantes.");
-      }
+      const r = await chamarFuncaoBruta("demonstrativo-pdf", { corpo: { balancete_id: balanceteId, periodo: periodo ?? null } });
       const blob = await r.blob();
       const nome = /filename="([^"]+)"/.exec(r.headers.get("content-disposition") ?? "")?.[1] ?? "demonstrativos-MDC.pdf";
       const a = document.createElement("a");
@@ -94,7 +85,7 @@ export function BotaoPdf({
       );
       setEstado("livre");
     } catch (e) {
-      setMsg((e as Error).message);
+      setMsg(traduzirErro(e));
       setEstado("erro");
     }
   }

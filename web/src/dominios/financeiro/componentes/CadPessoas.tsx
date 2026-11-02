@@ -19,10 +19,11 @@ import { EstadoVazio } from "@/components/ui/EstadoVazio";
 import { Icone } from "@/components/ui/Icone";
 import { QuadroTabela } from "@/components/ui/QuadroTabela";
 import { lerPessoas } from "../leituras";
-import { documentoValido, formatarDocumento, soDigitos } from "../regras";
-import { nomeArquivo } from "../exportar";
+import { documentoValido, formatarDocumento, soDigitos } from "@/lib/documento";
+import { nomeArquivo } from "@/lib/arquivos/exportarLista";
 import type { Pessoa, TipoPessoa } from "../tipos";
-import { BotoesExportar, Chip } from "./Comuns";
+import { BotoesExportar } from "@/components/ui/BotoesExportar";
+import { Chip } from "@/components/ui/Chip";
 import type { PropsAba } from "./Comuns";
 
 export const TIPOS_PESSOA: Record<TipoPessoa, string> = { fornecedor: "Fornecedor", cliente: "Cliente", ambos: "Fornecedor e cliente" };

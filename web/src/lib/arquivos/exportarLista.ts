@@ -1,5 +1,5 @@
-// Exportação das listas do Financeiro: a mesma definição de colunas gera o PDF (timbrado MDC) e o Excel, com
-// exatamente o que está filtrado na tela. Evita repetir em cada tela as duas montagens.
+// Exportação de listas de tela: a mesma definição de colunas gera o PDF (timbrado MDC) e o Excel, com exatamente o
+// que está filtrado na tela. Evita repetir em cada tela as duas montagens. Usado pelo BotoesExportar (components/ui).
 import { brl } from "@/lib/formato/moeda";
 import { baixarBytes } from "@/lib/arquivos/baixar";
 import { exportarExcel } from "@/lib/arquivos/excel";

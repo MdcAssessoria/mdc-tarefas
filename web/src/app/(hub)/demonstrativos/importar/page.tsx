@@ -23,7 +23,7 @@ export default function PaginaImportarBalancete() {
 }
 
 function Importar() {
-  const { org, clientes, pode } = useOrg();
+  const { org, clientes } = useOrg();
   const [leitura, setLeitura] = useState<Leitura | null>(null);
   const [arquivo, setArquivo] = useState("");
   const [cliente, setCliente] = useState("");
@@ -116,9 +116,6 @@ function Importar() {
       setProcessando(false);
     }
   }
-
-  if (!pode("demonstrativos", "operar"))
-    return <p className="text-sm text-neutral-600">Você pode consultar os demonstrativos, mas não importar.</p>;
 
   const cab = leitura?.cabecalho;
   const clienteEscolhido = clientes.find((c) => c.id === cliente);

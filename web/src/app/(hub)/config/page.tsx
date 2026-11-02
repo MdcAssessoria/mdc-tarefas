@@ -31,9 +31,6 @@ function Config() {
   ];
   const [aba, setAba] = useState<Aba>("obrigacoes");
 
-  if (papel !== "admin" && papel !== "gestor")
-    return <p className="text-sm">Apenas gestores e administradores acessam as configurações.</p>;
-
   return (
     <div className="space-y-4">
       <h1 className="text-xl font-semibold text-[var(--marca)]">Configurações</h1>

@@ -47,7 +47,7 @@ Código: regras puras em `web/src/dominios/financeiro/` (`ofx.ts`, `extratoPlani
 `web/src/app/(hub)/financeiro/`. Etapa 1B: regras puras em `regras.ts` (CPF/CNPJ, período, parcelas, situação; testes
 em `regras.test.ts`), exportação comum PDF/Excel em `exportar.ts`, telas compartilhadas em `componentes/`
 (`TelaTitulos`, `LancarTitulo`, `BaixaTitulo`, `CadPessoas`, `CadCategorias`, `CadCentros`, `EstoqueLocais`,
-`EstoqueMovimentos`, `estoqueBase`, `Comuns`). Financeiro v2: contas do painel em `painel.ts` (prazos, fluxo previsto,
+`EstoqueMovimentos`, `estoqueBase`; as peças de tela comuns ficam em `components/ui/` e a escolha da empresa em `dominios/organizacao/componentes/EmpresaEmGestao`). Financeiro v2: contas do painel em `painel.ts` (prazos, fluxo previsto,
 realizado por mês, despesas por categoria, primeiros passos, saldo com transferências; testes em `painel.test.ts`),
 dos relatórios em `relatorios.ts` (testes em `relatorios.test.ts`), gráficos SVG em `componentes/GraficosPainel.tsx`,
 visões dos relatórios em `componentes/RelatoriosVisoes.tsx`, `PrimeirosPassos`, `NovaTransferencia`, `PaginaCadastro`.

@@ -1,6 +1,19 @@
 // Testes de caracterização de lib/datas.ts: registram o comportamento atual antes da refatoração.
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { diasAte, hojeISO, mesAnteriorISO, mesAtualISO, primeiroDiaDoProximoMes, rotuloPrazo, somarDias, somarMeses } from "./datas";
+import {
+  diaNoFuso,
+  diasAte,
+  hojeISO,
+  horaNoFuso,
+  inicioDoDiaUtc,
+  mesAnteriorISO,
+  mesAtualISO,
+  primeiroDiaDoProximoMes,
+  rotuloPrazo,
+  saudacao,
+  somarDias,
+  somarMeses,
+} from "./datas";
 
 afterEach(() => vi.useRealTimers());
 
@@ -70,5 +83,41 @@ describe("somarMeses, somarDias e primeiroDiaDoProximoMes", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-11-01T01:00:00Z"));
     expect(mesAtualISO()).toBe("2026-10");
+  });
+});
+
+describe("fuso da organização", () => {
+  it("diaNoFuso: 01h30 UTC ainda é o dia anterior em São Paulo", () => {
+    expect(diaNoFuso("2026-11-01T01:30:00Z")).toBe("2026-10-31");
+    expect(diaNoFuso("2026-11-01T03:00:00Z", "America/Sao_Paulo")).toBe("2026-11-01");
+    expect(diaNoFuso("2026-11-01T01:30:00Z", "UTC")).toBe("2026-11-01");
+  });
+  it("horaNoFuso", () => {
+    expect(horaNoFuso("America/Sao_Paulo", new Date("2026-11-01T12:30:00Z"))).toBe(9);
+    expect(horaNoFuso("America/Manaus", new Date("2026-11-01T12:30:00Z"))).toBe(8);
+    expect(horaNoFuso("UTC", new Date("2026-11-01T00:10:00Z"))).toBe(0);
+  });
+  it("inicioDoDiaUtc: meia-noite do dia no fuso, em UTC", () => {
+    expect(inicioDoDiaUtc("2026-11-02")).toBe("2026-11-02T03:00:00.000Z");
+    expect(inicioDoDiaUtc("2026-11-02", "America/Manaus")).toBe("2026-11-02T04:00:00.000Z");
+    expect(inicioDoDiaUtc("2026-11-02", "UTC")).toBe("2026-11-02T00:00:00.000Z");
+    // com horário de verão (Nova York muda em 01/11/2026)
+    expect(inicioDoDiaUtc("2026-07-01", "America/New_York")).toBe("2026-07-01T04:00:00.000Z");
+    expect(inicioDoDiaUtc("2026-12-01", "America/New_York")).toBe("2026-12-01T05:00:00.000Z");
+  });
+});
+
+describe("saudacao (regra única do HUB)", () => {
+  it("5h às 11h59 bom dia; 12h às 17h59 boa tarde; senão boa noite", () => {
+    expect([0, 4, 5, 11, 12, 17, 18, 23].map(saudacao)).toEqual([
+      "Boa noite",
+      "Boa noite",
+      "Bom dia",
+      "Bom dia",
+      "Boa tarde",
+      "Boa tarde",
+      "Boa noite",
+      "Boa noite",
+    ]);
   });
 });

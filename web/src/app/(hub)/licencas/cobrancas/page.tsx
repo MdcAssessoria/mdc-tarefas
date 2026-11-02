@@ -10,8 +10,10 @@ import { traduzirErro } from "@/lib/erros";
 import { Carregando } from "@/components/ui/Carregando";
 import { EstadoVazio } from "@/components/ui/EstadoVazio";
 import { useAviso } from "@/components/ui/Aviso";
-import { BotoesExportar, Indicador, JanelaMotivo } from "@/dominios/financeiro/componentes/Comuns";
-import { nomeArquivo } from "@/dominios/financeiro/exportar";
+import { BotoesExportar } from "@/components/ui/BotoesExportar";
+import { Indicador } from "@/components/ui/Indicador";
+import { JanelaMotivo } from "@/components/ui/JanelaMotivo";
+import { nomeArquivo } from "@/lib/arquivos/exportarLista";
 import { Cabecalho, EtiquetaBloqueado, useDadosLicencas } from "@/dominios/licencas/componentes/Base";
 import { BaixaCobranca } from "@/dominios/licencas/componentes/BaixaCobranca";
 import { diasDeAtraso, mesesAte, SITUACOES, situacaoDaCobranca } from "@/dominios/licencas/regras";
@@ -221,21 +223,21 @@ export default function PaginaCobrancas() {
       ) : (
         <>
           <div className="grid gap-3 sm:grid-cols-3">
-            <Indicador
+            <Indicador icone="alerta"
               titulo="Atrasado"
               valor={brl(atrasado)}
               tom={atrasado ? "vermelho" : "neutro"}
               ativo={situacao === "atrasada"}
               aoClicar={() => setSituacao(situacao === "atrasada" ? "todas" : "atrasada")}
             />
-            <Indicador
+            <Indicador icone="calendario"
               titulo="A vencer"
               valor={brl(aVencer)}
-              tom="ambar"
+              tom="azul"
               ativo={situacao === "a_vencer"}
               aoClicar={() => setSituacao(situacao === "a_vencer" ? "todas" : "a_vencer")}
             />
-            <Indicador
+            <Indicador icone="check"
               titulo="Recebido"
               valor={brl(recebido)}
               tom="verde"

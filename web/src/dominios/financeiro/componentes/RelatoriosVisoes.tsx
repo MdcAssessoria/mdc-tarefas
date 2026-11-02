@@ -7,11 +7,14 @@ import { brl } from "@/lib/formato/moeda";
 import { fmtData } from "@/lib/formato/datas";
 import { EstadoVazio } from "@/components/ui/EstadoVazio";
 import { QuadroTabela } from "@/components/ui/QuadroTabela";
-import { BotoesExportar, Chip, Indicador, Valor } from "./Comuns";
+import { BotoesExportar } from "@/components/ui/BotoesExportar";
+import { Chip } from "@/components/ui/Chip";
+import { Indicador } from "@/components/ui/Indicador";
+import { Valor } from "@/components/ui/Valor";
 import { GraficoMeses } from "./GraficosPainel";
 import { rotuloMes } from "../painel";
 import type { LinhaCentro, LinhaPagoRecebido, LinhaResultado, MesFluxo, ResultadoDeCaixa } from "../relatorios";
-import type { ListaExportavel } from "../exportar";
+import type { ListaExportavel } from "@/lib/arquivos/exportarLista";
 
 type Avisar = (texto: string, tom?: "erro" | "sucesso" | "atencao") => void;
 /** O que toda visão recebe: cabeçalho dos arquivos (empresa e período) e como avisar. */

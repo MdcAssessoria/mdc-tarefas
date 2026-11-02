@@ -12,12 +12,15 @@ import { Carregando } from "@/components/ui/Carregando";
 import { EstadoVazio } from "@/components/ui/EstadoVazio";
 import { Modal } from "@/components/ui/Modal";
 import { useAviso } from "@/components/ui/Aviso";
-import { BotoesExportar, Indicador, JanelaMotivo } from "@/dominios/financeiro/componentes/Comuns";
-import { nomeArquivo } from "@/dominios/financeiro/exportar";
+import { BotoesExportar } from "@/components/ui/BotoesExportar";
+import { Indicador } from "@/components/ui/Indicador";
+import { JanelaMotivo } from "@/components/ui/JanelaMotivo";
+import { nomeArquivo } from "@/lib/arquivos/exportarLista";
 import { Cabecalho, EtiquetaBloqueado, useDadosLicencas } from "@/dominios/licencas/componentes/Base";
 import { FAIXAS, inadimplentes } from "@/dominios/licencas/regras";
 import type { Faixa, Inadimplente } from "@/dominios/licencas/regras";
-import { horaNoFuso, mensagemCobranca } from "@/dominios/licencas/mensagem";
+import { mensagemCobranca } from "@/dominios/licencas/mensagem";
+import { horaNoFuso } from "@/lib/datas";
 import { bloquearCliente, definirParametros, desbloquearCliente } from "@/dominios/licencas/repositorio";
 
 type Linha = Inadimplente & { bloqueado: boolean; sugerido: boolean };
@@ -176,19 +179,19 @@ export default function PaginaInadimplentes() {
       ) : (
         <>
           <div className="grid gap-3 sm:grid-cols-3">
-            <Indicador
+            <Indicador icone="alerta"
               titulo="Total em atraso (neste filtro)"
               valor={brl(total)}
               detalhe={`${lista.length} cliente(s)`}
               tom={total ? "vermelho" : "neutro"}
             />
-            <Indicador
+            <Indicador icone="relogio"
               titulo={`Com ${diasSugerir} dias ou mais`}
               valor={String(todos.filter((x) => x.sugerido).length)}
               detalhe="sugerido bloquear (ainda não bloqueados)"
               tom={todos.some((x) => x.sugerido) ? "ambar" : "neutro"}
             />
-            <Indicador titulo="Bloqueados" valor={String(bloqueados.size)} detalhe="sem acesso aos módulos pagos" />
+            <Indicador icone="cancelar" titulo="Bloqueados" valor={String(bloqueados.size)} detalhe="sem acesso aos módulos pagos" />
           </div>
 
           {!lista.length ? (

@@ -12,10 +12,10 @@ import {
   detectarCabecalho,
   fichasParaTabela,
   montarLinhas,
-  soDigitos,
   type Campo,
   type LinhaImport,
 } from "@/dominios/clientes/importacao";
+import { soDigitos } from "@/lib/documento";
 import { carregarSheetJS, corrigirXlsDominio } from "@/lib/arquivos/planilha";
 import { fmtData } from "@/lib/formato/datas";
 import { CampoArquivo } from "@/components/ui/CampoArquivo";
@@ -68,7 +68,7 @@ export default function Pagina() {
 }
 
 function Importar() {
-  const { org, clientes, podeEditarCadastros, recarregar } = useOrg();
+  const { org, clientes, recarregar } = useOrg();
   const [arquivo, setArquivo] = useState<string | null>(null);
   const [abas, setAbas] = useState<string[]>([]);
   const [dados, setDados] = useState<Record<string, string[][]>>({});
@@ -216,8 +216,6 @@ function Importar() {
       setEnviando(false);
     }
   }
-
-  if (!podeEditarCadastros) return <p className="text-sm">Apenas gestores e administradores importam clientes.</p>;
 
   return (
     <div className="space-y-5">

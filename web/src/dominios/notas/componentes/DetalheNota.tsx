@@ -8,7 +8,7 @@ import { Carregando } from "@/components/ui/Carregando";
 import { useConsulta } from "@/lib/useConsulta";
 import { brl } from "@/lib/formato/moeda";
 import { fmtData, fmtDataLocal } from "@/lib/formato/datas";
-import { formatarDocumento } from "@/dominios/financeiro/regras";
+import { formatarDocumento } from "@/lib/documento";
 import { lerItensDasNotas } from "../leituras";
 import { prazosDaNota, temManifestacao } from "../regras";
 import { tipoEntrada } from "../tiposEntrada";

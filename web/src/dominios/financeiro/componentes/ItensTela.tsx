@@ -15,9 +15,10 @@ import { Carregando } from "@/components/ui/Carregando";
 import { EstadoVazio } from "@/components/ui/EstadoVazio";
 import { combinaBusca, custoBase, margem, pct, qtdBr, situacaoSaldo, SITUACOES_SALDO } from "../estoqueRegras";
 import type { SituacaoSaldo } from "../estoqueRegras";
-import { nomeArquivo } from "../exportar";
+import { nomeArquivo } from "@/lib/arquivos/exportarLista";
 import type { Item } from "../tipos";
-import { BotoesExportar, Indicador } from "./Comuns";
+import { BotoesExportar } from "@/components/ui/BotoesExportar";
+import { Indicador } from "@/components/ui/Indicador";
 import type { PropsAba } from "./Comuns";
 import { useBaseEstoque } from "./estoqueBase";
 import { AssistenteItem } from "./AssistenteItem";
@@ -145,20 +146,20 @@ export function ItensTela({ cliente, podeOperar, avisar }: PropsAba) {
   return (
     <div className="space-y-3">
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Indicador
+        <Indicador icone="caixa"
           titulo="Itens ativos"
           valor={String(ativos.length)}
           detalhe={`${ativos.filter((x) => x.i.controla_estoque).length} controlam estoque`}
         />
-        <Indicador titulo="Valor em estoque" valor={brl(valorEstoque)} detalhe="pelo custo médio" tom="verde" />
-        <Indicador
+        <Indicador icone="moeda" titulo="Valor em estoque" valor={brl(valorEstoque)} detalhe="pelo custo médio" tom="verde" />
+        <Indicador icone="alerta"
           titulo="Abaixo do mínimo"
           valor={String(qtdBaixo)}
           tom={qtdBaixo ? "ambar" : "neutro"}
           ativo={mostrar === "baixo"}
           aoClicar={() => alternar("baixo")}
         />
-        <Indicador
+        <Indicador icone="cancelar"
           titulo="Sem estoque"
           valor={String(qtdZerado)}
           tom={qtdZerado ? "vermelho" : "neutro"}

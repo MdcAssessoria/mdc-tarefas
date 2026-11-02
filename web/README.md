@@ -71,7 +71,7 @@ web/
     │   ├── ui/                   peças de tela SEM regra de negócio: Modal, Abas, Aviso (+ useAviso), Carregando,
     │   │                         EstadoVazio, Etiquetas, MultiSelecao, Icone
     │   └── shell/                a moldura do HUB: Moldura, MenuLateral, BarraSuperior, BuscaRapida (Ctrl+K),
-    │                             Sino (notificações), Guarda (bloqueia ferramenta não liberada) e navegacao.ts
+    │                             Sino (notificações), Guarda (bloqueia ferramenta e nível da aba não liberados) e navegacao.ts
     │
     ├── dominios/                 REGRAS DE NEGÓCIO, um assunto por pasta
     │   ├── organizacao/          OrgProvider (useOrg: sessão, organização, membros, setores, clientes, permissões), tipos
@@ -91,9 +91,13 @@ web/
         ├── database.types.ts     tipos gerados do banco (não edite à mão; veja docs/07)
         ├── exigir.ts             lê a resposta do Supabase e lança o erro já traduzido
         ├── useConsulta.ts        hook de leitura de dados da tela (dados, erro, carregando, recarregar)
-        ├── erros.ts              traduzirErro: mensagem de erro em português para o usuário
+        ├── erros.ts              traduzirErro: mensagem de erro em português (P0001 e erro do site crus; o resto genérico)
+        ├── funcoesEdge.ts        chamarFuncao: Funções Edge com a sessão e erro em português
+        ├── documento.ts          CPF e CNPJ (soDigitos, validação, formatação)
+        ├── periodo.ts            períodos dos filtros de lista
         ├── caminho.ts            caminho("/x") → "/hub-mdc/x" para endereços montados à mão
-        ├── datas.ts, formato/    "hoje" no fuso da organização; formatação de data, dinheiro (brl) e números
+        ├── datas.ts, formato/    "hoje", hora, saudação e início do dia no fuso da organização; formatação de data,
+        │                         dinheiro (brl) e números
         ├── texto.ts, markdown.ts semAcento; Markdown simples → HTML
         ├── identidade.ts         dados oficiais da MDC (CNPJ, telefone, responsável técnico) para PDFs e Excel
         ├── marca.ts              logo da organização (Storage) para PDFs e para a TV
@@ -141,7 +145,7 @@ O ESLint (`eslint.config.mjs`, regra `no-restricted-imports`) **barra** os impor
 | --- | --- |
 | Item do menu lateral, abas de um módulo, qual módulo fica ativo em cada rota | `components/shell/navegacao.ts` |
 | O que aparece enquanto a organização carrega, quem é redirecionado para o Portal | `dominios/organizacao/OrgProvider.tsx` |
-| Permissão de ver uma ferramenta (`pode("tarefas", "operar")`) | `useOrg().pode` em `OrgProvider.tsx`; a regra de verdade está no banco (RLS) |
+| Permissão de ver uma ferramenta (`pode("tarefas", "operar")`) | `useOrg().pode` (regra em `dominios/acessos/permissoes.ts`); quem abre a tela é a Guarda (`navegacao.ts`); a regra de verdade está no banco (RLS) |
 | Nomes de situação/prioridade de tarefa | `dominios/tarefas/tipos.ts` |
 | Regimes e segmentos de cliente | `dominios/clientes/tipos.ts` |
 | Leitura do Excel de balancete do Domínio | `dominios/demonstrativos/balancete/leitura.ts` |

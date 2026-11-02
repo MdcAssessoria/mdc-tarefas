@@ -1,6 +1,6 @@
 // Testes do mapa de navegação: qual módulo fica ativo em cada rota e quais abas cada pessoa vê.
 import { describe, expect, it } from "vitest";
-import { agruparLinks, filtrarLinks, linkAtivo, moduloDaRota, NAV, podeModulo, temGrupos } from "./navegacao";
+import { agruparLinks, exigenciaDaRota, filtrarLinks, linkAtivo, moduloDaRota, NAV, podeAbrirRota, podeModulo, temGrupos } from "./navegacao";
 import type { LinkModulo } from "./navegacao";
 
 describe("moduloDaRota", () => {
@@ -130,5 +130,53 @@ describe("podeModulo", () => {
     expect(podeModulo("cadastros", so("financeiro"))).toBe(true);
     expect(podeModulo("cadastros", so("saidas"))).toBe(true);
     expect(podeModulo("cadastros", so("tarefas"))).toBe(false);
+  });
+});
+
+describe("Guarda: exigência da rota", () => {
+  it("usa a aba mais específica do módulo, também nas subpáginas", () => {
+    expect(exigenciaDaRota("/demonstrativos/importar", "demonstrativos")).toEqual({ minimo: "operar", gestor: undefined });
+    expect(exigenciaDaRota("/demonstrativos", "demonstrativos")).toBeNull();
+    expect(exigenciaDaRota("/demonstrativos/abc-123", "demonstrativos")).toBeNull();
+    expect(exigenciaDaRota("/config", "tarefas")).toEqual({ minimo: undefined, gestor: true });
+    expect(exigenciaDaRota("/atendimento/portal", "atendimento")).toEqual({ minimo: "gerir", gestor: undefined });
+    expect(exigenciaDaRota("/entradas/lancar", "entradas")).toEqual({ minimo: "operar", gestor: undefined });
+  });
+  it("telas sem aba própria vêm de TELAS_RESTRITAS", () => {
+    expect(exigenciaDaRota("/clientes/importar", "tarefas")).toEqual({ gestor: true });
+    expect(exigenciaDaRota("/demonstrativos/certificado", "demonstrativos")).toEqual({ admin: true });
+  });
+});
+
+describe("Guarda: podeAbrirRota", () => {
+  const PESO = { ver: 1, operar: 2, gerir: 3 } as const;
+  type Nivel = keyof typeof PESO;
+  const com = (acessos: Record<string, Nivel>, extra: { gestor?: boolean; admin?: boolean } = {}) => ({
+    pode: (app: string, minimo: Nivel = "ver") => !!acessos[app] && PESO[acessos[app]] >= PESO[minimo],
+    podeEditarCadastros: !!extra.gestor || !!extra.admin,
+    admin: !!extra.admin,
+  });
+  it("início sempre abre", () => {
+    expect(podeAbrirRota("/", "hub", com({}))).toBe(true);
+  });
+  it("sem a ferramenta do módulo, nada abre", () => {
+    expect(podeAbrirRota("/demonstrativos", "demonstrativos", com({}))).toBe(false);
+  });
+  it("nível da aba: 'ver' abre a lista mas não a importação", () => {
+    const p = com({ demonstrativos: "ver" });
+    expect(podeAbrirRota("/demonstrativos", "demonstrativos", p)).toBe(true);
+    expect(podeAbrirRota("/demonstrativos/importar", "demonstrativos", p)).toBe(false);
+    expect(podeAbrirRota("/demonstrativos/importar", "demonstrativos", com({ demonstrativos: "operar" }))).toBe(true);
+  });
+  it("Configurações e importar clientes exigem gestor; certificado exige administrador", () => {
+    expect(podeAbrirRota("/config", "tarefas", com({ tarefas: "gerir" }))).toBe(false);
+    expect(podeAbrirRota("/config", "tarefas", com({ tarefas: "ver" }, { gestor: true }))).toBe(true);
+    expect(podeAbrirRota("/clientes/importar", "tarefas", com({ tarefas: "operar" }))).toBe(false);
+    expect(podeAbrirRota("/demonstrativos/certificado", "demonstrativos", com({ demonstrativos: "gerir" }, { gestor: true }))).toBe(false);
+    expect(podeAbrirRota("/demonstrativos/certificado", "demonstrativos", com({ demonstrativos: "ver" }, { admin: true }))).toBe(true);
+  });
+  it("Entradas confere a ferramenta Entradas, não o Financeiro", () => {
+    expect(podeAbrirRota("/entradas/lancar", "entradas", com({ financeiro: "gerir" }))).toBe(false);
+    expect(podeAbrirRota("/entradas/lancar", "entradas", com({ entradas: "operar" }))).toBe(true);
   });
 });

@@ -1,4 +1,6 @@
-import { SUPABASE_URL, SUPABASE_KEY, supabase } from "@/lib/supabase";
+// Convite por e-mail (ou link para WhatsApp) para a pessoa criar a própria senha, pela Função Edge "convite".
+import { chamarFuncao } from "@/lib/funcoesEdge";
+import { traduzirErro } from "@/lib/erros";
 
 export interface RespostaConvite {
   enviado: boolean;
@@ -24,19 +26,10 @@ export async function gerarLinkConvite(email: string, nome?: string): Promise<Re
 }
 
 async function chamar(pedido: { email: string; nome?: string; so_link?: boolean }): Promise<RespostaConvite> {
-  const { data } = await supabase().auth.getSession();
-  const token = data.session?.access_token;
-  if (!token) return { enviado: false, erro: "Sessão expirada. Entre de novo." };
   try {
-    const r = await fetch(`${SUPABASE_URL}/functions/v1/convite`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${token}`, apikey: SUPABASE_KEY, "Content-Type": "application/json" },
-      body: JSON.stringify({ ...pedido, origem: window.location.origin }),
-    });
-    const corpo = (await r.json().catch(() => ({}))) as RespostaConvite;
-    if (!r.ok) return { enviado: false, erro: corpo.erro ?? "Não foi possível enviar o convite." };
-    return corpo;
-  } catch {
-    return { enviado: false, erro: "Sem conexão com o servidor." };
+    return await chamarFuncao<RespostaConvite>("convite", { corpo: { ...pedido, origem: window.location.origin } });
+  } catch (e) {
+    // quem chama mostra o erro ao lado do link/aviso; aqui nunca lança
+    return { enviado: false, erro: traduzirErro(e) };
   }
 }

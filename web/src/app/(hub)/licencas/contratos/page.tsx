@@ -11,8 +11,9 @@ import { fmtData } from "@/lib/formato/datas";
 import { Carregando } from "@/components/ui/Carregando";
 import { EstadoVazio } from "@/components/ui/EstadoVazio";
 import { useAviso } from "@/components/ui/Aviso";
-import { BotoesExportar, Indicador } from "@/dominios/financeiro/componentes/Comuns";
-import { nomeArquivo } from "@/dominios/financeiro/exportar";
+import { BotoesExportar } from "@/components/ui/BotoesExportar";
+import { Indicador } from "@/components/ui/Indicador";
+import { nomeArquivo } from "@/lib/arquivos/exportarLista";
 import { Cabecalho, EtiquetaBloqueado, useDadosLicencas } from "@/dominios/licencas/componentes/Base";
 import { AssistenteContrato, MESES } from "@/dominios/licencas/componentes/AssistenteContrato";
 import { EncerrarContrato, HistoricoContrato, ReajustarContrato } from "@/dominios/licencas/componentes/JanelasContrato";
@@ -191,18 +192,18 @@ function Contratos() {
       ) : (
         <>
           <div className="grid gap-3 sm:grid-cols-3">
-            <Indicador
+            <Indicador icone="documento"
               titulo="Valendo hoje (neste filtro)"
               valor={brl(mrr)}
               detalhe={`${vigentes.length} contrato(s) por mês`}
               tom="verde"
             />
-            <Indicador
+            <Indicador icone="etiqueta"
               titulo="Preço de tabela desses contratos"
               valor={brl(tabela)}
               detalhe={tabela > mrr ? `${brl(tabela - mrr)} em descontos` : "sem descontos"}
             />
-            <Indicador
+            <Indicador icone="tendencia"
               titulo="Reajustes a fazer"
               valor={String(reajustes)}
               detalhe="mês do reajuste já chegou"

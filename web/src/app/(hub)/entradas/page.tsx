@@ -15,11 +15,13 @@ import { traduzirErro } from "@/lib/erros";
 import { Carregando } from "@/components/ui/Carregando";
 import { EstadoVazio } from "@/components/ui/EstadoVazio";
 import { useAviso } from "@/components/ui/Aviso";
-import { EscolhaCliente, useClienteFinanceiro } from "@/dominios/financeiro/componentes/EscolhaCliente";
-import { BotoesExportar, FiltroPeriodo, Indicador } from "@/dominios/financeiro/componentes/Comuns";
+import { EscolhaCliente, useClienteGestao } from "@/dominios/organizacao/componentes/EmpresaEmGestao";
+import { BotoesExportar } from "@/components/ui/BotoesExportar";
+import { FiltroPeriodo } from "@/components/ui/FiltroPeriodo";
+import { Indicador } from "@/components/ui/Indicador";
 import { intervaloDoPeriodo } from "@/dominios/financeiro/regras";
 import type { Periodo } from "@/dominios/financeiro/regras";
-import { nomeArquivo } from "@/dominios/financeiro/exportar";
+import { nomeArquivo } from "@/lib/arquivos/exportarLista";
 import { lerCertificado, lerControle, lerEventos, lerNotas } from "@/dominios/notas/leituras";
 import { buscarAgora } from "@/dominios/notas/repositorio";
 import {
@@ -57,7 +59,7 @@ type Janela = { tipo: "manifestar"; notas: Nota[]; inicial?: CodigoManifestacao 
 
 export default function PaginaNotasRecebidas() {
   const { org, pode } = useOrg();
-  const financeiro = useClienteFinanceiro();
+  const financeiro = useClienteGestao();
   const cliente = financeiro.cliente;
   const podeOperar = pode("entradas", "operar") || pode("financeiro", "operar");
   const { aviso, mostrar } = useAviso();
@@ -79,13 +81,13 @@ export default function PaginaNotasRecebidas() {
     useCallback(async () => {
       if (!cliente) return null;
       const [notas, eventos, controle, certificado] = await Promise.all([
-        lerNotas(cliente.id, { ...intervalo, direcao: "entrada" }),
+        lerNotas(cliente.id, { ...intervalo, direcao: "entrada", fuso: org.fuso }),
         lerEventos(cliente.id),
         lerControle(cliente.id),
         lerCertificado(cliente.id),
       ]);
       return { notas, eventos, controle, certificado };
-    }, [cliente, intervalo]),
+    }, [cliente, intervalo, org.fuso]),
   );
   const d = consulta.dados;
 
@@ -245,7 +247,7 @@ export default function PaginaNotasRecebidas() {
       </div>
 
       <div className="cartao flex flex-wrap items-end gap-3 p-4">
-        <EscolhaCliente financeiro={financeiro} />
+        <EscolhaCliente gestao={financeiro} />
         <FiltroPeriodo
           rotulo="Emissão"
           periodo={periodo}
@@ -346,7 +348,7 @@ export default function PaginaNotasRecebidas() {
 
           <p className="text-sm text-neutral-700">{resumo}</p>
           <div className="grid gap-3 sm:grid-cols-3">
-            <Indicador
+            <Indicador icone="chat"
               titulo="Aguardando sua resposta"
               valor={String(aguardando.length)}
               detalhe={brl(soma(aguardando))}
@@ -354,7 +356,7 @@ export default function PaginaNotasRecebidas() {
               ativo={situacao === "aguardando"}
               aoClicar={() => setSituacao(situacao === "aguardando" ? "todas" : "aguardando")}
             />
-            <Indicador
+            <Indicador icone="relogio"
               titulo="Prazo vencendo"
               valor={String(vencendo.length)}
               detalhe="10 dias ou menos para responder"
@@ -362,7 +364,7 @@ export default function PaginaNotasRecebidas() {
               ativo={situacao === "prazo_vencendo"}
               aoClicar={() => setSituacao(situacao === "prazo_vencendo" ? "todas" : "prazo_vencendo")}
             />
-            <Indicador
+            <Indicador icone="check"
               titulo="Prontas para lançar"
               valor={String(aLancar.length)}
               detalhe={brl(soma(aLancar))}
