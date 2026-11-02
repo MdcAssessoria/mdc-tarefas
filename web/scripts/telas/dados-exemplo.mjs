@@ -1295,3 +1295,67 @@ export const RPCS = {
   prever_rotina: () => 2,
   portal_licenca_situacao: () => ({ bloqueado: true, modulos: [{ slug: "financeiro", nome: "Financeiro" }] }),
 };
+
+// ---------------------------------------------------------------- CRM Comercial: mais exemplos (02/11/2026)
+// Oportunidades em várias etapas (quadro por etapa no computador e no celular), um lead do Simulador com retorno
+// atrasado, uma ganha, uma perdida e uma arquivada; contratos enviado e assinado para a lista de Contratos.
+const crmOp = (n, campos = {}) => ({
+  ...oportunidade,
+  id: `55555555-5555-4555-8555-5555555556${String(n).padStart(2, "0")}`,
+  cnpj: null,
+  email: null,
+  observacoes: null,
+  ...campos,
+});
+TABELAS.crm_oportunidades.push(
+  crmOp(1, {
+    empresa: "Oficina Mecânica Bom Pistão",
+    contato_nome: "Carlos",
+    cidade: "Bragança Paulista",
+    etapa: "novo",
+    etapa_desde: momento(-1),
+    origem: "simulador",
+    regime_atual: "presumido",
+    valor_mensal: null,
+    proximo_contato: dia(-2),
+    dados_origem: { melhor_regime: "simples", economia_estimada: 18400, cnae_descricao: "Manutenção de veículos" },
+    criado_em: momento(-1),
+  }),
+  crmOp(2, { empresa: "Clínica Sorriso Feliz", contato_nome: "Dra. Ana", etapa: "contato", etapa_desde: momento(-9), valor_mensal: 1200, origem: "site", proximo_contato: dia(1) }),
+  crmOp(3, { empresa: "Mercadinho Central", contato_nome: "João", etapa: "reuniao", etapa_desde: momento(-2), valor_mensal: 750, origem: "whatsapp", responsavel_id: null }),
+  crmOp(4, { empresa: "Transportadora Serra Azul", contato_nome: "Paulo", etapa: "negociacao", etapa_desde: momento(-4), valor_mensal: 2400, origem: "evento" }),
+  crmOp(5, { empresa: "Pet Shop Amigo Fiel", etapa: "ganho", etapa_desde: momento(-6), valor_mensal: 680, origem: "instagram", cliente_id: C1 }),
+  crmOp(6, { empresa: "Loja de Roupas Estilo", etapa: "perdido", etapa_desde: momento(-12), valor_mensal: 900, motivo_perda: "Escolheu outro escritório (preço)" }),
+  crmOp(7, {
+    empresa: "Construtora Alicerce",
+    etapa: "contato",
+    etapa_desde: momento(-40),
+    origem: "simulador",
+    arquivado_em: momento(-3),
+    motivo_arquivo: "Sem retorno",
+    dados_origem: { melhor_regime: "presumido", economia_estimada: 5200 },
+  }),
+);
+TABELAS.crm_contratos.push(
+  {
+    ...TABELAS.crm_contratos[0],
+    id: "k2",
+    oportunidade_id: crmOp(4).id,
+    numero: "2026/002",
+    status: "enviado",
+    valores: { ...TABELAS.crm_contratos[0].valores, razao_social: "TRANSPORTADORA SERRA AZUL LTDA", honorario_mensal: 2400 },
+    enviado_em: momento(-1),
+    crm_oportunidades: { empresa: "Transportadora Serra Azul" },
+  },
+  {
+    ...TABELAS.crm_contratos[0],
+    id: "k3",
+    oportunidade_id: crmOp(5).id,
+    numero: "2026/003",
+    status: "assinado",
+    valores: { ...TABELAS.crm_contratos[0].valores, razao_social: "PET SHOP AMIGO FIEL LTDA", honorario_mensal: 680 },
+    enviado_em: momento(-8),
+    assinado_em: momento(0),
+    crm_oportunidades: { empresa: "Pet Shop Amigo Fiel" },
+  },
+);
