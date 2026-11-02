@@ -1581,8 +1581,7 @@ export type Database = {
           mes?: string;
           percentual?: number;
         };
-        Relationships: [
-        ];
+        Relationships: [];
       };
       fin_pessoas: {
         Row: {
@@ -1787,6 +1786,20 @@ export type Database = {
           tipo?: string;
         };
         Relationships: [
+          {
+            foreignKeyName: "fin_recorrente_eventos_cliente_id_fkey";
+            columns: ["cliente_id"];
+            isOneToOne: false;
+            referencedRelation: "clientes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "fin_recorrente_eventos_org_id_fkey";
+            columns: ["org_id"];
+            isOneToOne: false;
+            referencedRelation: "organizacoes";
+            referencedColumns: ["id"];
+          },
           {
             foreignKeyName: "fin_recorrente_eventos_recorrente_id_fkey";
             columns: ["recorrente_id"];
@@ -2041,8 +2054,8 @@ export type Database = {
           categoria_id: string;
           centro_id: string | null;
           cliente_id: string;
-          conta_prevista_id: string | null;
           competencia: string | null;
+          conta_prevista_id: string | null;
           criado_em: string;
           descricao: string;
           documento: string | null;
@@ -2069,8 +2082,8 @@ export type Database = {
           categoria_id: string;
           centro_id?: string | null;
           cliente_id: string;
-          conta_prevista_id?: string | null;
           competencia?: string | null;
+          conta_prevista_id?: string | null;
           criado_em?: string;
           descricao: string;
           documento?: string | null;
@@ -2097,8 +2110,8 @@ export type Database = {
           categoria_id?: string;
           centro_id?: string | null;
           cliente_id?: string;
-          conta_prevista_id?: string | null;
           competencia?: string | null;
+          conta_prevista_id?: string | null;
           criado_em?: string;
           descricao?: string;
           documento?: string | null;
@@ -2168,6 +2181,13 @@ export type Database = {
             columns: ["pessoa_id"];
             isOneToOne: false;
             referencedRelation: "fin_pessoas";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "fin_titulos_recorrente_id_fkey";
+            columns: ["recorrente_id"];
+            isOneToOne: false;
+            referencedRelation: "fin_recorrentes";
             referencedColumns: ["id"];
           },
         ];
