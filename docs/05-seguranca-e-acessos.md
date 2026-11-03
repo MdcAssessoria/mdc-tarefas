@@ -125,11 +125,12 @@ sequenceDiagram
 | Auditoria independente de 02/11/2026 (036): `app.hub_pode` volta a ser estrito (só a ferramenta pedida). Dados de gestão por assunto com `app.gestao_pode(cliente, nível, módulos)` (tabela 5.7): ler = qualquer módulo de gestão; gravar = o módulo do assunto; sensível continua só no Financeiro. Portal: permissão `financeiro` (ver e lançar) ou `financeiro_ver` (só ver), lista fechada de permissões e liberar Financeiro só com Financeiro (gerir) (`app.portal_perm_validas`, gatilho `portal_perm_valida`). Certificado e regras de notas no Portal só com cliente sem bloqueio e contrato de Entradas/Financeiro; módulo inativo não libera. XML enviado à mão: chave conferida (DV, CNPJ do emitente, modelo 55/65/57 ou NFS-e) e o modelo vem da chave; a nota da SEFAZ/ADN substitui a enviada à mão não lançada (auditoria) e, se já lançada, avisa os administradores. Nota cancelada pelo emitente depois de lançada: auditoria + sino + não deixa pagar. Título de nota/pedido só muda pelo documento de origem; nota, autor e data do título não mudam. Venda faturada só cancela com Financeiro (gerir) e motivo citando a nota. Saída com data passada não deixa a ficha negativa em nenhum dia. Desfazer nota recalcula o custo médio. Contrato de licença sem corrida (gatilho trava o cliente). Fotos de itens e envios do Portal só na pasta da organização do cliente. Desfazer extrato marca (não apaga). Leads do Simulador: até 20 por minuto. **Nada se apaga**: tarefas, vencimentos, CRM, feriados, perfis, convites do Portal e clientes sem DELETE (política, grant e gatilho `nada_se_apaga`); no lugar `tarefa_cancelar`, `venc_encerrar`, `crm_arquivar`, `feriado_inativar`, `hub_inativar_perfil`, `portal_cancelar_convite`, com motivo e auditoria. CNPJ do cliente com certificado/notas só o administrador muda | `app.hub_pode`, `app.hub_pode_algum`, `app.gestao_pode`, `app.fin_pode`, `app.fin_lancar_titulos`, `fis_registrar_upload`, `app.fis_gravar_nota`, `app.fis_gravar_evento`, `app.est_gravar`, `est_pedido_permissao`, `lic_contrato_produto_unico`, `nada_se_apaga`, `cliente_cnpj` |
 
 
-## 5.7 Quem grava o quê nos módulos de gestão (036)
+## 5.7 Quem grava o quê nos módulos de gestão (036, revista na 042)
 
-Regra: **ler** os dados de gestão de uma empresa = qualquer módulo de gestão (equipe) ou Portal com `financeiro`/`financeiro_ver`
-e contrato de algum módulo. **Gravar** = o módulo do assunto (tabela), na equipe com o nível pedido; no Portal, permissão
-`financeiro` e contrato ativo de um dos módulos da linha, sem bloqueio. `gerir` é sempre só da equipe.
+Regra (042): a gestão é **só da empresa da própria organização** (MDC; `organizacoes.gestao_cliente_id`). **Ler** = equipe
+com qualquer módulo de gestão (`app.modulos_gestao()`; Contratos tem leitura própria). **Gravar** = o módulo do assunto
+(tabela), na equipe com o nível pedido. O Portal do Cliente **não** lê nem grava gestão, nem envia certificado (as linhas
+históricas acima que citam o Portal, `cliente_tem_modulo` e `financeiro_ver` valem só até a 041).
 
 | Assunto | Módulos que gravam | Onde |
 | --- | --- | --- |

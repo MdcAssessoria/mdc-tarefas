@@ -4264,7 +4264,15 @@ export type Database = {
           plano?: string;
           slug?: string;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "organizacoes_gestao_cliente_id_fkey";
+            columns: ["gestao_cliente_id"];
+            isOneToOne: false;
+            referencedRelation: "clientes";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       portal_balancete_linhas: {
         Row: {
