@@ -4074,6 +4074,142 @@ export type Database = {
           },
         ];
       };
+      link_cobrancas: {
+        Row: {
+          atualizado_em: string;
+          cobranca_link_id: string;
+          emitida_em: string;
+          emitida_por: string | null;
+          lic_cobranca_id: string;
+          linha_digitavel: string | null;
+          nosso_numero: string | null;
+          org_id: string;
+          pix_copia_cola: string | null;
+          situacao: string;
+          tipo: string;
+        };
+        Insert: {
+          atualizado_em?: string;
+          cobranca_link_id: string;
+          emitida_em?: string;
+          emitida_por?: string | null;
+          lic_cobranca_id: string;
+          linha_digitavel?: string | null;
+          nosso_numero?: string | null;
+          org_id: string;
+          pix_copia_cola?: string | null;
+          situacao?: string;
+          tipo: string;
+        };
+        Update: {
+          atualizado_em?: string;
+          cobranca_link_id?: string;
+          emitida_em?: string;
+          emitida_por?: string | null;
+          lic_cobranca_id?: string;
+          linha_digitavel?: string | null;
+          nosso_numero?: string | null;
+          org_id?: string;
+          pix_copia_cola?: string | null;
+          situacao?: string;
+          tipo?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "link_cobrancas_lic_cobranca_id_fkey";
+            columns: ["lic_cobranca_id"];
+            isOneToOne: true;
+            referencedRelation: "lic_cobrancas";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "link_cobrancas_org_id_fkey";
+            columns: ["org_id"];
+            isOneToOne: false;
+            referencedRelation: "organizacoes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      link_config: {
+        Row: {
+          ativo: boolean;
+          atualizado_em: string;
+          atualizado_por: string | null;
+          conta_link_id: string | null;
+          dias_apos_vencimento: number;
+          juros_mensal_percentual: number;
+          multa_percentual: number;
+          org_id: string;
+          tipo_padrao: string;
+        };
+        Insert: {
+          ativo?: boolean;
+          atualizado_em?: string;
+          atualizado_por?: string | null;
+          conta_link_id?: string | null;
+          dias_apos_vencimento?: number;
+          juros_mensal_percentual?: number;
+          multa_percentual?: number;
+          org_id: string;
+          tipo_padrao?: string;
+        };
+        Update: {
+          ativo?: boolean;
+          atualizado_em?: string;
+          atualizado_por?: string | null;
+          conta_link_id?: string | null;
+          dias_apos_vencimento?: number;
+          juros_mensal_percentual?: number;
+          multa_percentual?: number;
+          org_id?: string;
+          tipo_padrao?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "link_config_org_id_fkey";
+            columns: ["org_id"];
+            isOneToOne: true;
+            referencedRelation: "organizacoes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      link_eventos: {
+        Row: {
+          detalhe: Json | null;
+          id_evento: string;
+          org_id: string | null;
+          recebido_em: string;
+          resultado: string;
+          tipo: string;
+        };
+        Insert: {
+          detalhe?: Json | null;
+          id_evento: string;
+          org_id?: string | null;
+          recebido_em?: string;
+          resultado?: string;
+          tipo: string;
+        };
+        Update: {
+          detalhe?: Json | null;
+          id_evento?: string;
+          org_id?: string | null;
+          recebido_em?: string;
+          resultado?: string;
+          tipo?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "link_eventos_org_id_fkey";
+            columns: ["org_id"];
+            isOneToOne: false;
+            referencedRelation: "organizacoes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       membros: {
         Row: {
           ativo: boolean;
@@ -6044,6 +6180,16 @@ export type Database = {
       lic_salvar_contrato: { Args: { p: Json }; Returns: string };
       lic_salvar_plano: { Args: { p: Json }; Returns: string };
       lic_salvar_produto: { Args: { p: Json }; Returns: string };
+      link_aplicar_evento: {
+        Args: { p_dados: Json; p_evento: string; p_tipo: string };
+        Returns: string;
+      };
+      link_pode_emitir: { Args: { p_cobranca: string }; Returns: boolean };
+      link_registrar_emissao: {
+        Args: { p: Json; p_cobranca: string; p_user: string };
+        Returns: undefined;
+      };
+      link_salvar_config: { Args: { p: Json; p_org: string }; Returns: undefined };
       portal_abrir_conversa: {
         Args: {
           p_assunto: string;

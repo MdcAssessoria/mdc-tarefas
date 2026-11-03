@@ -1078,6 +1078,28 @@ export const TABELAS = {
     licCobranca(4, LIC_K2, C2, -1, 120, "aberta"),
     licCobranca(5, LIC_K2, C2, 0, 120, "aberta"),
   ],
+  // Ledgra Link (043): ligado na organização; a mensalidade 2 (em aberto) já tem boleto/Pix emitido
+  link_config: [
+    {
+      org_id: ORG,
+      ativo: true,
+      conta_link_id: "7c1e2a90-3b4d-4e5f-8a6b-1c2d3e4f5a6b",
+      tipo_padrao: "boleto_hibrido",
+      multa_percentual: 2,
+      juros_mensal_percentual: 1,
+      dias_apos_vencimento: 30,
+    },
+  ],
+  link_cobrancas: [
+    {
+      lic_cobranca_id: "99999999-9999-4999-8999-0000000000c2",
+      tipo: "boleto_hibrido",
+      situacao: "registrada",
+      linha_digitavel: "03399.12345 67890.123456 78901.234567 8 12340000035000",
+      pix_copia_cola: "00020126580014br.gov.bcb.pix0136a1b2c3d4-e5f6-7890-abcd-ef1234567890520400005303986540535.005802BR6304ABCD",
+      emitida_em: mesRel(0) + "T10:00:00Z",
+    },
+  ],
   lic_baixas: [
     {
       id: 1,

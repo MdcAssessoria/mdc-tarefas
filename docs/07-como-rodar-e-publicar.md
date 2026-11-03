@@ -100,6 +100,13 @@ npx supabase functions deploy convite --project-ref bulqqdgfrrpqquqvjjfa --impor
   `xmlsec1 --verify` (instale com `apt-get install xmlsec1`). Publicadas pelo conector em 02/11/2026 (v1 das três),
   depois das migrações 031 a 035.
 - Segredos das funções (chave de serviço etc.) ficam no painel: Edge Functions › Secrets. Nunca no código.
+- Ledgra Link (043): `LEDGRA_LINK_URL` (endereço do Ledgra Link, ex.: `https://link.ledgra.com.br`), `LEDGRA_LINK_CHAVE`
+  (chave do HUB no Ledgra Link, começa com `llk_`) e `LEDGRA_LINK_SEGREDO_WEBHOOK` (segredo mostrado uma vez pelo Ledgra
+  Link ao configurar o endereço `https://bulqqdgfrrpqquqvjjfa.supabase.co/functions/v1/ledgra-link-webhook`). Publicar as
+  funções `ledgra-link` e `ledgra-link-webhook`. O SDK fica copiado em `supabase/functions/_ledgra_link/` (arquivo gerado no
+  repositório ledgra-link por `npm run sdk`; não editar aqui). As duas usam `_ledgra_link/http.ts` (cópia enxuta de
+  `_fiscal/http.ts`, sem a parte da SEFAZ; se mudar as origens, mude nos dois). Migração 043 aplicada e funções publicadas
+  pelo conector em 03/11/2026 (v1); `database.types.ts` acrescido à mão das tabelas e funções `link_*` (sem token da CLI).
 - As origens permitidas (CORS e link de convite) são `mdcassessoria.com`, `www.mdcassessoria.com` e
   `mdc-tarefas.vercel.app`. Para testar convite rodando local, publique uma versão de teste com `localhost`.
 
