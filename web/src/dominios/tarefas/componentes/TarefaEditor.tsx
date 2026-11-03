@@ -50,7 +50,7 @@ export function TarefaEditor({
   aoFechar: () => void;
   aoSalvar: () => void;
 }) {
-  const { org, eu, setores, clientes, membros, nomeMembro, podeEditarCadastros } = useOrg();
+  const { org, eu, setores, clientes, membros, nomeMembro, podeEditarCadastros, papel } = useOrg();
   const [f, setF] = useState<Form>(() => ({
     titulo: tarefa?.titulo ?? "",
     descricao: tarefa?.descricao ?? "",
@@ -68,6 +68,7 @@ export function TarefaEditor({
   const [erro, setErro] = useState<string | null>(null);
   const [salvando, setSalvando] = useState(false);
   const [cancelando, setCancelando] = useState(false);
+  const [retirando, setRetirando] = useState<Arquivo | null>(null);
   const [comentarios, setComentarios] = useState<Comentario[]>([]);
   const [historico, setHistorico] = useState<Historico[]>([]);
   const [novoComentario, setNovoComentario] = useState("");
@@ -91,6 +92,7 @@ export function TarefaEditor({
     sb.from("hub_arquivos")
       .select("*")
       .eq("ref_id", tarefa.id)
+      .is("retirado_em", null)
       .order("enviado_em")
       .then(({ data }) => setArquivos((data as Arquivo[]) ?? []));
   }, [tarefa]);
@@ -329,6 +331,15 @@ export function TarefaEditor({
                       no portal
                     </label>
                   )}
+                  {papel === "admin" && (
+                    <button
+                      className="shrink-0 text-xs text-[var(--texto-suave)] hover:text-red-700 hover:underline"
+                      onClick={() => setRetirando(a)}
+                      aria-label={`Retirar o anexo ${a.nome}`}
+                    >
+                      Retirar
+                    </button>
+                  )}
                 </li>
               ))}
             </ul>
@@ -407,6 +418,25 @@ export function TarefaEditor({
           botao="Cancelar tarefa"
           aoConfirmar={cancelarTarefa}
           aoFechar={() => setCancelando(false)}
+        />
+      )}
+      {retirando && (
+        <JanelaMotivo
+          titulo="Retirar anexo"
+          descricao={
+            <>
+              O anexo “{retirando.nome}” sai da tarefa e do Portal do cliente. Nada se apaga: o arquivo e o motivo ficam no
+              histórico.
+            </>
+          }
+          botao="Retirar anexo"
+          aoConfirmar={async (motivo) => {
+            const { error } = await supabase().rpc("hub_arquivo_retirar", { p_arquivo: retirando.id, p_motivo: motivo });
+            if (error) throw error;
+            setArquivos((l) => l.filter((x) => x.id !== retirando.id));
+            setRetirando(null);
+          }}
+          aoFechar={() => setRetirando(null)}
         />
       )}
     </div>

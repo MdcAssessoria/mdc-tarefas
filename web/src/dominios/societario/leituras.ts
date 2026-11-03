@@ -114,7 +114,7 @@ export async function lerFicha(id: string): Promise<DadosFicha> {
     sb.from("soc_exigencias").select("*").eq("processo_id", id).order("data", { ascending: false }),
     sb.from("soc_taxas").select("*").eq("processo_id", id).order("vencimento"),
     sb.from("soc_eventos").select("*").eq("processo_id", id).order("em", { ascending: false }).limit(200),
-    sb.from("hub_arquivos").select("*").eq("ref_id", id).order("enviado_em", { ascending: false }),
+    sb.from("hub_arquivos").select("*").eq("ref_id", id).is("retirado_em", null).order("enviado_em", { ascending: false }),
   ]);
   const processo = exigir(a) as SocProcesso;
   const t = await sb.from("soc_tipos").select("*").eq("id", processo.tipo_id).maybeSingle();

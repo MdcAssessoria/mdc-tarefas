@@ -26,6 +26,8 @@ interface OrgCtx {
   nomeMembro: (id: string | null) => string;
   setorPorId: (id: string | null) => Setor | undefined;
   clientePorId: (id: string | null) => Cliente | undefined;
+  /** Setores, clientes e equipe da organização atual já chegaram (antes disso a lista de clientes está vazia). */
+  cadastrosCarregados: boolean;
   apps: HubApp[];
   appsCarregados: boolean;
   pode: (app: string, minimo?: PapelApp) => boolean;
@@ -62,6 +64,7 @@ export function OrgProvider({ children }: { children: React.ReactNode }) {
   const [orgId, setOrgId] = useState<string | null>(null);
   const [setores, setSetores] = useState<Setor[]>([]);
   const [clientes, setClientes] = useState<Cliente[]>([]);
+  const [cadastrosDe, setCadastrosDe] = useState<string | null>(null);
   const [membros, setMembros] = useState<Membro[]>([]);
   const [apps, setApps] = useState<HubApp[]>([]);
   const [appsCarregados, setAppsCarregados] = useState(false);
@@ -133,6 +136,7 @@ export function OrgProvider({ children }: { children: React.ReactNode }) {
     setSetores(s.data as Setor[]);
     setClientes(c.data as Cliente[]);
     setMembros(m.data as Membro[]);
+    setCadastrosDe(orgId);
     const o = await sb.from("organizacoes").select("*").eq("id", orgId).single();
     if (o.data) setOrgs((prev) => prev?.map((x) => (x.id === orgId ? (o.data as Organizacao) : x)) ?? prev);
   }, [orgId]);
@@ -182,12 +186,13 @@ export function OrgProvider({ children }: { children: React.ReactNode }) {
       nomeMembro: (id) => (id ? (mapM.get(id)?.nome ?? "—") : "—"),
       setorPorId: (id) => (id ? mapS.get(id) : undefined),
       clientePorId: (id) => (id ? mapC.get(id) : undefined),
+      cadastrosCarregados: cadastrosDe === org.id,
       apps,
       appsCarregados,
       pode: (app, minimo = "ver") => podeNoApp(eu.papel, apps, app, minimo),
       recarregarApps,
     };
-  }, [session, org, orgs, minhas, membros, setores, clientes, recarregar, apps, appsCarregados, recarregarApps]);
+  }, [session, org, orgs, minhas, membros, setores, clientes, cadastrosDe, recarregar, apps, appsCarregados, recarregarApps]);
 
   if (erro) return <Centro titulo="Não foi possível carregar">{erro}</Centro>;
   if (session === undefined || (session && orgs === null)) return <Centro titulo="Carregando…" />;

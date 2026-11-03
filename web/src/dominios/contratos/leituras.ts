@@ -80,6 +80,7 @@ export const lerAnexos = (contrato: string) =>
       .select("*")
       .eq("app", "contratos")
       .eq("ref_id", contrato)
+      .is("retirado_em", null)
       .order("enviado_em", { ascending: false })
       .order("id")
       .range(de, ate),

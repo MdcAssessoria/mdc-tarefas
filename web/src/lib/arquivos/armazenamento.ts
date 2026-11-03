@@ -13,6 +13,7 @@ export interface Arquivo {
   visivel_cliente: boolean;
   enviado_por: string | null;
   enviado_em: string;
+  retirado_em?: string | null;
 }
 
 const BUCKET = "hub-arquivos";
