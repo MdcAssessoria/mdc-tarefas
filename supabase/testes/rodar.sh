@@ -71,3 +71,8 @@ for f in testes/101_base_046.sql migrations/046_nfse_emissao.sql; do
   $P -v ON_ERROR_STOP=1 -f "$R/$f" 2>&1 | grep -v NOTICE || true
 done
 $P -v conexao="host=$D port=$PORTA dbname=postgres user=postgres" -f "$R/testes/102_nfse_046.sql" 2>&1 | grep -v "^SET$"
+# 048: regras dos contratos (vencimento no mesmo mês, reajuste negativo mantém o valor, mês cheio) e B-04 a B-09, B-12, BD-03
+for f in testes/105_base_048.sql migrations/048_contratos_regras.sql; do
+  $P -v ON_ERROR_STOP=1 -f "$R/$f" 2>&1 | grep -v NOTICE || true
+done
+$P -f "$R/testes/106_regras_048.sql" 2>&1 | grep -v "^SET$"
