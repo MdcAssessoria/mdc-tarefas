@@ -36,6 +36,7 @@ flowchart TB
 | Demonstrativos | Equipe | Importa o balancete do Domínio, gera BP/DRE/DFC, índices, fragilidades, parecer e PDF assinado | `/demonstrativos/...` |
 | Atendimento | Equipe | Chat com os clientes do Portal | `/atendimento` |
 | Vencimentos | Equipe | Certificados, alvarás, procurações com avisos; renovar (nova data) e encerrar (com motivo) em janelas, PDF/Excel | `/vencimentos` |
+| Certificados digitais | Equipe | Os certificados do cofre do HUB (demonstrativos e notas fiscais) e do Ledgra Link (bancos) numa lista só, com validade, filtros e PDF/Excel | `/vencimentos/certificados` |
 | Comercial (CRM) | Equipe comercial | Funil, leads, contratos com modelo | `/comercial/...` |
 | Pessoas e acessos | Administrador | Equipe, perfis, acessos do Portal, transferência de trabalho, histórico | `/hub/acessos` |
 | Portal do Cliente | Cliente | Demonstrativos publicados, rotinas do mês, processos, documentos, chat | `/portal` |

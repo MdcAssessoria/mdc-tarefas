@@ -51,8 +51,18 @@ for f in testes/97_base_042.sql migrations/042_gestao_so_mdc_e_seguranca.sql; do
   $P -v ON_ERROR_STOP=1 -f "$R/$f" 2>&1 | grep -v NOTICE || true
 done
 $P -f "$R/testes/98_gestao_042.sql" 2>&1 | grep -v "^SET$"
-# 043: faturamento dos contratos a receber (fatura, fila de envio, Portal) e correções BD-01/BD-02 da reauditoria
-for f in testes/99_base_043.sql migrations/045_contratos_faturamento.sql; do
+# 043: Cobrança Ledgra pelo Ledgra Link (emissão pelo servidor, aviso de pagamento com baixa automática, sem dobrar)
+for f in testes/99_base_043.sql migrations/043_ledgra_link_cobranca.sql; do
   $P -v ON_ERROR_STOP=1 -f "$R/$f" 2>&1 | grep -v NOTICE || true
 done
-$P -v conexao="host=$D port=$PORTA dbname=postgres user=postgres" -f "$R/testes/100_faturamento_043.sql" 2>&1 | grep -v "^SET$"
+$P -f "$R/testes/99_ledgra_link_043.sql" 2>&1 | grep -v "^SET$"
+# 044: painel de certificados (cofre do HUB, só dados públicos; o Ledgra Link é buscado pela Função Edge)
+for f in testes/99_base_044.sql migrations/044_painel_certificados.sql; do
+  $P -v ON_ERROR_STOP=1 -f "$R/$f" 2>&1 | grep -v NOTICE || true
+done
+$P -f "$R/testes/99_painel_certificados_044.sql" 2>&1 | grep -v "^SET$"
+# 045: faturamento dos contratos a receber (fatura, fila de envio, Portal) e correções BD-01/BD-02 da reauditoria
+for f in testes/99_base_045.sql migrations/045_contratos_faturamento.sql; do
+  $P -v ON_ERROR_STOP=1 -f "$R/$f" 2>&1 | grep -v NOTICE || true
+done
+$P -v conexao="host=$D port=$PORTA dbname=postgres user=postgres" -f "$R/testes/100_faturamento_045.sql" 2>&1 | grep -v "^SET$"

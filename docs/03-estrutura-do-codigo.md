@@ -68,7 +68,7 @@ web/src/
 │   │                           periodos, tendencia, parecer, repositorio, componentes/ (painel, gráficos, índices…)
 │   ├── comercial/              CRM e contrato em PDF
 │   ├── atendimento/            chat e componentes/ChatMensagens
-│   └── vencimentos/            tipos, regras (prazo, contagens, situação), componentes/JanelasVencimento
+│   └── vencimentos/            tipos, regras (prazo, contagens, situação), certificados (painel dos dois cofres), componentes/JanelasVencimento
 └── lib/                        INFRAESTRUTURA sem regra de negócio
     ├── supabase.ts, database.types.ts, exigir.ts, lerTudo.ts, useConsulta.ts
     ├── erros.ts                traduzirErro (só P0001 e erro do próprio site passam crus), ErroApp, MENSAGEM_GENERICA

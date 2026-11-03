@@ -74,7 +74,13 @@ export const NAV: Record<Modulo, { titulo: string; links: LinkModulo[]; grupos?:
       { href: "/atendimento/portal", nome: "Acessos do portal", minimo: "gerir" },
     ],
   },
-  vencimentos: { titulo: "Vencimentos", links: [{ href: "/vencimentos", nome: "Vencimentos" }] },
+  vencimentos: {
+    titulo: "Vencimentos",
+    links: [
+      { href: "/vencimentos", nome: "Vencimentos" },
+      { href: "/vencimentos/certificados", nome: "Certificados digitais" },
+    ],
+  },
   // Gestão do cliente (modelo Conta Azul/Omie): cada módulo é um item do menu lateral, vendável e liberável por cliente.
   // Entradas (/entradas), Saídas (/saidas) e Estoque (/estoque) entram aqui pelas frentes que os constroem.
   financeiro: {

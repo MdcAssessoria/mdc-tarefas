@@ -265,6 +265,8 @@ async function abrirCaminho(pagina, onde, titulo, esperado, foto, nome, pdf = fa
  * foto("sufixo") salva uma captura do momento quando a verificação roda com FOTOS.
  */
 const INTERACOES = {
+  // Ledgra Link: a mensalidade com boleto/Pix emitido abre a janela com o Pix e a linha digitável
+  "/licencas/cobrancas": (p) => abrirEFecharModal(p, "Ver boleto/Pix", "Boleto/Pix da mensalidade"),
   "/vencimentos": (p) => abrirEFecharModal(p, "Novo vencimento", "Novo vencimento"),
   "/financeiro/bancos": (p) => abrirEFecharModal(p, "Nova conta", "Nova conta bancária"),
   // conta a pagar com "+ Nova categoria": a janela da categoria abre por cima e fecha voltando para a conta
