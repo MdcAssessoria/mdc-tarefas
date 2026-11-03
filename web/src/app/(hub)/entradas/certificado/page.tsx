@@ -18,6 +18,7 @@ import { formatarDocumento } from "@/lib/documento";
 import { lerCertificado, lerControle, lerParametros } from "@/dominios/notas/leituras";
 import { enviarCertificado, removerCertificado, salvarParametros } from "@/dominios/notas/repositorio";
 import { quandoProximaBusca } from "@/dominios/notas/regras";
+import { causaDoErro, contar, explicarErroBusca } from "@/dominios/notas/painel";
 import type { ParametrosFiscais } from "@/dominios/notas/tipos";
 
 const PADRAO: Omit<ParametrosFiscais, "cliente_id"> = {
@@ -223,11 +224,21 @@ export default function PaginaCertificadoEmpresa() {
               <ul className="space-y-1 text-sm">
                 {(d?.controle ?? []).map((c) => (
                   <li key={c.fonte}>
-                    <span className="font-medium">{c.fonte === "nfe" ? "NF-e (SEFAZ)" : "NFS-e Nacional"}:</span> {c.documentos_recebidos}{" "}
-                    documento(s) recebido(s)
+                    <span className="font-medium">{c.fonte === "nfe" ? "NF-e (SEFAZ)" : "NFS-e Nacional"}:</span> {contar(c.documentos_recebidos, "documento recebido", "documentos recebidos")}
                     {c.ultima_consulta_em ? ` · última consulta ${fmtDataLocal(c.ultima_consulta_em)}` : " · ainda não consultou"} · próxima{" "}
                     {quandoProximaBusca(c.bloqueado_ate ?? c.proxima_consulta_em, new Date(agora))}
-                    {c.ultimo_erro && <span className="block text-xs text-red-700">Último aviso: {c.ultimo_erro}</span>}
+                    {c.ultimo_erro && (
+                      <div className="text-xs text-red-700">
+                        Último aviso: {explicarErroBusca(c.ultimo_erro, c.fonte)}{" "}
+                        {causaDoErro(c.ultimo_erro) === "certificado"
+                          ? "Confira se o certificado é ICP-Brasil e está dentro da validade."
+                          : "O HUB tenta de novo sozinho."}
+                        <details className="mt-0.5">
+                          <summary className="cursor-pointer select-none underline">Ver detalhes</summary>
+                          <span className="block break-all font-mono opacity-80">{c.ultimo_erro}</span>
+                        </details>
+                      </div>
+                    )}
                   </li>
                 ))}
               </ul>

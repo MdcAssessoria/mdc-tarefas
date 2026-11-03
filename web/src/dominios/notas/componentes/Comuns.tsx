@@ -4,6 +4,7 @@
 
 import { useState } from "react";
 import { brl } from "@/lib/formato/moeda";
+import { Icone } from "@/components/ui/Icone";
 import { traduzirErro } from "@/lib/erros";
 import { formatarDocumento } from "@/lib/documento";
 import { enderecoDoXml } from "../leituras";
@@ -45,7 +46,7 @@ export function ChipSituacao({ id, dias }: { id: SituacaoPainel; dias?: number |
   return (
     <span className={`chip whitespace-nowrap ${s.tom}`} title={s.dica}>
       {s.nome}
-      {(id === "aguardando" || id === "prazo_vencendo") && dias != null ? ` · ${dias} dia(s)` : ""}
+      {(id === "aguardando" || id === "prazo_vencendo") && dias != null ? ` · ${dias} ${dias === 1 ? "dia" : "dias"}` : ""}
     </span>
   );
 }
@@ -100,7 +101,7 @@ export function BotaoXml({
   if (!caminho) return null;
   return (
     <button
-      className={compacto ? "block w-full px-3 py-1.5 text-left hover:bg-neutral-50" : "btn"}
+      className={compacto ? "flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left hover:bg-[var(--fundo)]" : "btn"}
       disabled={ocupado}
       onClick={async () => {
         setOcupado(true);
@@ -113,6 +114,7 @@ export function BotaoXml({
         }
       }}
     >
+      <Icone nome="arquivo" className={compacto ? "h-4 w-4 text-[var(--texto-suave)]" : "h-4 w-4"} />
       {ocupado ? "Preparando…" : "Baixar XML"}
     </button>
   );

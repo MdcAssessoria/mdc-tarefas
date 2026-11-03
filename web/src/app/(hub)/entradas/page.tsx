@@ -1,7 +1,8 @@
 // Entradas › Notas recebidas: painel dos XML que chegaram (busca automática na SEFAZ e na NFS-e Nacional, ou XML
 // enviado), com a situação em linguagem simples (Aguardando sua resposta, Prazo vencendo, Confirmada, Recusada…),
-// resposta à SEFAZ em lote, itens, histórico com protocolos, "Ver a nota" (espelho no layout DANFE/DANFSe, com PDF),
-// XML para baixar, PDF e Excel do que está na tela.
+// resposta à SEFAZ em lote, itens, histórico com protocolos, "Ver a nota" e "Baixar PDF" à vista em cada linha (espelho
+// no layout DANFE/DANFSe), XML para baixar, PDF e Excel do que está na tela. O aviso da busca automática sai em
+// linguagem simples (dominios/notas/painel.ts), com o texto técnico recolhido em "Ver detalhes".
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
@@ -22,6 +23,8 @@ import { FiltroPeriodo } from "@/components/ui/FiltroPeriodo";
 import { CartaoFiltros, MaisFiltros } from "@/components/ui/CartaoFiltros";
 import type { FiltroAtivo } from "@/components/ui/CartaoFiltros";
 import { Indicador } from "@/components/ui/Indicador";
+import { Icone } from "@/components/ui/Icone";
+import { QuadroTabela } from "@/components/ui/QuadroTabela";
 import { intervaloDoPeriodo } from "@/dominios/financeiro/regras";
 import type { Periodo } from "@/dominios/financeiro/regras";
 import { nomeArquivo } from "@/lib/arquivos/exportarLista";
@@ -45,6 +48,8 @@ import { JanelaManifestar } from "@/dominios/notas/componentes/JanelaManifestar"
 import { DetalheNota } from "@/dominios/notas/componentes/DetalheNota";
 import { EspelhoNota } from "@/dominios/notas/componentes/EspelhoNota";
 import { EnviarXml } from "@/dominios/notas/componentes/EnviarXml";
+import { BotoesVerNota } from "@/dominios/notas/componentes/BotoesVerNota";
+import { avisoDaBusca, contar, resumoNotasRecebidas } from "@/dominios/notas/painel";
 
 type FiltroSit = "todas" | SituacaoPainel | "a_lancar";
 const FILTROS: { id: FiltroSit; nome: string }[] = [
@@ -59,6 +64,9 @@ const FILTROS: { id: FiltroSit; nome: string }[] = [
   { id: "recebida", nome: "Notas de serviço" },
 ];
 const MOSTRAR = 500;
+// células um pouco mais justas (8 px dos lados) para a coluna de ações caber a 1280 px sem rolar de lado
+const LINHA = "[&>td]:px-2 [&>th]:px-2";
+const ITEM_MENU = "flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left hover:bg-[var(--fundo)]";
 
 type Janela =
   | { tipo: "manifestar"; notas: Nota[]; inicial?: CodigoManifestacao }
@@ -152,14 +160,17 @@ export default function PaginaNotasRecebidas() {
   const notasMarcadas = (d?.notas ?? []).filter((n) => marcadas.has(n.id));
   const nfe = d?.controle.find((c) => c.fonte === "nfe");
   const vencido = d?.certificado && d.certificado.valido_ate < new Date().toISOString();
+  const avisoBusca = useMemo(() => avisoDaBusca(d?.controle ?? []), [d?.controle]);
 
   const resumo = !cliente
     ? ""
-    : aguardando.length
-      ? `${aguardando.length} nota(s) aguardam sua resposta (${brl(soma(aguardando))})${vencendo.length ? `, ${vencendo.length} com prazo vencendo` : ""}. ${aLancar.length} pronta(s) para lançar.`
-      : aLancar.length
-        ? `Nenhuma nota esperando resposta. ${aLancar.length} pronta(s) para lançar (${brl(soma(aLancar))}).`
-        : "Tudo em dia neste período.";
+    : resumoNotasRecebidas({
+        aguardando: aguardando.length,
+        valorAguardando: brl(soma(aguardando)),
+        vencendo: vencendo.length,
+        aLancar: aLancar.length,
+        valorALancar: brl(soma(aLancar)),
+      });
 
   function limparFiltros() {
     setFornecedor("");
@@ -349,11 +360,43 @@ export default function PaginaNotasRecebidas() {
               .
             </p>
           ) : (
-            <p className="text-xs text-neutral-600">
-              Busca automática ligada. {nfe?.ultima_consulta_em ? `Última consulta à SEFAZ: ${fmtDataLocal(nfe.ultima_consulta_em)}. ` : ""}
-              Próxima: {quandoProximaBusca(nfe?.bloqueado_ate ?? nfe?.proxima_consulta_em ?? null, new Date())}.
-              {nfe?.ultimo_erro && <span className="text-red-700"> Último aviso: {nfe.ultimo_erro}</span>}
-            </p>
+            <>
+              <p className="text-xs text-neutral-600">
+                Busca automática ligada.{" "}
+                {nfe?.ultima_consulta_em ? `Última consulta à SEFAZ: ${fmtDataLocal(nfe.ultima_consulta_em)}. ` : ""}
+                Próxima: {quandoProximaBusca(nfe?.bloqueado_ate ?? nfe?.proxima_consulta_em ?? null, new Date())}.
+              </p>
+              {avisoBusca && (
+                <div
+                  role="status"
+                  className={`rounded-md p-3 text-sm ${avisoBusca.agir ? "bg-red-50 text-red-800" : "bg-amber-50 text-amber-900"}`}
+                >
+                  <p className="flex items-start gap-2">
+                    <Icone nome="alerta" className="mt-0.5 h-4 w-4 shrink-0" />
+                    <span>
+                      {avisoBusca.texto}
+                      {avisoBusca.agir && (
+                        <>
+                          {" "}
+                          <Link className="underline" href="/entradas/certificado">
+                            Abrir Certificado digital
+                          </Link>
+                        </>
+                      )}
+                    </span>
+                  </p>
+                  <details className="mt-1 pl-6 text-xs">
+                    <summary className="cursor-pointer select-none underline">Ver detalhes</summary>
+                    <p className="mt-1 opacity-80">Texto técnico para a equipe MDC, caso o aviso continue:</p>
+                    <ul className="mt-1 space-y-1 break-all font-mono opacity-80">
+                      {avisoBusca.detalhes.map((t) => (
+                        <li key={t}>{t}</li>
+                      ))}
+                    </ul>
+                  </details>
+                </div>
+              )}
+            </>
           )}
 
           <p className="text-sm text-neutral-700">{resumo}</p>
@@ -387,7 +430,7 @@ export default function PaginaNotasRecebidas() {
           {podeOperar && notasMarcadas.length > 0 && (
             <div className="cartao flex flex-wrap items-center gap-2 p-3">
               <span className="mr-auto text-sm">
-                {notasMarcadas.length} nota(s) marcada(s) · {brl(notasMarcadas.reduce((a, n) => a + Number(n.valor_total), 0))}
+                {contar(notasMarcadas.length, "nota marcada", "notas marcadas")} · {brl(notasMarcadas.reduce((a, n) => a + Number(n.valor_total), 0))}
               </span>
               <button
                 className="btn-primario"
@@ -422,125 +465,142 @@ export default function PaginaNotasRecebidas() {
                   : "Nenhuma nota ainda. Cadastre o certificado digital ou envie os XML."}
             </EstadoVazio>
           ) : (
-            <div className="cartao overflow-x-auto">
-              <table className="tabela">
-                <thead>
-                  <tr>
-                    {podeOperar && (
-                      <th className="w-8">
-                        <input
-                          type="checkbox"
-                          aria-label="Marcar todas que aceitam resposta"
-                          checked={selecionaveis.length > 0 && selecionaveis.every(({ n }) => marcadas.has(n.id))}
-                          onChange={(e) => setMarcadas(e.target.checked ? new Set(selecionaveis.map(({ n }) => n.id)) : new Set())}
-                        />
-                      </th>
-                    )}
-                    <th>Emissão</th>
-                    <th>Nota</th>
-                    <th>Fornecedor</th>
-                    <th className="text-right">Valor</th>
-                    <th>Situação</th>
-                    <th>Lançamento</th>
-                    <th />
-                  </tr>
-                </thead>
-                <tbody>
-                  {lista.slice(0, MOSTRAR).map(({ n, s, pronta }) => {
-                    const pode =
-                      temManifestacao(n) && manifestacoesPermitidas({ ...n, eventos: eventosAceitos.get(n.id) }, hoje).length > 0;
-                    return (
-                      <tr key={n.id} className={s.id === "cancelada" ? "opacity-60" : ""}>
-                        {podeOperar && (
-                          <td>
-                            {pode && (
-                              <input
-                                type="checkbox"
-                                aria-label={`Marcar nota ${n.numero}`}
-                                checked={marcadas.has(n.id)}
-                                onChange={(e) => marcar(n.id, e.target.checked)}
-                              />
-                            )}
-                          </td>
-                        )}
-                        <td className="whitespace-nowrap tabular-nums">{fmtDataLocal(n.emissao)}</td>
-                        <td className="whitespace-nowrap">
+            <QuadroTabela
+              rotulo="Notas recebidas"
+              rodape={lista.length > MOSTRAR ? `Mostrando ${MOSTRAR} de ${lista.length}. Os totais e a exportação consideram todas.` : undefined}
+            >
+              <thead>
+                <tr className={LINHA}>
+                  {podeOperar && (
+                    <th className="w-8">
+                      <input
+                        type="checkbox"
+                        aria-label="Marcar todas que aceitam resposta"
+                        checked={selecionaveis.length > 0 && selecionaveis.every(({ n }) => marcadas.has(n.id))}
+                        onChange={(e) => setMarcadas(e.target.checked ? new Set(selecionaveis.map(({ n }) => n.id)) : new Set())}
+                      />
+                    </th>
+                  )}
+                  <th>Emissão</th>
+                  <th>Nota</th>
+                  <th>Fornecedor</th>
+                  <th className="text-right">Valor</th>
+                  <th>Situação</th>
+                  <th>Lançamento</th>
+                  <th className="text-right">
+                    <span className="sr-only">Ações</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {lista.slice(0, MOSTRAR).map(({ n, s, pronta }) => {
+                  const pode =
+                    temManifestacao(n) && manifestacoesPermitidas({ ...n, eventos: eventosAceitos.get(n.id) }, hoje).length > 0;
+                  return (
+                    <tr key={n.id} className={`${LINHA} ${s.id === "cancelada" ? "opacity-60" : ""}`}>
+                      {podeOperar && (
+                        <td data-rotulo={pode ? "Marcar" : undefined}>
+                          {pode && (
+                            <input
+                              type="checkbox"
+                              aria-label={`Marcar nota ${n.numero}`}
+                              checked={marcadas.has(n.id)}
+                              onChange={(e) => marcar(n.id, e.target.checked)}
+                            />
+                          )}
+                        </td>
+                      )}
+                      <td data-rotulo="Emissão" className="whitespace-nowrap tabular-nums">
+                        {fmtDataLocal(n.emissao)}
+                      </td>
+                      <td data-rotulo="Nota" className="whitespace-nowrap">
+                        <span>
                           {nomeModelo(n.modelo)} {n.numero}
                           {n.conteudo === "resumo" && (
-                            <span
-                              className="block text-xs text-neutral-500"
-                              title="O XML completo chega depois da ciência ou da confirmação"
-                            >
+                            <span className="block text-xs text-neutral-500" title="O XML completo chega depois da ciência ou da confirmação">
                               só resumo
                             </span>
                           )}
-                        </td>
-                        <td className="min-w-48">{fornecedorDa(n)}</td>
-                        <td className="whitespace-nowrap text-right tabular-nums">{brl(Number(n.valor_total))}</td>
-                        <td>
-                          <ChipSituacao id={s.id} dias={s.diasRestantes} />
-                        </td>
-                        <td className="whitespace-nowrap text-sm">
-                          {n.processada ? (
-                            <span className="chip bg-emerald-50 text-emerald-800">Lançada</span>
-                          ) : pronta && podeOperar ? (
-                            <Link className="btn !min-h-8" href={`/entradas/lancar?nota=${n.id}`}>
-                              Lançar
-                            </Link>
-                          ) : (
-                            <span className="text-neutral-400">—</span>
+                        </span>
+                      </td>
+                      <td className="celula-titulo min-w-36">{fornecedorDa(n)}</td>
+                      <td data-rotulo="Valor" className="whitespace-nowrap text-right tabular-nums">
+                        {brl(Number(n.valor_total))}
+                      </td>
+                      <td data-rotulo="Situação">
+                        <span>
+                          <ChipSituacao id={s.id} />
+                          {(s.id === "aguardando" || s.id === "prazo_vencendo") && s.diasRestantes != null && (
+                            <span className="block pl-2.5 pt-0.5 text-xs text-[var(--texto-suave)]">
+                              {s.diasRestantes === 1 ? "falta 1 dia" : `faltam ${s.diasRestantes} dias`} para responder
+                            </span>
                           )}
-                        </td>
-                        <td className="whitespace-nowrap text-right">
-                          <div className="flex justify-end gap-1">
-                            {podeOperar && pode && (
-                              <button className="btn !min-h-8" onClick={() => setJanela({ tipo: "manifestar", notas: [n] })}>
-                                Responder
-                              </button>
-                            )}
-                            <details className="relative">
-                              <summary className="btn !min-h-8 list-none" aria-label="Mais ações">
-                                ⋯
-                              </summary>
-                              <div className="absolute right-0 z-10 mt-1 w-48 rounded-md border border-[var(--borda)] bg-white py-1 text-left text-sm shadow-lg">
-                                {n.xml_caminho && (
-                                  <button
-                                    className="block w-full px-3 py-1.5 text-left hover:bg-neutral-50"
-                                    title="Mostra a nota no layout do DANFE / DANFSe e baixa em PDF"
-                                    onClick={(e) => menu(e, { tipo: "espelho", nota: n })}
-                                  >
-                                    Ver a nota
-                                  </button>
-                                )}
+                        </span>
+                      </td>
+                      <td data-rotulo="Lançamento" className="whitespace-nowrap text-sm">
+                        {n.processada ? (
+                          <span className="chip bg-emerald-50 text-emerald-800">Lançada</span>
+                        ) : pronta && podeOperar ? (
+                          <Link className="btn !min-h-8 !px-3" href={`/entradas/lancar?nota=${n.id}`}>
+                            Lançar
+                          </Link>
+                        ) : (
+                          <span className="text-neutral-400">—</span>
+                        )}
+                      </td>
+                      <td className="celula-acoes whitespace-nowrap text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          {podeOperar && pode && (
+                            <button
+                              className="btn !min-h-10 !gap-1.5 !px-2.5"
+                              title="Responder à SEFAZ: confirmar, desconhecer ou recusar a nota"
+                              onClick={() => setJanela({ tipo: "manifestar", notas: [n] })}
+                            >
+                              <Icone nome="chat" className="h-4 w-4" />
+                              Responder
+                            </button>
+                          )}
+                          <BotoesVerNota nota={n} avisar={mostrar} aoVer={() => setJanela({ tipo: "espelho", nota: n })} />
+                          <details className="relative">
+                            <summary
+                              className="btn !min-h-10 !w-10 list-none !p-0 [&::-webkit-details-marker]:hidden"
+                              aria-label="Mais ações"
+                              title="Mais ações"
+                            >
+                              ⋯
+                            </summary>
+                            <div className="absolute right-0 z-10 mt-1 w-56 rounded-xl border border-[var(--borda)] bg-white p-1 text-left text-sm shadow-lg">
+                              {n.xml_caminho && (
                                 <button
-                                  className="block w-full px-3 py-1.5 text-left hover:bg-neutral-50"
-                                  onClick={(e) => menu(e, { tipo: "detalhe", nota: n })}
+                                  className={ITEM_MENU}
+                                  title="Mostra a nota no layout do DANFE / DANFSe e baixa em PDF"
+                                  onClick={(e) => menu(e, { tipo: "espelho", nota: n })}
                                 >
-                                  Ver itens e histórico
+                                  <Icone nome="olho" className="h-4 w-4 text-[var(--texto-suave)]" />
+                                  Ver a nota
                                 </button>
-                                <BotaoXml compacto caminho={n.xml_caminho} avisar={mostrar} />
-                              </div>
-                            </details>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-                <tfoot>
-                  <tr className="font-medium">
-                    <td colSpan={podeOperar ? 4 : 3}>Total ({lista.length})</td>
-                    <td className="text-right tabular-nums">{brl(totalLista)}</td>
-                    <td colSpan={3} />
-                  </tr>
-                </tfoot>
-              </table>
-              {lista.length > MOSTRAR && (
-                <p className="p-3 text-xs text-neutral-500">
-                  Mostrando {MOSTRAR} de {lista.length}. Os totais e a exportação consideram todas.
-                </p>
-              )}
-            </div>
+                              )}
+                              <button className={ITEM_MENU} onClick={(e) => menu(e, { tipo: "detalhe", nota: n })}>
+                                <Icone nome="lista" className="h-4 w-4 text-[var(--texto-suave)]" />
+                                Ver itens e histórico
+                              </button>
+                              <BotaoXml compacto caminho={n.xml_caminho} avisar={mostrar} />
+                            </div>
+                          </details>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+              <tfoot>
+                <tr className={`${LINHA} font-medium`}>
+                  <td colSpan={podeOperar ? 4 : 3}>Total ({contar(lista.length, "nota", "notas")})</td>
+                  <td className="text-right tabular-nums">{brl(totalLista)}</td>
+                  <td colSpan={3} />
+                </tr>
+              </tfoot>
+            </QuadroTabela>
           )}
         </>
       )}

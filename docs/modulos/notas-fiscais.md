@@ -12,16 +12,21 @@
 
 | Endereço | Quem usa | O que faz |
 | --- | --- | --- |
-| `/entradas` | Financeiro (ver; responder, enviar XML e buscar com operar) | **Notas recebidas**: situação em linguagem simples, dias para o prazo, filtros (emissão em um clique, situação, + fornecedor e tipo de nota), busca; 3 indicadores que filtram (aguardando, prazo vencendo, prontas para lançar); marcar várias e responder em lote; "Responder" por nota; ver itens e histórico com protocolos; **Ver a nota** (espelho DANFE/DANFSe com PDF, seção 1.1); baixar XML; "Buscar agora" (respeita a regra da SEFAZ); "Enviar XML"; PDF e Excel |
+| `/entradas` | Financeiro (ver; responder, enviar XML e buscar com operar) | **Notas recebidas**: situação em linguagem simples, dias para o prazo, filtros (emissão em um clique, situação, + fornecedor e tipo de nota), busca; 3 indicadores que filtram (aguardando, prazo vencendo, prontas para lançar); marcar várias e responder em lote; "Responder" por nota; ver itens e histórico com protocolos; **Ver a nota** e **Baixar PDF** à vista em cada linha (ícones olho e baixar; espelho DANFE/DANFSe, seção 1.1); baixar XML; aviso da busca automática em linguagem simples com "Ver detalhes" (seção 1.2); no celular cada nota vira cartão (`QuadroTabela`); "Buscar agora" (respeita a regra da SEFAZ); "Enviar XML"; PDF e Excel |
 | `/entradas/lancar` | Financeiro (ver; lançar com operar; regras com gerir) | **Lançar nota**: prontas para lançar → 1) tipo de entrada (com o efeito de cada um) 2) fornecedor (acha pelo CNPJ ou cadastra) 3) itens ligados ao estoque (de-para lembrado, fator de unidade, cadastrar item novo) 4) parcelas da fatura (lidas das duplicatas; NFS-e sugere valor líquido das retenções), categoria, centro, conta; aba **Lançadas** com "Desfazer lançamento" (motivo); aba **Regras dos tipos de entrada** da empresa; PDF e Excel. `?nota=<id>` abre direto |
 | `/entradas/carga-tributaria` | Financeiro (ver) | **Carga tributária das entradas**: por fornecedor, NCM, CFOP ou mês; ICMS(+ST), IPI, PIS/COFINS, ISS, IBS/CBS, carga % e crédito estimado; frase de resumo, 3 indicadores, gráfico que filtra a tabela; "Como o crédito é estimado" com a lei e a vigência de cada regra; PDF e Excel |
-| `/entradas/certificado` | Financeiro (gerir envia/remove; operar muda parâmetros) | **Certificado digital** da empresa: situação, CNPJ, emissor (ICP-Brasil?), vencimento; envio com `CampoArquivo` + senha; busca automática (por fonte: documentos recebidos, última e próxima consulta, último aviso) e parâmetros (busca ligada, ciência automática, contribuinte de ICMS/IPI, ambiente) |
+| `/entradas/certificado` | Financeiro (gerir envia/remove; operar muda parâmetros) | **Certificado digital** da empresa: situação, CNPJ, emissor (ICP-Brasil?), vencimento; envio com `CampoArquivo` + senha; busca automática (por fonte: documentos recebidos, última e próxima consulta, último aviso em linguagem simples com o texto técnico em "Ver detalhes") e parâmetros (busca ligada, ciência automática, contribuinte de ICMS/IPI, ambiente) |
 
 ### 1.1 Ver a nota (espelho DANFE / DANFSe) — 02/11/2026
 
-No menu "⋯" de cada nota (e no botão **Ver a nota** da janela "Ver itens e histórico") abre uma janela grande com o
+Na coluna de ações de cada nota, à vista (desde 03/11/2026, pedido do Edvaldo), há dois botões só com ícone, com nome
+acessível e dica: **Ver a nota** (olho) e **Baixar PDF** (seta para baixo), que gera e baixa o PDF do espelho direto, sem
+abrir janela (`componentes/BotoesVerNota.tsx`; área de toque de 40 px; sem XML guardado ficam desligados com a dica "O XML
+desta nota ainda não está no HUB"). "Ver a nota" continua também no menu "⋯" e na janela "Ver itens e histórico". As
+células da lista usam 8 px de folga lateral para a coluna de ações caber a 1280 px sem rolar de lado; os dias para
+responder saem abaixo da etiqueta de situação ("faltam 8 dias para responder"). O botão abre uma janela grande com o
 **espelho** da nota montado do XML guardado no Storage (`leituras.lerXmlGuardado`, mesma permissão do bucket `fiscal`),
-com **Baixar PDF** (A4 retrato, `NFe-<número>-<emitente>.pdf`), **Imprimir** (abre a impressão do mesmo PDF) e Baixar XML.
+montado por `leituras.lerEspelhoDaNota` (também usado pelo "Baixar PDF" da linha), com **Baixar PDF** (A4 retrato, `NFe-<número>-<emitente>.pdf`), **Imprimir** (abre a impressão do mesmo PDF) e Baixar XML.
 Toda tela e toda folha levam a faixa "Espelho gerado pelo HUB-MDC a partir do XML — não substitui o documento oficial"
 (o DANFE/DANFSe oficial é o do emitente).
 
@@ -43,7 +48,23 @@ derrubar a leitura (S-07). Datas aparecem como escritas no XML (sem troca de fus
 sozinha, repetindo o cabeçalho da nota e o título das colunas; no celular os quadros ficam em duas colunas e a tabela
 de itens rola na horizontal dentro do quadro. Testes: `espelho.test.ts`, `espelhoPdf.test.ts` (1 folha para a nota
 pequena, várias para 120 itens) e `lib/codigoBarras128.test.ts` (exemplo 123456 → controle 44 e leitura de volta da
-chave); `npm run telas` abre "Ver a nota" de uma NF-e e de uma NFS-e em `/entradas` e baixa o PDF.
+chave); `npm run telas` abre "Ver a nota" de uma NF-e (pelo ícone) e de uma NFS-e (pelo "⋯") em `/entradas`, baixa o
+PDF pela janela e pelo ícone da linha (sem abrir janela), confere que os botões têm 40×40 px, dica e não saem da borda
+da lista (sem rolagem lateral a 1280 px).
+
+### 1.2 Aviso da busca automática em linguagem simples — 03/11/2026
+
+A Função Edge `fiscal-captura` grava em `fis_dfe_controle.ultimo_erro` o erro técnico como veio (ex.: "Não foi possível
+falar com a SEFAZ (error sending request from 10.32.144.135:60946 for https://www1.nfe.fazenda.gov.br/… Connection reset by
+peer (os error 104))…"). O site não mostra isso ao leigo: `dominios/notas/painel.ts` (com `painel.test.ts`) classifica a
+causa (`causaDoErro`: certificado, sem resposta, demora, fora do ar, pausa pedida, nota ilegível, outro) e monta o aviso
+(`avisoDaBusca`) olhando as duas fontes, por exemplo: "A SEFAZ Nacional não respondeu na última tentativa. As NFS-e
+continuam chegando normalmente; as NF-e de produto estão temporariamente indisponíveis — o HUB tenta de novo sozinho."
+Sem IP, URL ou código; o texto original fica recolhido em **Ver detalhes** (para a equipe MDC). Problema de certificado
+pinta o aviso de vermelho e leva a "Certificado digital"; erro desconhecido acrescenta "se continuar, avise a equipe MDC".
+As Funções Edge não mudaram. O mesmo módulo dá o plural certo no resumo ("50 prontas para lançar", "1 nota aguarda sua
+resposta"), no total e nas marcadas (`contar`, `resumoNotasRecebidas`), sem "(s)". O exemplo do `npm run telas` traz
+esse erro real na fonte NF-e e o verificador falha se o IP/URL aparecer sem clicar em "Ver detalhes" ou se sobrar "(s)".
 
 Módulo próprio no menu (`navegacao.ts`, módulo `entradas`). Enquanto as permissões por módulo não forem separadas,
 Entradas usa a ferramenta **Financeiro** (`APP_DO_MODULO`) e o banco confere com `app.fin_pode`. A empresa é sempre a

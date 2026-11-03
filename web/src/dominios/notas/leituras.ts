@@ -4,6 +4,7 @@ import { lerTudo } from "@/lib/lerTudo";
 import { exigir } from "@/lib/exigir";
 import { inicioDoDiaUtc, somarDias } from "@/lib/datas";
 import type { RegraCredito } from "./creditos";
+import type { Espelho } from "./espelho";
 import type {
   CertificadoEmpresa,
   ControleCaptura,
@@ -101,6 +102,15 @@ export async function lerXmlGuardado(caminho: string): Promise<string> {
   const { data, error } = await supabase().storage.from("fiscal").download(caminho);
   if (error || !data) throw new Error("Não foi possível abrir o XML da nota. Tente de novo.");
   return data.text();
+}
+
+/** Espelho da nota (DANFE/DANFSe) montado do XML guardado; usado na janela "Ver a nota" e no "Baixar PDF" da lista. */
+export async function lerEspelhoDaNota(
+  nota: Pick<Nota, "xml_caminho" | "chave" | "numero" | "emitente_doc">,
+): Promise<Espelho> {
+  if (!nota.xml_caminho) throw new Error("Esta nota não tem o XML guardado no HUB.");
+  const [{ montarEspelho }, xml] = await Promise.all([import("./espelho"), lerXmlGuardado(nota.xml_caminho)]);
+  return montarEspelho(xml, { chave: nota.chave, numero: nota.numero, prestador: nota.emitente_doc });
 }
 
 /** Endereço temporário (5 minutos) para baixar o XML guardado no Storage. */

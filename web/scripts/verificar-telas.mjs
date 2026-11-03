@@ -350,13 +350,52 @@ const INTERACOES = {
       const xml = Object.entries(XML_EXEMPLO).find(([k]) => caminho.endsWith(k))?.[1];
       return r.fulfill({ status: xml ? 200 : 404, headers: { ...CORS, "content-type": "application/xml" }, body: xml ?? "{}" });
     });
-    for (const [nota, sigla, nome] of [
-      ["NF-e 1188", "DANFE", "nfe"],
-      ["NFS-e 52", "DANFSe", "nfse"],
+    // aviso da busca automática em linguagem simples; o texto técnico (IP, URL) só aparece em "Ver detalhes"
+    await p.getByText("A SEFAZ Nacional não respondeu na última tentativa.", { exact: false }).waitFor({ timeout: 3000 });
+    if (await p.evaluate(() => /10\.32\.144|os error|fazenda\.gov\.br/.test(document.body.innerText)))
+      throw new Error("o aviso da busca mostra texto técnico (IP/URL) sem a pessoa pedir");
+    if (await p.evaluate(() => /\(s\)/.test(document.querySelector("main")?.innerText ?? document.body.innerText)))
+      throw new Error('a tela de notas ainda mostra plural com "(s)"');
+    await p.getByText("Ver detalhes", { exact: true }).click();
+    await p.getByText("os error 104", { exact: false }).waitFor({ timeout: 3000 });
+    await foto("aviso-detalhes");
+    await p.getByText("Ver detalhes", { exact: true }).click();
+    // ações de cada nota à vista: "Ver a nota" e "Baixar PDF" só com ícone, área de toque de 40 px, sem sair do quadro
+    const medidas = await p.evaluate(() => {
+      const quadro = document.querySelector(".quadro-tabela");
+      const q = quadro.getBoundingClientRect();
+      return {
+        rolaDeLado: quadro.scrollWidth - quadro.clientWidth,
+        botoes: [...quadro.querySelectorAll('button[aria-label="Ver a nota"], button[aria-label="Baixar PDF"], summary[aria-label="Mais ações"]')].map((b) => {
+          const r = b.getBoundingClientRect();
+          return { nome: b.getAttribute("aria-label"), titulo: b.getAttribute("title"), l: r.width, a: r.height, fora: Math.max(r.right - q.right, q.left - r.left) };
+        }),
+      };
+    });
+    if (!medidas.botoes.some((b) => b.nome === "Ver a nota") || !medidas.botoes.some((b) => b.nome === "Baixar PDF"))
+      throw new Error('faltam os botões "Ver a nota" / "Baixar PDF" na lista');
+    for (const b of medidas.botoes) {
+      if (b.l < 40 || b.a < 40) throw new Error(`o botão "${b.nome}" tem ${Math.round(b.l)}×${Math.round(b.a)} px (mínimo 40×40)`);
+      if (!b.titulo) throw new Error(`o botão "${b.nome}" está sem dica (title)`);
+      if (b.fora > 1) throw new Error(`o botão "${b.nome}" sai ${Math.round(b.fora)} px da borda da lista`);
+    }
+    if (medidas.rolaDeLado > 1) throw new Error(`a lista de notas rola ${medidas.rolaDeLado} px na horizontal (coluna de ações cortada)`);
+    // "Baixar PDF" da linha baixa direto, sem abrir janela
+    {
+      const linha = p.getByRole("row").filter({ hasText: "NF-e 1188" });
+      const [baixado] = await Promise.all([p.waitForEvent("download", { timeout: 10_000 }), linha.getByRole("button", { name: "Baixar PDF" }).click()]);
+      if (!/\.pdf$/.test(baixado.suggestedFilename())) throw new Error(`o PDF da linha saiu com nome estranho: ${baixado.suggestedFilename()}`);
+      if (await p.getByRole("dialog").count()) throw new Error('"Baixar PDF" da linha abriu uma janela');
+    }
+    for (const [nota, sigla, nome, pelo] of [
+      ["NF-e 1188", "DANFE", "nfe", "icone"],
+      ["NFS-e 52", "DANFSe", "nfse", "menu"],
     ]) {
       const linha = p.getByRole("row").filter({ hasText: nota });
-      await linha.getByLabel("Mais ações").click();
-      await linha.getByRole("button", { name: "Ver a nota", exact: true }).click();
+      if (pelo === "menu") {
+        await linha.getByLabel("Mais ações").click();
+        await linha.locator("details").getByRole("button", { name: "Ver a nota", exact: true }).click();
+      } else await linha.getByRole("button", { name: "Ver a nota", exact: true }).click();
       const janela = p.getByRole("dialog", { name: new RegExp(`^${nota}`) });
       await janela.waitFor({ timeout: 3000 });
       await janela.getByText(sigla, { exact: true }).waitFor({ timeout: 5000 });

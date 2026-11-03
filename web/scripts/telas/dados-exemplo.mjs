@@ -1239,7 +1239,11 @@ export const TABELAS = {
     bloqueado_ate: null,
     ultima_consulta_em: momento(-0.01),
     ultimo_cstat: fonte === "nfe" ? "137" : "NENHUM_DOCUMENTO_LOCALIZADO",
-    ultimo_erro: null,
+    // NF-e com o erro de conexão real visto em 03/11/2026: a tela traduz para o leigo e guarda o técnico em "Ver detalhes"
+    ultimo_erro:
+      fonte === "nfe"
+        ? "Não foi possível falar com a SEFAZ (error sending request from 10.32.144.135:60946 for https://www1.nfe.fazenda.gov.br/NFeDistribuicaoDFe/NFeDistribuicaoDFe.asmx (www1.nfe.fazenda.gov.br): client error (SendRequest): connection error: Connection reset by peer (os error 104)). Confira se o certificado é ICP-Brasil e válido."
+        : null,
     documentos_recebidos: fonte === "nfe" ? 120 : 8,
   })),
   fis_certificados: [

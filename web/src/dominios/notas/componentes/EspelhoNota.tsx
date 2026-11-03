@@ -11,8 +11,8 @@ import { useConsulta } from "@/lib/useConsulta";
 import { traduzirErro } from "@/lib/erros";
 import { baixarBytes } from "@/lib/arquivos/baixar";
 import { barras128C } from "@/lib/codigoBarras128";
-import { lerXmlGuardado } from "../leituras";
-import { FAIXA_ESPELHO, montarEspelho } from "../espelho";
+import { lerEspelhoDaNota } from "../leituras";
+import { FAIXA_ESPELHO } from "../espelho";
 import type { BlocoEspelho, CampoEspelho, Espelho } from "../espelho";
 import type { Nota } from "../tipos";
 import { BotaoXml, fornecedorDa, nomeModelo } from "./Comuns";
@@ -20,10 +20,10 @@ import { BotaoXml, fornecedorDa, nomeModelo } from "./Comuns";
 export function EspelhoNota({ nota, avisar, aoFechar }: { nota: Nota; avisar: (t: string, tom?: "erro") => void; aoFechar: () => void }) {
   const caminho = nota.xml_caminho;
   const consulta = useConsulta(
-    useCallback(async () => {
-      if (!caminho) throw new Error("Esta nota não tem o XML guardado no HUB.");
-      return montarEspelho(await lerXmlGuardado(caminho), { chave: nota.chave, numero: nota.numero, prestador: nota.emitente_doc });
-    }, [caminho, nota.chave, nota.numero, nota.emitente_doc]),
+    useCallback(
+      () => lerEspelhoDaNota({ xml_caminho: caminho, chave: nota.chave, numero: nota.numero, emitente_doc: nota.emitente_doc }),
+      [caminho, nota.chave, nota.numero, nota.emitente_doc],
+    ),
   );
   const e = consulta.dados;
   const [ocupado, setOcupado] = useState<"pdf" | "imprimir" | null>(null);
