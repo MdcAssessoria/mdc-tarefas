@@ -2,7 +2,7 @@
 // @ledgra/link-cliente v0.1.0 — ARQUIVO GERADO, NÃO EDITE AQUI.
 // Fonte: repositório ledgra-link (packages/cliente). Para atualizar,
 // rode "node scripts/empacotar-sdk.mjs" lá e copie este arquivo de novo.
-// Integridade: 556bd932dbeb8aba
+// Integridade: c7eac84a7ac1dfb1
 // MDC Assessoria Ltda · CNPJ 48.140.121/0001-65
 // =============================================================================
 /**
@@ -68,10 +68,10 @@ export interface EventoMdc<T = Record<string, unknown>> {
 export interface OpcoesCliente {
   url: string;                 // ex.: https://link.ledgra.com.br
   chave: string;               // llk_...
-  usuario?: string;            // e-mail padrão para X-MDC-Usuario (pode ser trocado por chamada)
-  timeoutMs?: number;
-  tentativas?: number;
-  fetch?: typeof fetch;
+  usuario?: string | undefined; // e-mail padrão para X-MDC-Usuario (pode ser trocado por chamada)
+  timeoutMs?: number | undefined;
+  tentativas?: number | undefined;
+  fetch?: typeof fetch | undefined;
 }
 
 export class ErroLedgraLink extends Error {
@@ -85,16 +85,16 @@ export class ErroLedgraLink extends Error {
 }
 
 type Metodo = 'GET' | 'POST' | 'PUT';
-interface Chamada { usuario?: string; idempotencia?: string }
+interface Chamada { usuario?: string | undefined; idempotencia?: string | undefined }
 
 // --------------------------------------------------------------- tipos de uso
 export type TipoCobranca = 'boleto' | 'boleto_hibrido' | 'pix_imediato' | 'pix_vencimento';
 export interface NovaCobranca {
   conta_id: string; ref_externa: string; tipo: TipoCobranca; valor: number;
-  vencimento?: string; dias_apos_vencimento?: number; multa_percentual?: number; juros_mensal_percentual?: number;
-  desconto?: { valor: number; ate: string }; mensagem?: string;
-  pagador?: { documento: string; nome: string; email?: string;
-    endereco?: { logradouro: string; numero?: string; bairro?: string; cidade: string; uf: string; cep: string } };
+  vencimento?: string | undefined; dias_apos_vencimento?: number | undefined; multa_percentual?: number | undefined; juros_mensal_percentual?: number | undefined;
+  desconto?: { valor: number; ate: string } | undefined; mensagem?: string | undefined;
+  pagador?: { documento: string; nome: string; email?: string | undefined;
+    endereco?: { logradouro: string; numero?: string | undefined; bairro?: string | undefined; cidade: string; uf: string; cep: string } | undefined } | undefined;
 }
 export interface Cobranca {
   id: string; status: string; tipo: TipoCobranca; valor: number; vencimento: string | null;
@@ -127,7 +127,7 @@ export class LedgraLink {
     const usuario = c.usuario ?? this.o.usuario;
     if (usuario) cab['x-mdc-usuario'] = usuario;
     if (c.idempotencia) cab['idempotency-key'] = c.idempotencia;
-    let body: BodyInit | undefined;
+    let body: BodyInit | null = null;
     if (corpo instanceof FormData) body = corpo;
     else if (corpo !== undefined) { cab['content-type'] = 'application/json'; body = JSON.stringify(corpo); }
 
@@ -164,28 +164,28 @@ export class LedgraLink {
 
   // -------------------------------------------------------------- cadastros
   readonly titulares = {
-    cadastrar: (t: { documento: string; razao_social: string; ref_externa?: string; email_contato?: string }) =>
+    cadastrar: (t: { documento: string; razao_social: string; ref_externa?: string | undefined; email_contato?: string | undefined }) =>
       this.req<{ id: string; novo: boolean; liberado: boolean; mensagem: string }>('POST', '/v1/titulares', t),
     listar: (documento?: string) =>
       this.req<{ titulares: Array<{ id: string; documento: string; razao_social: string; autoriza_cobranca: boolean; autoriza_extrato: boolean }> }>(
         'GET', '/v1/titulares' + (documento ? `?documento=${encodeURIComponent(documento)}` : '')),
     registrarAutorizacao: (titularId: string, a: {
       escopos: Array<'cobranca' | 'extrato' | 'pagamento' | 'pix'>; documento_termo: string; hash_termo: string;
-      assinado_por_nome: string; assinado_por_cpf: string; assinado_em: string; vigente_ate?: string;
-      base_legal?: 'execucao_contrato' | 'obrigacao_legal' | 'exercicio_direitos' | 'legitimo_interesse';
+      assinado_por_nome: string; assinado_por_cpf: string; assinado_em: string; vigente_ate?: string | undefined;
+      base_legal?: 'execucao_contrato' | 'obrigacao_legal' | 'exercicio_direitos' | 'legitimo_interesse' | undefined;
     }, c?: Chamada) => this.req<{ id: string }>('POST', `/v1/titulares/${titularId}/autorizacoes`, a, c),
     revogarAutorizacao: (autorizacaoId: string, motivo: string, c?: Chamada) =>
       this.req('POST', `/v1/autorizacoes/${autorizacaoId}/revogar`, { motivo }, c),
   };
 
   readonly contas = {
-    cadastrar: (conta: { titular_id: string; codigo_compe: string; agencia: string; conta: string; conta_dv?: string;
-      apelido: string; convenio?: string; carteira?: string; workspace_id?: string; chave_pix?: string;
-      ambiente?: 'sandbox' | 'homologacao' | 'producao'; conta_contabil?: string }) =>
+    cadastrar: (conta: { titular_id: string; codigo_compe: string; agencia: string; conta: string; conta_dv?: string | undefined;
+      apelido: string; convenio?: string | undefined; carteira?: string | undefined; workspace_id?: string | undefined; chave_pix?: string | undefined;
+      ambiente?: 'sandbox' | 'homologacao' | 'producao' | undefined; conta_contabil?: string | undefined }) =>
       this.req<{ id: string }>('POST', '/v1/contas', conta),
     listar: (titularId: string) => this.req<{ contas: unknown[] }>('GET', `/v1/titulares/${titularId}/contas`),
     cadastrarCredencial: (contaId: string, cred: { produto: 'pix' | 'cobranca' | 'extrato' | 'pagamentos'; client_id: string;
-      segredos: Record<string, string>; certificado_id?: string; escopos_oauth?: string[] }) =>
+      segredos: Record<string, string>; certificado_id?: string | undefined; escopos_oauth?: string[] | undefined }) =>
       this.req<{ id: string }>('POST', `/v1/contas/${contaId}/credenciais`, cred),
   };
 
