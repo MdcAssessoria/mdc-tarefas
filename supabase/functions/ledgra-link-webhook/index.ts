@@ -5,7 +5,7 @@
 //
 // Segredo (Edge Functions › Secrets): LEDGRA_LINK_SEGREDO_WEBHOOK (o "segredo" mostrado uma vez pelo Ledgra Link ao
 // configurar o endereço deste webhook).
-import { bancoServico } from "../_fiscal/http.ts";
+import { bancoServico } from "../_ledgra_link/http.ts";
 import { ErroLedgraLink, LedgraLink } from "../_ledgra_link/ledgra-link-cliente.ts";
 
 const json = (status: number, corpo: unknown) =>

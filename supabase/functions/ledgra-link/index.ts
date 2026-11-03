@@ -7,7 +7,7 @@
 //   POST { acao: "situacao" }          → se o Ledgra Link está configurado neste servidor e respondendo.
 //
 // Segredos (Edge Functions › Secrets): LEDGRA_LINK_URL, LEDGRA_LINK_CHAVE.
-import { bancoServico, bancoUsuario, cabecalhos, resposta } from "../_fiscal/http.ts";
+import { bancoServico, bancoUsuario, cabecalhos, resposta } from "../_ledgra_link/http.ts";
 import { ErroLedgraLink, LedgraLink } from "../_ledgra_link/ledgra-link-cliente.ts";
 
 const DESLIGADO = "O Ledgra Link ainda não está ligado neste servidor. Fale com o administrador do HUB.";
