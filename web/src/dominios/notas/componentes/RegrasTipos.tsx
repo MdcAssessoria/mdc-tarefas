@@ -1,5 +1,5 @@
-// Regras dos tipos de entrada da empresa: o que cada tipo faz (estoque, conta a pagar) e a categoria padrão.
-// Todos veem; só a equipe MDC com "gerir" no Financeiro muda (o banco confere em fis_salvar_tipo_entrada).
+// Regras dos tipos de entrada da MDC: o que cada tipo faz (estoque, conta a pagar) e a categoria padrão.
+// Todos veem; só quem tem "gerir" no Financeiro muda (o banco confere em fis_salvar_tipo_entrada).
 "use client";
 
 import { useState } from "react";
@@ -41,7 +41,7 @@ export function RegrasTipos({
         gera_pagar: m.gera_pagar ?? atual.gera_pagar,
         categoria: m.categoria !== undefined ? m.categoria : atual.categoria_id,
       });
-      avisar("Regra salva para esta empresa.");
+      avisar("Regra salva.");
       aoMudar();
     } catch (e) {
       avisar(traduzirErro(e), "erro");
@@ -108,7 +108,7 @@ export function RegrasTipos({
           })}
         </tbody>
       </table>
-      {!podeGerir && <p className="p-3 text-xs text-neutral-500">Só a equipe MDC muda estas regras.</p>}
+      {!podeGerir && <p className="p-3 text-xs text-neutral-500">Só quem gerencia o Financeiro muda estas regras. Se precisar, peça ao administrador.</p>}
     </div>
   );
 }

@@ -14,7 +14,7 @@ import { fmtData, mesAno } from "@/lib/formato/datas";
 import { Carregando } from "@/components/ui/Carregando";
 import { EstadoVazio } from "@/components/ui/EstadoVazio";
 import { useAviso } from "@/components/ui/Aviso";
-import { EscolhaCliente, useClienteGestao } from "@/dominios/organizacao/componentes/EmpresaEmGestao";
+import { SemEmpresaGestao, useClienteGestao } from "@/dominios/organizacao/componentes/EmpresaEmGestao";
 import { BotoesExportar } from "@/components/ui/BotoesExportar";
 import { FiltroPeriodo } from "@/components/ui/FiltroPeriodo";
 import { Indicador } from "@/components/ui/Indicador";
@@ -188,7 +188,7 @@ export default function PaginaCargaTributaria() {
         <div className="mr-auto">
           <h1 className="text-xl font-semibold text-[var(--marca)]">Carga tributária das entradas</h1>
           <p className="text-sm text-neutral-600">
-            Quanto de imposto veio no preço das compras e quanto a empresa pode recuperar (estimativa pelo regime).
+            Quanto de imposto veio no preço das compras e quanto a MDC pode recuperar (estimativa pelo regime).
           </p>
         </div>
         <BotoesExportar
@@ -227,7 +227,6 @@ export default function PaginaCargaTributaria() {
       </div>
 
       <div className="cartao flex flex-wrap items-end gap-3 p-4">
-        <EscolhaCliente gestao={financeiro} />
         <FiltroPeriodo
           rotulo="Emissão"
           periodo={periodo}
@@ -282,7 +281,7 @@ export default function PaginaCargaTributaria() {
       {consulta.erro && <p className="rounded-md bg-red-50 p-3 text-sm text-red-800">{consulta.erro}</p>}
 
       {!cliente ? (
-        <EstadoVazio>Escolha a empresa acima para ver os impostos das compras dela.</EstadoVazio>
+        <SemEmpresaGestao />
       ) : consulta.carregando && !d ? (
         <Carregando />
       ) : !linhas.length ? (

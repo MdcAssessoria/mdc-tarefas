@@ -22,16 +22,16 @@ bancárias, transferências e extratos (no celular, botão "Telas"). Rotas antig
 
 | Módulo · endereço | Quem usa | O que faz |
 | --- | --- | --- |
-| Financeiro · `/financeiro` | Equipe (ver; atalhos com operar) | **Painel** da empresa escolhida: saudação e data, dinheiro nos bancos hoje (soma das contas ativas, com o saldo de cada uma), atalhos (nova conta a pagar, a receber, importar extrato, cadastrar item), "Hoje", "Vencidos" e "Próximos 7 dias" (a pagar e a receber), fluxo de caixa previsto dos próximos 30 dias (saldo atual + contas em aberto; vencido conta hoje; aviso se o saldo ficar negativo), maiores despesas do mês por categoria (no começo do mês, sem nada pago, mostra o mês passado), últimos 6 meses realizados (entrou × saiu). Empresa nova vê os **primeiros passos** (plano → banco → categorias → lançar) |
+| Financeiro · `/financeiro` | Equipe (ver; atalhos com operar) | **Painel** da MDC: saudação e data, dinheiro nos bancos hoje (soma das contas ativas, com o saldo de cada uma), atalhos (nova conta a pagar, a receber, importar extrato, cadastrar item), "Hoje", "Vencidos" e "Próximos 7 dias" (a pagar e a receber), fluxo de caixa previsto dos próximos 30 dias (saldo atual + contas em aberto; vencido conta hoje; aviso se o saldo ficar negativo), maiores despesas do mês por categoria (no começo do mês, sem nada pago, mostra o mês passado), últimos 6 meses realizados (entrou × saiu). Empresa nova vê os **primeiros passos** (plano → banco → categorias → lançar) |
 | Financeiro · `/financeiro/pagar` e `/financeiro/receber` | Equipe (ver; lançar e baixar com operar) | Contas a pagar / a receber: filtro de vencimento em um clique, situação (em aberto, vencidos, a vencer, pagos, cancelados), fornecedor/cliente e categoria em "Mais filtros", busca; etiquetas dos filtros em uso; frase de resumo; 3 indicadores que filtram ao clicar (vencido, a vencer, pago); lançar (parcelas mensais, "já foi pago", fornecedor novo cadastrado na hora), pagar/receber (total ou parcial), editar, histórico com estorno, cancelar com motivo; PDF e Excel. `?nova=1` abre "Nova conta" (atalho do painel) |
 | Financeiro · `/financeiro/movimento` | Equipe | Entradas e saídas: pagamentos e recebimentos do período (realizado) e, se marcado em "Mais filtros", o previsto; entrou, saiu, resultado; "para onde foi o dinheiro" por categoria (clique filtra); transferências entre contas aparecem na lista (chip "Transferência") mas **não** entram nos totais; lançar entrada/saída à vista e transferência; PDF e Excel |
 | Financeiro · `/financeiro/bancos` | Equipe (ver; cadastro e transferência com operar) | Contas bancárias: saldo atual, último lançamento, a conciliar, conta contábil ligada; indicadores (saldo, a conciliar, sem conta contábil); cadastrar, editar e "Transferir entre contas"; PDF e Excel |
-| Financeiro · `/financeiro/transferencias` | Equipe (ver; transferir e estornar com operar) | Transferências entre contas da mesma empresa por período e conta; nova transferência; estorno com motivo; PDF e Excel |
+| Financeiro · `/financeiro/transferencias` | Equipe (ver; transferir e estornar com operar) | Transferências entre contas da MDC por período e conta; nova transferência; estorno com motivo; PDF e Excel |
 | Financeiro · `/financeiro/extratos` | Equipe (ver; importar com operar) | Importa OFX ou planilha numa conta (confere antes de gravar); lista com filtros de conta, período, busca e (em "Mais filtros") entradas/saídas e situação; totais; PDF e Excel |
 | Financeiro · `/financeiro/estoque` (provisório) | Equipe (ver; movimentar com operar; regra de negativo com gerir) | Abas Itens, Estoques e Movimentações. Sai do Financeiro quando o módulo Estoque (`/estoque`, Frente 3) entrar |
 | Plano de contas · `/plano-contas` | Equipe (ver; importar com operar) | Importa o plano de contas do Domínio (Excel/CSV); lista com busca e filtros; PDF e Excel |
 | Plano de contas · `/plano-contas/categorias` | Equipe (ver; cadastrar com operar) | Despesas e receitas, cada uma ligada a conta analítica ativa do plano; filtros, PDF e Excel |
-| Centros de custo · `/centros-custo` | Equipe (ver; cadastrar com operar) | Centros de custo da empresa; PDF e Excel |
+| Centros de custo · `/centros-custo` | Equipe (ver; cadastrar com operar) | Centros de custo da MDC; PDF e Excel |
 | Fornecedores e clientes · `/cadastros/pessoas` | Quem tem Financeiro, Entradas, Saídas ou Estoque | Cadastro comum (CPF/CNPJ conferido) usado por todos os módulos; aparece no menu lateral como "Fornecedores e clientes" |
 | Relatórios · `/relatorios` | Equipe | Painel de relatórios gerenciais com período em um clique, PDF e Excel: **Resultado de caixa** (DRE gerencial por grupo e categoria, juros/multas e descontos à parte, "sobrou/faltou"), **Realizado x previsto** (mês a mês: previsto pelo vencimento, realizado pelos pagamentos, com gráfico), **Pagas e recebidas** (cada baixa, indicadores que filtram), **Centros de custo** (receitas, despesas, resultado e parte das despesas) |
 
@@ -42,7 +42,10 @@ Contas geradas pelo módulo [Contratos](contratos.md) (041) levam o selo **"Cont
 receber (e "Contrato fixo" na coluna Documento da exportação). São contas normais: pagar, receber, editar e cancelar
 continuam aqui; só o vínculo com o contrato e o mês (`recorrente_id`, `competencia`) não mudam pela tela.
 
-A empresa escolhida fica lembrada no navegador (`hub-mdc:financeiro:cliente`) e vale para todas as telas desses módulos.
+Desde 03/11/2026 essas telas cuidam só da MDC: a empresa é a própria da organização (`organizacoes.gestao_cliente_id`,
+migração 042), sem campo "Empresa" na tela e sem nada lembrado no navegador; o banco recusa gravar ou ler a gestão de
+outra empresa. Sem `gestao_cliente_id`, as telas avisam "A empresa da MDC ainda não foi definida para a Gestão. Peça ao
+administrador."
 Permissão nas telas: cada módulo usa a própria ferramenta (`plano_contas`, `centros_custo`, `relatorios`); as tabelas
 ainda conferem `app.fin_pode` (ferramenta `financeiro`) até a separação de RLS por módulo, feita na integração.
 

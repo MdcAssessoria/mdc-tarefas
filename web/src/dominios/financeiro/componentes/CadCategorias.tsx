@@ -1,4 +1,4 @@
-// Plano de contas › Despesas e receitas (categorias) da empresa escolhida (/plano-contas/categorias).
+// Plano de contas › Despesas e receitas (categorias) da MDC (/plano-contas/categorias).
 // Cada categoria aponta para uma conta ANALÍTICA ATIVA do plano do Domínio: é ela que vai para a contabilidade
 // quando a conta for paga ou recebida. Nada se apaga: inativa.
 "use client";
@@ -57,7 +57,7 @@ export function EscolhaConta({ contas, valor, aoMudar }: { contas: ContaContabil
 
 type FormCat = { id?: string; tipo: "despesa" | "receita"; nome: string; grupo: string; conta_contabil_id: string; ativo: boolean };
 
-export function CadCategorias({ cliente, podeOperar, avisar, seletor }: PropsAba) {
+export function CadCategorias({ cliente, podeOperar, avisar }: PropsAba) {
   const { org } = useOrg();
   const [tipo, setTipo] = useState("");
   const [busca, setBusca] = useState("");
@@ -175,7 +175,6 @@ export function CadCategorias({ cliente, podeOperar, avisar, seletor }: PropsAba
       />
 
       <CartaoFiltros ativos={filtrosAtivos} aoLimpar={limparFiltros}>
-        {seletor}
         <label className="campo">
           <span>Tipo</span>
           <select value={tipo} onChange={(e) => setTipo(e.target.value)}>
@@ -198,7 +197,7 @@ export function CadCategorias({ cliente, podeOperar, avisar, seletor }: PropsAba
         <p className="flex items-start gap-2 rounded-lg bg-amber-50 p-3 text-sm text-amber-900">
           <Icone nome="info" className="mt-0.5 h-4 w-4 shrink-0" />
           <span>
-            Para cadastrar despesas e receitas, importe antes o plano de contas desta empresa em{" "}
+            Para cadastrar despesas e receitas, importe antes o plano de contas da MDC em{" "}
             <Link className="underline" href="/plano-contas">
               Plano do Domínio
             </Link>

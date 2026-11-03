@@ -1,6 +1,6 @@
-// Entradas › Certificado digital da empresa (A1 / e-CNPJ): situação, vencimento, envio do arquivo e da senha (ficam no
+// Entradas › Certificado digital da MDC (A1 / e-CNPJ): situação, vencimento, envio do arquivo e da senha (ficam no
 // cofre do banco, nunca voltam para a tela), remoção, e a busca automática de notas (SEFAZ e NFS-e Nacional) com os
-// parâmetros da empresa. O certificado também servirá à emissão de notas (Saídas).
+// parâmetros fiscais da MDC. O certificado também servirá à emissão de notas (Saídas).
 "use client";
 
 import { useCallback, useState } from "react";
@@ -11,10 +11,9 @@ import { fmtDataLocal } from "@/lib/formato/datas";
 import { traduzirErro } from "@/lib/erros";
 import { CampoArquivo } from "@/components/ui/CampoArquivo";
 import { Carregando } from "@/components/ui/Carregando";
-import { EstadoVazio } from "@/components/ui/EstadoVazio";
 import { useAviso } from "@/components/ui/Aviso";
 import { useConfirmar } from "@/components/ui/JanelaConfirmar";
-import { EscolhaCliente, useClienteGestao } from "@/dominios/organizacao/componentes/EmpresaEmGestao";
+import { SemEmpresaGestao, useClienteGestao } from "@/dominios/organizacao/componentes/EmpresaEmGestao";
 import { formatarDocumento } from "@/lib/documento";
 import { lerCertificado, lerControle, lerParametros } from "@/dominios/notas/leituras";
 import { enviarCertificado, removerCertificado, salvarParametros } from "@/dominios/notas/repositorio";
@@ -34,7 +33,7 @@ export default function PaginaCertificadoEmpresa() {
   const agora = useAgora();
   const financeiro = useClienteGestao();
   const cliente = financeiro.cliente;
-  // certificado e parâmetros fiscais: no banco a regra é estrita ("gerir" no Financeiro, só a equipe MDC)
+  // certificado e parâmetros fiscais: no banco a regra é estrita ("gerir" no Financeiro)
   const podeGerir = pode("financeiro", "gerir");
   const podeOperar = pode("entradas", "operar") || pode("financeiro", "operar");
   const { aviso, mostrar } = useAviso();
@@ -86,7 +85,7 @@ export default function PaginaCertificadoEmpresa() {
   async function remover() {
     if (!cliente) return;
     const sim = await confirmar({
-      titulo: "Remover o certificado desta empresa?",
+      titulo: "Remover o certificado da MDC?",
       descricao: "A busca automática de notas para até um novo certificado ser enviado.",
       botao: "Remover",
       perigo: true,
@@ -133,20 +132,17 @@ export default function PaginaCertificadoEmpresa() {
     <div className="mx-auto max-w-3xl space-y-4">
       {janelaConfirmar}
       <div>
-        <h1 className="text-xl font-semibold text-[var(--marca)]">Certificado digital da empresa</h1>
+        <h1 className="text-xl font-semibold text-[var(--marca)]">Certificado digital da MDC</h1>
         <p className="text-sm text-neutral-600">
-          Com o certificado A1 (e-CNPJ) da empresa, o HUB busca sozinho as notas de compra na SEFAZ e as notas de serviço na NFS-e Nacional,
+          Com o certificado A1 (e-CNPJ) da MDC, o HUB busca sozinho as notas de compra na SEFAZ e as notas de serviço na NFS-e Nacional,
           e responde à SEFAZ (manifestação). Depois ele também vai assinar as notas emitidas.
         </p>
-      </div>
-      <div className="cartao flex flex-wrap items-end gap-3 p-4">
-        <EscolhaCliente gestao={financeiro} />
       </div>
       {aviso}
       {consulta.erro && <p className="rounded-md bg-red-50 p-3 text-sm text-red-800">{consulta.erro}</p>}
 
       {!cliente ? (
-        <EstadoVazio>Escolha a empresa acima.</EstadoVazio>
+        <SemEmpresaGestao />
       ) : consulta.carregando && !d ? (
         <Carregando />
       ) : (
@@ -207,7 +203,7 @@ export default function PaginaCertificadoEmpresa() {
               </label>
               <ul className="list-disc space-y-1 pl-5 text-xs text-neutral-600">
                 <li>
-                  Só certificado A1 (arquivo) e do mesmo CNPJ da empresa (matriz ou filial). O A3 (token/cartão) não funciona em servidor.
+                  Só certificado A1 (arquivo) e do mesmo CNPJ da MDC (matriz ou filial). O A3 (token/cartão) não funciona em servidor.
                 </li>
                 <li>O arquivo e a senha ficam criptografados no cofre do banco e nunca voltam para a tela.</li>
                 <li>O vencimento entra em Vencimentos, com aviso antes de vencer.</li>
@@ -218,7 +214,7 @@ export default function PaginaCertificadoEmpresa() {
               </button>
             </form>
           ) : (
-            <p className="text-sm text-neutral-600">Só a equipe MDC (ou o próprio cliente pelo Portal) envia o certificado.</p>
+            <p className="text-sm text-neutral-600">Só quem gerencia o Financeiro envia ou troca o certificado. Se precisar, peça ao administrador.</p>
           )}
 
           <section className="cartao space-y-3 p-4">
@@ -246,8 +242,8 @@ export default function PaginaCertificadoEmpresa() {
               "Dar ciência automática nas NF-e novas",
               "A SEFAZ só entrega o XML completo (com itens) depois da ciência. A ciência não confirma a compra.",
             )}
-            {caixa("contribuinte_icms", "A empresa é contribuinte do ICMS", "Usado na estimativa de créditos (Carga tributária).")}
-            {caixa("contribuinte_ipi", "A empresa é contribuinte do IPI (indústria)", "Usado na estimativa de créditos de IPI.")}
+            {caixa("contribuinte_icms", "A MDC é contribuinte do ICMS", "Usado na estimativa de créditos (Carga tributária).")}
+            {caixa("contribuinte_ipi", "A MDC é contribuinte do IPI (indústria)", "Usado na estimativa de créditos de IPI.")}
             <label className="campo max-w-xs">
               <span>Ambiente</span>
               <select

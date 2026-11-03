@@ -25,7 +25,7 @@ import { Chip } from "@/components/ui/Chip";
 import { Indicador } from "@/components/ui/Indicador";
 import { JanelaMotivo } from "@/components/ui/JanelaMotivo";
 import { Valor } from "@/components/ui/Valor";
-import { EscolhaCliente, useClienteGestao } from "@/dominios/organizacao/componentes/EmpresaEmGestao";
+import { SemEmpresaGestao, useClienteGestao } from "@/dominios/organizacao/componentes/EmpresaEmGestao";
 import { lerCategorias, lerCentros, lerContas, lerPessoas } from "@/dominios/financeiro/leituras";
 import { lerContratos, lerReajustes } from "../leituras";
 import { encerrarContrato, reativarContrato, suspenderContrato } from "../repositorio";
@@ -215,7 +215,6 @@ export function TelaContratos() {
       />
 
       <CartaoFiltros ativos={filtrosAtivos} aoLimpar={limparFiltros}>
-        <EscolhaCliente gestao={gestao} />
         <label className="campo">
           <span>Tipo</span>
           <select value={tipo} onChange={(e) => setTipo(e.target.value as FiltroTipo)}>
@@ -248,9 +247,7 @@ export function TelaContratos() {
       )}
 
       {!cliente ? (
-        <EstadoVazio icone="documento" titulo="Escolha a empresa">
-          Escolha a empresa nos filtros acima para ver os contratos dela.
-        </EstadoVazio>
+        <SemEmpresaGestao icone="documento" />
       ) : consulta.carregando && !consulta.dados ? (
         <Esqueleto />
       ) : (

@@ -5,7 +5,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { nomeCliente } from "@/dominios/clientes/nome";
-import { EscolhaCliente, useClienteGestao } from "@/dominios/organizacao/componentes/EmpresaEmGestao";
+import { SemEmpresaGestao, useClienteGestao } from "@/dominios/organizacao/componentes/EmpresaEmGestao";
 import { BotoesExportar } from "@/components/ui/BotoesExportar";
 import { Chip } from "@/components/ui/Chip";
 import { FiltroPeriodo } from "@/components/ui/FiltroPeriodo";
@@ -82,7 +82,7 @@ export default function PaginaTransferencias() {
     <div className="space-y-4">
       <CabecalhoPagina
         titulo="Transferências"
-        descricao="Dinheiro que passou de uma conta bancária para outra da mesma empresa. Não é receita nem despesa."
+        descricao="Dinheiro que passou de uma conta bancária para outra da MDC. Não é receita nem despesa."
         acoes={
           <>
             <BotoesExportar
@@ -122,7 +122,6 @@ export default function PaginaTransferencias() {
       />
 
       <CartaoFiltros ativos={filtrosAtivos} aoLimpar={limpar}>
-        <EscolhaCliente gestao={financeiro} />
         <FiltroPeriodo
           periodo={periodo}
           de={de}
@@ -154,9 +153,7 @@ export default function PaginaTransferencias() {
       )}
 
       {!cliente ? (
-        <EstadoVazio icone="banco" titulo="Escolha a empresa">
-          Escolha a empresa nos filtros acima para ver as transferências dela.
-        </EstadoVazio>
+        <SemEmpresaGestao icone="banco" />
       ) : consulta.carregando && !consulta.dados ? (
         <Esqueleto indicadores={2} linhas={4} />
       ) : (
@@ -184,8 +181,8 @@ export default function PaginaTransferencias() {
               }
             >
               {ativas >= 2
-                ? "Registre aqui quando o dinheiro passar de uma conta da empresa para outra (aplicação, reforço de caixa, troca de banco)."
-                : "Para transferir, a empresa precisa de pelo menos duas contas bancárias ativas (cadastre em Contas bancárias)."}
+                ? "Registre aqui quando o dinheiro passar de uma conta da MDC para outra (aplicação, reforço de caixa, troca de banco)."
+                : "Para transferir, a MDC precisa de pelo menos duas contas bancárias ativas (cadastre em Contas bancárias)."}
             </EstadoVazio>
           ) : (
             <QuadroTabela rotulo="Transferências">

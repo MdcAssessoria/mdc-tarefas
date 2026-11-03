@@ -11,6 +11,8 @@ export interface Organizacao {
   cor_primaria: string;
   cor_destaque: string;
   fuso: string;
+  /** Cliente que é a própria empresa da organização (na MDC, a MDC Assessoria): a única que a Gestão atende. */
+  gestao_cliente_id?: string | null;
 }
 
 export interface Membro {

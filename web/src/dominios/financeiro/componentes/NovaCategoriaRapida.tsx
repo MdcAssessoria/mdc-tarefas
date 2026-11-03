@@ -66,7 +66,7 @@ export function NovaCategoriaRapida({
         <p className="text-sm text-[var(--texto-suave)]">Carregando o plano de contas…</p>
       ) : analiticas.length === 0 ? (
         <div className="space-y-3 text-sm">
-          <p>Para criar categorias, esta empresa precisa do plano de contas (o do Domínio). Ele ainda não foi importado.</p>
+          <p>Para criar categorias, a MDC precisa do plano de contas (o do Domínio). Ele ainda não foi importado.</p>
           <Link href="/plano-contas" target="_blank" className="btn-primario inline-flex">
             <Icone nome="importar" className="h-4 w-4" />
             Importar o plano de contas

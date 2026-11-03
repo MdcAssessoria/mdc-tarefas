@@ -57,7 +57,7 @@ export function AbaLocais({ cliente, podeOperar, avisar }: PropsAba) {
   async function mudarNegativo(permite: boolean) {
     try {
       await definirEstoqueNegativo(cliente.id, permite);
-      avisar(permite ? "Estoque negativo liberado para esta empresa." : "Estoque negativo bloqueado.");
+      avisar(permite ? "Estoque negativo liberado." : "Estoque negativo bloqueado.");
       negativo.recarregar();
     } catch (e) {
       avisar(traduzirErro(e), "erro");
@@ -80,7 +80,7 @@ export function AbaLocais({ cliente, podeOperar, avisar }: PropsAba) {
         <p className="text-sm font-medium">Estoque negativo</p>
         <p className="text-sm text-neutral-600">
           {negativo.dados
-            ? "Liberado: a empresa pode dar saída mesmo sem saldo (o saldo fica negativo até a entrada ser lançada)."
+            ? "Liberado: a MDC pode dar saída mesmo sem saldo (o saldo fica negativo até a entrada ser lançada)."
             : "Bloqueado: não deixa sair mais do que tem no estoque. É o recomendado."}
         </p>
         {pode("financeiro", "gerir") ? (
@@ -88,7 +88,7 @@ export function AbaLocais({ cliente, podeOperar, avisar }: PropsAba) {
             {negativo.dados ? "Bloquear estoque negativo" : "Liberar estoque negativo"}
           </button>
         ) : (
-          <p className="text-xs text-neutral-500">Só a equipe MDC muda esta regra.</p>
+          <p className="text-xs text-neutral-500">Só quem gerencia o Financeiro muda esta regra. Se precisar, peça ao administrador.</p>
         )}
       </div>
       {base.erro && <p className="rounded-md bg-red-50 p-3 text-sm text-red-800">{base.erro}</p>}

@@ -1,4 +1,5 @@
-// Aba "Equipe" das Configurações: papel, setor e situação de cada pessoa da organização (só administrador).
+// Aba "Equipe" das Configurações: nome e setor de cada pessoa da organização (só administrador). Papel e inativar
+// ficam só em Pessoas e acessos, que pede confirmação e oferece transferir o trabalho de quem sai.
 "use client";
 
 import Link from "next/link";
@@ -8,8 +9,10 @@ import { PAPEIS } from "@/dominios/organizacao/tipos";
 import { traduzirErro } from "@/lib/erros";
 import { useMensagem } from "./useMensagem";
 
+const nomePapel = (id: string) => PAPEIS.find((p) => p.id === id)?.nome ?? id;
+
 export function AbaEquipe() {
-  const { org, membros, setores, recarregar, eu } = useOrg();
+  const { org, membros, setores, recarregar } = useOrg();
   const { mostrar, el } = useMensagem();
 
   async function alterar(userId: string, campos: Record<string, unknown>) {
@@ -23,7 +26,7 @@ export function AbaEquipe() {
       <div className="cartao flex flex-wrap items-center justify-between gap-3 p-4 text-sm">
         <p className="text-neutral-600">
           Novas pessoas são cadastradas em <b>Pessoas e acessos</b>: você escolhe o perfil e a pessoa recebe o convite por e-mail para criar
-          a senha. Aqui você ajusta nome, papel nas tarefas, setor e desativa quem saiu.
+          a senha. Aqui você ajusta o nome e o setor de cada pessoa.
         </p>
         <Link href="/hub/acessos" className="btn-primario">
           Cadastrar pessoa
@@ -38,7 +41,7 @@ export function AbaEquipe() {
               <th>E-mail</th>
               <th>Papel</th>
               <th>Setor</th>
-              <th>Ativo</th>
+              <th>Situação</th>
             </tr>
           </thead>
           <tbody>
@@ -48,27 +51,16 @@ export function AbaEquipe() {
                   <input
                     className="entrada w-full min-w-40"
                     defaultValue={m.nome}
+                    aria-label={`Nome de ${m.nome}`}
                     onBlur={(e) => e.target.value !== m.nome && alterar(m.user_id, { nome: e.target.value })}
                   />
                 </td>
                 <td className="text-[var(--texto-suave)]">{m.email}</td>
+                <td>{nomePapel(m.papel)}</td>
                 <td>
                   <select
                     className="entrada"
-                    value={m.papel}
-                    onChange={(e) => alterar(m.user_id, { papel: e.target.value })}
-                    disabled={m.user_id === eu.user_id}
-                  >
-                    {PAPEIS.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.nome}
-                      </option>
-                    ))}
-                  </select>
-                </td>
-                <td>
-                  <select
-                    className="entrada"
+                    aria-label={`Setor de ${m.nome}`}
                     value={m.setor_id ?? ""}
                     onChange={(e) => alterar(m.user_id, { setor_id: e.target.value || null })}
                   >
@@ -80,20 +72,17 @@ export function AbaEquipe() {
                     ))}
                   </select>
                 </td>
-                <td>
-                  <input
-                    type="checkbox"
-                    className="h-5 w-5 accent-[var(--marca)]"
-                    checked={m.ativo}
-                    disabled={m.user_id === eu.user_id}
-                    onChange={(e) => alterar(m.user_id, { ativo: e.target.checked })}
-                  />
-                </td>
+                <td>{m.ativo ? "Ativo" : "Inativo"}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+      <p className="text-sm">
+        <Link href="/hub/acessos" className="btn-link">
+          Mudar papel ou inativar em Pessoas e acessos
+        </Link>
+      </p>
     </div>
   );
 }

@@ -16,13 +16,16 @@ import { traduzirErro } from "@/lib/erros";
 import { Carregando } from "@/components/ui/Carregando";
 import { EstadoVazio } from "@/components/ui/EstadoVazio";
 import { useAviso } from "@/components/ui/Aviso";
-import { EscolhaCliente, useClienteGestao } from "@/dominios/organizacao/componentes/EmpresaEmGestao";
+import { SemEmpresaGestao, useClienteGestao } from "@/dominios/organizacao/componentes/EmpresaEmGestao";
 import { BotoesExportar } from "@/components/ui/BotoesExportar";
 import { FiltroPeriodo } from "@/components/ui/FiltroPeriodo";
+import { CartaoFiltros, MaisFiltros } from "@/components/ui/CartaoFiltros";
+import type { FiltroAtivo } from "@/components/ui/CartaoFiltros";
 import { Indicador } from "@/components/ui/Indicador";
 import { intervaloDoPeriodo } from "@/dominios/financeiro/regras";
 import type { Periodo } from "@/dominios/financeiro/regras";
 import { nomeArquivo } from "@/lib/arquivos/exportarLista";
+import { PERIODOS } from "@/lib/periodo";
 import { lerCertificado, lerControle, lerEventos, lerNotas } from "@/dominios/notas/leituras";
 import { buscarAgora } from "@/dominios/notas/repositorio";
 import {
@@ -158,6 +161,25 @@ export default function PaginaNotasRecebidas() {
         ? `Nenhuma nota esperando resposta. ${aLancar.length} pronta(s) para lançar (${brl(soma(aLancar))}).`
         : "Tudo em dia neste período.";
 
+  function limparFiltros() {
+    setFornecedor("");
+    setModelo("");
+    setBusca("");
+    setSituacao("todas");
+    setPeriodo("90");
+  }
+  const filtrosAtivos: FiltroAtivo[] = [
+    ...(periodo !== "90" ? [{ id: "periodo", rotulo: `Emissão: ${PERIODOS.find((x) => x.id === periodo)?.nome ?? ""}`, aoTirar: () => setPeriodo("90") }] : []),
+    ...(situacao !== "todas"
+      ? [{ id: "situacao", rotulo: `Situação: ${FILTROS.find((f) => f.id === situacao)?.nome ?? ""}`, aoTirar: () => setSituacao("todas") }]
+      : []),
+    ...(busca ? [{ id: "busca", rotulo: `Busca: ${busca}`, aoTirar: () => setBusca("") }] : []),
+    ...(fornecedor
+      ? [{ id: "fornecedor", rotulo: `Fornecedor: ${fornecedores.find(([k]) => k === fornecedor)?.[1] ?? ""}`, aoTirar: () => setFornecedor("") }]
+      : []),
+    ...(modelo ? [{ id: "modelo", rotulo: `Tipo: ${modelo === "55" ? "NF-e" : "NFS-e"}`, aoTirar: () => setModelo("") }] : []),
+  ];
+
   function marcar(id: string, sim: boolean) {
     setMarcadas((m) => {
       const n = new Set(m);
@@ -203,7 +225,7 @@ export default function PaginaNotasRecebidas() {
         <div className="mr-auto">
           <h1 className="text-xl font-semibold text-[var(--marca)]">Notas recebidas</h1>
           <p className="text-sm text-neutral-600">
-            Notas de compra e de serviço que chegaram para a empresa: responda à SEFAZ e lance no financeiro.
+            Notas de compra e de serviço que chegaram para a MDC: responda à SEFAZ e lance no financeiro.
           </p>
         </div>
         <BotoesExportar
@@ -252,8 +274,7 @@ export default function PaginaNotasRecebidas() {
         )}
       </div>
 
-      <div className="cartao flex flex-wrap items-end gap-3 p-4">
-        <EscolhaCliente gestao={financeiro} />
+      <CartaoFiltros ativos={filtrosAtivos} aoLimpar={limparFiltros}>
         <FiltroPeriodo
           rotulo="Emissão"
           periodo={periodo}
@@ -275,62 +296,45 @@ export default function PaginaNotasRecebidas() {
             ))}
           </select>
         </label>
-        <details className="w-full sm:w-auto">
-          <summary className="cursor-pointer py-2 text-sm text-neutral-700">Mais filtros</summary>
-          <div className="mt-2 flex flex-wrap gap-3">
-            <label className="campo">
-              <span>Fornecedor</span>
-              <select value={fornecedor} onChange={(e) => setFornecedor(e.target.value)}>
-                <option value="">Todos</option>
-                {fornecedores.map(([k, nome]) => (
-                  <option key={k} value={k}>
-                    {nome}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="campo">
-              <span>Tipo de nota</span>
-              <select value={modelo} onChange={(e) => setModelo(e.target.value)}>
-                <option value="">Todas</option>
-                <option value="55">NF-e (produtos)</option>
-                <option value="nfse">NFS-e (serviços)</option>
-              </select>
-            </label>
-          </div>
-        </details>
-        <label className="campo min-w-48 flex-1">
+        <label className="campo campo-largo min-w-48 flex-1">
           <span>Buscar</span>
-          <input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Número, fornecedor, chave ou valor" />
+          <input type="search" value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Número, fornecedor, chave ou valor" />
         </label>
-        {(fornecedor || modelo || busca || situacao !== "todas" || periodo !== "90") && (
-          <button
-            className="btn-link min-h-10 text-sm"
-            onClick={() => {
-              setFornecedor("");
-              setModelo("");
-              setBusca("");
-              setSituacao("todas");
-              setPeriodo("90");
-            }}
-          >
-            Limpar filtros
-          </button>
-        )}
-      </div>
+        <MaisFiltros emUso={(fornecedor ? 1 : 0) + (modelo ? 1 : 0)}>
+          <label className="campo">
+            <span>Fornecedor</span>
+            <select value={fornecedor} onChange={(e) => setFornecedor(e.target.value)}>
+              <option value="">Todos</option>
+              {fornecedores.map(([k, nome]) => (
+                <option key={k} value={k}>
+                  {nome}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="campo">
+            <span>Tipo de nota</span>
+            <select value={modelo} onChange={(e) => setModelo(e.target.value)}>
+              <option value="">Todas</option>
+              <option value="55">NF-e (produtos)</option>
+              <option value="nfse">NFS-e (serviços)</option>
+            </select>
+          </label>
+        </MaisFiltros>
+      </CartaoFiltros>
 
       {aviso}
       {consulta.erro && <p className="rounded-md bg-red-50 p-3 text-sm text-red-800">{consulta.erro}</p>}
 
       {!cliente ? (
-        <EstadoVazio>Escolha a empresa acima para ver as notas que ela recebeu.</EstadoVazio>
+        <SemEmpresaGestao />
       ) : consulta.carregando && !d ? (
         <Carregando />
       ) : (
         <>
           {!d?.certificado ? (
             <p className="rounded-md bg-amber-50 p-3 text-sm text-amber-900">
-              Sem certificado digital: as notas não chegam sozinhas. Cadastre o certificado A1 da empresa em{" "}
+              Sem certificado digital: as notas não chegam sozinhas. Cadastre o certificado A1 da MDC em{" "}
               <Link className="underline" href="/entradas/certificado">
                 Certificado digital
               </Link>{" "}

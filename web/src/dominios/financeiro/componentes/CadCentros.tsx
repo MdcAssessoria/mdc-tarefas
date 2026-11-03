@@ -1,4 +1,4 @@
-// Centros de custo (módulo próprio, /centros-custo) da empresa escolhida (opcional em cada lançamento). Nada se apaga: inativa.
+// Centros de custo (módulo próprio, /centros-custo) da MDC (opcional em cada lançamento). Nada se apaga: inativa.
 "use client";
 
 import { useCallback, useState } from "react";
@@ -24,7 +24,7 @@ import type { PropsAba } from "./Comuns";
 
 type FormCentro = { id?: string; codigo: string; nome: string; ativo: boolean };
 
-export function CadCentros({ cliente, podeOperar, avisar, seletor }: PropsAba) {
+export function CadCentros({ cliente, podeOperar, avisar }: PropsAba) {
   const { org } = useOrg();
   const [inativos, setInativos] = useState(false);
   const [form, setForm] = useState<FormCentro | null>(null);
@@ -83,7 +83,6 @@ export function CadCentros({ cliente, podeOperar, avisar, seletor }: PropsAba) {
         }
       />
       <CartaoFiltros ativos={inativos ? [{ id: "inativos", rotulo: "Com inativos", aoTirar: () => setInativos(false) }] : []}>
-        {seletor}
         <label className="flex min-h-10 items-center gap-2 text-sm">
           <input type="checkbox" checked={inativos} onChange={(e) => setInativos(e.target.checked)} />
           Mostrar inativos

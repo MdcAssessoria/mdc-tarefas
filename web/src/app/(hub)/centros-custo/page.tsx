@@ -1,4 +1,4 @@
-// Centros de custo (módulo próprio) da empresa escolhida: separam gastos e ganhos por área, loja ou obra.
+// Centros de custo (módulo próprio) da MDC: separam gastos e ganhos por área, loja ou obra.
 "use client";
 
 import { CadCentros } from "@/dominios/financeiro/componentes/CadCentros";

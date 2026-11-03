@@ -51,7 +51,7 @@ export function NovaTransferencia({
   return (
     <Modal
       titulo="Transferir entre contas"
-      descricao="Dinheiro que passou de uma conta bancária para outra da mesma empresa. Não entra como receita nem como despesa."
+      descricao="Dinheiro que passou de uma conta bancária para outra da MDC. Não entra como receita nem como despesa."
       aoFechar={aoFechar}
       largura="lg"
     >

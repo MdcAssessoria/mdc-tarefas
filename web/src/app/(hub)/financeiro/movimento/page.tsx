@@ -7,7 +7,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { nomeCliente } from "@/dominios/clientes/nome";
-import { EscolhaCliente, useClienteGestao } from "@/dominios/organizacao/componentes/EmpresaEmGestao";
+import { SemEmpresaGestao, useClienteGestao } from "@/dominios/organizacao/componentes/EmpresaEmGestao";
 import { BotoesExportar } from "@/components/ui/BotoesExportar";
 import { Chip } from "@/components/ui/Chip";
 import { FiltroPeriodo } from "@/components/ui/FiltroPeriodo";
@@ -280,7 +280,7 @@ export default function PaginaEntradasSaidas() {
     <div className="space-y-4">
       <CabecalhoPagina
         titulo="Entradas e saídas"
-        descricao="O dinheiro que entrou e saiu da empresa, e para onde ele foi."
+        descricao="O dinheiro que entrou e saiu da MDC, e para onde ele foi."
         acoes={
           <>
             <BotoesExportar
@@ -320,7 +320,7 @@ export default function PaginaEntradasSaidas() {
             {podeOperar && cliente && (
               <>
                 {(cad.dados?.contas.filter((c) => c.ativo).length ?? 0) >= 2 && (
-                  <button className="btn" onClick={() => setTransferindo(true)} title="Transferir entre contas da empresa">
+                  <button className="btn" onClick={() => setTransferindo(true)} title="Transferir entre contas da MDC">
                     <Icone nome="transferir" className="h-4 w-4" />
                     Transferência
                   </button>
@@ -340,7 +340,6 @@ export default function PaginaEntradasSaidas() {
       />
 
       <CartaoFiltros ativos={filtrosAtivos} aoLimpar={limparFiltros}>
-        <EscolhaCliente gestao={financeiro} />
         <FiltroPeriodo
           periodo={periodo}
           de={de}
@@ -406,9 +405,7 @@ export default function PaginaEntradasSaidas() {
       )}
 
       {!cliente ? (
-        <EstadoVazio icone="moeda" titulo="Escolha a empresa">
-          Escolha a empresa nos filtros acima para ver as entradas e saídas dela.
-        </EstadoVazio>
+        <SemEmpresaGestao icone="moeda" />
       ) : (consulta.carregando && !consulta.dados) || !cad.dados ? (
         <Esqueleto />
       ) : (

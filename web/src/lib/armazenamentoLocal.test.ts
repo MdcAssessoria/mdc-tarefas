@@ -11,7 +11,7 @@ describe("armazenamento local", () => {
   it("as chaves antigas continuam as mesmas (mudar apagaria preferências salvas)", () => {
     expect(CHAVES.organizacao).toBe("mdc-tarefas:org");
     expect(CHAVES.filtrosTarefas("abc")).toBe("mdc-tarefas:filtros:abc");
-    expect(CHAVES.clienteFinanceiroAntiga).toBe("hub-mdc:financeiro:cliente");
+    expect(CHAVES.menuGestao).toBe("hub-mdc:menu-gestao");
   });
   it("chave renomeada: lê a antiga enquanto a nova não tem valor, depois só a nova", () => {
     gravarLocal("teste:antiga", "empresa-1");

@@ -10,9 +10,8 @@ export const EU = "11111111-1111-4111-8111-111111111111";
 const OUTRO = "22222222-2222-4222-8222-222222222222";
 const SETOR = "33333333-3333-4333-8333-333333333333";
 const C1 = "44444444-4444-4444-8444-444444444441";
-/** Empresa já escolhida nas telas de gestão, para a verificação mostrar dados. Usa de propósito a chave ANTIGA
- * (hub-mdc:financeiro:cliente): confere que quem já tinha escolhido a empresa não perde a escolha (CHAVES.clienteGestao). */
-export const CLIENTE_LEMBRADO = { "hub-mdc:financeiro:cliente": C1 };
+/** A própria MDC como cliente: a única empresa das telas de Gestão (organizacoes.gestao_cliente_id, 03/11/2026). */
+const CM = "44444444-4444-4444-8444-444444444440";
 const C2 = "44444444-4444-4444-8444-444444444442";
 
 /** Ids usados nas rotas dinâmicas ([id]). A chave é a pasta da rota. */
@@ -38,7 +37,7 @@ const HISTORICO = (() => {
     titulos.push({
       id,
       org_id: ORG,
-      cliente_id: C1,
+      cliente_id: CM,
       tipo,
       pessoa_id: tipo === "receber" ? "f5000000-0000-4000-8000-000000000002" : "f5000000-0000-4000-8000-000000000001",
       categoria_id,
@@ -92,6 +91,7 @@ const org = {
   cor_destaque: "#E2C17E",
   fuso: "America/Sao_Paulo",
   ativo: true,
+  gestao_cliente_id: CM,
 };
 
 const APPS = [
@@ -105,8 +105,8 @@ const APPS = [
   ["saidas", "Saídas", "Pedidos de venda", "enviar", "/saidas", false, 37],
   ["entradas", "Entradas", "Notas recebidas e compras", "importar", "/entradas", false, 36],
   ["comercial", "CRM Comercial", "Leads, proposta e contrato", "alvo", "/comercial", false, 80],
-  ["licencas", "Licenças", "Módulos vendidos: contratos, mensalidades e bloqueio", "documento", "/licencas", false, 85],
-  ["centros_custo", "Centros de custo", "Centros de custo de cada empresa", "etiqueta", "/centros-custo", false, 39],
+  ["licencas", "Cobrança Ledgra", "Mensalidades dos assinantes do Ledgra", "documento", "/licencas", false, 85],
+  ["centros_custo", "Centros de custo", "Centros de custo da MDC", "etiqueta", "/centros-custo", false, 39],
   ["plano_contas", "Plano de contas", "Plano do Domínio e categorias", "lista", "/plano-contas", false, 40],
   ["relatorios", "Relatórios", "Relatórios gerenciais", "grafico", "/relatorios", false, 41],
 ].map(([slug, nome, descricao, icone, rota, externo, ordem]) => ({
@@ -341,6 +341,7 @@ export const TABELAS = {
   ],
   setores: [{ id: SETOR, org_id: ORG, nome: "Fiscal", cor: "#2a78d6", ordem: 1, ativo: true }],
   clientes: [
+    cliente(CM, "MDC ASSESSORIA LTDA", "MDC Assessoria", "48.140.121/0001-65", "real"),
     cliente(C1, "GREENCORE INDUSTRIA LTDA", "Greencore", "12.345.678/0001-95", "real"),
     cliente(C2, "NEXUS GESTAO DE PESSOAS LTDA", "Nexus", "44.537.381/0001-18", "presumido"),
   ],
@@ -416,7 +417,7 @@ export const TABELAS = {
   ].map(([classificacao, codigo, descricao, analitica, nivel], k) => ({
     id: `f1000000-0000-4000-8000-00000000000${k}`,
     org_id: ORG,
-    cliente_id: C1,
+    cliente_id: CM,
     classificacao,
     codigo,
     descricao,
@@ -426,18 +427,18 @@ export const TABELAS = {
     atualizado_em: momento(-5),
   })),
   fin_plano_importacoes: [
-    { id: 1, org_id: ORG, cliente_id: C1, arquivo: "plano-greencore.xls", total: 7, novas: 7, inativadas: 0, por: EU, em: momento(-5) },
+    { id: 1, org_id: ORG, cliente_id: CM, arquivo: "plano-greencore.xls", total: 7, novas: 7, inativadas: 0, por: EU, em: momento(-5) },
   ],
   fin_transferencias: [
-    { id: 1, org_id: ORG, cliente_id: C1, origem_id: "f2000000-0000-4000-8000-000000000001", destino_id: "f2000000-0000-4000-8000-000000000002", data: dia(-6), valor: 3000, observacao: "Aplicação", estornada: false, estorno_motivo: null, por: EU, em: momento(-6) },
-    { id: 2, org_id: ORG, cliente_id: C1, origem_id: "f2000000-0000-4000-8000-000000000002", destino_id: "f2000000-0000-4000-8000-000000000001", data: dia(1), valor: 800, observacao: null, estornada: false, estorno_motivo: null, por: EU, em: momento(0) },
-    { id: 3, org_id: ORG, cliente_id: C1, origem_id: "f2000000-0000-4000-8000-000000000001", destino_id: "f2000000-0000-4000-8000-000000000002", data: dia(-20), valor: 50, observacao: "Lançada duas vezes", estornada: true, estorno_motivo: "duplicada", por: EU, em: momento(-20) },
+    { id: 1, org_id: ORG, cliente_id: CM, origem_id: "f2000000-0000-4000-8000-000000000001", destino_id: "f2000000-0000-4000-8000-000000000002", data: dia(-6), valor: 3000, observacao: "Aplicação", estornada: false, estorno_motivo: null, por: EU, em: momento(-6) },
+    { id: 2, org_id: ORG, cliente_id: CM, origem_id: "f2000000-0000-4000-8000-000000000002", destino_id: "f2000000-0000-4000-8000-000000000001", data: dia(1), valor: 800, observacao: null, estornada: false, estorno_motivo: null, por: EU, em: momento(0) },
+    { id: 3, org_id: ORG, cliente_id: CM, origem_id: "f2000000-0000-4000-8000-000000000001", destino_id: "f2000000-0000-4000-8000-000000000002", data: dia(-20), valor: 50, observacao: "Lançada duas vezes", estornada: true, estorno_motivo: "duplicada", por: EU, em: momento(-20) },
   ],
   fin_contas_bancarias: [
     {
       id: "f2000000-0000-4000-8000-000000000002",
       org_id: ORG,
-      cliente_id: C1,
+      cliente_id: CM,
       nome: "Sicoob aplicação",
       banco: "756 · Sicoob",
       agencia: "3001",
@@ -452,7 +453,7 @@ export const TABELAS = {
     {
       id: "f2000000-0000-4000-8000-000000000001",
       org_id: ORG,
-      cliente_id: C1,
+      cliente_id: CM,
       nome: "Itaú movimento",
       banco: "341 · Itaú",
       agencia: "1234",
@@ -468,7 +469,7 @@ export const TABELAS = {
     {
       id: "f3000000-0000-4000-8000-000000000001",
       org_id: ORG,
-      cliente_id: C1,
+      cliente_id: CM,
       conta_id: "f2000000-0000-4000-8000-000000000001",
       arquivo: "extrato-itau.ofx",
       formato: "ofx",
@@ -490,7 +491,7 @@ export const TABELAS = {
   ].map(([d, valor, descricao, documento], k) => ({
     id: k + 1,
     org_id: ORG,
-    cliente_id: C1,
+    cliente_id: CM,
     conta_id: "f2000000-0000-4000-8000-000000000001",
     lote_id: "f3000000-0000-4000-8000-000000000001",
     data: dia(d),
@@ -501,12 +502,12 @@ export const TABELAS = {
   })),
   fin_pessoas: [
     ["f5000000-0000-4000-8000-000000000001", "fornecedor", "Imobiliária Centro Ltda", "11222333000181"],
-    ["f5000000-0000-4000-8000-000000000002", "cliente", "Cliente ABC Comércio", "48140121000165"],
+    ["f5000000-0000-4000-8000-000000000002", "cliente", "Cliente ABC Comércio", "44537381000118"],
     ["f5000000-0000-4000-8000-000000000003", "ambos", "Maria da Silva", "52998224725"],
   ].map(([id, tipo, nome, documento]) => ({
     id,
     org_id: ORG,
-    cliente_id: C1,
+    cliente_id: CM,
     tipo,
     nome,
     documento,
@@ -519,7 +520,7 @@ export const TABELAS = {
     criado_em: momento(-20),
   })),
   fin_centros_custo: [
-    { id: "f6000000-0000-4000-8000-000000000001", org_id: ORG, cliente_id: C1, codigo: "01", nome: "Administrativo", ativo: true },
+    { id: "f6000000-0000-4000-8000-000000000001", org_id: ORG, cliente_id: CM, codigo: "01", nome: "Administrativo", ativo: true },
   ],
   fin_categorias: [
     [
@@ -534,7 +535,7 @@ export const TABELAS = {
   ].map(([id, tipo, nome, grupo, conta_contabil_id]) => ({
     id,
     org_id: ORG,
-    cliente_id: C1,
+    cliente_id: CM,
     tipo,
     nome,
     grupo,
@@ -610,7 +611,7 @@ export const TABELAS = {
   ].map(([id, tipo, pessoa_id, categoria_id, descricao, d, valor, valor_pago, situacao, parcela, parcelas]) => ({
     id,
     org_id: ORG,
-    cliente_id: C1,
+    cliente_id: CM,
     tipo,
     pessoa_id,
     categoria_id,
@@ -638,7 +639,7 @@ export const TABELAS = {
   ].map(([id, titulo_id, d, valor]) => ({
     id,
     org_id: ORG,
-    cliente_id: C1,
+    cliente_id: CM,
     titulo_id,
     conta_id: "f2000000-0000-4000-8000-000000000001",
     data: dia(d),
@@ -660,7 +661,7 @@ export const TABELAS = {
   ].map(([id, codigo, nome, tipo, unidade, controla_estoque, estoque_minimo, custo, preco_venda]) => ({
     id,
     org_id: ORG,
-    cliente_id: C1,
+    cliente_id: CM,
     codigo,
     nome,
     tipo,
@@ -683,7 +684,7 @@ export const TABELAS = {
     markup: codigo === "P001" ? 150 : null,
     foto_caminho: null,
   })),
-  est_grupos: [{ id: "fb000000-0000-4000-8000-000000000001", org_id: ORG, cliente_id: C1, nome: "Ferragens", ativo: true }],
+  est_grupos: [{ id: "fb000000-0000-4000-8000-000000000001", org_id: ORG, cliente_id: CM, nome: "Ferragens", ativo: true }],
   est_pedidos: [
     ["fc000000-0000-4000-8000-000000000001", "venda", 1, "f5000000-0000-4000-8000-000000000002", -3, 182, "faturado", "NF 1234"],
     ["fc000000-0000-4000-8000-000000000002", "venda", 2, "f5000000-0000-4000-8000-000000000003", 0, 299, "rascunho", null],
@@ -692,7 +693,7 @@ export const TABELAS = {
   ].map(([id, tipo, numero, pessoa_id, d, total, situacao, documento]) => ({
     id,
     org_id: ORG,
-    cliente_id: C1,
+    cliente_id: CM,
     tipo,
     numero,
     pessoa_id,
@@ -725,7 +726,7 @@ export const TABELAS = {
   ].map(([id, pedido_id, item_id, descricao, quantidade, preco_unitario, total, custo_unitario, movimento_id], k) => ({
     id,
     org_id: ORG,
-    cliente_id: C1,
+    cliente_id: CM,
     pedido_id,
     ordem: k + 1,
     item_id,
@@ -741,23 +742,23 @@ export const TABELAS = {
     removido: false,
   })),
   est_pedido_titulos: [
-    { titulo_id: "f8000000-0000-4000-8000-000000000004", pedido_id: "fc000000-0000-4000-8000-000000000001", org_id: ORG, cliente_id: C1 },
+    { titulo_id: "f8000000-0000-4000-8000-000000000004", pedido_id: "fc000000-0000-4000-8000-000000000001", org_id: ORG, cliente_id: CM },
   ],
   est_locais: [
-    { id: "fa000000-0000-4000-8000-000000000001", org_id: ORG, cliente_id: C1, nome: "Depósito principal", padrao: true, ativo: true },
-    { id: "fa000000-0000-4000-8000-000000000002", org_id: ORG, cliente_id: C1, nome: "Loja", padrao: false, ativo: true },
+    { id: "fa000000-0000-4000-8000-000000000001", org_id: ORG, cliente_id: CM, nome: "Depósito principal", padrao: true, ativo: true },
+    { id: "fa000000-0000-4000-8000-000000000002", org_id: ORG, cliente_id: CM, nome: "Loja", padrao: false, ativo: true },
   ],
-  est_parametros: [{ cliente_id: C1, org_id: ORG, permite_negativo: false }],
+  est_parametros: [{ cliente_id: CM, org_id: ORG, permite_negativo: false }],
   est_saldos: [
     {
-      cliente_id: C1,
+      cliente_id: CM,
       item_id: "f9000000-0000-4000-8000-000000000001",
       local_id: "fa000000-0000-4000-8000-000000000001",
       saldo: 320,
       ultimo_movimento: dia(-1),
     },
     {
-      cliente_id: C1,
+      cliente_id: CM,
       item_id: "f9000000-0000-4000-8000-000000000002",
       local_id: "fa000000-0000-4000-8000-000000000001",
       saldo: 3,
@@ -771,7 +772,7 @@ export const TABELAS = {
   ].map(([id, item_id, d, tipo, quantidade, custo_unitario]) => ({
     id,
     org_id: ORG,
-    cliente_id: C1,
+    cliente_id: CM,
     item_id,
     local_id: "fa000000-0000-4000-8000-000000000001",
     data: dia(d),
@@ -1135,7 +1136,7 @@ export const TABELAS = {
   ].map(([id, modelo, conteudo, numero, d, valor, manifestacao, processada, tipo_entrada], k) => ({
     id,
     org_id: ORG,
-    cliente_id: C1,
+    cliente_id: CM,
     direcao: "entrada",
     modelo,
     chave: modelo === "nfse" ? "35034012112223330001810000000000000526100000000001" : `352610112223330001815500100000${numero}112345678${k}`,
@@ -1150,7 +1151,7 @@ export const TABELAS = {
     emitente_doc: "11222333000181",
     emitente_nome: modelo === "nfse" ? "Consultoria Exemplo Ltda" : "Distribuidora Exemplo Ltda",
     emitente_uf: "SP",
-    destinatario_doc: "12345678000195",
+    destinatario_doc: "48140121000165",
     valor_total: valor,
     valor_produtos: valor,
     valor_frete: 0,
@@ -1170,7 +1171,7 @@ export const TABELAS = {
     manifestacao,
     manifestacao_em: manifestacao ? momento(d + 1) : null,
     manifestacao_protocolo: manifestacao ? "891260000000123" : null,
-    xml_caminho: `${ORG}/${C1}/nfe/2026/10/${numero}.xml`,
+    xml_caminho: `${ORG}/${CM}/nfe/2026/10/${numero}.xml`,
     origem: modelo === "nfse" ? "adn" : "dfe",
     tipo_entrada,
     processada,
@@ -1231,7 +1232,7 @@ export const TABELAS = {
     },
   ],
   fis_dfe_controle: ["nfe", "nfse"].map((fonte) => ({
-    cliente_id: C1,
+    cliente_id: CM,
     fonte,
     ult_nsu: fonte === "nfe" ? 1532 : 44,
     proxima_consulta_em: momento(0.03),
@@ -1243,9 +1244,9 @@ export const TABELAS = {
   })),
   fis_certificados: [
     {
-      cliente_id: C1,
-      titular: "GREENCORE INDUSTRIA LTDA",
-      cnpj: "12345678000195",
+      cliente_id: CM,
+      titular: "MDC ASSESSORIA LTDA",
+      cnpj: "48140121000165",
       emissor: "AC SOLUTI Multipla v5",
       icp_brasil: true,
       valido_de: momento(-200),
@@ -1253,7 +1254,7 @@ export const TABELAS = {
       enviado_em: momento(-200),
     },
   ],
-  fis_parametros: [{ cliente_id: C1, org_id: ORG, ambiente: "producao", captura_ativa: true, ciencia_automatica: true, contribuinte_icms: true, contribuinte_ipi: false }],
+  fis_parametros: [{ cliente_id: CM, org_id: ORG, ambiente: "producao", captura_ativa: true, ciencia_automatica: true, contribuinte_icms: true, contribuinte_ipi: false }],
   fis_tipos_entrada: [
     ["revenda", "Compra para revenda", true, true],
     ["materia_prima", "Matéria-prima / industrialização", true, true],
@@ -1537,13 +1538,13 @@ TABELAS.crm_contratos.push(
 const CHAVE_NFE_1188 = "35261011222333000181550010000011881123456781";
 const CHAVE_NFSE_52 = "35034012112223330001810000000000000526100000000001";
 export const XML_EXEMPLO = {
-  [`${ORG}/${C1}/nfe/2026/10/1188.xml`]: `<?xml version="1.0" encoding="UTF-8"?>
+  [`${ORG}/${CM}/nfe/2026/10/1188.xml`]: `<?xml version="1.0" encoding="UTF-8"?>
 <nfeProc xmlns="http://www.portalfiscal.inf.br/nfe" versao="4.00"><NFe><infNFe Id="NFe${CHAVE_NFE_1188}" versao="4.00">
 <ide><cUF>35</cUF><natOp>Venda de mercadoria</natOp><mod>55</mod><serie>1</serie><nNF>1188</nNF><dhEmi>${momento(-12).slice(0, 19)}-03:00</dhEmi>
 <dhSaiEnt>${momento(-12).slice(0, 19)}-03:00</dhSaiEnt><tpNF>1</tpNF><tpAmb>1</tpAmb></ide>
 <emit><CNPJ>11222333000181</CNPJ><xNome>Distribuidora Exemplo Ltda</xNome><enderEmit><xLgr>Rua das Indústrias</xLgr><nro>1500</nro>
 <xBairro>Distrito Industrial</xBairro><xMun>Atibaia</xMun><UF>SP</UF><CEP>12940000</CEP><fone>1144112233</fone></enderEmit><IE>111111111111</IE></emit>
-<dest><CNPJ>12345678000195</CNPJ><xNome>Empresa Exemplo Ltda</xNome><enderDest><xLgr>Avenida Central</xLgr><nro>200</nro><xBairro>Centro</xBairro>
+<dest><CNPJ>48140121000165</CNPJ><xNome>MDC Assessoria Ltda</xNome><enderDest><xLgr>Avenida Central</xLgr><nro>200</nro><xBairro>Centro</xBairro>
 <xMun>Bragança Paulista</xMun><UF>SP</UF><CEP>12900000</CEP></enderDest><IE>333333333333</IE></dest>
 <det nItem="1"><prod><cProd>ABC-1</cProd><xProd>Parafuso sextavado (cx 100)</xProd><NCM>73181500</NCM><CFOP>5102</CFOP><uCom>CX</uCom>
 <qCom>10.0000</qCom><vUnCom>50.00</vUnCom><vProd>500.00</vProd></prod><imposto><ICMS><ICMS00><orig>0</orig><CST>00</CST><vBC>510.00</vBC>
@@ -1560,7 +1561,7 @@ export const XML_EXEMPLO = {
 <infAdic><infCpl>Pedido de compra 4521. Entrega no galpão 2.</infCpl></infAdic></infNFe></NFe>
 <protNFe versao="4.00"><infProt><tpAmb>1</tpAmb><chNFe>${CHAVE_NFE_1188}</chNFe><dhRecbto>${momento(-12).slice(0, 19)}-03:00</dhRecbto>
 <nProt>135260000000001</nProt><cStat>100</cStat><xMotivo>Autorizado o uso da NF-e</xMotivo></infProt></protNFe></nfeProc>`,
-  [`${ORG}/${C1}/nfe/2026/10/52.xml`]: `<?xml version="1.0" encoding="utf-8"?>
+  [`${ORG}/${CM}/nfe/2026/10/52.xml`]: `<?xml version="1.0" encoding="utf-8"?>
 <NFSe versao="1.00" xmlns="http://www.sped.fazenda.gov.br/nfse"><infNFSe Id="NFS${CHAVE_NFSE_52}">
 <xLocEmi>Atibaia</xLocEmi><xLocPrestacao>Bragança Paulista</xLocPrestacao><nNFSe>52</nNFSe><xLocIncid>Bragança Paulista</xLocIncid>
 <xTribNac>Assessoria ou consultoria de qualquer natureza</xTribNac><cStat>100</cStat><dhProc>${momento(-20).slice(0, 19)}-03:00</dhProc><nDFSe>998877</nDFSe>
@@ -1569,7 +1570,7 @@ export const XML_EXEMPLO = {
 <valores><vBC>2000.00</vBC><pAliqAplic>2.00</pAliqAplic><vISSQN>40.00</vISSQN><vTotalRet>143.00</vTotalRet><vLiq>1857.00</vLiq></valores>
 <DPS versao="1.00"><infDPS Id="DPS350340121122233300018100001000000000000052"><tpAmb>1</tpAmb><dhEmi>${momento(-20).slice(0, 19)}-03:00</dhEmi>
 <serie>1</serie><nDPS>52</nDPS><dCompet>${dia(-20)}</dCompet><prest><CNPJ>11222333000181</CNPJ></prest>
-<toma><CNPJ>12345678000195</CNPJ><xNome>Empresa Exemplo Ltda</xNome><end><endNac><cMun>3507605</cMun><CEP>12900000</CEP></endNac>
+<toma><CNPJ>48140121000165</CNPJ><xNome>MDC Assessoria Ltda</xNome><end><endNac><cMun>3507605</cMun><CEP>12900000</CEP></endNac>
 <xLgr>Avenida Central</xLgr><nro>200</nro><xBairro>Centro</xBairro></end></toma>
 <serv><locPrest><cLocPrestacao>3507605</cLocPrestacao></locPrest><cServ><cTribNac>170101</cTribNac><xDescServ>Assessoria em gestão financeira do mês:
 - revisão do fluxo de caixa;
@@ -1579,7 +1580,7 @@ export const XML_EXEMPLO = {
 <vRetIRRF>30.00</vRetIRRF><vRetCSLL>40.00</vRetCSLL></tribFed></trib></valores></infDPS></DPS></infNFSe></NFSe>`,
 };
 // ---------------------------------------------------------------- Contratos (041, 02/11/2026)
-// Contratos fixos da empresa C1: honorários a receber, aluguel (com reajuste de IGP-M pendente neste mês e contrato
+// Contratos fixos da MDC (CM): honorários a receber, aluguel (com reajuste de IGP-M pendente neste mês e contrato
 // anexado), sistema com vigência terminando em 20 dias (renova sozinho), limpeza suspensa e um encerrado. Algumas contas
 // do Financeiro passam a vir de contrato (selo "Contrato fixo"). Só acréscimos.
 (() => {
@@ -1604,7 +1605,7 @@ export const XML_EXEMPLO = {
   const contrato = (n, extra) => ({
     id: K(n),
     org_id: ORG,
-    cliente_id: C1,
+    cliente_id: CM,
     numero: null,
     objeto: null,
     centro_id: null,
@@ -1715,7 +1716,7 @@ export const XML_EXEMPLO = {
     {
       id: 1,
       org_id: ORG,
-      cliente_id: C1,
+      cliente_id: CM,
       recorrente_id: K(1),
       origem: "reajuste",
       referencia: mesesAtras(8),
@@ -1734,13 +1735,13 @@ export const XML_EXEMPLO = {
     [2, K(2), "anexo", "Arquivo anexado: contrato-locacao-assinado.pdf", -269],
     [3, K(2), "conta", `Conta de ${mmaaaa(mes)} lançada em Contas a pagar (R$ 2.500,00)`, -1],
     [4, K(2), "aviso", `Aviso no sino: reajuste de ${mmaaaa(mes)} pendente`, -1],
-  ].map(([id, recorrente_id, tipo, texto, d]) => ({ id, org_id: ORG, cliente_id: C1, recorrente_id, tipo, texto, dados: null, por: d < -2 ? EU : null, em: momento(d) }));
+  ].map(([id, recorrente_id, tipo, texto, d]) => ({ id, org_id: ORG, cliente_id: CM, recorrente_id, tipo, texto, dados: null, por: d < -2 ? EU : null, em: momento(d) }));
   TABELAS.hub_arquivos.push({
     id: "fc100000-0000-4000-8000-000000000001",
     org_id: ORG,
     app: "contratos",
     ref_id: K(2),
-    cliente_id: C1,
+    cliente_id: CM,
     nome: "contrato-locacao-assinado.pdf",
     caminho: `${ORG}/contratos/${K(2)}/contrato-locacao-assinado.pdf`,
     tamanho: 284_000,

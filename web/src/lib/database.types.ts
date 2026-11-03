@@ -4229,6 +4229,7 @@ export type Database = {
           cor_primaria: string;
           criado_em: string;
           fuso: string;
+          gestao_cliente_id: string | null;
           id: string;
           logo_url: string | null;
           nome: string;
@@ -4242,6 +4243,7 @@ export type Database = {
           cor_primaria?: string;
           criado_em?: string;
           fuso?: string;
+          gestao_cliente_id?: string | null;
           id?: string;
           logo_url?: string | null;
           nome: string;
@@ -4255,6 +4257,7 @@ export type Database = {
           cor_primaria?: string;
           criado_em?: string;
           fuso?: string;
+          gestao_cliente_id?: string | null;
           id?: string;
           logo_url?: string | null;
           nome?: string;

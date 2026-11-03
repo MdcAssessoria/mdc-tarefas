@@ -1,4 +1,4 @@
-// Financeiro › Bancos: contas bancárias da empresa escolhida: saldo atual (saldo inicial + extratos importados), último
+// Financeiro › Bancos: contas bancárias da MDC: saldo atual (saldo inicial + extratos importados), último
 // lançamento, a conta contábil do Domínio ligada a cada banco (usada na conciliação e na exportação, etapas 2 e 3)
 // e o cadastro/edição. Exporta a lista em PDF e Excel.
 "use client";
@@ -7,7 +7,7 @@ import Link from "next/link";
 import { useCallback, useMemo, useState } from "react";
 import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { nomeCliente } from "@/dominios/clientes/nome";
-import { EscolhaCliente, useClienteGestao } from "@/dominios/organizacao/componentes/EmpresaEmGestao";
+import { SemEmpresaGestao, useClienteGestao } from "@/dominios/organizacao/componentes/EmpresaEmGestao";
 import { lerContas, lerLinhas, lerPlano, lerTransferencias, rotuloConta } from "@/dominios/financeiro/leituras";
 import { saldoComTransferencias } from "@/dominios/financeiro/painel";
 import { NovaTransferencia } from "@/dominios/financeiro/componentes/NovaTransferencia";
@@ -238,7 +238,7 @@ export default function PaginaContasBancarias() {
     <div className="space-y-4">
       <CabecalhoPagina
         titulo="Contas bancárias"
-        descricao="Os bancos da empresa, com o saldo pelos extratos importados e as transferências entre contas."
+        descricao="Os bancos da MDC, com o saldo pelos extratos importados e as transferências entre contas."
         acoes={
           <>
             <button className="btn" onClick={pdf} disabled={!lista.length} title="Baixar a lista em PDF">
@@ -268,7 +268,6 @@ export default function PaginaContasBancarias() {
       <CartaoFiltros
         ativos={mostrarInativas ? [{ id: "inativas", rotulo: "Com contas inativas", aoTirar: () => setMostrarInativas(false) }] : []}
       >
-        <EscolhaCliente gestao={financeiro} />
         <label className="flex min-h-10 items-center gap-2 text-sm">
           <input type="checkbox" checked={mostrarInativas} onChange={(e) => setMostrarInativas(e.target.checked)} />
           Mostrar contas inativas
@@ -283,9 +282,7 @@ export default function PaginaContasBancarias() {
       )}
 
       {!cliente ? (
-        <EstadoVazio icone="banco" titulo="Escolha a empresa">
-          Escolha a empresa nos filtros acima para ver as contas bancárias dela.
-        </EstadoVazio>
+        <SemEmpresaGestao icone="banco" />
       ) : consulta.carregando && !dados ? (
         <Esqueleto linhas={3} />
       ) : !lista.length ? (
@@ -309,7 +306,7 @@ export default function PaginaContasBancarias() {
             <p className="flex items-start gap-2 rounded-lg bg-amber-50 p-3 text-sm text-amber-900">
               <Icone nome="info" className="mt-0.5 h-4 w-4 shrink-0" />
               <span>
-                O plano de contas desta empresa ainda não foi importado. Importe em{" "}
+                O plano de contas da MDC ainda não foi importado. Importe em{" "}
                 <Link className="underline" href="/plano-contas">
                   Plano de contas
                 </Link>{" "}
@@ -460,7 +457,7 @@ export default function PaginaContasBancarias() {
           {form.id && (
             <label className="flex items-center gap-2 text-sm">
               <input type="checkbox" checked={form.ativo} onChange={(e) => setForm({ ...form, ativo: e.target.checked })} />
-              Conta ativa (desmarque quando a empresa encerrar a conta; o histórico continua guardado)
+              Conta ativa (desmarque quando a MDC encerrar a conta; o histórico continua guardado)
             </label>
           )}
           <div className="flex justify-end gap-2 pt-2">
