@@ -1,8 +1,10 @@
 // Licenças › Mensalidades: as cobranças mensais de cada contrato. Filtros por mês, situação e cliente; dar baixa
 // (recebimento), desfazer baixa e cancelar, sempre com motivo; gerar as mensalidades do mês; PDF e Excel.
+// Com o Ledgra Link ligado (Configurações › Integrações), cada mensalidade em aberto ganha o botão "Boleto/Pix" e a
+// baixa passa a ser automática quando o banco avisa o pagamento (migração 043).
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { brl } from "@/lib/formato/moeda";
 import { fmtCompetencia, fmtData, mesExtenso } from "@/lib/formato/datas";
@@ -20,6 +22,9 @@ import { diasDeAtraso, mesesAte, SITUACOES, situacaoDaCobranca } from "@/dominio
 import type { SituacaoExibida } from "@/dominios/licencas/regras";
 import { cancelarCobranca, desfazerBaixa, gerarCobrancas } from "@/dominios/licencas/repositorio";
 import type { Cobranca } from "@/dominios/licencas/tipos";
+import { useConsulta } from "@/lib/useConsulta";
+import { JanelaBoletoPix } from "@/dominios/licencas/componentes/JanelaBoletoPix";
+import { emissaoValida, lerConfigLink, lerEmissoes, SITUACOES_EMISSAO } from "@/dominios/licencas/ledgraLink";
 
 type FiltroSituacao = "abertas" | "atrasada" | "a_vencer" | "paga" | "cancelada" | "todas";
 const FILTROS: { id: FiltroSituacao; nome: string }[] = [
@@ -38,7 +43,7 @@ const passa = (s: SituacaoExibida, f: FiltroSituacao) =>
       ? s === "a_vencer" || s === "vence_hoje"
       : s === f);
 
-type Janela = { tipo: "baixa" | "desfazer" | "cancelar"; c: Cobranca };
+type Janela = { tipo: "baixa" | "desfazer" | "cancelar" | "boleto"; c: Cobranca };
 
 export default function PaginaCobrancas() {
   const { org } = useOrg();
@@ -52,6 +57,15 @@ export default function PaginaCobrancas() {
   const [janela, setJanela] = useState<Janela | null>(null);
   const [gerando, setGerando] = useState(false);
   const meses = useMemo(() => mesesAte(hoje, 12, 1).reverse(), [hoje]);
+  // Ledgra Link: configuração e boletos/Pix já emitidos (sem configuração, a tela fica como antes)
+  const link = useConsulta(
+    useCallback(async () => {
+      const [config, emissoes] = await Promise.all([lerConfigLink(org.id), lerEmissoes(org.id)]);
+      return { config, emissoes: new Map(emissoes.map((e) => [e.lic_cobranca_id, e])) };
+    }, [org.id]),
+  );
+  const linkLigado = !!link.dados?.config?.ativo;
+  const emissaoDe = (id: string) => link.dados?.emissoes.get(id);
   const d = dados.dados;
 
   const clientesComCobranca = useMemo(
@@ -95,6 +109,7 @@ export default function PaginaCobrancas() {
     if (msg) {
       mostrar(msg);
       dados.recarregar();
+      link.recarregar();
     }
   }
   function menu(e: React.MouseEvent<HTMLElement>, j: Janela) {
@@ -223,21 +238,24 @@ export default function PaginaCobrancas() {
       ) : (
         <>
           <div className="grid gap-3 sm:grid-cols-3">
-            <Indicador icone="alerta"
+            <Indicador
+              icone="alerta"
               titulo="Atrasado"
               valor={brl(atrasado)}
               tom={atrasado ? "vermelho" : "neutro"}
               ativo={situacao === "atrasada"}
               aoClicar={() => setSituacao(situacao === "atrasada" ? "todas" : "atrasada")}
             />
-            <Indicador icone="calendario"
+            <Indicador
+              icone="calendario"
               titulo="A vencer"
               valor={brl(aVencer)}
               tom="azul"
               ativo={situacao === "a_vencer"}
               aoClicar={() => setSituacao(situacao === "a_vencer" ? "todas" : "a_vencer")}
             />
-            <Indicador icone="check"
+            <Indicador
+              icone="check"
               titulo="Recebido"
               valor={brl(recebido)}
               tom="verde"
@@ -298,6 +316,11 @@ export default function PaginaCobrancas() {
                       </td>
                       <td className="whitespace-nowrap">
                         <span className={`chip ${SITUACOES[s].tom}`}>{SITUACOES[s].nome}</span>
+                        {emissaoDe(c.id) && c.situacao !== "cancelada" && (
+                          <span className={`chip mt-1 block w-fit ${SITUACOES_EMISSAO[emissaoDe(c.id)!.situacao].tom}`}>
+                            {SITUACOES_EMISSAO[emissaoDe(c.id)!.situacao].nome}
+                          </span>
+                        )}
                         <span className="block text-xs text-neutral-500">
                           {s === "atrasada" ? `${diasDeAtraso(c, hoje)} dia(s)` : s === "paga" ? `em ${fmtData(c.pago_em)}` : ""}
                         </span>
@@ -305,6 +328,11 @@ export default function PaginaCobrancas() {
                       <td className="whitespace-nowrap text-right">
                         {podeOperar && (
                           <div className="flex justify-end gap-1">
+                            {c.situacao === "aberta" && linkLigado && (
+                              <button className="btn !min-h-8" onClick={() => setJanela({ tipo: "boleto", c })}>
+                                {emissaoValida(emissaoDe(c.id)) ? "Ver boleto/Pix" : "Boleto/Pix"}
+                              </button>
+                            )}
                             {c.situacao === "aberta" && (
                               <button className="btn !min-h-8" onClick={() => setJanela({ tipo: "baixa", c })}>
                                 Dar baixa
@@ -353,6 +381,16 @@ export default function PaginaCobrancas() {
         </>
       )}
 
+      {janela?.tipo === "boleto" && (
+        <JanelaBoletoPix
+          cobranca={janela.c}
+          cliente={nomeDoCliente(janela.c.cliente_id)}
+          emissao={emissaoDe(janela.c.id)}
+          tipoPadrao={link.dados?.config?.tipo_padrao ?? "boleto_hibrido"}
+          aoFechar={() => setJanela(null)}
+          aoEmitir={() => link.recarregar()}
+        />
+      )}
       {janela?.tipo === "baixa" && (
         <BaixaCobranca
           cobranca={janela.c}

@@ -32,3 +32,14 @@ import_map = "./functions/fiscal-certificado/deno.json"
 [functions.fiscal-manifestar]
 verify_jwt = true
 import_map = "./functions/fiscal-manifestar/deno.json"
+
+# Ledgra Link (migração 043): ledgra-link é chamada pela tela com o login (a função confere a permissão no banco);
+# ledgra-link-webhook é chamada pelo Ledgra Link, sem login: a defesa é a assinatura do aviso, por isso a checagem
+# padrão fica desligada nela.
+[functions.ledgra-link]
+verify_jwt = true
+import_map = "./functions/ledgra-link/deno.json"
+
+[functions.ledgra-link-webhook]
+verify_jwt = false
+import_map = "./functions/ledgra-link-webhook/deno.json"

@@ -100,7 +100,52 @@ bloqueio e o efeito no `fin_pode` do Portal, encerramento, reajuste, rotina diá
 
 ## 6. Limitações e próximos passos
 
-- Baixa manual (sem leitura do extrato da MDC nem boleto próprio).
+- Baixa manual quando o Ledgra Link está desligado (com ele ligado, a baixa é automática: seção 7).
 - Valor do índice de reajuste digitado pela MDC (sem consulta automática ao IBGE/FGV).
 - A ferramenta `licencas` não entrou nos perfis prontos: só administradores e quem receber a ferramenta veem a receita.
 - Módulos do Portal ainda sem tela própria do cliente: o aviso de bloqueio aparece no topo do Portal.
+
+## 7. Boleto e Pix pelo Ledgra Link (migração 043)
+
+O **Ledgra Link by MDC Assessoria** é o add-on de conexão bancária da MDC (repositório `ledgra-link`): fala com os bancos,
+guarda os certificados e avisa os sistemas por eventos assinados. A Cobrança Ledgra é o primeiro uso no HUB.
+
+```mermaid
+sequenceDiagram
+    participant T as Tela Mensalidades
+    participant E as Função Edge ledgra-link
+    participant L as Ledgra Link
+    participant B as Banco
+    participant W as Função Edge ledgra-link-webhook
+    T->>E: Boleto/Pix (login de quem pediu)
+    E->>E: link_pode_emitir (aberta, ligado, Licenças › operar)
+    E->>L: emitir LIC-<id da mensalidade> (nunca duplica)
+    L->>B: registra boleto híbrido ou Pix
+    E->>E: link_registrar_emissao (linha digitável, Pix)
+    B-->>L: pagamento confirmado
+    L-->>W: aviso cobranca.paga assinado
+    W->>W: confere a assinatura e chama link_aplicar_evento
+    W->>W: baixa em lic_baixas (forma "Pix/Boleto (Ledgra Link)")
+```
+
+| Onde | O que faz |
+| --- | --- |
+| Configurações › Integrações › Ledgra Link | Liga/desliga, conta da MDC no Ledgra Link, tipo (boleto com Pix, só Pix com vencimento, só boleto), multa (até 2%), juros ao mês (até 10%), dias aceitos após vencer; "Testar conexão" |
+| Cobrança Ledgra › Mensalidades | Mensalidade em aberto ganha **Boleto/Pix** (ou **Ver boleto/Pix**); a janela mostra o Pix copia e cola e a linha digitável, copiar e "Enviar pelo WhatsApp" (mensagem começa com bom dia/boa tarde/boa noite); selo com a situação no banco |
+
+Regras:
+
+| Regra | Onde |
+| --- | --- |
+| Emite só mensalidade em aberto, com o Ledgra Link ligado e permissão Licenças › operar (conferido com o login de quem pediu) | `link_pode_emitir` |
+| A referência no Ledgra Link é `LIC-<id da mensalidade>`: repetir o pedido nunca gera dois boletos | Função `ledgra-link` |
+| Mensalidade já vencida: o boleto/Pix sai com vencimento em 3 dias (o banco não registra vencimento no passado) e a janela avisa | Função `ledgra-link` |
+| Boleto válido não é trocado; só emite de novo se o anterior foi recusado, cancelado, baixado ou venceu no banco | `link_registrar_emissao` |
+| Cada aviso do Ledgra Link é aplicado uma vez só (id do evento); o mesmo aviso repetido devolve "repetido" | `link_aplicar_evento`, `link_eventos` |
+| Pago o valor ou mais: baixa automática (o que passar do valor entra como juros); pago a menor: **não baixa**, fica "Pago a menor: revisar" | `link_aplicar_evento` |
+| Já baixada à mão antes do aviso: não baixa de novo ("ja_baixada"); a trava `lic_baixas_uma_valida` garante uma baixa válida por mensalidade | `link_aplicar_evento` |
+| A baixa automática é uma baixa comum: aparece nos relatórios e pode ser desfeita pela tela, com motivo | `lic_desfazer_baixa` |
+| A tela só lê as tabelas `link_*`; quem grava são as funções (as de servidor só com `service_role`) | RLS + grants |
+
+Testes: `supabase/testes/99_ledgra_link_043.sql` (permissão, emissão, aviso repetido, pago a menor, já baixada, cobrança
+desconhecida, desfazer, tela sem gravar direto) e `web/src/dominios/licencas/ledgraLink.test.ts` (mensagem do WhatsApp).
