@@ -2358,3 +2358,127 @@ export const XML_EXEMPLO = {
     envio(5, 5, "portal", C1, tudo, "pendente", false),
   ];
 })();
+
+// ---------------------------------------------------------------- NFS-e pelo Emissor Nacional (046, 03/11/2026)
+// Parâmetros no ambiente de teste; a fatura 1 tem a nota de verdade nº 1287 (XML no bucket fiscal, pasta nfse-emitidas)
+// e a fatura 5 (NFS-e pronta para emitir) teve uma tentativa de teste recusada. A conferência (nfse_preparar) mostra os
+// dados da DPS e a recusa anterior.
+(() => {
+  const F = (n) => `fd000000-0000-4000-8000-00000000000${n}`;
+  const mes = dia(0).slice(0, 7);
+  const CHAVE_1287 = "35076052248140121000165" + "0000000001287" + mes.slice(2, 4) + mes.slice(5, 7) + "123456789" + "3";
+  const caminho = `${ORG}/${CM}/nfse-emitidas/${mes.replace("-", "/")}/${CHAVE_1287}.xml`;
+  TABELAS.nfse_parametros = [
+    {
+      cliente_id: CM,
+      org_id: ORG,
+      ambiente: "producao_restrita",
+      modo: "conferir",
+      serie: "1",
+      op_simples: "3",
+      reg_ap_trib_sn: "1",
+      reg_esp_trib: "0",
+      inscricao_municipal: "12345",
+      codigo_municipio: "3507605",
+      nbs_padrao: "113021000",
+      p_tot_trib_sn: 6,
+      atualizado_em: momento(-2),
+      atualizado_por: EU,
+    },
+  ];
+  TABELAS.nfse_numeracao = [
+    { cliente_id: CM, org_id: ORG, ambiente: "producao_restrita", serie: "1", proximo: 4, atualizado_em: momento(-1) },
+    { cliente_id: CM, org_id: ORG, ambiente: "producao", serie: "1", proximo: 2, atualizado_em: momento(-3) },
+  ];
+  const emissao = (n, extra) => ({
+    id: `fe000000-0000-4000-8000-00000000000${n}`,
+    org_id: ORG,
+    cliente_id: CM,
+    serie: "1",
+    chave_acesso: null,
+    numero_nfse: null,
+    xml_caminho: null,
+    dps_caminho: null,
+    mensagem: null,
+    mensagens: [],
+    tentativas: 1,
+    por: EU,
+    respondido_em: momento(-1),
+    atualizado_em: momento(-1),
+    ...extra,
+  });
+  TABELAS.nfse_emissoes = [
+    emissao(1, {
+      fatura_id: F(1),
+      ambiente: "producao",
+      ndps: 1,
+      id_dps: "DPS3507605248140121000165" + "00001" + "000000000000001",
+      situacao: "emitida",
+      chave_acesso: CHAVE_1287,
+      numero_nfse: "1287",
+      xml_caminho: caminho,
+      enviado_em: momento(-6),
+      criado_em: momento(-6),
+    }),
+    emissao(2, {
+      fatura_id: F(5),
+      ambiente: "producao_restrita",
+      ndps: 3,
+      id_dps: "DPS3507605248140121000165" + "00001" + "000000000000003",
+      situacao: "rejeitada",
+      mensagem: "Para ME/EPP do Simples sem retenção, a alíquota do ISS não vai na nota (o ISS está no DAS). (E0625)",
+      mensagens: [
+        {
+          codigo: "E0625",
+          descricao: "Não é permitido informar alíquota quando não há indicação de retenção do ISSQN (tpRetISSQN = 1) para o prestador ME/EPP",
+          complemento: null,
+          texto: "Para ME/EPP do Simples sem retenção, a alíquota do ISS não vai na nota (o ISS está no DAS).",
+        },
+      ],
+      enviado_em: momento(-1),
+      criado_em: momento(-1),
+    }),
+  ];
+  RPCS.nfse_preparar = ({ p_fatura }) => {
+    const f = TABELAS.fin_faturas.find((x) => x.id === p_fatura) ?? TABELAS.fin_faturas[4];
+    return {
+      org: ORG,
+      cliente: CM,
+      pronto: f.nfse_situacao !== "emitida",
+      pendencias: f.nfse_situacao === "emitida" ? [`A nota fiscal desta fatura já foi emitida (nº ${f.nfse_numero})`] : [],
+      pode_emitir: true,
+      ambiente: "producao_restrita",
+      modo: "conferir",
+      hoje: dia(0),
+      fatura: { id: f.id, numero: f.numero, competencia: f.competencia, emissao: f.emissao, vencimento: f.vencimento, valor: f.valor,
+                situacao: f.situacao, nfse_situacao: f.nfse_situacao, nfse_numero: f.nfse_numero },
+      dps: {
+        ambiente: "producao_restrita",
+        serie: "1",
+        proximo_ndps: 4,
+        dCompet: f.competencia,
+        cLocEmi: "3507605",
+        prestador: { cnpj: "48140121000165", nome: "MDC ASSESSORIA LTDA", im: "12345", opSimpNac: "3", regApTribSN: "1", regEspTrib: "0" },
+        tomador: { documento: "44537381000118", nome: "Cliente ABC Comércio", email: "financeiro@clienteabc.com.br" },
+        servico: { cLocPrestacao: "3507605", cTribNac: "171901", descricao: `${f.descricao} · Fatura ${f.numero} · Vencimento ${f.vencimento.split("-").reverse().join("/")}`, cNBS: "113021000" },
+        valores: { vServ: f.valor, pTotTribSN: 6, tribISSQN: "1", tpRetISSQN: "1" },
+      },
+      iss: { aliquota_referencia: 2, valor_estimado: Math.round(f.valor * 2) / 100, retido: false },
+      emissoes: TABELAS.nfse_emissoes.filter((e) => e.fatura_id === f.id),
+    };
+  };
+  XML_EXEMPLO[caminho] = `<?xml version="1.0" encoding="UTF-8"?>
+<NFSe versao="1.01" xmlns="http://www.sped.fazenda.gov.br/nfse"><infNFSe Id="NFS${CHAVE_1287}">
+<xLocEmi>Bragança Paulista</xLocEmi><xLocPrestacao>Bragança Paulista</xLocPrestacao><nNFSe>1287</nNFSe><xLocIncid>Bragança Paulista</xLocIncid>
+<xTribNac>Contabilidade, inclusive serviços técnicos e auxiliares</xTribNac><cStat>100</cStat><dhProc>${momento(-6).slice(0, 19)}-03:00</dhProc><nDFSe>1287</nDFSe>
+<emit><CNPJ>48140121000165</CNPJ><IM>12345</IM><xNome>MDC ASSESSORIA LTDA</xNome><enderNac><xLgr>Rua Exemplo</xLgr><nro>100</nro>
+<xBairro>Centro</xBairro><UF>SP</UF><CEP>12900000</CEP></enderNac></emit>
+<valores><vBC>2400.00</vBC><vLiq>2400.00</vLiq></valores>
+<DPS versao="1.01"><infDPS Id="DPS3507605248140121000165${"00001"}${"000000000000001"}"><tpAmb>1</tpAmb><dhEmi>${momento(-6).slice(0, 19)}-03:00</dhEmi>
+<verAplic>HUB-MDC 1.0</verAplic><serie>1</serie><nDPS>1</nDPS><dCompet>${mes}-01</dCompet><tpEmit>1</tpEmit><cLocEmi>3507605</cLocEmi>
+<prest><CNPJ>48140121000165</CNPJ><IM>12345</IM><regTrib><opSimpNac>3</opSimpNac><regApTribSN>1</regApTribSN><regEspTrib>0</regEspTrib></regTrib></prest>
+<toma><CNPJ>44537381000118</CNPJ><xNome>Cliente ABC Comércio</xNome><email>financeiro@clienteabc.com.br</email></toma>
+<serv><locPrest><cLocPrestacao>3507605</cLocPrestacao></locPrest><cServ><cTribNac>171901</cTribNac><xDescServ>Serviços de contabilidade, escrituração fiscal e folha de pagamento</xDescServ><cNBS>113021000</cNBS></cServ></serv>
+<valores><vServPrest><vServ>2400.00</vServ></vServPrest><trib><tribMun><tribISSQN>1</tribISSQN><tpRetISSQN>1</tpRetISSQN></tribMun>
+<totTrib><pTotTribSN>6.00</pTotTribSN></totTrib></trib></valores></infDPS></DPS></infNFSe></NFSe>`;
+})();

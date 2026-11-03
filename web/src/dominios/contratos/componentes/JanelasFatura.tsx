@@ -23,6 +23,7 @@ import {
   vencimentoDoMes,
 } from "../faturamento";
 import { gerarFaturaAgora } from "../repositorio";
+import type { SituacaoNota } from "../nfse";
 import type { EnvioDaFatura, Fatura, Recorrente } from "../tipos";
 import { CampoMes } from "./ContratoFixo";
 
@@ -42,6 +43,8 @@ export function DetalheFatura({
   contrato,
   nomeCarteira,
   podeOperar,
+  nota,
+  aoEmitir,
   aoBaixar,
   aoCancelar,
   aoFechar,
@@ -52,6 +55,10 @@ export function DetalheFatura({
   contrato: string;
   nomeCarteira: (id: string) => string;
   podeOperar: boolean;
+  /** Situação da nota fiscal em linguagem simples (046). */
+  nota?: SituacaoNota;
+  /** "Emitir nota fiscal" (só quando dá para emitir). */
+  aoEmitir?: () => void;
   aoBaixar: () => void;
   aoCancelar: () => void;
   aoFechar: () => void;
@@ -82,8 +89,11 @@ export function DetalheFatura({
         </Linha>
         <Linha rotulo="Serviço">{f.descricao}</Linha>
         <Linha rotulo="Documento">
-          {NOME_DOCUMENTO[f.documento]} · {SITUACOES_NFSE[f.nfse_situacao]}
-          {f.nfse_numero ? ` nº ${f.nfse_numero}` : ""}
+          {NOME_DOCUMENTO[f.documento]} · {nota ? nota.texto : SITUACOES_NFSE[f.nfse_situacao]}
+          {!nota && f.nfse_numero ? ` nº ${f.nfse_numero}` : ""}
+          {nota?.detalhe && (
+            <span className={`block text-xs ${nota.tom === "vermelho" ? "text-[var(--perigo)]" : "text-[var(--texto-suave)]"}`}>{nota.detalhe}</span>
+          )}
         </Linha>
         <Linha rotulo="O que vai ao cliente">
           {OPCOES_ENVIO.find((o) => o.id === f.envio)?.titulo} · {SITUACOES_BOLETO[f.boleto_situacao]}
@@ -131,6 +141,12 @@ export function DetalheFatura({
           <button className="btn text-[var(--perigo)]" onClick={aoCancelar}>
             <Icone nome="cancelar" className="h-4 w-4" />
             Cancelar fatura
+          </button>
+        )}
+        {aoEmitir && (
+          <button className="btn" onClick={aoEmitir}>
+            <Icone nome="enviar" className="h-4 w-4" />
+            Emitir nota fiscal
           </button>
         )}
         <button className="btn-primario" onClick={aoBaixar}>

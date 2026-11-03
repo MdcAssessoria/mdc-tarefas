@@ -168,3 +168,98 @@ export interface PropostaReajuste {
   contas_em_aberto: { id: string; competencia: string; valor: number }[];
   indices_atualizados_em: string | null;
 }
+
+// ------------------------------------------------------------------------------------------------ NFS-e (046)
+
+export type AmbienteNfse = "producao_restrita" | "producao";
+export type ModoNfse = "conferir" | "automatico";
+export type SituacaoEmissaoNfse = "enviando" | "emitida" | "rejeitada" | "erro";
+
+/** Mensagem do Emissor Nacional: código e descrição oficiais e o texto em português simples. */
+export interface MensagemNfse {
+  codigo: string;
+  descricao: string;
+  complemento: string | null;
+  texto: string;
+}
+
+/** Parâmetros da emissão (nfse_parametros). */
+export interface ParametrosNfse {
+  cliente_id: string;
+  ambiente: AmbienteNfse;
+  modo: ModoNfse;
+  serie: string;
+  op_simples: "1" | "2" | "3";
+  reg_ap_trib_sn: "1" | "2" | "3" | null;
+  reg_esp_trib: string;
+  inscricao_municipal: string | null;
+  codigo_municipio: string;
+  nbs_padrao: string | null;
+  p_tot_trib_sn: number | null;
+  atualizado_em: string;
+}
+
+/** Próximo número da DPS por ambiente e série (nfse_numeracao). */
+export interface NumeracaoNfse {
+  cliente_id: string;
+  ambiente: AmbienteNfse;
+  serie: string;
+  proximo: number;
+}
+
+/** Cada DPS enviada ao Emissor Nacional (nfse_emissoes). */
+export interface EmissaoNfse {
+  id: string;
+  fatura_id: string;
+  ambiente: AmbienteNfse;
+  serie: string;
+  ndps: number;
+  id_dps: string;
+  situacao: SituacaoEmissaoNfse;
+  chave_acesso: string | null;
+  numero_nfse: string | null;
+  xml_caminho: string | null;
+  mensagem: string | null;
+  mensagens: MensagemNfse[];
+  tentativas: number;
+  enviado_em: string;
+  respondido_em: string | null;
+  criado_em: string;
+}
+
+/** Resposta de nfse_preparar: o que vai na DPS, o que falta e as tentativas anteriores. */
+export interface PreparoNfse {
+  pronto: boolean;
+  pendencias: string[];
+  pode_emitir: boolean;
+  ambiente: AmbienteNfse | null;
+  modo: ModoNfse | null;
+  fatura: { id: string; numero: string; competencia: string; valor: number; vencimento: string; nfse_situacao: SituacaoNfse; nfse_numero: string | null };
+  dps: {
+    serie: string | null;
+    proximo_ndps: number;
+    dCompet: string;
+    cLocEmi: string | null;
+    prestador: { cnpj: string | null; nome: string | null; im: string | null; opSimpNac: string | null; regApTribSN: string | null; regEspTrib: string | null };
+    tomador: { documento: string | null; nome: string | null; email: string | null };
+    servico: { cLocPrestacao: string | null; cTribNac: string | null; descricao: string; cNBS: string | null };
+    valores: { vServ: number; pTotTribSN: number | null };
+  };
+  iss: { aliquota_referencia: number | null; valor_estimado: number | null; retido: boolean };
+  emissoes: Pick<EmissaoNfse, "id" | "ambiente" | "situacao" | "ndps" | "numero_nfse" | "chave_acesso" | "mensagem" | "mensagens" | "tentativas" | "enviado_em" | "respondido_em" | "xml_caminho">[];
+}
+
+/** Resposta da Função Edge nfse-emitir. */
+export interface ResultadoEmissaoNfse {
+  situacao: "emitida" | "rejeitada" | "erro";
+  ambiente: AmbienteNfse;
+  ambiente_nome: string;
+  teste: boolean;
+  ndps: number;
+  numero?: string | null;
+  chave?: string;
+  xml_caminho?: string;
+  recuperada?: boolean;
+  mensagem: string | null;
+  mensagens: MensagemNfse[];
+}

@@ -66,9 +66,9 @@ export const SITUACOES_FATURA: Record<SituacaoFatura, { nome: string; tom: Tom; 
 
 export const SITUACOES_NFSE: Record<SituacaoNfse, string> = {
   nao_se_aplica: "Sem nota fiscal",
-  a_emitir: "Nota fiscal a emitir",
+  a_emitir: "NFS-e pronta para emitir",
   emitida: "Nota fiscal emitida",
-  erro: "Erro na nota fiscal",
+  erro: "Nota fiscal com problema",
 };
 
 export const SITUACOES_BOLETO: Record<SituacaoBoleto, string> = {

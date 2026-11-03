@@ -3,7 +3,19 @@ import { supabase } from "@/lib/supabase";
 import { exigir } from "@/lib/exigir";
 import { enviarArquivo } from "@/lib/arquivos/armazenamento";
 import type { Json } from "@/lib/database.types";
-import type { CanalEnvio, DocumentoFatura, EnvioFatura, IndiceRecorrente, PropostaReajuste } from "./tipos";
+import { chamarFuncao } from "@/lib/funcoesEdge";
+import type {
+  AmbienteNfse,
+  CanalEnvio,
+  DocumentoFatura,
+  EnvioFatura,
+  IndiceRecorrente,
+  ModoNfse,
+  ParametrosNfse,
+  PreparoNfse,
+  PropostaReajuste,
+  ResultadoEmissaoNfse,
+} from "./tipos";
 
 export interface DadosContrato {
   id?: string;
@@ -108,4 +120,42 @@ export async function gerarFaturaAgora(contrato: string, competencia: string, mo
       p_vencimento: vencimento ?? undefined,
     }),
   ) as unknown as { titulo: string; fatura: string | null; numero: string | null; vencimento: string };
+}
+
+// ------------------------------------------------------------------------------------------------ NFS-e (046)
+
+/** O que vai na nota da fatura, o que falta e as tentativas anteriores (Contratos: ver). */
+export async function prepararNfse(fatura: string) {
+  return exigir(await supabase().rpc("nfse_preparar", { p_fatura: fatura })) as unknown as PreparoNfse;
+}
+
+/**
+ * Emite a NFS-e da fatura pela Função Edge nfse-emitir (que confere a permissão no banco, reserva o número da DPS,
+ * assina com o certificado A1 da MDC e envia ao Emissor Nacional). Recusa e falta de resposta voltam como resultado
+ * (situacao), não como erro; erro é só o que impediu de tentar (permissão, pendência, envio em andamento).
+ */
+export async function emitirNfse(fatura: string) {
+  return chamarFuncao<ResultadoEmissaoNfse>("nfse-emitir", { corpo: { fatura } });
+}
+
+export interface DadosParametrosNfse {
+  cliente: string;
+  ambiente: AmbienteNfse;
+  modo: ModoNfse;
+  serie: string;
+  reg_ap_trib_sn: string;
+  reg_esp_trib: string;
+  inscricao_municipal: string | null;
+  codigo_municipio: string;
+  nbs_padrao: string | null;
+  p_tot_trib_sn: number | null;
+  proximo_ndps?: number | null;
+  confirmo_producao?: boolean;
+}
+
+/** Salva os parâmetros da emissão (Contratos: gerir). Ir para produção pede confirmo_producao. */
+export async function salvarParametrosNfse(p: DadosParametrosNfse) {
+  return exigir(await supabase().rpc("nfse_parametros_salvar", { p: { ...p, op_simples: "3" } as unknown as Json })) as unknown as ParametrosNfse & {
+    proximo_ndps: number | null;
+  };
 }

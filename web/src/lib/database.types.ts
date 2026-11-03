@@ -4609,6 +4609,208 @@ export type Database = {
           },
         ];
       };
+      nfse_emissoes: {
+        Row: {
+          ambiente: string;
+          atualizado_em: string;
+          chave_acesso: string | null;
+          cliente_id: string;
+          criado_em: string;
+          dps_caminho: string | null;
+          enviado_em: string;
+          fatura_id: string;
+          id: string;
+          id_dps: string;
+          mensagem: string | null;
+          mensagens: Json;
+          ndps: number;
+          numero_nfse: string | null;
+          org_id: string;
+          por: string | null;
+          respondido_em: string | null;
+          serie: string;
+          situacao: string;
+          tentativas: number;
+          xml_caminho: string | null;
+        };
+        Insert: {
+          ambiente: string;
+          atualizado_em?: string;
+          chave_acesso?: string | null;
+          cliente_id: string;
+          criado_em?: string;
+          dps_caminho?: string | null;
+          enviado_em?: string;
+          fatura_id: string;
+          id?: string;
+          id_dps: string;
+          mensagem?: string | null;
+          mensagens?: Json;
+          ndps: number;
+          numero_nfse?: string | null;
+          org_id: string;
+          por?: string | null;
+          respondido_em?: string | null;
+          serie: string;
+          situacao: string;
+          tentativas?: number;
+          xml_caminho?: string | null;
+        };
+        Update: {
+          ambiente?: string;
+          atualizado_em?: string;
+          chave_acesso?: string | null;
+          cliente_id?: string;
+          criado_em?: string;
+          dps_caminho?: string | null;
+          enviado_em?: string;
+          fatura_id?: string;
+          id?: string;
+          id_dps?: string;
+          mensagem?: string | null;
+          mensagens?: Json;
+          ndps?: number;
+          numero_nfse?: string | null;
+          org_id?: string;
+          por?: string | null;
+          respondido_em?: string | null;
+          serie?: string;
+          situacao?: string;
+          tentativas?: number;
+          xml_caminho?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "nfse_emissoes_cliente_id_fkey";
+            columns: ["cliente_id"];
+            isOneToOne: false;
+            referencedRelation: "clientes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "nfse_emissoes_fatura_id_fkey";
+            columns: ["fatura_id"];
+            isOneToOne: false;
+            referencedRelation: "fin_faturas";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "nfse_emissoes_org_id_fkey";
+            columns: ["org_id"];
+            isOneToOne: false;
+            referencedRelation: "organizacoes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      nfse_numeracao: {
+        Row: {
+          ambiente: string;
+          atualizado_em: string;
+          cliente_id: string;
+          org_id: string;
+          proximo: number;
+          serie: string;
+        };
+        Insert: {
+          ambiente: string;
+          atualizado_em?: string;
+          cliente_id: string;
+          org_id: string;
+          proximo?: number;
+          serie: string;
+        };
+        Update: {
+          ambiente?: string;
+          atualizado_em?: string;
+          cliente_id?: string;
+          org_id?: string;
+          proximo?: number;
+          serie?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "nfse_numeracao_cliente_id_fkey";
+            columns: ["cliente_id"];
+            isOneToOne: false;
+            referencedRelation: "clientes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "nfse_numeracao_org_id_fkey";
+            columns: ["org_id"];
+            isOneToOne: false;
+            referencedRelation: "organizacoes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      nfse_parametros: {
+        Row: {
+          ambiente: string;
+          atualizado_em: string;
+          atualizado_por: string | null;
+          cliente_id: string;
+          codigo_municipio: string;
+          inscricao_municipal: string | null;
+          modo: string;
+          nbs_padrao: string | null;
+          op_simples: string;
+          org_id: string;
+          p_tot_trib_sn: number | null;
+          reg_ap_trib_sn: string | null;
+          reg_esp_trib: string;
+          serie: string;
+        };
+        Insert: {
+          ambiente?: string;
+          atualizado_em?: string;
+          atualizado_por?: string | null;
+          cliente_id: string;
+          codigo_municipio?: string;
+          inscricao_municipal?: string | null;
+          modo?: string;
+          nbs_padrao?: string | null;
+          op_simples?: string;
+          org_id: string;
+          p_tot_trib_sn?: number | null;
+          reg_ap_trib_sn?: string | null;
+          reg_esp_trib?: string;
+          serie?: string;
+        };
+        Update: {
+          ambiente?: string;
+          atualizado_em?: string;
+          atualizado_por?: string | null;
+          cliente_id?: string;
+          codigo_municipio?: string;
+          inscricao_municipal?: string | null;
+          modo?: string;
+          nbs_padrao?: string | null;
+          op_simples?: string;
+          org_id?: string;
+          p_tot_trib_sn?: number | null;
+          reg_ap_trib_sn?: string | null;
+          reg_esp_trib?: string;
+          serie?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "nfse_parametros_cliente_id_fkey";
+            columns: ["cliente_id"];
+            isOneToOne: false;
+            referencedRelation: "clientes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "nfse_parametros_org_id_fkey";
+            columns: ["org_id"];
+            isOneToOne: false;
+            referencedRelation: "organizacoes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       organizacoes: {
         Row: {
           ativo: boolean;
@@ -6473,6 +6675,10 @@ export type Database = {
         Args: { p: Json; p_org: string };
         Returns: undefined;
       };
+      nfse_parametros_salvar: { Args: { p: Json }; Returns: Json };
+      nfse_preparar: { Args: { p_fatura: string }; Returns: Json };
+      nfse_registrar_resultado: { Args: { p: Json; p_emissao: string }; Returns: Json };
+      nfse_reservar: { Args: { p_fatura: string; p_por?: string }; Returns: Json };
       portal_abrir_conversa: {
         Args: {
           p_assunto: string;

@@ -3,7 +3,7 @@ import { supabase } from "@/lib/supabase";
 import { lerTudo } from "@/lib/lerTudo";
 import type { Arquivo } from "@/lib/arquivos/armazenamento";
 import type { Titulo } from "@/dominios/financeiro/tipos";
-import type { EnvioDaFatura, EventoContrato, Fatura, ReajusteRecorrente, Recorrente } from "./tipos";
+import type { EmissaoNfse, EnvioDaFatura, EventoContrato, Fatura, NumeracaoNfse, ParametrosNfse, ReajusteRecorrente, Recorrente } from "./tipos";
 
 export const lerContratos = (cliente: string) =>
   lerTudo<Recorrente>((de, ate) =>
@@ -82,3 +82,31 @@ export const lerEnvios = (cliente: string) =>
       .order("id")
       .range(de, ate),
   );
+
+/** Notas fiscais enviadas ao Emissor Nacional (046), mais recentes primeiro. */
+export const lerEmissoesNfse = (cliente: string) =>
+  lerTudo<EmissaoNfse>((de, ate) =>
+    supabase()
+      .from("nfse_emissoes")
+      .select(
+        "id,fatura_id,ambiente,serie,ndps,id_dps,situacao,chave_acesso,numero_nfse,xml_caminho,mensagem,mensagens,tentativas,enviado_em,respondido_em,criado_em",
+      )
+      .eq("cliente_id", cliente)
+      .order("criado_em", { ascending: false })
+      .order("id")
+      .range(de, ate),
+  );
+
+/** Parâmetros da emissão da NFS-e da MDC (null = ainda não configurado). */
+export async function lerParametrosNfse(cliente: string): Promise<ParametrosNfse | null> {
+  const { data, error } = await supabase().from("nfse_parametros").select("*").eq("cliente_id", cliente).maybeSingle();
+  if (error) throw error;
+  return (data as unknown as ParametrosNfse) ?? null;
+}
+
+/** Próximo número da DPS de cada ambiente e série. */
+export async function lerNumeracaoNfse(cliente: string): Promise<NumeracaoNfse[]> {
+  const { data, error } = await supabase().from("nfse_numeracao").select("cliente_id,ambiente,serie,proximo").eq("cliente_id", cliente);
+  if (error) throw error;
+  return (data ?? []) as unknown as NumeracaoNfse[];
+}
