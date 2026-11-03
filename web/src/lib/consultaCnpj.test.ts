@@ -1,5 +1,6 @@
-import { describe, expect, it } from "vitest";
-import { consultarCnpj, lerRespostaCnpj, resumoCnpj } from "./consultaCnpj";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { ErroApp, traduzirErro } from "./erros";
+import { consultarCnpj, lerRespostaCnpj, mesmoCnpj, resumoCnpj } from "./consultaCnpj";
 
 const resposta = {
   cnpj: "11222333000181",
@@ -61,7 +62,100 @@ describe("resumoCnpj", () => {
 });
 
 describe("consultarCnpj", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.useRealTimers();
+  });
+  const CNPJ = "11.222.333/0001-81";
+  const responder = (r: Response | Promise<Response>) => vi.stubGlobal("fetch", vi.fn(() => r));
+  /** A mensagem que a pessoa vê (passa pelo traduzirErro, como na tela). */
+  const mensagem = async (p: Promise<unknown>) => {
+    try {
+      await p;
+    } catch (e) {
+      expect(e).toBeInstanceOf(ErroApp);
+      return traduzirErro(e);
+    }
+    throw new Error("a consulta deveria falhar");
+  };
+
   it("recusa CNPJ inválido sem consultar", async () => {
     await expect(consultarCnpj("123")).rejects.toThrow("CNPJ inválido");
+  });
+
+  it("devolve os dados quando a Receita responde", async () => {
+    responder(new Response(JSON.stringify(resposta), { status: 200 }));
+    expect((await consultarCnpj(CNPJ)).razaoSocial).toBe("EMPRESA EXEMPLO LTDA");
+  });
+
+  it.each([
+    [404, "CNPJ não encontrado na Receita. Confira o número."],
+    [429, "Muitas consultas seguidas. Espere um minuto e tente de novo."],
+    [500, "O serviço de consulta de CNPJ não respondeu agora. Preencha à mão ou tente de novo em instantes."],
+  ])("resposta %i vira mensagem em português", async (status, texto) => {
+    responder(new Response("erro", { status }));
+    expect(await mensagem(consultarCnpj(CNPJ))).toBe(texto);
+  });
+
+  it("JSON inválido vira mensagem em português (e não SyntaxError em inglês)", async () => {
+    responder(new Response("<html>gateway</html>", { status: 200 }));
+    expect(await mensagem(consultarCnpj(CNPJ))).toBe(
+      "A Receita respondeu de um jeito inesperado. Preencha à mão ou tente de novo em instantes.",
+    );
+  });
+
+  it("sem conexão vira mensagem em português", async () => {
+    vi.stubGlobal("fetch", vi.fn(() => Promise.reject(new TypeError("Failed to fetch"))));
+    expect(await mensagem(consultarCnpj(CNPJ))).toMatch(/^Não foi possível consultar a Receita agora/);
+  });
+
+  it("desiste depois de 10 segundos", async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(
+        (_url: string, init?: RequestInit) =>
+          new Promise<Response>((_ok, falha) =>
+            init?.signal?.addEventListener("abort", () => falha(new DOMException("The operation was aborted.", "AbortError"))),
+          ),
+      ),
+    );
+    const p = mensagem(consultarCnpj(CNPJ));
+    await vi.advanceTimersByTimeAsync(9_999);
+    let terminou = false;
+    void p.then(() => (terminou = true));
+    await Promise.resolve();
+    expect(terminou).toBe(false);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(await p).toBe("A consulta do CNPJ demorou demais. Tente de novo.");
+  });
+
+  it("o tempo também vale para a leitura da resposta", async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(
+        (_url: string, init?: RequestInit) =>
+          Promise.resolve({
+            ok: true,
+            status: 200,
+            json: () =>
+              new Promise((_ok, falha) =>
+                init?.signal?.addEventListener("abort", () => falha(new DOMException("The operation was aborted.", "AbortError"))),
+              ),
+          } as unknown as Response),
+      ),
+    );
+    const p = mensagem(consultarCnpj(CNPJ));
+    await vi.advanceTimersByTimeAsync(10_000);
+    expect(await p).toBe("A consulta do CNPJ demorou demais. Tente de novo.");
+  });
+});
+
+describe("mesmoCnpj", () => {
+  it("compara só os números (para ignorar a resposta de um CNPJ que já foi trocado no campo)", () => {
+    expect(mesmoCnpj("11.222.333/0001-81", "11222333000181")).toBe(true);
+    expect(mesmoCnpj("11.222.333/0001-81", "11.222.333/0001-8")).toBe(false);
+    expect(mesmoCnpj("", "")).toBe(false);
   });
 });

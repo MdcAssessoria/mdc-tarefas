@@ -2,6 +2,7 @@
 // Usada para preencher razão social, UF, endereço e sócios no Societário e no cadastro de clientes.
 // Só leitura de dado público; nada é enviado além do número do CNPJ.
 import { cnpjValido, formatarDocumento, soDigitos } from "./documento";
+import { ErroApp } from "./erros";
 
 export interface SocioCnpj {
   nome: string;
@@ -82,18 +83,47 @@ export function resumoCnpj(d: DadosCnpj, hojeBr: string): string {
   return linhas.filter(Boolean).join("\n");
 }
 
-/** Busca o CNPJ na BrasilAPI. Erros saem em português, prontos para a tela. */
-export async function consultarCnpj(doc: string): Promise<DadosCnpj> {
+/** Os dois textos são o mesmo CNPJ? Compara só os números (a tela usa para ignorar resposta de um CNPJ já trocado). */
+export function mesmoCnpj(a: string, b: string): boolean {
+  const x = soDigitos(a);
+  return !!x && x === soDigitos(b);
+}
+
+/** Tempo máximo da consulta, contando a leitura da resposta. */
+export const TEMPO_CONSULTA_CNPJ_MS = 10_000;
+
+/**
+ * Busca o CNPJ na BrasilAPI. Todo erro sai como `ErroApp` em português, pronto para a tela; a consulta desiste
+ * depois de 10 segundos (inclusive se a resposta começar a chegar e travar no meio).
+ */
+export async function consultarCnpj(doc: string, tempoMs = TEMPO_CONSULTA_CNPJ_MS): Promise<DadosCnpj> {
   const d = soDigitos(doc);
-  if (!cnpjValido(d)) throw new Error("CNPJ inválido: confira os 14 números.");
-  let r: Response;
+  if (!cnpjValido(d)) throw new ErroApp("CNPJ inválido: confira os 14 números.");
+  const controle = new AbortController();
+  const relogio = setTimeout(() => controle.abort(), tempoMs);
+  const demorou = () => new ErroApp("A consulta do CNPJ demorou demais. Tente de novo.");
   try {
-    r = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${d}`, { headers: { Accept: "application/json" } });
-  } catch {
-    throw new Error("Não foi possível consultar a Receita agora (sem conexão com o serviço). Preencha à mão ou tente de novo.");
+    let r: Response;
+    try {
+      r = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${d}`, { headers: { Accept: "application/json" }, signal: controle.signal });
+    } catch {
+      if (controle.signal.aborted) throw demorou();
+      throw new ErroApp("Não foi possível consultar a Receita agora (sem conexão com o serviço). Preencha à mão ou tente de novo.");
+    }
+    if (r.status === 404) throw new ErroApp("CNPJ não encontrado na Receita. Confira o número.");
+    if (r.status === 429) throw new ErroApp("Muitas consultas seguidas. Espere um minuto e tente de novo.");
+    if (!r.ok) throw new ErroApp("O serviço de consulta de CNPJ não respondeu agora. Preencha à mão ou tente de novo em instantes.");
+    let corpo: unknown;
+    try {
+      corpo = await r.json();
+    } catch {
+      if (controle.signal.aborted) throw demorou();
+      throw new ErroApp("A Receita respondeu de um jeito inesperado. Preencha à mão ou tente de novo em instantes.");
+    }
+    if (!corpo || typeof corpo !== "object")
+      throw new ErroApp("A Receita respondeu de um jeito inesperado. Preencha à mão ou tente de novo em instantes.");
+    return lerRespostaCnpj(corpo as Bruto);
+  } finally {
+    clearTimeout(relogio);
   }
-  if (r.status === 404) throw new Error("CNPJ não encontrado na Receita. Confira o número.");
-  if (r.status === 429) throw new Error("Muitas consultas seguidas. Espere um minuto e tente de novo.");
-  if (!r.ok) throw new Error("O serviço de consulta de CNPJ não respondeu agora. Preencha à mão ou tente de novo em instantes.");
-  return lerRespostaCnpj((await r.json()) as Bruto);
 }
