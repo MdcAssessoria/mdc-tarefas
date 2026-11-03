@@ -11,7 +11,7 @@
 > ou **só nota fatura**, **o que enviar** ao cliente (4 opções), o **dia de gerar** (separado do dia de vencer) e **por onde**
 > (e-mail, WhatsApp, Portal do Cliente). No dia de gerar o HUB cria a conta a receber, a **fatura numerada** e a fila de
 > envio. Etapa 1 não tem integração: NFS-e (Emissor Nacional), envio de e-mail/WhatsApp e boleto ficam "aguardando";
-> o Portal já recebe. Migração `043_contratos_faturamento.sql`; testes `99_base_043.sql` e `100_faturamento_043.sql`.
+> o Portal já recebe. Migração `045_contratos_faturamento.sql`; testes `99_base_043.sql` e `100_faturamento_043.sql`.
 
 ## 1. Telas
 

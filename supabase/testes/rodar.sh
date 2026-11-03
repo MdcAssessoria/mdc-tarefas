@@ -52,7 +52,7 @@ for f in testes/97_base_042.sql migrations/042_gestao_so_mdc_e_seguranca.sql; do
 done
 $P -f "$R/testes/98_gestao_042.sql" 2>&1 | grep -v "^SET$"
 # 043: faturamento dos contratos a receber (fatura, fila de envio, Portal) e correções BD-01/BD-02 da reauditoria
-for f in testes/99_base_043.sql migrations/043_contratos_faturamento.sql; do
+for f in testes/99_base_043.sql migrations/045_contratos_faturamento.sql; do
   $P -v ON_ERROR_STOP=1 -f "$R/$f" 2>&1 | grep -v NOTICE || true
 done
 $P -v conexao="host=$D port=$PORTA dbname=postgres user=postgres" -f "$R/testes/100_faturamento_043.sql" 2>&1 | grep -v "^SET$"

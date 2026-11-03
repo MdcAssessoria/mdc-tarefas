@@ -1,5 +1,6 @@
 -- =====================================================================================================
---  043 · Contratos: faturamento dos contratos a receber (etapa 1, sem integrações externas)
+--  045 (aplicada em 03/11/2026 com o nome "043_contratos_faturamento"; renumerada no repositório porque outra
+--  frente publicou ao mesmo tempo a 043_ledgra_link_cobranca e a 044) · Contratos: faturamento dos contratos a receber (etapa 1, sem integrações externas)
 --
 --  Pedido do Edvaldo (03/11/2026): "No contrato precisa ter um campo que informe se este contrato gerará nota fiscal ou
 --  nota fatura. Se o contrato é recorrente precisa ter a data em que a recorrência será gerada. Uma vez agendados, segue
