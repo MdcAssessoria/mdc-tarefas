@@ -34,10 +34,9 @@ import { Indicador } from "@/components/ui/Indicador";
 import { JanelaMotivo } from "@/components/ui/JanelaMotivo";
 import { Valor } from "@/components/ui/Valor";
 import { SemEmpresaGestao, useClienteGestao } from "@/dominios/organizacao/componentes/EmpresaEmGestao";
-import { lerPessoas } from "@/dominios/financeiro/leituras";
 import { baixarFaturaPdf } from "../baixarFatura";
 import { CANAIS_ENVIO, SITUACOES_ENVIO, SITUACOES_FATURA, textoConteudo } from "../faturamento";
-import { lerContratos, lerEmissoesNfse, lerEnvios, lerFaturas, lerParametrosNfse } from "../leituras";
+import { lerContratos, lerEmissoesNfse, lerEnvios, lerFaturas, lerOpcoesContrato, lerParametrosNfse } from "../leituras";
 import { cancelarFatura } from "../repositorio";
 import { notaEmitida, podeEmitirNota, situacaoDaNota, ultimasEmissoes } from "../nfse";
 import type { EmissaoNfse, EnvioDaFatura, Fatura, SituacaoFatura } from "../tipos";
@@ -87,7 +86,7 @@ export function TelaFaturas() {
         lerFaturas(cliente.id),
         lerEnvios(cliente.id),
         lerContratos(cliente.id),
-        lerPessoas(cliente.id),
+        lerOpcoesContrato(cliente.id).then((o) => o.tomadores),
         lerEmissoesNfse(cliente.id),
         lerParametrosNfse(cliente.id),
       ]);

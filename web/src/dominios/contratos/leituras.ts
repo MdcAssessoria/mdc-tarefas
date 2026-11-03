@@ -5,6 +5,31 @@ import type { Arquivo } from "@/lib/arquivos/armazenamento";
 import type { Titulo } from "@/dominios/financeiro/tipos";
 import type { EmissaoNfse, EnvioDaFatura, EventoContrato, Fatura, NumeracaoNfse, ParametrosNfse, ReajusteRecorrente, Recorrente } from "./tipos";
 
+/** Cliente de uma fatura, só com o que vai no PDF dela (047: Contratos não lê o cadastro inteiro). */
+export interface TomadorFatura {
+  id: string;
+  nome: string;
+  documento: string | null;
+  email: string | null;
+  cidade: string | null;
+  uf: string | null;
+}
+
+/** O que a tela de Contratos usa dos cadastros do Financeiro: nomes para escolher e mostrar (função do banco, 047). */
+export interface OpcoesContrato {
+  pessoas: { id: string; nome: string; tipo: "fornecedor" | "cliente" | "ambos"; ativo: boolean }[];
+  categorias: { id: string; nome: string; tipo: "despesa" | "receita"; grupo: string | null; ativo: boolean }[];
+  centros: { id: string; nome: string; ativo: boolean }[];
+  contas: { id: string; nome: string; ativo: boolean }[];
+  tomadores: TomadorFatura[];
+}
+
+export async function lerOpcoesContrato(cliente: string): Promise<OpcoesContrato> {
+  const { data, error } = await supabase().rpc("fin_recorrente_opcoes", { p_cliente: cliente });
+  if (error) throw error;
+  return data as unknown as OpcoesContrato;
+}
+
 export const lerContratos = (cliente: string) =>
   lerTudo<Recorrente>((de, ate) =>
     supabase().from("fin_recorrentes").select("*").eq("cliente_id", cliente).order("descricao").order("id").range(de, ate),

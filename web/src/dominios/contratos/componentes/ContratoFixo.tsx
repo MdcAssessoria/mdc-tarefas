@@ -17,7 +17,7 @@ import { ColunaFormulario, ColunasFormulario } from "@/components/ui/ColunasForm
 import { Modal } from "@/components/ui/Modal";
 import type { Cliente } from "@/dominios/clientes/tipos";
 import { useOrg } from "@/dominios/organizacao/OrgProvider";
-import type { Cadastros } from "@/dominios/financeiro/componentes/LancarTitulo";
+import type { OpcoesContrato } from "../leituras";
 import { NovaCategoriaRapida } from "@/dominios/financeiro/componentes/NovaCategoriaRapida";
 import { numeroBr, valorParaCampo } from "@/dominios/financeiro/regras";
 import type { TipoTitulo } from "@/dominios/financeiro/tipos";
@@ -105,7 +105,7 @@ export function ContratoFixo({
   aoRecarregarCadastros,
 }: {
   cliente: Cliente;
-  cad: Cadastros;
+  cad: OpcoesContrato;
   hoje: string;
   editar?: Recorrente;
   tipoInicial?: TipoTitulo;

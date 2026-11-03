@@ -2,11 +2,11 @@
 import { baixarBytes } from "@/lib/arquivos/baixar";
 import { nomeArquivo } from "@/lib/arquivos/exportarLista";
 import { carregarLogo } from "@/lib/marca";
-import type { Pessoa } from "@/dominios/financeiro/tipos";
+import type { TomadorFatura } from "./leituras";
 import { gerarFaturaPdf } from "./faturaPdf";
 import type { Fatura } from "./tipos";
 
-export async function baixarFaturaPdf(f: Fatura, pessoa: Pessoa | undefined, contrato: string | null, logoUrl: string | null) {
+export async function baixarFaturaPdf(f: Fatura, pessoa: TomadorFatura | undefined, contrato: string | null, logoUrl: string | null) {
   const nome = pessoa?.nome ?? "Cliente";
   const bytes = await gerarFaturaPdf({
     fatura: f,

@@ -2482,3 +2482,21 @@ export const XML_EXEMPLO = {
 <valores><vServPrest><vServ>2400.00</vServ></vServPrest><trib><tribMun><tribISSQN>1</tribISSQN><tpRetISSQN>1</tpRetISSQN></tribMun>
 <totTrib><pTotTribSN>6.00</pTotTribSN></totTrib></trib></valores></infDPS></DPS></infNFSe></NFSe>`;
 })();
+
+// 047: Contratos lê os cadastros pela função fin_recorrente_opcoes (só nomes; dados do cliente só de quem tem fatura)
+(() => {
+  const doCliente = (lista, c) => (lista ?? []).filter((x) => x.cliente_id === c);
+  RPCS.fin_recorrente_opcoes = ({ p_cliente }) => {
+    const pessoas = doCliente(TABELAS.fin_pessoas, p_cliente);
+    const comFatura = new Set((TABELAS.fin_faturas ?? []).filter((f) => f.cliente_id === p_cliente).map((f) => f.pessoa_id));
+    return {
+      pessoas: pessoas.map(({ id, nome, tipo, ativo }) => ({ id, nome, tipo, ativo })),
+      categorias: doCliente(TABELAS.fin_categorias, p_cliente).map(({ id, nome, tipo, grupo, ativo }) => ({ id, nome, tipo, grupo, ativo })),
+      centros: doCliente(TABELAS.fin_centros_custo, p_cliente).map(({ id, nome, ativo }) => ({ id, nome, ativo })),
+      contas: doCliente(TABELAS.fin_contas_bancarias, p_cliente).map(({ id, nome, ativo }) => ({ id, nome, ativo })),
+      tomadores: pessoas
+        .filter((p) => comFatura.has(p.id))
+        .map(({ id, nome, documento, email, cidade, uf }) => ({ id, nome, documento, email, cidade, uf })),
+    };
+  };
+})();

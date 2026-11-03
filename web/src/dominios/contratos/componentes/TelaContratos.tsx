@@ -26,8 +26,7 @@ import { Indicador } from "@/components/ui/Indicador";
 import { JanelaMotivo } from "@/components/ui/JanelaMotivo";
 import { Valor } from "@/components/ui/Valor";
 import { SemEmpresaGestao, useClienteGestao } from "@/dominios/organizacao/componentes/EmpresaEmGestao";
-import { lerCategorias, lerCentros, lerContas, lerPessoas } from "@/dominios/financeiro/leituras";
-import { lerContratos, lerReajustes } from "../leituras";
+import { lerContratos, lerOpcoesContrato, lerReajustes } from "../leituras";
 import { encerrarContrato, reativarContrato, suspenderContrato } from "../repositorio";
 import { proximoReajuste, reajustePendente, SITUACOES_RECORRENTE, terminaEm, textoReajuste, textoVigencia } from "../regras";
 import type { Recorrente, SituacaoRecorrente } from "../tipos";
@@ -78,13 +77,7 @@ export function TelaContratos() {
   const cad = useConsulta(
     useCallback(async () => {
       if (!cliente) return null;
-      const [pessoas, categorias, centros, contas] = await Promise.all([
-        lerPessoas(cliente.id),
-        lerCategorias(cliente.id),
-        lerCentros(cliente.id),
-        lerContas(cliente.id),
-      ]);
-      return { pessoas, categorias, centros, contas };
+      return lerOpcoesContrato(cliente.id);
     }, [cliente]),
   );
   const consulta = useConsulta(

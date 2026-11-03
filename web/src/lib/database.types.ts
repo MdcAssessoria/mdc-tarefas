@@ -3435,6 +3435,9 @@ export type Database = {
           nome: string;
           org_id: string;
           ref_id: string | null;
+          retirado_em: string | null;
+          retirado_motivo: string | null;
+          retirado_por: string | null;
           tamanho: number | null;
           tipo: string | null;
           visivel_cliente: boolean;
@@ -3449,6 +3452,9 @@ export type Database = {
           nome: string;
           org_id: string;
           ref_id?: string | null;
+          retirado_em?: string | null;
+          retirado_motivo?: string | null;
+          retirado_por?: string | null;
           tamanho?: number | null;
           tipo?: string | null;
           visivel_cliente?: boolean;
@@ -3463,6 +3469,9 @@ export type Database = {
           nome?: string;
           org_id?: string;
           ref_id?: string | null;
+          retirado_em?: string | null;
+          retirado_motivo?: string | null;
+          retirado_por?: string | null;
           tamanho?: number | null;
           tipo?: string | null;
           visivel_cliente?: boolean;
@@ -6422,6 +6431,7 @@ export type Database = {
         Args: { p_contrato: string; p_motivo: string };
         Returns: Json;
       };
+      fin_recorrente_opcoes: { Args: { p_cliente: string }; Returns: Json };
       fin_recorrente_salvar: { Args: { p: Json }; Returns: Json };
       fin_recorrente_suspender: {
         Args: { p_contrato: string; p_motivo: string };
@@ -6513,6 +6523,7 @@ export type Database = {
         Args: { p_org: string; p_perfil: string; p_user: string };
         Returns: number;
       };
+      hub_arquivo_retirar: { Args: { p_arquivo: string; p_motivo: string }; Returns: undefined };
       hub_cancelar_convite: {
         Args: { p_email: string; p_org: string };
         Returns: undefined;
@@ -6685,6 +6696,7 @@ export type Database = {
         Args: { p_fatura: string; p_por?: string };
         Returns: Json;
       };
+      org_definir_empresa_gestao: { Args: { p_cliente: string; p_motivo?: string; p_org: string }; Returns: string };
       portal_abrir_conversa: {
         Args: {
           p_assunto: string;
