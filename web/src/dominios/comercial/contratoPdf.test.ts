@@ -152,3 +152,46 @@ describe("contrato em PDF", () => {
     }
   });
 });
+
+/** Conteúdo bruto (descompactado) de cada página. */
+async function conteudoDasPaginas(bytes: Uint8Array): Promise<string[]> {
+  const doc = await PDFDocument.load(bytes);
+  return doc.getPages().map((p) => {
+    const c = p.node.Contents();
+    const refs = c instanceof PDFArray ? c.asArray() : c ? [c] : [];
+    return refs
+      .map((r) => {
+        const s = doc.context.lookup(r);
+        if (!(s instanceof PDFRawStream)) return "";
+        const bruto = Buffer.from(s.contents);
+        try {
+          return inflateSync(bruto).toString("latin1");
+        } catch {
+          return bruto.toString("latin1");
+        }
+      })
+      .join("\n");
+  });
+}
+
+describe("minuta (DES-01)", () => {
+  const MINUTA_HEX = Buffer.from("MINUTA", "latin1").toString("hex").toUpperCase();
+  const temMarca = (c: string) => c.toUpperCase().includes(`<${MINUTA_HEX}>`);
+
+  it("contrato em rascunho tem a marca d'água MINUTA em todas as páginas", async () => {
+    const bytes = await gerarContratoPdf({
+      texto: texto(30),
+      numero: "2026/042",
+      rascunho: true,
+      contratante: { nome: "Cliente", representante: "Fulano" },
+    });
+    const paginas = await conteudoDasPaginas(bytes);
+    expect(paginas.length).toBeGreaterThan(1);
+    for (const c of paginas) expect(temMarca(c)).toBe(true);
+  });
+
+  it("contrato definitivo não tem a marca", async () => {
+    const paginas = await conteudoDasPaginas(await contrato(30));
+    for (const c of paginas) expect(temMarca(c)).toBe(false);
+  });
+});

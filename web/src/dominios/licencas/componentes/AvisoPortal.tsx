@@ -1,21 +1,26 @@
 // Aviso do Portal do Cliente quando a MDC bloqueou o acesso aos módulos pagos (licença). Aparece no lugar dos módulos
 // pagos; as áreas do serviço contábil (demonstrativos, rotinas, chat, documentos) continuam abertas. Não mostra o
-// motivo do bloqueio (é anotação interna da MDC).
+// motivo do bloqueio (é anotação interna da MDC). Desde 03/11/2026 o cliente não tem mais Financeiro, Entradas etc.
+// no Portal (a gestão do HUB é só da MDC): esses módulos não entram no aviso, e o texto fala do Portal, não do "HUB"
+// (UX-02 da reauditoria).
 "use client";
 
 import { useCallback } from "react";
 import { useConsulta } from "@/lib/useConsulta";
+import { ehModuloGestao } from "@/components/shell/navegacao";
 import { lerSituacaoPortal } from "../leituras";
 
 export function AvisoBloqueioPortal({ cliente, telefone, aoFalar }: { cliente: string; telefone: string; aoFalar?: () => void }) {
   const { dados } = useConsulta(useCallback(() => lerSituacaoPortal(cliente), [cliente]));
   if (!dados?.bloqueado) return null;
-  const modulos = dados.modulos.map((m) => m.nome).join(", ");
+  const doPortal = dados.modulos.filter((m) => !ehModuloGestao(m.slug));
+  if (dados.modulos.length > 0 && doPortal.length === 0) return null;
+  const modulos = doPortal.map((m) => m.nome).join(", ");
   return (
     <section role="status" className="mb-5 rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-950">
-      <h2 className="font-semibold">Alguns serviços do HUB estão pausados</h2>
+      <h2 className="font-semibold">Parte do seu Portal está pausada</h2>
       <p className="mt-1 text-sm">
-        {modulos ? `O acesso a ${modulos} está suspenso no momento.` : "O acesso aos módulos contratados está suspenso no momento."} Seus
+        {modulos ? `O acesso a ${modulos} está pausado no momento.` : "Parte do Portal está pausada no momento."} Seus
         dados continuam guardados com segurança e voltam a aparecer assim que tudo for regularizado.
       </p>
       <p className="mt-2 text-sm">

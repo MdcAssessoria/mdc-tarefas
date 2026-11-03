@@ -1,5 +1,5 @@
 // Contrato em PDF no layout MDC (gerado no navegador com pdf-lib).
-import { PDFDocument, PDFFont, PDFImage, PDFPage, StandardFonts, rgb } from "pdf-lib";
+import { PDFDocument, PDFFont, PDFImage, PDFPage, StandardFonts, degrees, rgb } from "pdf-lib";
 import { IDENTIDADE_MDC, linhaResponsavel } from "@/lib/identidade";
 import { formatarDocumento, soDigitos } from "@/lib/documento";
 
@@ -25,6 +25,25 @@ const limpar = (s: string) =>
  * `brl()` põe depois do "R$" segura o símbolo junto do valor ("R$ 3.500,00" nunca fica "R$" no fim da linha).
  */
 export const palavras = (s: string) => s.split(/[ \t\n]+/).filter(Boolean);
+
+/** Texto da marca d'água do contrato em rascunho (todas as páginas). */
+export const MARCA_MINUTA = "MINUTA";
+
+/** "MINUTA" grande, na diagonal e clara, no meio da página: não esconde o texto, mas não deixa dúvida. */
+function marcaMinuta(p: PDFPage, fonte: PDFFont) {
+  const tam = 110;
+  const larg = fonte.widthOfTextAtSize(MARCA_MINUTA, tam);
+  const ang = (35 * Math.PI) / 180;
+  p.drawText(MARCA_MINUTA, {
+    x: W / 2 - (larg / 2) * Math.cos(ang) + (tam / 3) * Math.sin(ang),
+    y: H / 2 - (larg / 2) * Math.sin(ang) - (tam / 3) * Math.cos(ang),
+    size: tam,
+    font: fonte,
+    color: DOURADO_ESC,
+    opacity: 0.2,
+    rotate: degrees(35),
+  });
+}
 
 /** Começo do fecho do modelo ("E, por estarem de acordo, as partes assinam…"). */
 const FECHO = /^e,?\s+por\s+estarem\b/i;
@@ -306,6 +325,8 @@ export async function gerarContratoPdf(d: DadosContratoPdf): Promise<Uint8Array>
     }
     p.drawRectangle({ x: 0, y: 0, width: W, height: 14, color: VERDE });
     p.drawRectangle({ x: 0, y: 14, width: W, height: 2, color: DOURADO });
+    // DES-01: minuta impressa não pode passar por contrato definitivo — marca d'água em todas as páginas
+    if (d.rascunho) marcaMinuta(p, b);
   });
   return pdf.save();
 }
