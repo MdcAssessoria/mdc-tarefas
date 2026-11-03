@@ -2,7 +2,8 @@
 // Mesmo jeito do LancarTitulo: fornecedor/cliente digitado na hora (o banco cadastra junto), categoria com
 // "+ Nova categoria" e "Mais informações" para centro de custo, banco e observação. Guarda também número, objeto e
 // vigência (com renovação automática e aviso antes do fim). Mostra em uma frase o que o HUB vai fazer todo mês.
-// Editar vale para as próximas contas; as já lançadas não mudam.
+// Editar vale para as próximas contas; as já lançadas não mudam. Contrato A RECEBER tem também o faturamento (043):
+// dia de gerar (ao lado do "Vence todo dia"), o que enviar ao cliente e por onde (CamposFaturamento).
 "use client";
 
 import { useMemo, useState } from "react";
@@ -18,8 +19,11 @@ import { NovaCategoriaRapida } from "@/dominios/financeiro/componentes/NovaCateg
 import { numeroBr, valorParaCampo } from "@/dominios/financeiro/regras";
 import type { TipoTitulo } from "@/dominios/financeiro/tipos";
 import { salvarContrato } from "../repositorio";
-import { INDICES_RECORRENTE, MESES_ANO, primeiroDia, vencimentoNoMes } from "../regras";
+import { INDICES_RECORRENTE, MESES_ANO, primeiroDia } from "../regras";
+import { conferirFaturamento, dataGeracao, documentoDoEnvio, soDigitosTel, venceNoMesSeguinte, vencimentoDoMes } from "../faturamento";
+import type { FaturamentoForm } from "../faturamento";
 import type { IndiceRecorrente, Recorrente } from "../tipos";
+import { CamposFaturamento } from "./CamposFaturamento";
 
 const TIPOS: { id: TipoTitulo; nome: string; exemplo: string }[] = [
   { id: "receber", nome: "A receber", exemplo: "Honorários mensais, mensalidades de clientes" },
@@ -51,7 +55,7 @@ type Form = {
 };
 
 /** Mês e ano em duas listas (funciona em qualquer navegador, inclusive no celular). Valor "AAAA-MM". */
-function CampoMes({
+export function CampoMes({
   rotulo,
   valor,
   aoMudar,
@@ -106,7 +110,7 @@ export function ContratoFixo({
   aoSalvar: (msg: string) => void;
   aoRecarregarCadastros?: () => void;
 }) {
-  const { pode } = useOrg();
+  const { pode, clientes } = useOrg();
   const podeCriarCategoria = pode("plano_contas", "operar") || pode("financeiro", "operar");
   const mesAtual = hoje.slice(0, 7);
   const anoAtual = Number(hoje.slice(0, 4));
@@ -139,6 +143,20 @@ export function ContratoFixo({
     observacao: editar?.observacao ?? "",
   }));
   const mudar = (p: Partial<Form>) => setF((x) => ({ ...x, ...p }));
+  const [fat, setFat] = useState<FaturamentoForm>(() => ({
+    envio: editar?.envio ?? "fatura",
+    diaGeracao: String(editar?.dia_geracao ?? 1),
+    canais: editar?.canais ?? [],
+    email: editar?.email_envio ?? "",
+    whatsapp: editar?.whatsapp_envio ?? "",
+    carteira: editar?.cliente_carteira_id ?? "",
+    servicoDescricao: editar?.servico_descricao ?? "",
+    servicoCodigo: editar?.servico_codigo ?? "",
+    iss: editar?.iss_aliquota != null ? String(editar.iss_aliquota).replace(".", ",") : "",
+  }));
+  const mudarFat = (p: Partial<FaturamentoForm>) => setFat((x) => ({ ...x, ...p }));
+  const receber = f.tipo === "receber";
+  const carteira = useMemo(() => clientes.filter((c) => c.ativo && c.id !== cliente.id), [clientes, cliente.id]);
 
   const tipoCat = f.tipo === "pagar" ? "despesa" : "receita";
   const rotuloPessoa = f.tipo === "pagar" ? "Fornecedor" : "Cliente";
@@ -157,6 +175,8 @@ export function ContratoFixo({
   const primeira = podeMudarPrimeira ? (primeiraEscolhida < mesAtual ? mesAtual : primeiraEscolhida) : editar!.gerar_desde.slice(0, 7);
   const fim = f.indeterminado ? "" : f.vigFim;
   const novaPessoa = f.pessoa.trim() && !cad.pessoas.some((p) => p.nome.toLowerCase() === f.pessoa.trim().toLowerCase());
+  const diaGeracao = receber ? Math.max(1, Math.min(28, Math.floor(Number(fat.diaGeracao) || 1))) : 1;
+  const geraEm = dataGeracao(primeira, f.tipo, diaGeracao);
 
   async function salvar() {
     setErro("");
@@ -170,6 +190,11 @@ export function ContratoFixo({
     if (fim && fim < f.vigIni) return setErro("O fim da vigência precisa ser depois do início.");
     if (f.indice === "fixo" && !(f.fixo.trim() && numeroBr(f.fixo) > -50 && numeroBr(f.fixo) <= 100))
       return setErro("Informe o percentual fixo do reajuste (ex.: 5).");
+    if (receber && f.geraContas) {
+      const problema = conferirFaturamento(fat, numeroBr);
+      if (problema) return setErro(problema);
+    }
+    const nf = documentoDoEnvio(fat.envio) === "nfse";
     setSalvando(true);
     try {
       const r = await salvarContrato({
@@ -196,6 +221,20 @@ export function ContratoFixo({
         percentual_fixo: f.indice === "fixo" ? numeroBr(f.fixo) : null,
         mes_reajuste: f.indice === "nenhum" ? null : Number(f.mesReajuste),
         observacao: f.observacao.trim() || null,
+        ...(receber
+          ? {
+              documento: documentoDoEnvio(fat.envio),
+              envio: fat.envio,
+              dia_geracao: diaGeracao,
+              canais: fat.canais,
+              email_envio: fat.email.trim() || null,
+              whatsapp_envio: fat.whatsapp.trim() ? soDigitosTel(fat.whatsapp) : null,
+              cliente_carteira: fat.carteira || null,
+              servico_descricao: fat.servicoDescricao.trim() || null,
+              servico_codigo: fat.servicoCodigo.trim() || null,
+              iss_aliquota: nf || fat.iss.trim() ? numeroBr(fat.iss) : null,
+            }
+          : {}),
       });
       aoSalvar(
         editar
@@ -203,8 +242,8 @@ export function ContratoFixo({
           : !f.geraContas
             ? "Contrato cadastrado (sem lançar contas no Financeiro)."
             : r.geradas
-              ? `Contrato cadastrado e a conta de ${fmtCompetencia(mesAtual)} já foi lançada no Financeiro.`
-              : `Contrato cadastrado. A primeira conta sai em ${fmtCompetencia(primeira)}.`,
+              ? `Contrato cadastrado e a conta de ${fmtCompetencia(mesAtual)} já foi lançada no Financeiro${receber ? " (com a fatura)" : ""}.`
+              : `Contrato cadastrado. A primeira ${receber ? "conta e fatura saem" : "conta sai"} em ${fmtData(geraEm)}.`,
       );
     } catch (e) {
       setErro(traduzirErro(e));
@@ -215,7 +254,7 @@ export function ContratoFixo({
   return (
     <Modal
       titulo={editar ? "Editar contrato" : "Novo contrato"}
-      descricao="Algo que se repete todo mês. O HUB lança a conta no Financeiro no dia 1 e lembra do reajuste e do fim da vigência."
+      descricao="Algo que se repete todo mês. O HUB lança a conta no Financeiro (a receber: com a fatura, no dia de gerar) e lembra do reajuste e do fim da vigência."
       aoFechar={aoFechar}
       largura="2xl"
     >
@@ -374,7 +413,7 @@ export function ContratoFixo({
 
       <fieldset className="rounded-md border border-[var(--borda)] p-3">
         <legend className="px-1 text-sm font-medium">Valor e contas do mês</legend>
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className={`grid gap-3 ${receber ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>
           <label className="campo">
             <span>Valor mensal (R$)</span>
             <input value={f.valor} onChange={(e) => mudar({ valor: e.target.value })} inputMode="decimal" placeholder="0,00" />
@@ -382,10 +421,21 @@ export function ContratoFixo({
               <small className="text-xs text-[var(--texto-suave)]">Mudar aqui vale para as próximas contas e fica no histórico.</small>
             )}
           </label>
+          {receber && (
+            <label className="campo">
+              <span>Gerar todo dia</span>
+              <input type="number" min={1} max={28} value={fat.diaGeracao} onChange={(e) => mudarFat({ diaGeracao: e.target.value })} />
+              <small className="text-xs text-[var(--texto-suave)]">Dia em que a conta e a fatura nascem (1 a 28).</small>
+            </label>
+          )}
           <label className="campo">
             <span>Vence todo dia</span>
             <input type="number" min={1} max={31} value={f.dia} onChange={(e) => mudar({ dia: e.target.value })} />
-            <small className="text-xs text-[var(--texto-suave)]">Se o mês não tiver esse dia (ex.: 31), vence no último dia.</small>
+            <small className="text-xs text-[var(--texto-suave)]">
+              {receber && venceNoMesSeguinte("receber", diaGeracao, dia)
+                ? "Vence no mês seguinte ao da geração (o dia é igual ou antes do dia de gerar)."
+                : "Se o mês não tiver esse dia (ex.: 31), vence no último dia."}
+            </small>
           </label>
         </div>
         <label className="mt-2 flex items-center gap-2 text-sm">
@@ -448,6 +498,8 @@ export function ContratoFixo({
         )}
       </fieldset>
 
+      {receber && f.geraContas && <CamposFaturamento f={fat} mudar={mudarFat} carteira={carteira} />}
+
       <details
         className="rounded-md border border-[var(--borda)] p-3"
         open={!!editar && !!(editar.centro_id || editar.conta_prevista_id || editar.observacao)}
@@ -489,11 +541,13 @@ export function ContratoFixo({
 
       {f.geraContas && valor > 0 && f.descricao.trim() && (
         <p className="rounded-md bg-[var(--fundo)] p-3 text-sm">
-          Todo dia 1º o HUB lança{" "}
+          {receber ? `Todo dia ${diaGeracao} o HUB gera` : "Todo dia 1º o HUB lança"}{" "}
           <strong>
             {f.descricao.trim()} · {fmtCompetencia(primeira)}
           </strong>{" "}
-          de <strong>{brl(valor)}</strong>, com vencimento em {fmtData(vencimentoNoMes(primeira, dia))}
+          de <strong>{brl(valor)}</strong>
+          {receber ? ` (conta e fatura; a primeira em ${fmtData(geraEm)})` : ""}, com vencimento em{" "}
+          {fmtData(vencimentoDoMes(primeira, f.tipo, diaGeracao, dia))}
           {fim && !f.renova ? `, até ${fmtCompetencia(fim)}` : ""}. A próxima será a de {fmtCompetencia(somarMeses(primeira, 1))}.
         </p>
       )}

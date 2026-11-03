@@ -20,6 +20,7 @@ import { saldoDoTitulo, SITUACOES, situacaoDoTitulo } from "@/dominios/financeir
 import { lerAnexos, lerContasDoContrato, lerEventos } from "../leituras";
 import { anexarArquivo } from "../repositorio";
 import { SITUACOES_RECORRENTE, textoReajuste, textoVigencia } from "../regras";
+import { CANAIS_ENVIO, fmtWhatsapp, NOME_DOCUMENTO, OPCOES_ENVIO, vencimentoDoMes } from "../faturamento";
 import type { Recorrente } from "../tipos";
 
 type AbaFicha = "dados" | "contas" | "anexos" | "historico";
@@ -36,6 +37,7 @@ const ICONE_EVENTO: Record<string, string> = {
   renovado: "atualizar",
   aviso: "sino",
   anexo: "clipe",
+  fatura: "arquivo",
 };
 
 function Linha({ rotulo, children }: { rotulo: string; children: React.ReactNode }) {
@@ -64,7 +66,7 @@ export function FichaContrato({
   aoFechar: () => void;
   aoMudar: (msg: string) => void;
 }) {
-  const { org } = useOrg();
+  const { org, clientes } = useOrg();
   const hoje = hojeISO(org.fuso);
   const [aba, setAba] = useState<AbaFicha>(abaInicial);
   const [erro, setErro] = useState("");
@@ -128,11 +130,40 @@ export function FichaContrato({
           {k.vigencia_fim && <Linha rotulo="Aviso antes do fim">{k.aviso_dias} dia(s)</Linha>}
           <Linha rotulo="Contas no Financeiro">
             {k.gera_contas
-              ? `Lança no dia 1 em ${k.tipo === "pagar" ? "Contas a pagar" : "Contas a receber"} desde ${fmtCompetencia(k.gerar_desde)}` +
+              ? `Lança no dia ${k.tipo === "receber" ? k.dia_geracao : 1} em ${k.tipo === "pagar" ? "Contas a pagar" : "Contas a receber"} desde ${fmtCompetencia(k.gerar_desde)}` +
                 (k.fim ? ` até ${fmtCompetencia(k.fim)}` : "") +
                 (k.ultima_competencia ? ` · última: ${fmtCompetencia(k.ultima_competencia)}` : "")
               : "Não lança contas (só guarda o contrato)"}
           </Linha>
+          {k.tipo === "receber" && k.gera_contas && (
+            <>
+              <Linha rotulo="Fatura">
+                {NOME_DOCUMENTO[k.documento]} · {OPCOES_ENVIO.find((o) => o.id === k.envio)?.titulo}
+                <span className="block text-xs text-[var(--texto-suave)]">
+                  Gera todo dia {k.dia_geracao}; a deste mês vence em{" "}
+                  {fmtData(vencimentoDoMes(hoje, "receber", k.dia_geracao, k.dia_vencimento))}
+                </span>
+              </Linha>
+              <Linha rotulo="Envio ao cliente">
+                {k.canais.length
+                  ? k.canais
+                      .map((c) => {
+                        const nome = CANAIS_ENVIO.find((x) => x.id === c)?.nome ?? c;
+                        if (c === "email") return `${nome}: ${k.email_envio}`;
+                        if (c === "whatsapp") return `${nome}: ${fmtWhatsapp(k.whatsapp_envio)}`;
+                        const cli = clientes.find((x) => x.id === k.cliente_carteira_id);
+                        return `${nome}: ${cli ? cli.nome_fantasia || cli.razao_social : "cliente da carteira"}`;
+                      })
+                      .join(" · ")
+                  : "Nenhum canal: baixe o PDF da fatura em Contratos › Faturas"}
+              </Linha>
+              {k.documento === "nfse" && (
+                <Linha rotulo="Serviço (nota fiscal)">
+                  {k.servico_descricao} · código {k.servico_codigo} · ISS {String(k.iss_aliquota ?? "").replace(".", ",")}%
+                </Linha>
+              )}
+            </>
+          )}
           <Linha rotulo="Reajuste">{textoReajuste(k)}</Linha>
           <Linha rotulo="Categoria">{categoria}</Linha>
           {k.objeto && <Linha rotulo="Objeto">{k.objeto}</Linha>}

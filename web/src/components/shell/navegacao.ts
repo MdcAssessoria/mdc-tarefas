@@ -125,11 +125,12 @@ export const NAV: Record<Modulo, { titulo: string; links: LinkModulo[]; grupos?:
   },
   centros_custo: { titulo: "Centros de custo", links: [{ href: "/centros-custo", nome: "Centros de custo" }] },
   relatorios: { titulo: "Relatórios", links: [{ href: "/relatorios", nome: "Relatórios" }] },
-  // Contratos fixos (041): cadastro, vigência, anexos, contas do mês no Financeiro e reajuste anual
+  // Contratos fixos (041): cadastro, vigência, anexos, contas do mês no Financeiro e reajuste anual; faturas (043)
   contratos: {
     titulo: "Contratos",
     links: [
       { href: "/contratos", nome: "Contratos" },
+      { href: "/contratos/faturas", nome: "Faturas" },
       { href: "/contratos/reajustes", nome: "Reajustes" },
     ],
   },

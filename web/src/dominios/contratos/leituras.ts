@@ -3,7 +3,7 @@ import { supabase } from "@/lib/supabase";
 import { lerTudo } from "@/lib/lerTudo";
 import type { Arquivo } from "@/lib/arquivos/armazenamento";
 import type { Titulo } from "@/dominios/financeiro/tipos";
-import type { EventoContrato, ReajusteRecorrente, Recorrente } from "./tipos";
+import type { EnvioDaFatura, EventoContrato, Fatura, ReajusteRecorrente, Recorrente } from "./tipos";
 
 export const lerContratos = (cliente: string) =>
   lerTudo<Recorrente>((de, ate) =>
@@ -56,6 +56,29 @@ export const lerAnexos = (contrato: string) =>
       .eq("app", "contratos")
       .eq("ref_id", contrato)
       .order("enviado_em", { ascending: false })
+      .order("id")
+      .range(de, ate),
+  );
+
+/** Faturas dos contratos a receber da empresa (mais recentes primeiro). */
+export const lerFaturas = (cliente: string) =>
+  lerTudo<Fatura>((de, ate) =>
+    supabase()
+      .from("fin_faturas")
+      .select("*")
+      .eq("cliente_id", cliente)
+      .order("emissao", { ascending: false })
+      .order("sequencia", { ascending: false })
+      .range(de, ate),
+  );
+
+/** Fila de envio das faturas da empresa. */
+export const lerEnvios = (cliente: string) =>
+  lerTudo<EnvioDaFatura>((de, ate) =>
+    supabase()
+      .from("fin_envios")
+      .select("id,fatura_id,canal,destino,conteudo,situacao,tentativas,ultimo_erro,enviado_em")
+      .eq("cliente_id", cliente)
       .order("id")
       .range(de, ate),
   );

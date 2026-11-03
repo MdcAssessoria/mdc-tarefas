@@ -142,7 +142,7 @@ históricas acima que citam o Portal, `cliente_tem_modulo` e `financeiro_ver` va
 | Plano de contas (importar) e categorias | Plano de contas, Financeiro (só equipe) | `fin_importar_plano`, políticas de `fin_categorias` |
 | Centros de custo | Centros de custo, Financeiro (só equipe) | políticas de `fin_centros_custo` |
 | Relatórios | ninguém grava (só leitura) | — |
-| Contratos fixos (041/042): cadastrar, editar, suspender, reativar, encerrar, reajustar, anexar | Contratos (só equipe; o Portal não vê). As contas do mês nascem no Financeiro pelo caminho interno `app.fin_lancar_titulos`. **Leitura própria (042):** só fornecedores/clientes, categorias, centros, bancos e as contas que o próprio contrato gerou (política `contratos_ver`); Contratos **não** está em `app.modulos_gestao()` e não lê o resto do Financeiro, notas nem estoque | `app.contratos_pode`, `fin_recorrente_*`, `fin_indices_atualizar`, políticas `contratos_ver` |
+| Contratos fixos (041/042/043): cadastrar, editar, suspender, reativar, encerrar, reajustar, anexar; gerar fatura à mão e cancelar fatura (043, operar, sempre com motivo) | Contratos (só equipe; o Portal não vê contratos). Faturas e fila de envio (`fin_faturas`, `fin_envios`): leitura com Contratos (ver), gravação só pelas funções, nada se apaga, gatilho `gestao_so_empresa`. **Portal (043):** o cliente lê só as faturas publicadas para o próprio cadastro (`cliente_carteira_id`) pela função `portal_minhas_faturas(cliente)`, que exige o login do Portal desse cliente com a permissão `documentos`; a tabela continua fechada para o Portal. As contas do mês nascem no Financeiro pelo caminho interno `app.fin_lancar_titulos`. **Leitura própria (042):** só fornecedores/clientes, categorias, centros, bancos e as contas que o próprio contrato gerou (política `contratos_ver`); Contratos **não** está em `app.modulos_gestao()` e não lê o resto do Financeiro, notas nem estoque | `app.contratos_pode`, `fin_recorrente_*`, `fin_indices_atualizar`, políticas `contratos_ver` |
 | **Sensível (estrito no Financeiro)**: certificado A1 (gerir), regras dos tipos de entrada (gerir), estoque negativo (gerir), contas bancárias, importar e desfazer extrato, parâmetros de notas (operar) | Financeiro | `fis_pode_certificado`, `fis_salvar_tipo_entrada`, `est_definir_negativo`, `fin_contas_bancarias`, `fin_importar_extrato`, `fin_desfazer_lote`, `fis_salvar_parametros` |
 
 **Gestão só da MDC (042, decisão do Edvaldo em 02–03/11/2026).** A gestão (Financeiro, Entradas, Saídas, Estoque, Centros de
@@ -150,7 +150,8 @@ custo, Plano de contas, Relatórios e Contratos) vale só para a empresa da pró
 (na MDC, o cadastro de CNPJ 48.140.121/0001-65). `app.empresa_gestao(cliente)` entra em `app.gestao_pode`, `app.fin_pode`,
 `app.contratos_pode`, `fis_pode_certificado` e nas leituras de plano e bancos; o gatilho `gestao_so_empresa` em todas as
 tabelas `fin_*`, `fis_*` e `est_*` com `cliente_id` recusa gravar outra empresa ("A gestão do HUB é só da empresa da MDC"),
-inclusive pelas Funções Edge. O Portal do Cliente não lê mais gestão. A Cobrança Ledgra (`lic_*`) continua listando clientes.
+inclusive pelas Funções Edge. A rotina dos contratos e a captura de notas (`fis_captura_reservar`) também filtram a empresa
+da gestão (043, BD-01/BD-02): um cadastro antigo de outra empresa é ignorado e não trava a rotina. O Portal do Cliente não lê mais gestão. A Cobrança Ledgra (`lic_*`) continua listando clientes.
 
 **Arquivos (042).** No bucket `hub-arquivos` a equipe só lê o arquivo que tem registro em `hub_arquivos` visível pela regra do
 módulo (039), a logo (`marca`) e o que ela mesma enviou; envia só na pasta de um módulo que opera (`marca`: gestor); apaga só o
