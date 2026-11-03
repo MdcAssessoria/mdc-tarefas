@@ -109,7 +109,8 @@ npx supabase functions deploy convite --project-ref bulqqdgfrrpqquqvjjfa --impor
   ```
   Vai **com a checagem de login ligada** (`verify_jwt = true` no `config.toml`). Sem segredo novo (usa as variáveis que o
   Supabase injeta). Pelo conector: o mesmo bundle das funções fiscais, dentro de `supabase/functions/nfse-emitir`. O teste
-  pede `xmlsec1` e `xmllint` (`apt-get install xmlsec1 libxml2-utils`).
+  pede `xmlsec1` e `xmllint` (`apt-get install xmlsec1 libxml2-utils`). Publicada pelo conector em 03/11/2026 (v1), logo
+  depois da 046; a emissão começa no ambiente de teste (produção restrita) e no modo "conferir".
 - Segredos das funções (chave de serviço etc.) ficam no painel: Edge Functions › Secrets. Nunca no código.
 - Ledgra Link (043): `LEDGRA_LINK_URL` (endereço do Ledgra Link, ex.: `https://link.ledgra.com.br`), `LEDGRA_LINK_CHAVE`
   (chave do HUB no Ledgra Link, começa com `llk_`) e `LEDGRA_LINK_SEGREDO_WEBHOOK` (segredo mostrado uma vez pelo Ledgra

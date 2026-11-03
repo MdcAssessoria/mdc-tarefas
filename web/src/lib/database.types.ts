@@ -4798,7 +4798,7 @@ export type Database = {
           {
             foreignKeyName: "nfse_parametros_cliente_id_fkey";
             columns: ["cliente_id"];
-            isOneToOne: false;
+            isOneToOne: true;
             referencedRelation: "clientes";
             referencedColumns: ["id"];
           },
@@ -6677,8 +6677,14 @@ export type Database = {
       };
       nfse_parametros_salvar: { Args: { p: Json }; Returns: Json };
       nfse_preparar: { Args: { p_fatura: string }; Returns: Json };
-      nfse_registrar_resultado: { Args: { p: Json; p_emissao: string }; Returns: Json };
-      nfse_reservar: { Args: { p_fatura: string; p_por?: string }; Returns: Json };
+      nfse_registrar_resultado: {
+        Args: { p: Json; p_emissao: string };
+        Returns: Json;
+      };
+      nfse_reservar: {
+        Args: { p_fatura: string; p_por?: string };
+        Returns: Json;
+      };
       portal_abrir_conversa: {
         Args: {
           p_assunto: string;
