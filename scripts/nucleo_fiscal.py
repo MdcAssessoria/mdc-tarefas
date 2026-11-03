@@ -1,12 +1,12 @@
-# Gera a cópia do núcleo puro das notas fiscais usado pelas Funções Edge fiscais (fiscal-captura, fiscal-manifestar).
-# Origem: web/src/dominios/notas/{xml,sefaz,documentos,regras}.ts → supabase/functions/_fiscal/nucleo/ (o Deno exige
+# Gera a cópia do núcleo puro das notas fiscais usado pelas Funções Edge fiscais (fiscal-captura, fiscal-manifestar, nfse-emitir).
+# Origem: web/src/dominios/notas/{xml,sefaz,documentos,regras,dps}.ts → supabase/functions/_fiscal/nucleo/ (o Deno exige
 # a extensão .ts nos imports). Rode por scripts/sync-funcoes.sh; `npm run nucleo` confere se as cópias estão em dia.
 import os
 import re
 
 ORIGEM = "web/src/dominios/notas/"
 DESTINO = "supabase/functions/_fiscal/nucleo/"
-ARQUIVOS = ["xml.ts", "sefaz.ts", "documentos.ts", "regras.ts"]
+ARQUIVOS = ["xml.ts", "sefaz.ts", "documentos.ts", "regras.ts", "dps.ts"]
 IMPORTA = re.compile(r'(from\s+")(\./[\w]+)(")')
 
 os.makedirs(DESTINO, exist_ok=True)
