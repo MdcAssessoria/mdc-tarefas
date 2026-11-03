@@ -7,8 +7,11 @@
 
 import { useCallback } from "react";
 import { useConsulta } from "@/lib/useConsulta";
-import { ehModuloGestao } from "@/components/shell/navegacao";
 import { lerSituacaoPortal } from "../leituras";
+
+/** Módulos da gestão (mesma lista de MODULOS_GESTAO em components/shell/navegacao.ts): não existem mais no Portal. */
+const SO_DA_MDC = new Set(["financeiro", "entradas", "saidas", "estoque", "centros_custo", "plano_contas", "relatorios", "contratos", "licencas"]);
+const ehModuloGestao = (slug: string) => SO_DA_MDC.has(slug);
 
 export function AvisoBloqueioPortal({ cliente, telefone, aoFalar }: { cliente: string; telefone: string; aoFalar?: () => void }) {
   const { dados } = useConsulta(useCallback(() => lerSituacaoPortal(cliente), [cliente]));
