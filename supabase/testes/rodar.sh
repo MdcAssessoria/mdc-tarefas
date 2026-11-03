@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Sobe um Postgres 16 temporário, aplica a base simulada + migrações 026/028/029/030/031/032/033/034 e roda os testes do Financeiro,
+# Sobe um Postgres 16 temporário, aplica a base simulada + migrações 026/028/029/030/031/032/033/034 (e, no fim, 035 a 046) e roda os testes do Financeiro,
 # Licenças, Notas fiscais, Estoque/pedidos e Transferências; depois 035 (módulos) e 036 (auditoria de 02/11/2026).
 # Cada linha "(deve falhar)" precisa terminar em ERROR com a mensagem em português; as demais, sem erro.
 set -euo pipefail
@@ -66,3 +66,8 @@ for f in testes/99_base_045.sql migrations/045_contratos_faturamento.sql; do
   $P -v ON_ERROR_STOP=1 -f "$R/$f" 2>&1 | grep -v NOTICE || true
 done
 $P -v conexao="host=$D port=$PORTA dbname=postgres user=postgres" -f "$R/testes/100_faturamento_045.sql" 2>&1 | grep -v "^SET$"
+# 046: emissão da NFS-e das faturas pelo Emissor Nacional (parâmetros, nDPS sem repetir, resultado, travas, bucket fiscal)
+for f in testes/101_base_046.sql migrations/046_nfse_emissao.sql; do
+  $P -v ON_ERROR_STOP=1 -f "$R/$f" 2>&1 | grep -v NOTICE || true
+done
+$P -v conexao="host=$D port=$PORTA dbname=postgres user=postgres" -f "$R/testes/102_nfse_046.sql" 2>&1 | grep -v "^SET$"
