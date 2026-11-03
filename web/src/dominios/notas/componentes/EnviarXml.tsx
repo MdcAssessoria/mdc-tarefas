@@ -7,6 +7,7 @@ import { Modal } from "@/components/ui/Modal";
 import { CampoArquivo } from "@/components/ui/CampoArquivo";
 import { brl } from "@/lib/formato/moeda";
 import { traduzirErro } from "@/lib/erros";
+import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { enviarXml, lerXmlDoArquivo } from "../repositorio";
 import type { NotaLida } from "../documentos";
 import { nomeModelo } from "./Comuns";
@@ -22,6 +23,7 @@ export function EnviarXml({
   aoFechar: () => void;
   aoConcluir: (msg: string) => void;
 }) {
+  const { org: organizacao } = useOrg(); // fuso da organização para a pasta do mês
   const [arquivos, setArquivos] = useState<{ arquivo: File; notas: NotaLida[]; erro?: string }[]>([]);
   const [ocupado, setOcupado] = useState(false);
   const [erros, setErros] = useState<string[]>([]);
@@ -47,7 +49,7 @@ export function EnviarXml({
     let total = 0;
     for (const a of arquivos.filter((x) => !x.erro)) {
       try {
-        const r = await enviarXml(org, cliente, a.arquivo);
+        const r = await enviarXml(org, cliente, a.arquivo, organizacao.fuso);
         total += r.enviadas;
         falhas.push(...r.erros.map((e) => `${a.arquivo.name}: ${e}`));
       } catch (e) {

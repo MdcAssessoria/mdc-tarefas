@@ -3,6 +3,8 @@
 import { supabase } from "@/lib/supabase";
 import { chamarFuncao } from "@/lib/funcoesEdge";
 import { exigir } from "@/lib/exigir";
+import { traduzirErro } from "@/lib/erros";
+import { hojeISO } from "@/lib/datas";
 import type { Json } from "@/lib/database.types";
 import { lerVariasNotas } from "./documentos";
 import type { NotaLida } from "./documentos";
@@ -32,28 +34,45 @@ export interface ResultadoManifestar {
 export const manifestar = (cliente: string, notas: string[], tipo: CodigoManifestacao, justificativa?: string) =>
   chamarFuncao<ResultadoManifestar>("fiscal-manifestar", { corpo: { cliente, notas, tipo, justificativa } });
 
+/** Nome do arquivo no Storage: a chave de acesso; sem chave, "nota-<número>" (nunca "null-…"). */
+function nomeDoUpload(n: NotaLida): string {
+  const chave = (n.chave ?? "").replace(/\D/g, "");
+  if (chave) return chave;
+  const numero = (n.numero ?? "").replace(/[^0-9A-Za-z]/g, "");
+  return `nota-${numero || "sem-numero"}`;
+}
+
 /**
  * XML avulso: lê no navegador (mesmo leitor da captura), guarda o arquivo no Storage em <org>/<cliente>/upload/AAAA/MM/
- * e registra a nota. Um arquivo pode trazer várias NFS-e (lote da prefeitura).
+ * (mês de hoje no fuso da organização) e registra a nota. Um arquivo pode trazer várias NFS-e (lote da prefeitura).
+ * Se o registro no banco falhar, o arquivo recém-guardado é apagado para não ficar órfão. Erros saem em português.
  */
-export async function enviarXml(org: string, cliente: string, arquivo: File): Promise<{ enviadas: number; erros: string[] }> {
+export async function enviarXml(
+  org: string,
+  cliente: string,
+  arquivo: File,
+  fuso?: string,
+): Promise<{ enviadas: number; erros: string[] }> {
   const texto = await arquivo.text();
   const notas = lerVariasNotas(texto);
   const erros: string[] = [];
   let enviadas = 0;
-  const mes = new Date().toISOString().slice(0, 7).replace("-", "/");
+  const mes = hojeISO(fuso).slice(0, 7).replace("-", "/");
   for (const n of notas) {
-    const caminho = `${org}/${cliente}/upload/${mes}/${n.chave}-${Date.now()}.xml`;
-    const up = await supabase()
-      .storage.from("fiscal")
-      .upload(caminho, new Blob([texto], { type: "application/xml" }), { contentType: "application/xml" });
+    const rotulo = n.numero ? `Nota ${n.numero}` : n.chave ? `Nota ${n.chave}` : "Nota sem número";
+    const caminho = `${org}/${cliente}/upload/${mes}/${nomeDoUpload(n)}-${Date.now()}.xml`;
+    const armazem = supabase().storage.from("fiscal");
+    const up = await armazem.upload(caminho, new Blob([texto], { type: "application/xml" }), { contentType: "application/xml" });
     if (up.error) {
-      erros.push(`${n.numero ?? n.chave}: não foi possível guardar o arquivo (${up.error.message}).`);
+      erros.push(`${rotulo}: não foi possível guardar o arquivo. ${traduzirErro(up.error)}`);
       continue;
     }
     const { error } = await supabase().rpc("fis_registrar_upload", { p: { cliente, caminho, nota: n as unknown as Json } });
-    if (error) erros.push(`Nota ${n.numero ?? ""}: ${error.message}`);
-    else enviadas++;
+    if (error) {
+      // sem o registro ninguém acha o arquivo: apaga para não deixar lixo no Storage (falha ao apagar não muda a mensagem)
+      await armazem.remove([caminho]).catch(() => undefined);
+      erros.push(`${rotulo}: ${traduzirErro(error)}`);
+    } else enviadas++;
   }
   return { enviadas, erros };
 }

@@ -19,7 +19,8 @@ export function decodificarEntidades(s: string): string {
   return s.replace(/&(#x[0-9a-fA-F]+|#\d+|[a-zA-Z]+);/g, (m, e: string) => {
     if (e[0] === "#") {
       const cod = e[1] === "x" || e[1] === "X" ? parseInt(e.slice(2), 16) : parseInt(e.slice(1), 10);
-      return Number.isFinite(cod) ? String.fromCodePoint(cod) : m;
+      // acima de 0x10FFFF não existe caractere: mantém o texto como veio em vez de derrubar a leitura
+      return Number.isFinite(cod) && cod <= 0x10ffff ? String.fromCodePoint(cod) : m;
     }
     return ENTIDADES[e] ?? m;
   });

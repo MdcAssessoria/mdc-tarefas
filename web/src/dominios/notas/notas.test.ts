@@ -1,6 +1,6 @@
 // Testes das regras puras das notas de entrada (XMLs fictícios em exemplosXml.ts).
 import { describe, expect, it } from "vitest";
-import { lerXml, txt } from "./xml";
+import { decodificarEntidades, lerXml, txt } from "./xml";
 import { direcaoParaEmpresa, lerDocumento, lerVariasNotas, notaDaEmpresa } from "./documentos";
 import {
   compactarDocZip,
@@ -375,5 +375,14 @@ describe("tipo de entrada", () => {
       categoria_id: "cat",
     });
     expect(regraDoTipo([], "revenda", "c1", "o1").movimenta_estoque).toBe(true);
+  });
+});
+
+describe("entidades do XML", () => {
+  it("converte entidades válidas e mantém as fora do Unicode sem derrubar a leitura", () => {
+    expect(decodificarEntidades("A &amp; B &#65;&#x42; &#x10FFFF;")).toBe("A & B AB \u{10FFFF}");
+    expect(decodificarEntidades("x &#x110000; y")).toBe("x &#x110000; y");
+    expect(decodificarEntidades("&#99999999999;")).toBe("&#99999999999;");
+    expect(txt(lerXml("<a><b>ok &#x110000;</b></a>"), "b")).toBe("ok &#x110000;");
   });
 });

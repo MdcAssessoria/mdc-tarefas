@@ -35,8 +35,11 @@ Toda tela e toda folha levam a faixa "Espelho gerado pelo HUB-MDC a partir do XM
 | Qualquer outro XML (ou layout que falhe) | Genérico | Lista "campo › valor" de tudo que tem texto (até 200 linhas), com o aviso do motivo |
 
 Regras: o montador (`espelho.ts`) é função pura e reaproveita `xml.ts` e `documentos.ts` (lerNFe, lerNfse, lerResNFe)
-sem mudá-los (eles vão para as Funções Edge; `espelho.ts` não vai). Arquivo com várias notas (lote) usa a chave/número
-da nota escolhida. Datas aparecem como escritas no XML (sem troca de fuso). No PDF, a tabela de itens quebra de folha
+sem mudá-los (eles vão para as Funções Edge; `espelho.ts` não vai). Arquivo com várias notas (lote) usa a chave da
+nota escolhida (NF-e, CT-e, NFS-e nacional) ou, no ABRASF, o número **e** o CNPJ/CPF do prestador; se a nota não estiver
+no arquivo, a janela avisa "Não encontrei esta nota dentro do arquivo guardado. Baixe o XML para conferir." em vez de
+mostrar outra nota (03/11/2026, achado C-02). Entidade numérica inválida no XML (`&#x110000;`) fica como texto, sem
+derrubar a leitura (S-07). Datas aparecem como escritas no XML (sem troca de fuso). No PDF, a tabela de itens quebra de folha
 sozinha, repetindo o cabeçalho da nota e o título das colunas; no celular os quadros ficam em duas colunas e a tabela
 de itens rola na horizontal dentro do quadro. Testes: `espelho.test.ts`, `espelhoPdf.test.ts` (1 folha para a nota
 pequena, várias para 120 itens) e `lib/codigoBarras128.test.ts` (exemplo 123456 → controle 44 e leitura de volta da
@@ -77,7 +80,7 @@ componentes em `componentes/`, telas em `web/src/app/(hub)/entradas/`.
 | De-para lembrado por empresa + CNPJ do fornecedor + código do item no fornecedor (com o fator) | `fis_depara_itens` |
 | Contas a pagar: uma por parcela via `public.fin_lancar` (descrição "NF 123 · Fornecedor (1/2)", documento "NF 123/1"); soma das parcelas não passa do valor da nota; título ganha `nota_id` | `fis_processar_nota` |
 | Desfazer: motivo obrigatório; recusa se alguma conta já teve pagamento; cancela as contas e estorna o estoque (recusa se ficar negativo) | `fis_desfazer_lancamento` |
-| XML avulso: lido no navegador com o mesmo leitor da captura; precisa ser da empresa (CNPJ raiz do emitente ou do destinatário/tomador); XML completo; mesma nota não entra duas vezes (resumo vira completa) | `fis_registrar_upload`, `repositorio.enviarXml` |
+| XML avulso: lido no navegador com o mesmo leitor da captura; precisa ser da empresa (CNPJ raiz do emitente ou do destinatário/tomador); XML completo; mesma nota não entra duas vezes (resumo vira completa). Pasta do mês pelo dia de hoje no fuso da organização; nome do arquivo pela chave (sem chave: `nota-<número>`); se o registro falhar, o arquivo guardado é apagado; erros em português (`traduzirErro`) | `fis_registrar_upload`, `repositorio.enviarXml` |
 | Créditos (estimativa): **Simples** sem crédito de ICMS/IPI/PIS/COFINS (LC 123/2006, art. 23); **Presumido** PIS/COFINS cumulativos sem crédito, ICMS destacado para contribuinte (revenda, matéria-prima, devolução) e IPI para indústria (matéria-prima); **Real** PIS 1,65% e COFINS 7,6% sobre revenda, insumos, serviços e devoluções, com o ICMS fora da base desde 30/05/2023 (Lei 14.592/2023), e ICMS/IPI como no Presumido; compra com CST 04–09 (monofásico, alíquota zero, isento, suspenso) não gera crédito; IBS/CBS 2026 só informativo. Tudo em `fis_regras_credito` (regra da organização tem preferência) | `creditos.ts`, `fis_regras_credito` |
 
 ## 3. Banco (migração 032)
