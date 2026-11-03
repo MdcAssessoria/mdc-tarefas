@@ -27,6 +27,11 @@
   "Próximo retorno". Retorno com data anterior a hoje (fuso da organização) aparece como atrasado.
 - Contrato: enquanto rascunho, os valores mudam; "Marcar como enviado/assinado" só com os valores salvos (o PDF salva
   sozinho). Enviado leva a oportunidade para "Proposta" quando estava antes dela.
+- Contrato em PDF (`contratoPdf.ts`, revisto em 03/11/2026 pelos achados C-03, D-01, D-02 e D-13): valor por extenso
+  na regra portuguesa ("um milhão e mil reais", "dois milhões e quinhentos mil reais", "mil" e não "um mil"); o
+  "R$" nunca se separa do valor na quebra de linha (só quebra em espaço comum); o fecho ("E, por estarem de acordo…") e a
+  linha de local e data vão sempre para a mesma página das assinaturas; o nome do contratante quebra pela largura da
+  coluna em até 2 linhas (com "…" se ainda sobrar) e o CNPJ/CPF de cada parte sai sob a linha de assinatura.
 
 ## 3. Código
 
