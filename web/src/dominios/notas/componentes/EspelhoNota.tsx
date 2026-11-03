@@ -22,8 +22,8 @@ export function EspelhoNota({ nota, avisar, aoFechar }: { nota: Nota; avisar: (t
   const consulta = useConsulta(
     useCallback(async () => {
       if (!caminho) throw new Error("Esta nota não tem o XML guardado no HUB.");
-      return montarEspelho(await lerXmlGuardado(caminho), { chave: nota.chave, numero: nota.numero });
-    }, [caminho, nota.chave, nota.numero]),
+      return montarEspelho(await lerXmlGuardado(caminho), { chave: nota.chave, numero: nota.numero, prestador: nota.emitente_doc });
+    }, [caminho, nota.chave, nota.numero, nota.emitente_doc]),
   );
   const e = consulta.dados;
   const [ocupado, setOcupado] = useState<"pdf" | "imprimir" | null>(null);

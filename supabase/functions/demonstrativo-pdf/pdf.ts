@@ -116,7 +116,8 @@ class Doc {
     const pal: { t: string; b: boolean }[] = [];
     let neg = boldBase;
     for (const parte of s.split("**")) {
-      for (const w of parte.split(/\s+/).filter(Boolean)) pal.push({ t: w, b: neg });
+      // só espaço comum: o espaço não separável do brl() mantém "R$" junto do valor na quebra de linha
+      for (const w of parte.split(/[ \t\n]+/).filter(Boolean)) pal.push({ t: w, b: neg });
       neg = !neg;
     }
     const linhas: { t: string; b: boolean }[][] = [];

@@ -10,7 +10,7 @@ export async function baixarContratoPdf(c: Pick<Contrato, "texto" | "numero" | "
   const bytes = await gerarContratoPdf({
     texto: c.texto,
     numero: c.numero ?? "",
-    contratante: { nome: c.valores.razao_social, representante: c.valores.representante },
+    contratante: { nome: c.valores.razao_social, representante: c.valores.representante, documento: c.valores.cnpj },
     logo: await carregarLogo(logoUrl),
     rascunho: c.status === "rascunho",
   });

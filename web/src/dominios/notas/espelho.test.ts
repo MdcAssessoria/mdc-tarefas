@@ -2,8 +2,10 @@
 import { describe, expect, it } from "vitest";
 import { dataHoraXml, formatarChave, montarEspelho, nomeArquivoEspelho, numeroDanfe } from "./espelho";
 import type { BlocoEspelho, Espelho } from "./espelho";
+import { ErroApp } from "@/lib/erros";
 import {
   CHAVE_CTE,
+  CNPJ_FORNECEDOR,
   CHAVE_NFE,
   CHAVE_NFE_COMPLETA,
   CHAVE_NFSE,
@@ -226,6 +228,22 @@ describe("espelho da NFS-e Nacional (DANFSe)", () => {
     expect(montarEspelho(lote, { chave: CHAVE_NFSE_COMPLETA }).identificacao[0].valor).toBe("87");
     expect(montarEspelho(lote, { chave: CHAVE_NFSE }).identificacao[0].valor).toBe("52");
   });
+
+  it("chave inexistente no lote: avisa em vez de mostrar outra nota", () => {
+    const lote = `<Lote>${NFSE.replace(/<\?xml[^>]*>/, "")}${NFSE_COMPLETA.replace(/<\?xml[^>]*>/, "")}</Lote>`;
+    const pedir = () => montarEspelho(lote, { chave: "9".repeat(50) });
+    expect(pedir).toThrow(ErroApp);
+    expect(pedir).toThrow("Não encontrei esta nota dentro do arquivo guardado. Baixe o XML para conferir.");
+    // sem chave nenhuma também não escolhe "a primeira"
+    expect(() => montarEspelho(lote, { chave: null })).toThrow(ErroApp);
+  });
+
+  it("chave inexistente num arquivo com vários nfeProc", () => {
+    const varios = `<Lote>${PROC_NFE.replace(/<\?xml[^>]*>/, "")}${PROC_NFE_COMPLETA.replace(/<\?xml[^>]*>/, "")}</Lote>`;
+    expect(montarEspelho(varios, { chave: CHAVE_NFE_COMPLETA }).chave).toBe(CHAVE_NFE_COMPLETA);
+    expect(montarEspelho(varios, { chave: CHAVE_NFE }).chave).toBe(CHAVE_NFE);
+    expect(() => montarEspelho(varios, { chave: "1".repeat(44) })).toThrow(ErroApp);
+  });
 });
 
 describe("espelho da NFS-e municipal (ABRASF)", () => {
@@ -244,6 +262,26 @@ describe("espelho da NFS-e municipal (ABRASF)", () => {
     expect(r(valor(e, "ISS retido")!)).toBe("Sim · R$ 75,00");
     expect(r(valor(e, "Valor líquido da NFS-e")!)).toBe("R$ 1.425,00");
     expect(bloco(e, "Descrição do serviço", "texto")!.texto).toBe("Manutenção preventiva de compressor de ar");
+  });
+
+  // Dois prestadores diferentes podem ter a mesma numeração: o número sozinho não identifica a nota.
+  const outroPrestador = NFSE_ABRASF.replace(/<\?xml[^>]*>/, "")
+    .replace("Manutenção Municipal de Teste Ltda", "Outro Prestador Ltda")
+    .replace(`<Cnpj>${CNPJ_FORNECEDOR}</Cnpj>`, "<Cnpj>99888777000166</Cnpj>");
+  const outroNumero = NFSE_ABRASF.replace(/<\?xml[^>]*>/, "").replace("<Numero>321</Numero>", "<Numero>322</Numero>");
+  const lote = `<ListaNfse>${outroPrestador}${outroNumero}${NFSE_ABRASF.replace(/<\?xml[^>]*>/, "")}</ListaNfse>`;
+
+  it("lote ABRASF: escolhe pelo número E pelo CNPJ do prestador", () => {
+    expect(montarEspelho(lote, { numero: "321", prestador: CNPJ_FORNECEDOR }).emitente.nome).toBe("Manutenção Municipal de Teste Ltda");
+    expect(montarEspelho(lote, { numero: "321", prestador: "99.888.777/0001-66" }).emitente.nome).toBe("Outro Prestador Ltda");
+    expect(montarEspelho(lote, { numero: "322", prestador: CNPJ_FORNECEDOR }).identificacao[0].valor).toBe("322");
+  });
+
+  it("lote ABRASF sem correspondência: avisa em português", () => {
+    expect(() => montarEspelho(lote, { numero: "999", prestador: CNPJ_FORNECEDOR })).toThrow(ErroApp);
+    expect(() => montarEspelho(lote, { numero: "322", prestador: "99888777000166" })).toThrow(
+      "Não encontrei esta nota dentro do arquivo guardado. Baixe o XML para conferir.",
+    );
   });
 });
 

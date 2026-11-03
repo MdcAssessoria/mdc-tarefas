@@ -105,7 +105,8 @@ export async function gerarRelatorioPdf(o: {
     if (y - h < RODAPE) novaPagina();
   };
   const paragrafo = (s: string, size = 9, cor = SUAVE) => {
-    const pal = s.split(/\s+/);
+    // só espaço comum: o espaço não separável do brl() mantém "R$" junto do valor na quebra de linha
+    const pal = s.split(/[ \t\n]+/);
     let linha = "";
     for (const p of pal) {
       const t = linha ? linha + " " + p : p;

@@ -2,9 +2,10 @@
 // razão social, UF, endereço etc. A pessoa continua podendo editar tudo à mão depois.
 "use client";
 
-import { useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { Icone } from "./Icone";
-import { consultarCnpj } from "@/lib/consultaCnpj";
+import { consultarCnpj, mesmoCnpj } from "@/lib/consultaCnpj";
+import { traduzirErro } from "@/lib/erros";
 import type { DadosCnpj } from "@/lib/consultaCnpj";
 import { cnpjValido, formatarDocumento } from "@/lib/documento";
 
@@ -26,17 +27,29 @@ export function CampoCnpj({
   const [erro, setErro] = useState<string | null>(null);
   const valido = cnpjValido(valor);
   const id = useId();
+  // o valor atual do campo e se já há busca em andamento, lidos depois do await (o estado da closure fica velho)
+  const valorAtual = useRef(valor);
+  const emAndamento = useRef(false);
+  useEffect(() => {
+    valorAtual.current = valor;
+  }, [valor]);
 
   async function buscar() {
+    if (emAndamento.current) return; // Enter repetido ou clique duplo não dispara outra consulta
+    const buscado = valor;
+    emAndamento.current = true;
     setErro(null);
     setBuscando(true);
     try {
-      const d = await consultarCnpj(valor);
-      aoMudar(d.cnpj || formatarDocumento(valor));
+      const d = await consultarCnpj(buscado);
+      // a pessoa trocou o CNPJ enquanto a Receita respondia: a resposta é de outro CNPJ e é descartada
+      if (!mesmoCnpj(buscado, valorAtual.current)) return;
+      aoMudar(d.cnpj || formatarDocumento(buscado));
       aoCarregar(d);
     } catch (e) {
-      setErro(e instanceof Error ? e.message : "Não foi possível consultar o CNPJ agora.");
+      if (mesmoCnpj(buscado, valorAtual.current)) setErro(traduzirErro(e));
     } finally {
+      emAndamento.current = false;
       setBuscando(false);
     }
   }
@@ -57,7 +70,7 @@ export function CampoCnpj({
           onKeyDown={(e) => {
             if (e.key === "Enter" && valido) {
               e.preventDefault();
-              void buscar();
+              if (!buscando) void buscar(); // com busca em andamento, Enter não dispara outra
             }
           }}
           onBlur={() => valido && aoMudar(formatarDocumento(valor))}

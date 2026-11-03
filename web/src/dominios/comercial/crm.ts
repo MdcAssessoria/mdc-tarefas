@@ -212,38 +212,47 @@ function ate999(n: number): string {
   return partes.join(" e ");
 }
 
+/**
+ * Inteiro por extenso, regra portuguesa: grupos de três algarismos (bilhão, milhão, mil, centenas) lidos em ordem;
+ * o "e" liga o último grupo não zerado ao anterior quando esse grupo é menor que 100 ou uma centena redonda
+ * (1.001.000 → "um milhão e mil"; 2.500.000 → "dois milhões e quinhentos mil"; 1.234 → "mil duzentos e trinta e quatro").
+ * Mil sozinho é "mil", nunca "um mil".
+ */
 function inteiroExtenso(n: number): string {
   if (n === 0) return "zero";
-  const grupos: [number, string, string][] = [
+  const escalas: [number, string, string][] = [
     [1e9, "bilhão", "bilhões"],
     [1e6, "milhão", "milhões"],
     [1e3, "mil", "mil"],
+    [1, "", ""],
   ];
-  const partes: string[] = [];
+  const grupos: { valor: number; texto: string }[] = [];
   let resto = n;
-  for (const [base, sing, plur] of grupos) {
+  for (const [base, sing, plur] of escalas) {
     const q = Math.floor(resto / base);
-    if (q) {
-      partes.push(base === 1e3 && q === 1 ? "mil" : `${ate999(q)} ${q === 1 ? sing : plur}`);
-      resto %= base;
-    }
+    resto %= base;
+    if (!q) continue;
+    const texto = base === 1 ? ate999(q) : base === 1e3 && q === 1 ? "mil" : `${ate999(q)} ${q === 1 ? sing : plur}`;
+    grupos.push({ valor: q, texto });
   }
-  if (resto) partes.push(ate999(resto));
-  // "e" antes do último grupo quando ele é menor que 100 ou centena redonda
-  if (partes.length > 1 && (resto < 100 || resto % 100 === 0) && resto) {
-    const ult = partes.pop()!;
-    return `${partes.join(" ")} e ${ult}`;
+  const ultimo = grupos[grupos.length - 1];
+  if (grupos.length > 1 && (ultimo.valor < 100 || ultimo.valor % 100 === 0)) {
+    return `${grupos
+      .slice(0, -1)
+      .map((g) => g.texto)
+      .join(" ")} e ${ultimo.texto}`;
   }
-  return partes.join(" ");
+  return grupos.map((g) => g.texto).join(" ");
 }
 
-/** 1250,5 → "mil, duzentos e cinquenta reais e cinquenta centavos" */
+/** 1250,5 → "mil duzentos e cinquenta reais e cinquenta centavos"; 1.000.000 → "um milhão de reais". */
 export function valorExtenso(v: number): string {
-  const reais = Math.floor(Math.round(v * 100) / 100);
-  const cent = Math.round((v - reais) * 100);
-  const r = reais
-    ? `${inteiroExtenso(reais)} ${reais === 1 ? "real" : /lh(ão|ões)$/.test(inteiroExtenso(reais)) ? "de reais" : "reais"}`
-    : "";
+  const total = Math.round(v * 100);
+  const reais = Math.floor(total / 100);
+  const cent = total % 100;
+  const porExtenso = reais ? inteiroExtenso(reais) : "";
+  // "de reais" só quando o número termina em milhão/milhões/bilhão/bilhões redondos
+  const r = reais ? `${porExtenso} ${reais === 1 ? "real" : /lh(ão|ões)$/.test(porExtenso) ? "de reais" : "reais"}` : "";
   const c = cent ? `${inteiroExtenso(cent)} ${cent === 1 ? "centavo" : "centavos"}` : "";
   return [r, c].filter(Boolean).join(" e ") || "zero real";
 }

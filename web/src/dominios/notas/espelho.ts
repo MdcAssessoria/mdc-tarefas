@@ -13,6 +13,7 @@
 import { brl } from "@/lib/formato/moeda";
 import { fmtData } from "@/lib/formato/datas";
 import { formatarDocumento } from "@/lib/documento";
+import { ErroApp } from "@/lib/erros";
 import { semAcento } from "@/lib/texto";
 import { lerNFe, lerNfse, lerResNFe } from "./documentos";
 import { achar, descendente, descendentes, filho, filhos, lerXml, num, txt } from "./xml";
@@ -1025,32 +1026,59 @@ function espelhoGenerico(raiz: NoXml, motivo?: string): Espelho {
 
 // ------------------------------------------------------------------------------------------------ porta de entrada
 
-/** Escolhe, num arquivo com várias notas (lote de NFS-e, vários nfeProc), a da chave/número pedido. */
-function escolherNoLote(raiz: NoXml, alvo?: { chave?: string | null; numero?: string | null }): NoXml {
+/** Qual nota abrir: a chave de acesso (NF-e, CT-e, NFS-e Nacional) ou, no ABRASF, o número e o CNPJ/CPF do prestador. */
+export interface AlvoEspelho {
+  chave?: string | null;
+  numero?: string | null;
+  prestador?: string | null;
+}
+
+export const ERRO_NOTA_FORA_DO_LOTE = "Não encontrei esta nota dentro do arquivo guardado. Baixe o XML para conferir.";
+
+/** Número da NFS-e sem zeros à esquerda ("000321" e "321" são a mesma nota). */
+const numeroNota = (s: string | null | undefined) => (s ?? "").trim().replace(/^0+(?=.)/, "");
+
+/**
+ * Escolhe, num arquivo com várias notas (lote de NFS-e, vários nfeProc/cteProc, lista ABRASF), a nota pedida.
+ * Sem correspondência lança `ErroApp`: mostrar outra nota do mesmo arquivo levaria a baixar o PDF errado.
+ */
+function escolherNoLote(raiz: NoXml, alvo?: AlvoEspelho): NoXml {
   const chave = so(alvo?.chave);
   for (const nome of ["NFSe", "nfeProc", "cteProc"]) {
     const lista = descendentes(raiz, nome);
-    if (lista.length > 1)
-      return (
-        lista.find(
-          (no) =>
-            chave &&
-            Object.values(descendente(no, nome === "NFSe" ? "infNFSe" : nome === "cteProc" ? "infCte" : "infNFe")?.atributos ?? {}).some(
-              (v) => so(v) === chave,
-            ),
-        ) ?? lista[0]
-      );
+    if (lista.length <= 1) continue;
+    const inf = nome === "NFSe" ? "infNFSe" : nome === "cteProc" ? "infCte" : "infNFe";
+    const achada = chave
+      ? lista.find((no) => Object.values(descendente(no, inf)?.atributos ?? {}).some((v) => so(v) === chave))
+      : undefined;
+    if (!achada) throw new ErroApp(ERRO_NOTA_FORA_DO_LOTE);
+    return achada;
   }
   const abrasf = descendentes(raiz, "CompNfse");
-  if (abrasf.length > 1) return abrasf.find((c) => alvo?.numero && txt(descendente(c, "InfNfse"), "Numero") === alvo.numero) ?? abrasf[0];
+  if (abrasf.length > 1) {
+    // dois prestadores podem usar a mesma numeração: confere o número E o CNPJ/CPF do prestador
+    const numero = numeroNota(alvo?.numero);
+    const prestador = so(alvo?.prestador);
+    const achada = numero
+      ? abrasf.find((c) => {
+          if (numeroNota(txt(descendente(c, "InfNfse"), "Numero")) !== numero) return false;
+          if (!prestador) return true;
+          const docXml = t(descendente(c, "PrestadorServico"), "Cnpj", "Cpf") ?? t(descendente(c, "Prestador"), "Cnpj", "Cpf");
+          return so(docXml) === prestador;
+        })
+      : undefined;
+    if (!achada) throw new ErroApp(ERRO_NOTA_FORA_DO_LOTE);
+    return achada;
+  }
   return raiz;
 }
 
 /**
  * Monta o espelho a partir do texto do XML guardado. `alvo` escolhe a nota certa quando o arquivo traz várias.
- * Lança erro em português só quando o arquivo não é XML; um XML de layout desconhecido vira o espelho genérico.
+ * Lança erro em português quando o arquivo não é XML ou quando a nota pedida não está no lote; um XML de layout
+ * desconhecido vira o espelho genérico.
  */
-export function montarEspelho(xml: string, alvo?: { chave?: string | null; numero?: string | null }): Espelho {
+export function montarEspelho(xml: string, alvo?: AlvoEspelho): Espelho {
   const raiz = escolherNoLote(lerXml(xml), alvo);
   try {
     if (raiz.nome === "resNFe") return espelhoResumo(raiz);
