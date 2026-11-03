@@ -71,3 +71,8 @@ for f in testes/101_base_046.sql migrations/046_nfse_emissao.sql; do
   $P -v ON_ERROR_STOP=1 -f "$R/$f" 2>&1 | grep -v NOTICE || true
 done
 $P -v conexao="host=$D port=$PORTA dbname=postgres user=postgres" -f "$R/testes/102_nfse_046.sql" 2>&1 | grep -v "^SET$"
+# 047: correções da reauditoria de 03/11/2026 (anexos sem apagar, empresa da Gestão auditada, Contratos sem cadastros, NaN, anexo do Portal)
+for f in testes/103_base_047.sql migrations/047_reauditoria_seguranca.sql; do
+  $P -v ON_ERROR_STOP=1 -f "$R/$f" 2>&1 | grep -v NOTICE || true
+done
+$P -f "$R/testes/104_reauditoria_047.sql" 2>&1 | grep -v "^SET$"
