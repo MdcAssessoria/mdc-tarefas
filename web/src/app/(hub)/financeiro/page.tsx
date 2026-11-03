@@ -1,6 +1,6 @@
-// Financeiro › Início: o painel da empresa escolhida. Saldo dos bancos (pelos extratos), o que vence hoje, o que está
+// Financeiro › Início: o painel da MDC. Saldo dos bancos (pelos extratos), o que vence hoje, o que está
 // vencido, os próximos 7 dias, o fluxo de caixa previsto dos próximos 30 dias (saldo atual + contas em aberto), o
-// realizado dos últimos 6 meses (pagamentos e recebimentos), as maiores despesas do mês e atalhos. Empresa sem nada
+// realizado dos últimos 6 meses (pagamentos e recebimentos), as maiores despesas do mês e atalhos. Sem nada
 // cadastrado vê os primeiros passos (plano → banco → categorias → lançar). Só lê; as contas ficam em painel.ts.
 "use client";
 
@@ -8,7 +8,7 @@ import Link from "next/link";
 import { useCallback, useMemo } from "react";
 import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { nomeCliente } from "@/dominios/clientes/nome";
-import { useClienteGestao } from "@/dominios/organizacao/componentes/EmpresaEmGestao";
+import { SemEmpresaGestao, useClienteGestao } from "@/dominios/organizacao/componentes/EmpresaEmGestao";
 import { Valor } from "@/components/ui/Valor";
 import { BarrasCategorias, GraficoFluxo, GraficoMeses } from "@/dominios/financeiro/componentes/GraficosPainel";
 import { PrimeirosPassos } from "@/dominios/financeiro/componentes/PrimeirosPassos";
@@ -40,7 +40,6 @@ import { brl } from "@/lib/formato/moeda";
 import { fmtData } from "@/lib/formato/datas";
 import { Icone } from "@/components/ui/Icone";
 import { Esqueleto } from "@/components/ui/Esqueleto";
-import { EstadoVazio } from "@/components/ui/EstadoVazio";
 
 const dataPorExtenso = (iso: string) =>
   new Intl.DateTimeFormat("pt-BR", { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" }).format(new Date(iso + "T12:00:00Z"));
@@ -50,8 +49,7 @@ const nomeDoMes = (mes: string) =>
 
 export default function PainelFinanceiro() {
   const { org, eu, pode } = useOrg();
-  const financeiro = useClienteGestao();
-  const { cliente, ativos, escolher } = financeiro;
+  const { cliente } = useClienteGestao();
   const podeOperar = pode("financeiro", "operar");
   const hoje = hojeISO(org.fuso);
 
@@ -109,7 +107,7 @@ export default function PainelFinanceiro() {
 
   return (
     <div className="space-y-5">
-      {/* faixa de abertura: saudação, empresa e o saldo dos bancos */}
+      {/* faixa de abertura: saudação e o saldo dos bancos */}
       <section className="relative overflow-hidden rounded-2xl bg-[var(--marca)] text-[var(--nevoa)]">
         <div
           className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full border border-[var(--destaque)]/20"
@@ -127,24 +125,12 @@ export default function PainelFinanceiro() {
               </h1>
               <p className="mt-0.5 text-sm first-letter:uppercase text-[var(--nevoa)]/75">{dataPorExtenso(hoje)}</p>
             </div>
-            <label className="block max-w-md">
-              <span className="mb-1 block text-[12px] text-[var(--nevoa)]/70">Empresa</span>
-              <select
-                value={cliente?.id ?? ""}
-                onChange={(e) => escolher(e.target.value)}
-                className="w-full rounded-lg border border-white/15 bg-white/[0.07] px-3 py-2 text-[15px] font-medium text-white outline-none focus:border-[var(--destaque)]"
-              >
-                <option value="" className="text-black">
-                  Escolha a empresa…
-                </option>
-                {ativos.map((c) => (
-                  <option key={c.id} value={c.id} className="text-black">
-                    {nomeCliente(c)}
-                    {c.codigo_dominio ? ` · cód. ${c.codigo_dominio}` : ""}
-                  </option>
-                ))}
-              </select>
-            </label>
+            {cliente && (
+              <p className="flex items-center gap-1.5 text-[13px] text-[var(--nevoa)]/80">
+                <Icone nome="banco" className="h-3.5 w-3.5 text-[var(--destaque)]" />
+                Financeiro da {nomeCliente(cliente)}
+              </p>
+            )}
           </div>
           {cliente && calc && (
             <div className="min-w-0 lg:text-right">
@@ -170,9 +156,7 @@ export default function PainelFinanceiro() {
       </section>
 
       {!cliente ? (
-        <EstadoVazio icone="moeda" titulo="Escolha a empresa">
-          Escolha a empresa na faixa acima para ver o saldo, as contas do dia e o fluxo de caixa dela.
-        </EstadoVazio>
+        <SemEmpresaGestao icone="moeda" />
       ) : consulta.erro ? (
         <p role="alert" className="rounded-md bg-red-50 p-3 text-sm text-red-800">
           {consulta.erro}

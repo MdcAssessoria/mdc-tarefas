@@ -1,4 +1,4 @@
-// Plano de contas (módulo próprio, /plano-contas): o plano da empresa, importado do Domínio (Excel/CSV exportado do "Plano de contas").
+// Plano de contas (módulo próprio, /plano-contas): o plano da MDC, importado do Domínio (Excel/CSV exportado do "Plano de contas").
 // Importar de novo atualiza: contas novas entram, as existentes são atualizadas e as que saíram do Domínio ficam
 // inativas (podem estar ligadas a banco ou lançamento). Lista com busca e exportação em PDF e Excel.
 "use client";
@@ -6,7 +6,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { nomeCliente } from "@/dominios/clientes/nome";
-import { EscolhaCliente, useClienteGestao } from "@/dominios/organizacao/componentes/EmpresaEmGestao";
+import { SemEmpresaGestao, useClienteGestao } from "@/dominios/organizacao/componentes/EmpresaEmGestao";
 import { lerPlano } from "@/dominios/financeiro/leituras";
 import { lerPlanoDominio } from "@/dominios/financeiro/planoDominio";
 import type { ContaPlano } from "@/dominios/financeiro/planoDominio";
@@ -194,7 +194,7 @@ export default function PaginaPlano() {
     <div className="space-y-4">
       <CabecalhoPagina
         titulo="Plano de contas"
-        descricao="O plano do Domínio de cada empresa, usado para ligar bancos e classificar lançamentos."
+        descricao="O plano de contas da MDC no Domínio, usado para ligar bancos e classificar lançamentos."
         acoes={
           <>
             <button className="btn" onClick={pdf} disabled={!lista.length} title="Baixar a lista filtrada em PDF">
@@ -210,7 +210,6 @@ export default function PaginaPlano() {
       />
 
       <CartaoFiltros ativos={filtrosAtivos} aoLimpar={limparFiltros}>
-        <EscolhaCliente gestao={financeiro} />
         <label className="campo">
           <span>Mostrar</span>
           <select value={filtro} onChange={(e) => setFiltro(e.target.value)}>
@@ -235,7 +234,7 @@ export default function PaginaPlano() {
               Importar o plano do Domínio
             </h2>
             <p className="text-sm text-neutral-600">
-              No Domínio, exporte o plano de contas da empresa em Excel ou CSV (com as colunas Classificação e Descrição) e escolha o
+              No Domínio, exporte o plano de contas da MDC em Excel ou CSV (com as colunas Classificação e Descrição) e escolha o
               arquivo aqui. Você confere antes de gravar. Importar de novo atualiza o plano sem apagar nada.
             </p>
           </div>
@@ -262,7 +261,7 @@ export default function PaginaPlano() {
                 return (
                   <p className={muito ? "rounded-md bg-red-50 p-2 font-medium text-red-800" : "text-neutral-700"}>
                     Comparado com o plano atual: {entram} conta(s) nova(s) e {saem} conta(s) que ficarão inativas.
-                    {muito && " Muitas contas sairiam: confira se este é mesmo o plano desta empresa antes de gravar."}
+                    {muito && " Muitas contas sairiam: confira se este é mesmo o plano da MDC antes de gravar."}
                   </p>
                 );
               })()}
@@ -311,16 +310,14 @@ export default function PaginaPlano() {
       )}
 
       {!cliente ? (
-        <EstadoVazio icone="lista" titulo="Escolha a empresa">
-          Escolha a empresa nos filtros acima para ver o plano de contas dela.
-        </EstadoVazio>
+        <SemEmpresaGestao icone="lista" />
       ) : consulta.carregando && !consulta.dados ? (
         <Esqueleto indicadores={0} linhas={8} />
       ) : !plano.length ? (
         <EstadoVazio icone="lista" titulo="Plano de contas ainda não importado">
           {podeOperar
             ? `Exporte o plano de ${nomeCliente(cliente)} no Domínio (Excel ou CSV) e solte o arquivo no quadro acima.`
-            : `O plano de contas de ${nomeCliente(cliente)} ainda não foi importado pela equipe MDC.`}
+            : `O plano de contas de ${nomeCliente(cliente)} ainda não foi importado. Peça a quem cuida do Plano de contas para importar.`}
         </EstadoVazio>
       ) : !lista.length ? (
         <EstadoVazio

@@ -19,7 +19,7 @@ import { EstadoVazio } from "@/components/ui/EstadoVazio";
 import { Icone } from "@/components/ui/Icone";
 import { QuadroTabela } from "@/components/ui/QuadroTabela";
 import { useAviso } from "@/components/ui/Aviso";
-import { EscolhaCliente, useClienteGestao } from "@/dominios/organizacao/componentes/EmpresaEmGestao";
+import { SemEmpresaGestao, useClienteGestao } from "@/dominios/organizacao/componentes/EmpresaEmGestao";
 import { BotoesExportar } from "@/components/ui/BotoesExportar";
 import { Chip } from "@/components/ui/Chip";
 import { FiltroPeriodo } from "@/components/ui/FiltroPeriodo";
@@ -209,8 +209,8 @@ export function TelaTitulos({ tipo }: { tipo: TipoTitulo }) {
         titulo={T.titulo}
         descricao={
           tipo === "pagar"
-            ? "O que a empresa tem para pagar: vencimentos, pagamentos e atrasos."
-            : "O que a empresa tem para receber: vencimentos, recebimentos e atrasos."
+            ? "O que a MDC tem para pagar: vencimentos, pagamentos e atrasos."
+            : "O que a MDC tem para receber: vencimentos, recebimentos e atrasos."
         }
         acoes={
           <>
@@ -248,7 +248,6 @@ export function TelaTitulos({ tipo }: { tipo: TipoTitulo }) {
       />
 
       <CartaoFiltros ativos={filtrosAtivos} aoLimpar={limparFiltros}>
-        <EscolhaCliente gestao={financeiro} />
         <FiltroPeriodo
           rotulo="Vencimento"
           periodo={periodo}
@@ -315,9 +314,7 @@ export function TelaTitulos({ tipo }: { tipo: TipoTitulo }) {
       )}
 
       {!cliente ? (
-        <EstadoVazio icone="moeda" titulo="Escolha a empresa">
-          Escolha a empresa nos filtros acima para ver as {T.titulo.toLowerCase()} dela.
-        </EstadoVazio>
+        <SemEmpresaGestao icone="moeda" />
       ) : consulta.carregando && !consulta.dados ? (
         <Esqueleto />
       ) : (
@@ -326,7 +323,7 @@ export function TelaTitulos({ tipo }: { tipo: TipoTitulo }) {
             <p className="flex items-start gap-2 rounded-lg bg-amber-50 p-3 text-sm text-amber-900">
               <Icone nome="info" className="mt-0.5 h-4 w-4 shrink-0" />
               <span>
-                Antes do primeiro lançamento, cadastre as {tipo === "pagar" ? "despesas" : "receitas"} da empresa em{" "}
+                Antes do primeiro lançamento, cadastre as {tipo === "pagar" ? "despesas" : "receitas"} da MDC em{" "}
                 <Link className="underline" href="/plano-contas/categorias">
                   Plano de contas › Despesas e receitas
                 </Link>{" "}

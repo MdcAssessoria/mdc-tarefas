@@ -8,7 +8,7 @@ import type { PassoInicial } from "../painel";
 const TEXTOS: Record<PassoInicial["id"], { titulo: string; texto: string; href: string; botao: string }> = {
   plano: {
     titulo: "Importe o plano de contas",
-    texto: "No Domínio, exporte o plano da empresa em Excel e traga para cá. Ele liga o Financeiro à contabilidade.",
+    texto: "No Domínio, exporte o plano da MDC em Excel e traga para cá. Ele liga o Financeiro à contabilidade.",
     href: "/plano-contas",
     botao: "Importar o plano",
   },
@@ -40,7 +40,7 @@ export function PrimeirosPassos({ passos, podeOperar }: { passos: PassoInicial[]
       <div className="flex flex-wrap items-end gap-3 border-b border-[var(--borda)] p-4 sm:p-5">
         <div className="mr-auto">
           <h2 className="font-semibold text-[var(--marca)]">Primeiros passos</h2>
-          <p className="text-sm text-[var(--texto-suave)]">Quatro passos para o Financeiro desta empresa começar a trabalhar sozinho.</p>
+          <p className="text-sm text-[var(--texto-suave)]">Quatro passos para o Financeiro da MDC começar a trabalhar sozinho.</p>
         </div>
         <div className="flex items-center gap-2 text-sm text-[var(--texto-suave)]">
           <span className="num">

@@ -16,7 +16,7 @@ import { Abas } from "@/components/ui/Abas";
 import { Carregando } from "@/components/ui/Carregando";
 import { EstadoVazio } from "@/components/ui/EstadoVazio";
 import { useAviso } from "@/components/ui/Aviso";
-import { EscolhaCliente, useClienteGestao } from "@/dominios/organizacao/componentes/EmpresaEmGestao";
+import { SemEmpresaGestao, useClienteGestao } from "@/dominios/organizacao/componentes/EmpresaEmGestao";
 import { BotoesExportar } from "@/components/ui/BotoesExportar";
 import { JanelaMotivo } from "@/components/ui/JanelaMotivo";
 import { lerCategorias, lerCentros, lerContas, lerItens, lerLocais, lerPessoas } from "@/dominios/financeiro/leituras";
@@ -118,14 +118,11 @@ function LancarNotaTela() {
         )}
       </div>
 
-      <div className="cartao flex flex-wrap items-end gap-3 p-4">
-        <EscolhaCliente gestao={financeiro} />
-      </div>
       {aviso}
       {consulta.erro && <p className="rounded-md bg-red-50 p-3 text-sm text-red-800">{consulta.erro}</p>}
 
       {!cliente ? (
-        <EstadoVazio>Escolha a empresa acima para lançar as notas dela.</EstadoVazio>
+        <SemEmpresaGestao />
       ) : consulta.carregando && !d ? (
         <Carregando />
       ) : nota && d ? (

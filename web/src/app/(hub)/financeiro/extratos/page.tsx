@@ -7,7 +7,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { nomeCliente } from "@/dominios/clientes/nome";
-import { EscolhaCliente, useClienteGestao } from "@/dominios/organizacao/componentes/EmpresaEmGestao";
+import { SemEmpresaGestao, useClienteGestao } from "@/dominios/organizacao/componentes/EmpresaEmGestao";
 import { lerContas, lerLinhas, lerLotes } from "@/dominios/financeiro/leituras";
 import { ImportarExtrato } from "@/dominios/financeiro/componentes/ImportarExtrato";
 import { ListaLotes } from "@/dominios/financeiro/componentes/ListaLotes";
@@ -226,7 +226,6 @@ export default function PaginaExtratos() {
       />
 
       <CartaoFiltros ativos={filtrosAtivos} aoLimpar={limparFiltros}>
-        <EscolhaCliente gestao={financeiro} />
         <label className="campo">
           <span>Conta</span>
           <select value={conta} onChange={(e) => setConta(e.target.value)} disabled={!cliente}>
@@ -294,9 +293,7 @@ export default function PaginaExtratos() {
       )}
 
       {!cliente ? (
-        <EstadoVazio icone="banco" titulo="Escolha a empresa">
-          Escolha a empresa nos filtros acima para ver os extratos dela.
-        </EstadoVazio>
+        <SemEmpresaGestao icone="banco" />
       ) : consulta.carregando && !consulta.dados ? (
         <Esqueleto />
       ) : (
@@ -326,7 +323,7 @@ export default function PaginaExtratos() {
             >
               {contas.dados?.length
                 ? "Troque o período ou importe o extrato do banco no quadro acima (arquivo OFX ou planilha)."
-                : "Cadastre a conta bancária da empresa em Bancos e depois importe o extrato aqui."}
+                : "Cadastre a conta bancária da MDC em Bancos e depois importe o extrato aqui."}
             </EstadoVazio>
           ) : (
             <QuadroTabela

@@ -18,8 +18,8 @@
 | `/saidas` | Saídas | **Pedidos de venda**: período, situação, busca; indicadores (vendido no período, rascunhos, a faturar, ticket médio); novo pedido; Editar, Confirmar, Faturar, Ver, PDF, Duplicar, Cancelar com motivo |
 | `/entradas/compras` | Entradas | **Pedidos de compra**: idem, com Receber (mercadoria chegou) e indicador "aguardando entrega" |
 
-`/financeiro/estoque` (tela antiga) redireciona para `/estoque` (`next.config.ts`). A empresa escolhida é a mesma do
-Financeiro (lembrada no navegador).
+`/financeiro/estoque` (tela antiga) redireciona para `/estoque` (`next.config.ts`). A empresa é sempre a MDC
+(`organizacoes.gestao_cliente_id`), como no Financeiro.
 
 ### Assistente de item (`AssistenteItem.tsx`)
 

@@ -22,7 +22,7 @@ import { BotoesExportar } from "@/components/ui/BotoesExportar";
 import { Chip } from "@/components/ui/Chip";
 import { Indicador } from "@/components/ui/Indicador";
 import { Valor } from "@/components/ui/Valor";
-import { EscolhaCliente, useClienteGestao } from "@/dominios/organizacao/componentes/EmpresaEmGestao";
+import { SemEmpresaGestao, useClienteGestao } from "@/dominios/organizacao/componentes/EmpresaEmGestao";
 import { lerContratos, lerReajustes } from "../leituras";
 import { reajustePendente, textoReajuste } from "../regras";
 import type { Recorrente } from "../tipos";
@@ -152,7 +152,6 @@ export function TelaReajustes() {
         }
       />
       <CartaoFiltros ativos={filtrosAtivos} aoLimpar={() => (setVisao("pendentes"), setBusca(""))}>
-        <EscolhaCliente gestao={gestao} />
         <label className="campo">
           <span>Mostrar</span>
           <select value={visao} onChange={(e) => setVisao(e.target.value as Visao)}>
@@ -173,9 +172,7 @@ export function TelaReajustes() {
         </p>
       )}
       {!cliente ? (
-        <EstadoVazio icone="tendencia" titulo="Escolha a empresa">
-          Escolha a empresa nos filtros acima para ver os reajustes dos contratos dela.
-        </EstadoVazio>
+        <SemEmpresaGestao icone="tendencia" />
       ) : consulta.carregando && !consulta.dados ? (
         <Esqueleto />
       ) : (

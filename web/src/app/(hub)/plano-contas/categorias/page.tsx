@@ -1,4 +1,4 @@
-// Plano de contas › Despesas e receitas (categorias) da empresa escolhida, cada uma ligada a uma conta analítica do plano.
+// Plano de contas › Despesas e receitas (categorias) da MDC, cada uma ligada a uma conta analítica do plano.
 "use client";
 
 import { CadCategorias } from "@/dominios/financeiro/componentes/CadCategorias";

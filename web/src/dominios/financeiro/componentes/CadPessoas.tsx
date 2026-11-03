@@ -1,4 +1,4 @@
-// Cadastro comum › Fornecedores e clientes da empresa escolhida (/cadastros/pessoas, serve a todos os módulos de gestão):
+// Cadastro comum › Fornecedores e clientes da MDC (/cadastros/pessoas, serve a todos os módulos de gestão):
 // lista com busca e filtro, PDF/Excel, cadastro e edição.
 // CPF/CNPJ é conferido (dígitos verificadores) e não se repete na mesma empresa. Nada se apaga: inativa.
 "use client";
@@ -42,7 +42,7 @@ const VAZIO: Form = {
   ativo: true,
 };
 
-export function CadPessoas({ cliente, podeOperar, avisar, seletor }: PropsAba) {
+export function CadPessoas({ cliente, podeOperar, avisar }: PropsAba) {
   const { org } = useOrg();
   const [busca, setBusca] = useState("");
   const [tipo, setTipo] = useState("");
@@ -109,7 +109,7 @@ export function CadPessoas({ cliente, podeOperar, avisar, seletor }: PropsAba) {
     <div className="space-y-4">
       <CabecalhoPagina
         titulo="Fornecedores e clientes"
-        descricao="Um cadastro só para a empresa toda: vale no Financeiro, nas compras, nas vendas e no estoque."
+        descricao="Um cadastro só para a MDC toda: vale no Financeiro, nas compras, nas vendas e no estoque."
         acoes={
           <>
             <BotoesExportar
@@ -143,7 +143,6 @@ export function CadPessoas({ cliente, podeOperar, avisar, seletor }: PropsAba) {
       />
 
       <CartaoFiltros ativos={filtrosAtivos} aoLimpar={limparFiltros}>
-        {seletor}
         <label className="campo">
           <span>Tipo</span>
           <select value={tipo} onChange={(e) => setTipo(e.target.value)}>

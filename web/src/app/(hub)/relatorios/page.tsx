@@ -1,4 +1,4 @@
-// Relatórios (módulo próprio): painel de relatórios gerenciais da empresa escolhida, a partir do que já está no
+// Relatórios (módulo próprio): painel de relatórios gerenciais da MDC, a partir do que já está no
 // Financeiro. Resultado de caixa (DRE gerencial por grupo e categoria), fluxo realizado x previsto, contas pagas e
 // recebidas e despesas por centro de custo. Todos com período em um clique, PDF e Excel (contas em relatorios.ts).
 "use client";
@@ -6,7 +6,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { nomeCliente } from "@/dominios/clientes/nome";
-import { EscolhaCliente, useClienteGestao } from "@/dominios/organizacao/componentes/EmpresaEmGestao";
+import { SemEmpresaGestao, useClienteGestao } from "@/dominios/organizacao/componentes/EmpresaEmGestao";
 import { FiltroPeriodo } from "@/components/ui/FiltroPeriodo";
 import { VisaoCentros, VisaoFluxo, VisaoPagos, VisaoResultado } from "@/dominios/financeiro/componentes/RelatoriosVisoes";
 import type { BaseVisao } from "@/dominios/financeiro/componentes/RelatoriosVisoes";
@@ -30,7 +30,6 @@ import { CabecalhoPagina } from "@/components/ui/CabecalhoPagina";
 import { CartaoFiltros } from "@/components/ui/CartaoFiltros";
 import type { FiltroAtivo } from "@/components/ui/CartaoFiltros";
 import { Esqueleto } from "@/components/ui/Esqueleto";
-import { EstadoVazio } from "@/components/ui/EstadoVazio";
 import { Icone } from "@/components/ui/Icone";
 import { useAviso } from "@/components/ui/Aviso";
 
@@ -123,11 +122,10 @@ export default function PaginaRelatorios() {
     <div className="space-y-4">
       <CabecalhoPagina
         titulo="Relatórios"
-        descricao="Relatórios gerenciais da empresa a partir das contas pagas, recebidas e em aberto. Escolha o relatório e o período."
+        descricao="Relatórios gerenciais da MDC a partir das contas pagas, recebidas e em aberto. Escolha o relatório e o período."
       />
 
       <CartaoFiltros ativos={filtrosAtivos} aoLimpar={() => setPeriodo("ano")}>
-        <EscolhaCliente gestao={financeiro} />
         <FiltroPeriodo
           periodo={periodo}
           de={de}
@@ -176,9 +174,7 @@ export default function PaginaRelatorios() {
       )}
 
       {!cliente ? (
-        <EstadoVazio icone="grafico" titulo="Escolha a empresa">
-          Escolha a empresa nos filtros acima para ver os relatórios dela.
-        </EstadoVazio>
+        <SemEmpresaGestao icone="grafico" />
       ) : !calc ? (
         <Esqueleto />
       ) : rel === "resultado" ? (

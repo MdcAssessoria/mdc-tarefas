@@ -439,7 +439,7 @@ export function AssistenteItem({
               </label>
             )}
             <label className="campo">
-              <span title="Classificação fiscal da mercadoria, usada na nota. Peça à MDC se não souber.">NCM (opcional) ⓘ</span>
+              <span title="Classificação fiscal da mercadoria, usada na nota. Se não souber, pergunte ao setor fiscal.">NCM (opcional) ⓘ</span>
               <input value={f.ncm} onChange={(e) => mudar({ ncm: e.target.value })} inputMode="numeric" placeholder="0000.00.00" />
             </label>
           </div>
@@ -467,8 +467,8 @@ export function AssistenteItem({
                 <span>
                   <span className="font-medium">Controlar o estoque deste item</span>
                   <span className="block text-xs text-neutral-600">
-                    Entra no estoque nas compras e sai sozinho nas vendas. Não deixa vender mais do que tem (salvo se a MDC liberar estoque
-                    negativo).
+                    Entra no estoque nas compras e sai sozinho nas vendas. Não deixa vender mais do que tem (salvo se o estoque negativo
+                    estiver liberado em Estoques).
                     {temSaldo && " Este item tem saldo: para parar de controlar, zere o saldo antes."}
                   </span>
                 </span>

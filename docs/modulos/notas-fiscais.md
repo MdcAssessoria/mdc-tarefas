@@ -43,8 +43,9 @@ pequena, várias para 120 itens) e `lib/codigoBarras128.test.ts` (exemplo 123456
 chave); `npm run telas` abre "Ver a nota" de uma NF-e e de uma NFS-e em `/entradas` e baixa o PDF.
 
 Módulo próprio no menu (`navegacao.ts`, módulo `entradas`). Enquanto as permissões por módulo não forem separadas,
-Entradas usa a ferramenta **Financeiro** (`APP_DO_MODULO`) e o banco confere com `app.fin_pode`. A empresa escolhida
-é a mesma do Financeiro (lembrada no navegador).
+Entradas usa a ferramenta **Financeiro** (`APP_DO_MODULO`) e o banco confere com `app.fin_pode`. A empresa é sempre a
+MDC (`organizacoes.gestao_cliente_id`), como no Financeiro. Em Notas recebidas ficam à vista Emissão, Situação e Buscar;
+Fornecedor e Tipo de nota ficam em "Mais filtros".
 
 Código: regras puras em `web/src/dominios/notas/` — `xml.ts` (leitor de XML sem dependências), `documentos.ts`
 (procNFe, resNFe, resEvento/procEventoNFe, NFS-e nacional → campos do banco), `sefaz.ts` (endereços, SOAP 1.2,

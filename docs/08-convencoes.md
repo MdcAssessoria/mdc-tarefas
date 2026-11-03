@@ -56,14 +56,19 @@ Todo o HUB é pensado para **público leigo e de pouco conhecimento técnico**, 
 
 Toda tela nova de lista ou relatório segue este molde (já aplicado no Financeiro, Plano de contas, Centros de custo,
 Fornecedores e clientes e Relatórios). As peças moram em `components/ui/` (desde 02/11/2026; antes ficavam em
-`dominios/financeiro/componentes/Comuns`, que só reexporta enquanto o trabalho paralelo é integrado). A escolha da
-empresa (lembrada no navegador e a mesma em todos os módulos de gestão) é `EscolhaCliente`/`useClienteGestao`/
-`TelaEmpresa` de `dominios/organizacao/componentes/EmpresaEmGestao`. As peças:
+`dominios/financeiro/componentes/Comuns`, que só reexporta enquanto o trabalho paralelo é integrado). **Gestão sem
+seletor de empresa (decisão do Edvaldo, 03/11/2026):** Financeiro, Entradas, Saídas, Estoque, Centros de custo, Plano de
+contas, Relatórios, Contratos e Fornecedores e clientes cuidam só das rotinas da MDC. A empresa é sempre a própria da
+organização (`organizacoes.gestao_cliente_id`), lida por `useClienteGestao()` (ou pela moldura `TelaEmpresa`) de
+`dominios/organizacao/componentes/EmpresaEmGestao`; não há campo "Empresa" nem empresa lembrada no navegador. Se
+`gestao_cliente_id` estiver vazio, a tela mostra `SemEmpresaGestao` ("A empresa da MDC ainda não foi definida para a
+Gestão. Peça ao administrador."). Textos falam "da MDC", não "da empresa escolhida". A Cobrança Ledgra é cobrança de
+clientes e continua listando clientes. As peças:
 
 | Peça | Onde | Como usar |
 | --- | --- | --- |
 | Cabeçalho de página | `components/ui/CabecalhoPagina` | `titulo`, `descricao` (uma frase do que a tela faz) e `acoes` à direita: exportar primeiro, o botão principal (`btn-primario`) por último. No celular as ações descem para baixo do título |
-| Cartão de filtros | `components/ui/CartaoFiltros` + `MaisFiltros` | Empresa, período e no máximo mais um ou dois campos à vista; o resto em `MaisFiltros` (mostra quantos estão em uso). Passe `ativos` (etiquetas "Situação: Vencidos" com X para tirar) e `aoLimpar` ("Limpar filtros"). Campo de busca e seletor de empresa levam a classe `campo-largo` |
+| Cartão de filtros | `components/ui/CartaoFiltros` + `MaisFiltros` | Período e no máximo mais dois campos à vista; o resto em `MaisFiltros` (mostra quantos estão em uso). Passe `ativos` (etiquetas "Situação: Vencidos" com X para tirar) e `aoLimpar` ("Limpar filtros"). Campo de busca leva a classe `campo-largo` |
 | Período | `components/ui/FiltroPeriodo` (+ `lib/periodo.ts`) | Este mês, Mês passado, Próximo mês, Últimos 90 dias, Este ano, Escolher datas, Tudo |
 | Exportar | `components/ui/BotoesExportar` (+ `lib/arquivos/exportarLista.ts`) | PDF e Excel do que está filtrado; as colunas são definidas uma vez para os dois |
 | Indicadores | `components/ui/Indicador` | `icone` é **obrigatório** (tipo `NomeIcone`) e `tom` (verde, vermelho, âmbar, azul, violeta, neutro; mesmos significados do Chip: "A vencer" é azul). Com `aoClicar` vira filtro da lista (`ativo` mostra "Filtrando") |

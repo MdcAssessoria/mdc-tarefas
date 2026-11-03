@@ -54,8 +54,8 @@ web/src/
 │                               nível da aba), navegacao.ts (NAV, TELAS_RESTRITAS, podeAbrirRota)
 ├── dominios/                   REGRAS DE NEGÓCIO, um assunto por pasta (tipos, cálculos, acesso ao banco, componentes/)
 │   ├── organizacao/            OrgProvider (useOrg), tipos de organização, membro, setor, papel e
-│   │                           componentes/EmpresaEmGestao (useClienteGestao, EscolhaCliente, TelaEmpresa: a empresa
-│   │                           em uso no Financeiro, Estoque, Saídas, Entradas, Plano de contas e Relatórios)
+│   │                           componentes/EmpresaEmGestao (useClienteGestao, SemEmpresaGestao, TelaEmpresa: a própria MDC
+│   │                           (organizacoes.gestao_cliente_id), única empresa das telas de Gestão)
 │   ├── tarefas/                tipos, useTarefas, regras (situação, contagens, tons), relatorio (cálculos do relatório
 │   │                           de concluídas) e exportarRelatorio, componentes/ (TarefaEditor, VisoesTarefas, PainelTV,
 │   │                           Badges, RitmoSemanal)

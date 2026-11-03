@@ -1,5 +1,5 @@
 // Peças comuns das telas de estoque: formato de quantidade, nomes dos tipos e origens, e os dados que todas usam
-// (itens, grupos, estoques, saldos e categorias da empresa escolhida).
+// (itens, grupos, estoques, saldos e categorias da MDC).
 import { useCallback } from "react";
 import { useConsulta } from "@/lib/useConsulta";
 import { lerCategorias, lerGrupos, lerItens, lerLocais, lerSaldos } from "../leituras";

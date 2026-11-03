@@ -12,10 +12,6 @@ export const CHAVES = {
   visaoTarefas: "mdc-tarefas:visao",
   filtrosTarefas: (orgId: string) => `mdc-tarefas:filtros:${orgId}`,
   empresaPortal: "mdc-portal:empresa",
-  /** Empresa escolhida nas telas de gestão (Financeiro, Estoque, Saídas, Entradas, Plano de contas, Relatórios). */
-  clienteGestao: "hub-mdc:gestao:cliente",
-  /** Nome antigo da chave acima (até 02/11/2026): só lido, para não perder a escolha já feita. */
-  clienteFinanceiroAntiga: "hub-mdc:financeiro:cliente",
   visaoItens: "hub-mdc:estoque:visao-itens",
   /** Grupo "Gestão" do menu lateral aberto ("1") ou fechado ("0"). */
   menuGestao: "hub-mdc:menu-gestao",

@@ -1,4 +1,4 @@
-// Financeiro › Contas a pagar da empresa escolhida (tela comum em dominios/financeiro/componentes/TelaTitulos).
+// Financeiro › Contas a pagar da MDC (tela comum em dominios/financeiro/componentes/TelaTitulos).
 "use client";
 
 import { TelaTitulos } from "@/dominios/financeiro/componentes/TelaTitulos";

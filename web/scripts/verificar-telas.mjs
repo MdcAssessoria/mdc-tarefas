@@ -27,7 +27,7 @@ import { createRequire } from "node:module";
 import { createServer } from "node:net";
 import { join, relative, sep } from "node:path";
 import { fileURLToPath } from "node:url";
-import { CLIENTE_LEMBRADO, EU, IDS_EXEMPLO, RPCS, TABELAS, USUARIO, XML_EXEMPLO } from "./telas/dados-exemplo.mjs";
+import { EU, IDS_EXEMPLO, RPCS, TABELAS, USUARIO, XML_EXEMPLO } from "./telas/dados-exemplo.mjs";
 import { importarEmLote } from "./telas/interacoes-importacao.mjs";
 import { trocarPeriodo } from "./telas/interacoes-periodo.mjs";
 
@@ -509,15 +509,14 @@ async function verificarTela(navegador, porta, rota, pastaFotos) {
     timezoneId: "America/Sao_Paulo",
   });
   await contexto.addInitScript(
-    ([chave, sessao, lembrados]) => {
+    ([chave, sessao]) => {
       try {
         localStorage.setItem(chave, JSON.stringify(sessao));
-        for (const [k, v] of Object.entries(lembrados)) localStorage.setItem(k, v);
       } catch {
         // sem localStorage (ex.: about:blank): nada a fazer
       }
     },
-    [`sb-${PROJETO_SUPABASE}-auth-token`, sessaoFalsa(), CLIENTE_LEMBRADO],
+    [`sb-${PROJETO_SUPABASE}-auth-token`, sessaoFalsa()],
   );
   await contexto.route(`**/${PROJETO_SUPABASE}.supabase.co/**`, criarRespostaSupabase(avisos));
   // tempo real (WebSocket): aceita a conexão e não responde nada
