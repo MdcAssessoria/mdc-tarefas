@@ -29,6 +29,8 @@ import type { Nota } from "@/dominios/notas/tipos";
 import { fornecedorDa, nomeModelo } from "@/dominios/notas/componentes/Comuns";
 import { LancarNota } from "@/dominios/notas/componentes/LancarNota";
 import { RegrasTipos } from "@/dominios/notas/componentes/RegrasTipos";
+import { ArvoreDocumento } from "@/dominios/financeiro/componentes/ArvoreDocumento";
+import { BotaoVerCaminho } from "@/components/ui/BotaoVerCaminho";
 
 type Aba = "prontas" | "lancadas" | "regras";
 
@@ -51,6 +53,7 @@ function LancarNotaTela() {
   const [aba, setAba] = useState<Aba>("prontas");
   const [escolhida, setEscolhida] = useState<string | null>(params.get("nota"));
   const [desfazer, setDesfazer] = useState<Nota | null>(null);
+  const [caminho, setCaminho] = useState<Nota | null>(null);
 
   const consulta = useConsulta(
     useCallback(async () => {
@@ -228,6 +231,7 @@ function LancarNotaTela() {
                       {aba === "lancadas" && <td>{tipoEntrada(n.tipo_entrada)?.nome}</td>}
                       <td className="whitespace-nowrap text-right tabular-nums">{brl(Number(n.valor_total))}</td>
                       <td className="whitespace-nowrap text-right">
+                        {aba === "lancadas" && <BotaoVerCaminho compacto className="mr-1" aoClicar={() => setCaminho(n)} />}
                         {podeOperar &&
                           (aba === "lancadas" ? (
                             <button className="btn !min-h-8" onClick={() => setDesfazer(n)}>
@@ -248,6 +252,15 @@ function LancarNotaTela() {
         </>
       )}
 
+      {caminho && cliente && (
+        <ArvoreDocumento
+          ponto={{ tipo: "nota", id: caminho.id }}
+          clienteId={cliente.id}
+          empresa={nomeCliente(cliente)}
+          titulo={`${nomeModelo(caminho.modelo)} nº ${caminho.numero ?? "—"}`}
+          aoFechar={() => setCaminho(null)}
+        />
+      )}
       {desfazer && (
         <JanelaMotivo
           titulo="Desfazer lançamento"

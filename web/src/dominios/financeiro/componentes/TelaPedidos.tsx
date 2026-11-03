@@ -1,6 +1,6 @@
 // Lista de pedidos de venda (Saídas) ou de compra (Entradas › Compras): período em um clique, situação e busca;
-// indicadores clicáveis; novo pedido; ações por pedido (editar, confirmar/receber, faturar, ver, PDF, duplicar,
-// cancelar com motivo); PDF e Excel da lista.
+// indicadores clicáveis; novo pedido; ações por pedido (editar, confirmar/receber, faturar, ver, ver caminho, PDF,
+// duplicar, cancelar com motivo); PDF e Excel da lista.
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
@@ -31,11 +31,15 @@ import type { PropsAba } from "./Comuns";
 import { useBaseEstoque } from "./estoqueBase";
 import { EditorPedido, TEXTOS_PEDIDO } from "./EditorPedido";
 import { DetalhePedido, JanelaFaturar, JanelaLancar } from "./DetalhePedido";
+import { ArvoreDocumento } from "./ArvoreDocumento";
+import { BotaoVerCaminho } from "@/components/ui/BotaoVerCaminho";
 
 type Janela =
   | { tipo: "novo" }
   | { tipo: "editar" | "duplicar" | "ver" | "lancar"; p: Pedido; itens: PedidoItem[] }
-  | { tipo: "faturar" | "cancelar"; p: Pedido };
+  | { tipo: "faturar" | "cancelar"; p: Pedido }
+  /** "Ver caminho"; `volta` reabre a janela de onde veio ao fechar. */
+  | { tipo: "caminho"; p: Pedido; volta?: Janela };
 
 export function TelaPedidos({ tipo, cliente, podeOperar, avisar }: PropsAba & { tipo: "venda" | "compra" }) {
   const { org } = useOrg();
@@ -125,6 +129,7 @@ export function TelaPedidos({ tipo, cliente, podeOperar, avisar }: PropsAba & { 
     if (podeOperar && editavel && tipo === "compra") lista.push(b("Receber", () => abrir("lancar", p), true));
     if (podeOperar && p.situacao === "confirmado" && tipo === "venda") lista.push(b("Faturar", () => setJanela({ tipo: "faturar", p })));
     if (!editavel) lista.push(b("Ver", () => abrir("ver", p)));
+    lista.push(<BotaoVerCaminho key="caminho" aoClicar={() => setJanela({ tipo: "caminho", p })} />);
     lista.push(b("PDF", () => pdf(p)));
     if (podeOperar) lista.push(b("Duplicar", () => abrir("duplicar", p)));
     if (podeOperar && p.situacao !== "cancelado") lista.push(b("Cancelar", () => setJanela({ tipo: "cancelar", p })));
@@ -333,6 +338,16 @@ export function TelaPedidos({ tipo, cliente, podeOperar, avisar }: PropsAba & { 
               local={nomeLocal.get(janela.p.local_id ?? "") ?? ""}
               hoje={hoje}
               aoFechar={() => setJanela(null)}
+              aoVerCaminho={() => setJanela({ tipo: "caminho", p: janela.p, volta: janela })}
+            />
+          )}
+          {janela.tipo === "caminho" && (
+            <ArvoreDocumento
+              ponto={{ tipo: "pedido", id: janela.p.id }}
+              clienteId={cliente.id}
+              empresa={nomeCliente(cliente)}
+              titulo={`${T.nome} nº ${janela.p.numero}`}
+              aoFechar={() => setJanela(janela.volta ?? null)}
             />
           )}
           {janela.tipo === "lancar" && (

@@ -30,6 +30,9 @@ Janelas:
 - **Ficha** (`FichaContrato`): abas Dados, Contas lançadas (com situação de cada mês), Anexos (enviar PDF do contrato
   assinado e aditivos; abrir com link temporário) e Histórico.
 
+Na lista e na ficha há o botão **Ver caminho**: contrato → conta de cada mês → recebimentos/pagamentos, com o que falta
+e PDF ([Financeiro, seção 8](financeiro.md#8-ver-caminho-árvore-do-documento-03112026)).
+
 Nas **Contas a pagar/receber** do Financeiro, as contas geradas por contrato levam o selo discreto **"Contrato fixo"**.
 Elas são contas normais: pagar, receber, editar e cancelar continuam no Financeiro.
 

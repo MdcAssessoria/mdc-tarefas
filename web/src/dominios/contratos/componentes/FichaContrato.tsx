@@ -13,6 +13,7 @@ import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { Abas } from "@/components/ui/Abas";
 import { Carregando } from "@/components/ui/Carregando";
 import { Chip } from "@/components/ui/Chip";
+import { BotaoVerCaminho } from "@/components/ui/BotaoVerCaminho";
 import { Icone } from "@/components/ui/Icone";
 import { Modal } from "@/components/ui/Modal";
 import { Valor } from "@/components/ui/Valor";
@@ -55,6 +56,7 @@ export function FichaContrato({
   abaInicial = "dados",
   aoFechar,
   aoMudar,
+  aoVerCaminho,
 }: {
   contrato: Recorrente;
   pessoa: string;
@@ -63,6 +65,8 @@ export function FichaContrato({
   abaInicial?: AbaFicha;
   aoFechar: () => void;
   aoMudar: (msg: string) => void;
+  /** Abre o "Ver caminho" do contrato (contas de cada mês e recebimentos/pagamentos). */
+  aoVerCaminho?: () => void;
 }) {
   const { org } = useOrg();
   const hoje = hojeISO(org.fuso);
@@ -106,17 +110,22 @@ export function FichaContrato({
       aoFechar={aoFechar}
       largura="4xl"
     >
-      <Abas
-        rotulo="Partes da ficha"
-        valor={aba}
-        aoMudar={setAba}
-        itens={[
-          { id: "dados", nome: "Dados" },
-          { id: "contas", nome: "Contas lançadas" },
-          { id: "anexos", nome: "Anexos" },
-          { id: "historico", nome: "Histórico" },
-        ]}
-      />
+      <div className="flex flex-wrap-reverse items-end gap-2">
+        <div className="min-w-0 flex-1">
+          <Abas
+            rotulo="Partes da ficha"
+            valor={aba}
+            aoMudar={setAba}
+            itens={[
+              { id: "dados", nome: "Dados" },
+              { id: "contas", nome: "Contas lançadas" },
+              { id: "anexos", nome: "Anexos" },
+              { id: "historico", nome: "Histórico" },
+            ]}
+          />
+        </div>
+        {aoVerCaminho && <BotaoVerCaminho aoClicar={aoVerCaminho} className="mb-1" />}
+      </div>
       {erro && <p className="rounded-md bg-red-50 p-2 text-sm text-red-800">{erro}</p>}
 
       {aba === "dados" && (

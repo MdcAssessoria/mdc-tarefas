@@ -1,6 +1,6 @@
 // Tela de Contas a pagar / Contas a receber (a mesma tela para os dois, muda o tipo). Filtros simples (período do
 // vencimento, situação, fornecedor/cliente, categoria, busca), indicadores clicáveis, lista com ações (pagar/receber,
-// editar, histórico, cancelar), frase de resumo, PDF e Excel do que está filtrado.
+// editar, histórico, ver caminho, cancelar), frase de resumo, PDF e Excel do que está filtrado.
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
@@ -28,6 +28,8 @@ import { JanelaMotivo } from "@/components/ui/JanelaMotivo";
 import { Valor } from "@/components/ui/Valor";
 import { LancarTitulo, TEXTOS } from "./LancarTitulo";
 import { BaixarTitulo, HistoricoTitulo } from "./BaixaTitulo";
+import { ArvoreDocumento } from "./ArvoreDocumento";
+import { BotaoVerCaminho } from "@/components/ui/BotaoVerCaminho";
 import { lerCategorias, lerCentros, lerContas, lerPessoas, lerTitulos } from "../leituras";
 import { cancelarTitulo } from "../repositorio";
 import { intervaloDoPeriodo, PERIODOS, saldoDoTitulo, SITUACOES, situacaoDoTitulo } from "../regras";
@@ -59,7 +61,8 @@ type Janela =
   | { tipo: "editar"; t: Titulo }
   | { tipo: "baixar"; t: Titulo }
   | { tipo: "historico"; t: Titulo }
-  | { tipo: "cancelar"; t: Titulo };
+  | { tipo: "cancelar"; t: Titulo }
+  | { tipo: "caminho"; t: Titulo };
 
 export function TelaTitulos({ tipo }: { tipo: TipoTitulo }) {
   const { org, pode } = useOrg();
@@ -448,6 +451,7 @@ export function TelaTitulos({ tipo }: { tipo: TipoTitulo }) {
                             {T.verbo}
                           </button>
                         )}
+                        <BotaoVerCaminho compacto aoClicar={() => setJanela({ tipo: "caminho", t })} />
                         <details className="relative">
                           <summary
                             className="btn !min-h-8 list-none !px-2.5 [&::-webkit-details-marker]:hidden"
@@ -525,6 +529,15 @@ export function TelaTitulos({ tipo }: { tipo: TipoTitulo }) {
       )}
       {janela?.tipo === "historico" && cad.dados && (
         <HistoricoTitulo titulo={janela.t} contas={cad.dados.contas} podeOperar={podeOperar} aoFechar={() => fechar()} aoMudar={fechar} />
+      )}
+      {janela?.tipo === "caminho" && cliente && (
+        <ArvoreDocumento
+          ponto={{ tipo: "titulo", id: janela.t.id }}
+          clienteId={cliente.id}
+          empresa={nomeCliente(cliente)}
+          titulo={`${tipo === "pagar" ? "Conta a pagar" : "Conta a receber"}: ${janela.t.descricao}`}
+          aoFechar={() => fechar()}
+        />
       )}
       {janela?.tipo === "cancelar" && (
         <JanelaMotivo

@@ -1,7 +1,7 @@
 // Entradas › Notas recebidas: painel dos XML que chegaram (busca automática na SEFAZ e na NFS-e Nacional, ou XML
 // enviado), com a situação em linguagem simples (Aguardando sua resposta, Prazo vencendo, Confirmada, Recusada…),
 // resposta à SEFAZ em lote, itens, histórico com protocolos, "Ver a nota" (espelho no layout DANFE/DANFSe, com PDF),
-// XML para baixar, PDF e Excel do que está na tela.
+// "Ver caminho" (pedido → nota → contas a pagar → pagamentos e estoque), XML para baixar, PDF e Excel do que está na tela.
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
@@ -45,6 +45,8 @@ import { JanelaManifestar } from "@/dominios/notas/componentes/JanelaManifestar"
 import { DetalheNota } from "@/dominios/notas/componentes/DetalheNota";
 import { EspelhoNota } from "@/dominios/notas/componentes/EspelhoNota";
 import { EnviarXml } from "@/dominios/notas/componentes/EnviarXml";
+import { ArvoreDocumento } from "@/dominios/financeiro/componentes/ArvoreDocumento";
+import { BotaoVerCaminho } from "@/components/ui/BotaoVerCaminho";
 
 type FiltroSit = "todas" | SituacaoPainel | "a_lancar";
 const FILTROS: { id: FiltroSit; nome: string }[] = [
@@ -64,6 +66,7 @@ type Janela =
   | { tipo: "manifestar"; notas: Nota[]; inicial?: CodigoManifestacao }
   | { tipo: "detalhe"; nota: Nota }
   | { tipo: "espelho"; nota: Nota }
+  | { tipo: "caminho"; nota: Nota; volta?: Janela }
   | { tipo: "xml" };
 
 export default function PaginaNotasRecebidas() {
@@ -498,6 +501,7 @@ export default function PaginaNotasRecebidas() {
                                 Responder
                               </button>
                             )}
+                            <BotaoVerCaminho compacto aoClicar={() => setJanela({ tipo: "caminho", nota: n })} />
                             <details className="relative">
                               <summary className="btn !min-h-8 list-none" aria-label="Mais ações">
                                 ⋯
@@ -561,6 +565,16 @@ export default function PaginaNotasRecebidas() {
           avisar={mostrar}
           aoFechar={() => fechar()}
           aoVerNota={() => setJanela({ tipo: "espelho", nota: janela.nota })}
+          aoVerCaminho={() => setJanela({ tipo: "caminho", nota: janela.nota, volta: janela })}
+        />
+      )}
+      {janela?.tipo === "caminho" && cliente && (
+        <ArvoreDocumento
+          ponto={{ tipo: "nota", id: janela.nota.id }}
+          clienteId={cliente.id}
+          empresa={nomeCliente(cliente)}
+          titulo={`${nomeModelo(janela.nota.modelo)} nº ${janela.nota.numero ?? "—"}`}
+          aoFechar={() => setJanela(janela.volta ?? null)}
         />
       )}
       {janela?.tipo === "espelho" && <EspelhoNota nota={janela.nota} avisar={mostrar} aoFechar={() => fechar()} />}

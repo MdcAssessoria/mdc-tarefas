@@ -17,6 +17,10 @@
 | `/entradas/carga-tributaria` | Financeiro (ver) | **Carga tributária das entradas**: por fornecedor, NCM, CFOP ou mês; ICMS(+ST), IPI, PIS/COFINS, ISS, IBS/CBS, carga % e crédito estimado; frase de resumo, 3 indicadores, gráfico que filtra a tabela; "Como o crédito é estimado" com a lei e a vigência de cada regra; PDF e Excel |
 | `/entradas/certificado` | Financeiro (gerir envia/remove; operar muda parâmetros) | **Certificado digital** da empresa: situação, CNPJ, emissor (ICP-Brasil?), vencimento; envio com `CampoArquivo` + senha; busca automática (por fonte: documentos recebidos, última e próxima consulta, último aviso) e parâmetros (busca ligada, ciência automática, contribuinte de ICMS/IPI, ambiente) |
 
+Em Notas recebidas (cada nota e a janela "Ver itens e histórico") e na aba Lançadas há o botão **Ver caminho**: a
+árvore pedido de compra (achado pelo número da nota no Documento do pedido) → nota → contas a pagar → pagamentos e a
+entrada no estoque ([Financeiro, seção 8](financeiro.md#8-ver-caminho-árvore-do-documento-03112026)).
+
 ### 1.1 Ver a nota (espelho DANFE / DANFSe) — 02/11/2026
 
 No menu "⋯" de cada nota (e no botão **Ver a nota** da janela "Ver itens e histórico") abre uma janela grande com o

@@ -151,3 +151,73 @@ A mesma migração cadastra no `hub_apps` os módulos `entradas`, `saidas`, `est
 `relatorios` (status `ativo`). A separação das permissões (RLS) por módulo é feita na integração; até lá as tabelas
 seguem a ferramenta `financeiro`. Tipos de `fin_transferencias`, `fin_transferir` e `fin_estornar_transferencia` foram
 acrescentados à mão em `web/src/lib/database.types.ts`: regenerar depois de aplicar.
+
+## 8. Ver caminho (árvore do documento, 03/11/2026)
+
+Pedido do Edvaldo: "um botão que mostre como árvore o que foi feito: ex.: pedido de compra, nota fiscal de entrada e
+pagamento". Só site, sem migração: usa as ligações que o banco já grava.
+
+**Onde está o botão** (ícone de ramificação, nome acessível "Ver caminho"):
+
+| Tela | Onde |
+| --- | --- |
+| Entradas › Notas recebidas (`/entradas`) | Em cada nota (ao lado do "⋯") e na janela "Ver itens e histórico" |
+| Entradas › Lançar nota, aba Lançadas (`/entradas/lancar`) | Em cada nota lançada |
+| Entradas › Pedidos de compra (`/entradas/compras`) e Saídas (`/saidas`) | Em cada pedido e na janela "Ver" do pedido |
+| Financeiro › A pagar e A receber | Em cada conta, ao lado de Pagar/Receber |
+| Contratos (`/contratos`) | Em cada contrato e na ficha (ao lado das abas) |
+
+**O que a janela mostra** (`ArvoreDocumento`, `Modal` com `celularCheio`: no celular ocupa a tela inteira): de qualquer
+ponto, sobe até a origem e desce até os pagamentos:
+
+```mermaid
+flowchart TD
+  PC[Pedido de compra nº X] --> NF[Nota fiscal de entrada nº Y<br/>achada pelo número + fornecedor]
+  PC --> CP[Contas a pagar<br/>parcelas, vencimento, situação]
+  NF --> CP2[Contas a pagar da nota]
+  NF --> EN2[Entrada no estoque da nota]
+  CP --> PG[Pagamentos<br/>data, conta, valor; estornos riscados]
+  PC --> EN[Entrada no estoque]
+  K[Contrato fixo] --> CM[Conta de cada mês] --> RC[Recebimentos / pagamentos]
+```
+
+- Cada nó: ícone, tipo em linguagem simples, número e pessoa, data, valor, chip de situação (cores da 8.3.1: verde
+  pago/feito, azul a vencer, âmbar atenção, vermelho vencido, cinza cancelado/estornado) e botão para abrir o documento
+  (**Ver a nota** abre o espelho DANFE, **Ver pedido** abre o pedido, **Ver pagamentos** abre o histórico da conta só para
+  ler, **Abrir Contratos** leva ao módulo). O documento abre no lugar da árvore e, ao fechar, a árvore volta. O nó de onde
+  a pessoa abriu leva o selo "Você abriu daqui". Fechar a árvore aberta de um detalhe (pedido, nota, ficha do contrato)
+  volta para o detalhe.
+- No topo: contas do caminho, total, pago/recebido e quanto falta; e o quadro **O que falta** ("Parcela 2/2 a pagar em
+  aberto, vence 29/11/2026 · falta R$ 70,00", "A mercadoria do pedido nº 2 ainda não chegou", "Nota nº 1188 ainda não
+  lançada", "Próxima conta do contrato sai em 01/12/2026").
+- **Baixar PDF** no timbrado MDC (`gerarRelatorioPdf` + `lib/identidade.ts`): resumo, o que falta e o caminho em linhas
+  recuadas ("> " marca o documento aberto), arquivo `Caminho-<documento>-<data>.pdf`.
+
+| Regra | Onde |
+| --- | --- |
+| Origem: pagamento → conta → contrato (`recorrente_id`) ou nota (`nota_id` / `fis_notas.titulos`) → pedido (pelo número) ou pedido (`est_pedido_titulos`); sem nada disso é **conta avulsa**, mostrada junto das outras parcelas do mesmo lançamento (`grupo`) | `arvore.origemDoPonto` |
+| Pedido → contas (`est_pedido_titulos`) e estoque (`est_movimentos` origem `pedido_compra`/`pedido_venda`, `origem_id` = pedido); nota → contas (`fin_titulos.nota_id`) e estoque (origem `nota_entrada`); contrato → contas (`recorrente_id`, em ordem de mês); conta → pagamentos (`fin_baixas`, com os estornados) | `arvore.montarArvore` |
+| **Pedido de compra ↔ nota**: o banco não grava. A árvore liga quando o **primeiro número** do documento do pedido ("NF 1188") é o número da nota **e** o fornecedor é o mesmo (mesmo cadastro, ou CNPJ do emitente = documento do fornecedor do pedido). A ligação aparece com o aviso "Ligada pelo número da nota no pedido e pelo fornecedor" | `arvore.documentoCitaNota`, `arvoreLeituras` |
+| Nota ligada a pedido **já recebido** e ainda não lançada **não** vira pendência: o aviso diz que lançar a nota com estoque e contas repetiria os valores | `arvore.noPedido` |
+| Pendência de conta: em aberto ou paga em parte, com o vencimento (ou "vencida desde") e quanto falta; título "(1/2)" no fim da descrição não se repete | `arvore.noTitulo` |
+| Resumo: soma das contas não canceladas do caminho (total, pago = total − falta, falta) | `montarArvore` |
+| Leituras: por blocos de ids com `lerTudo` (`.in`), e cada resultado é conferido de novo no navegador; erro em português (`traduzirErro` pelo `useConsulta`) | `arvoreLeituras.lerArvore` |
+
+Código: regras puras em `web/src/dominios/financeiro/arvore.ts` (testes em `arvore.test.ts`: pedido com 2 parcelas e 1
+paga, nota sem pedido, conta avulsa, pagamento estornado, contrato com 3 meses, ligação pelo número, linhas do PDF),
+leituras em `arvoreLeituras.ts`, PDF em `arvorePdf.ts`, janela em `componentes/ArvoreDocumento.tsx`, botão em
+`web/src/components/ui/BotaoVerCaminho.tsx`. `npm run telas` abre o "Ver caminho" em Pedidos de compra (e baixa o PDF),
+Notas recebidas (abre "Ver a nota" de dentro da árvore), A pagar (abre "Ver pagamentos"), Saídas (de dentro do pedido) e
+na ficha do contrato; as fotos saem como `*-ver-caminho-*.png`.
+
+**Pendências para migração futura** (nada foi criado no banco):
+
+1. **Ligação gravada pedido de compra ↔ nota fiscal** (ex.: `fis_notas.pedido_id` preenchido por `fis_processar_nota`
+   com a escolha "esta nota é do pedido nº X"). Hoje a árvore acha pelo número no campo Documento do pedido; pedido
+   sem o número da nota (ou com outro número antes) não se liga. Com a ligação gravada, o lançamento da nota poderia
+   também impedir a duplicidade (pedido recebido + nota lançada com estoque e contas).
+2. **Pedido de venda ↔ nota de saída**: "Faturar" só guarda o número; a ligação vem com a emissão (Saídas).
+3. Índices para a busca pelo número: `fis_notas (cliente_id, numero)` e `est_pedidos (cliente_id, pessoa_id, tipo)` (hoje
+   a busca é pequena, por fornecedor; vira índice se a carteira crescer).
+4. Conciliação: `fin_baixas.extrato_linha_id` já existe; quando a conciliação (etapa 2) entrar, a árvore pode mostrar a
+   linha do extrato abaixo de cada pagamento.
