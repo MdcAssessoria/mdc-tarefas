@@ -18,7 +18,8 @@
 //     scripts/telas/dados-exemplo.mjs; rota nova com parâmetro sem id de exemplo faz o script falhar.
 //   - Uma sessão falsa é gravada no localStorage antes de a página abrir, e toda requisição ao Supabase
 //     (*.supabase.co) é respondida com os dados de scripts/telas/dados-exemplo.mjs. Nada sai para o banco real.
-//   - Algumas telas têm cliques extras (abrir janela, trocar aba) em INTERACOES, mais abaixo.
+//   - Algumas telas têm cliques extras (abrir janela, trocar aba) em INTERACOES, mais abaixo. A janela "Novo contrato"
+//     é medida em 1366×768 e 1920×1080 (ou no celular): botão principal à vista, nada rolando de lado, colunas.
 //   - Requisito: pacote `playwright` com o Chromium já instalado na máquina (aqui ele é global). Este script
 //     não roda `playwright install`.
 import { execFileSync, spawn } from "node:child_process";
@@ -259,6 +260,68 @@ async function abrirCaminho(pagina, onde, titulo, esperado, foto, nome, pdf = fa
   return janela;
 }
 
+/** Medidas das janelas largas, mostradas no fim da verificação (quanto o corpo ainda rola por dentro). */
+const MEDIDAS_JANELAS = [];
+
+/**
+ * Janela de formulário longa (docs/08-convencoes.md, 8.3.1): abre "Novo contrato" (a receber, com o resumo do mês),
+ * fotografa só a tela visível e confere que o botão principal aparece sem rolar a página, que nada rola de lado, que a
+ * janela cabe na altura da tela e que, no computador, as duas colunas ficam lado a lado (no celular, uma embaixo da
+ * outra, com letra legível). `nome` vai na foto e nas medidas (ex.: "1366x768").
+ */
+async function medirNovoContrato(pagina, foto, nome) {
+  await pagina.getByRole("button", { name: "Novo contrato", exact: true }).click();
+  const janela = pagina.getByRole("dialog", { name: "Novo contrato" });
+  await janela.waitFor({ timeout: 3000 });
+  await janela.getByLabel("Nome do contrato").fill("Honorários mensais");
+  await janela.getByLabel("Valor mensal (R$)").fill("1.500,00");
+  await janela.getByText("o HUB gera", { exact: false }).waitFor({ timeout: 3000 });
+  await pagina.waitForTimeout(200);
+  await foto(`janela-${nome}`, { soTela: true });
+  const m = await janela.evaluate((d) => {
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const caixa = d.getBoundingClientRect();
+    const botao = [...d.querySelectorAll("button")].find((b) => b.textContent.trim() === "Cadastrar contrato");
+    const rb = botao?.getBoundingClientRect();
+    const meio = rb && document.elementFromPoint(rb.left + rb.width / 2, rb.top + rb.height / 2);
+    const corpo = d.querySelector("[data-corpo-janela]") ?? d;
+    const legenda = (t) => [...d.querySelectorAll("legend")].find((l) => l.textContent.trim() === t)?.closest("fieldset");
+    const vig = legenda("Vigência")?.getBoundingClientRect();
+    const val = legenda("Valor e contas do mês")?.getBoundingClientRect();
+    const entrada = d.querySelector("input:not([type=checkbox]):not([type=radio])");
+    return {
+      vw,
+      vh,
+      larguraJanela: Math.round(caixa.width),
+      alturaJanela: Math.round(caixa.height),
+      cabeNaAltura: caixa.top >= 0 && caixa.bottom <= vh + 1,
+      botaoAVista: !!rb && rb.top >= 0 && rb.bottom <= vh && rb.left >= 0 && rb.right <= vw && !!meio && botao.contains(meio),
+      paginaRolaDeLado: document.documentElement.scrollWidth - vw,
+      janelaRolaDeLado: corpo.scrollWidth - corpo.clientWidth,
+      corpoRola: corpo.scrollHeight - corpo.clientHeight,
+      ladoALado: !!vig && !!val && val.left > vig.right - 1 && val.top < vig.bottom,
+      umaColuna: !!vig && !!val && Math.abs(val.left - vig.left) < 2,
+      letra: entrada ? parseFloat(getComputedStyle(entrada).fontSize) : 0,
+    };
+  });
+  MEDIDAS_JANELAS.push(
+    `Novo contrato ${nome}: janela ${m.larguraJanela}×${m.alturaJanela} px numa tela ${m.vw}×${m.vh}; ` +
+      (m.corpoRola > 0 ? `o corpo ainda rola ${m.corpoRola} px por dentro` : "cabe inteira, sem rolar"),
+  );
+  if (!m.botaoAVista) throw new Error(`"Cadastrar contrato" não fica à vista sem rolar (${nome})`);
+  if (!m.cabeNaAltura) throw new Error(`a janela "Novo contrato" passa da altura da tela (${nome})`);
+  if (m.paginaRolaDeLado > 1) throw new Error(`a janela "Novo contrato" fez a página rolar ${m.paginaRolaDeLado} px de lado (${nome})`);
+  if (m.janelaRolaDeLado > 1) throw new Error(`o corpo da janela "Novo contrato" rola ${m.janelaRolaDeLado} px de lado (${nome})`);
+  if (nome === "celular") {
+    if (!m.umaColuna) throw new Error("no celular a janela \"Novo contrato\" deveria ter uma coluna só");
+    if (m.larguraJanela > m.vw) throw new Error("no celular a janela \"Novo contrato\" é mais larga que a tela");
+    if (m.letra < 14) throw new Error(`no celular a letra dos campos ficou com ${m.letra} px (mínimo 14)`);
+  } else if (!m.ladoALado) throw new Error(`no computador a janela "Novo contrato" deveria ter duas colunas lado a lado (${nome})`);
+  await pagina.keyboard.press("Escape");
+  await janela.waitFor({ state: "detached", timeout: 3000 });
+}
+
 /**
  * Cliques extras depois que a tela abre, para cobrir o que só aparece com interação (janelas, abas).
  * A chave é o caminho da rota; a função recebe (página, foto) e lança erro quando algo não se comporta como esperado.
@@ -274,6 +337,7 @@ const INTERACOES = {
     await p.getByRole("button", { name: "Nova conta a pagar", exact: true }).click();
     const conta = p.getByRole("dialog", { name: "Nova conta a pagar" });
     await conta.waitFor({ timeout: 3000 });
+    await foto("nova-conta", { soTela: true });
     await conta.getByRole("button", { name: "+ Nova categoria" }).click();
     const cat = p.getByRole("dialog", { name: "Nova categoria de despesa" });
     await cat.waitFor({ timeout: 3000 });
@@ -376,7 +440,7 @@ const INTERACOES = {
     await editor.getByPlaceholder(/passe o leitor de código de barras/).fill("tinta");
     await editor.getByRole("listbox").getByRole("button").first().click();
     await editor.getByText("Total R$").waitFor({ timeout: 3000 });
-    await foto("novo-pedido");
+    await foto("novo-pedido", { soTela: true });
     await p.keyboard.press("Escape");
     await editor.waitFor({ state: "detached", timeout: 3000 });
     await p.getByRole("button", { name: "Ver", exact: true }).first().click();
@@ -524,6 +588,19 @@ const INTERACOES = {
   },
   // Contratos (041): novo contrato com "+ Nova categoria", reajuste pendente (índice → novo valor) e a ficha com as abas
   "/contratos": async (p, foto) => {
+    // janela larga: no notebook (1366×768) e no monitor (1920×1080) o botão fica à vista; no celular, uma coluna
+    if (process.env.TELA === "celular") await medirNovoContrato(p, foto, "celular");
+    else {
+      const antes = p.viewportSize();
+      for (const [l, a] of [
+        [1366, 768],
+        [1920, 1080],
+      ]) {
+        await p.setViewportSize({ width: l, height: a });
+        await medirNovoContrato(p, foto, `${l}x${a}`);
+      }
+      await p.setViewportSize(antes);
+    }
     await p.getByRole("button", { name: "Novo contrato", exact: true }).click();
     const novo = p.getByRole("dialog", { name: "Novo contrato" });
     await novo.waitFor({ timeout: 3000 });
@@ -652,7 +729,7 @@ const INTERACOES = {
     await janela.getByRole("button", { name: "Anotar estes dados nas observações" }).click();
     if (!(await janela.getByLabel("O que muda / observações").inputValue()).includes("FULANO DE TAL"))
       throw new Error("os dados da Receita não foram anotados nas observações");
-    await foto("novo-processo-cnpj");
+    await foto("novo-processo-cnpj", { soTela: true });
     await p.keyboard.press("Escape");
   },
   // Cadastrar pessoa: o administrador escolhe os módulos um a um (ou um perfil pronto)
@@ -669,7 +746,7 @@ const INTERACOES = {
         .getAttribute("aria-checked")) !== "true"
     )
       throw new Error("a escolha do nível do módulo não ficou marcada");
-    await foto("cadastrar-pessoa");
+    await foto("cadastrar-pessoa", { soTela: true });
     await janela.getByRole("radio", { name: /Usar um perfil pronto/ }).click();
     await janela.getByLabel("Perfil de acesso").waitFor({ timeout: 3000 });
     await p.keyboard.press("Escape");
@@ -750,10 +827,11 @@ async function verificarTela(navegador, porta, rota, pastaFotos) {
     const interacao = INTERACOES[rota.caminho];
     if (interacao) {
       try {
-        // foto("x") salva uma captura intermediária (<tela>-x.png) quando FOTOS está ligado
-        const foto = (sufixo) =>
+        // foto("x") salva uma captura intermediária (<tela>-x.png) quando FOTOS está ligado; { soTela: true } fotografa
+        // só o que cabe na tela (como a pessoa vê uma janela), sem esticar a página inteira
+        const foto = (sufixo, { soTela = false } = {}) =>
           pastaFotos
-            ? pagina.screenshot({ path: join(pastaFotos, `${rota.chave.replace(/[^\w-]+/g, "_")}-${sufixo}.png`), fullPage: true })
+            ? pagina.screenshot({ path: join(pastaFotos, `${rota.chave.replace(/[^\w-]+/g, "_")}-${sufixo}.png`), fullPage: !soTela })
             : Promise.resolve();
         await interacao(pagina, foto);
       } catch (e) {
@@ -797,6 +875,7 @@ async function principal() {
     servidor.kill();
   }
   const falhas = resultados.filter((r) => r.problemas.length);
+  if (MEDIDAS_JANELAS.length) console.log(`\nJanelas largas:\n${MEDIDAS_JANELAS.map((m) => `  - ${m}`).join("\n")}`);
   console.log(`\n${resultados.length - falhas.length} de ${resultados.length} telas ok.`);
   if (falhas.length) {
     console.log(`Telas com problema: ${falhas.map((f) => f.rota.caminho).join(", ")}`);

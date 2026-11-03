@@ -73,53 +73,56 @@ export function EscolhaModulos({
           </select>
         </label>
       )}
-      {grupos
-        .filter(([, itens]) => itens.length)
-        .map(([titulo, itens]) => (
-          <div key={titulo}>
-            <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-[var(--texto-suave)]">{titulo}</p>
-            <ul className="divide-y divide-[var(--borda)] rounded-md border border-[var(--borda)] bg-white">
-              {itens.map((a) => {
-                const atual = valor[a.slug] ?? "";
-                return (
-                  <li key={a.slug} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2">
-                    <span className="min-w-0">
-                      <span className={`block text-sm font-medium ${atual ? "text-[var(--texto)]" : "text-[var(--texto-suave)]"}`}>
-                        {a.nome}
+      {/* janela larga: no computador os grupos ficam lado a lado (a janela fica menos comprida) */}
+      <div className="grid items-start gap-3 lg:grid-cols-2">
+        {grupos
+          .filter(([, itens]) => itens.length)
+          .map(([titulo, itens]) => (
+            <div key={titulo}>
+              <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-[var(--texto-suave)]">{titulo}</p>
+              <ul className="divide-y divide-[var(--borda)] rounded-md border border-[var(--borda)] bg-white">
+                {itens.map((a) => {
+                  const atual = valor[a.slug] ?? "";
+                  return (
+                    <li key={a.slug} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2">
+                      <span className="min-w-0">
+                        <span className={`block text-sm font-medium ${atual ? "text-[var(--texto)]" : "text-[var(--texto-suave)]"}`}>
+                          {a.nome}
+                        </span>
+                        {a.descricao && <span className="block truncate text-xs text-[var(--texto-suave)] sm:max-w-xs">{a.descricao}</span>}
                       </span>
-                      {a.descricao && <span className="block truncate text-xs text-[var(--texto-suave)] sm:max-w-xs">{a.descricao}</span>}
-                    </span>
-                    <span
-                      role="radiogroup"
-                      aria-label={`Acesso a ${a.nome}`}
-                      className="flex overflow-hidden rounded-md border border-[var(--borda)] text-xs"
-                    >
-                      {NIVEIS.map((n) => (
-                        <button
-                          key={n.id || "nada"}
-                          type="button"
-                          role="radio"
-                          aria-checked={atual === n.id}
-                          title={n.dica}
-                          onClick={() => definir(a.slug, n.id)}
-                          className={`min-h-9 px-2.5 ${
-                            atual === n.id
-                              ? n.id
-                                ? "bg-[var(--marca)] font-medium text-white"
-                                : "bg-neutral-200 font-medium text-neutral-700"
-                              : "bg-white text-neutral-600 hover:bg-[var(--fundo)]"
-                          }`}
-                        >
-                          {n.nome}
-                        </button>
-                      ))}
-                    </span>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        ))}
+                      <span
+                        role="radiogroup"
+                        aria-label={`Acesso a ${a.nome}`}
+                        className="flex overflow-hidden rounded-md border border-[var(--borda)] text-xs"
+                      >
+                        {NIVEIS.map((n) => (
+                          <button
+                            key={n.id || "nada"}
+                            type="button"
+                            role="radio"
+                            aria-checked={atual === n.id}
+                            title={n.dica}
+                            onClick={() => definir(a.slug, n.id)}
+                            className={`min-h-9 px-2.5 ${
+                              atual === n.id
+                                ? n.id
+                                  ? "bg-[var(--marca)] font-medium text-white"
+                                  : "bg-neutral-200 font-medium text-neutral-700"
+                                : "bg-white text-neutral-600 hover:bg-[var(--fundo)]"
+                            }`}
+                          >
+                            {n.nome}
+                          </button>
+                        ))}
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          ))}
+      </div>
     </fieldset>
   );
 }

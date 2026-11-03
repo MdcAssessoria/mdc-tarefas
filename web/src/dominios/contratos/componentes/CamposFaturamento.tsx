@@ -1,6 +1,8 @@
 // Parte "Fatura e envio ao cliente" do cadastro de contrato A RECEBER (migração 043): o que enviar (4 opções com
 // ícones), dados do serviço quando sai nota fiscal e por onde enviar (e-mail, WhatsApp, Portal do Cliente).
 // O dia de gerar fica junto do "Vence todo dia" em ContratoFixo. Linguagem simples; o banco confere tudo de novo.
+// As grades seguem a largura do próprio bloco (@container), não a da tela: na terceira coluna da janela larga (monitor
+// grande) cada opção ocupa uma linha; na coluna da direita do notebook, duas por linha.
 "use client";
 
 import { Icone } from "@/components/ui/Icone";
@@ -29,7 +31,7 @@ export function CamposFaturamento({
     mudar({ canais: sim ? [...f.canais.filter((x) => x !== c), c] : f.canais.filter((x) => x !== c) });
 
   return (
-    <fieldset className="rounded-md border border-[var(--borda)] p-3">
+    <fieldset className="@container rounded-md border border-[var(--borda)] p-3">
       <legend className="px-1 text-sm font-medium">Fatura e envio ao cliente</legend>
       <p className="mb-2 text-xs text-[var(--texto-suave)]">
         Todo mês, no dia de gerar, o HUB cria a conta a receber e a fatura deste contrato e manda para o cliente pelos canais marcados.
@@ -38,7 +40,7 @@ export function CamposFaturamento({
       <p className="mb-1 text-sm font-medium" id="rotulo-o-que-enviar">
         O que enviar ao cliente
       </p>
-      <div className="grid gap-2 sm:grid-cols-2" role="radiogroup" aria-labelledby="rotulo-o-que-enviar">
+      <div className="grid gap-2 @md:grid-cols-2" role="radiogroup" aria-labelledby="rotulo-o-que-enviar">
         {OPCOES_ENVIO.map((o) => {
           const sel = f.envio === o.id;
           return (
@@ -85,8 +87,8 @@ export function CamposFaturamento({
       )}
 
       {doc === "nfse" && (
-        <div className="mt-3 grid gap-3 sm:grid-cols-4">
-          <label className="campo sm:col-span-4">
+        <div className="mt-3 grid gap-3 @md:grid-cols-4">
+          <label className="campo @md:col-span-4">
             <span>Descrição do serviço (vai na nota)</span>
             <textarea
               rows={2}
@@ -95,12 +97,12 @@ export function CamposFaturamento({
               placeholder="Ex.: Serviços de contabilidade, escrituração fiscal e folha de pagamento"
             />
           </label>
-          <label className="campo sm:col-span-2">
+          <label className="campo @md:col-span-2">
             <span>Código do serviço</span>
             <input value={f.servicoCodigo} onChange={(e) => mudar({ servicoCodigo: e.target.value })} placeholder="17.01.01" />
             <small className="text-xs text-[var(--texto-suave)]">Código de tributação nacional (ou o item da LC 116, ex.: 17.01).</small>
           </label>
-          <label className="campo sm:col-span-2">
+          <label className="campo @md:col-span-2">
             <span>ISS (%)</span>
             <input value={f.iss} onChange={(e) => mudar({ iss: e.target.value })} inputMode="decimal" placeholder="2" />
             <small className="text-xs text-[var(--texto-suave)]">Alíquota do município, de 0% a 5%.</small>
@@ -109,7 +111,7 @@ export function CamposFaturamento({
       )}
 
       <p className="mb-1 mt-3 text-sm font-medium">Por onde enviar</p>
-      <div className="grid gap-2 sm:grid-cols-3">
+      <div className="grid gap-2 @lg:grid-cols-3">
         {CANAIS_ENVIO.map((c) => {
           const sel = f.canais.includes(c.id);
           return (
@@ -127,7 +129,7 @@ export function CamposFaturamento({
         })}
       </div>
       {f.canais.length > 0 && (
-        <div className="mt-3 grid gap-3 sm:grid-cols-3">
+        <div className="mt-3 grid gap-3 @lg:grid-cols-3">
           {f.canais.includes("email") && (
             <label className="campo">
               <span>E-mail que recebe</span>

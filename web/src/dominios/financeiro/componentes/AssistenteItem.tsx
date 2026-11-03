@@ -237,6 +237,32 @@ export function AssistenteItem({
       descricao="Responda passo a passo. Só o nome é obrigatório; o resto ajuda nos relatórios."
       aoFechar={aoFechar}
       largura="2xl"
+      avisoRodape={
+        erro && (
+          <p role="alert" className="rounded-md bg-red-50 p-2 text-sm text-red-800">
+            {erro}
+          </p>
+        )
+      }
+      rodape={
+        <div className="flex w-full flex-wrap justify-between gap-2">
+          <button className="btn" onClick={passo === 0 ? aoFechar : () => irPara(passo - 1)}>
+            {passo === 0 ? "Cancelar" : "Voltar"}
+          </button>
+          <div className="flex gap-2">
+            {(editando || passo === PASSOS.length - 1) && (
+              <button className="btn-primario" onClick={salvar} disabled={salvando || enviandoFoto}>
+                {salvando ? "Salvando…" : "Salvar item"}
+              </button>
+            )}
+            {passo < PASSOS.length - 1 && (
+              <button className={editando ? "btn" : "btn-primario"} onClick={() => irPara(passo + 1)}>
+                Continuar
+              </button>
+            )}
+          </div>
+        </div>
+      }
     >
       <ol className="grid grid-cols-4 gap-1 text-xs" aria-label="Passos do cadastro">
         {PASSOS.map((nome, k) => (
@@ -439,7 +465,9 @@ export function AssistenteItem({
               </label>
             )}
             <label className="campo">
-              <span title="Classificação fiscal da mercadoria, usada na nota. Se não souber, pergunte ao setor fiscal.">NCM (opcional) ⓘ</span>
+              <span title="Classificação fiscal da mercadoria, usada na nota. Se não souber, pergunte ao setor fiscal.">
+                NCM (opcional) ⓘ
+              </span>
               <input value={f.ncm} onChange={(e) => mudar({ ncm: e.target.value })} inputMode="numeric" placeholder="0000.00.00" />
             </label>
           </div>
@@ -619,29 +647,6 @@ export function AssistenteItem({
           )}
         </div>
       )}
-
-      {erro && (
-        <p role="alert" className="rounded-md bg-red-50 p-2 text-sm text-red-800">
-          {erro}
-        </p>
-      )}
-      <div className="flex flex-wrap justify-between gap-2 pt-2">
-        <button className="btn" onClick={passo === 0 ? aoFechar : () => irPara(passo - 1)}>
-          {passo === 0 ? "Cancelar" : "Voltar"}
-        </button>
-        <div className="flex gap-2">
-          {(editando || passo === PASSOS.length - 1) && (
-            <button className="btn-primario" onClick={salvar} disabled={salvando || enviandoFoto}>
-              {salvando ? "Salvando…" : "Salvar item"}
-            </button>
-          )}
-          {passo < PASSOS.length - 1 && (
-            <button className={editando ? "btn" : "btn-primario"} onClick={() => irPara(passo + 1)}>
-              Continuar
-            </button>
-          )}
-        </div>
-      </div>
     </Modal>
   );
 }

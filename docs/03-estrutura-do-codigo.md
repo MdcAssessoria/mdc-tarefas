@@ -49,7 +49,8 @@ web/src/
 │   │                           Modal, Abas, Aviso (useAviso), Carregando, Esqueleto, EstadoVazio, Etiquetas,
 │   │                           MultiSelecao, CampoArquivo, Icone (NomeIcone), CabecalhoPagina, CartaoFiltros,
 │   │                           QuadroTabela, e as peças das listas (desde 02/11/2026): BotoesExportar,
-│   │                           FiltroPeriodo, Indicador, Chip, Valor, Tons, JanelaMotivo, JanelaConfirmar (useConfirmar)
+│   │                           FiltroPeriodo, Indicador, Chip, Valor, Tons, JanelaMotivo, JanelaConfirmar (useConfirmar),
+│   │                           ColunasFormulario (janelas largas em colunas, desde 03/11/2026)
 │   └── shell/                  Moldura, MenuLateral, BarraSuperior, BuscaRapida, Sino, Guarda (bloqueia módulo e
 │                               nível da aba), navegacao.ts (NAV, TELAS_RESTRITAS, podeAbrirRota)
 ├── dominios/                   REGRAS DE NEGÓCIO, um assunto por pasta (tipos, cálculos, acesso ao banco, componentes/)

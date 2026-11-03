@@ -11,6 +11,7 @@ import { useConsulta } from "@/lib/useConsulta";
 import { traduzirErro } from "@/lib/erros";
 import { hojeISO } from "@/lib/datas";
 import { Modal } from "@/components/ui/Modal";
+import { ColunaFormulario, ColunasFormulario } from "@/components/ui/ColunasFormulario";
 import { CabecalhoPagina } from "@/components/ui/CabecalhoPagina";
 import { CartaoFiltros } from "@/components/ui/CartaoFiltros";
 import type { FiltroAtivo } from "@/components/ui/CartaoFiltros";
@@ -244,70 +245,87 @@ export function CadPessoas({ cliente, podeOperar, avisar }: PropsAba) {
       )}
 
       {form && (
-        <Modal titulo={form.id ? "Editar cadastro" : "Novo fornecedor ou cliente"} aoFechar={() => setForm(null)} largura="lg">
-          <div className="grid gap-3 sm:grid-cols-3">
-            <label className="campo sm:col-span-2">
-              <span>Nome ou razão social</span>
-              <input value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} />
-            </label>
-            <label className="campo">
-              <span>É um</span>
-              <select value={form.tipo} onChange={(e) => setForm({ ...form, tipo: e.target.value as TipoPessoa })}>
-                {Object.entries(TIPOS_PESSOA).map(([id, nome]) => (
-                  <option key={id} value={id}>
-                    {nome}
-                  </option>
-                ))}
-              </select>
-            </label>
-          </div>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <label className="campo">
-              <span>CPF ou CNPJ (opcional)</span>
-              <input value={form.documento ?? ""} onChange={(e) => setForm({ ...form, documento: e.target.value })} inputMode="numeric" />
-            </label>
-            <label className="campo">
-              <span>Telefone</span>
-              <input value={form.telefone ?? ""} onChange={(e) => setForm({ ...form, telefone: e.target.value })} inputMode="tel" />
-            </label>
-          </div>
-          <label className="campo">
-            <span>E-mail</span>
-            <input type="email" value={form.email ?? ""} onChange={(e) => setForm({ ...form, email: e.target.value })} />
-          </label>
-          <div className="grid gap-3 sm:grid-cols-3">
-            <label className="campo sm:col-span-2">
-              <span>Cidade</span>
-              <input value={form.cidade ?? ""} onChange={(e) => setForm({ ...form, cidade: e.target.value })} />
-            </label>
-            <label className="campo">
-              <span>UF</span>
-              <select value={form.uf ?? ""} onChange={(e) => setForm({ ...form, uf: e.target.value })}>
-                <option value="">—</option>
-                {UFS.map((u) => (
-                  <option key={u}>{u}</option>
-                ))}
-              </select>
-            </label>
-          </div>
-          <label className="campo">
-            <span>Observação</span>
-            <textarea rows={2} value={form.observacao ?? ""} onChange={(e) => setForm({ ...form, observacao: e.target.value })} />
-          </label>
-          {form.id && (
-            <label className="flex items-center gap-2 text-sm">
-              <input type="checkbox" checked={form.ativo} onChange={(e) => setForm({ ...form, ativo: e.target.checked })} />
-              Ativo (desmarque para tirar das listas; o histórico continua guardado)
-            </label>
-          )}
-          <div className="flex justify-end gap-2 pt-2">
-            <button className="btn" onClick={() => setForm(null)}>
-              Cancelar
-            </button>
-            <button className="btn-primario" onClick={salvar} disabled={salvando}>
-              {salvando ? "Salvando…" : "Salvar"}
-            </button>
-          </div>
+        <Modal
+          titulo={form.id ? "Editar cadastro" : "Novo fornecedor ou cliente"}
+          aoFechar={() => setForm(null)}
+          largura="4xl"
+          rodape={
+            <>
+              <button className="btn" onClick={() => setForm(null)}>
+                Cancelar
+              </button>
+              <button className="btn-primario" onClick={salvar} disabled={salvando}>
+                {salvando ? "Salvando…" : "Salvar"}
+              </button>
+            </>
+          }
+        >
+          {/* computador: identificação e contato à esquerda; endereço e observação à direita */}
+          <ColunasFormulario>
+            <ColunaFormulario>
+              <div className="grid gap-3 sm:grid-cols-3">
+                <label className="campo sm:col-span-2">
+                  <span>Nome ou razão social</span>
+                  <input value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value })} />
+                </label>
+                <label className="campo">
+                  <span>É um</span>
+                  <select value={form.tipo} onChange={(e) => setForm({ ...form, tipo: e.target.value as TipoPessoa })}>
+                    {Object.entries(TIPOS_PESSOA).map(([id, nome]) => (
+                      <option key={id} value={id}>
+                        {nome}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <label className="campo">
+                  <span>CPF ou CNPJ (opcional)</span>
+                  <input
+                    value={form.documento ?? ""}
+                    onChange={(e) => setForm({ ...form, documento: e.target.value })}
+                    inputMode="numeric"
+                  />
+                </label>
+                <label className="campo">
+                  <span>Telefone</span>
+                  <input value={form.telefone ?? ""} onChange={(e) => setForm({ ...form, telefone: e.target.value })} inputMode="tel" />
+                </label>
+              </div>
+              <label className="campo">
+                <span>E-mail</span>
+                <input type="email" value={form.email ?? ""} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+              </label>
+            </ColunaFormulario>
+            <ColunaFormulario>
+              <div className="grid gap-3 sm:grid-cols-3">
+                <label className="campo sm:col-span-2">
+                  <span>Cidade</span>
+                  <input value={form.cidade ?? ""} onChange={(e) => setForm({ ...form, cidade: e.target.value })} />
+                </label>
+                <label className="campo">
+                  <span>UF</span>
+                  <select value={form.uf ?? ""} onChange={(e) => setForm({ ...form, uf: e.target.value })}>
+                    <option value="">—</option>
+                    {UFS.map((u) => (
+                      <option key={u}>{u}</option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+              <label className="campo">
+                <span>Observação</span>
+                <textarea rows={2} value={form.observacao ?? ""} onChange={(e) => setForm({ ...form, observacao: e.target.value })} />
+              </label>
+              {form.id && (
+                <label className="flex items-center gap-2 text-sm">
+                  <input type="checkbox" checked={form.ativo} onChange={(e) => setForm({ ...form, ativo: e.target.checked })} />
+                  Ativo (desmarque para tirar das listas; o histórico continua guardado)
+                </label>
+              )}
+            </ColunaFormulario>
+          </ColunasFormulario>
         </Modal>
       )}
     </div>

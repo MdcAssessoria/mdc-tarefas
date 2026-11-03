@@ -2,7 +2,7 @@
 // e envio do convite. Só o administrador chega aqui (a tela e o banco conferem).
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { supabase } from "@/lib/supabase";
 import { traduzirErro } from "@/lib/erros";
@@ -30,6 +30,7 @@ export function Cadastro({
   aoCadastrar: (txt: string, link?: string) => void;
 }) {
   const { org } = useOrg();
+  const idForm = useId();
   const [email, setEmail] = useState("");
   const [nome, setNome] = useState("");
   const [papel, setPapel] = useState<Papel>("analista");
@@ -84,10 +85,28 @@ export function Cadastro({
       titulo="Cadastrar pessoa da equipe"
       descricao="Escolha o que a pessoa vai ver no HUB. Ela recebe um e-mail e cria a própria senha; você não define senha."
       aoFechar={aoFechar}
-      largura="2xl"
+      largura="6xl"
+      avisoRodape={
+        erro && (
+          <p role="alert" className="rounded-md bg-red-50 p-3 text-sm text-red-800">
+            {erro}
+          </p>
+        )
+      }
+      rodape={
+        <>
+          <button type="button" className="btn" onClick={aoFechar}>
+            Voltar
+          </button>
+          <button type="submit" form={idForm} className="btn-primario" disabled={enviando}>
+            <Icone nome="enviar" className="h-4 w-4" />
+            {enviando ? "Enviando…" : "Cadastrar e enviar convite"}
+          </button>
+        </>
+      }
     >
-      <form onSubmit={enviar} className="space-y-3">
-        <div className="grid gap-3 sm:grid-cols-2">
+      <form id={idForm} onSubmit={enviar} className="space-y-3">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <label className="campo">
             <span>Nome</span>
             <input required value={nome} onChange={(e) => setNome(e.target.value)} />
@@ -176,20 +195,6 @@ export function Cadastro({
             )}
           </>
         )}
-        {erro && (
-          <p role="alert" className="rounded-md bg-red-50 p-3 text-sm text-red-800">
-            {erro}
-          </p>
-        )}
-        <div className="flex flex-wrap justify-end gap-2 pt-1">
-          <button type="button" className="btn" onClick={aoFechar}>
-            Voltar
-          </button>
-          <button className="btn-primario" disabled={enviando}>
-            <Icone nome="enviar" className="h-4 w-4" />
-            {enviando ? "Enviando…" : "Cadastrar e enviar convite"}
-          </button>
-        </div>
       </form>
     </Modal>
   );

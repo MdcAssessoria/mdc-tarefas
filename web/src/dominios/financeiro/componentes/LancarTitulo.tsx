@@ -8,6 +8,7 @@ import { traduzirErro } from "@/lib/erros";
 import { brl } from "@/lib/formato/moeda";
 import { fmtData } from "@/lib/formato/datas";
 import { Modal } from "@/components/ui/Modal";
+import { ColunaFormulario, ColunasFormulario } from "@/components/ui/ColunasFormulario";
 import type { Cliente } from "@/dominios/clientes/tipos";
 import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { NovaCategoriaRapida } from "./NovaCategoriaRapida";
@@ -186,186 +187,205 @@ export function LancarTitulo({
   }
 
   return (
-    <Modal titulo={editar ? `Editar ${t.conta}` : `Nova ${t.conta}`} aoFechar={aoFechar} largura="2xl">
-      <label className="campo">
-        <span>Descrição</span>
-        <input
-          value={f.descricao}
-          onChange={(e) => mudar({ descricao: e.target.value })}
-          placeholder={tipo === "pagar" ? "Ex.: Aluguel da loja" : "Ex.: Venda para Fulano"}
-        />
-      </label>
-      <div className="grid gap-3 sm:grid-cols-2">
-        <label className="campo">
-          <span>{t.pessoa} (opcional)</span>
-          <input
-            list="lista-pessoas-titulo"
-            value={f.pessoa}
-            onChange={(e) => mudar({ pessoa: e.target.value })}
-            placeholder="Digite o nome…"
-          />
-          <datalist id="lista-pessoas-titulo">
-            {pessoasDoTipo.map((p) => (
-              <option key={p.id} value={p.nome} />
-            ))}
-          </datalist>
-          {f.pessoa.trim() && !cad.pessoas.some((p) => p.nome.toLowerCase() === f.pessoa.trim().toLowerCase()) && (
-            <small className="text-xs text-neutral-500">Novo: será cadastrado ao salvar.</small>
-          )}
-        </label>
-        <div className="campo">
-          <span>Categoria ({tipoCat})</span>
-          <select value={f.categoria} onChange={(e) => mudar({ categoria: e.target.value })} aria-label={`Categoria (${tipoCat})`}>
-            <option value="">{categorias.length ? "Escolha…" : `Nenhuma categoria de ${tipoCat} cadastrada`}</option>
-            {categorias.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.grupo ? `${c.grupo} › ` : ""}
-                {c.nome}
-              </option>
-            ))}
-          </select>
-          {podeCriarCategoria && (
-            <button type="button" className="btn-link self-start text-xs" onClick={() => setNovaCategoria(true)}>
-              + Nova categoria
-            </button>
-          )}
-          {novaCategoria && (
-            <NovaCategoriaRapida
-              cliente={cliente}
-              tipo={tipoCat}
-              aoFechar={() => setNovaCategoria(false)}
-              aoCriar={(id) => {
-                setNovaCategoria(false);
-                mudar({ categoria: id });
-                aoRecarregarCadastros?.();
-              }}
-            />
-          )}
-        </div>
-      </div>
-      <div className="grid gap-3 sm:grid-cols-3">
-        <label className="campo">
-          <span>{editar ? "Valor (R$)" : "Valor total (R$)"}</span>
-          <input value={f.valor} onChange={(e) => mudar({ valor: e.target.value })} inputMode="decimal" placeholder="0,00" />
-        </label>
-        <label className="campo">
-          <span>{n > 1 ? "1º vencimento" : "Vencimento"}</span>
-          <input type="date" value={f.vencimento} onChange={(e) => mudar({ vencimento: e.target.value })} />
-        </label>
-        {!editar && (
-          <label className="campo">
-            <span>Parcelas</span>
-            <input type="number" min={1} max={120} value={f.parcelas} onChange={(e) => mudar({ parcelas: e.target.value })} />
-          </label>
-        )}
-      </div>
-      {previa.length > 0 && (
-        <div className="rounded-md bg-neutral-50 p-3 text-xs">
-          <p className="mb-1 font-medium">Parcelas mensais:</p>
-          <p className="tabular-nums text-neutral-700">
-            {previa
-              .slice(0, 12)
-              .map((p) => `${p.parcela}ª ${fmtData(p.vencimento)} ${brl(p.valor)}`)
-              .join(" · ")}
-            {previa.length > 12 && ` · … mais ${previa.length - 12}`}
+    <Modal
+      titulo={editar ? `Editar ${t.conta}` : `Nova ${t.conta}`}
+      aoFechar={aoFechar}
+      largura="5xl"
+      avisoRodape={
+        erro && (
+          <p role="alert" className="rounded-md bg-red-50 p-2 text-sm text-red-800">
+            {erro}
           </p>
-        </div>
-      )}
-      <details
-        className="rounded-md border border-[var(--borda)] p-3"
-        open={!!editar && !!(editar.documento || editar.centro_id || editar.observacao)}
-      >
-        <summary className="cursor-pointer text-sm text-neutral-700">
-          Mais informações (documento, centro de custo, banco, observação)
-        </summary>
-        <div className="mt-3 space-y-3">
+        )
+      }
+      rodape={
+        <>
+          <button className="btn" onClick={aoFechar}>
+            Cancelar
+          </button>
+          <button className="btn-primario" onClick={salvar} disabled={salvando}>
+            {salvando ? "Salvando…" : "Salvar"}
+          </button>
+        </>
+      }
+    >
+      {/* computador: a conta à esquerda; mais informações e "já pago" à direita */}
+      <ColunasFormulario>
+        <ColunaFormulario>
+          <label className="campo">
+            <span>Descrição</span>
+            <input
+              value={f.descricao}
+              onChange={(e) => mudar({ descricao: e.target.value })}
+              placeholder={tipo === "pagar" ? "Ex.: Aluguel da loja" : "Ex.: Venda para Fulano"}
+            />
+          </label>
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="campo">
-              <span>Nº do documento / nota</span>
-              <input value={f.documento} onChange={(e) => mudar({ documento: e.target.value })} />
+              <span>{t.pessoa} (opcional)</span>
+              <input
+                list="lista-pessoas-titulo"
+                value={f.pessoa}
+                onChange={(e) => mudar({ pessoa: e.target.value })}
+                placeholder="Digite o nome…"
+              />
+              <datalist id="lista-pessoas-titulo">
+                {pessoasDoTipo.map((p) => (
+                  <option key={p.id} value={p.nome} />
+                ))}
+              </datalist>
+              {f.pessoa.trim() && !cad.pessoas.some((p) => p.nome.toLowerCase() === f.pessoa.trim().toLowerCase()) && (
+                <small className="text-xs text-neutral-500">Novo: será cadastrado ao salvar.</small>
+              )}
             </label>
-            <label className="campo">
-              <span>Data de emissão</span>
-              <input type="date" value={f.emissao} onChange={(e) => mudar({ emissao: e.target.value })} />
-            </label>
-          </div>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <label className="campo">
-              <span>Centro de custo</span>
-              <select value={f.centro} onChange={(e) => mudar({ centro: e.target.value })}>
-                <option value="">Nenhum</option>
-                {cad.centros
-                  .filter((c) => c.ativo || c.id === f.centro)
-                  .map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.nome}
-                    </option>
-                  ))}
-              </select>
-            </label>
-            <label className="campo">
-              <span>Banco previsto</span>
-              <select value={f.conta_prevista} onChange={(e) => mudar({ conta_prevista: e.target.value })}>
-                <option value="">Não definido</option>
-                {contasAtivas.map((c) => (
+            <div className="campo">
+              <span>Categoria ({tipoCat})</span>
+              <select value={f.categoria} onChange={(e) => mudar({ categoria: e.target.value })} aria-label={`Categoria (${tipoCat})`}>
+                <option value="">{categorias.length ? "Escolha…" : `Nenhuma categoria de ${tipoCat} cadastrada`}</option>
+                {categorias.map((c) => (
                   <option key={c.id} value={c.id}>
+                    {c.grupo ? `${c.grupo} › ` : ""}
                     {c.nome}
                   </option>
                 ))}
               </select>
-            </label>
+              {podeCriarCategoria && (
+                <button type="button" className="btn-link self-start text-xs" onClick={() => setNovaCategoria(true)}>
+                  + Nova categoria
+                </button>
+              )}
+              {novaCategoria && (
+                <NovaCategoriaRapida
+                  cliente={cliente}
+                  tipo={tipoCat}
+                  aoFechar={() => setNovaCategoria(false)}
+                  aoCriar={(id) => {
+                    setNovaCategoria(false);
+                    mudar({ categoria: id });
+                    aoRecarregarCadastros?.();
+                  }}
+                />
+              )}
+            </div>
           </div>
-          <label className="campo">
-            <span>Observação</span>
-            <textarea rows={2} value={f.observacao} onChange={(e) => mudar({ observacao: e.target.value })} />
-          </label>
-        </div>
-      </details>
-      {!editar && (
-        <div className="rounded-md border border-[var(--borda)] p-3">
-          <label className="flex items-center gap-2 text-sm font-medium">
-            <input type="checkbox" checked={f.jaPago} onChange={(e) => mudar({ jaPago: e.target.checked })} />
-            {t.pago} {n > 1 && "(todas as parcelas)"}
-          </label>
-          {f.jaPago && (
-            <div className="mt-3 grid gap-3 sm:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-3">
+            <label className="campo">
+              <span>{editar ? "Valor (R$)" : "Valor total (R$)"}</span>
+              <input value={f.valor} onChange={(e) => mudar({ valor: e.target.value })} inputMode="decimal" placeholder="0,00" />
+            </label>
+            <label className="campo">
+              <span>{n > 1 ? "1º vencimento" : "Vencimento"}</span>
+              <input type="date" value={f.vencimento} onChange={(e) => mudar({ vencimento: e.target.value })} />
+            </label>
+            {!editar && (
               <label className="campo">
-                <span>Data</span>
-                <input type="date" value={f.pagoData} onChange={(e) => mudar({ pagoData: e.target.value })} />
+                <span>Parcelas</span>
+                <input type="number" min={1} max={120} value={f.parcelas} onChange={(e) => mudar({ parcelas: e.target.value })} />
               </label>
-              <label className="campo">
-                <span>Conta bancária</span>
-                <select value={f.pagoConta} onChange={(e) => mudar({ pagoConta: e.target.value })}>
-                  <option value="">{contasAtivas.length ? "Escolha…" : "Cadastre uma conta bancária"}</option>
-                  {contasAtivas.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.nome}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="campo">
-                <span>Forma</span>
-                <select value={f.pagoForma} onChange={(e) => mudar({ pagoForma: e.target.value })}>
-                  <option value="">—</option>
-                  {FORMAS_PAGAMENTO.map((x) => (
-                    <option key={x}>{x}</option>
-                  ))}
-                </select>
-              </label>
+            )}
+          </div>
+          {previa.length > 0 && (
+            <div className="rounded-md bg-neutral-50 p-3 text-xs">
+              <p className="mb-1 font-medium">Parcelas mensais:</p>
+              <p className="tabular-nums text-neutral-700">
+                {previa
+                  .slice(0, 12)
+                  .map((p) => `${p.parcela}ª ${fmtData(p.vencimento)} ${brl(p.valor)}`)
+                  .join(" · ")}
+                {previa.length > 12 && ` · … mais ${previa.length - 12}`}
+              </p>
             </div>
           )}
-        </div>
-      )}
-      {erro && <p className="rounded-md bg-red-50 p-2 text-sm text-red-800">{erro}</p>}
-      <div className="flex justify-end gap-2 pt-2">
-        <button className="btn" onClick={aoFechar}>
-          Cancelar
-        </button>
-        <button className="btn-primario" onClick={salvar} disabled={salvando}>
-          {salvando ? "Salvando…" : "Salvar"}
-        </button>
-      </div>
+        </ColunaFormulario>
+        <ColunaFormulario>
+          <details
+            className="rounded-md border border-[var(--borda)] p-3"
+            open={!!editar && !!(editar.documento || editar.centro_id || editar.observacao)}
+          >
+            <summary className="cursor-pointer text-sm text-neutral-700">
+              Mais informações (documento, centro de custo, banco, observação)
+            </summary>
+            <div className="mt-3 space-y-3">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <label className="campo">
+                  <span>Nº do documento / nota</span>
+                  <input value={f.documento} onChange={(e) => mudar({ documento: e.target.value })} />
+                </label>
+                <label className="campo">
+                  <span>Data de emissão</span>
+                  <input type="date" value={f.emissao} onChange={(e) => mudar({ emissao: e.target.value })} />
+                </label>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <label className="campo">
+                  <span>Centro de custo</span>
+                  <select value={f.centro} onChange={(e) => mudar({ centro: e.target.value })}>
+                    <option value="">Nenhum</option>
+                    {cad.centros
+                      .filter((c) => c.ativo || c.id === f.centro)
+                      .map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.nome}
+                        </option>
+                      ))}
+                  </select>
+                </label>
+                <label className="campo">
+                  <span>Banco previsto</span>
+                  <select value={f.conta_prevista} onChange={(e) => mudar({ conta_prevista: e.target.value })}>
+                    <option value="">Não definido</option>
+                    {contasAtivas.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.nome}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+              <label className="campo">
+                <span>Observação</span>
+                <textarea rows={2} value={f.observacao} onChange={(e) => mudar({ observacao: e.target.value })} />
+              </label>
+            </div>
+          </details>
+          {!editar && (
+            <div className="rounded-md border border-[var(--borda)] p-3">
+              <label className="flex items-center gap-2 text-sm font-medium">
+                <input type="checkbox" checked={f.jaPago} onChange={(e) => mudar({ jaPago: e.target.checked })} />
+                {t.pago} {n > 1 && "(todas as parcelas)"}
+              </label>
+              {f.jaPago && (
+                <div className="mt-3 grid gap-3 sm:grid-cols-3">
+                  <label className="campo">
+                    <span>Data</span>
+                    <input type="date" value={f.pagoData} onChange={(e) => mudar({ pagoData: e.target.value })} />
+                  </label>
+                  <label className="campo">
+                    <span>Conta bancária</span>
+                    <select value={f.pagoConta} onChange={(e) => mudar({ pagoConta: e.target.value })}>
+                      <option value="">{contasAtivas.length ? "Escolha…" : "Cadastre uma conta bancária"}</option>
+                      {contasAtivas.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.nome}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="campo">
+                    <span>Forma</span>
+                    <select value={f.pagoForma} onChange={(e) => mudar({ pagoForma: e.target.value })}>
+                      <option value="">—</option>
+                      {FORMAS_PAGAMENTO.map((x) => (
+                        <option key={x}>{x}</option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+              )}
+            </div>
+          )}
+        </ColunaFormulario>
+      </ColunasFormulario>
     </Modal>
   );
 }

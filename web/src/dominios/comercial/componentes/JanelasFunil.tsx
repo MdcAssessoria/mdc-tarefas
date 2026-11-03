@@ -2,7 +2,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useId, useState } from "react";
 import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { traduzirErro } from "@/lib/erros";
 import { Icone } from "@/components/ui/Icone";
@@ -27,6 +27,7 @@ export function NovaOportunidade({ aoFechar, aoCriar }: { aoFechar: () => void; 
   });
   const [erro, setErro] = useState<string | null>(null);
   const [ocupado, setOcupado] = useState(false);
+  const idForm = useId();
   const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setF({ ...f, [k]: e.target.value });
   const vazio = (s: string) => s.trim() || null;
 
@@ -58,14 +59,33 @@ export function NovaOportunidade({ aoFechar, aoCriar }: { aoFechar: () => void; 
       titulo="Nova oportunidade"
       descricao="Cadastre uma empresa interessada. Ela entra no funil como “Novo lead” e você vira o responsável."
       aoFechar={aoFechar}
-      largura="lg"
+      largura="4xl"
+      avisoRodape={
+        erro && (
+          <p role="alert" className="rounded-md bg-red-50 p-2 text-sm text-red-800">
+            {erro}
+          </p>
+        )
+      }
+      rodape={
+        <>
+          <button type="button" className="btn" onClick={aoFechar}>
+            Voltar
+          </button>
+          <button type="submit" form={idForm} className="btn-primario" disabled={ocupado}>
+            <Icone nome="mais" className="h-4 w-4" />
+            {ocupado ? "Criando…" : "Criar oportunidade"}
+          </button>
+        </>
+      }
     >
-      <form onSubmit={salvar} className="space-y-3">
-        <label className="campo">
-          <span>Empresa *</span>
-          <input required value={f.empresa} onChange={set("empresa")} placeholder="Nome pelo qual a empresa é conhecida" />
-        </label>
-        <div className="grid gap-2 sm:grid-cols-2">
+      <form id={idForm} onSubmit={salvar} className="space-y-3">
+        {/* computador: quatro campos por linha (a janela fica larga e baixa); celular: um embaixo do outro */}
+        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+          <label className="campo sm:col-span-2">
+            <span>Empresa *</span>
+            <input required value={f.empresa} onChange={set("empresa")} placeholder="Nome pelo qual a empresa é conhecida" />
+          </label>
           <label className="campo">
             <span>Contato</span>
             <input value={f.contato_nome} onChange={set("contato_nome")} />
@@ -105,11 +125,6 @@ export function NovaOportunidade({ aoFechar, aoCriar }: { aoFechar: () => void; 
             <input inputMode="decimal" value={f.valor_mensal} onChange={set("valor_mensal")} placeholder="Ex.: 1.200,00" />
           </label>
         </div>
-        {erro && (
-          <p role="alert" className="rounded-md bg-red-50 p-2 text-sm text-red-800">
-            {erro}
-          </p>
-        )}
         <p className="text-xs text-[var(--texto-suave)]">
           Quem preenche o Simulador de Regime entra no funil sozinho. O texto do contrato fica no{" "}
           <Link href="/comercial/modelo" className="underline">
@@ -117,15 +132,6 @@ export function NovaOportunidade({ aoFechar, aoCriar }: { aoFechar: () => void; 
           </Link>
           .
         </p>
-        <div className="flex justify-end gap-2">
-          <button type="button" className="btn" onClick={aoFechar}>
-            Voltar
-          </button>
-          <button className="btn-primario" disabled={ocupado}>
-            <Icone nome="mais" className="h-4 w-4" />
-            {ocupado ? "Criando…" : "Criar oportunidade"}
-          </button>
-        </div>
       </form>
     </Modal>
   );

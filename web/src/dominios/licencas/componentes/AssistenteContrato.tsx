@@ -163,6 +163,23 @@ export function AssistenteContrato({
       descricao={clienteSel ? nomeCliente(clienteSel) : "Siga os passos; dá para voltar e mudar antes de salvar."}
       aoFechar={aoFechar}
       largura="2xl"
+      avisoRodape={erro && <p className="rounded-md bg-red-50 p-2 text-sm text-red-800">{erro}</p>}
+      rodape={
+        <div className="flex w-full justify-between gap-2">
+          <button className="btn" onClick={voltar}>
+            {primeiro ? "Cancelar" : "Voltar"}
+          </button>
+          {passo < 4 ? (
+            <button className="btn-primario" onClick={avancar}>
+              Continuar
+            </button>
+          ) : (
+            <button className="btn-primario" onClick={salvar} disabled={salvando}>
+              {salvando ? "Salvando…" : editar ? "Salvar alterações" : "Cadastrar contrato"}
+            </button>
+          )}
+        </div>
+      }
     >
       <ol className="flex flex-wrap gap-1 text-xs" aria-label="Passos">
         {PASSOS.map((p, i) => (
@@ -395,22 +412,6 @@ export function AssistenteContrato({
           </label>
         </div>
       )}
-
-      {erro && <p className="rounded-md bg-red-50 p-2 text-sm text-red-800">{erro}</p>}
-      <div className="flex justify-between gap-2 pt-2">
-        <button className="btn" onClick={voltar}>
-          {primeiro ? "Cancelar" : "Voltar"}
-        </button>
-        {passo < 4 ? (
-          <button className="btn-primario" onClick={avancar}>
-            Continuar
-          </button>
-        ) : (
-          <button className="btn-primario" onClick={salvar} disabled={salvando}>
-            {salvando ? "Salvando…" : editar ? "Salvar alterações" : "Cadastrar contrato"}
-          </button>
-        )}
-      </div>
     </Modal>
   );
 }

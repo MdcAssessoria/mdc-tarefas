@@ -8,6 +8,7 @@ import { traduzirErro } from "@/lib/erros";
 import { brl } from "@/lib/formato/moeda";
 import { fmtData } from "@/lib/formato/datas";
 import { Modal } from "@/components/ui/Modal";
+import { ColunaFormulario, ColunasFormulario } from "@/components/ui/ColunasFormulario";
 import type { Cliente } from "@/dominios/clientes/tipos";
 import { numeroBr, valorParaCampo } from "../regras";
 import { custoBase, custoPorUnidadeEstoque, paraUnidadeEstoque, qtdBr } from "../estoqueRegras";
@@ -236,7 +237,36 @@ export function EditorPedido({
       ? `${T.nome} (cópia do nº ${pedido!.numero})`
       : `Novo ${T.nome.toLowerCase()}`;
   return (
-    <Modal titulo={titulo} aoFechar={aoFechar} largura="4xl">
+    <Modal
+      titulo={titulo}
+      aoFechar={aoFechar}
+      largura="6xl"
+      avisoRodape={
+        erro && (
+          <p role="alert" className="rounded-md bg-red-50 p-2 text-sm text-red-800">
+            {erro}
+          </p>
+        )
+      }
+      rodape={
+        <>
+          <button className="btn" onClick={aoFechar}>
+            Cancelar
+          </button>
+          <button className="btn" onClick={() => salvar(false)} disabled={salvando}>
+            Salvar rascunho
+          </button>
+          <button
+            className="btn-primario"
+            onClick={() => salvar(true)}
+            disabled={salvando}
+            title={tipo === "venda" ? "Baixa o estoque e lança as contas a receber" : "Põe no estoque e lança as contas a pagar"}
+          >
+            {salvando ? "Salvando…" : T.lancar}
+          </button>
+        </>
+      }
+    >
       <div className="grid gap-3 sm:grid-cols-4">
         <label className="campo sm:col-span-2">
           <span>{T.pessoa}</span>
@@ -259,294 +289,283 @@ export function EditorPedido({
           <input type="date" value={previsao} onChange={(e) => setPrevisao(e.target.value)} />
         </label>
       </div>
+      {/* computador: itens e total à esquerda; pagamento e mais informações à direita */}
+      <ColunasFormulario esquerdaLarga>
+        <ColunaFormulario>
+          <BuscaItem
+            itens={base.itens.filter((i) => i.ativo)}
+            saldo={saldoLocal}
+            tipo={tipo}
+            aoEscolher={incluir}
+            aoCadastrar={(nome) => setRapido(nome)}
+          />
 
-      <BuscaItem
-        itens={base.itens.filter((i) => i.ativo)}
-        saldo={saldoLocal}
-        tipo={tipo}
-        aoEscolher={incluir}
-        aoCadastrar={(nome) => setRapido(nome)}
-      />
-
-      {!linhas.length ? (
-        <p className="rounded-md border border-dashed border-[var(--borda)] p-4 text-center text-sm text-neutral-500">
-          Nenhum item ainda. Procure acima pelo nome ou código e aperte Enter.
-        </p>
-      ) : (
-        <div className="space-y-2">
-          {calc.map(({ l, it, q, fator, total }) => {
-            const falta = tipo === "venda" && it?.controla_estoque && q > 0 && paraUnidadeEstoque(q, fator) > saldoLocal(l.item);
-            return (
-              <div key={l.chave} className="grid grid-cols-2 items-end gap-2 rounded-md border border-[var(--borda)] p-2 sm:grid-cols-12">
-                <div className="col-span-2 sm:col-span-4">
-                  <p className="text-sm font-medium">{it?.nome ?? l.nome}</p>
-                  <p className={`text-xs ${falta ? "text-red-700" : "text-neutral-500"}`}>
-                    {it?.tipo === "servico"
-                      ? "Serviço"
-                      : it?.controla_estoque
-                        ? `Saldo neste estoque: ${qtdBr(saldoLocal(l.item))} ${it.unidade}${falta ? " · não tem o suficiente" : ""}`
-                        : "Não controla estoque"}
-                  </p>
-                </div>
-                <label className="campo">
-                  <span>Qtd.</span>
-                  <input value={l.quantidade} onChange={(e) => mudarLinha(l.chave, { quantidade: e.target.value })} inputMode="decimal" />
-                </label>
-                <label className="campo">
-                  <span>Unidade</span>
-                  {tipo === "compra" && it?.unidade_compra ? (
-                    <select
-                      value={l.emCompra ? "c" : "e"}
-                      onChange={(e) => {
-                        const emCompra = e.target.value === "c";
-                        const p = numeroBr(l.preco);
-                        const f = Number(it.fator_compra);
-                        mudarLinha(l.chave, {
-                          emCompra,
-                          preco: p > 0 ? valorParaCampo(emCompra ? p * f : custoPorUnidadeEstoque(p, f)) : l.preco,
-                        });
-                      }}
-                    >
-                      <option value="c">
-                        {it.unidade_compra} ({qtdBr(it.fator_compra)} {it.unidade})
-                      </option>
-                      <option value="e">{it.unidade}</option>
-                    </select>
-                  ) : (
-                    <input value={it?.unidade ?? ""} readOnly tabIndex={-1} className="bg-neutral-50" />
-                  )}
-                </label>
-                <label className="campo sm:col-span-2">
-                  <span>Preço unit. (R$)</span>
-                  <input value={l.preco} onChange={(e) => mudarLinha(l.chave, { preco: e.target.value })} inputMode="decimal" />
-                </label>
-                <label className="campo sm:col-span-2">
-                  <span>Desconto (R$)</span>
-                  <input
-                    value={l.desconto}
-                    onChange={(e) => mudarLinha(l.chave, { desconto: e.target.value })}
-                    inputMode="decimal"
-                    placeholder="0,00"
-                  />
-                </label>
-                <div className="flex items-end justify-between gap-2 sm:col-span-2">
-                  <p className="pb-2 text-right text-sm font-semibold tabular-nums">{brl(total)}</p>
-                  <button
-                    type="button"
-                    className="btn !min-h-9 !px-2"
-                    aria-label={`Tirar ${it?.nome ?? l.nome} do pedido`}
-                    onClick={() => setLinhas((ls) => ls.filter((x) => x.chave !== l.chave))}
+          {!linhas.length ? (
+            <p className="rounded-md border border-dashed border-[var(--borda)] p-4 text-center text-sm text-neutral-500">
+              Nenhum item ainda. Procure acima pelo nome ou código e aperte Enter.
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {calc.map(({ l, it, q, fator, total }) => {
+                const falta = tipo === "venda" && it?.controla_estoque && q > 0 && paraUnidadeEstoque(q, fator) > saldoLocal(l.item);
+                return (
+                  <div
+                    key={l.chave}
+                    className="grid grid-cols-2 items-end gap-2 rounded-md border border-[var(--borda)] p-2 sm:grid-cols-12"
                   >
-                    ✕
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      <div className="grid gap-3 sm:grid-cols-4">
-        <label className="campo">
-          <span>Desconto no pedido (R$)</span>
-          <input value={desconto} onChange={(e) => setDesconto(e.target.value)} inputMode="decimal" placeholder="0,00" />
-        </label>
-        <label className="campo">
-          <span>Frete (R$)</span>
-          <input value={frete} onChange={(e) => setFrete(e.target.value)} inputMode="decimal" placeholder="0,00" />
-        </label>
-        <div className="rounded-md bg-[var(--fundo)] p-3 text-right sm:col-span-2">
-          <p className="text-xs text-neutral-600">
-            Itens {brl(tot.itens)}
-            {numeroBr(desconto) > 0 && ` − desconto ${brl(numeroBr(desconto))}`}
-            {numeroBr(frete) > 0 && ` + frete ${brl(numeroBr(frete))}`}
-          </p>
-          <p className="text-xl font-semibold tabular-nums text-[var(--marca)]">Total {brl(tot.total)}</p>
-        </div>
-      </div>
-
-      <fieldset className="space-y-2 rounded-md border border-[var(--borda)] p-3">
-        <legend className="px-1 text-sm font-medium">Pagamento</legend>
-        <div className="grid gap-3 sm:grid-cols-4">
-          <label className="campo sm:col-span-2">
-            <span>Condição</span>
-            <select
-              value={condicao}
-              onChange={(e) => (e.target.value === "personalizado" ? personalizar() : setCondicao(e.target.value as Condicao))}
-            >
-              {CONDICOES.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.nome}
-                </option>
-              ))}
-            </select>
-          </label>
-          {condicao === "mensal" && (
-            <label className="campo">
-              <span>Quantas parcelas</span>
-              <input type="number" min={1} max={120} value={nParcelas} onChange={(e) => setNParcelas(e.target.value)} />
-            </label>
+                    <div className="col-span-2 sm:col-span-4">
+                      <p className="text-sm font-medium">{it?.nome ?? l.nome}</p>
+                      <p className={`text-xs ${falta ? "text-red-700" : "text-neutral-500"}`}>
+                        {it?.tipo === "servico"
+                          ? "Serviço"
+                          : it?.controla_estoque
+                            ? `Saldo neste estoque: ${qtdBr(saldoLocal(l.item))} ${it.unidade}${falta ? " · não tem o suficiente" : ""}`
+                            : "Não controla estoque"}
+                      </p>
+                    </div>
+                    <label className="campo">
+                      <span>Qtd.</span>
+                      <input
+                        value={l.quantidade}
+                        onChange={(e) => mudarLinha(l.chave, { quantidade: e.target.value })}
+                        inputMode="decimal"
+                      />
+                    </label>
+                    <label className="campo">
+                      <span>Unidade</span>
+                      {tipo === "compra" && it?.unidade_compra ? (
+                        <select
+                          value={l.emCompra ? "c" : "e"}
+                          onChange={(e) => {
+                            const emCompra = e.target.value === "c";
+                            const p = numeroBr(l.preco);
+                            const f = Number(it.fator_compra);
+                            mudarLinha(l.chave, {
+                              emCompra,
+                              preco: p > 0 ? valorParaCampo(emCompra ? p * f : custoPorUnidadeEstoque(p, f)) : l.preco,
+                            });
+                          }}
+                        >
+                          <option value="c">
+                            {it.unidade_compra} ({qtdBr(it.fator_compra)} {it.unidade})
+                          </option>
+                          <option value="e">{it.unidade}</option>
+                        </select>
+                      ) : (
+                        <input value={it?.unidade ?? ""} readOnly tabIndex={-1} className="bg-neutral-50" />
+                      )}
+                    </label>
+                    <label className="campo sm:col-span-2">
+                      <span>Preço unit. (R$)</span>
+                      <input value={l.preco} onChange={(e) => mudarLinha(l.chave, { preco: e.target.value })} inputMode="decimal" />
+                    </label>
+                    <label className="campo sm:col-span-2">
+                      <span>Desconto (R$)</span>
+                      <input
+                        value={l.desconto}
+                        onChange={(e) => mudarLinha(l.chave, { desconto: e.target.value })}
+                        inputMode="decimal"
+                        placeholder="0,00"
+                      />
+                    </label>
+                    <div className="flex items-end justify-between gap-2 sm:col-span-2">
+                      <p className="pb-2 text-right text-sm font-semibold tabular-nums">{brl(total)}</p>
+                      <button
+                        type="button"
+                        className="btn !min-h-9 !px-2"
+                        aria-label={`Tirar ${it?.nome ?? l.nome} do pedido`}
+                        onClick={() => setLinhas((ls) => ls.filter((x) => x.chave !== l.chave))}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           )}
-          <label className="campo">
-            <span>Forma</span>
-            <select value={forma} onChange={(e) => setForma(e.target.value)}>
-              <option value="">—</option>
-              {FORMAS_PAGAMENTO.map((x) => (
-                <option key={x}>{x}</option>
-              ))}
-            </select>
-          </label>
-        </div>
-        {condicao === "personalizado" ? (
-          <div className="space-y-2">
-            {manuais.map((p, k) => (
-              <div key={k} className="flex flex-wrap items-end gap-2">
-                <span className="pb-2 text-sm text-neutral-600">{k + 1}ª</span>
+
+          <div className="grid gap-3 sm:grid-cols-4">
+            <label className="campo">
+              <span>Desconto no pedido (R$)</span>
+              <input value={desconto} onChange={(e) => setDesconto(e.target.value)} inputMode="decimal" placeholder="0,00" />
+            </label>
+            <label className="campo">
+              <span>Frete (R$)</span>
+              <input value={frete} onChange={(e) => setFrete(e.target.value)} inputMode="decimal" placeholder="0,00" />
+            </label>
+            <div className="rounded-md bg-[var(--fundo)] p-3 text-right sm:col-span-2">
+              <p className="text-xs text-neutral-600">
+                Itens {brl(tot.itens)}
+                {numeroBr(desconto) > 0 && ` − desconto ${brl(numeroBr(desconto))}`}
+                {numeroBr(frete) > 0 && ` + frete ${brl(numeroBr(frete))}`}
+              </p>
+              <p className="text-xl font-semibold tabular-nums text-[var(--marca)]">Total {brl(tot.total)}</p>
+            </div>
+          </div>
+        </ColunaFormulario>
+        <ColunaFormulario>
+          <fieldset className="space-y-2 rounded-md border border-[var(--borda)] p-3">
+            <legend className="px-1 text-sm font-medium">Pagamento</legend>
+            <div className="grid gap-3 sm:grid-cols-4">
+              <label className="campo sm:col-span-2">
+                <span>Condição</span>
+                <select
+                  value={condicao}
+                  onChange={(e) => (e.target.value === "personalizado" ? personalizar() : setCondicao(e.target.value as Condicao))}
+                >
+                  {CONDICOES.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.nome}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              {condicao === "mensal" && (
                 <label className="campo">
-                  <span>Vencimento</span>
-                  <input
-                    type="date"
-                    value={p.vencimento}
-                    onChange={(e) => setManuais((m) => m.map((x, j) => (j === k ? { ...x, vencimento: e.target.value } : x)))}
-                  />
+                  <span>Quantas parcelas</span>
+                  <input type="number" min={1} max={120} value={nParcelas} onChange={(e) => setNParcelas(e.target.value)} />
                 </label>
-                <label className="campo w-36">
-                  <span>Valor (R$)</span>
-                  <input
-                    value={p.valor}
-                    inputMode="decimal"
-                    onChange={(e) => setManuais((m) => m.map((x, j) => (j === k ? { ...x, valor: e.target.value } : x)))}
-                  />
-                </label>
+              )}
+              <label className="campo">
+                <span>Forma</span>
+                <select value={forma} onChange={(e) => setForma(e.target.value)}>
+                  <option value="">—</option>
+                  {FORMAS_PAGAMENTO.map((x) => (
+                    <option key={x}>{x}</option>
+                  ))}
+                </select>
+              </label>
+            </div>
+            {condicao === "personalizado" ? (
+              <div className="space-y-2">
+                {manuais.map((p, k) => (
+                  <div key={k} className="flex flex-wrap items-end gap-2">
+                    <span className="pb-2 text-sm text-neutral-600">{k + 1}ª</span>
+                    <label className="campo">
+                      <span>Vencimento</span>
+                      <input
+                        type="date"
+                        value={p.vencimento}
+                        onChange={(e) => setManuais((m) => m.map((x, j) => (j === k ? { ...x, vencimento: e.target.value } : x)))}
+                      />
+                    </label>
+                    <label className="campo w-36">
+                      <span>Valor (R$)</span>
+                      <input
+                        value={p.valor}
+                        inputMode="decimal"
+                        onChange={(e) => setManuais((m) => m.map((x, j) => (j === k ? { ...x, valor: e.target.value } : x)))}
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      className="btn !min-h-9"
+                      onClick={() => setManuais((m) => m.filter((_, j) => j !== k))}
+                      disabled={manuais.length === 1}
+                    >
+                      Tirar
+                    </button>
+                  </div>
+                ))}
                 <button
                   type="button"
-                  className="btn !min-h-9"
-                  onClick={() => setManuais((m) => m.filter((_, j) => j !== k))}
-                  disabled={manuais.length === 1}
+                  className="btn"
+                  onClick={() => setManuais((m) => [...m, { vencimento: data, valor: dif > 0 ? valorParaCampo(dif) : "" }])}
                 >
-                  Tirar
+                  + Parcela
                 </button>
               </div>
-            ))}
-            <button
-              type="button"
-              className="btn"
-              onClick={() => setManuais((m) => [...m, { vencimento: data, valor: dif > 0 ? valorParaCampo(dif) : "" }])}
-            >
-              + Parcela
-            </button>
-          </div>
-        ) : (
-          tot.total > 0 && (
-            <p className="text-sm tabular-nums text-neutral-700">
-              {parcelas.map((p) => `${p.numero}ª ${fmtData(p.vencimento)} ${brl(p.valor)}`).join(" · ")}
-            </p>
-          )
-        )}
-        {tot.total > 0 && dif !== 0 && (
-          <p className="text-sm text-red-700">
-            As parcelas somam {brl(tot.total - dif)}; faltam {brl(dif)} para o total.
-          </p>
-        )}
-      </fieldset>
+            ) : (
+              tot.total > 0 && (
+                <p className="text-sm tabular-nums text-neutral-700">
+                  {parcelas.map((p) => `${p.numero}ª ${fmtData(p.vencimento)} ${brl(p.valor)}`).join(" · ")}
+                </p>
+              )
+            )}
+            {tot.total > 0 && dif !== 0 && (
+              <p className="text-sm text-red-700">
+                As parcelas somam {brl(tot.total - dif)}; faltam {brl(dif)} para o total.
+              </p>
+            )}
+          </fieldset>
 
-      <details className="rounded-md border border-[var(--borda)] p-3" open={!categoria && linhas.length > 0}>
-        <summary className="cursor-pointer text-sm text-neutral-700">Estoque, categoria e mais informações</summary>
-        <div className="mt-3 grid gap-3 sm:grid-cols-2">
-          <label className="campo">
-            <span>{tipo === "venda" ? "Sai do estoque" : "Entra no estoque"}</span>
-            <select value={local} onChange={(e) => setLocal(e.target.value)}>
-              {!locaisAtivos.length && <option value="">Cadastre um estoque em Estoque › Estoques</option>}
-              {locaisAtivos.map((l) => (
-                <option key={l.id} value={l.id}>
-                  {l.nome}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="campo">
-            <span title="Para onde vai o valor nos relatórios do Financeiro.">Categoria ({T.categoria}) ⓘ</span>
-            <select value={categoria} onChange={(e) => setCategoria(e.target.value)}>
-              <option value="">{categorias.length ? "Escolha…" : `Cadastre uma ${T.categoria} em Financeiro › Cadastros`}</option>
-              {categorias.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.grupo ? `${c.grupo} › ` : ""}
-                  {c.nome}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="campo">
-            <span>Centro de custo</span>
-            <select value={centro} onChange={(e) => setCentro(e.target.value)}>
-              <option value="">Nenhum</option>
-              {cad.centros
-                .filter((c) => c.ativo || c.id === centro)
-                .map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.nome}
-                  </option>
-                ))}
-            </select>
-          </label>
-          <label className="campo">
-            <span>{tipo === "venda" ? "Nº do pedido do cliente" : "Nº da nota / pedido do fornecedor"}</span>
-            <input value={documento} onChange={(e) => setDocumento(e.target.value)} />
-          </label>
-          <label className="campo sm:col-span-2">
-            <span>Observação (sai no PDF)</span>
-            <textarea rows={2} value={obs} onChange={(e) => setObs(e.target.value)} />
-          </label>
-        </div>
-      </details>
+          <details className="rounded-md border border-[var(--borda)] p-3" open={!categoria && linhas.length > 0}>
+            <summary className="cursor-pointer text-sm text-neutral-700">Estoque, categoria e mais informações</summary>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              <label className="campo">
+                <span>{tipo === "venda" ? "Sai do estoque" : "Entra no estoque"}</span>
+                <select value={local} onChange={(e) => setLocal(e.target.value)}>
+                  {!locaisAtivos.length && <option value="">Cadastre um estoque em Estoque › Estoques</option>}
+                  {locaisAtivos.map((l) => (
+                    <option key={l.id} value={l.id}>
+                      {l.nome}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="campo">
+                <span title="Para onde vai o valor nos relatórios do Financeiro.">Categoria ({T.categoria}) ⓘ</span>
+                <select value={categoria} onChange={(e) => setCategoria(e.target.value)}>
+                  <option value="">{categorias.length ? "Escolha…" : `Cadastre uma ${T.categoria} em Financeiro › Cadastros`}</option>
+                  {categorias.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.grupo ? `${c.grupo} › ` : ""}
+                      {c.nome}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="campo">
+                <span>Centro de custo</span>
+                <select value={centro} onChange={(e) => setCentro(e.target.value)}>
+                  <option value="">Nenhum</option>
+                  {cad.centros
+                    .filter((c) => c.ativo || c.id === centro)
+                    .map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.nome}
+                      </option>
+                    ))}
+                </select>
+              </label>
+              <label className="campo">
+                <span>{tipo === "venda" ? "Nº do pedido do cliente" : "Nº da nota / pedido do fornecedor"}</span>
+                <input value={documento} onChange={(e) => setDocumento(e.target.value)} />
+              </label>
+              <label className="campo sm:col-span-2">
+                <span>Observação (sai no PDF)</span>
+                <textarea rows={2} value={obs} onChange={(e) => setObs(e.target.value)} />
+              </label>
+            </div>
+          </details>
 
-      {tot.total > 0 && (
-        <div className="rounded-md border border-[var(--borda)] p-3">
-          <label className="flex items-center gap-2 text-sm font-medium">
-            <input type="checkbox" checked={jaPago} onChange={(e) => setJaPago(e.target.checked)} />
-            {T.pago}
-          </label>
-          {jaPago && (
-            <label className="campo mt-2 max-w-sm">
-              <span>Conta bancária</span>
-              <select value={pagoConta} onChange={(e) => setPagoConta(e.target.value)}>
-                <option value="">{contasAtivas.length ? "Escolha…" : "Cadastre uma conta em Financeiro › Bancos"}</option>
-                {contasAtivas.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.nome}
-                  </option>
-                ))}
-              </select>
-            </label>
+          {tot.total > 0 && (
+            <div className="rounded-md border border-[var(--borda)] p-3">
+              <label className="flex items-center gap-2 text-sm font-medium">
+                <input type="checkbox" checked={jaPago} onChange={(e) => setJaPago(e.target.checked)} />
+                {T.pago}
+              </label>
+              {jaPago && (
+                <label className="campo mt-2 max-w-sm">
+                  <span>Conta bancária</span>
+                  <select value={pagoConta} onChange={(e) => setPagoConta(e.target.value)}>
+                    <option value="">{contasAtivas.length ? "Escolha…" : "Cadastre uma conta em Financeiro › Bancos"}</option>
+                    {contasAtivas.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.nome}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              )}
+              <p className="mt-1 text-xs text-neutral-500">
+                Vale ao {tipo === "venda" ? "confirmar" : "receber"}: as parcelas já entram como pagas na data do pedido.
+              </p>
+            </div>
           )}
-          <p className="mt-1 text-xs text-neutral-500">
-            Vale ao {tipo === "venda" ? "confirmar" : "receber"}: as parcelas já entram como pagas na data do pedido.
-          </p>
-        </div>
-      )}
-
-      {erro && (
-        <p role="alert" className="rounded-md bg-red-50 p-2 text-sm text-red-800">
-          {erro}
-        </p>
-      )}
-      <div className="flex flex-wrap justify-end gap-2 pt-2">
-        <button className="btn" onClick={aoFechar}>
-          Cancelar
-        </button>
-        <button className="btn" onClick={() => salvar(false)} disabled={salvando}>
-          Salvar rascunho
-        </button>
-        <button
-          className="btn-primario"
-          onClick={() => salvar(true)}
-          disabled={salvando}
-          title={tipo === "venda" ? "Baixa o estoque e lança as contas a receber" : "Põe no estoque e lança as contas a pagar"}
-        >
-          {salvando ? "Salvando…" : T.lancar}
-        </button>
-      </div>
-
+        </ColunaFormulario>
+      </ColunasFormulario>
       {rapido !== null && (
         <CadastroRapido
           cliente={cliente}

@@ -2,7 +2,7 @@
 // perfil pronto). Só o administrador chega aqui.
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import { PAPEIS } from "@/dominios/organizacao/tipos";
 import type { Membro, Papel } from "@/dominios/organizacao/tipos";
 import type { Acesso, HubApp, Perfil } from "@/dominios/acessos/tipos";
@@ -41,6 +41,7 @@ export function EditarPessoa({
   aoSalvar: (c: EdicaoPessoa) => void;
 }) {
   const [nome, setNome] = useState(m.nome);
+  const idForm = useId();
   const [papel, setPapel] = useState<Papel>(m.papel);
   const [setor, setSetor] = useState(m.setor_id ?? "");
   const [modo, setModo] = useState<"modulos" | "perfil">(m.perfil_id ? "perfil" : "modulos");
@@ -51,8 +52,32 @@ export function EditarPessoa({
   const admin = papel === "admin";
 
   return (
-    <Modal titulo={reativando ? `Reativar ${m.nome}` : `Editar ${m.nome}`} descricao={m.email} aoFechar={aoFechar} largura="2xl">
+    <Modal
+      titulo={reativando ? `Reativar ${m.nome}` : `Editar ${m.nome}`}
+      descricao={m.email}
+      aoFechar={aoFechar}
+      largura="6xl"
+      avisoRodape={
+        erro && (
+          <p role="alert" className="rounded-md bg-red-50 p-3 text-sm text-red-800">
+            {erro}
+          </p>
+        )
+      }
+      rodape={
+        <>
+          <button type="button" className="btn" onClick={aoFechar}>
+            Voltar
+          </button>
+          <button type="submit" form={idForm} className="btn-primario">
+            <Icone nome="check" className="h-4 w-4" />
+            {reativando ? "Reativar" : "Salvar"}
+          </button>
+        </>
+      }
+    >
       <form
+        id={idForm}
         className="space-y-3"
         onSubmit={(e) => {
           e.preventDefault();
@@ -69,11 +94,11 @@ export function EditarPessoa({
           });
         }}
       >
-        <label className="campo">
-          <span>Nome</span>
-          <input required value={nome} onChange={(e) => setNome(e.target.value)} />
-        </label>
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <label className="campo sm:col-span-2 lg:col-span-1">
+            <span>Nome</span>
+            <input required value={nome} onChange={(e) => setNome(e.target.value)} />
+          </label>
           <label className="campo">
             <span>Papel nas tarefas</span>
             <select value={papel} disabled={souEu} onChange={(e) => setPapel(e.target.value as Papel)}>
@@ -144,20 +169,6 @@ export function EditarPessoa({
             )}
           </>
         )}
-        {erro && (
-          <p role="alert" className="rounded-md bg-red-50 p-3 text-sm text-red-800">
-            {erro}
-          </p>
-        )}
-        <div className="flex flex-wrap justify-end gap-2 pt-1">
-          <button type="button" className="btn" onClick={aoFechar}>
-            Voltar
-          </button>
-          <button className="btn-primario">
-            <Icone nome="check" className="h-4 w-4" />
-            {reativando ? "Reativar" : "Salvar"}
-          </button>
-        </div>
       </form>
     </Modal>
   );
