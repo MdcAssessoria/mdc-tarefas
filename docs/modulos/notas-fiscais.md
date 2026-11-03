@@ -179,4 +179,8 @@ Na tela: Notas recebidas → **Responder** (fiscal-manifestar assina e envia; o 
   Contabilidade/Fiscal.
 - Crédito do imobilizado (CIAP 1/48, depreciação) e de uso e consumo não entram na estimativa.
 - Tela do Portal (cliente) e a separação de permissão "Entradas" × "Financeiro" ficam para a integração.
-- Emissão (Saídas) vai reaproveitar o certificado, `_fiscal/assinatura.ts` e o transporte mTLS.
+- Emissão: a NFS-e das faturas dos contratos já sai pelo Emissor Nacional (046) reaproveitando o certificado,
+  `_fiscal/assinatura.ts` e o mTLS ([Contratos, seção 5](contratos.md#5-nota-fiscal-de-serviço-pelo-emissor-nacional-migração-046-03112026)).
+  O núcleo da DPS (`dps.ts`) entrou na cópia `_fiscal/nucleo/`. O espelho DANFSe (`EspelhoNota`, que agora aceita só os
+  campos que usa) abre também a nota emitida, lida da pasta `nfse-emitidas` do bucket `fiscal`. NF-e de produto (Saídas)
+  continua por fazer.

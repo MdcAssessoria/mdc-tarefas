@@ -43,3 +43,9 @@ import_map = "./functions/ledgra-link/deno.json"
 [functions.ledgra-link-webhook]
 verify_jwt = false
 import_map = "./functions/ledgra-link-webhook/deno.json"
+
+# NFS-e (migração 046): nfse-emitir é chamada pela tela Contratos › Faturas com o login (a função confere a permissão no
+# banco com nfse_preparar e só então reserva o nDPS com a chave de serviço). Checagem padrão de login ligada.
+[functions.nfse-emitir]
+verify_jwt = true
+import_map = "./functions/nfse-emitir/deno.json"

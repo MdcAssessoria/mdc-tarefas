@@ -65,9 +65,8 @@ export function enviarSoapCom(client: Deno.HttpClient, tempoMs = 60_000): Enviar
   };
 }
 
-/** GET com certificado (ADN da NFS-e): devolve status e corpo JSON (ou null). */
-export async function obterJson(client: Deno.HttpClient, url: string, tempoMs = 60_000): Promise<{ status: number; corpo: unknown }> {
-  const resp = await fetch(url, { headers: { Accept: "application/json" }, client, signal: AbortSignal.timeout(tempoMs) } as RequestInit);
+/** Lê o corpo como JSON; texto que não é JSON vira { Erros: [{ Descricao }] } (para o leitor explicar). */
+async function corpoJson(resp: Response): Promise<{ status: number; corpo: unknown }> {
   const texto = await resp.text();
   let corpo: unknown = null;
   try {
@@ -77,3 +76,32 @@ export async function obterJson(client: Deno.HttpClient, url: string, tempoMs = 
   }
   return { status: resp.status, corpo };
 }
+
+/** GET com certificado (ADN e Sefin da NFS-e): devolve status e corpo JSON (ou null). */
+export async function obterJson(client: Deno.HttpClient, url: string, tempoMs = 60_000): Promise<{ status: number; corpo: unknown }> {
+  const resp = await fetch(url, { headers: { Accept: "application/json" }, client, signal: AbortSignal.timeout(tempoMs) } as RequestInit);
+  return corpoJson(resp);
+}
+
+/** POST JSON com certificado (emissão da NFS-e na Sefin Nacional). */
+export async function postarJson(client: Deno.HttpClient, url: string, corpo: unknown, tempoMs = 60_000): Promise<{ status: number; corpo: unknown }> {
+  const resp = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify(corpo),
+    client,
+    signal: AbortSignal.timeout(tempoMs),
+  } as RequestInit);
+  return corpoJson(resp);
+}
+
+/** Chamadas JSON da API da NFS-e (trocável nos testes, que não usam rede). */
+export interface TransporteJson {
+  postarJson(url: string, corpo: unknown): Promise<{ status: number; corpo: unknown }>;
+  obterJson(url: string): Promise<{ status: number; corpo: unknown }>;
+}
+
+export const transporteCom = (client: Deno.HttpClient, tempoMs = 60_000): TransporteJson => ({
+  postarJson: (url, corpo) => postarJson(client, url, corpo, tempoMs),
+  obterJson: (url) => obterJson(client, url, tempoMs),
+});

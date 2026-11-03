@@ -3,6 +3,8 @@
 // Excel e tela vazia que ensina. Ações: ver a fatura (dados e envio por canal), baixar o PDF no papel timbrado,
 // cancelar com motivo e "Gerar fatura agora". Enquanto não há integração, avisa que e-mail, WhatsApp e boleto
 // aguardam configuração (o Portal do Cliente já recebe).
+// NFS-e (046): "Emitir nota fiscal" abre a conferência (JanelaEmitirNfse, com o ambiente em destaque) e emite pelo
+// Emissor Nacional; a situação da nota aparece na lista com o motivo da recusa; "Ver a nota" abre o espelho DANFSe.
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
@@ -34,11 +36,14 @@ import { Valor } from "@/components/ui/Valor";
 import { SemEmpresaGestao, useClienteGestao } from "@/dominios/organizacao/componentes/EmpresaEmGestao";
 import { lerPessoas } from "@/dominios/financeiro/leituras";
 import { baixarFaturaPdf } from "../baixarFatura";
-import { CANAIS_ENVIO, SITUACOES_ENVIO, SITUACOES_FATURA, SITUACOES_NFSE, textoConteudo } from "../faturamento";
-import { lerContratos, lerEnvios, lerFaturas } from "../leituras";
+import { CANAIS_ENVIO, SITUACOES_ENVIO, SITUACOES_FATURA, textoConteudo } from "../faturamento";
+import { lerContratos, lerEmissoesNfse, lerEnvios, lerFaturas, lerParametrosNfse } from "../leituras";
 import { cancelarFatura } from "../repositorio";
-import type { EnvioDaFatura, Fatura, SituacaoFatura } from "../tipos";
+import { notaEmitida, podeEmitirNota, situacaoDaNota, ultimasEmissoes } from "../nfse";
+import type { EmissaoNfse, EnvioDaFatura, Fatura, SituacaoFatura } from "../tipos";
+import { EspelhoNota } from "@/dominios/notas/componentes/EspelhoNota";
 import { DetalheFatura, JanelaGerarFatura } from "./JanelasFatura";
+import { JanelaEmitirNfse } from "./JanelaEmitirNfse";
 
 type FiltroSituacao = "abertas" | SituacaoFatura | "todas";
 const FILTROS_SITUACAO: { id: FiltroSituacao; nome: string }[] = [
@@ -51,13 +56,19 @@ const FILTROS_SITUACAO: { id: FiltroSituacao; nome: string }[] = [
   { id: "todas", nome: "Todas" },
 ];
 
-type Janela = { tipo: "ver"; f: Fatura } | { tipo: "cancelar"; f: Fatura } | { tipo: "gerar" };
+type Janela =
+  | { tipo: "ver"; f: Fatura }
+  | { tipo: "cancelar"; f: Fatura }
+  | { tipo: "gerar" }
+  | { tipo: "emitir"; f: Fatura }
+  | { tipo: "nota"; caminho: string; chave: string; numero: string | null; voltar?: Fatura };
 
 export function TelaFaturas() {
   const { org, pode, clientes } = useOrg();
   const gestao = useClienteGestao();
   const cliente = gestao.cliente;
   const podeOperar = pode("contratos", "operar");
+  const podeGerir = pode("contratos", "gerir");
   const { aviso, mostrar } = useAviso();
   const hoje = hojeISO(org.fuso);
 
@@ -72,13 +83,15 @@ export function TelaFaturas() {
   const consulta = useConsulta(
     useCallback(async () => {
       if (!cliente) return null;
-      const [faturas, envios, contratos, pessoas] = await Promise.all([
+      const [faturas, envios, contratos, pessoas, emissoes, parametrosNfse] = await Promise.all([
         lerFaturas(cliente.id),
         lerEnvios(cliente.id),
         lerContratos(cliente.id),
         lerPessoas(cliente.id),
+        lerEmissoesNfse(cliente.id),
+        lerParametrosNfse(cliente.id),
       ]);
-      return { faturas, envios, contratos, pessoas };
+      return { faturas, envios, contratos, pessoas, emissoes, parametrosNfse };
     }, [cliente]),
   );
 
@@ -90,6 +103,7 @@ export function TelaFaturas() {
       pessoa: new Map((d?.pessoas ?? []).map((p) => [p.id, p])),
       contrato: new Map((d?.contratos ?? []).map((k) => [k.id, k])),
       envios,
+      ultima: ultimasEmissoes(d?.emissoes ?? []),
     };
   }, [consulta.dados]);
   const nomePessoa = (id: string) => mapas.pessoa.get(id)?.nome ?? "—";
@@ -163,6 +177,15 @@ export function TelaFaturas() {
   ].filter((x): x is FiltroAtivo => !!x);
 
   const canais = (f: Fatura) => mapas.envios.get(f.id) ?? [];
+  const nota = (f: Fatura) => situacaoDaNota(f, mapas.ultima.get(f.id));
+  /** Nota para "Ver a nota": a de verdade (produção) ou, sem ela, a última de teste emitida. */
+  const notaParaVer = (f: Fatura): EmissaoNfse | null => {
+    const lista = consulta.dados?.emissoes ?? [];
+    const e = notaEmitida(lista, f.id) ?? (mapas.ultima.get(f.id)?.situacao === "emitida" ? mapas.ultima.get(f.id)! : null);
+    return e?.xml_caminho && e.chave_acesso ? e : null;
+  };
+  const parametrosNfse = consulta.dados?.parametrosNfse;
+  const temNfse = (consulta.dados?.faturas ?? []).some((f) => f.documento === "nfse" && f.situacao !== "cancelada");
 
   return (
     <div className="space-y-4">
@@ -189,7 +212,7 @@ export function TelaFaturas() {
                   { titulo: "Emissão", valor: (f) => fmtData(f.emissao), peso: 0.9, largura: 12 },
                   { titulo: "Vencimento", valor: (f) => fmtData(f.vencimento), peso: 0.9, largura: 12 },
                   { titulo: "Valor", valor: (f) => Number(f.valor), formato: "moeda", peso: 1 },
-                  { titulo: "Nota fiscal", valor: (f) => SITUACOES_NFSE[f.nfse_situacao], peso: 1.2, largura: 20 },
+                  { titulo: "Nota fiscal", valor: (f) => nota(f).texto, peso: 1.2, largura: 24 },
                   {
                     titulo: "Situação",
                     valor: (f) => SITUACOES_FATURA[f.situacao].nome,
@@ -219,6 +242,34 @@ export function TelaFaturas() {
           {aguardandoConfig ? " Há envios esperando a configuração." : ""}
         </p>
       </div>
+      {temNfse && !parametrosNfse && consulta.dados && (
+        <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900" role="note">
+          <Icone nome="engrenagem" className="mt-0.5 h-5 w-5 shrink-0" />
+          <p>
+            <strong>Emissão da nota fiscal ainda não configurada.</strong>{" "}
+            {podeGerir ? (
+              <>
+                Configure em{" "}
+                <Link className="underline" href="/contratos/nota-fiscal">
+                  Contratos › Nota fiscal (NFS-e)
+                </Link>{" "}
+                (começa no ambiente de teste, sem valor fiscal).
+              </>
+            ) : (
+              "Peça a quem gere o módulo Contratos para configurar em Contratos › Nota fiscal (NFS-e)."
+            )}
+          </p>
+        </div>
+      )}
+      {parametrosNfse?.ambiente === "producao_restrita" && temNfse && (
+        <div className="flex items-start gap-3 rounded-xl border-2 border-amber-400 bg-amber-50 p-3 text-sm text-amber-900" role="note">
+          <Icone nome="alerta" className="mt-0.5 h-5 w-5 shrink-0" />
+          <p>
+            <strong>Notas fiscais no ambiente de teste (sem valor fiscal).</strong> As notas emitidas agora servem só para conferir: não mudam a
+            fatura nem vão para o cliente.{podeGerir ? " Depois dos testes, mude para Produção em Contratos › Nota fiscal (NFS-e)." : ""}
+          </p>
+        </div>
+      )}
 
       <CartaoFiltros ativos={filtrosAtivos} aoLimpar={limparFiltros}>
         <FiltroPeriodo
@@ -274,7 +325,7 @@ export function TelaFaturas() {
               titulo="Aguardando nota fiscal"
               icone="documento"
               valor={String(conta("aguardando_nf"))}
-              detalhe="A nota sai pelo Emissor Nacional"
+              detalhe="Confira e clique em Emitir nota fiscal"
               tom={conta("aguardando_nf") ? "ambar" : "neutro"}
               ativo={situacao === "aguardando_nf"}
               aoClicar={() => setSituacao(situacao === "aguardando_nf" ? "abertas" : "aguardando_nf")}
@@ -340,6 +391,8 @@ export function TelaFaturas() {
                   const s = SITUACOES_FATURA[f.situacao];
                   const env = canais(f);
                   const vencida = f.situacao !== "cancelada" && f.vencimento < hoje;
+                  const n = nota(f);
+                  const ver = notaParaVer(f);
                   return (
                     <tr key={f.id} className={f.situacao === "cancelada" ? "opacity-60" : ""}>
                       <td className="celula-titulo min-w-48">
@@ -361,12 +414,19 @@ export function TelaFaturas() {
                       <td data-rotulo="Valor" className="whitespace-nowrap text-right">
                         <Valor v={Number(f.valor)} />
                       </td>
-                      <td data-rotulo="Situação">
+                      <td data-rotulo="Situação" className="min-w-40">
                         <Chip tom={s.tom}>{s.nome}</Chip>
-                        <span className="block text-xs text-[var(--texto-suave)]">
-                          {f.documento === "nfse" ? SITUACOES_NFSE[f.nfse_situacao] : "Sem nota fiscal"}
+                        <span
+                          className={`block text-xs ${n.tom === "vermelho" ? "font-medium text-[var(--perigo)]" : "text-[var(--texto-suave)]"}`}
+                        >
+                          {n.texto}
                           {f.boleto_situacao === "a_definir" ? " · boleto a configurar" : ""}
                         </span>
+                        {n.detalhe && n.tom === "vermelho" && (
+                          <span className="block max-w-64 text-xs text-[var(--perigo)]" title={n.detalhe}>
+                            {n.detalhe.length > 120 ? `${n.detalhe.slice(0, 117)}…` : n.detalhe}
+                          </span>
+                        )}
                       </td>
                       <td data-rotulo="Envio">
                         {env.length ? (
@@ -392,7 +452,28 @@ export function TelaFaturas() {
                         )}
                       </td>
                       <td className="celula-acoes whitespace-nowrap text-right">
-                        <div className="flex justify-end gap-1">
+                        <div className="flex flex-wrap justify-end gap-1">
+                          {podeOperar && podeEmitirNota(f) && (
+                            <button
+                              className="btn-primario !min-h-8 !px-3"
+                              onClick={() => setJanela({ tipo: "emitir", f })}
+                              aria-label={`Emitir nota fiscal da fatura ${f.numero}`}
+                              title="Conferir e emitir a nota fiscal pelo Emissor Nacional"
+                            >
+                              <Icone nome="enviar" className="h-4 w-4" />
+                              Emitir nota
+                            </button>
+                          )}
+                          {ver && (
+                            <button
+                              className="btn !min-h-8 !px-2.5"
+                              onClick={() => setJanela({ tipo: "nota", caminho: ver.xml_caminho!, chave: ver.chave_acesso!, numero: ver.numero_nfse })}
+                              aria-label={`Ver a nota fiscal da fatura ${f.numero}`}
+                              title={ver.ambiente === "producao" ? "Ver a nota fiscal (espelho)" : "Ver a nota de teste (sem valor fiscal)"}
+                            >
+                              <Icone nome="arquivo" className="h-4 w-4" />
+                            </button>
+                          )}
                           <button
                             className="btn !min-h-8 !px-3"
                             onClick={() => void baixar(f)}
@@ -449,9 +530,41 @@ export function TelaFaturas() {
           contrato={nomeContrato(janela.f.recorrente_id)}
           nomeCarteira={nomeCarteira}
           podeOperar={podeOperar}
+          nota={nota(janela.f)}
+          aoEmitir={podeOperar && podeEmitirNota(janela.f) ? () => setJanela({ tipo: "emitir", f: janela.f }) : undefined}
           aoBaixar={() => void baixar(janela.f)}
           aoCancelar={() => setJanela({ tipo: "cancelar", f: janela.f })}
           aoFechar={() => fechar()}
+        />
+      )}
+      {janela?.tipo === "emitir" && (
+        <JanelaEmitirNfse
+          fatura={janela.f}
+          cliente={nomePessoa(janela.f.pessoa_id)}
+          podeGerir={podeGerir}
+          aoVerNota={(caminho, chave, numero) => setJanela({ tipo: "nota", caminho, chave, numero, voltar: janela.f })}
+          aoFechar={(mudou) => {
+            setJanela(null);
+            if (mudou) consulta.recarregar();
+          }}
+        />
+      )}
+      {janela?.tipo === "nota" && (
+        <EspelhoNota
+          nota={{
+            xml_caminho: janela.caminho,
+            chave: janela.chave,
+            numero: janela.numero,
+            emitente_doc: null,
+            emitente_nome: cliente ? nomeCliente(cliente) : null,
+            modelo: "nfse",
+          }}
+          avisar={mostrar}
+          aoFechar={() => {
+            const voltar = janela.voltar;
+            setJanela(null);
+            if (voltar) consulta.recarregar();
+          }}
         />
       )}
       {janela?.tipo === "cancelar" && (

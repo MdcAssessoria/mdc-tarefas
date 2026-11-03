@@ -99,6 +99,17 @@ npx supabase functions deploy convite --project-ref bulqqdgfrrpqquqvjjfa --impor
   `SUPABASE_ANON_KEY` e `SUPABASE_SERVICE_ROLE_KEY`, que o Supabase já injeta. O teste da assinatura confere com o
   `xmlsec1 --verify` (instale com `apt-get install xmlsec1`). Publicadas pelo conector em 02/11/2026 (v1 das três),
   depois das migrações 031 a 035.
+- **NFS-e (046): `nfse-emitir`.** Usa `_fiscal/` (certificado, assinatura, mTLS, `emissao.ts`) e a cópia do núcleo com
+  `dps.ts`. Ordem: aplicar a 046 → regenerar `database.types.ts` e rodar os Advisors → **publicar a função** e conferir a
+  versão → push do site (o site novo chama a função; sem ela o botão "Emitir nota" falha).
+  ```bash
+  sh scripts/sync-funcoes.sh
+  cd supabase/functions/_fiscal && deno test --allow-run --allow-read --allow-write --allow-env --config deno.json nfse_test.ts && cd -
+  npx supabase functions deploy nfse-emitir --project-ref bulqqdgfrrpqquqvjjfa --import-map supabase/functions/nfse-emitir/deno.json
+  ```
+  Vai **com a checagem de login ligada** (`verify_jwt = true` no `config.toml`). Sem segredo novo (usa as variáveis que o
+  Supabase injeta). Pelo conector: o mesmo bundle das funções fiscais, dentro de `supabase/functions/nfse-emitir`. O teste
+  pede `xmlsec1` e `xmllint` (`apt-get install xmlsec1 libxml2-utils`).
 - Segredos das funções (chave de serviço etc.) ficam no painel: Edge Functions › Secrets. Nunca no código.
 - Ledgra Link (043): `LEDGRA_LINK_URL` (endereço do Ledgra Link, ex.: `https://link.ledgra.com.br`), `LEDGRA_LINK_CHAVE`
   (chave do HUB no Ledgra Link, começa com `llk_`) e `LEDGRA_LINK_SEGREDO_WEBHOOK` (segredo mostrado uma vez pelo Ledgra

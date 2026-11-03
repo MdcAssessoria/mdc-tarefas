@@ -17,7 +17,18 @@ import type { BlocoEspelho, CampoEspelho, Espelho } from "../espelho";
 import type { Nota } from "../tipos";
 import { BotaoXml, fornecedorDa, nomeModelo } from "./Comuns";
 
-export function EspelhoNota({ nota, avisar, aoFechar }: { nota: Nota; avisar: (t: string, tom?: "erro") => void; aoFechar: () => void }) {
+/** Só o que a janela usa: serve para as notas recebidas (fis_notas) e para a NFS-e emitida pelo HUB (Contratos › Faturas). */
+export type NotaParaEspelho = Pick<Nota, "xml_caminho" | "chave" | "numero" | "emitente_doc" | "emitente_nome" | "modelo">;
+
+export function EspelhoNota({
+  nota,
+  avisar,
+  aoFechar,
+}: {
+  nota: NotaParaEspelho;
+  avisar: (t: string, tom?: "erro") => void;
+  aoFechar: () => void;
+}) {
   const caminho = nota.xml_caminho;
   const consulta = useConsulta(
     useCallback(

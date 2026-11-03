@@ -675,6 +675,43 @@ const INTERACOES = {
     await p.keyboard.press("Escape");
     await canc.waitFor({ state: "detached", timeout: 3000 });
     await abrirEFecharModal(p, "Gerar fatura agora", "Gerar fatura agora");
+    // NFS-e (046): aviso do ambiente de teste, situação da nota com o motivo da recusa, conferência e "Ver a nota"
+    await p.getByText("Notas fiscais no ambiente de teste (sem valor fiscal).").waitFor({ timeout: 3000 });
+    await p.getByText("Nota de teste recusada").first().waitFor({ timeout: 3000 });
+    await p.getByRole("button", { name: /^Emitir nota fiscal da fatura / }).first().click();
+    const emitir = p.getByRole("dialog", { name: /^Emitir nota fiscal · Fatura / });
+    await emitir.waitFor({ timeout: 3000 });
+    await emitir.getByText("Ambiente de teste (sem valor fiscal)", { exact: true }).waitFor({ timeout: 3000 });
+    for (const t of ["Cliente (tomador)", "17.19.01", "NBS 1.1302.10.00", "Recolhido no DAS", "Tentativas anteriores", "Ver detalhes"])
+      await emitir.getByText(t, { exact: false }).first().waitFor({ timeout: 3000 });
+    await emitir.getByRole("button", { name: "Emitir nota de teste" }).waitFor({ timeout: 3000 });
+    const largaEmitir = await p.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
+    if (largaEmitir) throw new Error('a janela "Emitir nota fiscal" fez a página rolar na horizontal');
+    await foto("emitir-nfse");
+    await p.keyboard.press("Escape");
+    await emitir.waitFor({ state: "detached", timeout: 3000 });
+    await p.route(/\/storage\/v1\/object\/(authenticated\/)?fiscal\//, (r) => {
+      if (r.request().method() === "OPTIONS") return r.fulfill({ status: 204, headers: CORS });
+      const caminho = decodeURIComponent(new URL(r.request().url()).pathname);
+      const xml = Object.entries(XML_EXEMPLO).find(([k]) => caminho.endsWith(k))?.[1];
+      return r.fulfill({ status: xml ? 200 : 404, headers: { ...CORS, "content-type": "application/xml" }, body: xml ?? "{}" });
+    });
+    await p.getByRole("button", { name: /^Ver a nota fiscal da fatura / }).first().click();
+    const espelho = p.getByRole("dialog", { name: /NFS-e|1287/ });
+    await espelho.waitFor({ timeout: 3000 });
+    await espelho.getByText("1287", { exact: false }).first().waitFor({ timeout: 5000 });
+    await foto("nfse-emitida");
+    await p.keyboard.press("Escape");
+    await espelho.waitFor({ state: "detached", timeout: 3000 });
+  },
+  // Nota fiscal (NFS-e) (046): parâmetros da emissão; ir para a produção pede confirmação
+  "/contratos/nota-fiscal": async (p, foto) => {
+    await p.getByRole("radiogroup", { name: "Ambiente da emissão" }).waitFor({ timeout: 3000 });
+    for (const t of ["Código NBS do serviço", "Tributos aproximados do Simples (%)", "Inscrição municipal", "Notas enviadas pelo HUB"])
+      await p.getByText(t, { exact: false }).first().waitFor({ timeout: 3000 });
+    await p.getByRole("radio", { name: /^Produção \(nota com valor fiscal\)/ }).check();
+    await p.getByText("Confirmo que as notas de teste deram certo").waitFor({ timeout: 3000 });
+    await foto("nota-fiscal-parametros");
   },
   "/contratos/reajustes": async (p) => {
     await p.getByRole("button", { name: "Conferir e confirmar", exact: true }).first().click();
