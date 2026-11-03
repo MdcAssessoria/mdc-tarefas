@@ -1,8 +1,9 @@
 // Entradas › Notas recebidas: painel dos XML que chegaram (busca automática na SEFAZ e na NFS-e Nacional, ou XML
 // enviado), com a situação em linguagem simples (Aguardando sua resposta, Prazo vencendo, Confirmada, Recusada…),
 // resposta à SEFAZ em lote, itens, histórico com protocolos, "Ver a nota" e "Baixar PDF" à vista em cada linha (espelho
-// no layout DANFE/DANFSe), XML para baixar, PDF e Excel do que está na tela. O aviso da busca automática sai em
-// linguagem simples (dominios/notas/painel.ts), com o texto técnico recolhido em "Ver detalhes".
+// no layout DANFE/DANFSe), "Ver caminho" (pedido → nota → contas a pagar → pagamentos e estoque), XML para baixar,
+// PDF e Excel do que está na tela. O aviso da busca automática sai em linguagem simples (dominios/notas/painel.ts),
+// com o texto técnico recolhido em "Ver detalhes".
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
@@ -50,6 +51,7 @@ import { EspelhoNota } from "@/dominios/notas/componentes/EspelhoNota";
 import { EnviarXml } from "@/dominios/notas/componentes/EnviarXml";
 import { BotoesVerNota } from "@/dominios/notas/componentes/BotoesVerNota";
 import { avisoDaBusca, contar, resumoNotasRecebidas } from "@/dominios/notas/painel";
+import { ArvoreDocumento } from "@/dominios/financeiro/componentes/ArvoreDocumento";
 
 type FiltroSit = "todas" | SituacaoPainel | "a_lancar";
 const FILTROS: { id: FiltroSit; nome: string }[] = [
@@ -72,6 +74,7 @@ type Janela =
   | { tipo: "manifestar"; notas: Nota[]; inicial?: CodigoManifestacao }
   | { tipo: "detalhe"; nota: Nota }
   | { tipo: "espelho"; nota: Nota }
+  | { tipo: "caminho"; nota: Nota; volta?: Janela }
   | { tipo: "xml" };
 
 export default function PaginaNotasRecebidas() {
@@ -180,13 +183,21 @@ export default function PaginaNotasRecebidas() {
     setPeriodo("90");
   }
   const filtrosAtivos: FiltroAtivo[] = [
-    ...(periodo !== "90" ? [{ id: "periodo", rotulo: `Emissão: ${PERIODOS.find((x) => x.id === periodo)?.nome ?? ""}`, aoTirar: () => setPeriodo("90") }] : []),
+    ...(periodo !== "90"
+      ? [{ id: "periodo", rotulo: `Emissão: ${PERIODOS.find((x) => x.id === periodo)?.nome ?? ""}`, aoTirar: () => setPeriodo("90") }]
+      : []),
     ...(situacao !== "todas"
       ? [{ id: "situacao", rotulo: `Situação: ${FILTROS.find((f) => f.id === situacao)?.nome ?? ""}`, aoTirar: () => setSituacao("todas") }]
       : []),
     ...(busca ? [{ id: "busca", rotulo: `Busca: ${busca}`, aoTirar: () => setBusca("") }] : []),
     ...(fornecedor
-      ? [{ id: "fornecedor", rotulo: `Fornecedor: ${fornecedores.find(([k]) => k === fornecedor)?.[1] ?? ""}`, aoTirar: () => setFornecedor("") }]
+      ? [
+          {
+            id: "fornecedor",
+            rotulo: `Fornecedor: ${fornecedores.find(([k]) => k === fornecedor)?.[1] ?? ""}`,
+            aoTirar: () => setFornecedor(""),
+          },
+        ]
       : []),
     ...(modelo ? [{ id: "modelo", rotulo: `Tipo: ${modelo === "55" ? "NF-e" : "NFS-e"}`, aoTirar: () => setModelo("") }] : []),
   ];
@@ -401,7 +412,8 @@ export default function PaginaNotasRecebidas() {
 
           <p className="text-sm text-neutral-700">{resumo}</p>
           <div className="grid gap-3 sm:grid-cols-3">
-            <Indicador icone="chat"
+            <Indicador
+              icone="chat"
               titulo="Aguardando sua resposta"
               valor={String(aguardando.length)}
               detalhe={brl(soma(aguardando))}
@@ -409,7 +421,8 @@ export default function PaginaNotasRecebidas() {
               ativo={situacao === "aguardando"}
               aoClicar={() => setSituacao(situacao === "aguardando" ? "todas" : "aguardando")}
             />
-            <Indicador icone="relogio"
+            <Indicador
+              icone="relogio"
               titulo="Prazo vencendo"
               valor={String(vencendo.length)}
               detalhe="10 dias ou menos para responder"
@@ -417,7 +430,8 @@ export default function PaginaNotasRecebidas() {
               ativo={situacao === "prazo_vencendo"}
               aoClicar={() => setSituacao(situacao === "prazo_vencendo" ? "todas" : "prazo_vencendo")}
             />
-            <Indicador icone="check"
+            <Indicador
+              icone="check"
               titulo="Prontas para lançar"
               valor={String(aLancar.length)}
               detalhe={brl(soma(aLancar))}
@@ -430,7 +444,8 @@ export default function PaginaNotasRecebidas() {
           {podeOperar && notasMarcadas.length > 0 && (
             <div className="cartao flex flex-wrap items-center gap-2 p-3">
               <span className="mr-auto text-sm">
-                {contar(notasMarcadas.length, "nota marcada", "notas marcadas")} · {brl(notasMarcadas.reduce((a, n) => a + Number(n.valor_total), 0))}
+                {contar(notasMarcadas.length, "nota marcada", "notas marcadas")} ·{" "}
+                {brl(notasMarcadas.reduce((a, n) => a + Number(n.valor_total), 0))}
               </span>
               <button
                 className="btn-primario"
@@ -467,7 +482,9 @@ export default function PaginaNotasRecebidas() {
           ) : (
             <QuadroTabela
               rotulo="Notas recebidas"
-              rodape={lista.length > MOSTRAR ? `Mostrando ${MOSTRAR} de ${lista.length}. Os totais e a exportação consideram todas.` : undefined}
+              rodape={
+                lista.length > MOSTRAR ? `Mostrando ${MOSTRAR} de ${lista.length}. Os totais e a exportação consideram todas.` : undefined
+              }
             >
               <thead>
                 <tr className={LINHA}>
@@ -494,8 +511,7 @@ export default function PaginaNotasRecebidas() {
               </thead>
               <tbody>
                 {lista.slice(0, MOSTRAR).map(({ n, s, pronta }) => {
-                  const pode =
-                    temManifestacao(n) && manifestacoesPermitidas({ ...n, eventos: eventosAceitos.get(n.id) }, hoje).length > 0;
+                  const pode = temManifestacao(n) && manifestacoesPermitidas({ ...n, eventos: eventosAceitos.get(n.id) }, hoje).length > 0;
                   return (
                     <tr key={n.id} className={`${LINHA} ${s.id === "cancelada" ? "opacity-60" : ""}`}>
                       {podeOperar && (
@@ -517,7 +533,10 @@ export default function PaginaNotasRecebidas() {
                         <span>
                           {nomeModelo(n.modelo)} {n.numero}
                           {n.conteudo === "resumo" && (
-                            <span className="block text-xs text-neutral-500" title="O XML completo chega depois da ciência ou da confirmação">
+                            <span
+                              className="block text-xs text-neutral-500"
+                              title="O XML completo chega depois da ciência ou da confirmação"
+                            >
                               só resumo
                             </span>
                           )}
@@ -570,6 +589,14 @@ export default function PaginaNotasRecebidas() {
                               ⋯
                             </summary>
                             <div className="absolute right-0 z-10 mt-1 w-56 rounded-xl border border-[var(--borda)] bg-white p-1 text-left text-sm shadow-lg">
+                              <button
+                                className={ITEM_MENU}
+                                title="Ver caminho: de onde veio esta nota e para onde foi (pedido, contas, pagamentos e estoque)"
+                                onClick={(e) => menu(e, { tipo: "caminho", nota: n })}
+                              >
+                                <Icone nome="ramificacao" className="h-4 w-4 text-[var(--texto-suave)]" />
+                                Ver caminho
+                              </button>
                               {n.xml_caminho && (
                                 <button
                                   className={ITEM_MENU}
@@ -621,6 +648,16 @@ export default function PaginaNotasRecebidas() {
           avisar={mostrar}
           aoFechar={() => fechar()}
           aoVerNota={() => setJanela({ tipo: "espelho", nota: janela.nota })}
+          aoVerCaminho={() => setJanela({ tipo: "caminho", nota: janela.nota, volta: janela })}
+        />
+      )}
+      {janela?.tipo === "caminho" && cliente && (
+        <ArvoreDocumento
+          ponto={{ tipo: "nota", id: janela.nota.id }}
+          clienteId={cliente.id}
+          empresa={nomeCliente(cliente)}
+          titulo={`${nomeModelo(janela.nota.modelo)} nº ${janela.nota.numero ?? "—"}`}
+          aoFechar={() => setJanela(janela.volta ?? null)}
         />
       )}
       {janela?.tipo === "espelho" && <EspelhoNota nota={janela.nota} avisar={mostrar} aoFechar={() => fechar()} />}

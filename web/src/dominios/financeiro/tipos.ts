@@ -141,6 +141,8 @@ export interface Titulo {
   /** Contrato fixo que lançou esta conta (041) e o mês dele. */
   recorrente_id?: string | null;
   competencia?: string | null;
+  /** Nota fiscal de entrada que lançou esta conta (032). */
+  nota_id?: string | null;
 }
 
 export interface Baixa {

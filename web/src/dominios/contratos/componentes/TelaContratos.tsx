@@ -34,6 +34,8 @@ import type { Recorrente, SituacaoRecorrente } from "../tipos";
 import { ContratoFixo } from "./ContratoFixo";
 import { FichaContrato } from "./FichaContrato";
 import { JanelaReajuste } from "./JanelaReajuste";
+import { ArvoreDocumento } from "@/dominios/financeiro/componentes/ArvoreDocumento";
+import { BotaoVerCaminho } from "@/components/ui/BotaoVerCaminho";
 
 type FiltroTipo = "" | "receber" | "pagar";
 type FiltroSituacao = SituacaoRecorrente | "todos" | "vigentes";
@@ -53,7 +55,9 @@ type Janela =
   | { tipo: "reajuste"; k: Recorrente }
   | { tipo: "suspender"; k: Recorrente }
   | { tipo: "reativar"; k: Recorrente }
-  | { tipo: "encerrar"; k: Recorrente };
+  | { tipo: "encerrar"; k: Recorrente }
+  /** "Ver caminho" (contas de cada mês e recebimentos); `daFicha` volta para a ficha ao fechar. */
+  | { tipo: "caminho"; k: Recorrente; daFicha?: boolean };
 
 const ITEM_MENU = "flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left hover:bg-[var(--fundo)]";
 
@@ -388,6 +392,7 @@ export function TelaContratos() {
                               Ficha
                             </button>
                           )}
+                          <BotaoVerCaminho compacto aoClicar={() => setJanela({ tipo: "caminho", k })} />
                           <details className="relative">
                             <summary
                               className="btn !min-h-8 list-none !px-2.5 [&::-webkit-details-marker]:hidden"
@@ -481,6 +486,16 @@ export function TelaContratos() {
             mostrar(m);
             consulta.recarregar();
           }}
+          aoVerCaminho={() => setJanela({ tipo: "caminho", k: janela.k, daFicha: true })}
+        />
+      )}
+      {janela?.tipo === "caminho" && cliente && (
+        <ArvoreDocumento
+          ponto={{ tipo: "contrato", id: janela.k.id }}
+          clienteId={cliente.id}
+          empresa={nomeCliente(cliente)}
+          titulo={`Contrato fixo: ${janela.k.descricao}`}
+          aoFechar={() => (janela.daFicha ? setJanela({ tipo: "ficha", k: janela.k }) : fechar())}
         />
       )}
       {janela?.tipo === "reajuste" && (

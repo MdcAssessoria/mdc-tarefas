@@ -1781,3 +1781,86 @@ export const XML_EXEMPLO = {
     };
   };
 })();
+
+// "Ver caminho" (árvore do documento): o pedido de compra nº 1 cita a NF-e 1188 do mesmo fornecedor (CNPJ do emitente =
+// cadastro da Imobiliária Centro), gerou 2 parcelas (a 1ª paga, com um pagamento estornado antes) e a entrada da tinta no
+// estoque. A venda nº 1 já tem a conta a receber f8…04 com recebimento parcial. Só acréscimos e o documento do pedido.
+(() => {
+  const PC1 = "fc000000-0000-4000-8000-000000000003";
+  const pedido = TABELAS.est_pedidos.find((p) => p.id === PC1);
+  Object.assign(pedido, {
+    documento: "NF 1188",
+    condicao: "30 e 60 dias",
+    parcelas: [
+      { numero: 1, vencimento: dia(-4 + 30), valor: 70 },
+      { numero: 2, vencimento: dia(-4 + 60), valor: 70 },
+    ],
+  });
+  const parcela = (n, d, pago) => ({
+    id: `f8000000-0000-4000-8000-00000000001${n}`,
+    org_id: ORG,
+    cliente_id: CM,
+    tipo: "pagar",
+    pessoa_id: "f5000000-0000-4000-8000-000000000001",
+    categoria_id: "f7000000-0000-4000-8000-000000000002",
+    centro_id: null,
+    conta_prevista_id: "f2000000-0000-4000-8000-000000000001",
+    descricao: `Pedido de compra nº 1 · Imobiliária Centro Ltda (${n}/2)`,
+    documento: "NF 1188",
+    emissao: dia(-4),
+    vencimento: dia(d),
+    valor: 70,
+    valor_pago: pago ? 70 : 0,
+    parcela: n,
+    parcelas: 2,
+    grupo: null,
+    situacao: pago ? "quitado" : "aberto",
+    quitado_em: pago ? dia(-2) : null,
+    cancelado_motivo: null,
+    observacao: null,
+  });
+  TABELAS.fin_titulos.push(parcela(1, -3, true), parcela(2, 26, false));
+  TABELAS.est_pedido_titulos.push(
+    { titulo_id: "f8000000-0000-4000-8000-000000000011", pedido_id: PC1, org_id: ORG, cliente_id: CM },
+    { titulo_id: "f8000000-0000-4000-8000-000000000012", pedido_id: PC1, org_id: ORG, cliente_id: CM },
+  );
+  const baixa = (id, d, estornada) => ({
+    id,
+    org_id: ORG,
+    cliente_id: CM,
+    titulo_id: "f8000000-0000-4000-8000-000000000011",
+    conta_id: estornada ? "f2000000-0000-4000-8000-000000000002" : "f2000000-0000-4000-8000-000000000001",
+    data: dia(d),
+    valor: 70,
+    juros: 0,
+    multa: 0,
+    desconto: 0,
+    total: 70,
+    forma: estornada ? "Boleto" : "Pix",
+    observacao: null,
+    extrato_linha_id: null,
+    estornada,
+    estornada_em: estornada ? momento(d + 1) : null,
+    estorno_motivo: estornada ? "Pago pela conta errada" : null,
+  });
+  TABELAS.fin_baixas.push(baixa(40, -3, true), baixa(41, -2, false));
+  TABELAS.est_movimentos.push({
+    id: 4,
+    org_id: ORG,
+    cliente_id: CM,
+    item_id: "f9000000-0000-4000-8000-000000000002",
+    local_id: "fa000000-0000-4000-8000-000000000001",
+    data: dia(-4),
+    tipo: "entrada",
+    quantidade: 1,
+    custo_unitario: 140,
+    origem: "pedido_compra",
+    origem_id: PC1,
+    grupo: null,
+    observacao: null,
+    estornado: false,
+    estorno_motivo: null,
+    saldo_apos: 4,
+    custo_medio_apos: 170,
+  });
+})();

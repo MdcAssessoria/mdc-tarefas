@@ -18,6 +18,9 @@
 | `/saidas` | Saídas | **Pedidos de venda**: período, situação, busca; indicadores (vendido no período, rascunhos, a faturar, ticket médio); novo pedido; Editar, Confirmar, Faturar, Ver, PDF, Duplicar, Cancelar com motivo |
 | `/entradas/compras` | Entradas | **Pedidos de compra**: idem, com Receber (mercadoria chegou) e indicador "aguardando entrega" |
 
+Em pedidos de venda e de compra (lista e janela "Ver") há o botão **Ver caminho**: a árvore pedido → nota (achada pelo
+número no Documento) → contas → pagamentos e a entrada/saída do estoque ([Financeiro, seção 8](financeiro.md#8-ver-caminho-árvore-do-documento-03112026)).
+
 `/financeiro/estoque` (tela antiga) redireciona para `/estoque` (`next.config.ts`). A empresa é sempre a MDC
 (`organizacoes.gestao_cliente_id`), como no Financeiro.
 

@@ -9,6 +9,7 @@ import { brl } from "@/lib/formato/moeda";
 import { fmtData } from "@/lib/formato/datas";
 import { Modal } from "@/components/ui/Modal";
 import { Carregando } from "@/components/ui/Carregando";
+import { BotaoVerCaminho } from "@/components/ui/BotaoVerCaminho";
 import { lerTitulosDoPedido } from "../leituras";
 import { confirmarPedido, faturarPedido, receberPedido } from "../repositorio";
 import { margemVenda, situacaoPedido } from "../pedidosRegras";
@@ -24,6 +25,7 @@ export function DetalhePedido({
   local,
   hoje,
   aoFechar,
+  aoVerCaminho,
 }: {
   pedido: Pedido;
   itens: PedidoItem[];
@@ -31,6 +33,8 @@ export function DetalhePedido({
   local: string;
   hoje: string;
   aoFechar: () => void;
+  /** Abre o "Ver caminho" do pedido (nota, contas, pagamentos e estoque). */
+  aoVerCaminho?: () => void;
 }) {
   const T = TEXTOS_PEDIDO[pedido.tipo];
   const titulos = useConsulta(useCallback(() => lerTitulosDoPedido(pedido.id), [pedido.id]));
@@ -140,7 +144,8 @@ export function DetalhePedido({
           </ul>
         )}
       </div>
-      <div className="flex justify-end pt-2">
+      <div className="flex flex-wrap justify-end gap-2 pt-2">
+        {aoVerCaminho && <BotaoVerCaminho aoClicar={aoVerCaminho} className="!min-h-10" />}
         <button className="btn" onClick={aoFechar}>
           Fechar
         </button>

@@ -232,6 +232,34 @@ async function abrirEFecharModal(pagina, botao, titulo) {
 }
 
 /**
+ * "Ver caminho": clica no botão dentro de `onde` (linha, cartão ou janela), espera a árvore com o texto `esperado`,
+ * confere que a página não rola na horizontal, fotografa e (com `pdf`) baixa o PDF. Deixa a janela aberta.
+ */
+async function abrirCaminho(pagina, onde, titulo, esperado, foto, nome, pdf = false) {
+  await onde.getByRole("button", { name: "Ver caminho" }).first().click();
+  const janela = pagina.getByRole("dialog", { name: new RegExp(`^Caminho · ${titulo}`) });
+  await janela.waitFor({ timeout: 3000 });
+  for (const t of esperado) await janela.getByText(t, { exact: false }).first().waitFor({ timeout: 5000 });
+  const focoDentro = await janela.evaluate((d) => d.contains(document.activeElement));
+  if (!focoDentro) throw new Error(`o foco não foi para dentro da janela "Ver caminho" (${titulo})`);
+  const larga = await pagina.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
+  if (larga) throw new Error(`a janela "Ver caminho" (${titulo}) fez a página rolar na horizontal`);
+  await pagina.waitForTimeout(200);
+  await foto(`ver-caminho-${nome}`);
+  if (pdf) {
+    const [baixado] = await Promise.all([
+      pagina.waitForEvent("download", { timeout: 10_000 }),
+      janela.getByRole("button", { name: "Baixar PDF" }).click(),
+    ]);
+    if (!/^Caminho-.*\.pdf$/.test(baixado.suggestedFilename()))
+      throw new Error(`o PDF do caminho saiu com nome estranho: ${baixado.suggestedFilename()}`);
+    if (process.env.FOTOS)
+      await baixado.saveAs(join(process.env.FOTOS, `ver-caminho-${nome}${process.env.TELA === "celular" ? "-celular" : ""}.pdf`));
+  }
+  return janela;
+}
+
+/**
  * Cliques extras depois que a tela abre, para cobrir o que só aparece com interação (janelas, abas).
  * A chave é o caminho da rota; a função recebe (página, foto) e lança erro quando algo não se comporta como esperado.
  * foto("sufixo") salva uma captura do momento quando a verificação roda com FOTOS.
@@ -253,6 +281,28 @@ const INTERACOES = {
     await cat.waitFor({ state: "detached", timeout: 3000 });
     await conta.waitFor({ timeout: 3000 });
     await p.keyboard.press("Escape");
+    await conta.waitFor({ state: "detached", timeout: 3000 });
+    // "Ver caminho" da 2ª parcela do pedido de compra: sobe até o pedido e mostra a nota, o estorno e o que falta
+    const linha = p.getByRole("row").filter({ hasText: "Pedido de compra nº 1 · Imobiliária Centro Ltda (2/2)" });
+    const arvore = await abrirCaminho(
+      p,
+      linha,
+      "Conta a pagar",
+      ["Pedido de compra", "Nota fiscal de entrada", "Pagamento estornado", "O que falta"],
+      foto,
+      "conta-a-pagar",
+    );
+    // abrir o histórico de uma conta de dentro da árvore e voltar
+    await arvore
+      .getByRole("button", { name: /^Ver pagamentos/ })
+      .first()
+      .click();
+    const hist = p.getByRole("dialog", { name: /Histórico|Pagamentos/ });
+    await hist.waitFor({ timeout: 3000 });
+    await p.keyboard.press("Escape");
+    await p.getByRole("dialog", { name: /^Caminho · Conta a pagar/ }).waitFor({ timeout: 3000 });
+    await p.keyboard.press("Escape");
+    await arvore.waitFor({ state: "detached", timeout: 3000 });
   },
   "/financeiro/receber": (p) => abrirEFecharModal(p, "Nova conta a receber", "Nova conta a receber"),
   "/financeiro/movimento": (p) => abrirEFecharModal(p, "Saída", "Nova conta a pagar"),
@@ -328,13 +378,32 @@ const INTERACOES = {
     await p.keyboard.press("Escape");
     await editor.waitFor({ state: "detached", timeout: 3000 });
     await p.getByRole("button", { name: "Ver", exact: true }).first().click();
-    await p.getByRole("dialog", { name: "Pedido de venda nº 1" }).waitFor({ timeout: 3000 });
+    const ver = p.getByRole("dialog", { name: "Pedido de venda nº 1" });
+    await ver.waitFor({ timeout: 3000 });
+    // "Ver caminho" de dentro do pedido: ao fechar a árvore, volta para o pedido
+    await abrirCaminho(p, ver, "Pedido de venda nº 1", ["Conta a receber", "Recebimento"], foto, "pedido-venda");
     await p.keyboard.press("Escape");
+    await ver.waitFor({ timeout: 3000 });
+    await p.keyboard.press("Escape");
+    await ver.waitFor({ state: "detached", timeout: 3000 });
     await abrirEFecharModal(p, "Confirmar", "Confirmar a venda nº 2");
   },
-  "/entradas/compras": async (p) => {
+  "/entradas/compras": async (p, foto) => {
     await abrirEFecharModal(p, "Novo pedido", "Novo pedido de compra");
     await abrirEFecharModal(p, "Receber", "Receber a compra nº 2");
+    // pedido de compra nº 1 → NF-e 1188 (pelo número) → 2 parcelas (1 paga, 1 estorno) → pagamentos; entrada no estoque
+    const cartao = p.locator("article").filter({ hasText: "Nº 1 ·" });
+    const arvore = await abrirCaminho(
+      p,
+      cartao,
+      "Pedido de compra nº 1",
+      ["Nota fiscal de entrada", "Ligada pelo número da nota", "Parcela 2/2", "Pagamento estornado", "Entrada no estoque"],
+      foto,
+      "pedido-compra",
+      true,
+    );
+    await p.keyboard.press("Escape");
+    await arvore.waitFor({ state: "detached", timeout: 3000 });
   },
   "/entradas": async (p, foto) => {
     await abrirEFecharModal(p, "Enviar XML", "Enviar XML de nota");
@@ -366,9 +435,17 @@ const INTERACOES = {
       const q = quadro.getBoundingClientRect();
       return {
         rolaDeLado: quadro.scrollWidth - quadro.clientWidth,
-        botoes: [...quadro.querySelectorAll('button[aria-label="Ver a nota"], button[aria-label="Baixar PDF"], summary[aria-label="Mais ações"]')].map((b) => {
+        botoes: [
+          ...quadro.querySelectorAll('button[aria-label="Ver a nota"], button[aria-label="Baixar PDF"], summary[aria-label="Mais ações"]'),
+        ].map((b) => {
           const r = b.getBoundingClientRect();
-          return { nome: b.getAttribute("aria-label"), titulo: b.getAttribute("title"), l: r.width, a: r.height, fora: Math.max(r.right - q.right, q.left - r.left) };
+          return {
+            nome: b.getAttribute("aria-label"),
+            titulo: b.getAttribute("title"),
+            l: r.width,
+            a: r.height,
+            fora: Math.max(r.right - q.right, q.left - r.left),
+          };
         }),
       };
     });
@@ -383,8 +460,12 @@ const INTERACOES = {
     // "Baixar PDF" da linha baixa direto, sem abrir janela
     {
       const linha = p.getByRole("row").filter({ hasText: "NF-e 1188" });
-      const [baixado] = await Promise.all([p.waitForEvent("download", { timeout: 10_000 }), linha.getByRole("button", { name: "Baixar PDF" }).click()]);
-      if (!/\.pdf$/.test(baixado.suggestedFilename())) throw new Error(`o PDF da linha saiu com nome estranho: ${baixado.suggestedFilename()}`);
+      const [baixado] = await Promise.all([
+        p.waitForEvent("download", { timeout: 10_000 }),
+        linha.getByRole("button", { name: "Baixar PDF" }).click(),
+      ]);
+      if (!/\.pdf$/.test(baixado.suggestedFilename()))
+        throw new Error(`o PDF da linha saiu com nome estranho: ${baixado.suggestedFilename()}`);
       if (await p.getByRole("dialog").count()) throw new Error('"Baixar PDF" da linha abriu uma janela');
     }
     for (const [nota, sigla, nome, pelo] of [
@@ -403,12 +484,31 @@ const INTERACOES = {
       const larga = await p.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
       if (larga) throw new Error(`a janela "Ver a nota" (${nota}) fez a página rolar na horizontal`);
       await foto(`ver-nota-${nome}`);
-      const [baixado] = await Promise.all([p.waitForEvent("download", { timeout: 10_000 }), janela.getByRole("button", { name: "Baixar PDF" }).click()]);
-      if (!/\.pdf$/.test(baixado.suggestedFilename())) throw new Error(`o PDF da nota saiu com nome estranho: ${baixado.suggestedFilename()}`);
-      if (process.env.FOTOS) await baixado.saveAs(join(process.env.FOTOS, `entradas-ver-nota-${nome}${process.env.TELA === "celular" ? "-celular" : ""}.pdf`));
+      const [baixado] = await Promise.all([
+        p.waitForEvent("download", { timeout: 10_000 }),
+        janela.getByRole("button", { name: "Baixar PDF" }).click(),
+      ]);
+      if (!/\.pdf$/.test(baixado.suggestedFilename()))
+        throw new Error(`o PDF da nota saiu com nome estranho: ${baixado.suggestedFilename()}`);
+      if (process.env.FOTOS)
+        await baixado.saveAs(join(process.env.FOTOS, `entradas-ver-nota-${nome}${process.env.TELA === "celular" ? "-celular" : ""}.pdf`));
       await p.keyboard.press("Escape");
       await janela.waitFor({ state: "detached", timeout: 3000 });
     }
+    // "Ver caminho" da NF-e 1188: sobe até o pedido de compra que cita a nota; "Ver a nota" abre o espelho e volta
+    const linha = p.getByRole("row").filter({ hasText: "NF-e 1188" });
+    await linha.getByRole("button", { name: "Mais ações" }).or(linha.locator("summary")).first().click();
+    const arvore = await abrirCaminho(p, linha, "NF-e nº 1188", ["Pedido de compra", "Você abriu daqui"], foto, "nota");
+    await arvore
+      .getByRole("button", { name: /^Ver a nota/ })
+      .first()
+      .click();
+    const espelho = p.getByRole("dialog", { name: /^NF-e 1188/ });
+    await espelho.getByText("DANFE", { exact: true }).waitFor({ timeout: 5000 });
+    await p.keyboard.press("Escape");
+    await p.getByRole("dialog", { name: /^Caminho · NF-e nº 1188/ }).waitFor({ timeout: 3000 });
+    await p.keyboard.press("Escape");
+    await arvore.waitFor({ state: "detached", timeout: 3000 });
   },
   "/entradas/lancar": async (p) => {
     await p.getByRole("button", { name: "Lançar", exact: true }).first().click();
@@ -453,6 +553,10 @@ const INTERACOES = {
     }
     await ficha.getByText("Arquivo anexado").waitFor({ timeout: 3000 });
     await foto("ficha");
+    // "Ver caminho" da ficha: contrato → conta do mês; ao fechar, volta para a ficha
+    await abrirCaminho(p, ficha, "Contrato fixo: Aluguel da sala", ["Contrato fixo a pagar", "Conta de"], foto, "contrato");
+    await p.keyboard.press("Escape");
+    await p.getByRole("dialog", { name: "Aluguel da sala" }).waitFor({ timeout: 3000 });
     await p.keyboard.press("Escape");
   },
   "/contratos/reajustes": async (p) => {
@@ -518,7 +622,12 @@ const INTERACOES = {
     await janela.waitFor({ timeout: 3000 });
     await janela.getByRole("radiogroup", { name: "Acesso a Tarefas" }).waitFor({ timeout: 3000 });
     await janela.getByRole("radiogroup", { name: "Acesso a Societário" }).getByRole("radio", { name: "Gerir" }).click();
-    if ((await janela.getByRole("radiogroup", { name: "Acesso a Societário" }).getByRole("radio", { name: "Gerir" }).getAttribute("aria-checked")) !== "true")
+    if (
+      (await janela
+        .getByRole("radiogroup", { name: "Acesso a Societário" })
+        .getByRole("radio", { name: "Gerir" })
+        .getAttribute("aria-checked")) !== "true"
+    )
       throw new Error("a escolha do nível do módulo não ficou marcada");
     await foto("cadastrar-pessoa");
     await janela.getByRole("radio", { name: /Usar um perfil pronto/ }).click();

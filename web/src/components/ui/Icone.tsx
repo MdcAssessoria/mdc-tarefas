@@ -157,6 +157,15 @@ const P = {
   transferir: <path d="M4 8.5h15l-4-4M20 15.5H5l4 4" />,
   lista: <path d="M9 6.5h11M9 12h11M9 17.5h11M4.5 6.5h.1M4.5 12h.1M4.5 17.5h.1" />,
   tendencia: <path d="M3.5 16.5 9 11l4 4 7.5-7.5M15 7.5h5.5V13" />,
+  // "Ver caminho": ramificação (de onde veio e para onde foi um documento)
+  ramificacao: (
+    <>
+      <circle cx="6" cy="5.5" r="2" />
+      <circle cx="6" cy="18.5" r="2" />
+      <circle cx="18" cy="8.5" r="2" />
+      <path d="M6 7.5v9M18 10.5v.5a4 4 0 0 1-4 4H8.5a2.5 2.5 0 0 0-2.5 1.5" />
+    </>
+  ),
   info: (
     <>
       <circle cx="12" cy="12" r="8.5" />

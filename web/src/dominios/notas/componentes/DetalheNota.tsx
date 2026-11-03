@@ -6,6 +6,7 @@ import { useCallback } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { Carregando } from "@/components/ui/Carregando";
 import { Icone } from "@/components/ui/Icone";
+import { BotaoVerCaminho } from "@/components/ui/BotaoVerCaminho";
 import { useConsulta } from "@/lib/useConsulta";
 import { brl } from "@/lib/formato/moeda";
 import { fmtData, fmtDataLocal } from "@/lib/formato/datas";
@@ -22,6 +23,7 @@ export function DetalheNota({
   avisar,
   aoFechar,
   aoVerNota,
+  aoVerCaminho,
 }: {
   nota: Nota;
   eventos: EventoNota[];
@@ -29,6 +31,8 @@ export function DetalheNota({
   aoFechar: () => void;
   /** Abre o espelho da nota (layout DANFE/DANFSe com PDF). */
   aoVerNota?: () => void;
+  /** Abre o "Ver caminho" da nota (pedido, contas a pagar, pagamentos e estoque). */
+  aoVerCaminho?: () => void;
 }) {
   const itens = useConsulta(useCallback(() => lerItensDasNotas([nota.id]), [nota.id]));
   const prazos = prazosDaNota(nota.autorizacao ?? nota.emissao);
@@ -130,6 +134,7 @@ export function DetalheNota({
         </ul>
       )}
       <div className="flex flex-wrap justify-end gap-2 pt-2">
+        {aoVerCaminho && <BotaoVerCaminho aoClicar={aoVerCaminho} className="!min-h-10" />}
         {aoVerNota && nota.xml_caminho && (
           <button className="btn" onClick={aoVerNota}>
             <Icone nome="olho" className="h-4 w-4" />

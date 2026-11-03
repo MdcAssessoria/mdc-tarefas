@@ -13,6 +13,7 @@ export function Modal({
   aoFechar,
   largura = "md",
   espaco = 3,
+  celularCheio = false,
   children,
 }: {
   titulo: React.ReactNode;
@@ -22,6 +23,8 @@ export function Modal({
   largura?: keyof typeof LARGURAS;
   /** Espaço entre os blocos do conteúdo (3 = 0,75rem; 4 = 1rem). */
   espaco?: 3 | 4;
+  /** No celular a janela ocupa a tela inteira (listas longas, como o "Ver caminho"); no computador nada muda. */
+  celularCheio?: boolean;
   children: React.ReactNode;
 }) {
   const idTitulo = useId();
@@ -58,7 +61,7 @@ export function Modal({
   }, []);
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4" onClick={aoFechar}>
+    <div className={`fixed inset-0 z-50 grid place-items-center bg-black/40 ${celularCheio ? "p-0 sm:p-4" : "p-4"}`} onClick={aoFechar}>
       <div
         ref={caixa}
         role="dialog"
@@ -66,7 +69,11 @@ export function Modal({
         aria-labelledby={idTitulo}
         tabIndex={-1}
         onClick={(e) => e.stopPropagation()}
-        className={`cartao max-h-[calc(100dvh-2rem)] w-full overflow-y-auto ${LARGURAS[largura]} ${espaco === 4 ? "space-y-4" : "space-y-3"} p-5 outline-none`}
+        className={`cartao w-full overflow-y-auto ${LARGURAS[largura]} ${espaco === 4 ? "space-y-4" : "space-y-3"} outline-none ${
+          celularCheio
+            ? "h-[100dvh] max-h-[100dvh] rounded-none p-4 sm:h-auto sm:max-h-[calc(100dvh-2rem)] sm:rounded-[12px] sm:p-5"
+            : "max-h-[calc(100dvh-2rem)] p-5"
+        }`}
       >
         <div>
           <h2 id={idTitulo} className="text-lg font-semibold text-[var(--marca)]">
