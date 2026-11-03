@@ -12,6 +12,12 @@
 > (e-mail, WhatsApp, Portal do Cliente). No dia de gerar o HUB cria a conta a receber, a **fatura numerada** e a fila de
 > envio. Etapa 1 não tem integração: NFS-e (Emissor Nacional), envio de e-mail/WhatsApp e boleto ficam "aguardando";
 > o Portal já recebe. Migração `045_contratos_faturamento.sql`; testes `99_base_043.sql` e `100_faturamento_043.sql`.
+>
+> **NFS-e pelo Emissor Nacional (046, etapa 2, autorizada pelo Edvaldo em 03/11/2026):** a MDC é ME/EPP do Simples e, pela
+> Resolução CGSN 191/2026, emite NFS-e pelo Emissor Nacional desde 01/11/2026. Em Contratos › Faturas, **Emitir nota** abre a
+> conferência (ambiente em destaque) e a Função Edge `nfse-emitir` manda a DPS assinada com o A1 da MDC à API da Sefin
+> Nacional. Começa no **ambiente de teste** (produção restrita, sem valor fiscal). Seção 5. Migração `046_nfse_emissao.sql`;
+> testes `101_base_046.sql` e `102_nfse_046.sql`.
 
 ## 1. Telas
 
@@ -22,6 +28,7 @@ liberado pelo administrador por pessoa).
 | --- | --- | --- |
 | `/contratos` | Contratos (ver; cadastrar e mexer com operar) | Lista no molde 8.3.1 (só os contratos da MDC): tipo (a receber/a pagar), situação e busca; indicadores que filtram (recebe por mês, paga por mês, reajustes pendentes, vigência terminando em 30 dias); quadro que vira cartão no celular; saldo mensal dos ativos; PDF e Excel. Ações: **Novo contrato**, **Reajustar** (quando pendente), ficha, editar, suspender/reativar e encerrar (com motivo, `JanelaMotivo`) |
 | `/contratos/faturas` | Contratos (ver; gerar e cancelar com operar) | Faturas dos contratos a receber no molde 8.3.1: período do vencimento, situação e busca; indicadores que filtram (faturado no período, aguardando nota fiscal, prontas para enviar, enviadas); quadro que vira cartão no celular; PDF e Excel; aviso fixo "Envio por e-mail/WhatsApp e boleto: aguardando configuração". Ações: **PDF** da fatura (papel timbrado MDC, `faturaPdf.ts`), **Ver** (dados, nota fiscal, boleto e cada canal da fila), **Cancelar** (com motivo, `JanelaMotivo`) e **Gerar fatura agora** (um mês à mão, com motivo e vencimento) |
+| `/contratos/nota-fiscal` | Contratos (gerir) | **Nota fiscal (NFS-e)** (046): ambiente (teste × produção, com confirmação para ir à produção), modo (conferir; automático na próxima etapa), série e próximo número da DPS, regime do Simples, inscrição municipal, município (IBGE), NBS e % aproximado dos tributos do Simples; lista das notas enviadas pelo HUB com PDF e Excel (`TelaNotaFiscal`) |
 | `/contratos/reajustes` | Contratos | Reajustes pendentes de confirmar (com a proposta do HUB) e o histórico de reajustes e mudanças de valor; indicadores (pendentes, feitos no ano, efeito no mês); PDF e Excel |
 
 Janelas:
@@ -118,7 +125,73 @@ permissão `documentos`. A 043 também corrige a captura de notas (`fis_captura_
   tem valor mensal (pode não lançar contas).
 - Reajuste de ciclo perdido (mais de um ano sem confirmar): só o ciclo mais recente fica pendente.
 - Regenerar `web/src/lib/database.types.ts` do banco depois de aplicar a 041 e a 043 (os tipos novos foram escritos à mão).
-- Faturamento etapa 2: emitir a NFS-e pelo Emissor Nacional, enviar e-mail e WhatsApp de verdade, escolher a plataforma de
-  boleto; tela do Portal para o cliente ver e baixar as faturas (a função `portal_minhas_faturas` já existe).
+- Faturamento etapa 2: enviar e-mail e WhatsApp de verdade, escolher a plataforma de boleto; tela do Portal para o cliente
+  ver e baixar as faturas (a função `portal_minhas_faturas` já existe). A NFS-e já sai (046, seção 5); falta o modo
+  automático, o cancelamento da nota pelo HUB, NBS por contrato e ISS retido pelo tomador.
 - Reajuste com "atualizar as contas em aberto" não muda faturas já geradas (cancele e gere de novo). Cancelar a conta do
   contrato direto no Financeiro não cancela a fatura (use Contratos › Faturas).
+
+## 5. Nota fiscal de serviço pelo Emissor Nacional (migração 046, 03/11/2026)
+
+**Tela.** Em Contratos › Faturas, fatura com NFS-e e ainda sem nota tem o botão **Emitir nota** (Contratos: operar). A
+janela `JanelaEmitirNfse` chama `nfse_preparar` e mostra: a faixa do **ambiente** ("Ambiente de teste (sem valor fiscal)"
+em âmbar; "Produção (nota com valor fiscal)"), quem emite (MDC, CNPJ, IM, regime do Simples), o cliente (CNPJ/CPF e e-mail),
+a descrição do serviço (descrição da fatura + número + vencimento), o código de tributação nacional e o NBS, o valor e a
+competência, o ISS ("Recolhido no DAS do Simples… a alíquota não vai destacada na nota", com a referência do contrato), o %
+dos tributos e o número da DPS, o que falta ajustar e as tentativas anteriores com o motivo de cada recusa ("Ver detalhes"
+mostra código e texto oficiais). O resultado aparece na janela. A lista mostra a situação da nota em linguagem simples
+(`nfse.ts › situacaoDaNota`: "NFS-e pronta para emitir", "Nota fiscal recusada" + motivo, "Sem resposta certa do Emissor",
+"Nota de teste nº X emitida", "Nota fiscal nº X emitida") e **Ver a nota** abre o espelho DANFSe de Entradas
+(`EspelhoNota`). Avisos fixos: emissão não configurada e ambiente de teste.
+
+**Regras.**
+
+| Regra | Onde |
+| --- | --- |
+| Ambiente padrão = produção restrita (teste). Nota de teste fica registrada, mas **não muda a fatura** (não marca emitida, não publica no Portal); a de verdade sai depois em produção. Ir para produção exige "Confirmo que as notas de teste deram certo" | `nfse_parametros`, `nfse_parametros_salvar`, `app.nfse_registrar_resultado` |
+| Pendências (em português) bloqueiam a emissão: parâmetros, opção ME/EPP, NBS, % do Simples, CNPJ da MDC, certificado A1 válido e do mesmo CNPJ raiz, código do serviço com 6 números, CNPJ/CPF do cliente, fatura cancelada ou já com nota | `app.nfse_dados` |
+| nDPS reservado com trava da fatura e da numeração (por empresa, ambiente e série); nunca repete, nem abaixo de um já usado | `app.nfse_reservar`, `nfse_numeracao` |
+| Id da DPS = "DPS" + município (7) + 2 (CNPJ) + CNPJ (14) + série (5) + nDPS (15) | `app.nfse_reservar`, `dps.ts › idDps` |
+| Recusa do Emissor (4xx) = `rejeitada`: nada foi criado; a próxima tentativa usa outro nDPS. Sem resposta certa (rede, 5xx) = `erro`: a próxima tentativa **confere no Emissor** (`GET /dps/{Id}`) e só reenvia a mesma DPS se a nota não saiu | `_fiscal/emissao.ts`, `app.nfse_reservar` |
+| Emitida em produção → `fin_faturas.nfse_situacao = 'emitida'`, `nfse_numero`, `app.fin_fatura_processar` (libera o Portal); recusa/erro → `nfse_situacao = 'erro'` (fatura segue "aguardando nota fiscal") | `app.nfse_registrar_resultado` |
+| Não cancela a fatura com nota sendo enviada ou com resultado incerto em produção; com nota emitida já não cancelava (045) | gatilho `fatura_nfse_aberta` |
+| Simples ME/EPP: opSimpNac 3, regApTribSN obrigatório, regime especial 0 com ISS pelo Simples, ISS tributável e não retido **sem alíquota** (E0625/E0631), totTrib = pTotTribSN (E0712). Série de 1 a 49999 (E0010) | `dps.ts`, `nfse_parametros_salvar` |
+| Nada se apaga; leitura com Contratos (ver); gravação só pelas funções; empresa da gestão | 046 |
+
+**Banco.** `nfse_parametros`, `nfse_numeracao`, `nfse_emissoes`; funções `nfse_preparar` (ver), `nfse_parametros_salvar`
+(gerir), `nfse_reservar` e `nfse_registrar_resultado` (só `service_role`, portas para `app.nfse_reservar` e
+`app.nfse_registrar_resultado`). XML da DPS e da NFS-e no bucket `fiscal` em `<org>/<cliente>/nfse-emitidas/AAAA/MM/`
+(`<chave>.xml` e `dps/<Id>-<tentativa>.xml`); quem vê Contratos lê essa pasta (`app.fis_caminho_pode`).
+
+**Código.** Núcleo puro `web/src/dominios/notas/dps.ts` (copiado para `_fiscal/nucleo/`, testes `dps.test.ts`), envio em
+`supabase/functions/_fiscal/emissao.ts` (teste `nfse_test.ts`: assinatura no `xmlsec1` e DPS validada no XSD oficial 1.01
+com `xmllint`; esquemas em `supabase/testes/esquemas/nfse-1.01/`), Função Edge `nfse-emitir`, tela em
+`dominios/contratos/` (`nfse.ts`, `componentes/JanelaEmitirNfse.tsx`, `componentes/TelaNotaFiscal.tsx`).
+
+**Fontes.** Esquemas DPS 1.01 (Anexo I do leiaute, gov.br/nfse, cópia do projeto aberto Rainzart/nfse-nacional);
+[Manual dos Contribuintes – Emissor Público API v1.2](https://www.gov.br/nfse/pt-br/biblioteca/documentacao-tecnica/documentacao-atual/manual-contribuintes-emissor-publico-api-sistema-nacional-nfs-e-v1-2-out2025.pdf/@@download/file)
+(POST /nfse, GET /dps/{id}, GET /nfse/{chave}); regras E0625/E0712/E0010 (Anexo I, resumidas em buscadorncm.com.br e no
+fórum Contábeis); [Resolução CGSN 191/2026](https://economia.df.gov.br/documents/d/seec/resol-cgsn-n-191-2026-pdf).
+
+**A confirmar no primeiro teste em produção restrita:** assinatura RSA-SHA1 aceita (projetos abertos usam SHA-1; se vier
+E0714, trocar para SHA-256 em `assinatura.ts`); série e nDPS sem zeros à esquerda no XML; tipo de inscrição 2 = CNPJ no Id;
+prestador sem nome/endereço (o Emissor busca no cadastro); se a IM é aceita/exigida em Bragança Paulista; dCompet = 1º dia do
+mês da fatura; formato exato da resposta (201 com `chaveAcesso` e `nfseXmlGZipB64`; erros em `erros`/`erro`).
+
+**Limites desta etapa.** Modo automático guardado mas funciona como "conferir"; NBS único (parâmetro) para todos os
+contratos; sem ISS retido pelo tomador; cancelar ou substituir a nota é no Emissor Nacional; IBS/CBS (grupo IBSCBS) só a
+partir de 2027.
+
+**Primeiro teste (produção restrita, sem valor fiscal).**
+
+1. Quem integra aplica a `046_nfse_emissao.sql`, regenera `web/src/lib/database.types.ts`, roda os Advisors e publica
+   `nfse-emitir` (docs/07, 7.4); depois o push do site.
+2. Edvaldo confere em Entradas › Certificado digital que o A1 da MDC está válido (o mesmo da captura).
+3. Em Contratos › Nota fiscal (NFS-e), com **Ambiente de teste** marcado: inscrição municipal (se houver), município 3507605,
+   NBS do serviço contábil, % de tributos do Simples (alíquota efetiva do DAS) e série (1). Salvar.
+4. Num contrato a receber de teste (cliente com CNPJ cadastrado), código do serviço com 6 números (ex.: 17.19.01) e
+   "Nota fiscal + fatura"; gerar a fatura (Gerar fatura agora).
+5. Faturas › **Emitir nota** → conferir a faixa "Ambiente de teste (sem valor fiscal)" e os dados → **Emitir nota de teste**.
+6. Emitida: abrir **Ver a nota** e conferir no Emissor Nacional (produção restrita). Recusada: o motivo aparece em português
+   (código em "Ver detalhes"); corrigir o parâmetro e emitir de novo (nova DPS).
+7. Repetir até sair sem recusa; só então marcar **Produção** com a confirmação.

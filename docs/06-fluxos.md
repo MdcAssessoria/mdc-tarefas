@@ -103,6 +103,7 @@ Os indicadores da lista (fase atrasada, previsão vencida, com exigência, parad
 | `portal_usuario_nao_equipe` | Acesso de portal criado ou mudado | Impede equipe como usuário do portal e audita |
 | pg_cron `agente-balancetes` → Função `balancete-agente` | A cada 15 min, só com a pasta ligada em Configurações › Integrações | Lê a pasta de balancetes do SharePoint, cria rascunhos, move os arquivos e registra em `hub_importacoes` |
 | pg_cron `fiscal-captura` → Função `fiscal-captura` | A cada 15 min, só se houver empresa com captura ligada e certificado válido | Para cada empresa liberada: Distribuição DF-e da SEFAZ (NF-e, respeitando 137/656 e 1 hora de espera), ciência automática nos resumos, ADN da NFS-e; grava XML no bucket `fiscal` e as notas/eventos ([fluxo](modulos/notas-fiscais.md#4-fluxos)) |
+| `fatura_nfse_aberta` | Fatura cancelada | Recusa se a NFS-e está sendo enviada ou com resultado incerto em produção (046) |
 | Simulador (projeto separado) → `crm_receber_lead` | Lead preenchido no site | Cria a oportunidade no CRM |
 | `fin_conta_bancaria_valida`, `fin_categoria_valida`, `fin_titulo_valida`, `est_item_valida` | Gravação de conta bancária, categoria, título ou item | Confere empresa, conta analítica ativa do plano, tipo da categoria x tipo do título, travas de situação do título e de item com saldo |
 | `sem_troca_empresa`, `cliente_mesma_org` (tabelas `fin_*` e `est_*`) | Cadastro do Financeiro/estoque alterado | Impede mudar de empresa ou de organização |
@@ -150,5 +151,28 @@ flowchart TD
   Boleto: `a_definir` enquanto a plataforma não é escolhida.
 - **Sem duplicar:** trava do contrato + índices únicos das contas e faturas não canceladas. Mês cancelado não volta pela
   rotina; volta à mão, com motivo (também serve para o mês que a rotina perdeu).
-- **Etapa 2 (a fazer):** emitir a NFS-e pelo Emissor Nacional (marca `nfse_situacao = 'emitida'` e chama
-  `app.fin_fatura_processar`, que publica no Portal), envio real de e-mail/WhatsApp e a plataforma de boleto.
+- **Etapa 2 — NFS-e (046, feito):** ver o fluxo abaixo. A fazer: envio real de e-mail/WhatsApp, plataforma de boleto e o
+  modo automático da nota.
+
+```mermaid
+sequenceDiagram
+    actor P as Pessoa (Contratos operar)
+    participant T as Faturas › Emitir nota
+    participant EF as Função nfse-emitir
+    participant DB as Banco
+    participant S as Sefin Nacional (mTLS)
+    P->>T: Emitir nota (confere ambiente e dados)
+    T->>DB: nfse_preparar (dados da DPS e pendências)
+    T->>EF: POST {fatura} com o login
+    EF->>DB: nfse_preparar com o login (pode_emitir, pronto)
+    EF->>DB: nfse_reservar (service_role: trava, nDPS sem repetir)
+    EF->>DB: fis_cert_obter (A1 do cofre)
+    alt reenvio depois de resultado incerto
+      EF->>S: GET /dps/{Id}
+      S-->>EF: já saiu (chave) → GET /nfse/{chave} · ou 404 → segue
+    end
+    EF->>S: POST /nfse {dpsXmlGZipB64} (DPS assinada)
+    S-->>EF: 201 chaveAcesso + nfseXmlGZipB64 · 4xx erros · sem resposta
+    EF->>DB: Storage fiscal/nfse-emitidas + nfse_registrar_resultado
+    DB-->>T: produção: fatura emitida → fin_fatura_processar (Portal)
+```
