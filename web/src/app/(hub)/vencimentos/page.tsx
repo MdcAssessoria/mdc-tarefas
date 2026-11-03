@@ -13,6 +13,7 @@ import { intervaloDoPeriodo, PERIODOS } from "@/lib/periodo";
 import type { Periodo } from "@/lib/periodo";
 import { fmtData } from "@/lib/formato/datas";
 import { nomeArquivo } from "@/lib/arquivos/exportarLista";
+import { caminho } from "@/lib/caminho";
 import { nomeCliente } from "@/dominios/clientes/nome";
 import { nomeTipo, TIPOS_VENC } from "@/dominios/vencimentos/tipos";
 import type { Vencimento } from "@/dominios/vencimentos/tipos";
@@ -159,6 +160,10 @@ function Vencimentos() {
                 ],
               })}
             />
+            <a className="btn" href={caminho("/vencimentos/certificados")} title="Certificados do cofre do HUB e do Ledgra Link">
+              <Icone nome="escudo" className="h-4 w-4" />
+              Certificados digitais
+            </a>
             {novo}
           </>
         }

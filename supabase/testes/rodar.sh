@@ -54,3 +54,8 @@ for f in testes/99_base_043.sql migrations/043_ledgra_link_cobranca.sql; do
   $P -v ON_ERROR_STOP=1 -f "$R/$f" 2>&1 | grep -v NOTICE || true
 done
 $P -f "$R/testes/99_ledgra_link_043.sql" 2>&1 | grep -v "^SET$"
+# 044: painel de certificados (cofre do HUB, só dados públicos; o Ledgra Link é buscado pela Função Edge)
+for f in testes/99_base_044.sql migrations/044_painel_certificados.sql; do
+  $P -v ON_ERROR_STOP=1 -f "$R/$f" 2>&1 | grep -v NOTICE || true
+done
+$P -f "$R/testes/99_painel_certificados_044.sql" 2>&1 | grep -v "^SET$"

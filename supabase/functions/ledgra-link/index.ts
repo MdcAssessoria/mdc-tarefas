@@ -5,6 +5,8 @@
 //                                        dados do cliente e chama o Ledgra Link. A referência é "LIC-<id da mensalidade>":
 //                                        repetir o pedido (clique duplo, internet caiu) nunca gera dois boletos.
 //   POST { acao: "situacao" }          → se o Ledgra Link está configurado neste servidor e respondendo.
+//   POST { acao: "certificados", org } → certificados bancários guardados no cofre do Ledgra Link (só dados públicos),
+//                                        para o painel Vencimentos › Certificados digitais. Confere Vencimentos › ver.
 //
 // Segredos (Edge Functions › Secrets): LEDGRA_LINK_URL, LEDGRA_LINK_CHAVE.
 import { bancoServico, bancoUsuario, cabecalhos, resposta } from "../_ledgra_link/http.ts";
@@ -37,7 +39,7 @@ Deno.serve(async (req) => {
   const { data: u } = await usuario.auth.getUser();
   if (!u?.user) return json(401, { erro: "Sessão expirada. Entre de novo." });
 
-  const corpo = (await req.json().catch(() => ({}))) as { acao?: string; cobranca?: string };
+  const corpo = (await req.json().catch(() => ({}))) as { acao?: string; cobranca?: string; org?: string };
 
   if (corpo.acao === "situacao") {
     const link = cliente(u.user.email);
@@ -47,6 +49,25 @@ Deno.serve(async (req) => {
       return json(200, { ligado: true, mensagem: "Ledgra Link respondendo." });
     } catch (e) {
       return json(200, { ligado: false, mensagem: e instanceof ErroLedgraLink ? e.message : "O Ledgra Link não respondeu." });
+    }
+  }
+
+  if (corpo.acao === "certificados") {
+    const org = String(corpo.org ?? "");
+    if (!/^[0-9a-f-]{36}$/i.test(org)) return json(400, { erro: "Organização inválida." });
+    const { data: podeVer } = await usuario.rpc("link_pode_ver_certificados", { p_org: org });
+    if (podeVer !== true) return json(403, { erro: "Sem permissão para ver os certificados digitais." });
+    const link = cliente(u.user.email);
+    if (!link) return json(200, { ligado: false, mensagem: DESLIGADO, certificados: [] });
+    try {
+      const r = await link.certificados.vencimentos();
+      return json(200, { ligado: true, mensagem: null, certificados: r.certificados });
+    } catch (e) {
+      return json(200, {
+        ligado: false,
+        mensagem: e instanceof ErroLedgraLink ? e.message : "O Ledgra Link não respondeu.",
+        certificados: [],
+      });
     }
   }
 

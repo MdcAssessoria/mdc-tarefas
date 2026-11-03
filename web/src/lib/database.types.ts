@@ -5779,6 +5779,20 @@ export type Database = {
           valido_ate: string;
         }[];
       };
+      cert_painel: {
+        Args: { p_org: string };
+        Returns: {
+          cliente_id: string;
+          documento: string;
+          emissor: string;
+          enviado_em: string;
+          icp_brasil: boolean;
+          origem: string;
+          titular: string;
+          valido_ate: string;
+          valido_de: string;
+        }[];
+      };
       cert_remover: {
         Args: { p_org: string; p_user?: string };
         Returns: undefined;
@@ -6185,6 +6199,7 @@ export type Database = {
         Returns: string;
       };
       link_pode_emitir: { Args: { p_cobranca: string }; Returns: boolean };
+      link_pode_ver_certificados: { Args: { p_org: string }; Returns: boolean };
       link_registrar_emissao: {
         Args: { p: Json; p_cobranca: string; p_user: string };
         Returns: undefined;

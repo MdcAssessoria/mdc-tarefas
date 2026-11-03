@@ -2,7 +2,7 @@
 // @ledgra/link-cliente v0.1.0 — ARQUIVO GERADO, NÃO EDITE AQUI.
 // Fonte: repositório ledgra-link (packages/cliente). Para atualizar,
 // rode "node scripts/empacotar-sdk.mjs" lá e copie este arquivo de novo.
-// Integridade: 9d896a73d9eb2bea
+// Integridade: 556bd932dbeb8aba
 // MDC Assessoria Ltda · CNPJ 48.140.121/0001-65
 // =============================================================================
 /**
@@ -101,6 +101,14 @@ export interface Cobranca {
   nosso_numero: string | null; linha_digitavel: string | null; pix_copia_cola: string | null; txid: string | null;
 }
 
+/** Linha do painel de vencimentos (só dados públicos do certificado; o arquivo e a senha nunca saem do cofre). */
+export interface CertificadoVencimento {
+  id: string; titular_id: string; titular_documento: string; titular_razao_social: string;
+  tipo: 'icp_a1_ecnpj' | 'icp_a1_ecpf' | 'banco_mtls' | 'webhook_servidor'; apelido: string;
+  titular_cn: string | null; emissor_cn: string | null; valido_de: string; valido_ate: string;
+  dias_para_vencer: number; situacao: 'vencido' | 'critico' | 'atencao' | 'ok'; status: string; ultimo_uso_em: string | null;
+}
+
 export class LedgraLink {
   private readonly base: string;
   private readonly f: typeof fetch;
@@ -193,7 +201,7 @@ export class LedgraLink {
       return this.req<{ id: string; valido_ate: string; substituiu: string | null; mensagem: string }>('POST', '/v1/certificados', fd, c);
     },
     vencimentos: (situacao?: 'vencido' | 'critico' | 'atencao' | 'ok') =>
-      this.req<{ certificados: Array<{ id: string; apelido: string; titular_razao_social: string; valido_ate: string; dias_para_vencer: number; situacao: string }> }>(
+      this.req<{ total: number; certificados: CertificadoVencimento[] }>(
         'GET', '/v1/certificados/vencimentos' + (situacao ? `?situacao=${situacao}` : '')),
     revogar: (id: string, motivo: string, c?: Chamada) => this.req('POST', `/v1/certificados/${id}/revogar`, { motivo }, c),
   };
