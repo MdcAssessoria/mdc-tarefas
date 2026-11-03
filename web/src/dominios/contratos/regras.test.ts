@@ -45,6 +45,16 @@ const base: Recorrente = {
   mes_cadastro: "2026-11-01",
   observacao: null,
   criado_em: "2026-11-02T10:00:00Z",
+  documento: "fatura",
+  envio: "fatura",
+  dia_geracao: 1,
+  canais: [],
+  email_envio: null,
+  whatsapp_envio: null,
+  cliente_carteira_id: null,
+  servico_descricao: null,
+  servico_codigo: null,
+  iss_aliquota: null,
 };
 
 describe("vencimento no mês", () => {

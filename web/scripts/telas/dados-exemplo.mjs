@@ -1864,3 +1864,196 @@ export const XML_EXEMPLO = {
     custo_medio_apos: 170,
   });
 })();
+
+// ---------------------------------------------------------------- Faturas dos contratos a receber (043, 03/11/2026)
+// Honorários (contrato 1) com NFS-e + fatura + boleto, gera dia 25 e vence dia 5, por e-mail e Portal; uma consultoria
+// só com fatura (sem canal) e uma mensalidade publicada no Portal. Faturas em cada situação, inclusive cancelada.
+(() => {
+  const K = (n) => `fc000000-0000-4000-8000-00000000000${n}`;
+  const mes = dia(0).slice(0, 7) + "-01";
+  const mesesAtras = (n) => {
+    const d = new Date(agora.getFullYear(), agora.getMonth() - n, 1);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-01`;
+  };
+  const diaDoMes = (m, d) => `${m.slice(0, 8)}${String(d).padStart(2, "0")}`;
+  const semFatura = {
+    documento: "fatura",
+    envio: "fatura",
+    dia_geracao: 1,
+    canais: [],
+    email_envio: null,
+    whatsapp_envio: null,
+    cliente_carteira_id: null,
+    servico_descricao: null,
+    servico_codigo: null,
+    iss_aliquota: null,
+  };
+  for (const k of TABELAS.fin_recorrentes) Object.assign(k, { ...semFatura, ...k });
+  Object.assign(TABELAS.fin_recorrentes[0], {
+    documento: "nfse",
+    envio: "nf_fatura_boleto",
+    dia_geracao: 25,
+    dia_vencimento: 5,
+    canais: ["email", "portal"],
+    email_envio: "financeiro@clienteabc.com.br",
+    cliente_carteira_id: C1,
+    servico_descricao: "Serviços de contabilidade, escrituração fiscal e folha de pagamento",
+    servico_codigo: "17.01.01",
+    iss_aliquota: 2,
+  });
+  TABELAS.fin_recorrentes.push(
+    {
+      ...TABELAS.fin_recorrentes[0],
+      ...semFatura,
+      id: K(6),
+      descricao: "Consultoria tributária mensal",
+      numero: "2026/044",
+      objeto: null,
+      valor: 1800,
+      dia_vencimento: 15,
+      dia_geracao: 1,
+      indice: "nenhum",
+      mes_reajuste: null,
+      pessoa_id: "f5000000-0000-4000-8000-000000000003",
+    },
+    {
+      ...TABELAS.fin_recorrentes[0],
+      ...semFatura,
+      id: K(7),
+      descricao: "Mensalidade do portal",
+      numero: null,
+      objeto: null,
+      valor: 99.9,
+      dia_vencimento: 12,
+      dia_geracao: 2,
+      canais: ["portal"],
+      cliente_carteira_id: C1,
+      indice: "nenhum",
+      mes_reajuste: null,
+    },
+  );
+  const F = (n) => `fd000000-0000-4000-8000-00000000000${n}`;
+  const fatura = (n, seq, extra) => ({
+    id: F(n),
+    org_id: ORG,
+    cliente_id: CM,
+    titulo_id: `fd100000-0000-4000-8000-00000000000${n}`,
+    pessoa_id: "f5000000-0000-4000-8000-000000000002",
+    cliente_carteira_id: null,
+    ano: Number(dia(0).slice(0, 4)),
+    sequencia: seq,
+    numero: `${dia(0).slice(0, 4)}/${String(seq).padStart(5, "0")}`,
+    servico_codigo: null,
+    iss_aliquota: null,
+    nfse_numero: null,
+    origem: "rotina",
+    motivo_manual: null,
+    cancelada_em: null,
+    cancelada_por: null,
+    cancelamento_motivo: null,
+    por: null,
+    criado_em: momento(-1),
+    atualizado_em: momento(-1),
+    ...extra,
+  });
+  const nf = {
+    recorrente_id: K(1),
+    cliente_carteira_id: C1,
+    valor: 2400,
+    documento: "nfse",
+    envio: "nf_fatura_boleto",
+    boleto_situacao: "a_definir",
+    servico_codigo: "17.01.01",
+    iss_aliquota: 2,
+  };
+  TABELAS.fin_faturas = [
+    fatura(1, 1, {
+      ...nf,
+      competencia: mesesAtras(1),
+      emissao: diaDoMes(mesesAtras(1), 25),
+      vencimento: diaDoMes(mes, 5),
+      descricao: `Serviços de contabilidade, escrituração fiscal e folha de pagamento · ${mesesAtras(1).slice(5, 7)}/${mesesAtras(1).slice(0, 4)}`,
+      situacao: "pronta",
+      nfse_situacao: "emitida",
+      nfse_numero: "1287",
+    }),
+    fatura(2, 2, {
+      recorrente_id: K(6),
+      pessoa_id: "f5000000-0000-4000-8000-000000000003",
+      competencia: mes,
+      emissao: diaDoMes(mes, 1),
+      vencimento: diaDoMes(mes, 15),
+      valor: 1800,
+      descricao: `Consultoria tributária mensal · ${mes.slice(5, 7)}/${mes.slice(0, 4)}`,
+      documento: "fatura",
+      envio: "fatura",
+      situacao: "cancelada",
+      nfse_situacao: "nao_se_aplica",
+      boleto_situacao: "nao_se_aplica",
+      cancelada_em: momento(-1),
+      cancelamento_motivo: "Valor combinado errado",
+    }),
+    fatura(3, 3, {
+      recorrente_id: K(6),
+      pessoa_id: "f5000000-0000-4000-8000-000000000003",
+      competencia: mes,
+      emissao: dia(0),
+      vencimento: diaDoMes(mes, 15),
+      valor: 1850,
+      descricao: `Consultoria tributária mensal · ${mes.slice(5, 7)}/${mes.slice(0, 4)}`,
+      documento: "fatura",
+      envio: "fatura",
+      situacao: "gerada",
+      nfse_situacao: "nao_se_aplica",
+      boleto_situacao: "nao_se_aplica",
+      origem: "manual",
+      motivo_manual: "Refeita com o valor certo",
+    }),
+    fatura(4, 4, {
+      recorrente_id: K(7),
+      cliente_carteira_id: C1,
+      competencia: mes,
+      emissao: diaDoMes(mes, 2),
+      vencimento: diaDoMes(mes, 12),
+      valor: 99.9,
+      descricao: `Mensalidade do portal · ${mes.slice(5, 7)}/${mes.slice(0, 4)}`,
+      documento: "fatura",
+      envio: "fatura",
+      situacao: "enviada",
+      nfse_situacao: "nao_se_aplica",
+      boleto_situacao: "nao_se_aplica",
+    }),
+    fatura(5, 5, {
+      ...nf,
+      competencia: mes,
+      emissao: dia(0),
+      vencimento: diaDoMes(mesesAtras(-1), 5),
+      descricao: `Serviços de contabilidade, escrituração fiscal e folha de pagamento · ${mes.slice(5, 7)}/${mes.slice(0, 4)}`,
+      situacao: "aguardando_nf",
+      nfse_situacao: "a_emitir",
+    }),
+  ];
+  const envio = (id, f, canal, destino, conteudo, situacao, enviado) => ({
+    id,
+    org_id: ORG,
+    cliente_id: CM,
+    fatura_id: F(f),
+    canal,
+    destino,
+    conteudo,
+    situacao,
+    tentativas: enviado ? 1 : 0,
+    ultimo_erro: null,
+    enviado_em: enviado ? momento(-1) : null,
+    criado_em: momento(-1),
+    atualizado_em: momento(-1),
+  });
+  const tudo = ["nfse", "fatura", "boleto"];
+  TABELAS.fin_envios = [
+    envio(1, 1, "email", "financeiro@clienteabc.com.br", tudo, "aguardando_configuracao", false),
+    envio(2, 1, "portal", C1, tudo, "enviado", true),
+    envio(3, 4, "portal", C1, ["fatura"], "enviado", true),
+    envio(4, 5, "email", "financeiro@clienteabc.com.br", tudo, "aguardando_configuracao", false),
+    envio(5, 5, "portal", C1, tudo, "pendente", false),
+  ];
+})();

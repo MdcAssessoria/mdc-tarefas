@@ -92,7 +92,7 @@ Os indicadores da lista (fase atrasada, previsão vencida, com exigência, parad
 | pg_cron `avisar-vencimentos` → `app.venc_avisar` | Todo dia 06h15 | Avisos de vencimento 60/30/7 dias no sino |
 | pg_cron `licencas-diaria` → `app.lic_rotina_diaria` | Todo dia 06h25 | Encerra contratos de licença com prazo vencido, gera as mensalidades do mês (sem duplicar) e, uma vez por dia, avisa no sino (administradores e quem tem Licenças) das mensalidades que venceram ontem e dos clientes que chegaram aos dias de atraso em que o HUB sugere bloquear. Bloquear é manual |
 | pg_cron `fin-indices-buscar` → `app.fin_indices_pedir` | Todo dia 06h20 | Pede ao Banco Central (API SGS, por `pg_net`) os últimos 24 meses de IPCA, INPC e IGP-M; a resposta é lida depois e grava `fin_indices` |
-| pg_cron `financeiro-recorrentes` → `app.fin_recorrentes_rotina` | Todo dia 06h30 | Lê os índices que chegaram; renova vigências com renovação automática; lança no Financeiro a conta do mês de cada contrato ativo (e recupera o mês anterior, sem duplicar); encerra contratos cujo fim passou; avisa no sino (administradores e Contratos gerir) reajustes do mês e fins de vigência chegando ([módulo](modulos/contratos.md)) |
+| pg_cron `financeiro-recorrentes` → `app.fin_recorrentes_rotina` | Todo dia 06h30 | Lê os índices que chegaram; renova vigências com renovação automática; lança no Financeiro a conta do mês de cada contrato ativo da empresa da gestão cujo dia de gerar chegou — a receber, com a fatura e a fila de envio (043, [6.6](#66-fatura-dos-contratos-a-receber)) — e recupera o mês anterior, sem duplicar; erro num contrato vai para a auditoria e a rotina segue; encerra contratos cujo fim passou; avisa no sino (administradores e Contratos gerir) reajustes do mês e fins de vigência chegando ([módulo](modulos/contratos.md)) |
 | `organizacoes_semear_licencas` | Organização criada | Cadastra os módulos vendáveis e o plano Gestão completa (preço zero) |
 | `tarefas_historico` | Toda mudança de tarefa | Grava o histórico |
 | `tarefas_fase_societario` | Tarefa de fase concluída | Avança o processo societário |
@@ -121,3 +121,34 @@ Telas (molde 8.3.1, desde 02/11/2026): `/atendimento` tem indicadores que filtra
 filtros de busca/situação/assunto e PDF/Excel da lista. A lista e a conversa usam a mesma moldura do "Fale com a MDC"
 do Portal (`dominios/atendimento/componentes/PainelConversas`): no computador ficam lado a lado; no celular aparece uma
 de cada vez, com o botão "Voltar". Nova conversa (equipe ou cliente) abre na janela `NovaConversa`.
+
+## 6.6 Fatura dos contratos a receber
+
+Migração 043 (etapa 1, sem integrações). Cada contrato a receber diz **o documento** (NFS-e ou só nota fatura), **o que
+enviar** (nota + fatura + boleto, nota + fatura com boleto depois, fatura + boleto ou só a fatura), **o dia de gerar** (1–28)
+e **por onde** (e-mail, WhatsApp, Portal do Cliente).
+
+```mermaid
+flowchart TD
+    CRON[pg_cron 06h30<br/>fin_recorrentes_rotina] --> G{dia de gerar chegou?<br/>contrato ativo da MDC}
+    MAO[Gerar fatura agora<br/>fin_fatura_gerar_agora + motivo] --> L
+    G -- sim, mês sem conta --> L[fin_recorrente_lancar_mes<br/>trava o contrato]
+    L --> T[conta a receber no Financeiro<br/>documento = Fatura AAAA/NNNNN]
+    L --> F[fin_faturas<br/>número sem repetir por ano]
+    F --> E[fin_envios: um item por canal]
+    E --> P{NFS-e?}
+    P -- não --> PO[Portal: publicado<br/>portal_minhas_faturas]
+    P -- sim --> AN[aguardando_nf<br/>etapa 2: Emissor Nacional]
+    AN -. nota emitida .-> PO
+    E --> EW[e-mail / WhatsApp:<br/>aguardando configuração]
+    F -. cancelar com motivo .-> C[cancelada + conta em aberto cancelada]
+```
+
+- **Vencimento:** dia de vencer igual ou antes do dia de gerar → vence no mês seguinte (gera 25, vence 5 → 05 do mês
+  seguinte); depois → mesmo mês. A pagar continua gerando no dia 1 com vencimento no mesmo mês.
+- **Situação:** `gerada` (sem canal) · `aguardando_nf` · `pronta` (falta enviar) · `enviada` (todos os canais) · `cancelada`.
+  Boleto: `a_definir` enquanto a plataforma não é escolhida.
+- **Sem duplicar:** trava do contrato + índices únicos das contas e faturas não canceladas. Mês cancelado não volta pela
+  rotina; volta à mão, com motivo (também serve para o mês que a rotina perdeu).
+- **Etapa 2 (a fazer):** emitir a NFS-e pelo Emissor Nacional (marca `nfse_situacao = 'emitida'` e chama
+  `app.fin_fatura_processar`, que publica no Portal), envio real de e-mail/WhatsApp e a plataforma de boleto.

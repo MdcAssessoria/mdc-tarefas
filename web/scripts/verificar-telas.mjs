@@ -537,6 +537,27 @@ const INTERACOES = {
     await cat.waitFor({ state: "detached", timeout: 3000 });
     await p.keyboard.press("Escape");
     await novo.waitFor({ state: "detached", timeout: 3000 });
+    // contrato a receber (043): dia de gerar, "O que enviar" com 4 opções e por onde enviar
+    await p.getByRole("button", { name: "Novo contrato", exact: true }).click();
+    const rec = p.getByRole("dialog", { name: "Novo contrato" });
+    await rec.waitFor({ timeout: 3000 });
+    await rec.getByRole("radio", { name: /A receber/ }).click();
+    await rec.getByLabel("Nome do contrato").fill("Honorários mensais");
+    await rec.getByLabel("Valor mensal (R$)").fill("1.500,00");
+    await rec.getByLabel("Gerar todo dia").fill("25");
+    await rec.getByLabel("Vence todo dia").fill("5");
+    const opcoes = rec.getByRole("radiogroup", { name: "O que enviar ao cliente" }).getByRole("radio");
+    if ((await opcoes.count()) !== 4) throw new Error(`"O que enviar" deveria ter 4 opções, tem ${await opcoes.count()}`);
+    await rec.getByRole("radio", { name: /^Nota fiscal \+ fatura \+ boleto/ }).click();
+    await rec.getByLabel("Código do serviço").fill("17.01.01");
+    await rec.getByRole("checkbox", { name: /E-mail/ }).check();
+    await rec.getByRole("checkbox", { name: /Portal do Cliente/ }).check();
+    await rec.getByText("Envio por e-mail e WhatsApp: aguardando configuração").waitFor({ timeout: 3000 });
+    await rec.getByText("Vence no mês seguinte ao da geração").waitFor({ timeout: 3000 });
+    await rec.getByText("Todo dia 25 o HUB gera").waitFor({ timeout: 3000 });
+    await foto("novo-contrato-fatura");
+    await p.keyboard.press("Escape");
+    await rec.waitFor({ state: "detached", timeout: 3000 });
     await p.getByRole("button", { name: "Reajustar", exact: true }).first().click();
     const reaj = p.getByRole("dialog", { name: /^Reajuste · / });
     await reaj.waitFor({ timeout: 3000 });
@@ -558,6 +579,23 @@ const INTERACOES = {
     await p.keyboard.press("Escape");
     await p.getByRole("dialog", { name: "Aluguel da sala" }).waitFor({ timeout: 3000 });
     await p.keyboard.press("Escape");
+  },
+  // Faturas (043): aviso de "aguardando configuração", detalhe da fatura com a fila de envio, cancelar e gerar agora
+  "/contratos/faturas": async (p, foto) => {
+    await p.getByText("Envio por e-mail/WhatsApp e boleto: aguardando configuração.").waitFor({ timeout: 3000 });
+    await p.getByRole("button", { name: /^Ver a fatura / }).first().click();
+    const ver = p.getByRole("dialog", { name: /^Fatura \d{4}\/\d{5}$/ });
+    await ver.waitFor({ timeout: 3000 });
+    await ver.getByText("Envio ao cliente").waitFor({ timeout: 3000 });
+    await foto("fatura");
+    await p.keyboard.press("Escape");
+    await ver.waitFor({ state: "detached", timeout: 3000 });
+    await p.getByRole("button", { name: /^Cancelar a fatura / }).first().click();
+    const canc = p.getByRole("dialog", { name: /^Cancelar a fatura / });
+    await canc.waitFor({ timeout: 3000 });
+    await p.keyboard.press("Escape");
+    await canc.waitFor({ state: "detached", timeout: 3000 });
+    await abrirEFecharModal(p, "Gerar fatura agora", "Gerar fatura agora");
   },
   "/contratos/reajustes": async (p) => {
     await p.getByRole("button", { name: "Conferir e confirmar", exact: true }).first().click();

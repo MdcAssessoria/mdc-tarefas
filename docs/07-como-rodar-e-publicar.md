@@ -117,7 +117,8 @@ para validar qualquer novidade antes de liberar para a carteira.
 
 ## Testes SQL (Financeiro e estoque)
 
-`bash supabase/testes/rodar.sh` sobe um Postgres 16 temporário na máquina, cria uma base simulada (`auth.uid()` lido de
+`bash supabase/testes/rodar.sh` (porta 5521; outra porta com `PORTA_TESTES=5498 bash supabase/testes/rodar.sh`, para rodar
+duas cópias ao mesmo tempo) sobe um Postgres 16 temporário na máquina, cria uma base simulada (`auth.uid()` lido de
 `teste.uid`, `app.hub_pode` lido de `teste.papel`), aplica as migrações 026, 028, 029, 030 e 033 e roda os cenários de
 `supabase/testes/20_titulos.sql`, `30_estoque.sql` e `60_estoque_pedidos.sql` (custo médio, pedidos, cancelamento e
 duas vendas ao mesmo tempo, com duas conexões pelo `dblink`): parcelas, baixa parcial com juros e desconto, estorno, cancelamento,

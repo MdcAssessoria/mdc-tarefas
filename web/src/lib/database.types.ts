@@ -1559,6 +1559,221 @@ export type Database = {
           },
         ];
       };
+      fin_envios: {
+        Row: {
+          atualizado_em: string;
+          canal: string;
+          cliente_id: string;
+          conteudo: string[];
+          criado_em: string;
+          destino: string;
+          enviado_em: string | null;
+          fatura_id: string;
+          id: number;
+          org_id: string;
+          situacao: string;
+          tentativas: number;
+          ultimo_erro: string | null;
+        };
+        Insert: {
+          atualizado_em?: string;
+          canal: string;
+          cliente_id: string;
+          conteudo: string[];
+          criado_em?: string;
+          destino: string;
+          enviado_em?: string | null;
+          fatura_id: string;
+          id?: number;
+          org_id: string;
+          situacao: string;
+          tentativas?: number;
+          ultimo_erro?: string | null;
+        };
+        Update: {
+          atualizado_em?: string;
+          canal?: string;
+          cliente_id?: string;
+          conteudo?: string[];
+          criado_em?: string;
+          destino?: string;
+          enviado_em?: string | null;
+          fatura_id?: string;
+          id?: number;
+          org_id?: string;
+          situacao?: string;
+          tentativas?: number;
+          ultimo_erro?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "fin_envios_cliente_id_fkey";
+            columns: ["cliente_id"];
+            isOneToOne: false;
+            referencedRelation: "clientes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "fin_envios_fatura_id_fkey";
+            columns: ["fatura_id"];
+            isOneToOne: false;
+            referencedRelation: "fin_faturas";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "fin_envios_org_id_fkey";
+            columns: ["org_id"];
+            isOneToOne: false;
+            referencedRelation: "organizacoes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      fin_faturas: {
+        Row: {
+          ano: number;
+          atualizado_em: string;
+          boleto_situacao: string;
+          cancelada_em: string | null;
+          cancelada_por: string | null;
+          cancelamento_motivo: string | null;
+          cliente_carteira_id: string | null;
+          cliente_id: string;
+          competencia: string;
+          criado_em: string;
+          descricao: string;
+          documento: string;
+          emissao: string;
+          envio: string;
+          id: string;
+          iss_aliquota: number | null;
+          motivo_manual: string | null;
+          nfse_numero: string | null;
+          nfse_situacao: string;
+          numero: string;
+          org_id: string;
+          origem: string;
+          pessoa_id: string;
+          por: string | null;
+          recorrente_id: string;
+          sequencia: number;
+          servico_codigo: string | null;
+          situacao: string;
+          titulo_id: string;
+          valor: number;
+          vencimento: string;
+        };
+        Insert: {
+          ano: number;
+          atualizado_em?: string;
+          boleto_situacao: string;
+          cancelada_em?: string | null;
+          cancelada_por?: string | null;
+          cancelamento_motivo?: string | null;
+          cliente_carteira_id?: string | null;
+          cliente_id: string;
+          competencia: string;
+          criado_em?: string;
+          descricao: string;
+          documento: string;
+          emissao: string;
+          envio: string;
+          id?: string;
+          iss_aliquota?: number | null;
+          motivo_manual?: string | null;
+          nfse_numero?: string | null;
+          nfse_situacao: string;
+          numero: string;
+          org_id: string;
+          origem?: string;
+          pessoa_id: string;
+          por?: string | null;
+          recorrente_id: string;
+          sequencia: number;
+          servico_codigo?: string | null;
+          situacao: string;
+          titulo_id: string;
+          valor: number;
+          vencimento: string;
+        };
+        Update: {
+          ano?: number;
+          atualizado_em?: string;
+          boleto_situacao?: string;
+          cancelada_em?: string | null;
+          cancelada_por?: string | null;
+          cancelamento_motivo?: string | null;
+          cliente_carteira_id?: string | null;
+          cliente_id?: string;
+          competencia?: string;
+          criado_em?: string;
+          descricao?: string;
+          documento?: string;
+          emissao?: string;
+          envio?: string;
+          id?: string;
+          iss_aliquota?: number | null;
+          motivo_manual?: string | null;
+          nfse_numero?: string | null;
+          nfse_situacao?: string;
+          numero?: string;
+          org_id?: string;
+          origem?: string;
+          pessoa_id?: string;
+          por?: string | null;
+          recorrente_id?: string;
+          sequencia?: number;
+          servico_codigo?: string | null;
+          situacao?: string;
+          titulo_id?: string;
+          valor?: number;
+          vencimento?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "fin_faturas_cliente_carteira_id_fkey";
+            columns: ["cliente_carteira_id"];
+            isOneToOne: false;
+            referencedRelation: "clientes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "fin_faturas_cliente_id_fkey";
+            columns: ["cliente_id"];
+            isOneToOne: false;
+            referencedRelation: "clientes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "fin_faturas_org_id_fkey";
+            columns: ["org_id"];
+            isOneToOne: false;
+            referencedRelation: "organizacoes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "fin_faturas_pessoa_id_fkey";
+            columns: ["pessoa_id"];
+            isOneToOne: false;
+            referencedRelation: "fin_pessoas";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "fin_faturas_recorrente_id_fkey";
+            columns: ["recorrente_id"];
+            isOneToOne: false;
+            referencedRelation: "fin_recorrentes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "fin_faturas_titulo_id_fkey";
+            columns: ["titulo_id"];
+            isOneToOne: true;
+            referencedRelation: "fin_titulos";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       fin_indices: {
         Row: {
           atualizado_em: string;
@@ -1924,6 +2139,16 @@ export type Database = {
           valor: number;
           vigencia_fim: string | null;
           vigencia_inicio: string;
+          canais: string[];
+          cliente_carteira_id: string | null;
+          dia_geracao: number;
+          documento: string;
+          email_envio: string | null;
+          envio: string;
+          iss_aliquota: number | null;
+          servico_codigo: string | null;
+          servico_descricao: string | null;
+          whatsapp_envio: string | null;
         };
         Insert: {
           atualizado_em?: string;
@@ -1963,6 +2188,16 @@ export type Database = {
           valor: number;
           vigencia_fim?: string | null;
           vigencia_inicio: string;
+          canais?: string[];
+          cliente_carteira_id?: string | null;
+          dia_geracao?: number;
+          documento?: string;
+          email_envio?: string | null;
+          envio?: string;
+          iss_aliquota?: number | null;
+          servico_codigo?: string | null;
+          servico_descricao?: string | null;
+          whatsapp_envio?: string | null;
         };
         Update: {
           atualizado_em?: string;
@@ -2002,6 +2237,16 @@ export type Database = {
           valor?: number;
           vigencia_fim?: string | null;
           vigencia_inicio?: string;
+          canais?: string[];
+          cliente_carteira_id?: string | null;
+          dia_geracao?: number;
+          documento?: string;
+          email_envio?: string | null;
+          envio?: string;
+          iss_aliquota?: number | null;
+          servico_codigo?: string | null;
+          servico_descricao?: string | null;
+          whatsapp_envio?: string | null;
         };
         Relationships: [
           {
@@ -5781,6 +6026,11 @@ export type Database = {
         Args: { p_arquivo: string; p_cliente: string; p_contas: Json };
         Returns: Json;
       };
+      fin_fatura_cancelar: { Args: { p_fatura: string; p_motivo: string }; Returns: Json };
+      fin_fatura_gerar_agora: {
+        Args: { p_competencia: string; p_contrato: string; p_motivo: string; p_vencimento?: string };
+        Returns: Json;
+      };
       fin_indices_atualizar: { Args: { p_cliente: string }; Returns: Json };
       fin_lancar: { Args: { p: Json }; Returns: Json };
       fin_recorrente_anexo: {
@@ -6098,6 +6348,23 @@ export type Database = {
           razao_social: string;
           regime: string;
           uf: string;
+        }[];
+      };
+      portal_minhas_faturas: {
+        Args: { p_cliente: string };
+        Returns: {
+          boleto_situacao: string;
+          competencia: string;
+          descricao: string;
+          documento: string;
+          emissao: string;
+          id: string;
+          nfse_numero: string;
+          nfse_situacao: string;
+          numero: string;
+          situacao: string;
+          valor: number;
+          vencimento: string;
         }[];
       };
       portal_processos: {
