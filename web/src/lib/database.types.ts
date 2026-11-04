@@ -6747,6 +6747,10 @@ export type Database = {
         Returns: number;
       };
       crm_converter_cliente: { Args: { p_op: string }; Returns: string };
+      crm_excluir: {
+        Args: { p_ids: string[]; p_motivo: string };
+        Returns: number;
+      };
       crm_marcar_contrato: {
         Args: { p_contrato: string; p_converter?: boolean; p_status: string };
         Returns: undefined;

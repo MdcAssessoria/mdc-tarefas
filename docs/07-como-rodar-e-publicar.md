@@ -128,6 +128,8 @@ npx supabase functions deploy convite --project-ref bulqqdgfrrpqquqvjjfa --impor
   `fatura-enviar` v1 (verify_jwt desligado, token próprio), `nfse-emitir` v2 e `demonstrativo-pdf` v10 (bundle
   minificado, lê `org_papel_timbrado`). E-mail e WhatsApp seguem "aguardando configuração" até os segredos da seção 7.7
   serem cadastrados.
+- **04/11/2026 (noite):** 054 aplicada (Comercial: excluir lead de vez, `crm_excluir`, conferida por md5); tipos
+  regenerados. Busca na Receita no cadastro de fornecedores/clientes e na ficha do CRM (só site).
 - **Ajustes finais (052, branch `ajustes-finais`).** Ordem: testes (`bash supabase/testes/rodar.sh`, blocos 111 a 114)
   → aplicar a 052 → regenerar `database.types.ts` (os tipos da 052 foram escritos à mão) e rodar os Advisors → publicar
   as funções → push do site.
