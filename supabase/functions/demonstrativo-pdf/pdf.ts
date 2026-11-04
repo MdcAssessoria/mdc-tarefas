@@ -1,6 +1,6 @@
 // PDF das demonstrações no padrão visual MDC (pdf-lib, sem dependência de navegador).
 // Usado pela Edge Function demonstrativo-pdf; testável em Node.
-import { PDFDocument, PDFFont, PDFImage, PDFPage, StandardFonts, rgb } from "pdf-lib";
+import { PDFDocument, PDFFont, PDFImage, PDFPage, StandardFonts, degrees, rgb } from "pdf-lib";
 import { INDICES_INFO, brl, fmtIndice } from "./balancete.ts";
 import type { Alerta, Dre, Indices, Linha, Resumo } from "./balancete.ts";
 import { linhasDre } from "./demonstracoes.ts";
@@ -27,6 +27,40 @@ export interface DadosPdf {
   completude?: string | null;
   /** Período ainda em andamento (faltam os últimos meses): sai sem assinatura e marcado como parcial. */
   parcial?: boolean;
+  /** Dados do escritório lidos do cadastro (empresa da Gestão da organização); sem eles, os da MDC (D-11). */
+  escritorio?: Partial<Escritorio> | null;
+}
+
+/** Quem assina o papel timbrado: razão social, CNPJ e cidade vêm do cadastro; contatos e responsável técnico, da MDC. */
+export interface Escritorio {
+  razao: string;
+  cnpj: string;
+  cidadeUf: string;
+  telefone: string;
+  site: string;
+  instagram: string;
+  email: string;
+  responsavel: string;
+  crc: string;
+}
+
+export const ESCRITORIO_MDC: Escritorio = {
+  razao: "MDC Assessoria Ltda",
+  cnpj: "48.140.121/0001-65",
+  cidadeUf: "Bragança Paulista/SP",
+  telefone: "(11) 98859-8041",
+  site: "mdcassessoria.com",
+  instagram: "@mdcassessoria_",
+  email: "edvaldo@mdcassessoria.com",
+  responsavel: "Edvaldo Ribeiro de Carvalho",
+  crc: "1SP346098-O/0",
+};
+
+/** Junta o que veio do cadastro com o padrão da MDC (campo vazio fica com o padrão). */
+export function escritorioDe(e?: Partial<Escritorio> | null): Escritorio {
+  const r = { ...ESCRITORIO_MDC };
+  for (const [k, v] of Object.entries(e ?? {})) if (typeof v === "string" && v.trim()) (r as Record<string, string>)[k] = v.trim();
+  return r;
 }
 
 const VERDE = rgb(11 / 255, 40 / 255, 32 / 255);
@@ -56,9 +90,11 @@ class Doc {
   page!: PDFPage;
   y = 0;
   cabecalho = "";
+  esc: Escritorio = ESCRITORIO_MDC;
 
   static async criar(d: DadosPdf) {
     const o = new Doc();
+    o.esc = escritorioDe(d.escritorio);
     o.pdf = await PDFDocument.create();
     o.pdf.setTitle(`Demonstrações contábeis — ${d.empresa} — ${d.rotulo ?? mesExtenso(d.competencia)}`);
     o.pdf.setAuthor("MDC Assessoria Contábil");
@@ -160,15 +196,16 @@ class Doc {
     let yy = H - 30;
     for (const [t, sz, bold, cor] of [
       ["ASSESSORIA CONTÁBIL, TRIBUTÁRIA E GESTÃO FINANCEIRA", 9.2, true, DOURADO],
-      ["MDC Assessoria Ltda  ·  CNPJ 48.140.121/0001-65", 8, false, CLARO],
-      ["Bragança Paulista/SP  ·  (11) 98859-8041  ·  mdcassessoria.com", 7.4, false, CLARO],
+      [`${this.esc.razao}  ·  CNPJ ${this.esc.cnpj}`, 8, false, CLARO],
+      [`${this.esc.cidadeUf}  ·  ${this.esc.telefone}  ·  ${this.esc.site}`, 7.4, false, CLARO],
     ] as [string, number, boolean, ReturnType<typeof rgb>][]) {
       this.text(t, W - M, yy, sz, { bold, cor, alinhar: "dir" });
       yy -= sz + 6;
     }
-    let cab = this.cabecalho;
-    while (this.w(cab, 7.5) > W - 2 * M && cab.length > 20) cab = cab.slice(0, -2);
-    this.text(cab === this.cabecalho ? cab : cab + "…", W - M, H - BANDA - 16, 7.5, { cor: SUAVE, alinhar: "dir" });
+    // cabeçalho inteiro: diminui a letra até caber (sem cortar com "…", D-10)
+    let tam = 7.5;
+    while (tam > 5.5 && this.w(this.cabecalho, tam) > W - 2 * M) tam -= 0.25;
+    this.text(this.cabecalho, W - M, H - BANDA - 16, tam, { cor: SUAVE, alinhar: "dir" });
     this.y = H - BANDA - 30;
   }
   marca(x: number, y: number, alt: number) {
@@ -197,13 +234,42 @@ class Doc {
     this.text(s, M, this.y - 11, 11, { bold: true, cor: VERDE });
     this.y -= 18;
   }
-  /** Tabela com quebra de página e cabeçalho repetido. */
+  /** Quebra um texto simples em linhas que cabem na largura (palavra longa demais é partida). */
+  quebrar(s: string, size: number, largura: number, bold = false): string[] {
+    const linhas: string[] = [];
+    let atual = "";
+    for (const palavra of s.split(/\s+/).filter(Boolean)) {
+      let p = palavra;
+      while (this.w(p, size, bold) > largura && p.length > 1) {
+        let n = p.length - 1;
+        while (n > 1 && this.w(p.slice(0, n), size, bold) > largura) n--;
+        if (atual) {
+          linhas.push(atual);
+          atual = "";
+        }
+        linhas.push(p.slice(0, n));
+        p = p.slice(n);
+      }
+      const tent = atual ? `${atual} ${p}` : p;
+      if (atual && this.w(tent, size, bold) > largura) {
+        linhas.push(atual);
+        atual = p;
+      } else atual = tent;
+    }
+    if (atual || !linhas.length) linhas.push(atual);
+    return linhas;
+  }
+  /**
+   * Tabela com quebra de página e cabeçalho repetido. Texto que não cabe na coluna quebra em mais linhas
+   * (nada de "…" em documento contábil, D-10); números ficam numa linha só, alinhados à direita.
+   */
   tabela(
     cols: { titulo: string; largura: number; dir?: boolean }[],
     linhas: { celulas: string[]; bold?: boolean; fundo?: boolean; recuo?: number; negativo?: boolean[]; total?: boolean }[],
     size = 8.5,
   ) {
     const lh = size + 6.5;
+    const entre = size + 2.4;
     const cab = () => {
       this.garantir(lh * 2);
       this.page.drawRectangle({ x: M, y: this.y - lh, width: W - 2 * M, height: lh, color: VERDE });
@@ -216,27 +282,48 @@ class Doc {
     };
     cab();
     for (const l of linhas) {
-      if (this.y - lh < RODAPE) {
+      const partes = cols.map((c, k) => {
+        const s = l.celulas[k] ?? "";
+        const rec = k === 0 ? (l.recuo ?? 0) : 0;
+        return c.dir ? [s] : this.quebrar(s, size, c.largura - 8 - rec, l.bold);
+      });
+      const n = Math.max(1, ...partes.map((p) => p.length));
+      const rh = lh + (n - 1) * entre;
+      if (this.y - rh < RODAPE) {
         this.novaPagina();
         cab();
       }
-      if (l.fundo) this.page.drawRectangle({ x: M, y: this.y - lh, width: W - 2 * M, height: lh, color: FUNDO });
+      if (l.fundo) this.page.drawRectangle({ x: M, y: this.y - rh, width: W - 2 * M, height: rh, color: FUNDO });
       if (l.total) this.page.drawLine({ start: { x: M, y: this.y }, end: { x: W - M, y: this.y }, thickness: 1, color: VERDE });
       let x = M;
       cols.forEach((c, k) => {
-        let s = l.celulas[k] ?? "";
         const rec = k === 0 ? (l.recuo ?? 0) : 0;
-        const max = c.largura - 8 - rec;
-        while (s.length > 3 && this.w(s, size, l.bold) > max) s = s.slice(0, -2);
-        if (s !== (l.celulas[k] ?? "")) s = s.slice(0, -1) + "…";
-        this.text(s, c.dir ? x + c.largura - 4 : x + 4 + rec, this.y - lh + 4.6, size, { bold: l.bold, cor: l.negativo?.[k] ? PERIGO : TEXTO, alinhar: c.dir ? "dir" : "esq" });
+        partes[k].forEach((t, j) => {
+          this.text(t, c.dir ? x + c.largura - 4 : x + 4 + rec, this.y - lh + 4.6 - j * entre, size, {
+            bold: l.bold,
+            cor: l.negativo?.[k] ? PERIGO : TEXTO,
+            alinhar: c.dir ? "dir" : "esq",
+          });
+        });
         x += c.largura;
       });
-      this.page.drawLine({ start: { x: M, y: this.y - lh }, end: { x: W - M, y: this.y - lh }, thickness: 0.4, color: BORDA });
-      this.y -= lh;
+      this.page.drawLine({ start: { x: M, y: this.y - rh }, end: { x: W - M, y: this.y - rh }, thickness: 0.4, color: BORDA });
+      this.y -= rh;
     }
     this.y -= 8;
   }
+}
+
+/** Soma de débitos e créditos só das contas analíticas (as sintéticas repetem os valores das filhas) (DES-05). */
+export function totaisBalancete(linhas: Linha[]): { debitos: number; creditos: number } {
+  let debitos = 0,
+    creditos = 0;
+  for (const l of linhas) {
+    if (!l.analitica) continue;
+    debitos += Number(l.debitos) || 0;
+    creditos += Number(l.creditos) || 0;
+  }
+  return { debitos: Math.round(debitos * 100) / 100, creditos: Math.round(creditos * 100) / 100 };
 }
 
 export async function gerarPdf(d: DadosPdf): Promise<PDFDocument> {
@@ -258,9 +345,10 @@ export async function gerarPdf(d: DadosPdf): Promise<PDFDocument> {
   o.marca(M, H - 78, 44);
   o.text("Assessoria Contábil, Tributária e Gestão Financeira", M, H - 96, 9, { cor: CLARO });
   o.text("Demonstrações contábeis e análise gerencial", M, H - 128, 18, { bold: true, cor: rgb(1, 1, 1) });
-  let emp = d.empresa;
-  while (emp.length > 10 && o.w(emp, 10, true) > W - 2 * M) emp = emp.slice(0, -1);
-  o.text(emp === d.empresa ? emp : emp.trimEnd() + "…", M, H - 147, 10, { bold: true, cor: DOURADO });
+  // nome da empresa inteiro: diminui a letra até caber numa linha (sem cortar com "…", D-10)
+  let tamEmp = 10;
+  while (tamEmp > 6.5 && o.w(d.empresa, tamEmp, true) > W - 2 * M) tamEmp -= 0.5;
+  o.text(d.empresa, M, H - 147, tamEmp, { bold: true, cor: DOURADO });
   o.text(`${d.cnpj ? `CNPJ ${d.cnpj} · ` : ""}${multi || d.rotulo ? `Período: ${periodo}` : `Competência: ${periodo}`}`, M, H - 161, 9, { cor: CLARO });
   if (d.status !== "publicado" || d.parcial) {
     o.page.drawRectangle({ x: W - M - 170, y: H - 70, width: 170, height: 22, color: PERIGO });
@@ -461,6 +549,7 @@ export async function gerarPdf(d: DadosPdf): Promise<PDFDocument> {
   o.titulo("Balancete de verificação", `Período de ${dataBr(demo.periodo.inicio)} a ${dataBr(demo.periodo.fim)}. Saldos com D (devedor) ou C (credor).`);
   const sd = (v: number) => (Math.abs(v) < 0.005 ? "-" : `${Math.abs(v).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${v > 0 ? "D" : "C"}`);
   const mov = (v: number) => (Math.abs(v) < 0.005 ? "-" : Math.abs(v).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+  const tot = totaisBalancete(d.linhas);
   o.tabela(
     [
       { titulo: "Classificação", largura: 72 },
@@ -470,25 +559,31 @@ export async function gerarPdf(d: DadosPdf): Promise<PDFDocument> {
       { titulo: "Créditos", largura: 66, dir: true },
       { titulo: "Saldo atual", largura: 72, dir: true },
     ],
-    d.linhas
-      .filter((l) => l.saldo_anterior || l.debitos || l.creditos || l.saldo_atual)
-      .map((l) => ({
-        celulas: [l.classificacao, l.descricao, sd(l.saldo_anterior), mov(l.debitos), mov(l.creditos), sd(l.saldo_atual)],
-        bold: !l.analitica,
-        fundo: l.nivel === 1,
-        recuo: 0,
-      })),
+    [
+      ...d.linhas
+        .filter((l) => l.saldo_anterior || l.debitos || l.creditos || l.saldo_atual)
+        .map((l) => ({
+          celulas: [l.classificacao, l.descricao, sd(l.saldo_anterior), mov(l.debitos), mov(l.creditos), sd(l.saldo_atual)],
+          bold: !l.analitica,
+          fundo: l.nivel === 1,
+          recuo: 0,
+        })),
+      { celulas: ["", "TOTAL (contas analíticas)", "", mov(tot.debitos), mov(tot.creditos), ""], bold: true, total: true },
+    ],
     6.8,
   );
+  if (Math.abs(tot.debitos - tot.creditos) >= 0.01)
+    o.paragrafo(`Atenção: os débitos e os créditos do balancete não fecham (diferença de ${num(tot.debitos - tot.creditos)}). Confira a importação.`, { size: 8.5, cor: PERIGO });
+  else o.paragrafo("Débitos e créditos fecham: o balancete está equilibrado.", { size: 8, cor: SUAVE });
 
   // ---------------- responsabilidade técnica e assinatura
   o.garantir(120);
   o.y -= 10;
   o.subtitulo("Responsabilidade técnica");
-  const nome = d.parecer?.contador_nome || "Edvaldo Ribeiro de Carvalho";
-  const crc = d.parecer?.contador_crc || "1SP346098-O/0";
+  const nome = d.parecer?.contador_nome || o.esc.responsavel;
+  const crc = d.parecer?.contador_crc || o.esc.crc;
   o.paragrafo(`${nome} — Contador, CRC ${crc}`, { bold: true, size: 9.5, entre: 1 });
-  o.paragrafo("MDC Assessoria Ltda · CNPJ 48.140.121/0001-65 · Bragança Paulista/SP", { size: 9, cor: SUAVE });
+  o.paragrafo(`${o.esc.razao} · CNPJ ${o.esc.cnpj} · ${o.esc.cidadeUf}`, { size: 9, cor: SUAVE });
   if (d.assinatura) {
     const alt = 46;
     o.garantir(alt + 6);
@@ -505,13 +600,36 @@ export async function gerarPdf(d: DadosPdf): Promise<PDFDocument> {
 
   // rodapé do papel timbrado: empresa e responsável técnico em todas as páginas
   const paginas = o.pdf.getPages();
+  const e = o.esc;
+  // rascunho e período parcial: marca d'água em TODAS as páginas (D-03), para nenhuma folha solta passar por definitiva
+  const marcaDagua = d.parcial ? "PERÍODO PARCIAL" : d.status !== "publicado" ? "RASCUNHO" : null;
   paginas.forEach((p, k) => {
     o.page = p;
+    if (marcaDagua) {
+      const tam = marcaDagua.length > 10 ? 64 : 92;
+      const larg = o.w(marcaDagua, tam, true);
+      const ang = Math.PI / 4;
+      p.drawText(o.t(marcaDagua), {
+        x: W / 2 - (larg / 2) * Math.cos(ang) + (tam * 0.35) * Math.sin(ang),
+        y: H / 2 - (larg / 2) * Math.sin(ang) - (tam * 0.35) * Math.cos(ang),
+        size: tam,
+        font: o.b,
+        color: PERIGO,
+        opacity: 0.1,
+        rotate: degrees(45),
+      });
+      if (k > 0) {
+        const selo = d.parcial ? "PERÍODO PARCIAL · SEM ASSINATURA" : "RASCUNHO · NÃO PUBLICADO";
+        const ls = o.w(selo, 6.8, true) + 12;
+        p.drawRectangle({ x: M - 6, y: H - BANDA + 3, width: ls, height: 11, color: PERIGO });
+        o.text(selo, M, H - BANDA + 6.2, 6.8, { bold: true, cor: rgb(1, 1, 1) });
+      }
+    }
     p.drawLine({ start: { x: M, y: 62 }, end: { x: W - M, y: 62 }, thickness: 0.8, color: DOURADO });
-    o.text("MDC Assessoria Ltda", M, 50, 7.2, { bold: true, cor: VERDE });
-    o.text("  ·  CNPJ 48.140.121/0001-65  ·  Bragança Paulista/SP  ·  mdcassessoria.com  ·  @mdcassessoria_", M + o.w("MDC Assessoria Ltda", 7.2, true), 50, 7.2, { cor: VERDE });
+    o.text(e.razao, M, 50, 7.2, { bold: true, cor: VERDE });
+    o.text(`  ·  CNPJ ${e.cnpj}  ·  ${e.cidadeUf}  ·  ${e.site}  ·  ${e.instagram}`, M + o.w(e.razao, 7.2, true), 50, 7.2, { cor: VERDE });
     o.text("Responsável técnico: ", M, 39, 7.2, { bold: true, cor: DOURADO_ESC });
-    o.text("Edvaldo Ribeiro de Carvalho  ·  Contador CRC 1SP346098-O/0  ·  edvaldo@mdcassessoria.com  ·  (11) 98859-8041", M + o.w("Responsável técnico: ", 7.2, true), 39, 7.2, { cor: VERDE });
+    o.text(`${e.responsavel}  ·  Contador CRC ${e.crc}  ·  ${e.email}  ·  ${e.telefone}`, M + o.w("Responsável técnico: ", 7.2, true), 39, 7.2, { cor: VERDE });
     o.text(`Página ${k + 1} de ${paginas.length}`, W - M, 50, 7.2, { cor: SUAVE, alinhar: "dir" });
     p.drawRectangle({ x: 0, y: 0, width: W, height: 14, color: VERDE });
     p.drawRectangle({ x: 0, y: 14, width: W, height: 2, color: DOURADO });
