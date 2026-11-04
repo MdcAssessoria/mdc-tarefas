@@ -226,7 +226,7 @@ function Contratos() {
             </EstadoVazio>
           ) : (
             <div className="cartao overflow-x-auto">
-              <table className="tabela">
+              <table className="tabela tabela-acoes-fixas">
                 <thead>
                   <tr>
                     <th>Cliente</th>

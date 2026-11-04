@@ -126,7 +126,7 @@ export default function PaginaProdutos() {
               </p>
             )}
             <div className="cartao overflow-x-auto">
-              <table className="tabela">
+              <table className="tabela tabela-acoes-fixas">
                 <thead>
                   <tr>
                     <th>Produto</th>

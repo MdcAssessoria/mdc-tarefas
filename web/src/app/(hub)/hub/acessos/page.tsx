@@ -221,7 +221,7 @@ function Acessos() {
 
       {aba === "pessoas" && (
         <div className="cartao overflow-x-auto">
-          <table className="tabela">
+          <table className="tabela tabela-acoes-fixas">
             <thead>
               <tr>
                 <th>Pessoa</th>

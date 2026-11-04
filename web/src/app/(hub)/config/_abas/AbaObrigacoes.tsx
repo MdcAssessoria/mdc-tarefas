@@ -289,7 +289,7 @@ export function AbaObrigacoes() {
       )}
 
       <div className="cartao overflow-x-auto">
-        <table className="tabela">
+        <table className="tabela tabela-acoes-fixas">
           <thead>
             <tr>
               <th>Obrigação</th>

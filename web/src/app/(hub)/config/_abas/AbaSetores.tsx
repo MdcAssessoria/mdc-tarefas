@@ -43,7 +43,7 @@ export function AbaSetores() {
       </form>
       {el}
       <div className="cartao">
-        <table className="tabela">
+        <table className="tabela tabela-acoes-fixas">
           <thead>
             <tr>
               <th>Ordem</th>

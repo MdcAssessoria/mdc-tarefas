@@ -34,7 +34,7 @@ export function AbaEquipe() {
       </div>
       {el}
       <div className="cartao overflow-x-auto">
-        <table className="tabela">
+        <table className="tabela tabela-acoes-fixas">
           <thead>
             <tr>
               <th>Nome</th>

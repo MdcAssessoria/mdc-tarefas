@@ -180,7 +180,7 @@ export function AbaMovimentos({ cliente, podeOperar, avisar }: PropsAba) {
         <EstadoVazio>Nenhum movimento neste filtro.</EstadoVazio>
       ) : (
         <div className="cartao overflow-x-auto">
-          <table className="tabela">
+          <table className="tabela tabela-acoes-fixas">
             <thead>
               <tr>
                 <th>Data</th>

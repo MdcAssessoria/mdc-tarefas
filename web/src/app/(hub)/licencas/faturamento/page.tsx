@@ -112,7 +112,7 @@ export default function PaginaFaturamento() {
             <EstadoVazio>Nada a acrescentar aos honorários de {mesExtenso(mes)}. Se faltam mensalidades, gere em Mensalidades.</EstadoVazio>
           ) : (
             <div className="cartao overflow-x-auto">
-              <table className="tabela">
+              <table className="tabela tabela-acoes-fixas">
                 <thead>
                   <tr>
                     <th>Cliente</th>

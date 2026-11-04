@@ -287,7 +287,7 @@ export function AbaClientes() {
         </div>
       )}
       <div className="cartao overflow-x-auto">
-        <table className="tabela">
+        <table className="tabela tabela-acoes-fixas">
           <thead>
             <tr>
               <th className="w-8">

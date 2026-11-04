@@ -284,7 +284,7 @@ export default function PaginaCobrancas() {
             </EstadoVazio>
           ) : (
             <div className="cartao overflow-x-auto">
-              <table className="tabela">
+              <table className="tabela tabela-acoes-fixas">
                 <thead>
                   <tr>
                     <th>Vencimento</th>

@@ -108,7 +108,7 @@ export function AbaLocais({ cliente, podeOperar, avisar }: PropsAba) {
         </EstadoVazio>
       ) : (
         <div className="cartao overflow-x-auto">
-          <table className="tabela">
+          <table className="tabela tabela-acoes-fixas">
             <thead>
               <tr>
                 <th>Estoque</th>

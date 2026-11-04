@@ -398,3 +398,16 @@ input[type="file"]:disabled::file-selector-button {
     flex: 1 1 14rem;
   }
 }
+
+/* UX-01 (reauditoria 03/11/2026): tabela que continua de lado no celular (muitas colunas ou campos para editar) deixa a
+   última coluna — a das ações ou do campo a mudar — presa à direita, sempre visível sem rolar a tabela. */
+@media (max-width: 639px) {
+  .tabela-acoes-fixas th:last-child,
+  .tabela-acoes-fixas td:last-child {
+    position: sticky;
+    right: 0;
+    z-index: 1;
+    background: var(--superficie);
+    box-shadow: -8px 0 8px -8px rgb(0 0 0 / 0.25);
+  }
+}

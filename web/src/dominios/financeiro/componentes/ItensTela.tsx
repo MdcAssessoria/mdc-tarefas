@@ -355,7 +355,7 @@ export function ItensTela({ cliente, podeOperar, avisar }: PropsAba) {
         </div>
       ) : (
         <div className="cartao overflow-x-auto">
-          <table className="tabela">
+          <table className="tabela tabela-acoes-fixas">
             <thead>
               <tr>
                 <th>Item</th>

@@ -98,7 +98,7 @@ export function AcessosClientes({
       </div>
       {erroLista && <p className="rounded-md bg-red-50 p-3 text-sm text-red-800">{erroLista}</p>}
       <div className="cartao overflow-x-auto">
-        <table className="tabela">
+        <table className="tabela tabela-acoes-fixas">
           <thead>
             <tr>
               <th>Pessoa do cliente</th>
