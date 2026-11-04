@@ -1,5 +1,7 @@
 // Janela do reajuste anual: o HUB mostra o índice acumulado de 12 meses (buscado no Banco Central) ou o % fixo, o valor
 // atual e o novo; a pessoa confere (pode ajustar o %) e confirma. Faltando mês do índice, explica e oferece buscar de novo.
+// 048: índice negativo vira 0% (o valor é mantido); as contas do ciclo aparecem separadas (as que mudam, as ajustadas à
+// mão, as com nota/boleto emitido e as já pagas, com a diferença que não é lançada sozinha).
 "use client";
 
 import { useCallback, useState } from "react";
@@ -15,6 +17,9 @@ import { atualizarIndices, propostaReajuste, reajustarContrato } from "../reposi
 import { valorReajustado } from "../regras";
 import type { Recorrente } from "../tipos";
 
+/** Quanto os meses já pagos ficaram abaixo do valor novo (igual a app.fin_reajuste_contas). */
+const diferencaPagas = (pagas: { valor: number }[], novo: number) =>
+  Math.round(pagas.reduce((s, c) => s + Math.max(novo - Number(c.valor), 0), 0) * 100) / 100;
 const pct = (n: number) => `${n.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 4 })}%`;
 
 export function JanelaReajuste({
@@ -59,14 +64,16 @@ export function JanelaReajuste({
 
   async function confirmar() {
     setErro("");
-    if (!Number.isFinite(percentual) || percentual <= -50 || percentual > 100)
-      return setErro("Informe o percentual do reajuste (ex.: 4,68).");
+    if (!Number.isFinite(percentual) || percentual > 100) return setErro("Informe o percentual do reajuste (ex.: 4,68).");
+    if (percentual < 0) return setErro("Reajuste negativo não se aplica: pela regra da MDC o valor é mantido. Use 0%.");
     setOcupado(true);
     try {
       const r = await reajustarContrato(contrato.id, percentual, obs.trim() || null, atualizar);
       aoSalvar(
         `Reajuste confirmado: ${brl(Number(r.valor))} por mês a partir da próxima conta` +
-          (r.contas_atualizadas ? ` (${r.contas_atualizadas} conta(s) em aberto atualizada(s)).` : "."),
+          (r.contas_atualizadas ? ` (${r.contas_atualizadas} conta(s) em aberto atualizada(s))` : "") +
+          (Number(r.diferenca_pagas) > 0 ? `. Diferença de ${brl(Number(r.diferenca_pagas))} nos meses já pagos não foi lançada` : "") +
+          (r.proximo ? `. Há outro reajuste pendente (${mesExtenso(r.proximo)}): abra de novo para conferir.` : "."),
       );
     } catch (e) {
       setErro(traduzirErro(e));
@@ -119,6 +126,15 @@ export function JanelaReajuste({
               )}
             </div>
           )}
+          {p.negativo_vira_zero && (
+            <p className="flex items-start gap-2 rounded-md bg-sky-50 p-3 text-sm text-sky-900">
+              <Icone nome="info" className="mt-0.5 h-4 w-4 shrink-0" />
+              <span>
+                O {p.indice} acumulado ficou negativo ({pct(Number(p.percentual_indice))}). Pela regra da MDC o valor do contrato é mantido:
+                o HUB propõe 0%.
+              </span>
+            </p>
+          )}
           <div className="grid gap-3 sm:grid-cols-3">
             <div className="cartao p-3">
               <p className="text-xs text-[var(--texto-suave)]">Valor atual</p>
@@ -163,6 +179,31 @@ export function JanelaReajuste({
               </span>
             </label>
           )}
+          {p.contas &&
+            (p.contas.ajuste_manual.length > 0 || p.contas.documento_emitido.length > 0 || p.contas.pagas.length > 0) && (
+              <ul className="space-y-1 rounded-md bg-[var(--fundo)] p-3 text-xs text-[var(--texto-suave)]">
+                {p.contas.ajuste_manual.length > 0 && (
+                  <li>
+                    Não mudam porque o valor foi ajustado à mão:{" "}
+                    {p.contas.ajuste_manual.map((c) => `${fmtCompetencia(c.competencia)} (${brl(Number(c.valor))})`).join("; ")}.
+                  </li>
+                )}
+                {p.contas.documento_emitido.length > 0 && (
+                  <li>
+                    Não mudam porque a nota fiscal ou o boleto já foi emitido:{" "}
+                    {p.contas.documento_emitido.map((c) => fmtCompetencia(c.competencia)).join("; ")}.
+                  </li>
+                )}
+                {p.contas.pagas.length > 0 && (
+                  <li>
+                    Já pagas com o valor antigo: {p.contas.pagas.map((c) => fmtCompetencia(c.competencia)).join("; ")}
+                    {novo != null && diferencaPagas(p.contas.pagas, novo) > 0
+                      ? ` — diferença de ${brl(diferencaPagas(p.contas.pagas, novo))} (não é lançada sozinha; lance à parte se for cobrar).`
+                      : "."}
+                  </li>
+                )}
+              </ul>
+            )}
           {podeOperar && (
             <label className="campo">
               <span>Observação (opcional)</span>

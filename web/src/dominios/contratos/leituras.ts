@@ -3,7 +3,7 @@ import { supabase } from "@/lib/supabase";
 import { lerTudo } from "@/lib/lerTudo";
 import type { Arquivo } from "@/lib/arquivos/armazenamento";
 import type { Titulo } from "@/dominios/financeiro/tipos";
-import type { EmissaoNfse, EnvioDaFatura, EventoContrato, Fatura, NumeracaoNfse, ParametrosNfse, ReajusteRecorrente, Recorrente } from "./tipos";
+import type { BoletoFatura, ContaBancoLink, EmissaoNfse, EnvioDaFatura, EventoContrato, Fatura, NumeracaoNfse, ParametrosNfse, ReajusteRecorrente, Recorrente } from "./tipos";
 
 /** Cliente de uma fatura, só com o que vai no PDF dela (047: Contratos não lê o cadastro inteiro). */
 export interface TomadorFatura {
@@ -135,4 +135,23 @@ export async function lerNumeracaoNfse(cliente: string): Promise<NumeracaoNfse[]
   const { data, error } = await supabase().from("nfse_numeracao").select("cliente_id,ambiente,serie,proximo").eq("cliente_id", cliente);
   if (error) throw error;
   return (data ?? []) as unknown as NumeracaoNfse[];
+}
+
+/** Boletos das faturas emitidos pelo Ledgra Link (049), o mais recente de cada fatura primeiro. */
+export const lerBoletos = (cliente: string) =>
+  lerTudo<BoletoFatura>((de, ate) =>
+    supabase()
+      .from("fin_fatura_boletos")
+      .select("id,fatura_id,banco,tipo,situacao,valor,vencimento,linha_digitavel,pix_copia_cola,nosso_numero,tentativa,emitido_em")
+      .eq("cliente_id", cliente)
+      .order("tentativa", { ascending: false })
+      .order("id")
+      .range(de, ate),
+  );
+
+/** Contas da MDC no Ledgra Link por banco (Itaú e Santander) (049). */
+export async function lerContasBanco(cliente: string): Promise<ContaBancoLink[]> {
+  const { data, error } = await supabase().from("link_contas_banco").select("*").eq("cliente_id", cliente).order("banco");
+  if (error) throw error;
+  return (data ?? []) as ContaBancoLink[];
 }

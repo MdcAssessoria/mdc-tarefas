@@ -1,5 +1,6 @@
 // Parte "Fatura e envio ao cliente" do cadastro de contrato A RECEBER (migração 043): o que enviar (4 opções com
-// ícones), dados do serviço quando sai nota fiscal e por onde enviar (e-mail, WhatsApp, Portal do Cliente).
+// ícones), banco do boleto (Itaú ou Santander, pelo Ledgra Link — 048/049), dados do serviço quando sai nota fiscal e
+// por onde enviar (e-mail, WhatsApp, Portal do Cliente).
 // O dia de gerar fica junto do "Vence todo dia" em ContratoFixo. Linguagem simples; o banco confere tudo de novo.
 // As grades seguem a largura do próprio bloco (@container), não a da tela: na terceira coluna da janela larga (monitor
 // grande) cada opção ocupa uma linha; na coluna da direita do notebook, duas por linha.
@@ -8,7 +9,7 @@
 import { Icone } from "@/components/ui/Icone";
 import type { Cliente } from "@/dominios/clientes/tipos";
 import { nomeCliente } from "@/dominios/clientes/nome";
-import { CANAIS_ENVIO, documentoDoEnvio, NOME_DOCUMENTO, OPCOES_ENVIO } from "../faturamento";
+import { BANCOS_BOLETO, CANAIS_ENVIO, documentoDoEnvio, NOME_DOCUMENTO, OPCOES_ENVIO } from "../faturamento";
 import type { FaturamentoForm } from "../faturamento";
 import type { CanalEnvio } from "../tipos";
 
@@ -77,13 +78,36 @@ export function CamposFaturamento({
       </div>
       <p className="mt-2 text-xs text-[var(--texto-suave)]">
         Documento do mês: <strong className="text-[var(--texto)]">{NOME_DOCUMENTO[doc]}</strong>
-        {doc === "nfse" && " — a nota será emitida pelo Emissor Nacional (próxima etapa); até lá a fatura fica “Aguardando nota fiscal”."}
+        {doc === "nfse" && " — a nota é emitida pelo Emissor Nacional em Contratos › Faturas (botão Emitir nota)."}
       </p>
       {temBoleto && (
-        <p className="mt-2 flex items-start gap-2 rounded-md bg-amber-50 p-2 text-xs text-amber-900">
-          <Icone nome="info" className="mt-0.5 h-4 w-4 shrink-0" />
-          Boleto: a plataforma de boletos ainda não foi escolhida. A fatura sai normalmente e o boleto fica “aguardando configuração”.
-        </p>
+        <div className="mt-3">
+          <p className="mb-1 text-sm font-medium" id="rotulo-banco-boleto">
+            Banco do boleto
+          </p>
+          <div className="grid gap-2 @md:grid-cols-2" role="radiogroup" aria-labelledby="rotulo-banco-boleto">
+            {BANCOS_BOLETO.map((b) => {
+              const sel = f.boletoBanco === b.id;
+              return (
+                <button
+                  key={b.id}
+                  type="button"
+                  role="radio"
+                  aria-checked={sel}
+                  onClick={() => mudar({ boletoBanco: b.id })}
+                  className={`${CARTAO} flex items-center gap-2 ${sel ? MARCADO : DESMARCADO}`}
+                >
+                  <Icone nome="banco" className="h-4 w-4 text-[var(--marca)]" />
+                  <span className="font-medium">{b.nome}</span>
+                  <span className="text-xs text-[var(--texto-suave)]">banco {b.codigo}</span>
+                </button>
+              );
+            })}
+          </div>
+          <p className="mt-1 text-xs text-[var(--texto-suave)]">
+            O boleto sai pelo Ledgra Link na conta da MDC nesse banco. Quando o cliente paga, a baixa entra sozinha no Financeiro.
+          </p>
+        </div>
       )}
 
       {doc === "nfse" && (

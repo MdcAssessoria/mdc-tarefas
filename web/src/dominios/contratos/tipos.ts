@@ -8,6 +8,8 @@ export type DocumentoFatura = "nfse" | "fatura";
 /** O que vai ao cliente (043). "nf_fatura" = nota + fatura agora, boleto depois. */
 export type EnvioFatura = "nf_fatura_boleto" | "nf_fatura" | "fatura_boleto" | "fatura";
 export type CanalEnvio = "email" | "whatsapp" | "portal";
+/** Banco do boleto pelo Ledgra Link (048/049). */
+export type BancoBoleto = "itau" | "santander";
 export type SituacaoRecorrente = "ativo" | "suspenso" | "encerrado";
 
 export interface Recorrente {
@@ -51,7 +53,7 @@ export interface Recorrente {
   // faturamento (043; só contrato a receber usa)
   documento: DocumentoFatura;
   envio: EnvioFatura;
-  /** Dia (1–28) em que a conta e a fatura nascem. Vencimento <= dia de gerar → vence no mês seguinte. */
+  /** Dia (1–28) em que a conta e a fatura nascem; vence no mesmo mês (048), então não passa do dia de vencer. */
   dia_geracao: number;
   canais: CanalEnvio[];
   email_envio: string | null;
@@ -61,6 +63,10 @@ export interface Recorrente {
   servico_descricao: string | null;
   servico_codigo: string | null;
   iss_aliquota: number | null;
+  /** Banco do boleto (048), quando o envio tem boleto. */
+  boleto_banco: BancoBoleto | null;
+  /** Renovação automática: meses por renovação (048, padrão 12). */
+  renovacao_meses: number;
 }
 
 export type SituacaoFatura = "gerada" | "aguardando_nf" | "pronta" | "enviada" | "cancelada";
@@ -162,10 +168,22 @@ export interface PropostaReajuste {
   ate?: string;
   meses: number;
   faltam: string[];
+  /** % proposto: o índice acumulado, mas nunca negativo (048: reajuste negativo mantém o valor). */
   percentual: number | null;
+  /** O acumulado como veio do índice (pode ser negativo). */
+  percentual_indice?: number | null;
+  negativo_vira_zero?: boolean;
   valor_atual: number;
   valor_novo: number | null;
   contas_em_aberto: { id: string; competencia: string; valor: number }[];
+  /** Contas do ciclo separadas (048, B-09). */
+  contas?: {
+    atualizaveis: { id: string; competencia: string; valor: number; fatura: string | null }[];
+    ajuste_manual: { id: string; competencia: string; valor: number }[];
+    documento_emitido: { id: string; competencia: string; valor: number; fatura: string | null }[];
+    pagas: { id: string; competencia: string; valor: number; pago: number }[];
+    diferenca_pagas: number;
+  };
   indices_atualizados_em: string | null;
 }
 
@@ -262,4 +280,37 @@ export interface ResultadoEmissaoNfse {
   recuperada?: boolean;
   mensagem: string | null;
   mensagens: MensagemNfse[];
+}
+
+// ------------------------------------------------------------------------------------------------ boleto (049)
+
+export type SituacaoBoletoEmitido = "registrada" | "paga" | "paga_parcial" | "baixada" | "cancelada" | "vencida" | "rejeitada";
+
+/** Boleto de uma fatura emitido pelo Ledgra Link (fin_fatura_boletos). */
+export interface BoletoFatura {
+  id: string;
+  fatura_id: string;
+  banco: BancoBoleto;
+  tipo: "boleto" | "boleto_hibrido";
+  situacao: SituacaoBoletoEmitido;
+  valor: number;
+  vencimento: string;
+  linha_digitavel: string | null;
+  pix_copia_cola: string | null;
+  nosso_numero: string | null;
+  tentativa: number;
+  emitido_em: string;
+}
+
+/** Conta da MDC no Ledgra Link por banco (link_contas_banco). */
+export interface ContaBancoLink {
+  org_id: string;
+  banco: BancoBoleto;
+  codigo_compe: string;
+  cliente_id: string;
+  conta_link_id: string;
+  fin_conta_id: string;
+  tipo: "boleto" | "boleto_hibrido";
+  ativo: boolean;
+  atualizado_em: string;
 }

@@ -1,11 +1,13 @@
-// Regras puras do faturamento dos contratos a receber (migração 043). As mesmas contas do banco:
+// Regras puras do faturamento dos contratos a receber (migrações 043 e 048). As mesmas contas do banco:
 // app.fin_recorrente_data_geracao, app.fin_recorrente_vencimento e as validações de fin_recorrente_salvar.
+// 048 (decisão do Edvaldo, 03/11/2026): a fatura vence no MESMO mês em que é gerada; por isso o dia de gerar não pode
+// passar do dia de vencer (a fatura nasceria vencida).
 // O banco decide; a tela só mostra e avisa antes de mandar.
 import { vencimentoNoMes } from "./regras";
 import { somarMeses } from "@/lib/datas";
 import type { NomeIcone } from "@/components/ui/Icone";
 import type { Tom } from "@/components/ui/Tons";
-import type { CanalEnvio, DocumentoFatura, EnvioDaFatura, EnvioFatura, SituacaoBoleto, SituacaoFatura, SituacaoNfse } from "./tipos";
+import type { BancoBoleto, CanalEnvio, DocumentoFatura, EnvioDaFatura, EnvioFatura, SituacaoBoleto, SituacaoFatura, SituacaoNfse } from "./tipos";
 
 /** As 4 opções de "O que enviar ao cliente", na ordem do pedido do Edvaldo (03/11/2026). */
 export const OPCOES_ENVIO: {
@@ -95,15 +97,20 @@ export function dataGeracao(mes: string, tipo: "pagar" | "receber", diaGeracao: 
   return `${mes.slice(0, 7)}-${String(d).padStart(2, "0")}`;
 }
 
-/** A receber: vencimento no dia de gerar ou antes → vence no mês seguinte. */
-export const venceNoMesSeguinte = (tipo: "pagar" | "receber", diaGeracao: number, diaVencimento: number) =>
-  tipo === "receber" && diaVencimento <= diaGeracao;
+/** A receber com o dia de gerar depois do dia de vencer: a fatura nasceria vencida (o banco recusa, 048). */
+export const geraDepoisDoVencimento = (tipo: "pagar" | "receber", diaGeracao: number, diaVencimento: number) =>
+  tipo === "receber" && diaGeracao > diaVencimento;
 
-/** Vencimento da conta do mês (igual a app.fin_recorrente_vencimento). */
-export function vencimentoDoMes(mes: string, tipo: "pagar" | "receber", diaGeracao: number, diaVencimento: number): string {
-  const alvo = venceNoMesSeguinte(tipo, diaGeracao, diaVencimento) ? somarMeses(mes.slice(0, 7), 1) : mes.slice(0, 7);
-  return vencimentoNoMes(alvo, diaVencimento);
+/** Vencimento da conta do mês: sempre no mesmo mês da geração (igual a app.fin_recorrente_vencimento, 048). */
+export function vencimentoDoMes(mes: string, _tipo: "pagar" | "receber", _diaGeracao: number, diaVencimento: number): string {
+  return vencimentoNoMes(mes.slice(0, 7), diaVencimento);
 }
+
+/** Bancos do boleto pelo Ledgra Link (decisão do Edvaldo, 03/11/2026). */
+export const BANCOS_BOLETO: { id: BancoBoleto; nome: string; codigo: string }[] = [
+  { id: "itau", nome: "Itaú", codigo: "341" },
+  { id: "santander", nome: "Santander", codigo: "033" },
+];
 
 /** Primeiro mês cuja geração ainda não passou: este mês se o dia de gerar ainda vem, senão o próximo. */
 export function proximaGeracao(hoje: string, tipo: "pagar" | "receber", diaGeracao: number): string {
@@ -127,12 +134,16 @@ export interface FaturamentoForm {
   servicoDescricao: string;
   servicoCodigo: string;
   iss: string;
+  boletoBanco: BancoBoleto | "";
 }
 
 /** Mesmas regras do banco, para avisar antes de salvar. Devolve a mensagem do primeiro problema ou "". */
-export function conferirFaturamento(f: FaturamentoForm, numero: (s: string) => number): string {
+export function conferirFaturamento(f: FaturamentoForm, numero: (s: string) => number, diaVencimento?: number): string {
   const dia = Number(f.diaGeracao);
   if (!Number.isInteger(dia) || dia < 1 || dia > 28) return "Dia de gerar: de 1 a 28 (todo mês tem esses dias).";
+  if (diaVencimento != null && geraDepoisDoVencimento("receber", dia, diaVencimento))
+    return `A fatura vence no mesmo mês em que é gerada: gere até o dia ${diaVencimento} (ex.: gerar dia 1 e vencer dia ${diaVencimento}).`;
+  if (f.envio !== "fatura" && !f.boletoBanco) return "Escolha o banco do boleto: Itaú ou Santander.";
   if (f.canais.includes("email") && !emailValido(f.email)) return "Informe o e-mail que recebe a fatura (ex.: financeiro@cliente.com.br).";
   if (f.canais.includes("whatsapp") && !whatsappValido(f.whatsapp)) return "Informe o WhatsApp que recebe a fatura, com DDD.";
   if (f.canais.includes("portal") && !f.carteira) return "Para publicar no Portal, escolha o cliente da carteira.";

@@ -111,6 +111,12 @@ npx supabase functions deploy convite --project-ref bulqqdgfrrpqquqvjjfa --impor
   Supabase injeta). Pelo conector: o mesmo bundle das funções fiscais, dentro de `supabase/functions/nfse-emitir`. O teste
   pede `xmlsec1` e `xmllint` (`apt-get install xmlsec1 libxml2-utils`). Publicada pelo conector em 03/11/2026 (v1), logo
   depois da 046; a emissão começa no ambiente de teste (produção restrita) e no modo "conferir".
+- **Contratos: regras (048) e boleto (049).** Ordem: aplicar a 048 e a 049 (testes 105 a 108 passando) → regenerar
+  `database.types.ts` (os tipos da 048/049 foram escritos à mão na branch) e rodar os Advisors → publicar a função
+  `ledgra-link` (ganhou `acao: "emitir_fatura"`; bundle como as fiscais) → push do site. Sem segredo novo: usa
+  `LEDGRA_LINK_URL` e `LEDGRA_LINK_CHAVE`, que já existem. Depois, em Contratos › Boleto, quem gere informa o código da conta
+  de cada banco no Ledgra Link. A 048 troca a regra do vencimento: contrato a receber com dia de gerar depois do dia de
+  vencer passa a ser recusado ao salvar (em 03/11/2026 não havia contratos em produção).
 - Segredos das funções (chave de serviço etc.) ficam no painel: Edge Functions › Secrets. Nunca no código.
 - Ledgra Link (043): `LEDGRA_LINK_URL` (endereço do Ledgra Link, ex.: `https://link.ledgra.com.br`), `LEDGRA_LINK_CHAVE`
   (chave do HUB no Ledgra Link, começa com `llk_`) e `LEDGRA_LINK_SEGREDO_WEBHOOK` (segredo mostrado uma vez pelo Ledgra
