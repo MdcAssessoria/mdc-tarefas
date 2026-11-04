@@ -122,6 +122,12 @@ npx supabase functions deploy convite --project-ref bulqqdgfrrpqquqvjjfa --impor
   vencer passa a ser recusado ao salvar (em 03/11/2026 não havia contratos em produção).
   047, 048 e 049 aplicadas em 03/11/2026 (21h30); tipos regenerados; `ledgra-link` v3 publicada pelo conector (bundle).
 - **04/11/2026:** 050 aplicada (Portal › Faturas); `demonstrativo-pdf` v9 publicada (rascunho em todas as páginas, total do balancete, texto sem corte). As 8 funções com a origem `hub.mdcassessoria.com` (fiscal-certificado, fiscal-manifestar, fiscal-captura, nfse-emitir, ledgra-link, ledgra-link-webhook, convite, balancete-agente) ficam para quando o DNS do subdomínio estiver no ar.
+- **04/11/2026 (noite):** 051 (conciliação do extrato), 052 (NFS-e automática e papel timbrado) e 053 (envio das faturas)
+  aplicadas; 26 funções conferidas por md5 contra o repositório; agendadores `nfse-automatica` (06h45) e `fatura-enviar`
+  (a cada 10 min) ativos; tipos regenerados. Funções publicadas pelo conector (bundle): `nfse-automatica` v1 e
+  `fatura-enviar` v1 (verify_jwt desligado, token próprio), `nfse-emitir` v2 e `demonstrativo-pdf` v10 (bundle
+  minificado, lê `org_papel_timbrado`). E-mail e WhatsApp seguem "aguardando configuração" até os segredos da seção 7.7
+  serem cadastrados.
 - **Ajustes finais (052, branch `ajustes-finais`).** Ordem: testes (`bash supabase/testes/rodar.sh`, blocos 111 a 114)
   → aplicar a 052 → regenerar `database.types.ts` (os tipos da 052 foram escritos à mão) e rodar os Advisors → publicar
   as funções → push do site.
