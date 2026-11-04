@@ -55,6 +55,8 @@ const base: Recorrente = {
   servico_descricao: null,
   servico_codigo: null,
   iss_aliquota: null,
+  boleto_banco: null,
+  renovacao_meses: 12,
 };
 
 describe("vencimento no mês", () => {

@@ -632,8 +632,12 @@ const INTERACOES = {
     await rec.getByRole("checkbox", { name: /E-mail/ }).check();
     await rec.getByRole("checkbox", { name: /Portal do Cliente/ }).check();
     await rec.getByText("Envio por e-mail e WhatsApp: aguardando configuração").waitFor({ timeout: 3000 });
-    await rec.getByText("Vence no mês seguinte ao da geração").waitFor({ timeout: 3000 });
-    await rec.getByText("Todo dia 25 o HUB gera").waitFor({ timeout: 3000 });
+    // 048: vence no mesmo mês; gerar depois do vencimento avisa na hora; com boleto, escolhe o banco (Itaú ou Santander)
+    await rec.getByText("A fatura vence no mesmo mês em que é gerada: gere até o dia 5.").waitFor({ timeout: 3000 });
+    await rec.getByLabel("Gerar todo dia").fill("1");
+    await rec.getByText("Vence no mesmo mês da fatura").waitFor({ timeout: 3000 });
+    await rec.getByRole("radiogroup", { name: "Banco do boleto" }).getByRole("radio", { name: /Itaú/ }).click();
+    await rec.getByText("Todo dia 1 o HUB gera").waitFor({ timeout: 3000 });
     await foto("novo-contrato-fatura");
     await p.keyboard.press("Escape");
     await rec.waitFor({ state: "detached", timeout: 3000 });
@@ -661,7 +665,15 @@ const INTERACOES = {
   },
   // Faturas (043): aviso de "aguardando configuração", detalhe da fatura com a fila de envio, cancelar e gerar agora
   "/contratos/faturas": async (p, foto) => {
-    await p.getByText("Envio por e-mail/WhatsApp e boleto: aguardando configuração.").waitFor({ timeout: 3000 });
+    await p.getByText("Envio por e-mail/WhatsApp: aguardando configuração.").waitFor({ timeout: 3000 });
+    // boleto (049): a fatura com boleto do Itaú mostra a linha digitável para copiar
+    await p.getByRole("button", { name: /^Ver o boleto da fatura / }).first().click();
+    const boleto = p.getByRole("dialog", { name: /^Boleto · Fatura / });
+    await boleto.waitFor({ timeout: 3000 });
+    await boleto.getByText("Linha digitável").waitFor({ timeout: 3000 });
+    await foto("boleto");
+    await p.keyboard.press("Escape");
+    await boleto.waitFor({ state: "detached", timeout: 3000 });
     await p.getByRole("button", { name: /^Ver a fatura / }).first().click();
     const ver = p.getByRole("dialog", { name: /^Fatura \d{4}\/\d{5}$/ });
     await ver.waitFor({ timeout: 3000 });
@@ -712,6 +724,12 @@ const INTERACOES = {
     await p.getByRole("radio", { name: /^Produção \(nota com valor fiscal\)/ }).check();
     await p.getByText("Confirmo que as notas de teste deram certo").waitFor({ timeout: 3000 });
     await foto("nota-fiscal-parametros");
+  },
+  // Boleto (049): contas do Itaú (configurado) e do Santander (não configurado) no Ledgra Link
+  "/contratos/boleto": async (p, foto) => {
+    for (const t of ["Código da conta no Ledgra Link", "Conta do Financeiro onde o dinheiro cai", "Boletos emitidos", "Não configurado"])
+      await p.getByText(t, { exact: false }).first().waitFor({ timeout: 3000 });
+    await foto("boleto-config");
   },
   "/contratos/reajustes": async (p) => {
     await p.getByRole("button", { name: "Conferir e confirmar", exact: true }).first().click();

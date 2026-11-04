@@ -10,24 +10,28 @@ import {
   proximaGeracao,
   textoConteudo,
   vencimentoDoMes,
-  venceNoMesSeguinte,
+  geraDepoisDoVencimento,
 } from "./faturamento";
 import type { FaturamentoForm } from "./faturamento";
 
-describe("dia de gerar e vencimento (igual a app.fin_recorrente_vencimento)", () => {
-  it("vencimento no dia de gerar ou antes vai para o mês seguinte", () => {
-    expect(vencimentoDoMes("2028-01-01", "receber", 25, 5)).toBe("2028-02-05");
-    expect(vencimentoDoMes("2028-01-01", "receber", 10, 10)).toBe("2028-02-10");
-    expect(vencimentoDoMes("2028-12-01", "receber", 25, 5)).toBe("2029-01-05");
+describe("dia de gerar e vencimento (igual a app.fin_recorrente_vencimento, 048)", () => {
+  it("vence sempre no mesmo mês da geração (decisão do Edvaldo)", () => {
+    expect(vencimentoDoMes("2028-01-01", "receber", 1, 5)).toBe("2028-01-05");
+    expect(vencimentoDoMes("2028-01-01", "receber", 10, 10)).toBe("2028-01-10");
+    expect(vencimentoDoMes("2028-12-01", "receber", 1, 5)).toBe("2028-12-05");
   });
-  it("vencimento depois do dia de gerar fica no mesmo mês; dia que o mês não tem vira o último", () => {
+  it("gerar depois do dia de vencer é recusado (a fatura nasceria vencida)", () => {
+    expect(geraDepoisDoVencimento("receber", 25, 5)).toBe(true);
+    expect(geraDepoisDoVencimento("receber", 5, 5)).toBe(false);
+    expect(geraDepoisDoVencimento("pagar", 25, 5)).toBe(false);
+  });
+  it("dia que o mês não tem vira o último", () => {
     expect(vencimentoDoMes("2028-01-01", "receber", 1, 10)).toBe("2028-01-10");
     expect(vencimentoDoMes("2028-01-01", "receber", 28, 31)).toBe("2028-01-31");
     expect(vencimentoDoMes("2028-02-01", "receber", 28, 30)).toBe("2028-02-29");
   });
   it("a pagar continua no mesmo mês e nasce no dia 1", () => {
     expect(vencimentoDoMes("2028-01-01", "pagar", 25, 1)).toBe("2028-01-01");
-    expect(venceNoMesSeguinte("pagar", 25, 5)).toBe(false);
     expect(dataGeracao("2028-01-01", "pagar", 25)).toBe("2028-01-01");
     expect(dataGeracao("2028-01", "receber", 25)).toBe("2028-01-25");
   });
@@ -62,6 +66,7 @@ describe("conferir antes de salvar (mesmas regras do banco)", () => {
     servicoDescricao: "",
     servicoCodigo: "",
     iss: "",
+    boletoBanco: "",
   };
   it("aceita o mínimo e recusa o que o banco recusa", () => {
     expect(conferirFaturamento(ok, numeroBr)).toBe("");
@@ -70,8 +75,14 @@ describe("conferir antes de salvar (mesmas regras do banco)", () => {
     expect(conferirFaturamento({ ...ok, canais: ["whatsapp"], whatsapp: "98888" }, numeroBr)).toMatch(/DDD/);
     expect(conferirFaturamento({ ...ok, canais: ["portal"] }, numeroBr)).toMatch(/Portal/);
   });
+  it("dia de gerar até o dia de vencer e banco do boleto (048)", () => {
+    expect(conferirFaturamento(ok, numeroBr, 25)).toBe("");
+    expect(conferirFaturamento(ok, numeroBr, 5)).toMatch(/mesmo mês/);
+    expect(conferirFaturamento({ ...ok, envio: "fatura_boleto" }, numeroBr)).toMatch(/banco do boleto/);
+    expect(conferirFaturamento({ ...ok, envio: "fatura_boleto", boletoBanco: "itau" }, numeroBr)).toBe("");
+  });
   it("nota fiscal pede serviço, código e ISS de 0 a 5%", () => {
-    const nf = { ...ok, envio: "nf_fatura" as const, servicoDescricao: "Contabilidade", servicoCodigo: "17.01.01", iss: "2" };
+    const nf = { ...ok, envio: "nf_fatura" as const, boletoBanco: "santander" as const, servicoDescricao: "Contabilidade", servicoCodigo: "17.01.01", iss: "2" };
     expect(conferirFaturamento(nf, numeroBr)).toBe("");
     expect(conferirFaturamento({ ...nf, servicoCodigo: "abc" }, numeroBr)).toMatch(/código/);
     expect(conferirFaturamento({ ...nf, iss: "7" }, numeroBr)).toMatch(/ISS/);

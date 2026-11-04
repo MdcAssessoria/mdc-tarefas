@@ -1400,6 +1400,88 @@ export type Database = {
           },
         ];
       };
+      fin_fatura_boletos: {
+        Row: {
+          atualizado_em: string;
+          banco: string;
+          cliente_id: string;
+          cobranca_link_id: string;
+          emitido_em: string;
+          emitido_por: string | null;
+          fatura_id: string;
+          id: string;
+          linha_digitavel: string | null;
+          nosso_numero: string | null;
+          org_id: string;
+          pix_copia_cola: string | null;
+          situacao: string;
+          tentativa: number;
+          tipo: string;
+          valor: number;
+          vencimento: string;
+        };
+        Insert: {
+          atualizado_em?: string;
+          banco: string;
+          cliente_id: string;
+          cobranca_link_id: string;
+          emitido_em?: string;
+          emitido_por?: string | null;
+          fatura_id: string;
+          id?: string;
+          linha_digitavel?: string | null;
+          nosso_numero?: string | null;
+          org_id: string;
+          pix_copia_cola?: string | null;
+          situacao?: string;
+          tentativa?: number;
+          tipo: string;
+          valor: number;
+          vencimento: string;
+        };
+        Update: {
+          atualizado_em?: string;
+          banco?: string;
+          cliente_id?: string;
+          cobranca_link_id?: string;
+          emitido_em?: string;
+          emitido_por?: string | null;
+          fatura_id?: string;
+          id?: string;
+          linha_digitavel?: string | null;
+          nosso_numero?: string | null;
+          org_id?: string;
+          pix_copia_cola?: string | null;
+          situacao?: string;
+          tentativa?: number;
+          tipo?: string;
+          valor?: number;
+          vencimento?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "fin_fatura_boletos_cliente_id_fkey";
+            columns: ["cliente_id"];
+            isOneToOne: false;
+            referencedRelation: "clientes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "fin_fatura_boletos_fatura_id_fkey";
+            columns: ["fatura_id"];
+            isOneToOne: false;
+            referencedRelation: "fin_faturas";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "fin_fatura_boletos_org_id_fkey";
+            columns: ["org_id"];
+            isOneToOne: false;
+            referencedRelation: "organizacoes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       fin_envios: {
         Row: {
           atualizado_em: string;
@@ -1409,6 +1491,7 @@ export type Database = {
           criado_em: string;
           destino: string;
           enviado_em: string | null;
+          etapa: string;
           fatura_id: string;
           id: number;
           org_id: string;
@@ -1424,6 +1507,7 @@ export type Database = {
           criado_em?: string;
           destino: string;
           enviado_em?: string | null;
+          etapa?: string;
           fatura_id: string;
           id?: never;
           org_id: string;
@@ -1439,6 +1523,7 @@ export type Database = {
           criado_em?: string;
           destino?: string;
           enviado_em?: string | null;
+          etapa?: string;
           fatura_id?: string;
           id?: never;
           org_id?: string;
@@ -2137,6 +2222,10 @@ export type Database = {
           por: string | null;
           reajuste_avisado: string | null;
           renovacao_automatica: boolean;
+          renovacao_meses: number;
+          vigencia_fim_base: string | null;
+          reajuste_avisado_em: string | null;
+          boleto_banco: string | null;
           servico_codigo: string | null;
           servico_descricao: string | null;
           situacao: string;
@@ -2186,6 +2275,10 @@ export type Database = {
           por?: string | null;
           reajuste_avisado?: string | null;
           renovacao_automatica?: boolean;
+          renovacao_meses?: number;
+          vigencia_fim_base?: string | null;
+          reajuste_avisado_em?: string | null;
+          boleto_banco?: string | null;
           servico_codigo?: string | null;
           servico_descricao?: string | null;
           situacao?: string;
@@ -2235,6 +2328,10 @@ export type Database = {
           por?: string | null;
           reajuste_avisado?: string | null;
           renovacao_automatica?: boolean;
+          renovacao_meses?: number;
+          vigencia_fim_base?: string | null;
+          reajuste_avisado_em?: string | null;
+          boleto_banco?: string | null;
           servico_codigo?: string | null;
           servico_descricao?: string | null;
           situacao?: string;
@@ -4319,6 +4416,67 @@ export type Database = {
           },
           {
             foreignKeyName: "lic_reajustes_org_id_fkey";
+            columns: ["org_id"];
+            isOneToOne: false;
+            referencedRelation: "organizacoes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      link_contas_banco: {
+        Row: {
+          ativo: boolean;
+          atualizado_em: string;
+          atualizado_por: string | null;
+          banco: string;
+          cliente_id: string;
+          codigo_compe: string;
+          conta_link_id: string;
+          fin_conta_id: string;
+          org_id: string;
+          tipo: string;
+        };
+        Insert: {
+          ativo?: boolean;
+          atualizado_em?: string;
+          atualizado_por?: string | null;
+          banco: string;
+          cliente_id: string;
+          codigo_compe: string;
+          conta_link_id: string;
+          fin_conta_id: string;
+          org_id: string;
+          tipo?: string;
+        };
+        Update: {
+          ativo?: boolean;
+          atualizado_em?: string;
+          atualizado_por?: string | null;
+          banco?: string;
+          cliente_id?: string;
+          codigo_compe?: string;
+          conta_link_id?: string;
+          fin_conta_id?: string;
+          org_id?: string;
+          tipo?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "link_contas_banco_cliente_id_fkey";
+            columns: ["cliente_id"];
+            isOneToOne: false;
+            referencedRelation: "clientes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "link_contas_banco_fin_conta_id_fkey";
+            columns: ["fin_conta_id"];
+            isOneToOne: false;
+            referencedRelation: "fin_contas_bancarias";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "link_contas_banco_org_id_fkey";
             columns: ["org_id"];
             isOneToOne: false;
             referencedRelation: "organizacoes";
@@ -6675,6 +6833,9 @@ export type Database = {
         Args: { p: Json; p_org: string };
         Returns: undefined;
       };
+      link_salvar_banco: { Args: { p: Json }; Returns: Json };
+      fatura_boleto_preparar: { Args: { p_fatura: string }; Returns: Json };
+      fatura_boleto_registrar: { Args: { p: Json; p_fatura: string; p_user: string }; Returns: Json };
       nfse_parametros_salvar: { Args: { p: Json }; Returns: Json };
       nfse_preparar: { Args: { p_fatura: string }; Returns: Json };
       nfse_registrar_resultado: {

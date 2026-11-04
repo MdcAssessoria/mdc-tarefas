@@ -23,7 +23,7 @@ import { numeroBr, valorParaCampo } from "@/dominios/financeiro/regras";
 import type { TipoTitulo } from "@/dominios/financeiro/tipos";
 import { salvarContrato } from "../repositorio";
 import { INDICES_RECORRENTE, MESES_ANO, primeiroDia } from "../regras";
-import { conferirFaturamento, dataGeracao, documentoDoEnvio, soDigitosTel, venceNoMesSeguinte, vencimentoDoMes } from "../faturamento";
+import { conferirFaturamento, dataGeracao, documentoDoEnvio, geraDepoisDoVencimento, soDigitosTel, vencimentoDoMes } from "../faturamento";
 import type { FaturamentoForm } from "../faturamento";
 import type { IndiceRecorrente, Recorrente } from "../tipos";
 import { CamposFaturamento } from "./CamposFaturamento";
@@ -46,6 +46,7 @@ type Form = {
   vigFim: string;
   indeterminado: boolean;
   renova: boolean;
+  renovaMeses: string;
   aviso: string;
   geraContas: boolean;
   gerarDesde: string;
@@ -135,6 +136,7 @@ export function ContratoFixo({
     vigFim: editar?.vigencia_fim ?? "",
     indeterminado: editar ? !editar.vigencia_fim : true,
     renova: editar?.renovacao_automatica ?? false,
+    renovaMeses: String(editar?.renovacao_meses ?? 12),
     aviso: String(editar?.aviso_dias ?? 30),
     geraContas: editar?.gera_contas ?? true,
     gerarDesde: editar?.gerar_desde.slice(0, 7) ?? mesAtual,
@@ -156,6 +158,7 @@ export function ContratoFixo({
     servicoDescricao: editar?.servico_descricao ?? "",
     servicoCodigo: editar?.servico_codigo ?? "",
     iss: editar?.iss_aliquota != null ? String(editar.iss_aliquota).replace(".", ",") : "",
+    boletoBanco: editar?.boleto_banco ?? "",
   }));
   const mudarFat = (p: Partial<FaturamentoForm>) => setFat((x) => ({ ...x, ...p }));
   const receber = f.tipo === "receber";
@@ -191,10 +194,12 @@ export function ContratoFixo({
     if (!f.vigIni) return setErro("Informe o início da vigência.");
     if (!f.indeterminado && !f.vigFim) return setErro("Informe o fim da vigência ou marque “Prazo indeterminado”.");
     if (fim && fim < f.vigIni) return setErro("O fim da vigência precisa ser depois do início.");
-    if (f.indice === "fixo" && !(f.fixo.trim() && numeroBr(f.fixo) > -50 && numeroBr(f.fixo) <= 100))
-      return setErro("Informe o percentual fixo do reajuste (ex.: 5).");
+    if (f.indice === "fixo" && !(f.fixo.trim() && numeroBr(f.fixo) >= 0 && numeroBr(f.fixo) <= 100))
+      return setErro("Informe o percentual fixo do reajuste, de 0% a 100% (ex.: 5). Reajuste negativo não se aplica.");
+    const renovaMeses = Math.floor(Number(f.renovaMeses));
+    if (fim && f.renova && !(renovaMeses >= 1 && renovaMeses <= 60)) return setErro("Cada renovação: de 1 a 60 meses.");
     if (receber && f.geraContas) {
-      const problema = conferirFaturamento(fat, numeroBr);
+      const problema = conferirFaturamento(fat, numeroBr, dia);
       if (problema) return setErro(problema);
     }
     const nf = documentoDoEnvio(fat.envio) === "nfse";
@@ -217,6 +222,7 @@ export function ContratoFixo({
         vigencia_inicio: f.vigIni,
         vigencia_fim: fim || null,
         renovacao_automatica: !!fim && f.renova,
+        ...(fim && f.renova ? { renovacao_meses: renovaMeses } : {}),
         aviso_dias: Math.max(0, Math.min(365, Math.floor(Number(f.aviso) || 0))),
         gera_contas: f.geraContas,
         gerar_desde: podeMudarPrimeira ? primeiroDia(primeira) : null,
@@ -236,6 +242,7 @@ export function ContratoFixo({
               servico_descricao: fat.servicoDescricao.trim() || null,
               servico_codigo: fat.servicoCodigo.trim() || null,
               iss_aliquota: nf || fat.iss.trim() ? numeroBr(fat.iss) : null,
+              boleto_banco: fat.envio === "fatura" ? null : fat.boletoBanco || null,
             }
           : {}),
       });
@@ -426,7 +433,22 @@ export function ContratoFixo({
               {!f.indeterminado && (
                 <label className="flex items-center gap-2">
                   <input type="checkbox" checked={f.renova} onChange={(e) => mudar({ renova: e.target.checked })} />
-                  Renova sozinho por mais 12 meses
+                  Renova sozinho
+                </label>
+              )}
+              {!f.indeterminado && f.renova && (
+                <label className="flex items-center gap-2">
+                  por
+                  <input
+                    type="number"
+                    min={1}
+                    max={60}
+                    className="w-16 rounded-md border border-[var(--borda)] px-2 py-1"
+                    value={f.renovaMeses}
+                    onChange={(e) => mudar({ renovaMeses: e.target.value })}
+                    aria-label="Meses de cada renovação"
+                  />
+                  meses
                 </label>
               )}
             </div>
@@ -434,7 +456,7 @@ export function ContratoFixo({
               {f.indeterminado
                 ? "Vale até alguém encerrar. O início marca o aniversário do reajuste."
                 : f.renova
-                  ? "No fim, o HUB renova por mais 12 meses e avisa no sino antes."
+                  ? `No fim, o HUB renova por mais ${Math.max(1, Math.floor(Number(f.renovaMeses) || 12))} meses e avisa no sino antes.`
                   : "O HUB avisa no sino antes do fim e para de lançar contas depois do mês do fim."}
             </p>
           </fieldset>
@@ -498,16 +520,18 @@ export function ContratoFixo({
                 <label className="campo">
                   <span>Gerar todo dia</span>
                   <input type="number" min={1} max={28} value={fat.diaGeracao} onChange={(e) => mudarFat({ diaGeracao: e.target.value })} />
-                  <small className="text-xs text-[var(--texto-suave)]">Dia em que a conta e a fatura nascem (1 a 28).</small>
+                  <small className="text-xs text-[var(--texto-suave)]">Dia em que a conta e a fatura nascem (1 a 28, até o dia de vencer).</small>
                 </label>
               )}
               <label className="campo">
                 <span>Vence todo dia</span>
                 <input type="number" min={1} max={31} value={f.dia} onChange={(e) => mudar({ dia: e.target.value })} />
                 <small className="text-xs text-[var(--texto-suave)]">
-                  {receber && venceNoMesSeguinte("receber", diaGeracao, dia)
-                    ? "Vence no mês seguinte ao da geração (o dia é igual ou antes do dia de gerar)."
-                    : "Se o mês não tiver esse dia (ex.: 31), vence no último dia."}
+                  {receber && geraDepoisDoVencimento("receber", diaGeracao, dia)
+                    ? `A fatura vence no mesmo mês em que é gerada: gere até o dia ${dia}.`
+                    : receber
+                      ? "Vence no mesmo mês da fatura. Se o mês não tiver esse dia (ex.: 31), vence no último dia."
+                      : "Se o mês não tiver esse dia (ex.: 31), vence no último dia."}
                 </small>
               </label>
             </div>

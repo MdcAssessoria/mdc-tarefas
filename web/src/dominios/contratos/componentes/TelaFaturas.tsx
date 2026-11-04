@@ -5,6 +5,7 @@
 // aguardam configuração (o Portal do Cliente já recebe).
 // NFS-e (046): "Emitir nota fiscal" abre a conferência (JanelaEmitirNfse, com o ambiente em destaque) e emite pelo
 // Emissor Nacional; a situação da nota aparece na lista com o motivo da recusa; "Ver a nota" abre o espelho DANFSe.
+// Boleto (049): "Gerar boleto" / "Ver boleto" abre JanelaBoleto (Ledgra Link, banco do contrato: Itaú ou Santander).
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
@@ -37,13 +38,14 @@ import { SemEmpresaGestao, useClienteGestao } from "@/dominios/organizacao/compo
 import { lerPessoas } from "@/dominios/financeiro/leituras";
 import { baixarFaturaPdf } from "../baixarFatura";
 import { CANAIS_ENVIO, SITUACOES_ENVIO, SITUACOES_FATURA, textoConteudo } from "../faturamento";
-import { lerContratos, lerEmissoesNfse, lerEnvios, lerFaturas, lerParametrosNfse } from "../leituras";
+import { lerBoletos, lerContratos, lerEmissoesNfse, lerEnvios, lerFaturas, lerParametrosNfse } from "../leituras";
 import { cancelarFatura } from "../repositorio";
 import { notaEmitida, podeEmitirNota, situacaoDaNota, ultimasEmissoes } from "../nfse";
-import type { EmissaoNfse, EnvioDaFatura, Fatura, SituacaoFatura } from "../tipos";
+import type { BoletoFatura, EmissaoNfse, EnvioDaFatura, Fatura, SituacaoFatura } from "../tipos";
 import { EspelhoNota } from "@/dominios/notas/componentes/EspelhoNota";
 import { DetalheFatura, JanelaGerarFatura } from "./JanelasFatura";
 import { JanelaEmitirNfse } from "./JanelaEmitirNfse";
+import { JanelaBoleto, SITUACOES_BOLETO_EMITIDO } from "./JanelaBoleto";
 
 type FiltroSituacao = "abertas" | SituacaoFatura | "todas";
 const FILTROS_SITUACAO: { id: FiltroSituacao; nome: string }[] = [
@@ -61,6 +63,7 @@ type Janela =
   | { tipo: "cancelar"; f: Fatura }
   | { tipo: "gerar" }
   | { tipo: "emitir"; f: Fatura }
+  | { tipo: "boleto"; f: Fatura }
   | { tipo: "nota"; caminho: string; chave: string; numero: string | null; voltar?: Fatura };
 
 export function TelaFaturas() {
@@ -83,15 +86,16 @@ export function TelaFaturas() {
   const consulta = useConsulta(
     useCallback(async () => {
       if (!cliente) return null;
-      const [faturas, envios, contratos, pessoas, emissoes, parametrosNfse] = await Promise.all([
+      const [faturas, envios, contratos, pessoas, emissoes, parametrosNfse, boletos] = await Promise.all([
         lerFaturas(cliente.id),
         lerEnvios(cliente.id),
         lerContratos(cliente.id),
         lerPessoas(cliente.id),
         lerEmissoesNfse(cliente.id),
         lerParametrosNfse(cliente.id),
+        lerBoletos(cliente.id),
       ]);
-      return { faturas, envios, contratos, pessoas, emissoes, parametrosNfse };
+      return { faturas, envios, contratos, pessoas, emissoes, parametrosNfse, boletos };
     }, [cliente]),
   );
 
@@ -99,7 +103,11 @@ export function TelaFaturas() {
     const d = consulta.dados;
     const envios = new Map<string, EnvioDaFatura[]>();
     for (const e of d?.envios ?? []) envios.set(e.fatura_id, [...(envios.get(e.fatura_id) ?? []), e]);
+    // último boleto de cada fatura (a leitura vem da tentativa mais nova para a mais antiga)
+    const boleto = new Map<string, BoletoFatura>();
+    for (const b of d?.boletos ?? []) if (!boleto.has(b.fatura_id)) boleto.set(b.fatura_id, b);
     return {
+      boleto,
       pessoa: new Map((d?.pessoas ?? []).map((p) => [p.id, p])),
       contrato: new Map((d?.contratos ?? []).map((k) => [k.id, k])),
       envios,
@@ -237,8 +245,9 @@ export function TelaFaturas() {
       <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900" role="note">
         <Icone nome="relogio" className="mt-0.5 h-5 w-5 shrink-0" />
         <p>
-          <strong>Envio por e-mail/WhatsApp e boleto: aguardando configuração.</strong> As faturas já são geradas e ficam na fila; enquanto
-          isso, baixe o PDF e mande ao cliente. O Portal do Cliente já recebe as faturas publicadas.
+          <strong>Envio por e-mail/WhatsApp: aguardando configuração.</strong> As faturas já são geradas e ficam na fila; enquanto isso,
+          baixe o PDF e mande ao cliente. O Portal do Cliente já recebe as faturas publicadas. O boleto sai pelo Ledgra Link (botão do
+          banco em cada fatura).
           {aguardandoConfig ? " Há envios esperando a configuração." : ""}
         </p>
       </div>
@@ -420,7 +429,11 @@ export function TelaFaturas() {
                           className={`block text-xs ${n.tom === "vermelho" ? "font-medium text-[var(--perigo)]" : "text-[var(--texto-suave)]"}`}
                         >
                           {n.texto}
-                          {f.boleto_situacao === "a_definir" ? " · boleto a configurar" : ""}
+                          {f.boleto_situacao === "a_definir"
+                            ? " · boleto a gerar"
+                            : mapas.boleto.get(f.id)
+                              ? ` · boleto: ${SITUACOES_BOLETO_EMITIDO[mapas.boleto.get(f.id)!.situacao].nome.toLowerCase()}`
+                              : ""}
                         </span>
                         {n.detalhe && n.tom === "vermelho" && (
                           <span className="block max-w-64 text-xs text-[var(--perigo)]" title={n.detalhe}>
@@ -472,6 +485,16 @@ export function TelaFaturas() {
                               title={ver.ambiente === "producao" ? "Ver a nota fiscal (espelho)" : "Ver a nota de teste (sem valor fiscal)"}
                             >
                               <Icone nome="arquivo" className="h-4 w-4" />
+                            </button>
+                          )}
+                          {f.boleto_situacao !== "nao_se_aplica" && f.situacao !== "cancelada" && (podeOperar || f.boleto_situacao === "gerado") && (
+                            <button
+                              className="btn !min-h-8 !px-2.5"
+                              onClick={() => setJanela({ tipo: "boleto", f })}
+                              aria-label={`${f.boleto_situacao === "gerado" ? "Ver o boleto" : "Gerar o boleto"} da fatura ${f.numero}`}
+                              title={f.boleto_situacao === "gerado" ? "Ver o boleto (linha digitável e Pix)" : "Gerar o boleto pelo Ledgra Link"}
+                            >
+                              <Icone nome="banco" className="h-4 w-4" />
                             </button>
                           )}
                           <button
@@ -546,6 +569,22 @@ export function TelaFaturas() {
           aoFechar={(mudou) => {
             setJanela(null);
             if (mudou) consulta.recarregar();
+          }}
+        />
+      )}
+      {janela?.tipo === "boleto" && (
+        <JanelaBoleto
+          fatura={janela.f}
+          cliente={nomePessoa(janela.f.pessoa_id)}
+          banco={mapas.contrato.get(janela.f.recorrente_id)?.boleto_banco ?? null}
+          boleto={mapas.boleto.get(janela.f.id) ?? null}
+          podeOperar={podeOperar}
+          aoFechar={(mudou) => {
+            setJanela(null);
+            if (mudou) {
+              mostrar("Boleto gerado. Copie a linha digitável ou mande o PDF da fatura ao cliente.");
+              consulta.recarregar();
+            }
           }}
         />
       )}

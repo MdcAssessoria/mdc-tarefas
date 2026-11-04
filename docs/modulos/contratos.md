@@ -27,8 +27,9 @@ liberado pelo administrador por pessoa).
 | Endereço | Quem usa | O que faz |
 | --- | --- | --- |
 | `/contratos` | Contratos (ver; cadastrar e mexer com operar) | Lista no molde 8.3.1 (só os contratos da MDC): tipo (a receber/a pagar), situação e busca; indicadores que filtram (recebe por mês, paga por mês, reajustes pendentes, vigência terminando em 30 dias); quadro que vira cartão no celular; saldo mensal dos ativos; PDF e Excel. Ações: **Novo contrato**, **Reajustar** (quando pendente), ficha, editar, suspender/reativar e encerrar (com motivo, `JanelaMotivo`) |
-| `/contratos/faturas` | Contratos (ver; gerar e cancelar com operar) | Faturas dos contratos a receber no molde 8.3.1: período do vencimento, situação e busca; indicadores que filtram (faturado no período, aguardando nota fiscal, prontas para enviar, enviadas); quadro que vira cartão no celular; PDF e Excel; aviso fixo "Envio por e-mail/WhatsApp e boleto: aguardando configuração". Ações: **PDF** da fatura (papel timbrado MDC, `faturaPdf.ts`), **Ver** (dados, nota fiscal, boleto e cada canal da fila), **Cancelar** (com motivo, `JanelaMotivo`) e **Gerar fatura agora** (um mês à mão, com motivo e vencimento) |
+| `/contratos/faturas` | Contratos (ver; gerar e cancelar com operar) | Faturas dos contratos a receber no molde 8.3.1: período do vencimento, situação e busca; indicadores que filtram (faturado no período, aguardando nota fiscal, prontas para enviar, enviadas); quadro que vira cartão no celular; PDF e Excel; aviso fixo "Envio por e-mail/WhatsApp: aguardando configuração". Ações: botão do **banco** (gerar ou ver o boleto pelo Ledgra Link, `JanelaBoleto`, 049), **PDF** da fatura (papel timbrado MDC, `faturaPdf.ts`), **Ver** (dados, nota fiscal, boleto e cada canal da fila), **Cancelar** (com motivo, `JanelaMotivo`) e **Gerar fatura agora** (um mês à mão, com motivo e vencimento) |
 | `/contratos/nota-fiscal` | Contratos (gerir) | **Nota fiscal (NFS-e)** (046): ambiente (teste × produção, com confirmação para ir à produção), modo (conferir; automático na próxima etapa), série e próximo número da DPS, regime do Simples, inscrição municipal, município (IBGE), NBS e % aproximado dos tributos do Simples; lista das notas enviadas pelo HUB com PDF e Excel (`TelaNotaFiscal`) |
+| `/contratos/boleto` | Contratos (gerir) | **Boleto** (049): um cartão por banco (Itaú 341, Santander 033) com o código da conta no Ledgra Link, a conta do Financeiro onde o dinheiro cai, boleto com Pix ou simples e ligado/desligado; lista dos boletos emitidos com PDF e Excel (`TelaBoleto`) |
 | `/contratos/reajustes` | Contratos | Reajustes pendentes de confirmar (com a proposta do HUB) e o histórico de reajustes e mudanças de valor; indicadores (pendentes, feitos no ano, efeito no mês); PDF e Excel |
 
 Janelas:
@@ -65,19 +66,24 @@ Código: `web/src/dominios/contratos/` (`regras.ts` com testes em `regras.test.t
 
 | Regra | Onde |
 | --- | --- |
-| A conta do mês nasce no dia 1 (rotina 06h30); se a rotina falhar, o dia seguinte recupera — gera o mês atual e o anterior, **sem duplicar** (trava o contrato + índice único `fin_titulos (recorrente_id, competencia)`, inclusive conta cancelada) | `app.fin_recorrentes_gerar`, `app.fin_recorrentes_rotina` |
+| A conta do mês nasce no dia de gerar (rotina 06h30). Rotina parada: recupera sozinha **até 12 meses** para trás, do mais antigo ao atual, **sem duplicar** (trava o contrato + índice único; mês com conta cancelada não volta) (048, B-06) | `app.fin_recorrentes_gerar`, `app.fin_recorrentes_rotina` |
 | Ao cadastrar (ou reativar), a conta do mês atual sai na hora; meses anteriores ao cadastro não são lançados. "Primeira conta" é este mês ou um mês futuro | `fin_recorrente_salvar`, `fin_recorrente_reativar` |
 | Vencimento = dia do contrato; quando o mês não tem o dia (31 em fevereiro), o último dia do mês | `app.fin_vencimento_no_mes`, `regras.vencimentoNoMes` |
-| Sem renovação automática, as contas param no mês do fim da vigência e a rotina encerra o contrato no mês seguinte. Com renovação, a vigência ganha mais 12 meses (histórico) | `fin_recorrentes.fim`, rotina |
-| Aviso no sino X dias antes do fim da vigência (uma vez por vigência) e no mês do reajuste (uma vez por ciclo): administradores e quem tem Contratos **gerir** | rotina |
+| Sem renovação automática, as contas param no mês do fim da vigência e a rotina encerra o contrato no mês seguinte. Com renovação, a vigência ganha o prazo escolhido (1 a 60 meses, padrão 12), contado da data base: 29/02 volta a 29/02 no ano bissexto (048, B-12) | `fin_recorrentes.renovacao_meses`, `vigencia_fim_base`, rotina |
+| Aviso no sino X dias antes do fim da vigência (uma vez por vigência). Reajuste pendente: avisa quando o índice do ciclo já saiu (IPCA sai por volta do dia 10) ou, sem ele, no dia 20 dizendo que falta; repete a cada 7 dias enquanto pendente. Vão para administradores e quem tem Contratos **operar ou gerir** com acesso válido (048, B-07) | rotina, `app.contratos_quem_avisar` |
+| Falha na rotina (conta, fatura, renovação, encerramento, avisos): auditoria (`recorrente_falha`) **e** sino para administradores e quem gere Contratos (048, B-08) | rotina |
+| **Mês cheio** (decisão do Edvaldo, 03/11/2026): contrato que começa ou termina no meio do mês cobra o valor mensal inteiro no primeiro e no último mês (sem proporcional) | `app.fin_recorrente_lancar_mes` |
 | Suspenso não lança; ao reativar volta a lançar a partir do mês da reativação (meses suspensos não voltam). Encerrar não lança mais nada; a conta do mês já lançada fica | `fin_recorrente_suspender/reativar/encerrar` |
 | Editar vale para as próximas contas; as já lançadas não mudam. Mudança de valor vai para o histórico (`origem = edicao`). Tipo (pagar/receber) e empresa não mudam | `fin_recorrente_salvar` |
-| Reajuste pendente: o último mês do reajuste que já chegou, com 12 meses de contrato até lá, **depois do mês em que o contrato entrou no HUB** (o valor informado no cadastro já é o do ciclo) e sem reajuste confirmado nesse ciclo | `app.fin_reajuste_pendente`, `regras.reajustePendente` |
+| Reajuste pendente: o primeiro mês do reajuste com 12 meses de contrato, depois do mês em que o contrato entrou no HUB e **12 meses ou mais depois do último reajuste confirmado**. Trocar o mês do reajuste não reajusta duas vezes no ano (B-04); ciclo não confirmado continua pendente e, confirmado, vem o seguinte (B-05) (048) | `app.fin_reajuste_candidato`, `app.fin_reajuste_pendente` |
 | Proposta: acumulado dos 12 meses anteriores ao mês do reajuste (reajuste em 03/2027 usa 03/2026–02/2027), produto de (1 + %/100) − 1; faltando mês, não propõe e diz quais faltam | `app.fin_indice_acumulado` |
-| Confirmar: % de −50 a 100; contas já lançadas não mudam, salvo se a pessoa marcar para atualizar as do ciclo em aberto e sem pagamento | `fin_recorrente_reajustar` |
+| **Índice negativo mantém o valor** (decisão do Edvaldo): a proposta mostra o índice como veio e propõe 0%; confirmar com % negativo é recusado; % fixo negativo não é aceito (048) | `fin_recorrente_proposta`, `fin_recorrente_reajustar` |
+| Confirmar: % de 0 a 100; contas já lançadas não mudam, salvo se marcar para atualizar: muda só conta do ciclo em aberto, sem pagamento, **ainda com o valor antigo** (ajuste manual fica) e sem nota fiscal emitida ou boleto gerado; a fatura acompanha; a diferença dos meses já pagos aparece no histórico (não é lançada) (048, B-09) | `fin_recorrente_reajustar`, `app.fin_reajuste_contas` |
 | Nada se apaga: contratos, histórico, reajustes e índices sem DELETE (grant e gatilho `nada_se_apaga`) | 041 |
-| Contrato a receber gera no **dia de gerar** (1–28); a pagar, no dia 1. Vencimento **igual ou antes** do dia de gerar → vence no **mês seguinte**; depois → no mesmo mês. Ao cadastrar, a conta do mês sai na hora só se o dia de gerar deste mês já chegou | `app.fin_recorrente_data_geracao`, `app.fin_recorrente_vencimento`, `faturamento.ts` |
-| Cada conta a receber do contrato tem uma **fatura** com número `AAAA/NNNNN` (ano da emissão) sem repetir nem pular, mesmo ao mesmo tempo (trava consultiva por organização e ano). A conta leva "Fatura AAAA/NNNNN" no documento | `app.fin_recorrente_lancar_mes` |
+| Contrato a receber gera no **dia de gerar** (1–28); a pagar, no dia 1. **Vence no mesmo mês da geração** (decisão do Edvaldo, 048; a 045 levava para o mês seguinte). Por isso o dia de gerar não pode passar do dia de vencer (o banco recusa; a tela avisa na hora: a fatura nasceria vencida). Ao cadastrar, a conta do mês sai na hora só se o dia de gerar deste mês já chegou | `app.fin_recorrente_data_geracao`, `app.fin_recorrente_vencimento`, `faturamento.ts` |
+| Contrato **a pagar** que lança contas: criar, editar, reativar, gerar à mão ou atualizar contas no reajuste exige também o **Financeiro (operar)**. Só Contratos: contrato a receber ou que só guarda o documento (048, BD-03) | `app.contratos_lanca_pode` |
+| Cada conta a receber do contrato tem uma **fatura** com número `AAAA/NNNNN` (ano da emissão) sem repetir nem pular, mesmo ao mesmo tempo (trava consultiva por organização e ano); recomeça em 00001 no ano novo (provado no teste 106). A conta leva "Fatura AAAA/NNNNN" no documento | `app.fin_recorrente_lancar_mes` |
+| **Boleto** (049): com boleto no envio, o contrato escolhe o banco (Itaú ou Santander). Em Faturas, o botão do banco gera o boleto pelo Ledgra Link (com o login de quem pede, Contratos operar) e mostra a linha digitável e o Pix. Pago = baixa automática da conta a receber na conta do Financeiro do banco; pago a menos não baixa sozinho; recusado/baixado/cancelado libera outro boleto (tentativa 2, 3…). No "Nota fiscal + fatura" o boleto vai num envio próprio; com boleto no conteúdo o Portal só publica quando o boleto existe. Fatura com boleto registrado não cancela | `fatura_boleto_preparar`, `fatura_boleto_registrar`, `link_aplicar_evento`, Contratos › Boleto |
 | Fila de envio: um item por canal marcado, com o que vai (nota, fatura, boleto). Etapa 1: e-mail e WhatsApp "aguardando configuração"; Portal "enviado" na hora se não há nota fiscal, ou quando a nota for emitida (etapa 2). Situação da fatura: gerada (sem canal), aguardando nota fiscal, pronta, enviada, cancelada | `fin_envios`, `app.fin_fatura_processar`, `app.fin_fatura_situacao` |
 | Cancelar fatura: com motivo; cancela junto a conta do mês em aberto e sem recebimento; recusa fatura já recebida ou com nota emitida. A rotina não gera de novo o mês cancelado | `fin_fatura_cancelar` |
 | Gerar fatura agora: um mês do início do contrato até o mês atual, com motivo e vencimento opcional; não deixa duplicar (só se o mês não tem conta ativa). Serve para mês perdido (B-06), adiantar o deste mês ou refazer depois de cancelar | `fin_fatura_gerar_agora` |
@@ -119,17 +125,33 @@ em). Leitura com `app.contratos_pode(cliente, 'ver')`; gravação só pelas fun�
 a valer só entre as não canceladas (`fin_titulos_recorrente_mes_ativa`). Portal: `portal_minhas_faturas(cliente)` com a
 permissão `documentos`. A 043 também corrige a captura de notas (`fis_captura_reservar` só a empresa da gestão, BD-01).
 
+### Regras e boleto (migrações 048 e 049, 03/11/2026)
+
+048: `fin_recorrentes` ganhou `renovacao_meses`, `vigencia_fim_base`, `reajuste_avisado_em` e `boleto_banco`; funções
+`app.fin_reajuste_candidato`, `app.fin_reajuste_contas`, `app.contratos_lanca_pode`, `app.contratos_quem_avisar` e nova versão
+de `fin_recorrente_salvar`, `fin_recorrente_reativar`, `fin_fatura_gerar_agora`, `fin_recorrente_proposta`,
+`fin_recorrente_reajustar`, `app.fin_recorrente_vencimento` e da rotina. Testes 105/106.
+
+049: tabelas `link_contas_banco` (conta da MDC no Ledgra Link por banco + conta do Financeiro da baixa) e
+`fin_fatura_boletos` (cada boleto da fatura, nada se apaga); `fin_envios.etapa` (principal | boleto). Funções
+`link_salvar_banco` (Contratos gerir), `fatura_boleto_preparar` (Contratos operar, chamada pela Função Edge com o login de
+quem pede), `fatura_boleto_registrar` (só service_role) e nova `link_aplicar_evento` (mensalidade ou boleto de fatura).
+Gatilhos `fatura_boleto_fixo` e `fatura_boleto_valendo`. Função Edge `ledgra-link` ganhou `acao: "emitir_fatura"`.
+Testes 107/108.
+
 ## 4. Pendências
 
 - Contrato com valor variável (ex.: honorário por faixa de faturamento) e contrato sem valor mensal: hoje todo contrato
   tem valor mensal (pode não lançar contas).
-- Reajuste de ciclo perdido (mais de um ano sem confirmar): só o ciclo mais recente fica pendente.
+- Reajuste negativo: a regra é única (mantém o valor). Se algum contrato precisar reduzir, falta um campo por contrato.
 - Regenerar `web/src/lib/database.types.ts` do banco depois de aplicar a 041 e a 043 (os tipos novos foram escritos à mão).
-- Faturamento etapa 2: enviar e-mail e WhatsApp de verdade, escolher a plataforma de boleto; tela do Portal para o cliente
-  ver e baixar as faturas (a função `portal_minhas_faturas` já existe). A NFS-e já sai (046, seção 5); falta o modo
+- Faturamento: enviar e-mail e WhatsApp de verdade; tela do Portal para o cliente ver e baixar as faturas e o boleto (a
+  função `portal_minhas_faturas` já existe; falta devolver a linha digitável). Boleto (049): do lado do Ledgra Link, a MDC
+  precisa estar cadastrada como titular com as contas Itaú (341) e Santander (033) e as credenciais de cobrança de cada
+  banco; o código de cada conta vai em Contratos › Boleto. Confirmar no Ledgra Link (`GET /v1/bancos`) que os dois bancos
+  estão ativos para cobrança. A NFS-e já sai (046, seção 5); falta o modo
   automático, o cancelamento da nota pelo HUB, NBS por contrato e ISS retido pelo tomador.
-- Reajuste com "atualizar as contas em aberto" não muda faturas já geradas (cancele e gere de novo). Cancelar a conta do
-  contrato direto no Financeiro não cancela a fatura (use Contratos › Faturas).
+- Cancelar a conta do contrato direto no Financeiro não cancela a fatura (use Contratos › Faturas).
 
 ## 5. Nota fiscal de serviço pelo Emissor Nacional (migração 046, 03/11/2026)
 

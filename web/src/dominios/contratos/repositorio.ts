@@ -6,6 +6,7 @@ import type { Json } from "@/lib/database.types";
 import { chamarFuncao } from "@/lib/funcoesEdge";
 import type {
   AmbienteNfse,
+  BancoBoleto,
   CanalEnvio,
   DocumentoFatura,
   EnvioFatura,
@@ -35,6 +36,8 @@ export interface DadosContrato {
   vigencia_inicio: string;
   vigencia_fim?: string | null;
   renovacao_automatica: boolean;
+  /** Meses de cada renovação automática (048; 1 a 60, padrão 12). */
+  renovacao_meses?: number;
   aviso_dias: number;
   gera_contas: boolean;
   gerar_desde?: string | null;
@@ -53,6 +56,8 @@ export interface DadosContrato {
   servico_descricao?: string | null;
   servico_codigo?: string | null;
   iss_aliquota?: number | null;
+  /** Banco do boleto (048): itau ou santander, quando o envio tem boleto. */
+  boleto_banco?: BancoBoleto | null;
 }
 
 /** Cria ou edita; ao criar, o banco já lança a conta do mês atual (devolve quantas lançou). */
@@ -84,7 +89,16 @@ export async function reajustarContrato(id: string, percentual: number, obs: str
       p_obs: obs ?? undefined,
       p_atualizar_abertas: atualizarAbertas,
     }),
-  ) as unknown as { valor: number; referencia: string; contas_atualizadas: number };
+  ) as unknown as {
+    valor: number;
+    referencia: string;
+    contas_atualizadas: number;
+    ajuste_manual?: number;
+    documento_emitido?: number;
+    diferenca_pagas?: number;
+    /** Outro ciclo antigo já pendente (048, B-05). */
+    proximo?: string | null;
+  };
 }
 
 /** "Buscar índices agora": pede ao Banco Central (a resposta chega em segundos e é lida na próxima proposta). */
@@ -158,4 +172,28 @@ export async function salvarParametrosNfse(p: DadosParametrosNfse) {
   return exigir(await supabase().rpc("nfse_parametros_salvar", { p: { ...p, op_simples: "3" } as unknown as Json })) as unknown as ParametrosNfse & {
     proximo_ndps: number | null;
   };
+}
+
+// ------------------------------------------------------------------------------------------------ boleto (049)
+
+/**
+ * Gera o boleto da fatura pelo Ledgra Link (Função Edge ledgra-link, com o login de quem pede: Contratos operar).
+ * O banco é o do contrato (Itaú ou Santander); a recusa vem em português.
+ */
+export async function gerarBoletoFatura(fatura: string) {
+  return chamarFuncao<{ linha_digitavel: string | null; pix_copia_cola: string | null; vencimento: string; aviso: string | null }>(
+    "ledgra-link",
+    { corpo: { acao: "emitir_fatura", fatura } },
+  );
+}
+
+/** Liga a conta de um banco no Ledgra Link para o boleto das faturas (Contratos: gerir). */
+export async function salvarContaBanco(c: {
+  banco: BancoBoleto;
+  conta_link_id: string;
+  fin_conta: string;
+  tipo: "boleto" | "boleto_hibrido";
+  ativo: boolean;
+}) {
+  return exigir(await supabase().rpc("link_salvar_banco", { p: c as unknown as Json }));
 }

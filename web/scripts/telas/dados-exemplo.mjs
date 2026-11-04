@@ -2188,12 +2188,15 @@ export const XML_EXEMPLO = {
     servico_descricao: null,
     servico_codigo: null,
     iss_aliquota: null,
+    boleto_banco: null,
+    renovacao_meses: 12,
   };
   for (const k of TABELAS.fin_recorrentes) Object.assign(k, { ...semFatura, ...k });
   Object.assign(TABELAS.fin_recorrentes[0], {
     documento: "nfse",
     envio: "nf_fatura_boleto",
-    dia_geracao: 25,
+    boleto_banco: "itau",
+    dia_geracao: 1,
     dia_vencimento: 5,
     canais: ["email", "portal"],
     email_envio: "financeiro@clienteabc.com.br",
@@ -2277,6 +2280,7 @@ export const XML_EXEMPLO = {
       situacao: "pronta",
       nfse_situacao: "emitida",
       nfse_numero: "1287",
+      boleto_situacao: "gerado",
     }),
     fatura(2, 2, {
       recorrente_id: K(6),
@@ -2356,6 +2360,42 @@ export const XML_EXEMPLO = {
     envio(3, 4, "portal", C1, ["fatura"], "enviado", true),
     envio(4, 5, "email", "financeiro@clienteabc.com.br", tudo, "aguardando_configuracao", false),
     envio(5, 5, "portal", C1, tudo, "pendente", false),
+  ];
+  // boleto (049): a fatura 1 tem boleto do Itaú registrado; a 5 ainda vai gerar. Itaú configurado; Santander não.
+  TABELAS.fin_fatura_boletos = [
+    {
+      id: "fe000000-0000-4000-8000-000000000001",
+      org_id: ORG,
+      cliente_id: CM,
+      fatura_id: F(1),
+      banco: "itau",
+      cobranca_link_id: "fe100000-0000-4000-8000-000000000001",
+      tipo: "boleto_hibrido",
+      situacao: "registrada",
+      valor: 2400,
+      vencimento: diaDoMes(mes, 5),
+      linha_digitavel: "34191.79001 01043.510047 91020.150008 1 00000000150000",
+      pix_copia_cola: "00020101021226850014br.gov.bcb.pix2563qrpix.exemplo.com.br/v2/cobv/9d36b84f",
+      nosso_numero: "10435100",
+      tentativa: 1,
+      emitido_em: momento(-1),
+      emitido_por: null,
+      atualizado_em: momento(-1),
+    },
+  ];
+  TABELAS.link_contas_banco = [
+    {
+      org_id: ORG,
+      banco: "itau",
+      codigo_compe: "341",
+      cliente_id: CM,
+      conta_link_id: "7d1b6f2e-1111-4a3c-9d1e-0000000000aa",
+      fin_conta_id: TABELAS.fin_contas_bancarias?.find((c) => c.cliente_id === CM)?.id ?? "fb000000-0000-4000-8000-000000000001",
+      tipo: "boleto_hibrido",
+      ativo: true,
+      atualizado_em: momento(-2),
+      atualizado_por: null,
+    },
   ];
 })();
 
