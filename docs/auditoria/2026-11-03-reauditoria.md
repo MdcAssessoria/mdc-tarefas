@@ -63,7 +63,7 @@ resolvido com a coluna de ações presa à direita no celular.
 - **UX-10 (resolvido, 04/11: o axe-core não acha mais nada nas 62 telas no computador; `ACESSIBILIDADE=1 npm run telas`):** 137 elementos com contraste insuficiente.
 - **UX-12 (resolvido, 04/11):** em Lançar nota, "Voltar" descarta tudo sem perguntar.
 - **UX-13 (resolvido, 04/11: lista de contratos com a coluna de ações presa à direita):** botões cortados a 1280 px.
-- **T-02 (resolvido, 04/11; migração 051, falta aplicar):** a conciliação de extrato não existe. Agora Financeiro › Conciliação liga cada linha a pagamentos, contas em aberto (com juros/desconto), lançamento novo ou transferência, ignora e desfaz com motivo, com sugestão automática e saldos extrato × HUB.
+- **T-02 (resolvido, 04/11; migração 051 aplicada em produção):** a conciliação de extrato não existe. Agora Financeiro › Conciliação liga cada linha a pagamentos, contas em aberto (com juros/desconto), lançamento novo ou transferência, ignora e desfaz com motivo, com sugestão automática e saldos extrato × HUB.
 
 ## Prioridade 3 — Contratos (regras), aguardando decisões do Edvaldo
 

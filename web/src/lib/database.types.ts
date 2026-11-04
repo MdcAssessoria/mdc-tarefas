@@ -1333,6 +1333,168 @@ export type Database = {
           },
         ];
       };
+      fin_conciliacao_itens: {
+        Row: {
+          baixa_id: number | null;
+          cliente_id: string;
+          conciliacao_id: number;
+          conta_id: string;
+          criado_aqui: boolean;
+          id: number;
+          org_id: string;
+          transferencia_id: number | null;
+          valendo: boolean;
+          valor: number;
+        };
+        Insert: {
+          baixa_id?: number | null;
+          cliente_id: string;
+          conciliacao_id: number;
+          conta_id: string;
+          criado_aqui?: boolean;
+          id?: never;
+          org_id: string;
+          transferencia_id?: number | null;
+          valendo?: boolean;
+          valor: number;
+        };
+        Update: {
+          baixa_id?: number | null;
+          cliente_id?: string;
+          conciliacao_id?: number;
+          conta_id?: string;
+          criado_aqui?: boolean;
+          id?: never;
+          org_id?: string;
+          transferencia_id?: number | null;
+          valendo?: boolean;
+          valor?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "fin_conciliacao_itens_baixa_id_fkey";
+            columns: ["baixa_id"];
+            isOneToOne: false;
+            referencedRelation: "fin_baixas";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "fin_conciliacao_itens_cliente_id_fkey";
+            columns: ["cliente_id"];
+            isOneToOne: false;
+            referencedRelation: "clientes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "fin_conciliacao_itens_conciliacao_id_fkey";
+            columns: ["conciliacao_id"];
+            isOneToOne: false;
+            referencedRelation: "fin_conciliacoes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "fin_conciliacao_itens_conta_id_fkey";
+            columns: ["conta_id"];
+            isOneToOne: false;
+            referencedRelation: "fin_contas_bancarias";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "fin_conciliacao_itens_org_id_fkey";
+            columns: ["org_id"];
+            isOneToOne: false;
+            referencedRelation: "organizacoes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "fin_conciliacao_itens_transferencia_id_fkey";
+            columns: ["transferencia_id"];
+            isOneToOne: false;
+            referencedRelation: "fin_transferencias";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      fin_conciliacoes: {
+        Row: {
+          cliente_id: string;
+          conta_id: string;
+          desfeita: boolean;
+          desfeita_em: string | null;
+          desfeita_motivo: string | null;
+          desfeita_por: string | null;
+          em: string;
+          id: number;
+          linha_id: number;
+          observacao: string | null;
+          org_id: string;
+          por: string | null;
+          tipo: string;
+          valor: number;
+        };
+        Insert: {
+          cliente_id: string;
+          conta_id: string;
+          desfeita?: boolean;
+          desfeita_em?: string | null;
+          desfeita_motivo?: string | null;
+          desfeita_por?: string | null;
+          em?: string;
+          id?: never;
+          linha_id: number;
+          observacao?: string | null;
+          org_id: string;
+          por?: string | null;
+          tipo: string;
+          valor: number;
+        };
+        Update: {
+          cliente_id?: string;
+          conta_id?: string;
+          desfeita?: boolean;
+          desfeita_em?: string | null;
+          desfeita_motivo?: string | null;
+          desfeita_por?: string | null;
+          em?: string;
+          id?: never;
+          linha_id?: number;
+          observacao?: string | null;
+          org_id?: string;
+          por?: string | null;
+          tipo?: string;
+          valor?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "fin_conciliacoes_cliente_id_fkey";
+            columns: ["cliente_id"];
+            isOneToOne: false;
+            referencedRelation: "clientes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "fin_conciliacoes_conta_id_fkey";
+            columns: ["conta_id"];
+            isOneToOne: false;
+            referencedRelation: "fin_contas_bancarias";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "fin_conciliacoes_linha_id_fkey";
+            columns: ["linha_id"];
+            isOneToOne: false;
+            referencedRelation: "fin_extrato_linhas";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "fin_conciliacoes_org_id_fkey";
+            columns: ["org_id"];
+            isOneToOne: false;
+            referencedRelation: "organizacoes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       fin_contas_bancarias: {
         Row: {
           agencia: string | null;
@@ -1432,19 +1594,19 @@ export type Database = {
           conteudo: string[];
           criado_em: string;
           destino: string;
+          em_envio_ate: string | null;
           enviado_em: string | null;
           etapa: string;
+          falhas: number;
           fatura_id: string;
           id: number;
+          mensagem_id: string | null;
           org_id: string;
+          proxima_tentativa_em: string | null;
+          reenvios: number;
           situacao: string;
           tentativas: number;
           ultimo_erro: string | null;
-          em_envio_ate: string | null;
-          falhas: number;
-          mensagem_id: string | null;
-          proxima_tentativa_em: string | null;
-          reenvios: number;
         };
         Insert: {
           atualizado_em?: string;
@@ -1453,19 +1615,19 @@ export type Database = {
           conteudo: string[];
           criado_em?: string;
           destino: string;
+          em_envio_ate?: string | null;
           enviado_em?: string | null;
           etapa?: string;
+          falhas?: number;
           fatura_id: string;
           id?: never;
+          mensagem_id?: string | null;
           org_id: string;
+          proxima_tentativa_em?: string | null;
+          reenvios?: number;
           situacao: string;
           tentativas?: number;
           ultimo_erro?: string | null;
-          em_envio_ate?: string | null;
-          falhas?: number;
-          mensagem_id?: string | null;
-          proxima_tentativa_em?: string | null;
-          reenvios?: number;
         };
         Update: {
           atualizado_em?: string;
@@ -1474,19 +1636,19 @@ export type Database = {
           conteudo?: string[];
           criado_em?: string;
           destino?: string;
+          em_envio_ate?: string | null;
           enviado_em?: string | null;
           etapa?: string;
+          falhas?: number;
           fatura_id?: string;
           id?: never;
+          mensagem_id?: string | null;
           org_id?: string;
+          proxima_tentativa_em?: string | null;
+          reenvios?: number;
           situacao?: string;
           tentativas?: number;
           ultimo_erro?: string | null;
-          em_envio_ate?: string | null;
-          falhas?: number;
-          mensagem_id?: string | null;
-          proxima_tentativa_em?: string | null;
-          reenvios?: number;
         };
         Relationships: [
           {
@@ -4815,6 +4977,61 @@ export type Database = {
           },
         ];
       };
+      nfse_auto_tentativas: {
+        Row: {
+          ambiente: string;
+          cliente_id: string;
+          criado_em: string;
+          dia: string;
+          fatura_id: string;
+          mensagem: string | null;
+          org_id: string;
+          resultado: string;
+        };
+        Insert: {
+          ambiente: string;
+          cliente_id: string;
+          criado_em?: string;
+          dia: string;
+          fatura_id: string;
+          mensagem?: string | null;
+          org_id: string;
+          resultado: string;
+        };
+        Update: {
+          ambiente?: string;
+          cliente_id?: string;
+          criado_em?: string;
+          dia?: string;
+          fatura_id?: string;
+          mensagem?: string | null;
+          org_id?: string;
+          resultado?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "nfse_auto_tentativas_cliente_id_fkey";
+            columns: ["cliente_id"];
+            isOneToOne: false;
+            referencedRelation: "clientes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "nfse_auto_tentativas_fatura_id_fkey";
+            columns: ["fatura_id"];
+            isOneToOne: false;
+            referencedRelation: "fin_faturas";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "nfse_auto_tentativas_org_id_fkey";
+            columns: ["org_id"];
+            isOneToOne: false;
+            referencedRelation: "organizacoes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       nfse_emissoes: {
         Row: {
           ambiente: string;
@@ -4944,61 +5161,6 @@ export type Database = {
           },
           {
             foreignKeyName: "nfse_numeracao_org_id_fkey";
-            columns: ["org_id"];
-            isOneToOne: false;
-            referencedRelation: "organizacoes";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
-      nfse_auto_tentativas: {
-        Row: {
-          ambiente: string;
-          cliente_id: string;
-          criado_em: string;
-          dia: string;
-          fatura_id: string;
-          mensagem: string | null;
-          org_id: string;
-          resultado: string;
-        };
-        Insert: {
-          ambiente: string;
-          cliente_id: string;
-          criado_em?: string;
-          dia: string;
-          fatura_id: string;
-          mensagem?: string | null;
-          org_id: string;
-          resultado: string;
-        };
-        Update: {
-          ambiente?: string;
-          cliente_id?: string;
-          criado_em?: string;
-          dia?: string;
-          fatura_id?: string;
-          mensagem?: string | null;
-          org_id?: string;
-          resultado?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "nfse_auto_tentativas_cliente_id_fkey";
-            columns: ["cliente_id"];
-            isOneToOne: false;
-            referencedRelation: "clientes";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "nfse_auto_tentativas_fatura_id_fkey";
-            columns: ["fatura_id"];
-            isOneToOne: false;
-            referencedRelation: "fin_faturas";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "nfse_auto_tentativas_org_id_fkey";
             columns: ["org_id"];
             isOneToOne: false;
             referencedRelation: "organizacoes";
@@ -6589,6 +6751,7 @@ export type Database = {
         Args: { p_contrato: string; p_converter?: boolean; p_status: string };
         Returns: undefined;
       };
+      crm_raiox_conferir: { Args: { p: Json }; Returns: Json };
       crm_receber_lead: { Args: { p: Json }; Returns: undefined };
       crm_registrar_atividade: {
         Args: {
@@ -6676,7 +6839,10 @@ export type Database = {
         Returns: Json;
       };
       fin_conciliar: { Args: { p: Json; p_linha: number }; Returns: Json };
-      fin_conciliar_lancar: { Args: { p: Json; p_linha: number }; Returns: Json };
+      fin_conciliar_lancar: {
+        Args: { p: Json; p_linha: number };
+        Returns: Json;
+      };
       fin_conciliar_transferir: {
         Args: { p_linha: number; p_obs?: string; p_outra_conta: string };
         Returns: Json;
@@ -6685,6 +6851,27 @@ export type Database = {
         Args: { p_lote: string; p_motivo: string };
         Returns: Json;
       };
+      fin_envio_canal_estado: {
+        Args: {
+          p_canal: string;
+          p_configurado: boolean;
+          p_detalhe?: string;
+          p_remetente?: string;
+        };
+        Returns: Json;
+      };
+      fin_envio_reenviar: {
+        Args: { p_envio: number; p_motivo: string };
+        Returns: Json;
+      };
+      fin_envio_reservar: { Args: { p_limite?: number }; Returns: Json };
+      fin_envio_resultado: { Args: { p: Json; p_envio: number }; Returns: Json };
+      fin_envio_situacao: { Args: { p_org: string }; Returns: Json };
+      fin_envio_teste_registrar: {
+        Args: { p_canal: string; p_destino: string; p_org: string };
+        Returns: Json;
+      };
+      fin_envio_token_confere: { Args: { p_token: string }; Returns: boolean };
       fin_estornar_baixa: {
         Args: { p_baixa: number; p_motivo: string };
         Returns: Json;
@@ -6696,34 +6883,6 @@ export type Database = {
       fin_extrato_ignorar: {
         Args: { p_linha: number; p_motivo: string };
         Returns: Json;
-      };
-      fin_envio_canal_estado: {
-        Args: { p_canal: string; p_configurado: boolean; p_detalhe?: string; p_remetente?: string };
-        Returns: Json;
-      };
-      fin_envio_reenviar: {
-        Args: { p_envio: number; p_motivo: string };
-        Returns: Json;
-      };
-      fin_envio_reservar: {
-        Args: { p_limite?: number };
-        Returns: Json;
-      };
-      fin_envio_resultado: {
-        Args: { p: Json; p_envio: number };
-        Returns: Json;
-      };
-      fin_envio_situacao: {
-        Args: { p_org: string };
-        Returns: Json;
-      };
-      fin_envio_teste_registrar: {
-        Args: { p_canal: string; p_destino: string; p_org: string };
-        Returns: Json;
-      };
-      fin_envio_token_confere: {
-        Args: { p_token: string };
-        Returns: boolean;
       };
       fin_fatura_cancelar: {
         Args: { p_fatura: string; p_motivo: string };
@@ -7037,6 +7196,11 @@ export type Database = {
         Args: { p: Json; p_org: string };
         Returns: undefined;
       };
+      nfse_auto_pendentes: { Args: never; Returns: Json };
+      nfse_auto_registrar: {
+        Args: { p_fatura: string; p_mensagem?: string; p_resultado: string };
+        Returns: string;
+      };
       nfse_parametros_salvar: { Args: { p: Json }; Returns: Json };
       nfse_preparar: { Args: { p_fatura: string }; Returns: Json };
       nfse_registrar_resultado: {
@@ -7047,11 +7211,15 @@ export type Database = {
         Args: { p_fatura: string; p_por?: string };
         Returns: Json;
       };
+      nfse_token_confere: { Args: { p_token: string }; Returns: boolean };
       org_definir_empresa_gestao: {
         Args: { p_cliente: string; p_motivo?: string; p_org: string };
         Returns: string;
       };
-      org_papel_timbrado_salvar: { Args: { p: Json; p_org: string }; Returns: Json };
+      org_papel_timbrado_salvar: {
+        Args: { p: Json; p_org: string };
+        Returns: Json;
+      };
       portal_abrir_conversa: {
         Args: {
           p_assunto: string;
