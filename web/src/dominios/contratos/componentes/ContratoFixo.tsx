@@ -27,6 +27,8 @@ import { conferirFaturamento, dataGeracao, documentoDoEnvio, geraDepoisDoVencime
 import type { FaturamentoForm } from "../faturamento";
 import type { IndiceRecorrente, Recorrente } from "../tipos";
 import { CamposFaturamento } from "./CamposFaturamento";
+import { CampoPessoaContrato } from "./CampoPessoaContrato";
+import type { PessoaEscolhida } from "./CampoPessoaContrato";
 
 const TIPOS: { id: TipoTitulo; nome: string; exemplo: string }[] = [
   { id: "receber", nome: "A receber", exemplo: "Honorários mensais, mensalidades de clientes" },
@@ -148,6 +150,9 @@ export function ContratoFixo({
     observacao: editar?.observacao ?? "",
   }));
   const mudar = (p: Partial<Form>) => setF((x) => ({ ...x, ...p }));
+  const [escolhida, setEscolhida] = useState<PessoaEscolhida | null>(() =>
+    editar && editar.pessoa_id ? { nome: nomePessoa(editar.pessoa_id), origem: "financeiro" } : null,
+  );
   const [fat, setFat] = useState<FaturamentoForm>(() => ({
     envio: editar?.envio ?? "fatura",
     diaGeracao: String(editar?.dia_geracao ?? 1),
@@ -180,7 +185,6 @@ export function ContratoFixo({
   const primeiraEscolhida = f.gerarDesde < inicioMes ? inicioMes : f.gerarDesde;
   const primeira = podeMudarPrimeira ? (primeiraEscolhida < mesAtual ? mesAtual : primeiraEscolhida) : editar!.gerar_desde.slice(0, 7);
   const fim = f.indeterminado ? "" : f.vigFim;
-  const novaPessoa = f.pessoa.trim() && !cad.pessoas.some((p) => p.nome.toLowerCase() === f.pessoa.trim().toLowerCase());
   const diaGeracao = receber ? Math.max(1, Math.min(28, Math.floor(Number(fat.diaGeracao) || 1))) : 1;
   const geraEm = dataGeracao(primeira, f.tipo, diaGeracao);
 
@@ -188,7 +192,7 @@ export function ContratoFixo({
     setErro("");
     if (!f.descricao.trim())
       return setErro(`Dê um nome ao contrato (ex.: ${f.tipo === "pagar" ? "Aluguel da sala" : "Honorários mensais"}).`);
-    if (!f.pessoa.trim()) return setErro(`Informe o ${rotuloPessoa.toLowerCase()}.`);
+    if (!f.pessoa.trim()) return setErro(`Escolha o ${rotuloPessoa.toLowerCase()} na lista ou cadastre um novo.`);
     if (!f.categoria) return setErro(`Escolha a categoria (${tipoCat}).`);
     if (!(valor > 0)) return setErro("Informe o valor mensal. Exemplo: 1.250,00");
     if (!f.vigIni) return setErro("Informe o início da vigência.");
@@ -211,6 +215,7 @@ export function ContratoFixo({
         tipo: f.tipo,
         pessoa: cad.pessoas.find((p) => p.nome.toLowerCase() === f.pessoa.trim().toLowerCase())?.id ?? null,
         pessoa_nome: f.pessoa.trim(),
+        ...(escolhida?.dados ? { pessoa_dados: escolhida.dados } : {}),
         descricao: f.descricao.trim(),
         numero: f.numero.trim() || null,
         objeto: f.objeto.trim() || null,
@@ -285,113 +290,172 @@ export function ContratoFixo({
         </>
       }
     >
-      {/* notebook: dados do contrato à esquerda, valor e faturamento à direita; monitor grande: o faturamento ganha
-          uma terceira coluna; celular: uma coluna */}
+      {/* Etapas numeradas (04/11/2026): 1 quem e o quê; 2 valor, 3 vigência e 4 reajuste; 5 fatura e envio. Notebook:
+          1 e 5 à esquerda, 2–4 à direita; monitor grande: três colunas; celular: uma coluna na ordem dos números */}
       <ColunasFormulario colunas="2-3">
-        <ColunaFormulario className="lg:row-span-2 2xl:row-span-1">
-          {!editar && (
-            <div className="grid gap-2 sm:grid-cols-2" role="radiogroup" aria-label="Tipo do contrato">
-              {TIPOS.map((t) => (
-                <button
-                  key={t.id}
-                  type="button"
-                  role="radio"
-                  aria-checked={f.tipo === t.id}
-                  onClick={() => mudar({ tipo: t.id, categoria: "" })}
-                  className={`rounded-lg border p-3 text-left transition ${
-                    f.tipo === t.id
-                      ? "border-[var(--destaque-escuro)] bg-amber-50/60 ring-1 ring-[var(--destaque-escuro)]"
-                      : "border-[var(--borda)] hover:bg-[var(--fundo)]"
-                  }`}
-                >
-                  <span className="flex items-center gap-2 font-medium">
-                    <span
-                      aria-hidden="true"
-                      className={`grid h-4 w-4 shrink-0 place-items-center rounded-full border ${
-                        f.tipo === t.id ? "border-[var(--marca)] bg-[var(--marca)]" : "border-neutral-400 bg-white"
-                      }`}
-                    >
-                      {f.tipo === t.id && <span className="h-1.5 w-1.5 rounded-full bg-white" />}
+        <ColunaFormulario>
+          <fieldset className="space-y-3 rounded-md border border-[var(--borda)] p-3">
+            <legend className="px-1 text-sm font-medium">1. O contrato: quem e o quê</legend>
+            {!editar && (
+              <div className="grid gap-2 sm:grid-cols-2" role="radiogroup" aria-label="Tipo do contrato">
+                {TIPOS.map((t) => (
+                  <button
+                    key={t.id}
+                    type="button"
+                    role="radio"
+                    aria-checked={f.tipo === t.id}
+                    onClick={() => {
+                      if (t.id === f.tipo) return;
+                      mudar({ tipo: t.id, categoria: "", pessoa: "" });
+                      setEscolhida(null);
+                    }}
+                    className={`rounded-lg border p-3 text-left transition ${
+                      f.tipo === t.id
+                        ? "border-[var(--destaque-escuro)] bg-amber-50/60 ring-1 ring-[var(--destaque-escuro)]"
+                        : "border-[var(--borda)] hover:bg-[var(--fundo)]"
+                    }`}
+                  >
+                    <span className="flex items-center gap-2 font-medium">
+                      <span
+                        aria-hidden="true"
+                        className={`grid h-4 w-4 shrink-0 place-items-center rounded-full border ${
+                          f.tipo === t.id ? "border-[var(--marca)] bg-[var(--marca)]" : "border-neutral-400 bg-white"
+                        }`}
+                      >
+                        {f.tipo === t.id && <span className="h-1.5 w-1.5 rounded-full bg-white" />}
+                      </span>
+                      {t.nome}
                     </span>
-                    {t.nome}
-                  </span>
-                  <span className="block pl-6 text-xs text-[var(--texto-suave)]">{t.exemplo}</span>
-                </button>
-              ))}
-            </div>
-          )}
-          <div className="grid gap-3 sm:grid-cols-3">
-            <label className="campo sm:col-span-2">
-              <span>Nome do contrato</span>
-              <input
-                value={f.descricao}
-                onChange={(e) => mudar({ descricao: e.target.value })}
-                placeholder={f.tipo === "pagar" ? "Ex.: Aluguel da sala" : "Ex.: Honorários mensais"}
-              />
-            </label>
-            <label className="campo">
-              <span>Número (opcional)</span>
-              <input value={f.numero} onChange={(e) => mudar({ numero: e.target.value })} placeholder="Ex.: 2026/015" />
-            </label>
-          </div>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <label className="campo">
-              <span>{rotuloPessoa}</span>
-              <input
-                list="lista-pessoas-contrato"
-                value={f.pessoa}
-                onChange={(e) => mudar({ pessoa: e.target.value })}
-                placeholder="Digite o nome…"
-              />
-              <datalist id="lista-pessoas-contrato">
-                {pessoasDoTipo.map((p) => (
-                  <option key={p.id} value={p.nome} />
+                    <span className="block pl-6 text-xs text-[var(--texto-suave)]">{t.exemplo}</span>
+                  </button>
                 ))}
-              </datalist>
-              {novaPessoa && <small className="text-xs text-neutral-500">Novo: será cadastrado ao salvar.</small>}
-            </label>
-            <div className="campo">
-              <span>Categoria ({tipoCat})</span>
-              <select value={f.categoria} onChange={(e) => mudar({ categoria: e.target.value })} aria-label={`Categoria (${tipoCat})`}>
-                <option value="">{categorias.length ? "Escolha…" : `Nenhuma categoria de ${tipoCat} cadastrada`}</option>
-                {categorias.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.grupo ? `${c.grupo} › ` : ""}
-                    {c.nome}
-                  </option>
-                ))}
-              </select>
-              {podeCriarCategoria && (
-                <button type="button" className="btn-link self-start text-xs" onClick={() => setNovaCategoria(true)}>
-                  + Nova categoria
-                </button>
-              )}
-              {novaCategoria && (
-                <NovaCategoriaRapida
-                  cliente={cliente}
-                  tipo={tipoCat}
-                  aoFechar={() => setNovaCategoria(false)}
-                  aoCriar={(id) => {
-                    setNovaCategoria(false);
-                    mudar({ categoria: id });
-                    aoRecarregarCadastros?.();
-                  }}
+              </div>
+            )}
+            <div className="grid gap-3 sm:grid-cols-3">
+              <label className="campo sm:col-span-2">
+                <span>Nome do contrato</span>
+                <input
+                  value={f.descricao}
+                  onChange={(e) => mudar({ descricao: e.target.value })}
+                  placeholder={f.tipo === "pagar" ? "Ex.: Aluguel da sala" : "Ex.: Honorários mensais"}
                 />
-              )}
+              </label>
+              <label className="campo">
+                <span>Número (opcional)</span>
+                <input value={f.numero} onChange={(e) => mudar({ numero: e.target.value })} placeholder="Ex.: 2026/015" />
+              </label>
             </div>
-          </div>
-          <label className="campo">
-            <span>Objeto do contrato (opcional)</span>
-            <textarea
-              rows={2}
-              value={f.objeto}
-              onChange={(e) => mudar({ objeto: e.target.value })}
-              placeholder="O que foi contratado. Ex.: locação da sala 12 do Edifício Central"
-            />
-          </label>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <CampoPessoaContrato
+                rotulo={rotuloPessoa}
+                receber={receber}
+                escolhida={escolhida}
+                pessoas={pessoasDoTipo}
+                carteira={carteira}
+                aoEscolher={(p) => {
+                  setEscolhida(p);
+                  mudar({ pessoa: p?.nome ?? "" });
+                  if (p && receber)
+                    setFat((x) => ({
+                      ...x,
+                      carteira: p.carteira ?? x.carteira,
+                      email: x.email.trim() ? x.email : (p.dados?.email ?? x.email),
+                      whatsapp: x.whatsapp.trim() ? x.whatsapp : (p.dados?.telefone ?? x.whatsapp),
+                    }));
+                }}
+              />
+              <div className="campo">
+                <span>Categoria ({tipoCat})</span>
+                <select value={f.categoria} onChange={(e) => mudar({ categoria: e.target.value })} aria-label={`Categoria (${tipoCat})`}>
+                  <option value="">{categorias.length ? "Escolha…" : `Nenhuma categoria de ${tipoCat} cadastrada`}</option>
+                  {categorias.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.grupo ? `${c.grupo} › ` : ""}
+                      {c.nome}
+                    </option>
+                  ))}
+                </select>
+                {podeCriarCategoria && (
+                  <button type="button" className="btn-link self-start text-xs" onClick={() => setNovaCategoria(true)}>
+                    + Nova categoria
+                  </button>
+                )}
+                {novaCategoria && (
+                  <NovaCategoriaRapida
+                    cliente={cliente}
+                    tipo={tipoCat}
+                    aoFechar={() => setNovaCategoria(false)}
+                    aoCriar={(id) => {
+                      setNovaCategoria(false);
+                      mudar({ categoria: id });
+                      aoRecarregarCadastros?.();
+                    }}
+                  />
+                )}
+              </div>
+            </div>
+            <label className="campo">
+              <span>Objeto do contrato (opcional)</span>
+              <textarea
+                rows={2}
+                value={f.objeto}
+                onChange={(e) => mudar({ objeto: e.target.value })}
+                placeholder="O que foi contratado. Ex.: locação da sala 12 do Edifício Central"
+              />
+            </label>
+          </fieldset>
+        </ColunaFormulario>
 
+        <ColunaFormulario className="lg:row-span-2 2xl:row-span-1">
           <fieldset className="rounded-md border border-[var(--borda)] p-3">
-            <legend className="px-1 text-sm font-medium">Vigência</legend>
+            <legend className="px-1 text-sm font-medium">2. Valor e contas do mês</legend>
+            <div className={`grid gap-3 ${receber ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>
+              <label className="campo">
+                <span>Valor mensal (R$)</span>
+                <input value={f.valor} onChange={(e) => mudar({ valor: e.target.value })} inputMode="decimal" placeholder="0,00" />
+                {editar && (
+                  <small className="text-xs text-[var(--texto-suave)]">Mudar aqui vale para as próximas contas e fica no histórico.</small>
+                )}
+              </label>
+              {receber && (
+                <label className="campo">
+                  <span>Gerar todo dia</span>
+                  <input type="number" min={1} max={28} value={fat.diaGeracao} onChange={(e) => mudarFat({ diaGeracao: e.target.value })} />
+                  <small className="text-xs text-[var(--texto-suave)]">
+                    Dia em que a conta e a fatura nascem (1 a 28, até o dia de vencer).
+                  </small>
+                </label>
+              )}
+              <label className="campo">
+                <span>Vence todo dia</span>
+                <input type="number" min={1} max={31} value={f.dia} onChange={(e) => mudar({ dia: e.target.value })} />
+                <small className="text-xs text-[var(--texto-suave)]">
+                  {receber && geraDepoisDoVencimento("receber", diaGeracao, dia)
+                    ? `A fatura vence no mesmo mês em que é gerada: gere até o dia ${dia}.`
+                    : receber
+                      ? "Vence no mesmo mês da fatura. Se o mês não tiver esse dia (ex.: 31), vence no último dia."
+                      : "Se o mês não tiver esse dia (ex.: 31), vence no último dia."}
+                </small>
+              </label>
+            </div>
+            <label className="mt-2 flex items-center gap-2 text-sm">
+              <input type="checkbox" checked={f.geraContas} onChange={(e) => mudar({ geraContas: e.target.checked })} />
+              Lançar a conta no Financeiro todo mês ({f.tipo === "pagar" ? "Contas a pagar" : "Contas a receber"})
+            </label>
+            {f.geraContas && podeMudarPrimeira && (
+              <div className="mt-2">
+                <CampoMes
+                  rotulo="Primeira conta lançada pelo HUB"
+                  valor={primeira}
+                  anos={anosFuturos}
+                  aoMudar={(v) => mudar({ gerarDesde: v < mesAtual ? mesAtual : v })}
+                  dica="Os meses anteriores não são lançados. Se a deste mês já foi paga por fora, escolha o mês que vem."
+                />
+              </div>
+            )}
+          </fieldset>
+          <fieldset className="rounded-md border border-[var(--borda)] p-3">
+            <legend className="px-1 text-sm font-medium">3. Vigência</legend>
             <div className="grid gap-3 sm:grid-cols-3">
               <label className="campo">
                 <span>Começa em</span>
@@ -462,7 +526,7 @@ export function ContratoFixo({
           </fieldset>
 
           <fieldset className="rounded-md border border-[var(--borda)] p-3">
-            <legend className="px-1 text-sm font-medium">Reajuste anual</legend>
+            <legend className="px-1 text-sm font-medium">4. Reajuste anual</legend>
             <div className="grid gap-3 sm:grid-cols-2">
               <label className="campo">
                 <span>Índice</span>
@@ -506,55 +570,9 @@ export function ContratoFixo({
         </ColunaFormulario>
 
         <ColunaFormulario>
-          <fieldset className="rounded-md border border-[var(--borda)] p-3">
-            <legend className="px-1 text-sm font-medium">Valor e contas do mês</legend>
-            <div className={`grid gap-3 ${receber ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>
-              <label className="campo">
-                <span>Valor mensal (R$)</span>
-                <input value={f.valor} onChange={(e) => mudar({ valor: e.target.value })} inputMode="decimal" placeholder="0,00" />
-                {editar && (
-                  <small className="text-xs text-[var(--texto-suave)]">Mudar aqui vale para as próximas contas e fica no histórico.</small>
-                )}
-              </label>
-              {receber && (
-                <label className="campo">
-                  <span>Gerar todo dia</span>
-                  <input type="number" min={1} max={28} value={fat.diaGeracao} onChange={(e) => mudarFat({ diaGeracao: e.target.value })} />
-                  <small className="text-xs text-[var(--texto-suave)]">Dia em que a conta e a fatura nascem (1 a 28, até o dia de vencer).</small>
-                </label>
-              )}
-              <label className="campo">
-                <span>Vence todo dia</span>
-                <input type="number" min={1} max={31} value={f.dia} onChange={(e) => mudar({ dia: e.target.value })} />
-                <small className="text-xs text-[var(--texto-suave)]">
-                  {receber && geraDepoisDoVencimento("receber", diaGeracao, dia)
-                    ? `A fatura vence no mesmo mês em que é gerada: gere até o dia ${dia}.`
-                    : receber
-                      ? "Vence no mesmo mês da fatura. Se o mês não tiver esse dia (ex.: 31), vence no último dia."
-                      : "Se o mês não tiver esse dia (ex.: 31), vence no último dia."}
-                </small>
-              </label>
-            </div>
-            <label className="mt-2 flex items-center gap-2 text-sm">
-              <input type="checkbox" checked={f.geraContas} onChange={(e) => mudar({ geraContas: e.target.checked })} />
-              Lançar a conta no Financeiro todo mês ({f.tipo === "pagar" ? "Contas a pagar" : "Contas a receber"})
-            </label>
-            {f.geraContas && podeMudarPrimeira && (
-              <div className="mt-2">
-                <CampoMes
-                  rotulo="Primeira conta lançada pelo HUB"
-                  valor={primeira}
-                  anos={anosFuturos}
-                  aoMudar={(v) => mudar({ gerarDesde: v < mesAtual ? mesAtual : v })}
-                  dica="Os meses anteriores não são lançados. Se a deste mês já foi paga por fora, escolha o mês que vem."
-                />
-              </div>
-            )}
-          </fieldset>
-        </ColunaFormulario>
-
-        <ColunaFormulario>
-          {receber && f.geraContas && <CamposFaturamento f={fat} mudar={mudarFat} carteira={carteira} />}
+          {receber && f.geraContas && (
+            <CamposFaturamento titulo="5. Fatura e envio ao cliente" f={fat} mudar={mudarFat} carteira={carteira} />
+          )}
 
           <details
             className="rounded-md border border-[var(--borda)] p-3"

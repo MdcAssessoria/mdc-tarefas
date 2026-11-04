@@ -114,3 +114,8 @@ for f in testes/117_base_054.sql migrations/054_crm_excluir.sql; do
   $P -v ON_ERROR_STOP=1 -f "$R/$f" 2>&1 | grep -v NOTICE || true
 done
 $P -f "$R/testes/118_crm_excluir_054.sql" 2>&1 | grep -v "^SET$"
+# 055: contrato — cliente/fornecedor nasce (ou é completado) com CNPJ, e-mail, telefone, cidade e UF
+for f in testes/119_base_055.sql migrations/055_contrato_cliente.sql; do
+  $P -v ON_ERROR_STOP=1 -f "$R/$f" 2>&1 | grep -v NOTICE || true
+done
+$P -f "$R/testes/120_contrato_cliente_055.sql" 2>&1 | grep -v "^SET$"

@@ -35,8 +35,13 @@ liberado pelo administrador por pessoa).
 
 Janelas:
 
-- **Novo/Editar contrato** (`ContratoFixo`): tipo, nome, número, cliente/fornecedor (digitado na hora é cadastrado
-  junto, como no lançamento normal), categoria com **+ Nova categoria** (`NovaCategoriaRapida`), objeto, vigência (início,
+- **Novo/Editar contrato** (`ContratoFixo`), em etapas numeradas (04/11/2026): **1 quem e o quê**, **2 valor e contas
+  do mês**, **3 vigência**, **4 reajuste**, **5 fatura e envio**. O **Cliente/Fornecedor** (`CampoPessoaContrato`) abre a
+  lista ao clicar: carteira da MDC (contrato a receber) e Fornecedores e clientes, com busca por nome ou CNPJ, e
+  **+ Cadastrar novo** com CPF/CNPJ buscado na Receita (`CampoCnpj`). Quem vem da carteira ou da Receita leva CNPJ,
+  e-mail, telefone, cidade e UF (`pessoa_dados`): o banco cadastra a pessoa com eles e completa só o que estiver em
+  branco numa que já existe (migração 055); da carteira, já marca o cliente do Portal e o e-mail/WhatsApp do envio.
+  Também: tipo, nome, número, categoria com **+ Nova categoria** (`NovaCategoriaRapida`), objeto, vigência (início,
   fim ou prazo indeterminado, renovação automática, aviso X dias antes), valor mensal e dia de vencimento, "Lançar a conta
   no Financeiro todo mês" e a primeira conta, reajuste (índice, % fixo, mês) e "Mais informações" (centro de custo,
   banco previsto, observação). Uma frase mostra o que o HUB vai fazer: "Todo dia 1º o HUB lança … com vencimento em …".

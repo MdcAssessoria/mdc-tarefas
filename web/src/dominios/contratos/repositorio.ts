@@ -27,6 +27,9 @@ export interface DadosContrato {
   pessoa?: string | null;
   /** Fornecedor/cliente digitado na hora: o banco acha pelo nome ou cadastra, junto com o contrato. */
   pessoa_nome?: string | null;
+  /** CNPJ, e-mail, telefone, cidade e UF de quem veio da carteira ou da Receita: o banco grava ao cadastrar e completa
+   *  o que estiver em branco numa pessoa que já existe (055). */
+  pessoa_dados?: { documento?: string | null; email?: string | null; telefone?: string | null; cidade?: string | null; uf?: string | null };
   descricao: string;
   numero?: string | null;
   objeto?: string | null;

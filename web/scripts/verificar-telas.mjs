@@ -370,8 +370,8 @@ async function medirNovoContrato(pagina, foto, nome) {
     const meio = rb && document.elementFromPoint(rb.left + rb.width / 2, rb.top + rb.height / 2);
     const corpo = d.querySelector("[data-corpo-janela]") ?? d;
     const legenda = (t) => [...d.querySelectorAll("legend")].find((l) => l.textContent.trim() === t)?.closest("fieldset");
-    const vig = legenda("Vigência")?.getBoundingClientRect();
-    const val = legenda("Valor e contas do mês")?.getBoundingClientRect();
+    const vig = legenda("1. O contrato: quem e o quê")?.getBoundingClientRect();
+    const val = legenda("2. Valor e contas do mês")?.getBoundingClientRect();
     const entrada = d.querySelector("input:not([type=checkbox]):not([type=radio])");
     return {
       vw,
@@ -401,6 +401,27 @@ async function medirNovoContrato(pagina, foto, nome) {
     if (m.larguraJanela > m.vw) throw new Error('no celular a janela "Novo contrato" é mais larga que a tela');
     if (m.letra < 14) throw new Error(`no celular a letra dos campos ficou com ${m.letra} px (mínimo 14)`);
   } else if (!m.ladoALado) throw new Error(`no computador a janela "Novo contrato" deveria ter duas colunas lado a lado (${nome})`);
+  // Cliente: ao clicar, a lista traz a carteira da MDC e o "+ Cadastrar novo" (com busca na Receita)
+  const campoCliente = janela.getByRole("combobox", { name: "Cliente" });
+  await campoCliente.click();
+  const lista = janela.getByRole("listbox");
+  await lista.getByText("Carteira MDC", { exact: false }).first().waitFor({ timeout: 3000 });
+  await foto(`janela-${nome}-cliente`, { soTela: true });
+  await lista.getByRole("button", { name: /Cadastrar novo cliente/ }).click();
+  const nova = pagina.getByRole("dialog", { name: "Novo cliente" });
+  await nova.getByRole("button", { name: "Buscar dados" }).waitFor({ timeout: 3000 });
+  await foto(`janela-${nome}-novo-cliente`, { soTela: true });
+  await nova.getByRole("button", { name: "Voltar" }).click({ timeout: 4000 }).catch((e) => {
+    throw new Error(`Novo cliente: Voltar não respondeu (${e.message.split("\n")[0]})`);
+  });
+  await nova.waitFor({ state: "detached", timeout: 3000 });
+  await campoCliente.click({ timeout: 4000 }).catch((e) => {
+    throw new Error(`campo Cliente não respondeu ao voltar (${e.message.split("\n")[0]})`);
+  });
+  await lista.getByRole("option").first().getByRole("button").click({ timeout: 4000 }).catch((e) => {
+    throw new Error(`escolher da lista não respondeu (${e.message.split("\n")[0]})`);
+  });
+  await janela.getByRole("button", { name: "Trocar" }).waitFor({ timeout: 3000 });
   await pagina.keyboard.press("Escape");
   await janela.waitFor({ state: "detached", timeout: 3000 });
 }

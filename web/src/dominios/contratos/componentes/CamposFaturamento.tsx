@@ -21,7 +21,9 @@ export function CamposFaturamento({
   f,
   mudar,
   carteira,
+  titulo = "Fatura e envio ao cliente",
 }: {
+  titulo?: string;
   f: FaturamentoForm;
   mudar: (p: Partial<FaturamentoForm>) => void;
   carteira: Cliente[];
@@ -33,7 +35,7 @@ export function CamposFaturamento({
 
   return (
     <fieldset className="@container rounded-md border border-[var(--borda)] p-3">
-      <legend className="px-1 text-sm font-medium">Fatura e envio ao cliente</legend>
+      <legend className="px-1 text-sm font-medium">{titulo}</legend>
       <p className="mb-2 text-xs text-[var(--texto-suave)]">
         Todo mês, no dia de gerar, o HUB cria a conta a receber e a fatura deste contrato e manda para o cliente pelos canais marcados.
       </p>
