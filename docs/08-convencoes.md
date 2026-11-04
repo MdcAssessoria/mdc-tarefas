@@ -60,9 +60,10 @@ Fornecedores e clientes e Relatórios). As peças moram em `components/ui/` (des
 seletor de empresa (decisão do Edvaldo, 03/11/2026):** Financeiro, Entradas, Saídas, Estoque, Centros de custo, Plano de
 contas, Relatórios, Contratos e Fornecedores e clientes cuidam só das rotinas da MDC. A empresa é sempre a própria da
 organização (`organizacoes.gestao_cliente_id`), lida por `useClienteGestao()` (ou pela moldura `TelaEmpresa`) de
-`dominios/organizacao/componentes/EmpresaEmGestao`; não há campo "Empresa" nem empresa lembrada no navegador. Se
-`gestao_cliente_id` estiver vazio, a tela mostra `SemEmpresaGestao` ("A empresa da MDC ainda não foi definida para a
-Gestão. Peça ao administrador."). Textos falam "da MDC", não "da empresa escolhida". A Cobrança Ledgra é cobrança de
+`dominios/organizacao/componentes/EmpresaEmGestao`; não há campo "Empresa" nem empresa lembrada no navegador. Enquanto os cadastros
+chegam, `SemEmpresaGestao` mostra "Carregando…" (sem piscar o aviso); se `gestao_cliente_id` estiver vazio de fato,
+explica e pede ao administrador, e **o administrador escolhe a empresa ali mesmo** (função `org_definir_empresa_gestao`,
+047). Textos falam "da MDC", não "da empresa escolhida". A Cobrança Ledgra é cobrança de
 clientes e continua listando clientes. As peças:
 
 | Peça | Onde | Como usar |
@@ -72,7 +73,7 @@ clientes e continua listando clientes. As peças:
 | Período | `components/ui/FiltroPeriodo` (+ `lib/periodo.ts`) | Este mês, Mês passado, Próximo mês, Últimos 90 dias, Este ano, Escolher datas, Tudo |
 | Exportar | `components/ui/BotoesExportar` (+ `lib/arquivos/exportarLista.ts`) | PDF e Excel do que está filtrado; as colunas são definidas uma vez para os dois |
 | Indicadores | `components/ui/Indicador` | `icone` é **obrigatório** (tipo `NomeIcone`) e `tom` (verde, vermelho, âmbar, azul, violeta, neutro; mesmos significados do Chip: "A vencer" é azul). Com `aoClicar` vira filtro da lista (`ativo` mostra "Filtrando") |
-| Lista | `components/ui/QuadroTabela` | Cabeçalho e total fixos ao rolar, linhas zebradas suaves. No celular cada linha vira cartão: cada `td` leva `data-rotulo="Coluna"`, a célula principal `className="celula-titulo"` (vai para o topo do cartão) e a de botões `celula-acoes`. Tabela de duas colunas pode ficar tabela (`cartoes={false}`) |
+| Lista | `components/ui/QuadroTabela` | Cabeçalho e total fixos ao rolar, linhas zebradas suaves. No celular cada linha vira cartão: cada `td` leva `data-rotulo="Coluna"`, a célula principal `className="celula-titulo"` (vai para o topo do cartão) e a de botões `celula-acoes`. Tabela de duas colunas pode ficar tabela (`cartoes={false}`). Tabela que continua de lado no celular (fora do `QuadroTabela`, muitas colunas ou campos para editar) leva `tabela-acoes-fixas`: a última coluna (ações) fica presa à direita (047, UX-01) |
 | Situação | `components/ui/Chip` (tons em `Tons.ts`) | Chip com bolinha de cor; use o mesmo tom para o mesmo significado (vermelho = vencido/problema, âmbar = atenção/a conciliar, azul = a vencer/previsto, verde = pago/feito, cinza = inativo/cancelado) |
 | Dinheiro | `components/ui/Valor` | `brl()` com negativo em vermelho; `sinal` pinta entrada positiva de verde |
 | Vazio | `components/ui/EstadoVazio` com `icone` e `titulo` | Ilustração + o que fazer agora + botão da ação (ou "Limpar filtros" quando é o filtro que esvaziou) |

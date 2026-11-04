@@ -27,6 +27,8 @@
   "Próximo retorno". Retorno com data anterior a hoje (fuso da organização) aparece como atrasado.
 - Contrato: enquanto rascunho, os valores mudam; "Marcar como enviado/assinado" só com os valores salvos (o PDF salva
   sozinho). Enviado leva a oportunidade para "Proposta" quando estava antes dela.
+- Contrato em rascunho sai com a marca d'água **MINUTA** na diagonal em todas as páginas (047, DES-01): minuta impressa
+  não passa por contrato definitivo.
 - Contrato em PDF (`contratoPdf.ts`, revisto em 03/11/2026 pelos achados C-03, D-01, D-02 e D-13): valor por extenso
   na regra portuguesa ("um milhão e mil reais", "dois milhões e quinhentos mil reais", "mil" e não "um mil"); o
   "R$" nunca se separa do valor na quebra de linha (só quebra em espaço comum); o fecho ("E, por estarem de acordo…") e a

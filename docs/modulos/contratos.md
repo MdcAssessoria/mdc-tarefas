@@ -90,7 +90,9 @@ Tabelas (prefixo `fin_` porque cada contrato alimenta `fin_titulos`): `fin_recor
 (série mensal dos índices), `app.fin_indices_pedidos` (pedidos ao Banco Central). `fin_titulos` ganhou `recorrente_id` e
 `competencia`. Leitura com `app.contratos_pode(cliente, 'ver')`; gravação só pelas funções (`app.contratos_pode(cliente,
 'operar')` = `app.hub_pode(org, 'contratos', …)`). O Portal não vê contratos. `contratos` entrou em `app.modulos_gestao()`
-(o módulo lê fornecedores/clientes, categorias, centros e bancos para o cadastro), mas **não** em `app.modulos_operar()`.
+(depois a 042 tirou), mas **não** em `app.modulos_operar()`. Desde a 047 os cadastros (fornecedores/clientes,
+categorias, centros e bancos) chegam pela função `fin_recorrente_opcoes`, só com nome, tipo e ativo; o PDF da fatura usa
+os dados do cliente (nome, CNPJ/CPF, e-mail, cidade/UF) só de quem já tem fatura (SEG-03).
 
 Funções da tela: `fin_recorrente_salvar`, `fin_recorrente_suspender`, `fin_recorrente_reativar`, `fin_recorrente_encerrar`,
 `fin_recorrente_proposta`, `fin_recorrente_reajustar`, `fin_recorrente_anexo`, `fin_indices_atualizar`.

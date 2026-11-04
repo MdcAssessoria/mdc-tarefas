@@ -142,7 +142,7 @@ históricas acima que citam o Portal, `cliente_tem_modulo` e `financeiro_ver` va
 | Plano de contas (importar) e categorias | Plano de contas, Financeiro (só equipe) | `fin_importar_plano`, políticas de `fin_categorias` |
 | Centros de custo | Centros de custo, Financeiro (só equipe) | políticas de `fin_centros_custo` |
 | Relatórios | ninguém grava (só leitura) | — |
-| Contratos fixos (041/042/043): cadastrar, editar, suspender, reativar, encerrar, reajustar, anexar; gerar fatura à mão e cancelar fatura (043, operar, sempre com motivo) | Contratos (só equipe; o Portal não vê contratos). Faturas e fila de envio (`fin_faturas`, `fin_envios`): leitura com Contratos (ver), gravação só pelas funções, nada se apaga, gatilho `gestao_so_empresa`. **Portal (043):** o cliente lê só as faturas publicadas para o próprio cadastro (`cliente_carteira_id`) pela função `portal_minhas_faturas(cliente)`, que exige o login do Portal desse cliente com a permissão `documentos`; a tabela continua fechada para o Portal. As contas do mês nascem no Financeiro pelo caminho interno `app.fin_lancar_titulos`. **Leitura própria (042):** só fornecedores/clientes, categorias, centros, bancos e as contas que o próprio contrato gerou (política `contratos_ver`); Contratos **não** está em `app.modulos_gestao()` e não lê o resto do Financeiro, notas nem estoque | `app.contratos_pode`, `fin_recorrente_*`, `fin_indices_atualizar`, políticas `contratos_ver` |
+| Contratos fixos (041/042/043): cadastrar, editar, suspender, reativar, encerrar, reajustar, anexar; gerar fatura à mão e cancelar fatura (043, operar, sempre com motivo) | Contratos (só equipe; o Portal não vê contratos). Faturas e fila de envio (`fin_faturas`, `fin_envios`): leitura com Contratos (ver), gravação só pelas funções, nada se apaga, gatilho `gestao_so_empresa`. **Portal (043):** o cliente lê só as faturas publicadas para o próprio cadastro (`cliente_carteira_id`) pela função `portal_minhas_faturas(cliente)`, que exige o login do Portal desse cliente com a permissão `documentos`; a tabela continua fechada para o Portal. As contas do mês nascem no Financeiro pelo caminho interno `app.fin_lancar_titulos`. **Leitura própria (042, revista na 047):** as contas que o próprio contrato gerou (política `contratos_ver` de `fin_titulos`); os cadastros (fornecedores/clientes, categorias, centros, bancos) **não** são lidos pela tabela desde a 047 (SEG-03): a tela usa `fin_recorrente_opcoes(cliente)`, que devolve só id, nome, tipo e ativo e, para o PDF da fatura, nome, CNPJ/CPF, e-mail e cidade/UF apenas dos clientes que já têm fatura; Contratos **não** está em `app.modulos_gestao()` e não lê o resto do Financeiro, notas nem estoque | `app.contratos_pode`, `fin_recorrente_*`, `fin_indices_atualizar`, políticas `contratos_ver` |
 | NFS-e das faturas (046): conferir (ver), emitir (operar), parâmetros (gerir) | Contratos. Tabelas `nfse_*` só leitura com Contratos (ver); gravação só pelas funções; nada se apaga; `gestao_so_empresa`. A Função Edge `nfse-emitir` (verify_jwt) confere o login com `nfse_preparar` (`pode_emitir`) e só então usa a chave de serviço para `nfse_reservar`/`nfse_registrar_resultado` (execute só `service_role`) e `fis_cert_obter`. Bucket `fiscal`: Contratos (ver) lê só `<org>/<cliente>/nfse-emitidas/…`; quem grava é a função. Ir para produção pede confirmação; certificado, senha e XML nunca vão para log | `nfse_*`, `app.nfse_*`, `app.fis_caminho_pode` |
 | **Sensível (estrito no Financeiro)**: certificado A1 (gerir), regras dos tipos de entrada (gerir), estoque negativo (gerir), contas bancárias, importar e desfazer extrato, parâmetros de notas (operar) | Financeiro | `fis_pode_certificado`, `fis_salvar_tipo_entrada`, `est_definir_negativo`, `fin_contas_bancarias`, `fin_importar_extrato`, `fin_desfazer_lote`, `fis_salvar_parametros` |
 
@@ -156,10 +156,20 @@ da gestão (043, BD-01/BD-02): um cadastro antigo de outra empresa é ignorado e
 
 **Arquivos (042).** No bucket `hub-arquivos` a equipe só lê o arquivo que tem registro em `hub_arquivos` visível pela regra do
 módulo (039), a logo (`marca`) e o que ela mesma enviou; envia só na pasta de um módulo que opera (`marca`: gestor); apaga só o
-administrador, ou quem enviou um arquivo que ainda não virou registro. O registro do anexo pela equipe (gatilho
+quem enviou um arquivo que ainda não virou registro (047: nem o administrador apaga arquivo com registro). O registro do anexo pela equipe (gatilho
 `hub_arquivos_equipe`) exige caminho `<org>/<módulo>/…` (no Portal, a pasta do próprio cliente) e arquivo enviado pela
 própria pessoa; `enviado_por` é sempre quem está logado; módulo e referência não mudam depois. Valores "NaN"/infinito são
 recusados em todas as colunas numéricas de `fin_*`, `fis_*`, `est_*`, `lic_*` e `crm_*` (travas `*_numero_valido`).
+
+**Anexos sem apagar e empresa da Gestão auditada (047, reauditoria de 03/11/2026).** O registro de `hub_arquivos` não sai
+mais da tabela (gatilho `nada_se_apaga`, sem política de DELETE). "Retirar anexo" é só do administrador, com motivo de 5
+letras ou mais, pela função `hub_arquivo_retirar`: o anexo some do Portal e das listas, fica marcado (`retirado_em`,
+`retirado_por`, `retirado_motivo`) e vai para `hub_auditoria`; marcar à mão pela API é recusado e um anexo retirado não
+volta ao Portal (SEG-01). `organizacoes.gestao_cliente_id` só muda por `org_definir_empresa_gestao` (administrador; trocar
+uma empresa já definida pede motivo; auditada); o gatilho `org_empresa_gestao` recusa a mudança direta (SEG-02). Anexo
+enviado pelo Portal com referência só entra se a tarefa ou a conversa for do próprio cliente (gatilho
+`hub_arquivos_portal_ref`, SEG-09). NaN/infinito também são recusados nas colunas numéricas de `portal_*` e `soc_*`
+(SEG-08).
 
 Contas geradas por nota ou pedido nascem pela função interna `app.fin_lancar_titulos` (quem tem Entradas ou Saídas gera as
 contas do documento sem precisar do Financeiro) e só mudam ou cancelam pelo documento de origem.

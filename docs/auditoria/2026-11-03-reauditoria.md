@@ -32,23 +32,29 @@ da gestão), T-01 (seletor de Empresa sumiu), T-04, T-11, C-02, C-03, C-14, D-01
 
 ## Prioridade 1 — próxima migração (043) e ajustes curtos
 
+**Situação em 03/11/2026, noite (branch `fase2-seguranca-telas`, migração 047 ainda não aplicada):** BD-01 e BD-02
+resolvidos na 045 (aplicada); SEG-01, SEG-02/BD-07, SEG-03/BD-06, SEG-08/BD-05 e SEG-09 resolvidos na **047** (testes
+103/104); COD-03/UX-11, UX-02 e DES-01 resolvidos nas telas; BD-04 **em aberto** (os testes 20/30/50/70 rodam antes da
+042 com o cliente c1; os casos de gestão da MDC estão cobertos pelos testes 98, 100, 102 e 104). UX-01 (Prioridade 2)
+resolvido com a coluna de ações presa à direita no celular.
+
 | # | O quê | Por quê |
 | --- | --- | --- |
-| BD-01 / COD-01 | `fis_captura_reservar` filtrar `app.empresa_gestao` | Um certificado de outra empresa pararia toda a captura (inclusive da MDC). Hoje não há. |
-| BD-02 | `fin_recorrentes_rotina` filtrar a empresa e tratar erro por contrato | Um contrato de outra empresa derrubaria a rotina inteira, sem registro. Hoje não há. |
-| SEG-01 | `hub_arquivos` sem DELETE (gatilho nada_se_apaga) e "retirar anexo" só pelo administrador, com motivo | Hoje dá para apagar o registro e depois o arquivo, sem auditoria. |
-| SEG-02 / BD-07 | Trocar `gestao_cliente_id` só por função auditada | Hoje o administrador troca a empresa da Gestão pela API, sem rastro. |
-| SEG-03 / BD-06 | Contratos lê só id e nome dos cadastros (função `fin_recorrente_opcoes`) | Hoje lê CPF, e-mail e dados bancários. |
-| SEG-08 / BD-05 | Trava de NaN em `portal_balancete_linhas` e `soc_taxas` | Um NaN pode chegar ao Demonstrativo assinado. |
-| SEG-09 | Anexo do Portal só em tarefa do próprio cliente | Hoje um cliente consegue pendurar arquivo na rotina de outro (precisa do UUID). |
+| BD-01 / COD-01 (resolvido, 045) | `fis_captura_reservar` filtrar `app.empresa_gestao` | Um certificado de outra empresa pararia toda a captura (inclusive da MDC). Hoje não há. |
+| BD-02 (resolvido, 045) | `fin_recorrentes_rotina` filtrar a empresa e tratar erro por contrato | Um contrato de outra empresa derrubaria a rotina inteira, sem registro. Hoje não há. |
+| SEG-01 (resolvido, 047) | `hub_arquivos` sem DELETE (gatilho nada_se_apaga) e "retirar anexo" só pelo administrador, com motivo | Hoje dá para apagar o registro e depois o arquivo, sem auditoria. |
+| SEG-02 / BD-07 (resolvido, 047) | Trocar `gestao_cliente_id` só por função auditada | Hoje o administrador troca a empresa da Gestão pela API, sem rastro. |
+| SEG-03 / BD-06 (resolvido, 047) | Contratos lê só id e nome dos cadastros (função `fin_recorrente_opcoes`) | Hoje lê CPF, e-mail e dados bancários. |
+| SEG-08 / BD-05 (resolvido, 047) | Trava de NaN em `portal_balancete_linhas` e `soc_taxas` | Um NaN pode chegar ao Demonstrativo assinado. |
+| SEG-09 (resolvido, 047) | Anexo do Portal só em tarefa do próprio cliente | Hoje um cliente consegue pendurar arquivo na rotina de outro (precisa do UUID). |
 | BD-04 | Rodar os testes 20/30/50/70 depois da 042 com a empresa MDC | Hoje baixa, estoque e notas não têm teste com a regra que vale em produção. |
-| COD-03 / UX-11 | Mostrar "Carregando" e, para o administrador, como definir a empresa | A tela pisca "Empresa da Gestão não definida" ao abrir. |
-| DES-01 | Marca d'água "MINUTA" em todas as páginas do contrato em rascunho | Hoje uma minuta impressa pode ser assinada como definitiva. |
-| UX-02 | Aviso do Portal sem "serviços do HUB" e sem "Financeiro suspenso" | Confunde o cliente, que não tem mais Financeiro no HUB. |
+| COD-03 / UX-11 (resolvido) | Mostrar "Carregando" e, para o administrador, como definir a empresa | A tela pisca "Empresa da Gestão não definida" ao abrir. |
+| DES-01 (resolvido) | Marca d'água "MINUTA" em todas as páginas do contrato em rascunho | Hoje uma minuta impressa pode ser assinada como definitiva. |
+| UX-02 (resolvido) | Aviso do Portal sem "serviços do HUB" e sem "Financeiro suspenso" | Confunde o cliente, que não tem mais Financeiro no HUB. |
 
 ## Prioridade 2 — telas (antes de levar aos pilotos)
 
-- **UX-01:** 15 tabelas de lado no celular, com as ações fora da tela (Entradas, Estoque, Cobrança Ledgra, Pessoas e acessos, Configurações, Acessos do portal).
+- **UX-01 (resolvido: coluna de ações fixa no celular):** 15 tabelas de lado no celular, com as ações fora da tela (Entradas, Estoque, Cobrança Ledgra, Pessoas e acessos, Configurações, Acessos do portal).
 - **UX-04:** ações em massa sem confirmação.
 - **UX-05:** concluir tarefa no Início com toque de 24 px e sem desfazer.
 - **UX-06, UX-07:** Pessoas e acessos e Configurações sem PDF/Excel, com campos sem rótulo e avisos não anunciados.
