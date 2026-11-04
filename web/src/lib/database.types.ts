@@ -6893,6 +6893,7 @@ export type Database = {
         };
         Returns: string;
       };
+      portal_faturas_detalhe: { Args: { p_cliente: string }; Returns: Json };
       portal_gravar_balancete: {
         Args: {
           p_analise: Json;
@@ -6923,7 +6924,6 @@ export type Database = {
           uf: string;
         }[];
       };
-      portal_faturas_detalhe: { Args: { p_cliente: string }; Returns: Json };
       portal_minhas_faturas: {
         Args: { p_cliente: string };
         Returns: {
