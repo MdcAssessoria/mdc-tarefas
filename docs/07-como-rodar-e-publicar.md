@@ -121,6 +121,7 @@ npx supabase functions deploy convite --project-ref bulqqdgfrrpqquqvjjfa --impor
   de cada banco no Ledgra Link. A 048 troca a regra do vencimento: contrato a receber com dia de gerar depois do dia de
   vencer passa a ser recusado ao salvar (em 03/11/2026 não havia contratos em produção).
   047, 048 e 049 aplicadas em 03/11/2026 (21h30); tipos regenerados; `ledgra-link` v3 publicada pelo conector (bundle).
+- **04/11/2026:** 050 aplicada (Portal › Faturas); `demonstrativo-pdf` v9 publicada (rascunho em todas as páginas, total do balancete, texto sem corte). As 8 funções com a origem `hub.mdcassessoria.com` (fiscal-certificado, fiscal-manifestar, fiscal-captura, nfse-emitir, ledgra-link, ledgra-link-webhook, convite, balancete-agente) ficam para quando o DNS do subdomínio estiver no ar.
 - Segredos das funções (chave de serviço etc.) ficam no painel: Edge Functions › Secrets. Nunca no código.
 - Ledgra Link (043): `LEDGRA_LINK_URL` (endereço do Ledgra Link, ex.: `https://link.ledgra.com.br`), `LEDGRA_LINK_CHAVE`
   (chave do HUB no Ledgra Link, começa com `llk_`) e `LEDGRA_LINK_SEGREDO_WEBHOOK` (segredo mostrado uma vez pelo Ledgra
