@@ -1,5 +1,5 @@
 // Edge Function fatura-enviar: manda as faturas da fila (fin_envios) por e-mail (Microsoft 365, pelo Graph, como a
-// caixa do HUB) e por WhatsApp (API oficial da Meta, modelo aprovado com o PDF da fatura). Migração 053; docs/07 7.12.
+// caixa do HUB) e por WhatsApp (API oficial da Meta, modelo aprovado com o PDF da fatura). Migração 053; docs/07, seção 7.7.
 //
 // Quem chama:
 //   - o agendador do banco (pg_cron, a cada 10 min) com o cabeçalho x-agente-token          → { acao: "rodar" }

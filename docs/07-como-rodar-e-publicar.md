@@ -149,6 +149,92 @@ npx supabase functions deploy convite --project-ref bulqqdgfrrpqquqvjjfa --impor
 Use a **MDC** (código Domínio 1) e o **Grupo Greencore** (códigos 41 e 50), marcados com o grupo "Piloto HUB",
 para validar qualquer novidade antes de liberar para a carteira.
 
+## 7.7 Envio das faturas por e-mail e WhatsApp (053)
+
+As faturas de Contratos saem sozinhas pela Função `fatura-enviar`: **e-mail pelo Microsoft 365** (Microsoft Graph,
+`sendMail` como `hub@mdcassessoria.com`) e **WhatsApp pela API oficial da Meta** (WhatsApp Business Platform, modelo
+aprovado com o PDF da fatura). Decisão do Edvaldo em 04/11/2026. Enquanto os segredos de um canal não estão no painel,
+os envios dele ficam "aguardando configuração" (sem erro) e Contratos › Envio mostra o que falta.
+
+**Como funciona.** O `pg_cron` chama a função a cada 10 minutos com o token interno `fatura_enviar_token` (gerado pelo
+próprio banco no Vault na migração 053; ninguém precisa digitar). A função confere os canais, pega a fila pronta
+(`fin_envio_reservar`: NFS-e emitida quando o envio leva a nota, boleto gerado quando leva o boleto, "boleto depois"
+como segundo envio) e grava cada resultado (`fin_envio_resultado`). Falha temporária tenta de novo em 10 min, 30 min,
+2 h, 6 h e 24 h (6 falhas param); endereço ou número que não existe para na hora; na 3ª falha avisa no sino quem
+opera/gere Contratos. Erro de configuração (senha do aplicativo vencida, permissão, modelo) desliga o canal sem gastar
+tentativa. "Enviado" no WhatsApp quer dizer **aceito pela Meta** (a entrega no aparelho não volta para o HUB nesta etapa);
+no e-mail, devolução do servidor do cliente chega na caixa `hub@` como e-mail de "não entregue".
+
+**Ordem para ligar (tarefa do Edvaldo / TI):**
+1. Aplicar a 053 (testes 113/114 passando), regenerar `database.types.ts` (os tipos da 053 foram escritos à mão) e rodar
+   os Advisors.
+2. Publicar a função **com a checagem de login desligada** (o agendador manda `x-agente-token`; a função confere o token
+   ou o login + a permissão no banco):
+   ```bash
+   sh scripts/sync-funcoes.sh
+   cd supabase/functions/fatura-enviar && deno test --allow-read --allow-env --config deno.json envio_test.ts && cd -
+   npx supabase functions deploy fatura-enviar --project-ref bulqqdgfrrpqquqvjjfa --no-verify-jwt --import-map supabase/functions/fatura-enviar/deno.json
+   ```
+   Pelo conector: bundle dentro de `supabase/functions/fatura-enviar` com
+   `npx esbuild@0.24.0 index.ts --bundle --format=esm --platform=neutral --target=es2022 --charset=ascii --external:@supabase/supabase-js --external:pdf-lib --outfile=index.js`.
+3. Push do site (Contratos › Envio e o "Reenviar" em Contratos › Faturas).
+4. Fazer o passo a passo do Microsoft 365 e/ou da Meta abaixo e cadastrar os segredos em **Edge Functions › Secrets**.
+5. Em Contratos › Envio, clicar **Conferir agora** (o canal fica "Ligado" e os envios guardados entram na fila) e
+   **Enviar teste** para um e-mail/WhatsApp da MDC. Validar com a MDC e o Grupo Greencore (Piloto HUB) antes da carteira.
+
+### E-mail: aplicativo no Azure (Microsoft Entra) com Mail.Send só na caixa do HUB
+
+1. **Entra admin center › Identidade › Aplicativos › Registros de aplicativo › Novo registro.** Nome: `HUB-MDC envio de
+   faturas`; "Contas somente neste diretório"; sem URI de redirecionamento. Anote o **ID do aplicativo (cliente)** e o
+   **ID do diretório (locatário)**.
+2. **Certificados e segredos › Novo segredo do cliente**, validade de 24 meses. Copie o **Valor** na hora (aparece uma vez
+   só) e anote a data de vencimento na agenda da TI: quando vencer, o canal desliga e Contratos › Envio avisa.
+3. **Não** dê a permissão de aplicativo `Mail.Send` em "Permissões de API" (ela vale para todas as caixas da empresa, e as
+   permissões se somam). A permissão entra só pela caixa do HUB, pelo **RBAC para Aplicativos** do Exchange Online
+   (substitui as antigas Application Access Policies). No PowerShell do Exchange Online (`Connect-ExchangeOnline`), com o
+   ID do aplicativo e o **ID do objeto da entidade de serviço** (Entra › Aplicativos empresariais › o aplicativo):
+   ```powershell
+   New-ServicePrincipal -AppId <ID do aplicativo> -ObjectId <ID do objeto da entidade de serviço> -DisplayName "HUB-MDC envio de faturas"
+   New-ManagementScope -Name "HUB-MDC caixa do HUB" -RecipientRestrictionFilter "PrimarySmtpAddress -eq 'hub@mdcassessoria.com'"
+   New-ManagementRoleAssignment -App <ID do aplicativo> -Role "Application Mail.Send" -CustomResourceScope "HUB-MDC caixa do HUB"
+   Test-ServicePrincipalAuthorization -Identity <ID do aplicativo> -Resource hub@mdcassessoria.com   # deve dar InScope = True
+   Test-ServicePrincipalAuthorization -Identity <ID do aplicativo> -Resource edvaldo@mdcassessoria.com # deve dar InScope = False
+   ```
+   A permissão pode levar de 30 minutos a 2 horas para valer. Se alguém tiver dado `Mail.Send` em "Permissões de API",
+   remova e revogue o consentimento, senão o aplicativo continua podendo enviar por qualquer caixa.
+4. A caixa `hub@mdcassessoria.com` precisa ter licença com Exchange Online (já é a do SMTP do convite, seção 7.5).
+5. Segredos (Edge Functions › Secrets): `GRAPH_TENANT_ID` (ID do diretório), `GRAPH_CLIENT_ID` (ID do aplicativo),
+   `GRAPH_CLIENT_SECRET` (o Valor do passo 2) e `GRAPH_REMETENTE` = `hub@mdcassessoria.com`. O e-mail sai com a fatura em PDF,
+   o XML da NFS-e quando houver, a linha digitável e o Pix copia e cola quando há boleto; fica em "Itens enviados" da caixa.
+
+### WhatsApp: conta na WhatsApp Business Platform (API oficial da Meta)
+
+1. **Meta Business Suite (business.facebook.com):** use o portfólio empresarial da MDC e faça a **verificação da empresa**
+   (Configurações › Central de segurança), com CNPJ e um documento. Sem ela, a conta fica limitada.
+2. **developers.facebook.com › Meus aplicativos › Criar aplicativo** do tipo Empresa, ligado ao portfólio da MDC, e adicione
+   o produto **WhatsApp**. Em WhatsApp › Configuração da API, **adicione o número da MDC** que vai mandar as faturas (um
+   número que **não** esteja em uso no aplicativo WhatsApp comum, ou migre o número) e confirme por SMS/ligação. Anote o
+   **ID do número de telefone** (Phone number ID). Cadastre a forma de pagamento da conta (a Meta cobra cada mensagem de
+   modelo de "Utilidade").
+3. **Gerenciador do WhatsApp › Modelos de mensagem › Criar modelo:** categoria **Utilidade**, nome **`fatura_mdc`**, idioma
+   **Português (BR)**; cabeçalho **Documento**; corpo exatamente com 5 variáveis:
+   > Olá, {{1}}! Segue em anexo a fatura {{2}} da MDC Assessoria Contábil, no valor de {{3}}, com vencimento em {{4}}.
+   > Para pagar: {{5}}. Qualquer dúvida, é só responder esta mensagem.
+
+   Exemplos para a aprovação: `Gama Comércio Ltda`, `2026/00012`, `R$ 1.260,00`, `10/11/2026`,
+   `linha digitável 34191.79001 01043.510047 91020.150008 1 99990000150000`. Espere o modelo ficar **Aprovado**.
+4. **Configurações do negócio › Usuários › Usuários do sistema › Adicionar** (função Administrador). Em "Atribuir ativos",
+   dê ao usuário do sistema o aplicativo e a conta do WhatsApp com controle total. **Gerar token**: escolha o aplicativo,
+   validade **Nunca** e as permissões `whatsapp_business_messaging` e `whatsapp_business_management`. Copie o token na hora.
+5. Segredos (Edge Functions › Secrets): `WHATSAPP_TOKEN` (o token do passo 4), `WHATSAPP_NUMERO_ID` (ID do número do passo
+   2) e `WHATSAPP_MODELO` = `fatura_mdc`. Opcionais: `WHATSAPP_IDIOMA` (padrão `pt_BR`) e `WHATSAPP_VERSAO` (versão da API,
+   padrão `v23.0`; troque quando a Meta descontinuar). O número do cliente vem do contrato (DDD + número; o HUB põe o 55).
+
+**Segredos da função, lista completa:** `GRAPH_TENANT_ID`, `GRAPH_CLIENT_ID`, `GRAPH_CLIENT_SECRET`, `GRAPH_REMETENTE`,
+`WHATSAPP_TOKEN`, `WHATSAPP_NUMERO_ID`, `WHATSAPP_MODELO` (+ opcionais `WHATSAPP_IDIOMA`, `WHATSAPP_VERSAO`). O token do
+agendador não é segredo de painel: mora no Vault do banco (`fatura_enviar_token`). Nada disso vai para o código nem para
+o site; a tela só mostra os **nomes** que faltam.
+
 ## Testes SQL (Financeiro e estoque)
 
 `bash supabase/testes/rodar.sh` (porta 5521; outra porta com `PORTA_TESTES=5498 bash supabase/testes/rodar.sh`, para rodar
