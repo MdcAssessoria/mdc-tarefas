@@ -2489,7 +2489,40 @@ export const XML_EXEMPLO = {
     envio(3, 4, "portal", C1, ["fatura"], "enviado", true),
     envio(4, 5, "email", "financeiro@clienteabc.com.br", tudo, "aguardando_configuracao", false),
     envio(5, 5, "portal", C1, tudo, "pendente", false),
+    // 053: o WhatsApp da fatura 1 falhou (número sem WhatsApp) e parou de tentar: aparece o motivo e "Reenviar"
+    {
+      ...envio(6, 1, "whatsapp", "13988887777", tudo, "erro", false),
+      tentativas: 1,
+      falhas: 1,
+      ultimo_erro: "Não foi possível entregar no WhatsApp deste número (número sem WhatsApp ou inválido): confira o cadastro.",
+      proxima_tentativa_em: null,
+      etapa: "principal",
+    },
   ];
+  // Contratos › Envio (053): e-mail ligado pelo Microsoft 365; WhatsApp sem os segredos ainda
+  RPCS.fin_envio_situacao = () => ({
+    canais: {
+      email: { configurado: true, detalhe: "Microsoft 365 conferido: o aplicativo do HUB entrou.", remetente: "hub@mdcassessoria.com", verificado_em: momento(0) },
+      whatsapp: {
+        configurado: false,
+        detalhe: "Faltam os segredos WHATSAPP_TOKEN, WHATSAPP_NUMERO_ID, WHATSAPP_MODELO em Edge Functions › Secrets do Supabase.",
+        remetente: null,
+        verificado_em: momento(0),
+      },
+    },
+    fila: { "email:pendente": 1, "email:enviado": 12, "whatsapp:erro": 1, "whatsapp:aguardando_configuracao": 3 },
+    problemas: [
+      {
+        envio: 6,
+        fatura: TABELAS.fin_faturas[0].numero,
+        canal: "whatsapp",
+        destino: "13988887777",
+        erro: "Não foi possível entregar no WhatsApp deste número (número sem WhatsApp ou inválido): confira o cadastro.",
+        falhas: 1,
+        proxima: null,
+      },
+    ],
+  });
   // boleto (049): a fatura 1 tem boleto do Itaú registrado; a 5 ainda vai gerar. Itaú configurado; Santander não.
   TABELAS.fin_fatura_boletos = [
     {

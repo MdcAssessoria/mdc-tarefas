@@ -56,3 +56,10 @@ import_map = "./functions/nfse-emitir/deno.json"
 verify_jwt = false
 import_map = "./functions/nfse-automatica/deno.json"
 
+# Envio das faturas (migração 053): fatura-enviar é chamada pelo agendador com token próprio (x-agente-token) ou pela
+# tela Contratos › Envio com o login (a função confere a permissão no banco); por isso a checagem padrão fica desligada.
+# Segredos (Edge Functions › Secrets): GRAPH_TENANT_ID, GRAPH_CLIENT_ID, GRAPH_CLIENT_SECRET, GRAPH_REMETENTE,
+# WHATSAPP_TOKEN, WHATSAPP_NUMERO_ID, WHATSAPP_MODELO (docs/07, seção 7.7).
+[functions.fatura-enviar]
+verify_jwt = false
+import_map = "./functions/fatura-enviar/deno.json"

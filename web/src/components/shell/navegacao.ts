@@ -133,7 +133,8 @@ export const NAV: Record<Modulo, { titulo: string; links: LinkModulo[]; grupos?:
   centros_custo: { titulo: "Centros de custo", links: [{ href: "/centros-custo", nome: "Centros de custo" }] },
   relatorios: { titulo: "Relatórios", links: [{ href: "/relatorios", nome: "Relatórios" }] },
   // Contratos fixos (041): cadastro, vigência, anexos, contas do mês no Financeiro e reajuste anual; faturas (043);
-  // parâmetros da emissão da NFS-e pelo Emissor Nacional, só para quem gere (046); boleto pelo Ledgra Link (049)
+  // parâmetros da emissão da NFS-e pelo Emissor Nacional, só para quem gere (046); boleto pelo Ledgra Link (049);
+  // envio automático por e-mail e WhatsApp, só para quem gere (053)
   contratos: {
     titulo: "Contratos",
     links: [
@@ -142,6 +143,7 @@ export const NAV: Record<Modulo, { titulo: string; links: LinkModulo[]; grupos?:
       { href: "/contratos/reajustes", nome: "Reajustes" },
       { href: "/contratos/nota-fiscal", nome: "Nota fiscal (NFS-e)", minimo: "gerir" },
       { href: "/contratos/boleto", nome: "Boleto", minimo: "gerir" },
+      { href: "/contratos/envio", nome: "Envio (e-mail e WhatsApp)", minimo: "gerir" },
     ],
   },
   cadastros: {

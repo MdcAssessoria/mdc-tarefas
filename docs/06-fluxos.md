@@ -142,6 +142,10 @@ flowchart TD
     P -- sim --> AN[aguardando_nf<br/>etapa 2: Emissor Nacional]
     AN -. nota emitida .-> PO
     E --> EW[e-mail / WhatsApp:<br/>aguardando configuração]
+    EW -. canal ligado .-> FILA[na fila: pg_cron 10 min<br/>Função fatura-enviar]
+    FILA --> OK[enviado]
+    FILA -. falhou .-> ESP[espera 10 min → 24 h<br/>3ª falha avisa no sino]
+    ESP --> FILA
     F -. cancelar com motivo .-> C[cancelada + conta em aberto cancelada]
 ```
 
@@ -151,8 +155,8 @@ flowchart TD
   Boleto: `a_definir` enquanto a plataforma não é escolhida.
 - **Sem duplicar:** trava do contrato + índices únicos das contas e faturas não canceladas. Mês cancelado não volta pela
   rotina; volta à mão, com motivo (também serve para o mês que a rotina perdeu).
-- **Etapa 2 — NFS-e (046, feito):** ver o fluxo abaixo. A fazer: envio real de e-mail/WhatsApp, plataforma de boleto e o
-  modo automático da nota.
+- **Etapa 2 — NFS-e (046, feito):** ver o fluxo abaixo. Envio real de e-mail (Microsoft 365) e WhatsApp (Meta): 053, falta a TI ligar os
+  canais (docs/07, seção 7.7). A fazer: o modo automático da nota.
 
 ```mermaid
 sequenceDiagram

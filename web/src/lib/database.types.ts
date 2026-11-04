@@ -1400,6 +1400,30 @@ export type Database = {
           },
         ];
       };
+      fin_envio_canais: {
+        Row: {
+          canal: string;
+          configurado: boolean;
+          detalhe: string | null;
+          remetente: string | null;
+          verificado_em: string;
+        };
+        Insert: {
+          canal: string;
+          configurado?: boolean;
+          detalhe?: string | null;
+          remetente?: string | null;
+          verificado_em?: string;
+        };
+        Update: {
+          canal?: string;
+          configurado?: boolean;
+          detalhe?: string | null;
+          remetente?: string | null;
+          verificado_em?: string;
+        };
+        Relationships: [];
+      };
       fin_envios: {
         Row: {
           atualizado_em: string;
@@ -1416,6 +1440,11 @@ export type Database = {
           situacao: string;
           tentativas: number;
           ultimo_erro: string | null;
+          em_envio_ate: string | null;
+          falhas: number;
+          mensagem_id: string | null;
+          proxima_tentativa_em: string | null;
+          reenvios: number;
         };
         Insert: {
           atualizado_em?: string;
@@ -1432,6 +1461,11 @@ export type Database = {
           situacao: string;
           tentativas?: number;
           ultimo_erro?: string | null;
+          em_envio_ate?: string | null;
+          falhas?: number;
+          mensagem_id?: string | null;
+          proxima_tentativa_em?: string | null;
+          reenvios?: number;
         };
         Update: {
           atualizado_em?: string;
@@ -1448,6 +1482,11 @@ export type Database = {
           situacao?: string;
           tentativas?: number;
           ultimo_erro?: string | null;
+          em_envio_ate?: string | null;
+          falhas?: number;
+          mensagem_id?: string | null;
+          proxima_tentativa_em?: string | null;
+          reenvios?: number;
         };
         Relationships: [
           {
@@ -6657,6 +6696,34 @@ export type Database = {
       fin_extrato_ignorar: {
         Args: { p_linha: number; p_motivo: string };
         Returns: Json;
+      };
+      fin_envio_canal_estado: {
+        Args: { p_canal: string; p_configurado: boolean; p_detalhe?: string; p_remetente?: string };
+        Returns: Json;
+      };
+      fin_envio_reenviar: {
+        Args: { p_envio: number; p_motivo: string };
+        Returns: Json;
+      };
+      fin_envio_reservar: {
+        Args: { p_limite?: number };
+        Returns: Json;
+      };
+      fin_envio_resultado: {
+        Args: { p: Json; p_envio: number };
+        Returns: Json;
+      };
+      fin_envio_situacao: {
+        Args: { p_org: string };
+        Returns: Json;
+      };
+      fin_envio_teste_registrar: {
+        Args: { p_canal: string; p_destino: string; p_org: string };
+        Returns: Json;
+      };
+      fin_envio_token_confere: {
+        Args: { p_token: string };
+        Returns: boolean;
       };
       fin_fatura_cancelar: {
         Args: { p_fatura: string; p_motivo: string };

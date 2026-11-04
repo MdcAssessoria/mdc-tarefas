@@ -27,9 +27,10 @@ liberado pelo administrador por pessoa).
 | Endereço | Quem usa | O que faz |
 | --- | --- | --- |
 | `/contratos` | Contratos (ver; cadastrar e mexer com operar) | Lista no molde 8.3.1 (só os contratos da MDC): tipo (a receber/a pagar), situação e busca; indicadores que filtram (recebe por mês, paga por mês, reajustes pendentes, vigência terminando em 30 dias); quadro que vira cartão no celular; saldo mensal dos ativos; PDF e Excel. Ações: **Novo contrato**, **Reajustar** (quando pendente), ficha, editar, suspender/reativar e encerrar (com motivo, `JanelaMotivo`) |
-| `/contratos/faturas` | Contratos (ver; gerar e cancelar com operar) | Faturas dos contratos a receber no molde 8.3.1: período do vencimento, situação e busca; indicadores que filtram (faturado no período, aguardando nota fiscal, prontas para enviar, enviadas); quadro que vira cartão no celular; PDF e Excel; aviso fixo "Envio por e-mail/WhatsApp: aguardando configuração". Ações: botão do **banco** (gerar ou ver o boleto pelo Ledgra Link, `JanelaBoleto`, 049), **PDF** da fatura (papel timbrado MDC, `faturaPdf.ts`), **Ver** (dados, nota fiscal, boleto e cada canal da fila), **Cancelar** (com motivo, `JanelaMotivo`) e **Gerar fatura agora** (um mês à mão, com motivo e vencimento) |
+| `/contratos/faturas` | Contratos (ver; gerar e cancelar com operar) | Faturas dos contratos a receber no molde 8.3.1: período do vencimento, situação e busca; indicadores que filtram (faturado no período, aguardando nota fiscal, prontas para enviar, enviadas); quadro que vira cartão no celular; PDF e Excel; avisos de envio aguardando configuração (com o caminho para Contratos › Envio) e de envio que não saiu (053); cada canal da fila na lista mostra se foi, está na fila, falhou ou aguarda (o motivo aparece ao passar o mouse e no detalhe). Ações: botão do **banco** (gerar ou ver o boleto pelo Ledgra Link, `JanelaBoleto`, 049), **PDF** da fatura (papel timbrado MDC, `faturaPdf.ts`), **Ver** (dados, nota fiscal, boleto e cada canal da fila com a frase simples da situação, o motivo da falha e quando o HUB tenta de novo; **Reenviar** com motivo para quem opera, `JanelaReenviar`, 053), **Cancelar** (com motivo, `JanelaMotivo`) e **Gerar fatura agora** (um mês à mão, com motivo e vencimento) |
 | `/contratos/nota-fiscal` | Contratos (gerir) | **Nota fiscal (NFS-e)** (046): ambiente (teste × produção, com confirmação para ir à produção), modo (conferir ou automático, este com confirmação ao ligar — 052), série e próximo número da DPS, regime do Simples, inscrição municipal, município (IBGE), NBS e % aproximado dos tributos do Simples; lista das notas enviadas pelo HUB com PDF e Excel (`TelaNotaFiscal`) |
 | `/contratos/boleto` | Contratos (gerir) | **Boleto** (049): um cartão por banco (Itaú 341, Santander 033) com o código da conta no Ledgra Link, a conta do Financeiro onde o dinheiro cai, boleto com Pix ou simples e ligado/desligado; lista dos boletos emitidos com PDF e Excel (`TelaBoleto`) |
+| `/contratos/envio` | Contratos (gerir) | **Envio (e-mail e WhatsApp)** (053): um cartão por canal (E-mail pelo Microsoft 365, WhatsApp pela API oficial da Meta) com Ligado/Não configurado, o que falta em palavras simples (os **nomes** dos segredos, nunca valores), por onde sai, quando foi conferido e a contagem da fila (na fila, falharam, aguardando, enviados); **Conferir agora** (a função confere os segredos e a conexão) e **Enviar teste** (até 5 por hora, PDF de exemplo marcado como cancelado); lista dos envios que falharam com o motivo e a próxima tentativa, PDF e Excel (`TelaEnvio`) |
 | `/contratos/reajustes` | Contratos | Reajustes pendentes de confirmar (com a proposta do HUB) e o histórico de reajustes e mudanças de valor; indicadores (pendentes, feitos no ano, efeito no mês); PDF e Excel |
 
 Janelas:
@@ -84,7 +85,7 @@ Código: `web/src/dominios/contratos/` (`regras.ts` com testes em `regras.test.t
 | Contrato **a pagar** que lança contas: criar, editar, reativar, gerar à mão ou atualizar contas no reajuste exige também o **Financeiro (operar)**. Só Contratos: contrato a receber ou que só guarda o documento (048, BD-03) | `app.contratos_lanca_pode` |
 | Cada conta a receber do contrato tem uma **fatura** com número `AAAA/NNNNN` (ano da emissão) sem repetir nem pular, mesmo ao mesmo tempo (trava consultiva por organização e ano); recomeça em 00001 no ano novo (provado no teste 106). A conta leva "Fatura AAAA/NNNNN" no documento | `app.fin_recorrente_lancar_mes` |
 | **Boleto** (049): com boleto no envio, o contrato escolhe o banco (Itaú ou Santander). Em Faturas, o botão do banco gera o boleto pelo Ledgra Link (com o login de quem pede, Contratos operar) e mostra a linha digitável e o Pix. Pago = baixa automática da conta a receber na conta do Financeiro do banco; pago a menos não baixa sozinho; recusado/baixado/cancelado libera outro boleto (tentativa 2, 3…). No "Nota fiscal + fatura" o boleto vai num envio próprio; com boleto no conteúdo o Portal só publica quando o boleto existe. Fatura com boleto registrado não cancela | `fatura_boleto_preparar`, `fatura_boleto_registrar`, `link_aplicar_evento`, Contratos › Boleto |
-| Fila de envio: um item por canal marcado, com o que vai (nota, fatura, boleto). Etapa 1: e-mail e WhatsApp "aguardando configuração"; Portal "enviado" na hora se não há nota fiscal, ou quando a nota for emitida (etapa 2). Situação da fatura: gerada (sem canal), aguardando nota fiscal, pronta, enviada, cancelada | `fin_envios`, `app.fin_fatura_processar`, `app.fin_fatura_situacao` |
+| Fila de envio: um item por canal marcado, com o que vai (nota, fatura, boleto). E-mail e WhatsApp nascem "aguardando configuração" e passam sozinhos para "na fila" quando o canal é ligado (053; desligou, voltam a aguardar); saem pela Função `fatura-enviar` quando a NFS-e foi emitida (se o envio leva a nota) e o boleto foi gerado (se leva o boleto). Falha: tenta de novo em 10 min, 30 min, 2 h, 6 h e 24 h; erro definitivo (endereço/número que não existe) ou 6 falhas param e esperam o **Reenviar** (Contratos operar, motivo com 5 letras); na 3ª falha avisa no sino quem opera/gere Contratos. Portal "enviado" na hora se não há nota fiscal, ou quando a nota for emitida (etapa 2). Situação da fatura: gerada (sem canal), aguardando nota fiscal, pronta, enviada, cancelada | `fin_envios`, `app.fin_fatura_processar`, `app.fin_fatura_situacao` |
 | Cancelar fatura: com motivo; cancela junto a conta do mês em aberto e sem recebimento; recusa fatura já recebida ou com nota emitida. A rotina não gera de novo o mês cancelado | `fin_fatura_cancelar` |
 | Gerar fatura agora: um mês do início do contrato até o mês atual, com motivo e vencimento opcional; não deixa duplicar (só se o mês não tem conta ativa). Serve para mês perdido (B-06), adiantar o deste mês ou refazer depois de cancelar | `fin_fatura_gerar_agora` |
 | Rotina e geração só olham a empresa da gestão; erro num contrato (renovar, gerar, encerrar) ou nos avisos vai para a auditoria (`recorrente_falha`) e a rotina segue (`falhas` no retorno) (BD-02) | `app.fin_recorrentes_rotina`, `app.fin_recorrentes_gerar` |
@@ -141,13 +142,35 @@ quem pede), `fatura_boleto_registrar` (só service_role) e nova `link_aplicar_ev
 Gatilhos `fatura_boleto_fixo` e `fatura_boleto_valendo`. Função Edge `ledgra-link` ganhou `acao: "emitir_fatura"`.
 Testes 107/108.
 
+### Envio automático por e-mail e WhatsApp (migração 053, 04/11/2026)
+
+Decisão do Edvaldo: e-mail pelo **Microsoft 365** (Microsoft Graph, `sendMail` como `hub@mdcassessoria.com`, aplicativo no
+Azure com `Mail.Send` só nessa caixa pelo RBAC para Aplicativos) e WhatsApp pela **API oficial da Meta** (modelo
+`fatura_mdc` aprovado, com o PDF da fatura no cabeçalho). Passo a passo e segredos: docs/07, seção 7.7.
+
+- `fin_envios` ganhou `proxima_tentativa_em`, `falhas`, `mensagem_id`, `em_envio_ate` (reserva de 5 min) e `reenvios`;
+  tabela `fin_envio_canais` (estado de cada canal informado pela função; fechada para a equipe, lida por função); gatilho
+  `fin_envio_canal` (envio novo já nasce "na fila" com o canal ligado).
+- Só o servidor (service_role): `fin_envio_token_confere` (token do agendador no Vault, `fatura_enviar_token`, comparação
+  pelo resumo SHA-256), `fin_envio_canal_estado`, `fin_envio_reservar` (só fatura pronta da empresa da gestão, `skip
+  locked`) e `fin_envio_resultado` (enviado / espera crescente / definitivo; aviso no sino na 3ª falha; evento no histórico
+  do contrato; auditoria `envio_enviado`/`envio_falhou`).
+- Telas: `fin_envio_situacao(org)` (Contratos ver), `fin_envio_reenviar(envio, motivo)` (Contratos operar) e
+  `fin_envio_teste_registrar(org, canal, destino)` (Contratos gerir, 5 por hora, auditoria `envio_teste`).
+- `pg_cron` `fatura-enviar` a cada 10 min, só quando há envio a fazer ou canal sem conferência na última hora.
+- Função Edge `fatura-enviar` (`verify_jwt = false`): o PDF da fatura sai no servidor com a cópia do núcleo da tela
+  (`scripts/nucleo_fatura.py`); o e-mail leva o PDF, o XML da NFS-e (bucket `fiscal`, pasta da própria organização), a
+  linha digitável e o Pix; o WhatsApp sobe o PDF e manda o modelo com 5 campos (nome, número, valor, vencimento, como
+  pagar). Testes 113/114 (SQL) e `envio_test.ts` (Deno, sem rede).
+
 ## 4. Pendências
 
 - Contrato com valor variável (ex.: honorário por faixa de faturamento) e contrato sem valor mensal: hoje todo contrato
   tem valor mensal (pode não lançar contas).
 - Reajuste negativo: a regra é única (mantém o valor). Se algum contrato precisar reduzir, falta um campo por contrato.
 - Regenerar `web/src/lib/database.types.ts` do banco depois de aplicar a 041 e a 043 (os tipos novos foram escritos à mão).
-- Faturamento: enviar e-mail e WhatsApp de verdade. **Portal › Faturas da MDC (050):** o cliente vê as faturas
+- Faturamento: envio de e-mail e WhatsApp pronto na 053 (seção 6); falta a TI ligar os canais (docs/07, seção 7.7) e,
+  depois, receber os avisos de entrega do WhatsApp (webhook da Meta) para separar "aceito" de "entregue". **Portal › Faturas da MDC (050):** o cliente vê as faturas
   publicadas para ele (`portal_faturas_detalhe`, permissão `documentos`), baixa o PDF da fatura, vê a NFS-e emitida em
   produção (espelho e XML: política `fis_storage_portal_nfse` do bucket fiscal, só o XML da nota de fatura publicada para
   o próprio cliente; nota de teste nunca aparece) e copia a linha digitável e o Pix do boleto. Boleto (049): do lado do Ledgra Link, a MDC

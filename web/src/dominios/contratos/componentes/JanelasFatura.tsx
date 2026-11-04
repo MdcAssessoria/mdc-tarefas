@@ -1,4 +1,5 @@
-// Janelas da tela de Faturas (043): detalhe da fatura (dados, nota fiscal, boleto e a fila de envio por canal) e
+// Janelas da tela de Faturas (043): detalhe da fatura (dados, nota fiscal, boleto e a fila de envio por canal, com o
+// motivo da falha e "Reenviar" — 053) e
 // "Gerar fatura agora" (um mês à mão, com motivo: mês que a rotina não gerou, adiantar o deste mês ou refazer depois
 // de cancelar). O banco confere tudo (fin_fatura_gerar_agora) e não deixa duplicar.
 "use client";
@@ -16,13 +17,13 @@ import {
   NOME_DOCUMENTO,
   OPCOES_ENVIO,
   SITUACOES_BOLETO,
-  SITUACOES_ENVIO,
   SITUACOES_FATURA,
   SITUACOES_NFSE,
   textoConteudo,
   vencimentoDoMes,
 } from "../faturamento";
 import { gerarFaturaAgora } from "../repositorio";
+import { explicarEnvio, podeReenviar } from "../envio";
 import type { SituacaoNota } from "../nfse";
 import type { EnvioDaFatura, Fatura, Recorrente } from "../tipos";
 import { CampoMes } from "./ContratoFixo";
@@ -47,6 +48,7 @@ export function DetalheFatura({
   aoEmitir,
   aoBaixar,
   aoCancelar,
+  aoReenviar,
   aoFechar,
 }: {
   fatura: Fatura;
@@ -61,9 +63,12 @@ export function DetalheFatura({
   aoEmitir?: () => void;
   aoBaixar: () => void;
   aoCancelar: () => void;
+  /** "Reenviar" um e-mail/WhatsApp (só quem opera Contratos). */
+  aoReenviar?: (e: EnvioDaFatura) => void;
   aoFechar: () => void;
 }) {
   const s = SITUACOES_FATURA[f.situacao];
+  const agora = new Date();
   const destino = (e: EnvioDaFatura) =>
     e.canal === "whatsapp" ? fmtWhatsapp(e.destino) : e.canal === "portal" ? nomeCarteira(e.destino) : e.destino;
   return (
@@ -115,18 +120,27 @@ export function DetalheFatura({
           <ul className="divide-y divide-[var(--borda)] rounded-md border border-[var(--borda)]">
             {envios.map((e) => {
               const c = CANAIS_ENVIO.find((x) => x.id === e.canal);
-              const se = SITUACOES_ENVIO[e.situacao];
+              const se = explicarEnvio(e, agora);
               return (
                 <li key={e.id} className="flex flex-wrap items-center gap-3 p-3 text-sm">
                   <Icone nome={c?.icone ?? "enviar"} className="h-5 w-5 text-[var(--marca)]" />
                   <span className="min-w-0 flex-1">
-                    <span className="font-medium">{c?.nome}</span>
+                    <span className="font-medium">
+                      {c?.nome}
+                      {e.etapa === "boleto" ? " (boleto)" : ""}
+                    </span>
                     <span className="block truncate text-xs text-[var(--texto-suave)]">
                       {destino(e)} · {textoConteudo(e.conteudo)}
                     </span>
+                    <span className={`block text-xs ${se.tom === "vermelho" ? "text-[var(--perigo)]" : "text-[var(--texto-suave)]"}`}>{se.texto}</span>
                   </span>
                   <Chip tom={se.tom}>{se.nome}</Chip>
-                  {e.enviado_em && <span className="text-xs text-[var(--texto-suave)]">{fmtDataHora(e.enviado_em)}</span>}
+                  {aoReenviar && podeReenviar(e, f.situacao === "cancelada") && (
+                    <button className="btn" onClick={() => aoReenviar(e)}>
+                      <Icone nome="enviar" className="h-4 w-4" />
+                      Reenviar
+                    </button>
+                  )}
                 </li>
               );
             })}

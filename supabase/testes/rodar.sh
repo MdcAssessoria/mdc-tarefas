@@ -104,3 +104,8 @@ $P -f "$R/testes/112_ajustes_052.sql" 2>&1 | grep -v "^SET$"
 # BD-04: títulos, estoque, transferências e notas de entrada com a regra de produção (só a MDC, acesso por módulo)
 $P -v ON_ERROR_STOP=1 -f "$R/testes/113_base_bd04.sql" 2>&1 | grep -v NOTICE || true
 $P -f "$R/testes/114_gestao_bd04.sql" 2>&1 | grep -v "^SET$"
+# 053: envio automático das faturas por e-mail (Microsoft 365) e WhatsApp (Meta): fila com espera, canais e reenvio
+for f in testes/115_base_053.sql migrations/053_envio_faturas.sql; do
+  $P -v ON_ERROR_STOP=1 -f "$R/$f" 2>&1 | grep -v NOTICE || true
+done
+$P -f "$R/testes/116_envio_053.sql" 2>&1 | grep -v "^SET$"

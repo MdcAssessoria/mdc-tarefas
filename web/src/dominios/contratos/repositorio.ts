@@ -4,11 +4,13 @@ import { exigir } from "@/lib/exigir";
 import { enviarArquivo } from "@/lib/arquivos/armazenamento";
 import type { Json } from "@/lib/database.types";
 import { chamarFuncao } from "@/lib/funcoesEdge";
+import type { CanalAutomatico, SituacaoEnvio } from "./envio";
 import type {
   AmbienteNfse,
   BancoBoleto,
   CanalEnvio,
   DocumentoFatura,
+  EnvioDaFatura,
   EnvioFatura,
   IndiceRecorrente,
   ModoNfse,
@@ -198,4 +200,28 @@ export async function salvarContaBanco(c: {
   ativo: boolean;
 }) {
   return exigir(await supabase().rpc("link_salvar_banco", { p: c as unknown as Json }));
+}
+
+// ------------------------------------------------------------------------------------------------ envio (053)
+
+/** Estado dos canais, contagem da fila e os últimos problemas (Contratos: ver). */
+export async function lerSituacaoEnvio(org: string) {
+  return exigir(await supabase().rpc("fin_envio_situacao", { p_org: org })) as unknown as SituacaoEnvio;
+}
+
+/** Volta o envio para a fila agora (Contratos: operar; motivo com 5 letras; fica no histórico do contrato). */
+export async function reenviarEnvio(envio: number, motivo: string) {
+  return exigir(await supabase().rpc("fin_envio_reenviar", { p_envio: envio, p_motivo: motivo })) as unknown as { situacao: EnvioDaFatura["situacao"] };
+}
+
+/** Pede para a fatura-enviar conferir os segredos e a conexão de cada canal agora. */
+export async function conferirEnvio(org: string) {
+  return chamarFuncao<{ canais: Record<CanalAutomatico, { configurado: boolean; detalhe: string; faltam: string[] }> }>("fatura-enviar", {
+    corpo: { acao: "situacao", org },
+  });
+}
+
+/** Manda uma mensagem de teste (Contratos: gerir; até 5 por hora). */
+export async function testarEnvio(org: string, canal: CanalAutomatico, destino: string) {
+  return chamarFuncao<{ ok: boolean; mensagem?: string; erro?: string }>("fatura-enviar", { corpo: { acao: "teste", org, canal, destino } });
 }
