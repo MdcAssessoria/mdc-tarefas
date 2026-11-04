@@ -18,6 +18,8 @@ import { useMensagem } from "./useMensagem";
 import { ModulosDoCliente } from "@/dominios/licencas/componentes/ModulosDoCliente";
 import { CampoCnpj } from "@/components/ui/CampoCnpj";
 import { useConfirmar } from "@/components/ui/JanelaConfirmar";
+import { BotoesExportar } from "@/components/ui/BotoesExportar";
+import { nomeArquivo } from "@/lib/arquivos/exportarLista";
 
 interface Resp {
   cliente_id: string;
@@ -223,6 +225,7 @@ export function AbaClientes() {
         </div>
         <input
           className="entrada flex-1"
+          aria-label="Buscar cliente"
           placeholder="Buscar cliente, CNPJ, código, cidade ou UF"
           value={busca}
           onChange={(e) => setBusca(e.target.value)}
@@ -250,6 +253,28 @@ export function AbaClientes() {
         <button className="btn" onClick={() => setCsv(csv === null ? "" : null)}>
           Colar lista
         </button>
+        <BotoesExportar
+          vazio={!lista.length}
+          avisar={(t, tom) => mostrar(t, tom === "erro")}
+          montar={() => ({
+            titulo: "Clientes",
+            subtitulo: `${org.nome} · ${situacao === "ativos" ? "ativos" : situacao === "inativos" ? "inativos" : "todos"} · ${lista.length} cliente(s)`,
+            arquivo: nomeArquivo("Clientes", hojeISO()),
+            logoUrl: org.logo_url,
+            linhas: lista,
+            colunas: [
+              { titulo: "Razão social", valor: (c) => c.razao_social, peso: 2.4, largura: 40 },
+              { titulo: "Nome curto", valor: (c) => c.nome_fantasia ?? "", peso: 1.4, largura: 24 },
+              { titulo: "CNPJ", valor: (c) => c.cnpj ?? "", peso: 1.3, largura: 20 },
+              { titulo: "Regime", valor: (c) => REGIMES.find((r) => r.id === c.regime)?.nome ?? "", peso: 1.1, largura: 18 },
+              { titulo: "Código Domínio", valor: (c) => c.codigo_dominio ?? "", peso: 0.8, largura: 14 },
+              { titulo: "Cidade/UF", valor: (c) => [c.cidade, c.uf].filter(Boolean).join("/"), peso: 1.1, largura: 20 },
+              { titulo: "Segmento", valor: (c) => SEGMENTOS.find((x) => x.id === c.segmento)?.nome ?? "", peso: 1, largura: 18 },
+              { titulo: "Grupos", valor: (c) => (c.grupos ?? []).join(", "), peso: 1.2, largura: 24 },
+              { titulo: "Situação", valor: (c) => (c.ativo ? "Ativo" : `Inativo${c.inativo_em ? ` desde ${fmtData(c.inativo_em)}` : ""}`), peso: 1, largura: 18 },
+            ],
+          })}
+        />
       </div>
       {csv !== null && (
         <div className="cartao space-y-2 p-4">

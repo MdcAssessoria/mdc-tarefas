@@ -1,6 +1,7 @@
 // Barra superior do HUB: botão do menu no celular, abas do módulo ativo, botão de busca rápida e sino de notificações.
 // Módulo com abas agrupadas (navegacao.ts, campo `grupo`) mostra cada grupo como um menu suspenso no computador e,
-// no celular, um botão com a página atual que abre a lista completa por grupos (não estoura com muitas telas).
+// no celular, um botão com a página atual que abre a lista completa por grupos (não estoura com muitas telas). Sem
+// grupos, até 3 telas aparecem lado a lado no celular; com mais, entra o mesmo botão "Telas" (nada fica escondido).
 "use client";
 
 import Link from "next/link";
@@ -183,8 +184,9 @@ export function BarraSuperior({ modulo, aoMenu, aoBuscar }: { modulo: Modulo; ao
           <Sino />
         </div>
       </div>
-      {links.length > 1 && agrupado && <MenuModuloCelular modulo={modulo} links={links} ativo={ativo} />}
-      {links.length > 1 && !agrupado && (
+      {/* celular: com mais de 3 telas (ou com grupos), um botão "Telas" com a lista inteira, para nenhuma ficar escondida */}
+      {(agrupado ? links.length > 1 : links.length > 3) && <MenuModuloCelular modulo={modulo} links={links} ativo={ativo} />}
+      {links.length > 1 && links.length <= 3 && !agrupado && (
         <nav className="flex gap-1 overflow-x-auto border-t border-[var(--borda)] px-3 md:hidden" aria-label={NAV[modulo].titulo}>
           {links.map((l) => (
             <Link

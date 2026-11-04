@@ -21,6 +21,11 @@ import { TransferirTrabalho } from "./_componentes/TransferirTrabalho";
 import { AcessosClientes } from "@/dominios/portal/componentes/AcessosClientes";
 import { descrever } from "@/dominios/acessos/auditoria";
 import { useConfirmar } from "@/components/ui/JanelaConfirmar";
+import { Abas } from "@/components/ui/Abas";
+import { BotoesExportar } from "@/components/ui/BotoesExportar";
+import { nomeArquivo } from "@/lib/arquivos/exportarLista";
+import { hojeISO } from "@/lib/datas";
+import { PAPEIS } from "@/dominios/organizacao/tipos";
 
 export default function PaginaAcessos() {
   return <Acessos />;
@@ -192,30 +197,67 @@ function Acessos() {
         </button>
       </div>
 
-      <div className="flex gap-1 border-b border-[var(--borda)] text-sm">
-        {(
-          [
-            ["pessoas", `Equipe MDC (${ativos.length})`],
-            ["clientes", "Clientes (portal)"],
-            ["perfis", `Perfis (${perfis.length})`],
-            ["historico", "Histórico"],
-          ] as [Aba, string][]
-        ).map(([id, nome]) => (
-          <button
-            key={id}
-            onClick={() => setAba(id)}
-            className={`-mb-px border-b-2 px-3 py-2 ${aba === id ? "border-[var(--marca)] font-medium text-[var(--marca)]" : "border-transparent text-neutral-600"}`}
-          >
-            {nome}
-          </button>
-        ))}
+      <Abas
+        rotulo="Partes de Pessoas e acessos"
+        valor={aba}
+        aoMudar={setAba}
+        itens={[
+          { id: "pessoas", nome: `Equipe MDC (${ativos.length})` },
+          { id: "clientes", nome: "Clientes (portal)" },
+          { id: "perfis", nome: `Perfis (${perfis.length})` },
+          { id: "historico", nome: "Histórico" },
+        ]}
+      />
+
+      <div role="alert" aria-live="assertive">
+        {erro && <p className="rounded-md bg-red-50 p-3 text-sm text-red-800">{erro}</p>}
+      </div>
+      <div role="status" aria-live="polite">
+        {aviso && (
+          <div className="rounded-md bg-emerald-50 p-3 text-sm text-emerald-900">
+            {aviso.texto}
+            {aviso.link && <LinkCopiavel link={aviso.link} nome={aviso.nome} />}
+          </div>
+        )}
       </div>
 
-      {erro && <p className="rounded-md bg-red-50 p-3 text-sm text-red-800">{erro}</p>}
-      {aviso && (
-        <div className="rounded-md bg-emerald-50 p-3 text-sm text-emerald-900">
-          {aviso.texto}
-          {aviso.link && <LinkCopiavel link={aviso.link} nome={aviso.nome} />}
+      {aba === "pessoas" && (
+        <div className="flex flex-wrap justify-end gap-2">
+          <BotoesExportar
+            vazio={!ativos.length}
+            avisar={(t, tom) => (tom === "erro" ? falhar(t) : avisar(t))}
+            montar={() => ({
+              titulo: "Pessoas e acessos — Equipe MDC",
+              subtitulo: `${org.nome} · ${ativos.length} pessoa(s) ativa(s)`,
+              arquivo: nomeArquivo("Pessoas-e-acessos", hojeISO()),
+              logoUrl: org.logo_url,
+              linhas: ativos,
+              colunas: [
+                { titulo: "Nome", valor: (m) => m.nome, peso: 1.6, largura: 28 },
+                { titulo: "E-mail", valor: (m) => m.email ?? "", peso: 1.8, largura: 32 },
+                { titulo: "Papel", valor: (m) => PAPEIS.find((p) => p.id === m.papel)?.nome ?? m.papel, peso: 0.9, largura: 14 },
+                {
+                  titulo: "Perfil",
+                  valor: (m) => (m.papel === "admin" ? "Administrador (tudo)" : (perfis.find((p) => p.id === m.perfil_id)?.nome ?? "Acesso manual")),
+                  peso: 1.2,
+                  largura: 22,
+                },
+                { titulo: "Setor", valor: (m) => setores.find((x) => x.id === m.setor_id)?.nome ?? "", peso: 1, largura: 18 },
+                {
+                  titulo: "Módulos liberados",
+                  valor: (m) =>
+                    m.papel === "admin"
+                      ? "Todos"
+                      : acessos
+                          .filter((a) => a.user_id === m.user_id)
+                          .map((a) => `${apps.find((x) => x.slug === a.app)?.nome ?? a.app} (${a.papel})`)
+                          .join(", "),
+                  peso: 2.4,
+                  largura: 50,
+                },
+              ],
+            })}
+          />
         </div>
       )}
 

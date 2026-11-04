@@ -8,6 +8,8 @@ import { hojeISO } from "@/lib/datas";
 import { traduzirErro } from "@/lib/erros";
 import { fmtData } from "@/lib/formato/datas";
 import { useMensagem } from "./useMensagem";
+import { BotoesExportar } from "@/components/ui/BotoesExportar";
+import { nomeArquivo } from "@/lib/arquivos/exportarLista";
 import { JanelaMotivo } from "@/dominios/financeiro/componentes/Comuns";
 
 interface Feriado {
@@ -62,6 +64,24 @@ export function AbaFeriados() {
         <button className="btn-primario">Adicionar</button>
       </form>
       {el}
+      <div className="flex justify-end gap-2">
+        <BotoesExportar
+          vazio={!lista.length}
+          avisar={(t, tom) => mostrar(t, tom === "erro")}
+          montar={() => ({
+            titulo: "Feriados",
+            subtitulo: `${org.nome} · ${lista.length} feriado(s)`,
+            arquivo: nomeArquivo("Feriados", hojeISO()),
+            logoUrl: org.logo_url,
+            linhas: lista,
+            colunas: [
+              { titulo: "Data", valor: (f) => fmtData(f.data), peso: 0.8, largura: 12 },
+              { titulo: "Feriado", valor: (f) => f.descricao, peso: 2.4, largura: 40 },
+              { titulo: "Tipo", valor: (f) => (f.org_id ? "Municipal/estadual" : "Nacional"), peso: 1, largura: 18 },
+            ],
+          })}
+        />
+      </div>
       <div className="cartao">
         <table className="tabela">
           <tbody>

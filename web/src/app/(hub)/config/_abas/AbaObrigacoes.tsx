@@ -14,6 +14,9 @@ import type { Modelo, Prioridade } from "@/dominios/tarefas/tipos";
 import { traduzirErro } from "@/lib/erros";
 import { fmtCompetencia } from "@/lib/formato/datas";
 import { useMensagem } from "./useMensagem";
+import { BotoesExportar } from "@/components/ui/BotoesExportar";
+import { nomeArquivo } from "@/lib/arquivos/exportarLista";
+import { hojeISO } from "@/lib/datas";
 
 const MESES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
@@ -95,6 +98,20 @@ export function AbaObrigacoes() {
         : m.length === 1
           ? `Anual (comp. ${MESES[m[0] - 1].toLowerCase()})`
           : m.map((x) => MESES[x - 1]).join(", ");
+  const descreverPrazo = (m: Modelo) =>
+    `Dia ${m.dia_vencimento}${
+      m.meses_apos_competencia === 0 ? " do mês" : m.meses_apos_competencia === 1 ? " do mês seguinte" : ` (+${m.meses_apos_competencia} meses)`
+    }`;
+  const descreverAlcance = (m: Modelo) =>
+    !m.regimes && !m.segmentos?.length && !m.grupos?.length
+      ? "Todos os clientes"
+      : [
+          m.regimes && m.regimes.map((r) => REGIMES.find((x) => x.id === r)?.nome ?? r).join(", "),
+          m.segmentos?.length && m.segmentos.map((x) => nomeSegmento(x)).join(", "),
+          m.grupos?.length && `grupos: ${m.grupos.join(", ")}`,
+        ]
+          .filter(Boolean)
+          .join(" · ");
 
   return (
     <div className="space-y-4">
@@ -113,6 +130,25 @@ export function AbaObrigacoes() {
         <button className="btn" onClick={() => setEditando({ ...MODELO_VAZIO })}>
           + Nova obrigação
         </button>
+        <BotoesExportar
+          vazio={!modelos.length}
+          avisar={(t, tom) => mostrar(t, tom === "erro")}
+          montar={() => ({
+            titulo: "Obrigações recorrentes",
+            subtitulo: `${org.nome} · ${modelos.length} obrigação(ões)`,
+            arquivo: nomeArquivo("Obrigacoes", hojeISO()),
+            logoUrl: org.logo_url,
+            linhas: modelos,
+            colunas: [
+              { titulo: "Obrigação", valor: (m) => m.titulo, peso: 2, largura: 34 },
+              { titulo: "Setor", valor: (m) => setorPorId(m.setor_id)?.nome ?? "", peso: 1, largura: 18 },
+              { titulo: "Periodicidade", valor: (m) => descreverMeses(m.meses), peso: 1.2, largura: 20 },
+              { titulo: "Prazo", valor: (m) => descreverPrazo(m), peso: 1.2, largura: 22 },
+              { titulo: "Alcance", valor: (m) => descreverAlcance(m), peso: 2, largura: 36 },
+              { titulo: "Situação", valor: (m) => (m.ativo ? "Ativa" : "Inativa"), peso: 0.7, largura: 10 },
+            ],
+          })}
+        />
       </div>
       {el}
 
@@ -310,29 +346,13 @@ export function AbaObrigacoes() {
                 <td className="font-medium">{m.titulo}</td>
                 <td>{setorPorId(m.setor_id)?.nome ?? "—"}</td>
                 <td>{descreverMeses(m.meses)}</td>
-                <td className="whitespace-nowrap">
-                  Dia {m.dia_vencimento}
-                  {m.meses_apos_competencia === 0
-                    ? " do mês"
-                    : m.meses_apos_competencia === 1
-                      ? " do mês seguinte"
-                      : ` (+${m.meses_apos_competencia} meses)`}
-                </td>
-                <td className="text-[var(--texto-suave)]">
-                  {!m.regimes && !m.segmentos?.length && !m.grupos?.length
-                    ? "Todos os clientes"
-                    : [
-                        m.regimes && m.regimes.map((r) => REGIMES.find((x) => x.id === r)?.nome ?? r).join(", "),
-                        m.segmentos?.length && m.segmentos.map((x) => nomeSegmento(x)).join(", "),
-                        m.grupos?.length && `grupos: ${m.grupos.join(", ")}`,
-                      ]
-                        .filter(Boolean)
-                        .join(" · ")}
-                </td>
+                <td className="whitespace-nowrap">{descreverPrazo(m)}</td>
+                <td className="text-[var(--texto-suave)]">{descreverAlcance(m)}</td>
                 <td onClick={(e) => e.stopPropagation()}>
                   <input
                     type="checkbox"
                     className="h-5 w-5 accent-[var(--marca)]"
+                    aria-label={`${m.titulo} ativa`}
                     checked={m.ativo}
                     onChange={async (e) => {
                       const { error } = await supabase().from("modelos_recorrentes").update({ ativo: e.target.checked }).eq("id", m.id);

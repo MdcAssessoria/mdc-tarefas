@@ -6,6 +6,9 @@ import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { supabase } from "@/lib/supabase";
 import { traduzirErro } from "@/lib/erros";
 import { useMensagem } from "./useMensagem";
+import { BotoesExportar } from "@/components/ui/BotoesExportar";
+import { nomeArquivo } from "@/lib/arquivos/exportarLista";
+import { hojeISO } from "@/lib/datas";
 
 export function AbaSetores() {
   const { org, setores, recarregar } = useOrg();
@@ -42,6 +45,24 @@ export function AbaSetores() {
         <button className="btn-primario">Adicionar</button>
       </form>
       {el}
+      <div className="flex justify-end gap-2">
+        <BotoesExportar
+          vazio={!setores.length}
+          avisar={(t, tom) => mostrar(t, tom === "erro")}
+          montar={() => ({
+            titulo: "Setores",
+            subtitulo: `${org.nome} · ${setores.length} setor(es)`,
+            arquivo: nomeArquivo("Setores", hojeISO()),
+            logoUrl: org.logo_url,
+            linhas: setores,
+            colunas: [
+              { titulo: "Ordem", valor: (x) => x.ordem, formato: "numero", peso: 0.6, largura: 8 },
+              { titulo: "Nome", valor: (x) => x.nome, peso: 2, largura: 30 },
+              { titulo: "Situação", valor: (x) => (x.ativo ? "Ativo" : "Inativo"), peso: 0.8, largura: 12 },
+            ],
+          })}
+        />
+      </div>
       <div className="cartao">
         <table className="tabela tabela-acoes-fixas">
           <thead>
@@ -59,6 +80,7 @@ export function AbaSetores() {
                   <input
                     type="number"
                     className="entrada w-20"
+                    aria-label={`Ordem de ${s.nome}`}
                     defaultValue={s.ordem}
                     onBlur={(e) => Number(e.target.value) !== s.ordem && alterar(s.id, { ordem: Number(e.target.value) })}
                   />
@@ -66,6 +88,7 @@ export function AbaSetores() {
                 <td>
                   <input
                     className="entrada w-full"
+                    aria-label={`Nome do setor ${s.nome}`}
                     defaultValue={s.nome}
                     onBlur={(e) => e.target.value !== s.nome && alterar(s.id, { nome: e.target.value })}
                   />
@@ -73,6 +96,7 @@ export function AbaSetores() {
                 <td>
                   <input
                     type="color"
+                    aria-label={`Cor de ${s.nome}`}
                     defaultValue={s.cor}
                     onBlur={(e) => e.target.value !== s.cor && alterar(s.id, { cor: e.target.value })}
                   />
@@ -81,6 +105,7 @@ export function AbaSetores() {
                   <input
                     type="checkbox"
                     className="h-5 w-5 accent-[var(--marca)]"
+                    aria-label={`${s.nome} ativo`}
                     checked={s.ativo}
                     onChange={(e) => alterar(s.id, { ativo: e.target.checked })}
                   />
