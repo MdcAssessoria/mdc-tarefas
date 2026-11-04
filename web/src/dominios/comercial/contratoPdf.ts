@@ -70,6 +70,12 @@ export function separarFecho(linhas: string[]): { corpo: string[]; fecho: string
   return { corpo: uteis.slice(0, inicio), fecho: uteis.slice(inicio, fim).filter((l) => l.trim()) };
 }
 
+/** Onde começa a última cláusula ("## …") do corpo do contrato; -1 se não houver cláusula. */
+export function indiceUltimaClausula(corpo: string[]): number {
+  for (let k = corpo.length - 1; k >= 0; k--) if (/^## /.test(corpo[k].trim())) return k;
+  return -1;
+}
+
 /**
  * Quebra um nome pela largura real em até `max` linhas; o que não couber termina em "…". Nenhuma linha passa de `larg`.
  */
@@ -234,10 +240,9 @@ export async function gerarContratoPdf(d: DadosContratoPdf): Promise<Uint8Array>
   };
 
   const { corpo, fecho } = separarFecho(d.texto.split("\n"));
-  novaPagina();
-  for (const bruta of corpo) {
+  const desenhar = (bruta: string) => {
     const l = bruta.trimEnd();
-    if (!l.trim()) continue;
+    if (!l.trim()) return;
     if (l.startsWith("# ")) {
       garantir(50);
       paragrafo(l.slice(2).toUpperCase(), { size: 13, bold: true, centro: true, depois: 2 });
@@ -253,8 +258,24 @@ export async function gerarContratoPdf(d: DadosContratoPdf): Promise<Uint8Array>
       text("•", ME + 6, y - 10.2, 10.2, b, DOURADO_ESC);
       paragrafo(l.slice(2), { x: ME + 18, larg: largura - 18, depois: 2 });
     } else paragrafo(l);
-  }
-
+  };
+  /** Altura aproximada de uma linha do modelo (mesmas regras de desenhar), para levar blocos juntos. */
+  const alturaLinha = (bruta: string) => {
+    const l = bruta.trimEnd();
+    if (!l.trim()) return 0;
+    if (l.startsWith("# ")) return 50;
+    if (l.startsWith("## ")) return 26;
+    if (/^- /.test(l)) return alturaParagrafo(l.slice(2), { larg: largura - 18, depois: 2 });
+    return alturaParagrafo(l);
+  };
+  // DES-02: a última cláusula vai junto do fecho e das assinaturas. Se tudo couber numa página, a cláusula inteira
+  // muda de página junto; se não couber, pelo menos o último parágrafo dela acompanha o fecho (nada de página só
+  // com o "E, por estarem de acordo").
+  const ultimaClausula = indiceUltimaClausula(corpo);
+  const antes = ultimaClausula < 0 ? corpo : corpo.slice(0, ultimaClausula);
+  const clausula = ultimaClausula < 0 ? [] : corpo.slice(ultimaClausula);
+  novaPagina();
+  for (const l of antes) desenhar(l);
   // assinaturas: nome quebrado pela largura da coluna (até 2 linhas) e CNPJ/CPF sob a linha de cada parte
   const meia = (largura - 30) / 2;
   const NOME = 9,
@@ -293,7 +314,21 @@ export async function gerarContratoPdf(d: DadosContratoPdf): Promise<Uint8Array>
   // o fecho ("E, por estarem de acordo…") e a linha de local e data vão para a mesma página das assinaturas
   const opFecho = (k: number): Opcoes => ({ antes: k === 0 ? 4 : 0 });
   const alturaFecho = fecho.reduce((a, l, k) => a + alturaParagrafo(l, opFecho(k)), 0);
-  garantir(alturaFecho + ACIMA + linhaPartes + ACIMA + linhaTestemunhas);
+  const blocoFinal = alturaFecho + ACIMA + linhaPartes + ACIMA + linhaTestemunhas;
+  const alturaClausula = clausula.reduce((a, l) => a + alturaLinha(l), 0);
+  const ALTURA_UTIL = H - BANDA - 34 - 84;
+  if (clausula.length && alturaClausula + blocoFinal <= ALTURA_UTIL) {
+    garantir(alturaClausula + blocoFinal);
+    for (const l of clausula) desenhar(l);
+  } else if (clausula.length) {
+    const uteis = clausula.filter((l) => l.trim());
+    const ultimo = uteis[uteis.length - 1];
+    const k = clausula.lastIndexOf(ultimo);
+    for (const l of clausula.slice(0, k)) desenhar(l);
+    garantir(alturaLinha(ultimo) + blocoFinal);
+    desenhar(ultimo);
+  }
+  garantir(blocoFinal);
   fecho.forEach((l, k) => paragrafo(l, opFecho(k)));
   y -= ACIMA;
   contratante.desenhar(ME);
