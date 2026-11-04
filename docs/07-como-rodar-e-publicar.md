@@ -122,6 +122,16 @@ npx supabase functions deploy convite --project-ref bulqqdgfrrpqquqvjjfa --impor
   vencer passa a ser recusado ao salvar (em 03/11/2026 não havia contratos em produção).
   047, 048 e 049 aplicadas em 03/11/2026 (21h30); tipos regenerados; `ledgra-link` v3 publicada pelo conector (bundle).
 - **04/11/2026:** 050 aplicada (Portal › Faturas); `demonstrativo-pdf` v9 publicada (rascunho em todas as páginas, total do balancete, texto sem corte). As 8 funções com a origem `hub.mdcassessoria.com` (fiscal-certificado, fiscal-manifestar, fiscal-captura, nfse-emitir, ledgra-link, ledgra-link-webhook, convite, balancete-agente) ficam para quando o DNS do subdomínio estiver no ar.
+- **Ajustes finais (052, branch `ajustes-finais`).** Ordem: testes (`bash supabase/testes/rodar.sh`, blocos 111 a 114)
+  → aplicar a 052 → regenerar `database.types.ts` (os tipos da 052 foram escritos à mão) e rodar os Advisors → publicar
+  as funções → push do site.
+  - `nfse-automatica` (**nova**, **sem checagem de login**: `verify_jwt = false`, como `fiscal-captura`; só aceita o token
+    do Vault `nfse_automatica_token`, que a própria 052 gera). Bundle como as fiscais, dentro da pasta da função.
+  - `nfse-emitir` (republicar: a emissão passou para `_fiscal/emitirFatura.ts`, usado também pela automática; continua
+    com `verify_jwt = true`).
+  - `demonstrativo-pdf` (republicar: lê telefone, site, e-mail, Instagram e responsável técnico de `org_papel_timbrado`).
+  Sem segredo novo no painel. Testes: `cd supabase/functions/_fiscal && deno test --allow-read --config deno.json automatica_test.ts`.
+  O agendador `nfse-automatica` (06h45) já nasce com a 052, mas só chama a função se algum parâmetro estiver em automático.
 - Segredos das funções (chave de serviço etc.) ficam no painel: Edge Functions › Secrets. Nunca no código.
 - Ledgra Link (043): `LEDGRA_LINK_URL` (endereço do Ledgra Link, ex.: `https://link.ledgra.com.br`), `LEDGRA_LINK_CHAVE`
   (chave do HUB no Ledgra Link, começa com `llk_`) e `LEDGRA_LINK_SEGREDO_WEBHOOK` (segredo mostrado uma vez pelo Ledgra

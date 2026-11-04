@@ -6,6 +6,7 @@
 // O acesso aos balancetes segue as regras do banco (RLS) do usuário que pediu.
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { gerarPdf } from "./pdf.ts";
+import type { Escritorio } from "./pdf.ts";
 import { assinar } from "./assinatura.ts";
 import { somarDfc, somarDre } from "./demonstracoes.ts";
 import type { Demonstracoes, Dfc } from "./demonstracoes.ts";
@@ -248,12 +249,24 @@ async function finalizar(servico: Sb, orgId: string, publicado: boolean, cli: Cl
   const org = orgRow as { logo_url: string | null; nome: string | null; cnpj: string | null; gestao_cliente_id: string | null } | null;
   const logoUrl = org?.logo_url ?? "";
   // papel timbrado com os dados do cadastro (empresa da Gestão da organização); o que faltar fica com o padrão MDC (D-11)
-  let escritorio: { razao?: string; cnpj?: string; cidadeUf?: string } | null = null;
+  let escritorio: Partial<Escritorio> | null = null;
   if (org?.gestao_cliente_id) {
     const { data: emp } = await servico.from("clientes").select("razao_social,cnpj,cidade,uf").eq("id", org.gestao_cliente_id).maybeSingle();
     const e = emp as { razao_social: string | null; cnpj: string | null; cidade: string | null; uf: string | null } | null;
     if (e) escritorio = { razao: e.razao_social ?? undefined, cnpj: mascaraCnpj(e.cnpj), cidadeUf: e.cidade && e.uf ? `${e.cidade}/${e.uf}` : undefined };
   } else if (org?.cnpj) escritorio = { razao: org.nome ?? undefined, cnpj: mascaraCnpj(org.cnpj) };
+  // contatos e responsável técnico do papel timbrado (Configurações › Organização e painel, migração 052)
+  const { data: papel } = await servico
+    .from("org_papel_timbrado")
+    .select("telefone,site,email,instagram,responsavel,crc")
+    .eq("org_id", b.org_id)
+    .maybeSingle();
+  if (papel) {
+    const t = papel as Record<string, string | null>;
+    const contatos: Partial<Escritorio> = {};
+    for (const k of ["telefone", "site", "email", "instagram", "responsavel", "crc"] as const) if (t[k]) contatos[k] = t[k] as string;
+    escritorio = { ...(escritorio ?? {}), ...contatos };
+  }
   // só a logo da própria organização (Storage) ou do site da MDC
   const permitida =
     (logoUrl.startsWith("storage:") && logoUrl.slice(8).startsWith(`${b.org_id}/`) && !logoUrl.includes("..")) ||

@@ -103,7 +103,7 @@ function Certificado() {
     <div className="mx-auto max-w-2xl space-y-5">
       {janelaConfirmar}
       <div className="space-y-2">
-        <Link href="/demonstrativos" className="inline-flex items-center gap-1 text-sm text-neutral-600 hover:underline">
+        <Link href="/demonstrativos" className="alvo-toque inline-flex items-center gap-1 text-sm text-neutral-600 hover:underline">
           <Icone nome="voltar" className="h-4 w-4" />
           Balancetes
         </Link>

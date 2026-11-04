@@ -106,7 +106,7 @@ export default function Portal() {
             <div className="truncate text-xs">Portal do Cliente · {emp.org_nome}</div>
             {empresas.length > 1 ? (
               <select
-                className="max-w-full truncate rounded-md bg-white/10 px-2 py-0.5 font-semibold text-white"
+                className="alvo-toque max-w-full truncate rounded-md bg-white/10 px-2 py-0.5 font-semibold text-white"
                 aria-label="Empresa"
                 value={atual}
                 onChange={(e) => {
@@ -126,7 +126,7 @@ export default function Portal() {
           </div>
           <SinoCliente uid={session.user.id} />
           <button
-            className="flex shrink-0 items-center gap-1.5 rounded-md border border-white/20 px-2.5 py-1 text-sm hover:text-white"
+            className="alvo-toque flex shrink-0 items-center gap-1.5 rounded-md border border-white/20 px-2.5 py-1 text-sm hover:text-white"
             onClick={async () => {
               await supabase().auth.signOut();
               window.location.replace(caminho("/login"));
@@ -146,7 +146,7 @@ export default function Portal() {
               ref={aba === a.id ? abaAtiva : undefined}
               onClick={() => setAba(a.id)}
               aria-current={aba === a.id ? "page" : undefined}
-              className={`flex min-h-9 shrink-0 items-center gap-1.5 rounded-md px-3 py-1.5 ${aba === a.id ? "bg-white/15 text-white" : "hover:text-white"}`}
+              className={`alvo-toque flex min-h-9 shrink-0 items-center gap-1.5 rounded-md px-3 py-1.5 ${aba === a.id ? "bg-white/15 text-white" : "hover:text-white"}`}
             >
               <Icone nome={a.icone} className="h-4 w-4" />
               {a.nome}

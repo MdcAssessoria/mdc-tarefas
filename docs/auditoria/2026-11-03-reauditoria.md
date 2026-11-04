@@ -34,8 +34,8 @@ da gestão), T-01 (seletor de Empresa sumiu), T-04, T-11, C-02, C-03, C-14, D-01
 
 **Situação em 03/11/2026, noite (branch `fase2-seguranca-telas`, migração 047 ainda não aplicada):** BD-01 e BD-02
 resolvidos na 045 (aplicada); SEG-01, SEG-02/BD-07, SEG-03/BD-06, SEG-08/BD-05 e SEG-09 resolvidos na **047** (testes
-103/104); COD-03/UX-11, UX-02 e DES-01 resolvidos nas telas; BD-04 **em aberto** (os testes 20/30/50/70 rodam antes da
-042 com o cliente c1; os casos de gestão da MDC estão cobertos pelos testes 98, 100, 102 e 104). UX-01 (Prioridade 2)
+103/104); COD-03/UX-11, UX-02 e DES-01 resolvidos nas telas; BD-04 **resolvido em 04/11** (testes 113/114 refazem as provas de 20/30/50/70 com a MDC depois da 052; os originais
+continuam como histórico). UX-01 (Prioridade 2)
 resolvido com a coluna de ações presa à direita no celular.
 
 | # | O quê | Por quê |
@@ -47,7 +47,7 @@ resolvido com a coluna de ações presa à direita no celular.
 | SEG-03 / BD-06 (resolvido, 047) | Contratos lê só id e nome dos cadastros (função `fin_recorrente_opcoes`) | Hoje lê CPF, e-mail e dados bancários. |
 | SEG-08 / BD-05 (resolvido, 047) | Trava de NaN em `portal_balancete_linhas` e `soc_taxas` | Um NaN pode chegar ao Demonstrativo assinado. |
 | SEG-09 (resolvido, 047) | Anexo do Portal só em tarefa do próprio cliente | Hoje um cliente consegue pendurar arquivo na rotina de outro (precisa do UUID). |
-| BD-04 | Rodar os testes 20/30/50/70 depois da 042 com a empresa MDC | Hoje baixa, estoque e notas não têm teste com a regra que vale em produção. |
+| BD-04 (resolvido, 04/11) | Rodar os testes 20/30/50/70 depois da 042 com a empresa MDC (testes 113/114: as mesmas provas com a MDC, acesso por módulo e o Portal sem gestão) | Hoje baixa, estoque e notas não têm teste com a regra que vale em produção. |
 | COD-03 / UX-11 (resolvido) | Mostrar "Carregando" e, para o administrador, como definir a empresa | A tela pisca "Empresa da Gestão não definida" ao abrir. |
 | DES-01 (resolvido) | Marca d'água "MINUTA" em todas as páginas do contrato em rascunho | Hoje uma minuta impressa pode ser assinada como definitiva. |
 | UX-02 (resolvido) | Aviso do Portal sem "serviços do HUB" e sem "Financeiro suspenso" | Confunde o cliente, que não tem mais Financeiro no HUB. |
@@ -59,7 +59,7 @@ resolvido com a coluna de ações presa à direita no celular.
 - **UX-05 (resolvido, 04/11):** concluir tarefa no Início com toque de 24 px e sem desfazer. Alvo de 44 px e botão "Desfazer" por 8 s.
 - **UX-06, UX-07 (resolvidos, 04/11):** Pessoas e acessos e Configurações sem PDF/Excel, com campos sem rótulo e avisos não anunciados. Excel/PDF em Pessoas e acessos e em Clientes, Equipe, Setores, Obrigações e Feriados; rótulos nos campos das tabelas; avisos com `role=status`/`alert`.
 - **UX-08 (resolvido, 04/11):** sub-abas escondidas no celular. Módulo com mais de 3 telas mostra o botão "Telas" com a lista inteira; abas da página com 44 px e rolagem.
-- **UX-09 (resolvido, 04/11; caixas de marcar ficam com 24 px, o mínimo da WCAG 2.2 AA):** alvos de toque menores que 44 px; letra de 14 px nos campos faz o iPhone dar zoom.
+- **UX-09 (resolvido, 04/11; caixas de marcar ficam com 24 px, o mínimo da WCAG 2.2 AA; ajustes finais de 04/11: links de navegação do Societário e dos Demonstrativos, links das listas e seletor de Empresa do Portal com 44 px — 134 → 105 alvos pequenos no celular, o resto são ações compactas fora deste escopo):** alvos de toque menores que 44 px; letra de 14 px nos campos faz o iPhone dar zoom.
 - **UX-10 (resolvido, 04/11: o axe-core não acha mais nada nas 62 telas no computador; `ACESSIBILIDADE=1 npm run telas`):** 137 elementos com contraste insuficiente.
 - **UX-12 (resolvido, 04/11):** em Lançar nota, "Voltar" descarta tudo sem perguntar.
 - **UX-13 (resolvido, 04/11: lista de contratos com a coluna de ações presa à direita):** botões cortados a 1280 px.
@@ -93,7 +93,7 @@ resolvido com a coluna de ações presa à direita no celular.
 - **DES-08 / D-07:** cores com sentido único.
 - **DES-09:** posição dos botões fora do molde.
 - **DES-10:** gráfico "Seu ritmo" ilegível no celular.
-- **D-11 (resolvido em parte em 04/11):** dados da MDC escritos à mão no PDF do Demonstrativo. Razão social, CNPJ e cidade vêm do cadastro; telefone, site, e-mail e responsável técnico seguem fixos (o cadastro não tem esses campos).
+- **D-11 (resolvido, 04/11, migração 052):** dados da MDC escritos à mão no PDF do Demonstrativo. Razão social, CNPJ e cidade vêm do cadastro; telefone, site, e-mail, Instagram e responsável técnico (nome e CRC) vêm de `org_papel_timbrado`, editável pelo administrador em Configurações (valor inicial = dados atuais da MDC). Falta republicar `demonstrativo-pdf`.
 - **DES-12 a DES-17:** pequenos ajustes visuais.
 
 ## Código (manutenção)

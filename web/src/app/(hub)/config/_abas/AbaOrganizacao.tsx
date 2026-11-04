@@ -7,6 +7,7 @@ import { supabase } from "@/lib/supabase";
 import { traduzirErro } from "@/lib/erros";
 import { enderecoHub } from "@/lib/caminho";
 import { useMensagem } from "./useMensagem";
+import { CartaoPapelTimbrado } from "./CartaoPapelTimbrado";
 
 export function AbaOrganizacao() {
   const { org, recarregar } = useOrg();
@@ -91,6 +92,7 @@ export function AbaOrganizacao() {
           <li>Faça login uma vez; a sessão se renova sozinha e o painel atualiza em tempo real.</li>
         </ol>
       </div>
+      <CartaoPapelTimbrado />
     </div>
   );
 }

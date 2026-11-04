@@ -4912,6 +4912,61 @@ export type Database = {
           },
         ];
       };
+      nfse_auto_tentativas: {
+        Row: {
+          ambiente: string;
+          cliente_id: string;
+          criado_em: string;
+          dia: string;
+          fatura_id: string;
+          mensagem: string | null;
+          org_id: string;
+          resultado: string;
+        };
+        Insert: {
+          ambiente: string;
+          cliente_id: string;
+          criado_em?: string;
+          dia: string;
+          fatura_id: string;
+          mensagem?: string | null;
+          org_id: string;
+          resultado: string;
+        };
+        Update: {
+          ambiente?: string;
+          cliente_id?: string;
+          criado_em?: string;
+          dia?: string;
+          fatura_id?: string;
+          mensagem?: string | null;
+          org_id?: string;
+          resultado?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "nfse_auto_tentativas_cliente_id_fkey";
+            columns: ["cliente_id"];
+            isOneToOne: false;
+            referencedRelation: "clientes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "nfse_auto_tentativas_fatura_id_fkey";
+            columns: ["fatura_id"];
+            isOneToOne: false;
+            referencedRelation: "fin_faturas";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "nfse_auto_tentativas_org_id_fkey";
+            columns: ["org_id"];
+            isOneToOne: false;
+            referencedRelation: "organizacoes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       nfse_parametros: {
         Row: {
           ambiente: string;
@@ -4973,6 +5028,50 @@ export type Database = {
             foreignKeyName: "nfse_parametros_org_id_fkey";
             columns: ["org_id"];
             isOneToOne: false;
+            referencedRelation: "organizacoes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      org_papel_timbrado: {
+        Row: {
+          atualizado_em: string;
+          atualizado_por: string | null;
+          crc: string | null;
+          email: string | null;
+          instagram: string | null;
+          org_id: string;
+          responsavel: string | null;
+          site: string | null;
+          telefone: string | null;
+        };
+        Insert: {
+          atualizado_em?: string;
+          atualizado_por?: string | null;
+          crc?: string | null;
+          email?: string | null;
+          instagram?: string | null;
+          org_id: string;
+          responsavel?: string | null;
+          site?: string | null;
+          telefone?: string | null;
+        };
+        Update: {
+          atualizado_em?: string;
+          atualizado_por?: string | null;
+          crc?: string | null;
+          email?: string | null;
+          instagram?: string | null;
+          org_id?: string;
+          responsavel?: string | null;
+          site?: string | null;
+          telefone?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "org_papel_timbrado_org_id_fkey";
+            columns: ["org_id"];
+            isOneToOne: true;
             referencedRelation: "organizacoes";
             referencedColumns: ["id"];
           },
@@ -6885,6 +6984,7 @@ export type Database = {
         Args: { p_cliente: string; p_motivo?: string; p_org: string };
         Returns: string;
       };
+      org_papel_timbrado_salvar: { Args: { p: Json; p_org: string }; Returns: Json };
       portal_abrir_conversa: {
         Args: {
           p_assunto: string;

@@ -96,3 +96,11 @@ for f in testes/111_base_051.sql migrations/051_conciliacao_extrato.sql; do
   $P -v ON_ERROR_STOP=1 -f "$R/$f" 2>&1 | grep -v NOTICE || true
 done
 $P -f "$R/testes/112_conciliacao_051.sql" 2>&1 | grep -v "^SET$"
+# 052: NFS-e automática (token do agendador, uma tentativa por dia, aviso no sino) e papel timbrado do escritório
+for f in testes/111_base_052.sql migrations/052_ajustes_finais.sql; do
+  $P -v ON_ERROR_STOP=1 -f "$R/$f" 2>&1 | grep -v NOTICE || true
+done
+$P -f "$R/testes/112_ajustes_052.sql" 2>&1 | grep -v "^SET$"
+# BD-04: títulos, estoque, transferências e notas de entrada com a regra de produção (só a MDC, acesso por módulo)
+$P -v ON_ERROR_STOP=1 -f "$R/testes/113_base_bd04.sql" 2>&1 | grep -v NOTICE || true
+$P -f "$R/testes/114_gestao_bd04.sql" 2>&1 | grep -v "^SET$"

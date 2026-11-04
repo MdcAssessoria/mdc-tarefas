@@ -165,9 +165,11 @@ export interface DadosParametrosNfse {
   p_tot_trib_sn: number | null;
   proximo_ndps?: number | null;
   confirmo_producao?: boolean;
+  /** Ligar o modo automático pede a confirmação de que a nota pode sair sem ninguém conferir (052). */
+  confirmo_automatico?: boolean;
 }
 
-/** Salva os parâmetros da emissão (Contratos: gerir). Ir para produção pede confirmo_producao. */
+/** Salva os parâmetros da emissão (Contratos: gerir). Ir para produção pede confirmo_producao; ligar o automático, confirmo_automatico. */
 export async function salvarParametrosNfse(p: DadosParametrosNfse) {
   return exigir(await supabase().rpc("nfse_parametros_salvar", { p: { ...p, op_simples: "3" } as unknown as Json })) as unknown as ParametrosNfse & {
     proximo_ndps: number | null;

@@ -482,5 +482,31 @@ input[type="file"]:disabled::file-selector-button {
       display: inline-flex;
       align-items: center;
     }
+    /* Alvos que não são botão (ajustes de 04/11/2026): links de navegação ("← Balancetes"), links soltos nas listas,
+       escolhas Quadro/Lista e o seletor de empresa do Portal. alvo-toque = uma linha; alvo-toque-bloco = texto em
+       duas linhas (nome + detalhe). Links dentro das células das tabelas ganham a altura sozinhos. */
+    .alvo-toque {
+      min-height: 44px;
+      min-width: 44px;
+      display: inline-flex;
+      align-items: center;
+    }
+    .alvo-toque-bloco {
+      min-height: 44px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    td a:not(.btn):not(.btn-primario):not(.btn-azul):not(.btn-perigo):not(.alvo-toque),
+    td button:not(.btn):not(.btn-primario):not(.btn-azul):not(.btn-perigo):not([role="checkbox"]) {
+      min-height: 44px;
+      min-width: 44px;
+      display: inline-flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    [role="group"] > button {
+      min-height: 44px;
+    }
   }
 }

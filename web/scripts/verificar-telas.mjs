@@ -936,11 +936,17 @@ const INTERACOES = {
     await janela.getByLabel("Perfil de acesso").waitFor({ timeout: 3000 });
     await p.keyboard.press("Escape");
   },
-  "/config": async (p) => {
+  "/config": async (p, foto) => {
     for (const aba of await p.getByRole("tab").all()) {
       await aba.click();
       if ((await aba.getAttribute("aria-selected")) !== "true") throw new Error(`a aba "${await aba.innerText()}" não ficou selecionada`);
       await p.waitForTimeout(300);
+      // Organização e painel: o cartão do papel timbrado (052) carrega os dados do escritório
+      if (/Organização/.test(await aba.innerText())) {
+        await p.getByRole("heading", { name: "Papel timbrado dos documentos" }).waitFor({ timeout: 5000 });
+        if ((await p.getByLabel("CRC do responsável").inputValue()) !== "1SP346098-O/0") throw new Error("o papel timbrado não carregou o CRC");
+        await foto("organizacao");
+      }
     }
   },
 };

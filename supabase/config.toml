@@ -49,3 +49,10 @@ import_map = "./functions/ledgra-link-webhook/deno.json"
 [functions.nfse-emitir]
 verify_jwt = true
 import_map = "./functions/nfse-emitir/deno.json"
+
+# NFS-e automática (migração 052): chamada só pelo agendador (pg_cron) com o token do Vault (x-agente-token), que a
+# função confere no banco; sem login de usuário, por isso a checagem padrão fica desligada.
+[functions.nfse-automatica]
+verify_jwt = false
+import_map = "./functions/nfse-automatica/deno.json"
+
