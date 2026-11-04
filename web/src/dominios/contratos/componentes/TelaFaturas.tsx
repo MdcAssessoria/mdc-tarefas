@@ -403,7 +403,7 @@ export function TelaFaturas() {
                   const n = nota(f);
                   const ver = notaParaVer(f);
                   return (
-                    <tr key={f.id} className={f.situacao === "cancelada" ? "opacity-60" : ""}>
+                    <tr key={f.id} className={f.situacao === "cancelada" ? "linha-apagada" : ""}>
                       <td className="celula-titulo min-w-48">
                         <button className="text-left font-medium hover:underline" onClick={() => setJanela({ tipo: "ver", f })}>
                           Fatura {f.numero}

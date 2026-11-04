@@ -119,7 +119,7 @@ export function AcessosClientes({
               const ativos = p.vs.filter((v) => v.ativo);
               const pendente = p.vs.every((v) => !v.user_id);
               return (
-                <tr key={p.email} className={`align-top ${ativos.length ? "" : "opacity-50"}`}>
+                <tr key={p.email} className={`align-top ${ativos.length ? "" : "linha-apagada"}`}>
                   <td>
                     <div className="font-medium">{p.nome}</div>
                     <div className="text-xs text-neutral-500">{p.email}</div>
