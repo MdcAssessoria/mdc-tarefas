@@ -7,7 +7,7 @@
 import { createClient } from "@supabase/supabase-js";
 
 // endereços onde o Hub roda; o link do convite só pode voltar para um deles
-const ORIGENS = ["https://mdcassessoria.com", "https://www.mdcassessoria.com", "https://mdc-tarefas.vercel.app"];
+const ORIGENS = ["https://mdcassessoria.com", "https://www.mdcassessoria.com", "https://hub.mdcassessoria.com", "https://mdc-tarefas.vercel.app"];
 const BASE = "/hub-mdc";
 
 const CORS = {

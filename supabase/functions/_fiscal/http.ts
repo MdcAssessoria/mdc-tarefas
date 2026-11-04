@@ -6,7 +6,7 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { RequisicaoSoap } from "./nucleo/sefaz.ts";
 
-export const ORIGENS = ["https://mdcassessoria.com", "https://www.mdcassessoria.com", "https://mdc-tarefas.vercel.app"];
+export const ORIGENS = ["https://mdcassessoria.com", "https://www.mdcassessoria.com", "https://hub.mdcassessoria.com", "https://mdc-tarefas.vercel.app"];
 
 export function cabecalhos(req: Request, metodos = "POST, OPTIONS") {
   const origem = req.headers.get("origin") ?? "";

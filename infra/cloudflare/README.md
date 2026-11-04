@@ -1,5 +1,12 @@
 # Endereço público do HUB-MDC: mdcassessoria.com/hub-mdc
 
+> **Caminho escolhido em 04/11/2026: subdomínio `hub.mdcassessoria.com`** (CNAME na Cloudflare com a nuvem cinza
+> apontando para a Vercel; o site WordPress não muda). O passo a passo do TI está no documento "HUB-MDC e EXato nos
+> domínios próprios". O código já aceita a origem `https://hub.mdcassessoria.com` nas funções e `hub.mdcassessoria.com/`
+> abre `/hub-mdc` pelo redirect do `web/next.config.ts`. Supabase: Site URL `https://hub.mdcassessoria.com/hub-mdc` e
+> Redirect URL `https://hub.mdcassessoria.com/hub-mdc/**`, mantendo a da Vercel. O plano do Worker abaixo continua
+> válido como alternativa (`mdcassessoria.com/hub-mdc`).
+
 O app roda na Vercel (`mdc-tarefas.vercel.app/hub-mdc`, `basePath` no `web/next.config.ts`).
 O site institucional continua na Hostinger. O DNS do domínio já está na Cloudflare,
 que repassa só o caminho `/hub-mdc` para a Vercel com o Worker deste diretório.

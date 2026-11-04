@@ -37,6 +37,7 @@ type Resultado = {
 export const ORIGENS = [
   "https://mdcassessoria.com",
   "https://www.mdcassessoria.com",
+  "https://hub.mdcassessoria.com",
   "https://mdc-tarefas.vercel.app",
 ];
 const POR_RODADA = 8; // arquivos por organização a cada chamada (o resto fica para a próxima, em 15 minutos; reauditoria R-M1)

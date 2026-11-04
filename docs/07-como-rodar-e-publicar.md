@@ -126,8 +126,12 @@ npx supabase functions deploy convite --project-ref bulqqdgfrrpqquqvjjfa --impor
   repositório ledgra-link por `npm run sdk`; não editar aqui). As duas usam `_ledgra_link/http.ts` (cópia enxuta de
   `_fiscal/http.ts`, sem a parte da SEFAZ; se mudar as origens, mude nos dois). Migração 043 aplicada e funções publicadas
   pelo conector em 03/11/2026 (v1); `database.types.ts` acrescido à mão das tabelas e funções `link_*` (sem token da CLI).
-- As origens permitidas (CORS e link de convite) são `mdcassessoria.com`, `www.mdcassessoria.com` e
-  `mdc-tarefas.vercel.app`. Para testar convite rodando local, publique uma versão de teste com `localhost`.
+- As origens permitidas (CORS e link de convite) são `mdcassessoria.com`, `www.mdcassessoria.com`,
+  `hub.mdcassessoria.com` (subdomínio na Vercel, 04/11/2026) e `mdc-tarefas.vercel.app`. A lista mora em
+  `_fiscal/http.ts`, `_ledgra_link/http.ts`, `convite/index.ts` e `balancete-agente/agente.ts`: mudou uma, mude as quatro e
+  republique as funções que as usam (fiscal-certificado, fiscal-manifestar, fiscal-captura, nfse-emitir, ledgra-link,
+  ledgra-link-webhook, convite e balancete-agente). `hub.mdcassessoria.com/` cai em `/hub-mdc` pelo redirect da raiz do
+  `web/next.config.ts`. Para testar convite rodando local, publique uma versão de teste com `localhost`.
 
 ## 7.5 E-mail, domínio e certificado
 

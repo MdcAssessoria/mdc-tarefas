@@ -95,7 +95,7 @@ sequenceDiagram
 - **Nunca** use a chave `service_role` no navegador. O app usa só a chave publicável (pública por natureza).
 - Toda tabela nova: `org_id`, RLS ligado, políticas com `app.hub_pode` ou `app.portal_pode`.
 - Toda função `security definer`: `set search_path` fixo e checagem de permissão logo no início.
-- Edge Functions conferem o token do usuário e a origem (lista `ORIGENS` em `supabase/functions/convite`).
+- Edge Functions conferem o token do usuário e a origem (lista `ORIGENS` em `supabase/functions/convite`, `_fiscal/http.ts`, `_ledgra_link/http.ts` e `balancete-agente/agente.ts`; desde 04/11/2026 inclui `https://hub.mdcassessoria.com`).
 - Certificado digital: o arquivo e a senha ficam no **Supabase Vault** (`hub_certificados` guarda só as referências).
 - Depois de qualquer migração, rode os avisos de segurança do Supabase (Advisors).
 

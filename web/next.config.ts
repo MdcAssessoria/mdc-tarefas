@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
-// Endereço público: https://mdcassessoria.com/hub-mdc (repassado à Vercel pelo Worker da Cloudflare).
+// Endereço público: https://hub.mdcassessoria.com/hub-mdc (subdomínio na Vercel; a raiz "/" cai em /hub-mdc pelo
+// redirect abaixo). Alternativa: https://mdcassessoria.com/hub-mdc pelo Worker da Cloudflare (infra/cloudflare).
 const nextConfig: NextConfig = {
   basePath: "/hub-mdc",
   async redirects() {
