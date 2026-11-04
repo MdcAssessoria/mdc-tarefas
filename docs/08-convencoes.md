@@ -34,6 +34,9 @@ Todo o HUB é pensado para **público leigo e de pouco conhecimento técnico**, 
 2. Filtros fáceis: período em um clique (Este mês, Mês passado, Últimos 3 meses, Este ano, Escolher datas),
    no máximo três filtros à vista, o resto em "Mais filtros", e "Limpar".
 3. Exportar sempre em **PDF** (papel timbrado da MDC) e **Excel** (formatado, valores como número) exatamente o que está na tela.
+   Documentos e exportações: plural certo com `plural()` de `lib/formato/numero` (nunca "(s)"); texto longo **quebra
+   linha** (não termina em "…"); tabela que passa de página repete o cabeçalho com "(continuação)"; no Excel, data é data
+   e número com casas não é arredondado.
 4. Tela vazia ensina o próximo passo; erro diz o que fazer em português (use `traduzirErro`). Só chegam à pessoa como
    vieram as mensagens do próprio HUB (`raise exception` das funções do banco, código P0001, e `ErroApp`/`new Error`
    do site); erro técnico desconhecido vira "Não foi possível concluir. Tente de novo; se continuar, avise a equipe MDC."

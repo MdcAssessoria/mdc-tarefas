@@ -65,6 +65,9 @@ npx supabase functions deploy convite --project-ref bulqqdgfrrpqquqvjjfa --impor
   só depois faça o push do site. A função nova aceita o site antigo; o site novo com a função antiga entrega PDF errado.
 - `demonstrativo-pdf` usa cópias de `balancete.ts` e `demonstracoes.ts` geradas por `scripts/sync-funcoes.sh` a
   partir de `web/src/dominios/demonstrativos/`. **Rode o script antes de publicar** sempre que mexer nesses cálculos.
+  Testes do PDF: `cd supabase/functions/demonstrativo-pdf && deno test --allow-read --config deno.json pdf_test.ts`.
+  **Pendente (04/11/2026):** republicar `demonstrativo-pdf` com o acabamento da branch `documentos-acabamento` (marca
+  d'água em todas as páginas, total do balancete, texto sem "…", papel timbrado pelo cadastro). Bundle como as fiscais.
 - `balancete-agente` (pasta de balancetes do SharePoint) usa a cópia do núcleo em `nucleo/`, também gerada por
   `scripts/sync-funcoes.sh`. Publique **com a checagem de login do Supabase desligada** (a própria função confere o
   token do agendador ou o login do administrador); isso já está em `supabase/config.toml`:
