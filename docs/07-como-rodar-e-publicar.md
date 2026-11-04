@@ -130,6 +130,8 @@ npx supabase functions deploy convite --project-ref bulqqdgfrrpqquqvjjfa --impor
   serem cadastrados.
 - **04/11/2026 (noite):** 054 aplicada (Comercial: excluir lead de vez, `crm_excluir`, conferida por md5); tipos
   regenerados. Busca na Receita no cadastro de fornecedores/clientes e na ficha do CRM (só site).
+- **04/11/2026 (noite):** 055 aplicada (Contratos: cliente do contrato com CNPJ, e-mail, telefone, cidade e UF;
+  `app.fin_recorrente_conferir` conferida por md5); Novo contrato em etapas com a carteira da MDC no campo Cliente.
 - **Ajustes finais (052, branch `ajustes-finais`).** Ordem: testes (`bash supabase/testes/rodar.sh`, blocos 111 a 114)
   → aplicar a 052 → regenerar `database.types.ts` (os tipos da 052 foram escritos à mão) e rodar os Advisors → publicar
   as funções → push do site.
