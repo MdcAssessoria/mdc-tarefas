@@ -17,6 +17,7 @@ import { fmtData } from "@/lib/formato/datas";
 import { useMensagem } from "./useMensagem";
 import { ModulosDoCliente } from "@/dominios/licencas/componentes/ModulosDoCliente";
 import { CampoCnpj } from "@/components/ui/CampoCnpj";
+import { useConfirmar } from "@/components/ui/JanelaConfirmar";
 
 interface Resp {
   cliente_id: string;
@@ -34,6 +35,7 @@ export function AbaClientes() {
   const [situacao, setSituacao] = useState<"ativos" | "inativos" | "todos">("ativos");
   const [inativando, setInativando] = useState<{ id: string; data: string; motivo: string; outro: string } | null>(null);
   const { mostrar, el } = useMensagem();
+  const [janelaConfirmar, confirmar] = useConfirmar();
   const [sel, setSel] = useState<Set<string>>(new Set());
   const [lote, setLote] = useState<{ segmento: string; grupos: string[] }>({ segmento: "", grupos: [] });
   const [filtroSeg, setFiltroSeg] = useState("");
@@ -117,6 +119,16 @@ export function AbaClientes() {
     const ids = [...sel];
     if (!ids.length) return;
     if (!lote.segmento && !lote.grupos.length) return mostrar("Escolha um segmento ou um grupo para aplicar.", true);
+    const partes = [
+      lote.segmento && (lote.segmento === "_limpar" ? "limpar o segmento" : `segmento ${SEGMENTOS.find((x) => x.id === lote.segmento)?.nome ?? lote.segmento}`),
+      lote.grupos.length > 0 && `incluir no(s) grupo(s) ${lote.grupos.join(", ")}`,
+    ].filter(Boolean);
+    const sim = await confirmar({
+      titulo: `Aplicar em ${ids.length} cliente(s)?`,
+      descricao: `Vai ${partes.join(" e ")} de todos os selecionados.`,
+      botao: "Aplicar",
+    });
+    if (!sim) return;
     const sb = supabase();
     for (const id of ids) {
       const c = clientes.find((x) => x.id === id);
@@ -252,6 +264,7 @@ export function AbaClientes() {
         </div>
       )}
       {el}
+      {janelaConfirmar}
       {sel.size > 0 && (
         <div className="cartao sticky top-2 z-20 flex flex-wrap items-center gap-3 border-[var(--destaque-escuro)] p-3">
           <b className="text-sm text-[var(--marca)]">{sel.size} selecionado(s)</b>

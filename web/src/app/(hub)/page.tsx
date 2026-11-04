@@ -45,6 +45,8 @@ function Hub() {
   const [semanasAtras, setSemanasAtras] = useState(8);
   const [semanaSel, setSemanaSel] = useState<string | null>(null);
   const [aviso, setAviso] = useState<string | null>(null);
+  /** Última tarefa concluída pelo botão redondo: dá para desfazer por alguns segundos. */
+  const [desfazer, setDesfazer] = useState<{ id: string; titulo: string; status: MinhaTarefa["status"] } | null>(null);
   const temTarefas = pode("tarefas");
 
   useEffect(() => {
@@ -164,10 +166,28 @@ function Hub() {
   async function concluir(t: MinhaTarefa) {
     setAbertas((l) => l?.filter((x) => x.id !== t.id) ?? l);
     const { error } = await supabase().from("tarefas").update({ status: "concluida" }).eq("id", t.id);
-    if (error) setAviso(traduzirErro(error));
-    else setAviso(`Concluída: ${t.titulo}`);
+    if (error) {
+      setAviso(traduzirErro(error));
+      setDesfazer(null);
+    } else {
+      setAviso(`Concluída: ${t.titulo}`);
+      setDesfazer({ id: t.id, titulo: t.titulo, status: t.status });
+    }
     void carregar();
-    setTimeout(() => setAviso(null), 4000);
+    window.setTimeout(() => {
+      setAviso((a) => (a === `Concluída: ${t.titulo}` || error ? null : a));
+      setDesfazer((d) => (d?.id === t.id ? null : d));
+    }, 8000);
+  }
+
+  async function desfazerConclusao() {
+    if (!desfazer) return;
+    const d = desfazer;
+    setDesfazer(null);
+    const { error } = await supabase().from("tarefas").update({ status: d.status }).eq("id", d.id);
+    setAviso(error ? traduzirErro(error) : `Voltou para a fila: ${d.titulo}`);
+    void carregar();
+    window.setTimeout(() => setAviso(null), 4000);
   }
 
   const primeiroNome = eu.nome.split(" ")[0];
@@ -325,7 +345,19 @@ function Hub() {
                 </Link>
               </div>
             </div>
-            {aviso && <p className="mb-2 rounded-lg bg-emerald-50 px-3 py-2 text-[13px] text-emerald-900">{aviso}</p>}
+            <div role="status" aria-live="polite">
+              {aviso && (
+                <p className="mb-2 flex flex-wrap items-center justify-between gap-2 rounded-lg bg-emerald-50 px-3 py-2 text-[13px] text-emerald-900">
+                  <span>{aviso}</span>
+                  {desfazer && (
+                    <button className="btn min-h-11 px-3 py-1 text-[13px]" onClick={() => void desfazerConclusao()}>
+                      <Icone nome="atualizar" className="h-4 w-4" />
+                      Desfazer
+                    </button>
+                  )}
+                </p>
+              )}
+            </div>
             <div className="overflow-hidden rounded-2xl border border-[var(--borda)] bg-white">
               {abertas === null ? (
                 <p className="px-5 py-8 text-[14px] text-[var(--texto-suave)]">Carregando…</p>
@@ -355,11 +387,13 @@ function Hub() {
                         ) : (
                           <button
                             onClick={() => concluir(t)}
-                            className="grid h-6 w-6 shrink-0 place-items-center rounded-full border-2 border-[var(--borda)] text-transparent transition-colors hover:border-[var(--sucesso)] hover:text-[var(--sucesso)]"
+                            className="group -m-2.5 grid h-11 w-11 shrink-0 place-items-center rounded-full"
                             aria-label={`Concluir ${t.titulo}`}
                             title="Concluir"
                           >
-                            <Icone nome="check" className="h-3.5 w-3.5" />
+                            <span className="grid h-6 w-6 place-items-center rounded-full border-2 border-[var(--borda)] text-transparent transition-colors group-hover:border-[var(--sucesso)] group-hover:text-[var(--sucesso)] group-focus-visible:border-[var(--sucesso)]">
+                              <Icone nome="check" className="h-3.5 w-3.5" />
+                            </span>
                           </button>
                         )}
                         <Link href={c ? `/tarefas?cliente=${c.id}` : "/tarefas"} className="min-w-0 flex-1">
