@@ -91,3 +91,8 @@ for f in testes/109_base_050.sql migrations/050_portal_faturas.sql; do
   $P -v ON_ERROR_STOP=1 -f "$R/$f" 2>&1 | grep -v NOTICE || true
 done
 $P -f "$R/testes/110_portal_faturas_050.sql" 2>&1 | grep -v "^SET$"
+# 052: NFS-e automática (token do agendador, uma tentativa por dia, aviso no sino) e papel timbrado do escritório
+for f in testes/111_base_052.sql migrations/052_ajustes_finais.sql; do
+  $P -v ON_ERROR_STOP=1 -f "$R/$f" 2>&1 | grep -v NOTICE || true
+done
+$P -f "$R/testes/112_ajustes_052.sql" 2>&1 | grep -v "^SET$"

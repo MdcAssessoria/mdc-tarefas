@@ -1,6 +1,6 @@
 // Contratos › Nota fiscal (NFS-e) (046): como o HUB emite a nota das faturas pelo Emissor Nacional. Só para quem gere o
 // módulo Contratos (aba com minimo "gerir"). Ambiente (teste sem valor fiscal × produção, com confirmação para ir à
-// produção), modo (conferir antes de emitir; automático na próxima etapa), numeração da DPS, regime do Simples da MDC,
+// produção), modo (conferir antes de emitir ou automático às 06h45, com confirmação para ligar — 052), numeração da DPS, regime do Simples da MDC,
 // inscrição municipal, município, NBS e % aproximado dos tributos. Embaixo, as notas enviadas pelo HUB (PDF e Excel).
 "use client";
 
@@ -85,11 +85,13 @@ export function TelaNotaFiscal() {
   const d = consulta.dados;
   const [editado, setEditado] = useState<Partial<Form>>({});
   const [confirmo, setConfirmo] = useState(false);
+  const [confirmoAuto, setConfirmoAuto] = useState(false);
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState("");
   const form: Form = { ...doBanco(d?.parametros ?? null), ...editado };
   const mudar = (campo: keyof Form, valor: string) => setEditado((x) => ({ ...x, [campo]: valor }));
   const indoParaProducao = form.ambiente === "producao" && d?.parametros?.ambiente !== "producao";
+  const ligandoAutomatico = form.modo === "automatico" && d?.parametros?.modo !== "automatico";
   const proximoAtual =
     d?.numeracao.find((n) => n.ambiente === form.ambiente && n.serie === String(Number(form.serie) || ""))?.proximo ?? 1;
   const numeroFatura = useMemo(() => new Map((d?.faturas ?? []).map((f) => [f.id, f.numero])), [d]);
@@ -99,6 +101,7 @@ export function TelaNotaFiscal() {
     if (!cliente) return;
     setErro("");
     if (indoParaProducao && !confirmo) return setErro("Para ir para a produção, marque a confirmação de que os testes deram certo.");
+    if (ligandoAutomatico && !confirmoAuto) return setErro("Para ligar o automático, marque a confirmação de que a nota pode sair sem conferir.");
     const ptot = form.p_tot_trib_sn.trim() ? Number(form.p_tot_trib_sn.replace(/\./g, "").replace(",", ".")) : null;
     if (ptot !== null && !Number.isFinite(ptot)) return setErro("Percentual dos tributos: use só números (ex.: 6,00).");
     setSalvando(true);
@@ -116,9 +119,11 @@ export function TelaNotaFiscal() {
         p_tot_trib_sn: ptot,
         proximo_ndps: form.proximo.trim() ? Number(form.proximo.replace(/\D/g, "")) : null,
         confirmo_producao: indoParaProducao ? confirmo : undefined,
+        confirmo_automatico: ligandoAutomatico ? confirmoAuto : undefined,
       });
       setEditado({});
       setConfirmo(false);
+      setConfirmoAuto(false);
       mostrar("Parâmetros da nota fiscal salvos.");
       consulta.recarregar();
     } catch (x) {
@@ -187,7 +192,7 @@ export function TelaNotaFiscal() {
             </p>
           )}
 
-          <form onSubmit={salvar} className="grid gap-4 lg:grid-cols-2">
+          <form onSubmit={salvar} className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             <section className="cartao space-y-3 p-4">
               <h2 className="font-semibold">Ambiente</h2>
               <div role="radiogroup" aria-label="Ambiente da emissão" className="space-y-2">
@@ -210,6 +215,19 @@ export function TelaNotaFiscal() {
               <div role="radiogroup" aria-label="Como emitir" className="space-y-2">
                 {MODOS_NFSE.map((m) => opcao("modo", m.id, m.titulo, m.detalhe, form.modo === m.id, () => mudar("modo", m.id)))}
               </div>
+              {ligandoAutomatico && (
+                <label className="flex gap-3 rounded-xl border-2 border-[var(--perigo)] p-3 text-sm">
+                  <input type="checkbox" className="mt-1" checked={confirmoAuto} onChange={(e) => setConfirmoAuto(e.target.checked)} />
+                  <span>
+                    <span className="block font-medium">Confirmo que a nota pode sair sem ninguém conferir antes</span>
+                    <span className="block text-xs text-[var(--texto-suave)]">
+                      {form.ambiente === "producao"
+                        ? "A nota sai com valor fiscal e vai para o cliente junto com a fatura. Confira antes o código do serviço e o CNPJ de cada cliente nos contratos."
+                        : "No ambiente de teste a nota sai sem valor fiscal e não vai para o cliente: bom para conferir o automático antes da produção."}
+                    </span>
+                  </span>
+                </label>
+              )}
             </section>
 
             <section className="cartao space-y-3 p-4">

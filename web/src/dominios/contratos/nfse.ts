@@ -22,8 +22,9 @@ export const MODOS_NFSE: { id: ModoNfse; titulo: string; detalhe: string }[] = [
   },
   {
     id: "automatico",
-    titulo: "Automático (próxima etapa)",
-    detalhe: "O HUB vai emitir sozinho no dia de gerar. Até essa etapa chegar, funciona como Conferir.",
+    titulo: "Automático",
+    detalhe:
+      "Todo dia às 06h45 o HUB emite sozinho a nota das faturas que nasceram, sem ninguém conferir antes. Se faltar algum dado ou o Emissor recusar, avisa no sino e a nota fica para emitir pela tela.",
   },
 ];
 

@@ -28,7 +28,7 @@ liberado pelo administrador por pessoa).
 | --- | --- | --- |
 | `/contratos` | Contratos (ver; cadastrar e mexer com operar) | Lista no molde 8.3.1 (só os contratos da MDC): tipo (a receber/a pagar), situação e busca; indicadores que filtram (recebe por mês, paga por mês, reajustes pendentes, vigência terminando em 30 dias); quadro que vira cartão no celular; saldo mensal dos ativos; PDF e Excel. Ações: **Novo contrato**, **Reajustar** (quando pendente), ficha, editar, suspender/reativar e encerrar (com motivo, `JanelaMotivo`) |
 | `/contratos/faturas` | Contratos (ver; gerar e cancelar com operar) | Faturas dos contratos a receber no molde 8.3.1: período do vencimento, situação e busca; indicadores que filtram (faturado no período, aguardando nota fiscal, prontas para enviar, enviadas); quadro que vira cartão no celular; PDF e Excel; aviso fixo "Envio por e-mail/WhatsApp: aguardando configuração". Ações: botão do **banco** (gerar ou ver o boleto pelo Ledgra Link, `JanelaBoleto`, 049), **PDF** da fatura (papel timbrado MDC, `faturaPdf.ts`), **Ver** (dados, nota fiscal, boleto e cada canal da fila), **Cancelar** (com motivo, `JanelaMotivo`) e **Gerar fatura agora** (um mês à mão, com motivo e vencimento) |
-| `/contratos/nota-fiscal` | Contratos (gerir) | **Nota fiscal (NFS-e)** (046): ambiente (teste × produção, com confirmação para ir à produção), modo (conferir; automático na próxima etapa), série e próximo número da DPS, regime do Simples, inscrição municipal, município (IBGE), NBS e % aproximado dos tributos do Simples; lista das notas enviadas pelo HUB com PDF e Excel (`TelaNotaFiscal`) |
+| `/contratos/nota-fiscal` | Contratos (gerir) | **Nota fiscal (NFS-e)** (046): ambiente (teste × produção, com confirmação para ir à produção), modo (conferir ou automático, este com confirmação ao ligar — 052), série e próximo número da DPS, regime do Simples, inscrição municipal, município (IBGE), NBS e % aproximado dos tributos do Simples; lista das notas enviadas pelo HUB com PDF e Excel (`TelaNotaFiscal`) |
 | `/contratos/boleto` | Contratos (gerir) | **Boleto** (049): um cartão por banco (Itaú 341, Santander 033) com o código da conta no Ledgra Link, a conta do Financeiro onde o dinheiro cai, boleto com Pix ou simples e ligado/desligado; lista dos boletos emitidos com PDF e Excel (`TelaBoleto`) |
 | `/contratos/reajustes` | Contratos | Reajustes pendentes de confirmar (com a proposta do HUB) e o histórico de reajustes e mudanças de valor; indicadores (pendentes, feitos no ano, efeito no mês); PDF e Excel |
 
@@ -153,8 +153,8 @@ Testes 107/108.
   o próprio cliente; nota de teste nunca aparece) e copia a linha digitável e o Pix do boleto. Boleto (049): do lado do Ledgra Link, a MDC
   precisa estar cadastrada como titular com as contas Itaú (341) e Santander (033) e as credenciais de cobrança de cada
   banco; o código de cada conta vai em Contratos › Boleto. Confirmar no Ledgra Link (`GET /v1/bancos`) que os dois bancos
-  estão ativos para cobrança. A NFS-e já sai (046, seção 5); falta o modo
-  automático, o cancelamento da nota pelo HUB, NBS por contrato e ISS retido pelo tomador.
+  estão ativos para cobrança. A NFS-e já sai (046, seção 5), também no modo automático (052, seção 6); falta o
+  cancelamento da nota pelo HUB, NBS por contrato e ISS retido pelo tomador.
 - Cancelar a conta do contrato direto no Financeiro não cancela a fatura (use Contratos › Faturas).
 
 ## 5. Nota fiscal de serviço pelo Emissor Nacional (migração 046, 03/11/2026)
@@ -204,7 +204,7 @@ E0714, trocar para SHA-256 em `assinatura.ts`); série e nDPS sem zeros à esque
 prestador sem nome/endereço (o Emissor busca no cadastro); se a IM é aceita/exigida em Bragança Paulista; dCompet = 1º dia do
 mês da fatura; formato exato da resposta (201 com `chaveAcesso` e `nfseXmlGZipB64`; erros em `erros`/`erro`).
 
-**Limites desta etapa.** Modo automático guardado mas funciona como "conferir"; NBS único (parâmetro) para todos os
+**Limites desta etapa.** Modo automático: ver seção 6 (052); NBS único (parâmetro) para todos os
 contratos; sem ISS retido pelo tomador; cancelar ou substituir a nota é no Emissor Nacional; IBS/CBS (grupo IBSCBS) só a
 partir de 2027.
 
@@ -221,3 +221,31 @@ partir de 2027.
 6. Emitida: abrir **Ver a nota** e conferir no Emissor Nacional (produção restrita). Recusada: o motivo aparece em português
    (código em "Ver detalhes"); corrigir o parâmetro e emitir de novo (nova DPS).
 7. Repetir até sair sem recusa; só então marcar **Produção** com a confirmação.
+
+## 6. Emissão automática da NFS-e (migração 052, 04/11/2026)
+
+**Como funciona (para quem usa).** Em Contratos › Nota fiscal, o modo **Automático** faz o HUB emitir sozinho, todo dia
+às 06h45 (Brasília), a nota das faturas que nasceram, sem ninguém conferir antes. Para ligar, quem gere marca a caixa
+"Entendi: a nota vai sair sem ninguém conferir" (no ambiente de produção o texto lembra que a nota tem valor fiscal); sem
+a marca o banco recusa. Se faltar dado ou o Emissor recusar, chega um aviso no sino de quem gere Contratos (e dos
+administradores) e a nota fica para emitir pela tela, como no modo conferir.
+
+**Regras.**
+- Entra na rodada a fatura da empresa da Gestão com documento `nfse`, não cancelada, NFS-e "a emitir" ou "erro", com
+  emissão até hoje, no ambiente configurado (teste ou produção; nunca troca de ambiente sozinho).
+- **Uma tentativa por fatura por dia** (`nfse_auto_tentativas`, chave fatura + dia): se der erro, tenta de novo no dia
+  seguinte; nota rejeitada pelo Emissor ou já emitida naquele ambiente não volta para a rodada.
+- A trava contra nota repetida continua a da 046 (`nfse_reservar`): a rodada e a tela usam o mesmo caminho
+  (`_fiscal/emitirFatura.ts`), então nunca saem duas DPS da mesma fatura ao mesmo tempo.
+- Quem recebe o aviso: administradores e quem tem Contratos no nível gerir (acesso válido). Título "Contratos: nota
+  fiscal automática não saiu", com o motivo e o link para Contratos › Faturas.
+
+**Como a rodada é chamada.** O pg_cron (`nfse-automatica`, `45 9 * * *` UTC) chama a Função Edge `nfse-automatica`
+com o cabeçalho `x-agente-token`, lido do Vault (`nfse_automatica_token`, gerado pela própria migração, nunca digitado).
+A função confere o token no banco (`nfse_token_confere`), pede a lista (`nfse_auto_pendentes`), emite cada fatura e
+grava o resultado (`nfse_auto_registrar`). As três funções são só da chave de serviço; a tela só lê as tentativas
+(Contratos ver). O agendador só chama a função se algum parâmetro estiver em automático.
+
+Testes: `supabase/testes/111_base_052.sql` e `112_ajustes_052.sql` (token, lista, uma vez por dia, aviso no sino,
+confirmação ao ligar, nada se apaga).
+
