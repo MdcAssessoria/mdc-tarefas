@@ -55,14 +55,14 @@ resolvido com a coluna de ações presa à direita no celular.
 ## Prioridade 2 — telas (antes de levar aos pilotos)
 
 - **UX-01 (resolvido: coluna de ações fixa no celular):** 15 tabelas de lado no celular, com as ações fora da tela (Entradas, Estoque, Cobrança Ledgra, Pessoas e acessos, Configurações, Acessos do portal).
-- **UX-04:** ações em massa sem confirmação.
-- **UX-05:** concluir tarefa no Início com toque de 24 px e sem desfazer.
-- **UX-06, UX-07:** Pessoas e acessos e Configurações sem PDF/Excel, com campos sem rótulo e avisos não anunciados.
-- **UX-08:** sub-abas escondidas no celular.
-- **UX-09:** alvos de toque menores que 44 px; letra de 14 px nos campos faz o iPhone dar zoom.
-- **UX-10:** 137 elementos com contraste insuficiente.
-- **UX-12:** em Lançar nota, "Voltar" descarta tudo sem perguntar.
-- **UX-13:** botões cortados a 1280 px.
+- **UX-04 (resolvido, 04/11):** ações em massa sem confirmação. Aplicar em lote nos clientes e devolver várias oportunidades ao funil pedem confirmação; arquivar já pedia motivo.
+- **UX-05 (resolvido, 04/11):** concluir tarefa no Início com toque de 24 px e sem desfazer. Alvo de 44 px e botão "Desfazer" por 8 s.
+- **UX-06, UX-07 (resolvidos, 04/11):** Pessoas e acessos e Configurações sem PDF/Excel, com campos sem rótulo e avisos não anunciados. Excel/PDF em Pessoas e acessos e em Clientes, Equipe, Setores, Obrigações e Feriados; rótulos nos campos das tabelas; avisos com `role=status`/`alert`.
+- **UX-08 (resolvido, 04/11):** sub-abas escondidas no celular. Módulo com mais de 3 telas mostra o botão "Telas" com a lista inteira; abas da página com 44 px e rolagem.
+- **UX-09 (resolvido, 04/11; caixas de marcar ficam com 24 px, o mínimo da WCAG 2.2 AA):** alvos de toque menores que 44 px; letra de 14 px nos campos faz o iPhone dar zoom.
+- **UX-10 (resolvido, 04/11: o axe-core não acha mais nada nas 62 telas no computador; `ACESSIBILIDADE=1 npm run telas`):** 137 elementos com contraste insuficiente.
+- **UX-12 (resolvido, 04/11):** em Lançar nota, "Voltar" descarta tudo sem perguntar.
+- **UX-13 (resolvido, 04/11: lista de contratos com a coluna de ações presa à direita):** botões cortados a 1280 px.
 - **T-02:** a conciliação de extrato não existe.
 
 ## Prioridade 3 — Contratos (regras), aguardando decisões do Edvaldo
