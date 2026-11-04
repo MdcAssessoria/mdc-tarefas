@@ -76,3 +76,8 @@ for f in testes/105_base_048.sql migrations/048_contratos_regras.sql; do
   $P -v ON_ERROR_STOP=1 -f "$R/$f" 2>&1 | grep -v NOTICE || true
 done
 $P -f "$R/testes/106_regras_048.sql" 2>&1 | grep -v "^SET$"
+# 049: boleto das faturas pelo Ledgra Link (Itaú e Santander) com baixa automática pelo aviso do banco
+for f in testes/107_base_049.sql migrations/049_faturas_boleto_ledgra_link.sql; do
+  $P -v ON_ERROR_STOP=1 -f "$R/$f" 2>&1 | grep -v NOTICE || true
+done
+$P -f "$R/testes/108_boleto_049.sql" 2>&1 | grep -v "^SET$"
