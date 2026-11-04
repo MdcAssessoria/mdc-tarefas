@@ -141,6 +141,7 @@ de período, porta e resultado, e exportação em PDF e Excel.
 | `portal_pareceres` | Parecer técnico por balancete, com versões |
 | `hub_integracoes` | Configuração da pasta do SharePoint (só administrador) |
 | `hub_importacoes` | Histórico de importações (arquivo, lote, pasta) |
+| `org_papel_timbrado` | Telefone, site, e-mail, Instagram e responsável técnico (nome e CRC) que saem no rodapé e na responsabilidade técnica do PDF (052, D-11). Editado em Configurações › Organização e painel › "Papel timbrado dos documentos", só pelo administrador (`org_papel_timbrado_salvar`, auditado); a função `demonstrativo-pdf` lê daqui e, campo vazio, usa o padrão da MDC. Razão social, CNPJ e cidade continuam vindo do cadastro da empresa da Gestão |
 
 Detalhes de colunas e travas no [capítulo 4](../04-banco-de-dados.md); o fluxo até o Portal na [seção 6.1](../06-fluxos.md#61-balancete-do-excel-do-domínio-ao-portal-do-cliente).
 

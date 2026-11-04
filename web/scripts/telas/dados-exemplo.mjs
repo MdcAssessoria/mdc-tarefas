@@ -339,6 +339,20 @@ export const TABELAS = {
       perfil_id: null,
     },
   ],
+  // papel timbrado do escritório (052): rodapé e responsabilidade técnica do PDF do Demonstrativo
+  org_papel_timbrado: [
+    {
+      org_id: ORG,
+      telefone: "(11) 98859-8041",
+      site: "mdcassessoria.com",
+      email: "edvaldo@mdcassessoria.com",
+      instagram: "@mdcassessoria_",
+      responsavel: "Edvaldo Ribeiro de Carvalho",
+      crc: "1SP346098-O/0",
+      atualizado_em: "2026-11-04T10:00:00-03:00",
+      atualizado_por: null,
+    },
+  ],
   setores: [{ id: SETOR, org_id: ORG, nome: "Fiscal", cor: "#2a78d6", ordem: 1, ativo: true }],
   clientes: [
     cliente(CM, "MDC ASSESSORIA LTDA", "MDC Assessoria", "48.140.121/0001-65", "real"),

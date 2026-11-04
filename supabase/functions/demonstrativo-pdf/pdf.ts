@@ -31,7 +31,7 @@ export interface DadosPdf {
   escritorio?: Partial<Escritorio> | null;
 }
 
-/** Quem assina o papel timbrado: razão social, CNPJ e cidade vêm do cadastro; contatos e responsável técnico, da MDC. */
+/** Quem assina o papel timbrado: razão social, CNPJ e cidade vêm do cadastro da empresa; contatos e responsável técnico, do papel timbrado (052). */
 export interface Escritorio {
   razao: string;
   cnpj: string;
