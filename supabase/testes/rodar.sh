@@ -91,3 +91,8 @@ for f in testes/109_base_050.sql migrations/050_portal_faturas.sql; do
   $P -v ON_ERROR_STOP=1 -f "$R/$f" 2>&1 | grep -v NOTICE || true
 done
 $P -f "$R/testes/110_portal_faturas_050.sql" 2>&1 | grep -v "^SET$"
+# 051: conciliação do extrato (ligar a pagamentos/contas, criar lançamento, transferência, ignorar, desfazer, travas)
+for f in testes/111_base_051.sql migrations/051_conciliacao_extrato.sql; do
+  $P -v ON_ERROR_STOP=1 -f "$R/$f" 2>&1 | grep -v NOTICE || true
+done
+$P -f "$R/testes/112_conciliacao_051.sql" 2>&1 | grep -v "^SET$"
