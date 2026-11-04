@@ -31,6 +31,7 @@ import { fileURLToPath } from "node:url";
 import { EU, IDS_EXEMPLO, RPCS, TABELAS, USUARIO, XML_EXEMPLO } from "./telas/dados-exemplo.mjs";
 import { importarEmLote } from "./telas/interacoes-importacao.mjs";
 import { trocarPeriodo } from "./telas/interacoes-periodo.mjs";
+import { interacoesPortal } from "./telas/interacoes-portal.mjs";
 
 const WEB = fileURLToPath(new URL("..", import.meta.url));
 const BASE = "/hub-mdc";
@@ -750,7 +751,7 @@ const INTERACOES = {
     await abrirEFecharModal(p, "Novo plano", "Novo plano");
   },
   [`/demonstrativos/${IDS_EXEMPLO["demonstrativos/[id]"]}`]: trocarPeriodo,
-  "/portal": trocarPeriodo,
+  "/portal": interacoesPortal,
   "/demonstrativos/importar": importarEmLote,
   // Novo processo de empresa fora do cadastro: "Buscar dados" do CNPJ (Receita simulada) preenche razão social e UF
   "/societario": async (p, foto) => {

@@ -147,8 +147,10 @@ Testes 107/108.
   tem valor mensal (pode não lançar contas).
 - Reajuste negativo: a regra é única (mantém o valor). Se algum contrato precisar reduzir, falta um campo por contrato.
 - Regenerar `web/src/lib/database.types.ts` do banco depois de aplicar a 041 e a 043 (os tipos novos foram escritos à mão).
-- Faturamento: enviar e-mail e WhatsApp de verdade; tela do Portal para o cliente ver e baixar as faturas e o boleto (a
-  função `portal_minhas_faturas` já existe; falta devolver a linha digitável). Boleto (049): do lado do Ledgra Link, a MDC
+- Faturamento: enviar e-mail e WhatsApp de verdade. **Portal › Faturas da MDC (050):** o cliente vê as faturas
+  publicadas para ele (`portal_faturas_detalhe`, permissão `documentos`), baixa o PDF da fatura, vê a NFS-e emitida em
+  produção (espelho e XML: política `fis_storage_portal_nfse` do bucket fiscal, só o XML da nota de fatura publicada para
+  o próprio cliente; nota de teste nunca aparece) e copia a linha digitável e o Pix do boleto. Boleto (049): do lado do Ledgra Link, a MDC
   precisa estar cadastrada como titular com as contas Itaú (341) e Santander (033) e as credenciais de cobrança de cada
   banco; o código de cada conta vai em Contratos › Boleto. Confirmar no Ledgra Link (`GET /v1/bancos`) que os dois bancos
   estão ativos para cobrança. A NFS-e já sai (046, seção 5); falta o modo

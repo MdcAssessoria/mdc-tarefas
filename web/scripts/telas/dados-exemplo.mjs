@@ -1513,7 +1513,7 @@ export const RPCS = {
       logo_url: null,
       cor_primaria: "#0B2820",
       cor_destaque: "#E2C17E",
-      permissoes: ["tarefas", "demonstrativos", "societario", "atendimento", "vencimentos", "folha"],
+      permissoes: ["tarefas", "demonstrativos", "societario", "atendimento", "vencimentos", "folha", "documentos"],
     },
     // segunda empresa com todas as partes do Portal liberadas (Rotinas, Fale com a MDC, Documentos) e sem fechamento
     // publicado: serve para ver as telas vazias que ensinam (escolha "mdc-portal:empresa" = C2 no navegador)
@@ -1532,6 +1532,38 @@ export const RPCS = {
       permissoes: ["demonstrativos", "rotinas", "chat", "societario", "documentos"],
     },
   ],
+  // Portal › Faturas (050): uma a vencer com boleto, uma paga com nota fiscal e uma vencida sem boleto
+  portal_faturas_detalhe: () =>
+    [
+      { n: "2026/00031", comp: -3, venc: 6, valor: 1850, paga: false, boleto: true, nota: null },
+      { n: "2026/00024", comp: -33, venc: -24, valor: 1850, paga: true, boleto: false, nota: "157" },
+      { n: "2026/00017", comp: -63, venc: -54, valor: 1790.5, paga: false, boleto: false, nota: "141" },
+    ].map((x, i) => ({
+      id: `fp${i}`,
+      numero: x.n,
+      competencia: `${dia(x.comp).slice(0, 7)}-01`,
+      emissao: dia(x.comp),
+      vencimento: dia(x.venc),
+      valor: x.valor,
+      descricao: "Honorários contábeis — assessoria mensal",
+      documento: x.nota ? "nfse" : "fatura",
+      envio: x.nota ? "nf_fatura_boleto" : "fatura_boleto",
+      situacao: "enviada",
+      nfse_situacao: x.nota ? "emitida" : "nao_se_aplica",
+      nfse_numero: x.nota,
+      boleto_situacao: x.boleto ? "gerado" : "a_definir",
+      servico_codigo: x.nota ? "17.19.01" : null,
+      iss_aliquota: x.nota ? 2 : null,
+      cancelamento_motivo: null,
+      contrato: "Assessoria contábil Greencore",
+      paga: x.paga,
+      pago_em: x.paga ? dia(x.venc) : null,
+      tomador: { nome: "GREENCORE INDUSTRIA LTDA", documento: "12345678000195", email: "financeiro@greencore.com.br", cidade: "Bragança Paulista", uf: "SP" },
+      nfse: x.nota ? { numero: x.nota, chave: "35071052481401210001650000000000157" + "000000000000000", xml_caminho: `${ORG}/x/nfse-emitidas/2026/09/n${i}.xml` } : null,
+      boleto: x.boleto
+        ? { banco: "itau", linha_digitavel: "34191.79001 01043.510047 91020.150008 1 99990000185000", pix_copia_cola: "00020126580014br.gov.bcb.pix0136exemplo-mdc-portal", vencimento: dia(x.venc), valor: x.valor, situacao: "registrada" }
+        : null,
+    })),
   portal_rotinas: () => [
     {
       tarefa_id: "r1",

@@ -19,9 +19,10 @@ import { PortalRotinas } from "@/dominios/portal/componentes/PortalRotinas";
 import { PortalProcessos } from "@/dominios/portal/componentes/PortalProcessos";
 import { PortalChat } from "@/dominios/portal/componentes/PortalChat";
 import { PortalDocumentos } from "@/dominios/portal/componentes/PortalDocumentos";
+import { PortalFaturas } from "@/dominios/portal/componentes/PortalFaturas";
 import { SinoCliente } from "@/dominios/portal/componentes/SinoCliente";
 
-type Aba = AbaDemonstrativo | "rotinas" | "processos" | "chat" | "documentos";
+type Aba = AbaDemonstrativo | "rotinas" | "processos" | "chat" | "documentos" | "faturas";
 
 const ABAS: { id: Aba; nome: string; perm: string; icone: string }[] = [
   { id: "inicio", nome: "Resumo", perm: "demonstrativos", icone: "grafico" },
@@ -33,6 +34,7 @@ const ABAS: { id: Aba; nome: string; perm: string; icone: string }[] = [
   { id: "parecer", nome: "Parecer técnico", perm: "demonstrativos", icone: "escudo" },
   { id: "processos", nome: "Societário", perm: "societario", icone: "pasta" },
   { id: "documentos", nome: "Documentos", perm: "documentos", icone: "clipe" },
+  { id: "faturas", nome: "Faturas da MDC", perm: "documentos", icone: "moeda" },
 ];
 const DEMONSTRATIVOS: Aba[] = ["inicio", "demonstracoes", "balancete", "indices", "parecer"];
 
@@ -159,6 +161,7 @@ export default function Portal() {
         {aba === "processos" && <PortalProcessos emp={emp} aoFalar={irAoChat} />}
         {aba === "chat" && <PortalChat emp={emp} />}
         {aba === "documentos" && <PortalDocumentos emp={emp} />}
+        {aba === "faturas" && <PortalFaturas emp={emp} />}
       </main>
       <footer className="mx-auto max-w-[1200px] px-4 pb-6 text-xs text-neutral-500 print:hidden">
         {IDENTIDADE_MDC.nomeComercial} · {IDENTIDADE_MDC.telefone} · {IDENTIDADE_MDC.site}

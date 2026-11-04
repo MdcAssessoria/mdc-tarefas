@@ -26,7 +26,7 @@ export const SITUACOES_BOLETO_EMITIDO: Record<SituacaoBoletoEmitido, { nome: str
 
 const nomeBanco = (b: BancoBoleto | null | undefined) => BANCOS_BOLETO.find((x) => x.id === b)?.nome ?? "—";
 
-function Copiavel({ rotulo, texto }: { rotulo: string; texto: string }) {
+export function Copiavel({ rotulo, texto }: { rotulo: string; texto: string }) {
   const [copiado, setCopiado] = useState(false);
   return (
     <div className="campo">
