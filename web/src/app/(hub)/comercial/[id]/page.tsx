@@ -3,7 +3,7 @@
 "use client";
 
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
 import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { useConsulta } from "@/lib/useConsulta";
@@ -35,6 +35,7 @@ function Ficha() {
   const podeOperar = pode("comercial", "operar");
   const podeGerir = pode("comercial", "gerir");
   const { aviso, mostrar } = useAviso();
+  const router = useRouter();
   const [aba, setAba] = useState<Aba>("acompanhamento");
   const consulta = useConsulta(useCallback(() => lerFicha(id, org.id), [id, org.id]));
   const acoes = useAcoesOportunidade(consulta.recarregar, mostrar);
@@ -99,6 +100,12 @@ function Ficha() {
               <button className="btn" onClick={() => acoes.arquivar([o])}>
                 <Icone nome="caixa" className="h-4 w-4" />
                 Arquivar
+              </button>
+            )}
+            {podeGerir && !o.cliente_id && (
+              <button className="btn text-[var(--perigo)]" onClick={() => acoes.excluir([o], () => router.push("/comercial"))}>
+                <Icone nome="lixeira" className="h-4 w-4" />
+                Excluir
               </button>
             )}
             {podeOperar && !o.cliente_id && !o.arquivado_em && (

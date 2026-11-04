@@ -109,3 +109,8 @@ for f in testes/115_base_053.sql migrations/053_envio_faturas.sql; do
   $P -v ON_ERROR_STOP=1 -f "$R/$f" 2>&1 | grep -v NOTICE || true
 done
 $P -f "$R/testes/116_envio_053.sql" 2>&1 | grep -v "^SET$"
+# 054: Comercial — excluir lead de vez (só quem gere, com motivo, nunca cliente nem contrato assinado)
+for f in testes/117_base_054.sql migrations/054_crm_excluir.sql; do
+  $P -v ON_ERROR_STOP=1 -f "$R/$f" 2>&1 | grep -v NOTICE || true
+done
+$P -f "$R/testes/118_crm_excluir_054.sql" 2>&1 | grep -v "^SET$"

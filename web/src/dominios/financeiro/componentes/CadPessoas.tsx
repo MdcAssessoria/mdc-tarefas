@@ -11,6 +11,8 @@ import { useConsulta } from "@/lib/useConsulta";
 import { traduzirErro } from "@/lib/erros";
 import { hojeISO } from "@/lib/datas";
 import { Modal } from "@/components/ui/Modal";
+import { CampoCnpj, ResumoCnpj } from "@/components/ui/CampoCnpj";
+import type { DadosCnpj } from "@/lib/consultaCnpj";
 import { ColunaFormulario, ColunasFormulario } from "@/components/ui/ColunasFormulario";
 import { CabecalhoPagina } from "@/components/ui/CabecalhoPagina";
 import { CartaoFiltros } from "@/components/ui/CartaoFiltros";
@@ -51,6 +53,12 @@ export function CadPessoas({ cliente, podeOperar, avisar }: PropsAba) {
   const [inativos, setInativos] = useState(false);
   const [form, setForm] = useState<Form | null>(null);
   const [salvando, setSalvando] = useState(false);
+  /** O que veio da Receita na última busca da janela aberta (para conferir situação, endereço e atividade). */
+  const [receita, setReceita] = useState<DadosCnpj | null>(null);
+  function abrir(f: Form) {
+    setReceita(null);
+    setForm(f);
+  }
 
   const consulta = useConsulta(useCallback(() => lerPessoas(cliente.id), [cliente.id]));
   const lista = useMemo(() => {
@@ -135,7 +143,7 @@ export function CadPessoas({ cliente, podeOperar, avisar }: PropsAba) {
               })}
             />
             {podeOperar && (
-              <button className="btn-primario" onClick={() => setForm({ ...VAZIO })}>
+              <button className="btn-primario" onClick={() => abrir({ ...VAZIO })}>
                 <Icone nome="mais" className="h-4 w-4" />
                 Novo cadastro
               </button>
@@ -181,7 +189,7 @@ export function CadPessoas({ cliente, podeOperar, avisar }: PropsAba) {
               </button>
             ) : (
               podeOperar && (
-                <button className="btn-primario" onClick={() => setForm({ ...VAZIO })}>
+                <button className="btn-primario" onClick={() => abrir({ ...VAZIO })}>
                   <Icone nome="mais" className="h-4 w-4" />
                   Cadastrar o primeiro
                 </button>
@@ -233,7 +241,7 @@ export function CadPessoas({ cliente, podeOperar, avisar }: PropsAba) {
                 </td>
                 {podeOperar && (
                   <td className="celula-acoes text-right">
-                    <button className="btn !min-h-8 !px-3" onClick={() => setForm({ ...p })}>
+                    <button className="btn !min-h-8 !px-3" onClick={() => abrir({ ...p })}>
                       <Icone nome="editar" className="h-4 w-4" />
                       Editar
                     </button>
@@ -280,24 +288,39 @@ export function CadPessoas({ cliente, podeOperar, avisar }: PropsAba) {
                   </select>
                 </label>
               </div>
+              <CampoCnpj
+                rotulo="CPF ou CNPJ (opcional)"
+                valor={form.documento ?? ""}
+                aoMudar={(v) => setForm((f) => (f ? { ...f, documento: v } : f))}
+                aoCarregar={(d) => {
+                  setReceita(d);
+                  setForm((f) =>
+                    f
+                      ? {
+                          ...f,
+                          nome: d.razaoSocial || f.nome,
+                          cidade: d.municipio ?? f.cidade,
+                          uf: d.uf ?? f.uf,
+                          telefone: f.telefone?.trim() ? f.telefone : (d.telefone ?? f.telefone),
+                          email: f.email?.trim() ? f.email : (d.email?.toLowerCase() ?? f.email),
+                        }
+                      : f,
+                  );
+                }}
+                placeholder="CPF ou CNPJ"
+                ajuda="Com CNPJ, clique em Buscar dados: o HUB traz da Receita o nome, a cidade, a UF, o telefone e o e-mail."
+              />
+              {receita && <ResumoCnpj d={receita} />}
               <div className="grid gap-3 sm:grid-cols-2">
-                <label className="campo">
-                  <span>CPF ou CNPJ (opcional)</span>
-                  <input
-                    value={form.documento ?? ""}
-                    onChange={(e) => setForm({ ...form, documento: e.target.value })}
-                    inputMode="numeric"
-                  />
-                </label>
                 <label className="campo">
                   <span>Telefone</span>
                   <input value={form.telefone ?? ""} onChange={(e) => setForm({ ...form, telefone: e.target.value })} inputMode="tel" />
                 </label>
+                <label className="campo">
+                  <span>E-mail</span>
+                  <input type="email" value={form.email ?? ""} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+                </label>
               </div>
-              <label className="campo">
-                <span>E-mail</span>
-                <input type="email" value={form.email ?? ""} onChange={(e) => setForm({ ...form, email: e.target.value })} />
-              </label>
             </ColunaFormulario>
             <ColunaFormulario>
               <div className="grid gap-3 sm:grid-cols-3">

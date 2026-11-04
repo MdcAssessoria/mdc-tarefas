@@ -219,7 +219,7 @@ pode fazer aquilo (normalmente com `app.hub_pode(org, app, nível)` ou `app.port
 | Portal | `portal_convidar` (036: lista fechada de permissões), `portal_minhas_empresas`, `portal_rotinas`, `portal_processos`, `portal_abrir_conversa`, `portal_conversa_para_tarefa`, `portal_publicar_balancete`, `portal_publicar_parecer` |
 | Vencimentos | `venc_renovar`, `venc_encerrar` (036) |
 | Tarefas e configurações (036, nada se apaga) | `tarefa_cancelar`, `feriado_inativar`, `hub_inativar_perfil`, `portal_cancelar_convite` |
-| CRM | `crm_receber_lead` (página pública de leads), `crm_converter_cliente`, `crm_arquivar`, `crm_salvar_contrato`, `crm_marcar_contrato`, `crm_registrar_atividade` (038) |
+| CRM | `crm_receber_lead` (página pública de leads), `crm_converter_cliente`, `crm_arquivar`, `crm_excluir` (054: só gerir, com motivo, nunca cliente/contrato assinado, retrato na auditoria), `crm_salvar_contrato`, `crm_marcar_contrato`, `crm_registrar_atividade` (038) |
 | Certificado | `cert_salvar`, `cert_obter`, `cert_remover` (segredos no Supabase Vault) |
 | Licenças | `lic_salvar_produto`, `lic_salvar_plano`, `lic_salvar_contrato`, `lic_encerrar_contrato`, `lic_reajustar_contrato`, `lic_gerar_cobrancas`, `lic_baixar_cobranca`, `lic_desfazer_baixa`, `lic_cancelar_cobranca`, `lic_bloquear`, `lic_desbloquear`, `lic_definir_parametros`, `portal_licenca_situacao` |
 | Ledgra Link | `link_salvar_config`, `link_pode_emitir` (tela); `link_registrar_emissao`, `link_aplicar_evento` (só `service_role`, chamadas pelas Funções Edge `ledgra-link` e `ledgra-link-webhook`) |

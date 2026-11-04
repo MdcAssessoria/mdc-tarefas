@@ -1,5 +1,5 @@
 // Comercial › Leads: quem chegou pelo Simulador de Regime e pelos demais canais, com o que o Simulador apurou
-// (regime atual, melhor regime, economia estimada). Seleção em lote para arquivar ou devolver ao funil.
+// (regime atual, melhor regime, economia estimada). Seleção em lote para arquivar, devolver ao funil ou excluir de vez (quem gere).
 "use client";
 
 import Link from "next/link";
@@ -51,6 +51,7 @@ const MOSTRAR = 500;
 function Leads() {
   const { org, pode } = useOrg();
   const podeOperar = pode("comercial", "operar");
+  const podeGerir = pode("comercial", "gerir");
   const { aviso, mostrar } = useAviso();
   const hoje = hojeISO(org.fuso);
 
@@ -310,6 +311,12 @@ function Leads() {
                 <button className="btn" onClick={() => acoes.restaurar(selecionados.filter((o) => o.arquivado_em))}>
                   <Icone nome="atualizar" className="h-4 w-4" />
                   Voltar ao funil
+                </button>
+              )}
+              {podeGerir && selecionados.some((o) => !o.cliente_id) && (
+                <button className="btn text-[var(--perigo)]" onClick={() => acoes.excluir(selecionados.filter((o) => !o.cliente_id))}>
+                  <Icone nome="lixeira" className="h-4 w-4" />
+                  Excluir de vez
                 </button>
               )}
               <button className="btn-link" onClick={() => setSel(new Set())}>

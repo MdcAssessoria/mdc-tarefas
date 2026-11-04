@@ -488,7 +488,15 @@ const INTERACOES = {
     await janela.getByRole("button", { name: "Voltar" }).click();
     await janela.waitFor({ state: "detached", timeout: 3000 });
   },
-  "/cadastros/pessoas": (p) => abrirEFecharModal(p, "Novo cadastro", "Novo fornecedor ou cliente"),
+  // cadastro: a janela abre com o campo CPF/CNPJ e o botão "Buscar dados" (Receita)
+  "/cadastros/pessoas": async (p, foto) => {
+    await p.getByRole("button", { name: "Novo cadastro", exact: true }).click();
+    const janela = p.getByRole("dialog", { name: "Novo fornecedor ou cliente" });
+    await janela.getByRole("button", { name: "Buscar dados" }).waitFor({ timeout: 3000 });
+    await foto("janela-pessoas", { soTela: true });
+    await p.keyboard.press("Escape");
+    await janela.waitFor({ state: "detached", timeout: 3000 });
+  },
   "/plano-contas/categorias": (p) => abrirEFecharModal(p, "Nova categoria", "Nova categoria"),
   "/centros-custo": (p) => abrirEFecharModal(p, "Novo centro de custo", "Novo centro de custo"),
   // painel do Financeiro: os atalhos e os primeiros passos estão lá, e o menu "Bancos" da barra abre e mostra as telas

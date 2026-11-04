@@ -21,6 +21,13 @@
   motivo obrigatória) e pode voltar; atividade fica no histórico (o texto dos registros feitos à mão pode ser
   corrigido; os automáticos de contrato/etapa não); contrato muda para **cancelado** ("Renegociar") e continua em
   "Versões anteriores".
+- **Excluir de vez** (migração 054, pedido do Edvaldo em 04/11/2026): para lead de teste, duplicado ou que entrou por
+  engano. Só quem **gere** o Comercial vê o botão (ficha, menu "⋯" do cartão, Arquivadas e seleção em Leads); pede
+  motivo (5 letras ou mais) e avisa que não dá para desfazer. Leva junto o histórico e os rascunhos de contrato. O banco
+  recusa quem virou cliente ou tem contrato assinado (esses se arquivam) e guarda o retrato completo na auditoria
+  (`crm_excluir`, `excluir_oportunidade`). Apagar direto pela tabela continua bloqueado (`nada_se_apaga`).
+- **Buscar dados da Receita** na ficha: o campo CNPJ tem o botão "Buscar dados" (BrasilAPI, `CampoCnpj`), que preenche
+  razão social, cidade, UF, e-mail (se vazio) e o regime quando é Simples/MEI.
 - Marcar como **perdida** pede o motivo (`motivo_perda`). Marcar como **ganho** confirma e cadastra o cliente
   (`crm_converter_cliente`). Ao marcar contrato como **assinado**, a tela pergunta se cadastra o cliente agora.
 - Registro de ligação/WhatsApp/e-mail/reunião tira a oportunidade de "Novo lead"; "Próximo passo" exige data e vira o

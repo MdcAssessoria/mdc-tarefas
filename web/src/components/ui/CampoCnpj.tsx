@@ -15,6 +15,8 @@ export function CampoCnpj({
   aoMudar,
   aoCarregar,
   obrigatorio = false,
+  placeholder = "00.000.000/0000-00",
+  ajuda = "Digite o CNPJ e clique em Buscar dados para trazer razão social, endereço e sócios da Receita.",
 }: {
   rotulo?: string;
   valor: string;
@@ -22,6 +24,9 @@ export function CampoCnpj({
   /** Recebe os dados da Receita; a tela decide o que preencher. */
   aoCarregar: (d: DadosCnpj) => void;
   obrigatorio?: boolean;
+  /** Para campos que também aceitam CPF (a busca só vale para CNPJ). */
+  placeholder?: string;
+  ajuda?: string;
 }) {
   const [buscando, setBuscando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
@@ -74,7 +79,7 @@ export function CampoCnpj({
             }
           }}
           onBlur={() => valido && aoMudar(formatarDocumento(valor))}
-          placeholder="00.000.000/0000-00"
+          placeholder={placeholder}
           inputMode="numeric"
           aria-describedby={`${id}-ajuda`}
         />
@@ -94,7 +99,7 @@ export function CampoCnpj({
         className={`text-xs ${erro ? "text-red-700" : "text-[var(--texto-suave)]"}`}
         role={erro ? "alert" : undefined}
       >
-        {erro ?? "Digite o CNPJ e clique em Buscar dados para trazer razão social, endereço e sócios da Receita."}
+        {erro ?? ajuda}
       </small>
     </div>
   );

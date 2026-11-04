@@ -1,5 +1,6 @@
-// CRM Comercial: gravações feitas pelas telas. Nada do CRM se apaga (migração 036): oportunidade se arquiva com
-// motivo (crm_arquivar), atividade fica no histórico (pode ser editada) e contrato muda para "cancelado".
+// CRM Comercial: gravações feitas pelas telas. Oportunidade se arquiva com motivo (crm_arquivar); excluir de vez só
+// por crm_excluir (054: quem gere, com motivo, nunca cliente nem contrato assinado; retrato fica na auditoria).
+// Atividade fica no histórico (pode ser editada) e contrato muda para "cancelado".
 //
 // salvarContrato, marcarContrato e registrarAtividade chamam funções do banco (migração 038): cada uma grava tudo
 // numa transação só (contrato, funil e histórico), e o número do contrato (AAAA/NNN) é dado pelo banco, sem repetir.
@@ -12,6 +13,11 @@ import type { Atividade, Contrato, Etapa, Modelo, Oportunidade, Valores } from "
 /** Arquiva (ou devolve ao funil) várias oportunidades; devolve quantas mudaram. */
 export async function arquivarOportunidades(ids: string[], motivo: string, arquivar: boolean): Promise<number> {
   return Number(exigir(await supabase().rpc("crm_arquivar", { p_ids: ids, p_motivo: motivo, p_arquivar: arquivar })) ?? 0);
+}
+
+/** Exclui de vez (com histórico e rascunhos); devolve quantas saíram. Só quem gere o Comercial. */
+export async function excluirOportunidades(ids: string[], motivo: string): Promise<number> {
+  return Number(exigir(await supabase().rpc("crm_excluir", { p_ids: ids, p_motivo: motivo })) ?? 0);
 }
 
 /** Muda a etapa (ganho passa por converterEmCliente). Perdido leva o motivo. */

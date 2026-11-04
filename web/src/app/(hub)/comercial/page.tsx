@@ -58,6 +58,7 @@ function Funil() {
   const { org, membros, pode, eu } = useOrg();
   const router = useRouter();
   const podeOperar = pode("comercial", "operar");
+  const podeGerir = pode("comercial", "gerir");
   const { aviso, mostrar } = useAviso();
   const hoje = hojeISO(org.fuso);
 
@@ -416,6 +417,8 @@ function Funil() {
               nomeMembro={nomeMembro}
               aoMover={acoes.mover}
               aoArquivar={(o) => acoes.arquivar([o])}
+              podeGerir={podeGerir}
+              aoExcluir={(o) => acoes.excluir([o])}
             />
           ) : visao === "lista" ? (
             <QuadroTabela rotulo="Oportunidades do funil">
@@ -519,6 +522,12 @@ function Funil() {
                         <button className="btn !min-h-8 !px-3" onClick={() => acoes.restaurar([o])}>
                           <Icone nome="atualizar" className="h-4 w-4" />
                           Voltar ao funil
+                        </button>
+                      )}
+                      {podeGerir && !o.cliente_id && (
+                        <button className="btn ml-2 !min-h-8 !px-3 text-[var(--perigo)]" onClick={() => acoes.excluir([o])}>
+                          <Icone nome="lixeira" className="h-4 w-4" />
+                          Excluir
                         </button>
                       )}
                     </td>

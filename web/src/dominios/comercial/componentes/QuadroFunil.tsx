@@ -24,6 +24,8 @@ export function QuadroFunil({
   nomeMembro,
   aoMover,
   aoArquivar,
+  podeGerir = false,
+  aoExcluir,
 }: {
   colunas: Coluna[];
   itens: Oportunidade[];
@@ -32,6 +34,8 @@ export function QuadroFunil({
   nomeMembro: (id: string | null) => string;
   aoMover: (o: Oportunidade, etapa: Etapa) => void;
   aoArquivar: (o: Oportunidade) => void;
+  podeGerir?: boolean;
+  aoExcluir?: (o: Oportunidade) => void;
 }) {
   const [arrastando, setArrastando] = useState<string | null>(null);
   const [escolhida, setEscolhida] = useState<Etapa | null>(null);
@@ -107,6 +111,7 @@ export function QuadroFunil({
                     aoArrastar={setArrastando}
                     aoMover={(etapa) => aoMover(o, etapa)}
                     aoArquivar={() => aoArquivar(o)}
+                    aoExcluir={podeGerir && aoExcluir && !o.cliente_id ? () => aoExcluir(o) : undefined}
                   />
                 ))}
                 {!lista.length && (
@@ -132,6 +137,7 @@ function CartaoOportunidade({
   aoArrastar,
   aoMover,
   aoArquivar,
+  aoExcluir,
 }: {
   o: Oportunidade;
   hoje: string;
@@ -140,6 +146,8 @@ function CartaoOportunidade({
   aoArrastar: (id: string | null) => void;
   aoMover: (etapa: Etapa) => void;
   aoArquivar: () => void;
+  /** Só aparece para quem gere o Comercial (e nunca para quem já é cliente). */
+  aoExcluir?: () => void;
 }) {
   const router = useRouter();
   const parado = diasDesde(o.etapa_desde);
@@ -195,6 +203,15 @@ function CartaoOportunidade({
                 <Icone nome="caixa" className="h-4 w-4 text-[var(--texto-suave)]" />
                 Arquivar (dar baixa)
               </button>
+              {aoExcluir && (
+                <button
+                  className="flex w-full items-center gap-2 rounded-lg px-3 py-1.5 text-left text-[var(--perigo)] hover:bg-red-50"
+                  onClick={(e) => item(e, aoExcluir)}
+                >
+                  <Icone nome="lixeira" className="h-4 w-4" />
+                  Excluir de vez
+                </button>
+              )}
             </div>
           </details>
         )}

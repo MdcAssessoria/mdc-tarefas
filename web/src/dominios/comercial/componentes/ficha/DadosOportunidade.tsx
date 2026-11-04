@@ -6,6 +6,7 @@ import { useState } from "react";
 import { brl } from "@/lib/formato/moeda";
 import { traduzirErro } from "@/lib/erros";
 import { Icone } from "@/components/ui/Icone";
+import { CampoCnpj } from "@/components/ui/CampoCnpj";
 import { REGIMES } from "@/dominios/clientes/tipos";
 import type { Oportunidade } from "../../crm";
 import { atualizarOportunidade } from "../../repositorio";
@@ -108,7 +109,28 @@ export function DadosOportunidade({
         <div className="grid gap-2 sm:grid-cols-2">
           {campo("empresa", "Nome (como é conhecida)")}
           {campo("razao_social", "Razão social")}
-          {campo("cnpj", "CNPJ", "text", { inputMode: "numeric" })}
+          {podeOperar ? (
+            <div className="sm:col-span-2">
+              <CampoCnpj
+                valor={f.cnpj ?? ""}
+                aoMudar={(v) => setF((x) => ({ ...x, cnpj: v || null }))}
+                aoCarregar={(d) =>
+                  setF((x) => ({
+                    ...x,
+                    razao_social: d.razaoSocial || x.razao_social,
+                    empresa: x.empresa?.trim() ? x.empresa : d.nomeFantasia || d.razaoSocial,
+                    cidade: d.municipio ?? x.cidade,
+                    uf: d.uf ?? x.uf,
+                    email: x.email?.trim() ? x.email : (d.email?.toLowerCase() ?? x.email),
+                    regime_atual: d.mei ? "mei" : d.simples ? "simples" : x.regime_atual,
+                  }))
+                }
+                ajuda="Clique em Buscar dados para trazer da Receita a razão social, a cidade, a UF e o regime (Simples/MEI)."
+              />
+            </div>
+          ) : (
+            campo("cnpj", "CNPJ", "text", { inputMode: "numeric" })
+          )}
           <label className="campo">
             <span>Regime atual</span>
             <select

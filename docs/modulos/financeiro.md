@@ -33,7 +33,7 @@ bancárias, transferências, extratos e conciliação (no celular, botão "Telas
 | Plano de contas · `/plano-contas` | Equipe (ver; importar com operar) | Importa o plano de contas do Domínio (Excel/CSV); lista com busca e filtros; PDF e Excel |
 | Plano de contas · `/plano-contas/categorias` | Equipe (ver; cadastrar com operar) | Despesas e receitas, cada uma ligada a conta analítica ativa do plano; filtros, PDF e Excel |
 | Centros de custo · `/centros-custo` | Equipe (ver; cadastrar com operar) | Centros de custo da MDC; PDF e Excel |
-| Fornecedores e clientes · `/cadastros/pessoas` | Quem tem Financeiro, Entradas, Saídas ou Estoque | Cadastro comum (CPF/CNPJ conferido) usado por todos os módulos; aparece no menu lateral como "Fornecedores e clientes" |
+| Fornecedores e clientes · `/cadastros/pessoas` | Quem tem Financeiro, Entradas, Saídas ou Estoque | Cadastro comum (CPF/CNPJ conferido) usado por todos os módulos; com CNPJ, "Buscar dados" traz da Receita nome, cidade, UF, telefone e e-mail e mostra a situação, o endereço e a atividade para conferir; aparece no menu lateral como "Fornecedores e clientes" |
 | Relatórios · `/relatorios` | Equipe | Painel de relatórios gerenciais com período em um clique, PDF e Excel: **Resultado de caixa** (DRE gerencial por grupo e categoria, juros/multas e descontos à parte, "sobrou/faltou"), **Realizado x previsto** (mês a mês: previsto pelo vencimento, realizado pelos pagamentos, com gráfico), **Pagas e recebidas** (cada baixa, indicadores que filtram), **Centros de custo** (receitas, despesas, resultado e parte das despesas) |
 
 | Endereço | Quem usa | O que faz |

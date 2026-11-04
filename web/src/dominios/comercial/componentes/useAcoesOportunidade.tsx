@@ -1,5 +1,6 @@
 // Ações sobre oportunidades usadas no funil, nos leads e na ficha: mudar de etapa (perdido pede o motivo; ganho
-// confirma e cadastra o cliente), arquivar com motivo (JanelaMotivo) e devolver ao funil. Nada é apagado.
+// confirma e cadastra o cliente), arquivar com motivo (JanelaMotivo), devolver ao funil e excluir de vez (só quem gere,
+// com motivo; lead que virou cliente ou tem contrato assinado o banco recusa).
 "use client";
 
 import { useState } from "react";
@@ -8,9 +9,12 @@ import { useConfirmar } from "@/components/ui/JanelaConfirmar";
 import { JanelaMotivo } from "@/components/ui/JanelaMotivo";
 import type { TomAviso } from "@/components/ui/Aviso";
 import type { Etapa, Oportunidade } from "../crm";
-import { arquivarOportunidades, converterEmCliente, moverEtapa } from "../repositorio";
+import { arquivarOportunidades, converterEmCliente, excluirOportunidades, moverEtapa } from "../repositorio";
 
-type Pedido = { tipo: "perdido"; o: Oportunidade } | { tipo: "arquivar"; lista: Oportunidade[] };
+type Pedido =
+  | { tipo: "perdido"; o: Oportunidade }
+  | { tipo: "arquivar"; lista: Oportunidade[] }
+  | { tipo: "excluir"; lista: Oportunidade[]; depois?: () => void };
 
 export function useAcoesOportunidade(aoMudar: () => void, avisar: (texto: string, tom?: TomAviso) => void) {
   const [confirmacao, confirmar] = useConfirmar();
@@ -48,6 +52,11 @@ export function useAcoesOportunidade(aoMudar: () => void, avisar: (texto: string
 
   function arquivar(lista: Oportunidade[]) {
     if (lista.length) setPedido({ tipo: "arquivar", lista });
+  }
+
+  /** depois: o que fazer quando der certo (a ficha volta para o funil, porque a oportunidade não existe mais). */
+  function excluir(lista: Oportunidade[], depois?: () => void) {
+    if (lista.length) setPedido({ tipo: "excluir", lista, depois });
   }
 
   const restaurar = async (lista: Oportunidade[]) => {
@@ -105,8 +114,34 @@ export function useAcoesOportunidade(aoMudar: () => void, avisar: (texto: string
           }}
         />
       )}
+      {pedido?.tipo === "excluir" && (
+        <JanelaMotivo
+          titulo={pedido.lista.length === 1 ? `Excluir ${pedido.lista[0].empresa} de vez` : `Excluir ${pedido.lista.length} oportunidades de vez`}
+          descricao={
+            <>
+              Some do funil, dos Arquivados e das listas, junto com o histórico de conversas e os rascunhos de contrato.{" "}
+              <b>Não dá para desfazer.</b> Use para lead de teste, duplicado ou que entrou por engano. Se for só um lead que não
+              avançou, prefira Arquivar (dá para devolver ao funil). Quem já virou cliente ou tem contrato assinado não pode ser
+              excluído.
+            </>
+          }
+          botao="Excluir de vez"
+          aoFechar={fechar}
+          aoConfirmar={async (motivo) => {
+            const n = await excluirOportunidades(
+              pedido.lista.map((o) => o.id),
+              motivo,
+            );
+            const depois = pedido.depois;
+            fechar();
+            avisar(n === 1 ? `${pedido.lista[0].empresa} foi excluída.` : `${n} oportunidades excluídas.`);
+            if (depois) depois();
+            else aoMudar();
+          }}
+        />
+      )}
     </>
   );
 
-  return { janela, mover, arquivar, restaurar, virarCliente };
+  return { janela, mover, arquivar, excluir, restaurar, virarCliente };
 }
