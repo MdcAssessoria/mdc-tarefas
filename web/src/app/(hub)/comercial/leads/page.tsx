@@ -30,6 +30,7 @@ import type { Oportunidade } from "@/dominios/comercial/crm";
 import { lerOportunidades } from "@/dominios/comercial/leituras";
 import { TOM_ETAPA, linkWhatsapp, nomeEtapa, nomeOrigem, nomeRegime, numero } from "@/dominios/comercial/rotulos";
 import { useAcoesOportunidade } from "@/dominios/comercial/componentes/useAcoesOportunidade";
+import { plural } from "@/lib/formato/numero";
 
 export default function PaginaLeads() {
   return <Leads />;
@@ -154,7 +155,7 @@ function Leads() {
             avisar={mostrar}
             montar={() => ({
               titulo: "Leads do CRM",
-              subtitulo: `${org.nome} · origem: ${origem ? nomeOrigem(origem) : "todas"}${periodo !== "tudo" ? ` · recebidos: ${rotuloPeriodo}` : ""} · ${lista.length} lead(s)`,
+              subtitulo: `${org.nome} · origem: ${origem ? nomeOrigem(origem) : "todas"}${periodo !== "tudo" ? ` · recebidos: ${rotuloPeriodo}` : ""} · ${plural(lista.length, "lead")}`,
               arquivo: nomeArquivo("Leads", hoje),
               logoUrl: org.logo_url,
               linhas: lista,

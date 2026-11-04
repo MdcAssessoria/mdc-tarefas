@@ -19,6 +19,7 @@ import { Icone } from "@/components/ui/Icone";
 import type { Tom } from "@/components/ui/Tons";
 import { nomeCliente } from "@/dominios/clientes/nome";
 import type { EmpresaPortal } from "../tipos";
+import { plural } from "@/lib/formato/numero";
 
 interface Processo {
   processo_id: string;
@@ -65,7 +66,7 @@ export function PortalProcessos({ emp, aoFalar }: { emp: EmpresaPortal; aoFalar?
             avisar={mostrar}
             montar={() => ({
               titulo: "Processos societários",
-              subtitulo: `${nomeCliente(emp)} · ${lista.length} processo(s)`,
+              subtitulo: `${nomeCliente(emp)} · ${plural(lista.length, "processo")}`,
               arquivo: nomeArquivo("Processos-societarios", nomeCliente(emp), hojeISO()),
               logoUrl: emp.logo_url,
               linhas: lista,

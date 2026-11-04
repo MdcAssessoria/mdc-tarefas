@@ -24,6 +24,11 @@ describe("valor por extenso", () => {
     [2_000_300, "dois milhões e trezentos reais"],
     [1_234_567, "um milhão duzentos e trinta e quatro mil quinhentos e sessenta e sete reais"],
     [1_000_000_000, "um bilhão de reais"],
+    [1_200_300, "um milhão e duzentos mil e trezentos reais"],
+    [1_200_000, "um milhão e duzentos mil reais"],
+    [1_230_300, "um milhão duzentos e trinta mil e trezentos reais"],
+    [2_100_050, "dois milhões e cem mil e cinquenta reais"],
+    [1_500_000_000, "um bilhão e quinhentos milhões de reais"],
   ])("%s → %s", (v, esperado) => {
     expect(valorExtenso(v)).toBe(esperado);
   });

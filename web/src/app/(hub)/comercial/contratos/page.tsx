@@ -31,6 +31,7 @@ import type { ContratoComEmpresa } from "@/dominios/comercial/leituras";
 import { SITUACOES_CONTRATO } from "@/dominios/comercial/rotulos";
 import type { SituacaoContrato } from "@/dominios/comercial/rotulos";
 import { baixarContratoPdf } from "@/dominios/comercial/baixarContrato";
+import { plural } from "@/lib/formato/numero";
 
 export default function PaginaContratos() {
   return <Lista />;
@@ -114,7 +115,7 @@ function Lista() {
             avisar={mostrar}
             montar={() => ({
               titulo: "Contratos do CRM",
-              subtitulo: `${org.nome} · ${nomeSituacao(situacao)}${periodo !== "tudo" ? ` · criados: ${rotuloPeriodo}` : ""} · ${lista.length} contrato(s)`,
+              subtitulo: `${org.nome} · ${nomeSituacao(situacao)}${periodo !== "tudo" ? ` · criados: ${rotuloPeriodo}` : ""} · ${plural(lista.length, "contrato")}`,
               arquivo: nomeArquivo("Contratos", hoje),
               logoUrl: org.logo_url,
               linhas: lista,

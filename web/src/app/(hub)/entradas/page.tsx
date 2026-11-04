@@ -52,6 +52,7 @@ import { EnviarXml } from "@/dominios/notas/componentes/EnviarXml";
 import { BotoesVerNota } from "@/dominios/notas/componentes/BotoesVerNota";
 import { avisoDaBusca, contar, resumoNotasRecebidas } from "@/dominios/notas/painel";
 import { ArvoreDocumento } from "@/dominios/financeiro/componentes/ArvoreDocumento";
+import { plural } from "@/lib/formato/numero";
 
 type FiltroSit = "todas" | SituacaoPainel | "a_lancar";
 const FILTROS: { id: FiltroSit; nome: string }[] = [
@@ -255,7 +256,7 @@ export default function PaginaNotasRecebidas() {
           avisar={mostrar}
           montar={() => ({
             titulo: "Notas recebidas",
-            subtitulo: `${cliente ? nomeCliente(cliente) : ""} · emissão ${intervalo.de ? `${fmtData(intervalo.de)} a ${fmtData(intervalo.ate ?? "")}` : "todas"} · ${FILTROS.find((f) => f.id === situacao)?.nome} · ${lista.length} nota(s)`,
+            subtitulo: `${cliente ? nomeCliente(cliente) : ""} · emissão ${intervalo.de ? `${fmtData(intervalo.de)} a ${fmtData(intervalo.ate ?? "")}` : "todas"} · ${FILTROS.find((f) => f.id === situacao)?.nome} · ${plural(lista.length, "nota")}`,
             arquivo: nomeArquivo("Notas-recebidas", cliente ? nomeCliente(cliente) : "", hoje),
             logoUrl: org.logo_url,
             linhas: lista,

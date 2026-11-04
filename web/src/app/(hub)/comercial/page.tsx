@@ -37,6 +37,7 @@ import { TOM_ETAPA, diasDesde, estaAberta, nomeEtapa, nomeOrigem, retornoAtrasad
 import { LimparFunil, NovaOportunidade } from "@/dominios/comercial/componentes/JanelasFunil";
 import { QuadroFunil } from "@/dominios/comercial/componentes/QuadroFunil";
 import { useAcoesOportunidade } from "@/dominios/comercial/componentes/useAcoesOportunidade";
+import { plural } from "@/lib/formato/numero";
 
 export default function PaginaFunil() {
   return <Funil />;
@@ -206,7 +207,7 @@ function Funil() {
               avisar={mostrar}
               montar={() => ({
                 titulo: visao === "arquivados" ? "Oportunidades arquivadas" : "Funil comercial",
-                subtitulo: `${org.nome} · ${visao === "arquivados" ? "arquivadas" : SITUACOES.find((s) => s.id === situacao)?.nome}${periodo !== "tudo" ? ` · entrou no funil: ${rotuloPeriodo}` : ""} · ${lista.length} oportunidade(s)`,
+                subtitulo: `${org.nome} · ${visao === "arquivados" ? "arquivadas" : SITUACOES.find((s) => s.id === situacao)?.nome}${periodo !== "tudo" ? ` · entrou no funil: ${rotuloPeriodo}` : ""} · ${plural(lista.length, "oportunidade")}`,
                 arquivo: nomeArquivo(visao === "arquivados" ? "Oportunidades-arquivadas" : "Funil-comercial", hoje),
                 logoUrl: org.logo_url,
                 linhas: lista,

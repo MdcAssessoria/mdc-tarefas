@@ -45,6 +45,7 @@ import { EspelhoNota } from "@/dominios/notas/componentes/EspelhoNota";
 import { DetalheFatura, JanelaGerarFatura } from "./JanelasFatura";
 import { JanelaEmitirNfse } from "./JanelaEmitirNfse";
 import { JanelaBoleto, SITUACOES_BOLETO_EMITIDO } from "./JanelaBoleto";
+import { plural } from "@/lib/formato/numero";
 
 type FiltroSituacao = "abertas" | SituacaoFatura | "todas";
 const FILTROS_SITUACAO: { id: FiltroSituacao; nome: string }[] = [
@@ -206,7 +207,7 @@ export function TelaFaturas() {
               avisar={mostrar}
               montar={() => ({
                 titulo: "Faturas",
-                subtitulo: `${cliente ? nomeCliente(cliente) : ""} · ${PERIODOS.find((p) => p.id === periodo)?.nome} · ${FILTROS_SITUACAO.find((x) => x.id === situacao)?.nome} · ${filtradas.length} fatura(s)`,
+                subtitulo: `${cliente ? nomeCliente(cliente) : ""} · ${PERIODOS.find((p) => p.id === periodo)?.nome} · ${FILTROS_SITUACAO.find((x) => x.id === situacao)?.nome} · ${plural(filtradas.length, "fatura")}`,
                 arquivo: nomeArquivo("Faturas", cliente ? nomeCliente(cliente) : "", hoje),
                 logoUrl: org.logo_url,
                 paisagem: true,

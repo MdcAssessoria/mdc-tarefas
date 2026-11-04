@@ -21,6 +21,7 @@ import type { CentroCusto } from "../tipos";
 import { BotoesExportar } from "@/components/ui/BotoesExportar";
 import { Chip } from "@/components/ui/Chip";
 import type { PropsAba } from "./Comuns";
+import { plural } from "@/lib/formato/numero";
 
 type FormCentro = { id?: string; codigo: string; nome: string; ativo: boolean };
 
@@ -61,7 +62,7 @@ export function CadCentros({ cliente, podeOperar, avisar }: PropsAba) {
               avisar={avisar}
               montar={() => ({
                 titulo: "Centros de custo",
-                subtitulo: `${nomeCliente(cliente)} · ${lista.length} centro(s)`,
+                subtitulo: `${nomeCliente(cliente)} · ${plural(lista.length, "centro")}`,
                 arquivo: nomeArquivo("Centros-de-custo", nomeCliente(cliente), hojeISO(org.fuso)),
                 logoUrl: org.logo_url,
                 paisagem: false,

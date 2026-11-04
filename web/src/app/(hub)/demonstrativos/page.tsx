@@ -16,7 +16,7 @@ import type { Periodo } from "@/lib/periodo";
 import type { BalanceteReg } from "@/dominios/demonstrativos/tipos";
 import { reprocessar } from "@/dominios/demonstrativos/repositorio";
 import { brl } from "@/lib/formato/moeda";
-import { fmtIndice } from "@/lib/formato/numero";
+import { fmtIndice, plural } from "@/lib/formato/numero";
 import { mesAno } from "@/lib/formato/datas";
 import { nomeCliente } from "@/dominios/clientes/nome";
 import { nomeArquivo } from "@/lib/arquivos/exportarLista";
@@ -169,7 +169,7 @@ function Lista() {
               avisar={mostrar}
               montar={() => ({
                 titulo: "Balancetes e demonstrativos",
-                subtitulo: `${org.nome} · ${filtrada.length} balancete(s)`,
+                subtitulo: `${org.nome} · ${plural(filtrada.length, "balancete")}`,
                 arquivo: nomeArquivo("Balancetes", hoje),
                 logoUrl: org.logo_url,
                 linhas: filtrada,

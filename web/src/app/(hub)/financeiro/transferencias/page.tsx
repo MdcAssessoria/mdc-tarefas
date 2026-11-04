@@ -31,6 +31,7 @@ import { EstadoVazio } from "@/components/ui/EstadoVazio";
 import { Icone } from "@/components/ui/Icone";
 import { QuadroTabela } from "@/components/ui/QuadroTabela";
 import { useAviso } from "@/components/ui/Aviso";
+import { plural } from "@/lib/formato/numero";
 
 export default function PaginaTransferencias() {
   const { org, pode } = useOrg();
@@ -90,7 +91,7 @@ export default function PaginaTransferencias() {
               avisar={mostrar}
               montar={() => ({
                 titulo: "Transferências entre contas",
-                subtitulo: `${cliente ? nomeCliente(cliente) : ""} · ${rotuloPeriodo}${conta ? ` · ${nomeConta(conta)}` : ""} · ${lista.length} transferência(s)`,
+                subtitulo: `${cliente ? nomeCliente(cliente) : ""} · ${rotuloPeriodo}${conta ? ` · ${nomeConta(conta)}` : ""} · ${plural(lista.length, "transferência")}`,
                 arquivo: nomeArquivo("Transferencias", cliente ? nomeCliente(cliente) : "", hoje),
                 logoUrl: org.logo_url,
                 linhas: lista,

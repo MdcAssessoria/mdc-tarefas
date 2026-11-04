@@ -39,6 +39,7 @@ import {
 import type { Destaque, LinhaProcesso } from "@/dominios/societario/processos";
 import { QuadroProcessos } from "@/dominios/societario/componentes/QuadroProcessos";
 import { NovoProcesso } from "@/dominios/societario/componentes/NovoProcesso";
+import { plural } from "@/lib/formato/numero";
 
 export default function PaginaSocietario() {
   return <Societario />;
@@ -185,7 +186,7 @@ function Societario() {
               avisar={mostrar}
               montar={() => ({
                 titulo: "Processos societários",
-                subtitulo: [nomeSituacao, ...filtrosAtivos.filter((f) => f.id !== "situacao").map((f) => f.rotulo), `${lista.length} processo(s)`].join(" · "),
+                subtitulo: [nomeSituacao, ...filtrosAtivos.filter((f) => f.id !== "situacao").map((f) => f.rotulo), `${plural(lista.length, "processo")}`].join(" · "),
                 arquivo: nomeArquivo("Processos-societarios", hoje),
                 logoUrl: org.logo_url,
                 linhas: lista,

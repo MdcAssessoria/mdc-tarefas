@@ -25,6 +25,7 @@ import { QuadroTabela } from "@/components/ui/QuadroTabela";
 import type { Tom } from "@/components/ui/Tons";
 import { nomeCliente } from "@/dominios/clientes/nome";
 import type { EmpresaPortal } from "../tipos";
+import { plural } from "@/lib/formato/numero";
 
 interface Vencimento {
   id: string;
@@ -132,7 +133,7 @@ export function PortalDocumentos({ emp }: { emp: EmpresaPortal }) {
               avisar={mostrar}
               montar={() => ({
                 titulo: "Documentos",
-                subtitulo: `${nomeCliente(emp)} · ${lista.length} arquivo(s)`,
+                subtitulo: `${nomeCliente(emp)} · ${plural(lista.length, "arquivo")}`,
                 arquivo: nomeArquivo("Documentos", nomeCliente(emp), hoje),
                 logoUrl: emp.logo_url,
                 paisagem: false,

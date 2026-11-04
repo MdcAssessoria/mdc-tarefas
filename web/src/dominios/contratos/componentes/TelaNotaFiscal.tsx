@@ -27,6 +27,7 @@ import { salvarParametrosNfse } from "../repositorio";
 import { EXPLICA_AMBIENTE, MODOS_NFSE, NOMES_AMBIENTE, REGIMES_APURACAO, REGIMES_ESPECIAIS } from "../nfse";
 import type { AmbienteNfse, EmissaoNfse, ModoNfse, ParametrosNfse } from "../tipos";
 import { FaixaAmbiente } from "./JanelaEmitirNfse";
+import { plural } from "@/lib/formato/numero";
 
 const SITUACOES = {
   enviando: { nome: "Enviando", tom: "azul" },
@@ -151,7 +152,7 @@ export function TelaNotaFiscal() {
             avisar={mostrar}
             montar={() => ({
               titulo: "Notas fiscais enviadas pelo HUB",
-              subtitulo: `${cliente ? nomeCliente(cliente) : ""} · ${emissoes.length} envio(s)`,
+              subtitulo: `${cliente ? nomeCliente(cliente) : ""} · ${plural(emissoes.length, "envio")}`,
               arquivo: nomeArquivo("Notas-fiscais-enviadas", cliente ? nomeCliente(cliente) : "", hoje),
               logoUrl: org.logo_url,
               paisagem: true,

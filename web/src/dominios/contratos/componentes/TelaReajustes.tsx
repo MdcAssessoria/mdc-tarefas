@@ -27,6 +27,7 @@ import { lerContratos, lerReajustes } from "../leituras";
 import { reajustePendente, textoReajuste } from "../regras";
 import type { Recorrente } from "../tipos";
 import { JanelaReajuste } from "./JanelaReajuste";
+import { plural } from "@/lib/formato/numero";
 
 type Visao = "pendentes" | "feitos" | "todos";
 interface Linha {
@@ -127,7 +128,7 @@ export function TelaReajustes() {
             avisar={mostrar}
             montar={() => ({
               titulo: "Reajustes de contratos",
-              subtitulo: `${cliente ? nomeCliente(cliente) : ""} · ${filtrados.length} linha(s)`,
+              subtitulo: `${cliente ? nomeCliente(cliente) : ""} · ${plural(filtrados.length, "linha")}`,
               arquivo: nomeArquivo("Reajustes", cliente ? nomeCliente(cliente) : "", hoje),
               logoUrl: org.logo_url,
               linhas: filtrados,

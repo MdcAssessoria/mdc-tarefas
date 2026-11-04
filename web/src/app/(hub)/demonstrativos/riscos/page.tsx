@@ -11,7 +11,7 @@ import { useConsulta } from "@/lib/useConsulta";
 import { hojeISO } from "@/lib/datas";
 import type { BalanceteReg } from "@/dominios/demonstrativos/tipos";
 import { brl } from "@/lib/formato/moeda";
-import { fmtIndice } from "@/lib/formato/numero";
+import { fmtIndice, plural } from "@/lib/formato/numero";
 import { mesAno } from "@/lib/formato/datas";
 import { nomeCliente } from "@/dominios/clientes/nome";
 import { nomeArquivo } from "@/lib/arquivos/exportarLista";
@@ -110,7 +110,7 @@ function Riscos() {
             avisar={mostrar}
             montar={() => ({
               titulo: "Riscos da carteira",
-              subtitulo: `${org.nome} · ${lista.length} empresa(s) · ${comAlerta} com sinais de alerta`,
+              subtitulo: `${org.nome} · ${plural(lista.length, "empresa")} · ${comAlerta} com sinais de alerta`,
               arquivo: nomeArquivo("Riscos-da-carteira", hojeISO(org.fuso)),
               logoUrl: org.logo_url,
               linhas: lista,

@@ -36,6 +36,7 @@ import { intervaloDoPeriodo, PERIODOS, saldoDoTitulo, SITUACOES, situacaoDoTitul
 import type { Periodo, SituacaoExibida } from "../regras";
 import { nomeArquivo } from "@/lib/arquivos/exportarLista";
 import type { Titulo, TipoTitulo } from "../tipos";
+import { plural } from "@/lib/formato/numero";
 
 type FiltroSituacao = "abertos" | "vencido" | "a_vencer" | "quitado" | "cancelado" | "todos";
 const FILTROS_SITUACAO: { id: FiltroSituacao; nome: string }[] = [
@@ -222,7 +223,7 @@ export function TelaTitulos({ tipo }: { tipo: TipoTitulo }) {
               avisar={mostrar}
               montar={() => ({
                 titulo: T.titulo,
-                subtitulo: `${cliente ? nomeCliente(cliente) : ""} · ${rotuloPeriodo} · ${FILTROS_SITUACAO.find((x) => x.id === situacao)?.nome} · ${lista.length} lançamento(s)`,
+                subtitulo: `${cliente ? nomeCliente(cliente) : ""} · ${rotuloPeriodo} · ${FILTROS_SITUACAO.find((x) => x.id === situacao)?.nome} · ${plural(lista.length, "lançamento")}`,
                 arquivo: nomeArquivo(T.titulo, cliente ? nomeCliente(cliente) : "", hoje),
                 logoUrl: org.logo_url,
                 linhas: lista,
