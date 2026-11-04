@@ -168,9 +168,9 @@ function CartaoOportunidade({
           {o.empresa}
         </Link>
         {podeOperar && (
-          <details className="relative -mr-1 -mt-1 shrink-0" onClick={(e) => e.stopPropagation()}>
+          <details className="relative -mr-2 -mt-2 shrink-0 md:-mr-1 md:-mt-1" onClick={(e) => e.stopPropagation()}>
             <summary
-              className="grid h-7 w-7 cursor-pointer list-none place-items-center rounded-md text-[var(--texto-suave)] hover:bg-[var(--fundo)] hover:text-[var(--marca)] [&::-webkit-details-marker]:hidden"
+              className="grid h-11 w-11 cursor-pointer list-none place-items-center rounded-md text-[var(--texto-suave)] md:h-7 md:w-7 hover:bg-[var(--fundo)] hover:text-[var(--marca)] [&::-webkit-details-marker]:hidden"
               aria-label={`Ações de ${o.empresa}`}
               title="Mais ações"
             >

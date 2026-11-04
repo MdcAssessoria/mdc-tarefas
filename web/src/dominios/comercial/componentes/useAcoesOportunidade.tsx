@@ -50,8 +50,17 @@ export function useAcoesOportunidade(aoMudar: () => void, avisar: (texto: string
     if (lista.length) setPedido({ tipo: "arquivar", lista });
   }
 
-  const restaurar = (lista: Oportunidade[]) =>
-    tentar(async () => {
+  const restaurar = async (lista: Oportunidade[]) => {
+    if (!lista.length) return;
+    if (lista.length > 1) {
+      const sim = await confirmar({
+        titulo: `Devolver ${lista.length} oportunidades ao funil?`,
+        descricao: "Elas saem de “Arquivados” e voltam para a etapa em que estavam. Dá para arquivar de novo depois.",
+        botao: "Devolver ao funil",
+      });
+      if (!sim) return;
+    }
+    await tentar(async () => {
       const n = await arquivarOportunidades(
         lista.map((o) => o.id),
         "Devolvida ao funil",
@@ -59,6 +68,7 @@ export function useAcoesOportunidade(aoMudar: () => void, avisar: (texto: string
       );
       avisar(n === 1 ? `${lista[0].empresa} voltou ao funil.` : `${n} oportunidades voltaram ao funil.`);
     });
+  };
 
   const fechar = () => setPedido(null);
   const janela = (

@@ -403,7 +403,7 @@ function Importar() {
                   </thead>
                   <tbody>
                     {visiveis.slice(0, 1000).map((l) => (
-                      <tr key={l.n} className={["fora", "duplicado", "erro"].includes(l.situacao) ? "opacity-50" : ""}>
+                      <tr key={l.n} className={["fora", "duplicado", "erro"].includes(l.situacao) ? "linha-apagada" : ""}>
                         <td className="text-[var(--texto-suave)]">{l.n}</td>
                         <td>
                           <Selo s={l.situacao} />

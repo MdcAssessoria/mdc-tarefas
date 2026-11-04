@@ -17,6 +17,9 @@ import { fmtData } from "@/lib/formato/datas";
 import { useMensagem } from "./useMensagem";
 import { ModulosDoCliente } from "@/dominios/licencas/componentes/ModulosDoCliente";
 import { CampoCnpj } from "@/components/ui/CampoCnpj";
+import { useConfirmar } from "@/components/ui/JanelaConfirmar";
+import { BotoesExportar } from "@/components/ui/BotoesExportar";
+import { nomeArquivo } from "@/lib/arquivos/exportarLista";
 
 interface Resp {
   cliente_id: string;
@@ -34,6 +37,7 @@ export function AbaClientes() {
   const [situacao, setSituacao] = useState<"ativos" | "inativos" | "todos">("ativos");
   const [inativando, setInativando] = useState<{ id: string; data: string; motivo: string; outro: string } | null>(null);
   const { mostrar, el } = useMensagem();
+  const [janelaConfirmar, confirmar] = useConfirmar();
   const [sel, setSel] = useState<Set<string>>(new Set());
   const [lote, setLote] = useState<{ segmento: string; grupos: string[] }>({ segmento: "", grupos: [] });
   const [filtroSeg, setFiltroSeg] = useState("");
@@ -117,6 +121,16 @@ export function AbaClientes() {
     const ids = [...sel];
     if (!ids.length) return;
     if (!lote.segmento && !lote.grupos.length) return mostrar("Escolha um segmento ou um grupo para aplicar.", true);
+    const partes = [
+      lote.segmento && (lote.segmento === "_limpar" ? "limpar o segmento" : `segmento ${SEGMENTOS.find((x) => x.id === lote.segmento)?.nome ?? lote.segmento}`),
+      lote.grupos.length > 0 && `incluir no(s) grupo(s) ${lote.grupos.join(", ")}`,
+    ].filter(Boolean);
+    const sim = await confirmar({
+      titulo: `Aplicar em ${ids.length} cliente(s)?`,
+      descricao: `Vai ${partes.join(" e ")} de todos os selecionados.`,
+      botao: "Aplicar",
+    });
+    if (!sim) return;
     const sb = supabase();
     for (const id of ids) {
       const c = clientes.find((x) => x.id === id);
@@ -211,6 +225,7 @@ export function AbaClientes() {
         </div>
         <input
           className="entrada flex-1"
+          aria-label="Buscar cliente"
           placeholder="Buscar cliente, CNPJ, código, cidade ou UF"
           value={busca}
           onChange={(e) => setBusca(e.target.value)}
@@ -238,6 +253,28 @@ export function AbaClientes() {
         <button className="btn" onClick={() => setCsv(csv === null ? "" : null)}>
           Colar lista
         </button>
+        <BotoesExportar
+          vazio={!lista.length}
+          avisar={(t, tom) => mostrar(t, tom === "erro")}
+          montar={() => ({
+            titulo: "Clientes",
+            subtitulo: `${org.nome} · ${situacao === "ativos" ? "ativos" : situacao === "inativos" ? "inativos" : "todos"} · ${lista.length} cliente(s)`,
+            arquivo: nomeArquivo("Clientes", hojeISO()),
+            logoUrl: org.logo_url,
+            linhas: lista,
+            colunas: [
+              { titulo: "Razão social", valor: (c) => c.razao_social, peso: 2.4, largura: 40 },
+              { titulo: "Nome curto", valor: (c) => c.nome_fantasia ?? "", peso: 1.4, largura: 24 },
+              { titulo: "CNPJ", valor: (c) => c.cnpj ?? "", peso: 1.3, largura: 20 },
+              { titulo: "Regime", valor: (c) => REGIMES.find((r) => r.id === c.regime)?.nome ?? "", peso: 1.1, largura: 18 },
+              { titulo: "Código Domínio", valor: (c) => c.codigo_dominio ?? "", peso: 0.8, largura: 14 },
+              { titulo: "Cidade/UF", valor: (c) => [c.cidade, c.uf].filter(Boolean).join("/"), peso: 1.1, largura: 20 },
+              { titulo: "Segmento", valor: (c) => SEGMENTOS.find((x) => x.id === c.segmento)?.nome ?? "", peso: 1, largura: 18 },
+              { titulo: "Grupos", valor: (c) => (c.grupos ?? []).join(", "), peso: 1.2, largura: 24 },
+              { titulo: "Situação", valor: (c) => (c.ativo ? "Ativo" : `Inativo${c.inativo_em ? ` desde ${fmtData(c.inativo_em)}` : ""}`), peso: 1, largura: 18 },
+            ],
+          })}
+        />
       </div>
       {csv !== null && (
         <div className="cartao space-y-2 p-4">
@@ -252,6 +289,7 @@ export function AbaClientes() {
         </div>
       )}
       {el}
+      {janelaConfirmar}
       {sel.size > 0 && (
         <div className="cartao sticky top-2 z-20 flex flex-wrap items-center gap-3 border-[var(--destaque-escuro)] p-3">
           <b className="text-sm text-[var(--marca)]">{sel.size} selecionado(s)</b>
@@ -313,7 +351,7 @@ export function AbaClientes() {
               const rs = resps.filter((r) => r.cliente_id === c.id);
               return (
                 <Fragment key={c.id}>
-                  <tr className={c.ativo ? "" : "opacity-50"}>
+                  <tr className={c.ativo ? "" : "linha-apagada"}>
                     <td>
                       <input
                         type="checkbox"

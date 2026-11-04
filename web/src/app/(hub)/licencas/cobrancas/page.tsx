@@ -296,7 +296,7 @@ export default function PaginaCobrancas() {
                 </thead>
                 <tbody>
                   {lista.map(({ c, s }) => (
-                    <tr key={c.id} className={s === "cancelada" ? "opacity-60" : ""}>
+                    <tr key={c.id} className={s === "cancelada" ? "linha-apagada" : ""}>
                       <td className={`whitespace-nowrap tabular-nums ${s === "atrasada" ? "font-medium text-red-700" : ""}`}>
                         {fmtData(c.vencimento)}
                       </td>

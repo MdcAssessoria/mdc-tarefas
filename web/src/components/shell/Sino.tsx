@@ -89,7 +89,7 @@ export function Sino() {
   return (
     <div className="relative" ref={ref}>
       <button
-        className="relative grid h-9 w-9 place-items-center rounded-lg text-[var(--texto-suave)] hover:bg-[var(--fundo)] hover:text-[var(--marca)]"
+        className="relative grid h-11 w-11 md:h-9 md:w-9 place-items-center rounded-lg text-[var(--texto-suave)] hover:bg-[var(--fundo)] hover:text-[var(--marca)]"
         onClick={() => setAberto((x) => !x)}
         aria-label={`Notificações${novas ? ` (${novas} novas)` : ""}`}
         title="Notificações"

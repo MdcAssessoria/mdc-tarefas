@@ -81,7 +81,7 @@ export function GruposItens({
       ) : (
         <ul className="divide-y divide-[var(--borda)] rounded-md border border-[var(--borda)]">
           {grupos.map((g) => (
-            <li key={g.id} className={`flex flex-wrap items-center gap-2 px-3 py-2 text-sm ${g.ativo ? "" : "opacity-60"}`}>
+            <li key={g.id} className={`flex flex-wrap items-center gap-2 px-3 py-2 text-sm ${g.ativo ? "" : "linha-apagada"}`}>
               {editando?.id === g.id ? (
                 <input
                   aria-label="Novo nome do grupo"

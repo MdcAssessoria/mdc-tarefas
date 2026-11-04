@@ -210,7 +210,7 @@ export function CadPessoas({ cliente, podeOperar, avisar }: PropsAba) {
           </thead>
           <tbody>
             {lista.map((p) => (
-              <tr key={p.id} className={p.ativo ? "" : "opacity-60"}>
+              <tr key={p.id} className={p.ativo ? "" : "linha-apagada"}>
                 <td className="celula-titulo min-w-48 font-medium">{p.nome}</td>
                 <td data-rotulo="Tipo">
                   <span className="flex flex-wrap justify-end gap-1 sm:justify-start">

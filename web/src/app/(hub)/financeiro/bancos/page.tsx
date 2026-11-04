@@ -333,7 +333,7 @@ export default function PaginaContasBancarias() {
           </div>
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {lista.map((x) => (
-              <div key={x.conta.id} className={`cartao flex flex-col gap-4 p-4 sm:p-5 ${x.conta.ativo ? "" : "opacity-60"}`}>
+              <div key={x.conta.id} className={`cartao flex flex-col gap-4 p-4 sm:p-5 ${x.conta.ativo ? "" : "linha-apagada"}`}>
                 <div className="flex items-start gap-3">
                   <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[var(--marca)] text-[var(--destaque)]" aria-hidden="true">
                     <Icone nome="banco" className="h-5 w-5" />

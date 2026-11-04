@@ -445,7 +445,7 @@ function ListaProcessos({ linhas, hoje }: { linhas: LinhaProcesso[]; hoje: strin
           const sit = situacaoProcesso(p);
           const previsaoVencida = p.status === "aberto" && !!p.previsao_em && p.previsao_em < hoje;
           return (
-            <tr key={p.id} className={p.status === "cancelado" ? "opacity-60" : ""}>
+            <tr key={p.id} className={p.status === "cancelado" ? "linha-apagada" : ""}>
               <td className="celula-titulo min-w-56">
                 <Link href={`/societario/${p.id}`} className="font-medium text-[var(--marca)] hover:underline">
                   {l.cliente}

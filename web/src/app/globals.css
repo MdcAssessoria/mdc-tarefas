@@ -3,7 +3,7 @@
 :root {
   --marca: #0b2820;
   --destaque: #e2c17e;
-  --destaque-escuro: #8a6a2a;
+  --destaque-escuro: #846528; /* 4,8:1 sobre o fundo (WCAG AA); era #8a6a2a */
   --fundo: #eef2ef;
   --superficie: #ffffff;
   --borda: #dce3de;
@@ -22,6 +22,9 @@
   --color-fundo: var(--fundo);
   --font-sans: "Hanken Grotesk Variable", "Segoe UI", system-ui, -apple-system, sans-serif;
   --font-display: "Bodoni Moda", "Didot", "Bodoni 72", Georgia, serif;
+  /* cinzas do Tailwind usados em texto: escurecidos para dar 4,5:1 sobre o branco e o fundo do HUB (WCAG AA) */
+  --color-neutral-400: #707070;
+  --color-neutral-500: #666666;
 }
 
 html,
@@ -409,5 +412,75 @@ input[type="file"]:disabled::file-selector-button {
     z-index: 1;
     background: var(--superficie);
     box-shadow: -8px 0 8px -8px rgb(0 0 0 / 0.25);
+  }
+}
+
+/* Tabela larga no computador (QuadroTabela acoesFixas): a coluna das ações fica presa à direita, então os botões
+   nunca somem quando a tabela não cabe (reauditoria UX-13, 1280 px). No celular a tabela vira cartões. */
+@media (min-width: 640px) {
+  .tabela-acoes-presas th:last-child,
+  .tabela-acoes-presas td:last-child {
+    position: sticky;
+    right: 0;
+    z-index: 1;
+    background: var(--superficie);
+    box-shadow: -8px 0 8px -8px rgb(0 0 0 / 0.18);
+  }
+}
+
+/* Linha apagada (cancelada, inativa, encerrada): fundo cinza e texto suave, sem transparência — a opacidade
+   derrubava o contraste dos textos menores abaixo de 4,5:1 (WCAG AA, reauditoria UX-10). */
+.linha-apagada {
+  color: var(--texto-suave);
+  background: color-mix(in srgb, var(--fundo) 70%, transparent);
+}
+
+/* Celular e telas de toque (reauditoria UX-09): botões e campos com pelo menos 44 px de altura e letra de 16 px nos
+   campos (com menos, o iPhone dá zoom ao tocar no campo). No computador nada muda. */
+@layer utilities {
+  @media (max-width: 767px), (pointer: coarse) {
+    /* !important dentro da camada de utilitários: vence os !min-h-8 das ações compactas das tabelas (no computador
+     elas continuam baixinhas). Fora da camada, o !important do Tailwind ganharia. */
+    .btn,
+    .btn-primario,
+    .btn-azul,
+    .btn-perigo,
+    details > div > button,
+    details > div > a,
+    .campo input:not([type="checkbox"]):not([type="radio"]):not([type="color"]),
+    .campo select,
+    .entrada {
+      min-height: 44px !important;
+    }
+    .btn,
+    .btn-primario,
+    .btn-azul,
+    .btn-perigo {
+      min-width: 44px;
+    }
+    .campo input,
+    .campo select,
+    .campo textarea,
+    .entrada,
+    input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="range"]),
+    select,
+    textarea {
+      font-size: 16px;
+    }
+    input[type="checkbox"],
+    input[type="radio"] {
+      min-width: 24px;
+      min-height: 24px;
+    }
+    summary {
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+    }
+    .btn-link {
+      min-height: 44px;
+      display: inline-flex;
+      align-items: center;
+    }
   }
 }

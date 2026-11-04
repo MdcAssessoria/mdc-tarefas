@@ -411,7 +411,7 @@ export function TelaTitulos({ tipo }: { tipo: TipoTitulo }) {
               </thead>
               <tbody>
                 {lista.slice(0, MOSTRAR).map(({ t, s, saldo }) => (
-                  <tr key={t.id} className={s === "cancelado" ? "opacity-60" : ""}>
+                  <tr key={t.id} className={s === "cancelado" ? "linha-apagada" : ""}>
                     <td data-rotulo="Vencimento" className={`num whitespace-nowrap ${s === "vencido" ? "font-medium text-red-700" : ""}`}>
                       {fmtData(t.vencimento)}
                     </td>

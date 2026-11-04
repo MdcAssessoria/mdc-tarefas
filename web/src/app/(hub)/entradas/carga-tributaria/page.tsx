@@ -318,7 +318,7 @@ export default function PaginaCargaTributaria() {
             />
           </section>
 
-          <div className="cartao overflow-x-auto">
+          <div className="cartao overflow-x-auto" tabIndex={0} role="region" aria-label="Tabela da carga tributária">
             <table className="tabela">
               <thead>
                 <tr>

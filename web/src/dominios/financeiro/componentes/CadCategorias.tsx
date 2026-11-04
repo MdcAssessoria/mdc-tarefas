@@ -254,7 +254,7 @@ export function CadCategorias({ cliente, podeOperar, avisar }: PropsAba) {
             {lista.map((c) => {
               const conta = porId.get(c.conta_contabil_id);
               return (
-                <tr key={c.id} className={c.ativo ? "" : "opacity-60"}>
+                <tr key={c.id} className={c.ativo ? "" : "linha-apagada"}>
                   <td className="celula-titulo min-w-48">
                     <span className="font-medium">{c.nome}</span>
                     {c.grupo && <span className="block text-xs font-normal text-[var(--texto-suave)]">{c.grupo}</span>}

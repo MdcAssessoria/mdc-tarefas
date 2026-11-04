@@ -8,6 +8,9 @@ import { supabase } from "@/lib/supabase";
 import { PAPEIS } from "@/dominios/organizacao/tipos";
 import { traduzirErro } from "@/lib/erros";
 import { useMensagem } from "./useMensagem";
+import { BotoesExportar } from "@/components/ui/BotoesExportar";
+import { nomeArquivo } from "@/lib/arquivos/exportarLista";
+import { hojeISO } from "@/lib/datas";
 
 const nomePapel = (id: string) => PAPEIS.find((p) => p.id === id)?.nome ?? id;
 
@@ -28,9 +31,29 @@ export function AbaEquipe() {
           Novas pessoas são cadastradas em <b>Pessoas e acessos</b>: você escolhe o perfil e a pessoa recebe o convite por e-mail para criar
           a senha. Aqui você ajusta o nome e o setor de cada pessoa.
         </p>
-        <Link href="/hub/acessos" className="btn-primario">
-          Cadastrar pessoa
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <BotoesExportar
+            vazio={!membros.length}
+            avisar={(t, tom) => mostrar(t, tom === "erro")}
+            montar={() => ({
+              titulo: "Equipe",
+              subtitulo: `${org.nome} · ${membros.length} pessoa(s)`,
+              arquivo: nomeArquivo("Equipe", hojeISO()),
+              logoUrl: org.logo_url,
+              linhas: membros,
+              colunas: [
+                { titulo: "Nome", valor: (m) => m.nome, peso: 1.8, largura: 30 },
+                { titulo: "E-mail", valor: (m) => m.email ?? "", peso: 2, largura: 34 },
+                { titulo: "Papel", valor: (m) => nomePapel(m.papel), peso: 1, largura: 16 },
+                { titulo: "Setor", valor: (m) => setores.find((x) => x.id === m.setor_id)?.nome ?? "", peso: 1.2, largura: 20 },
+                { titulo: "Situação", valor: (m) => (m.ativo ? "Ativo" : "Inativo"), peso: 0.8, largura: 12 },
+              ],
+            })}
+          />
+          <Link href="/hub/acessos" className="btn-primario">
+            Cadastrar pessoa
+          </Link>
+        </div>
       </div>
       {el}
       <div className="cartao overflow-x-auto">
@@ -46,7 +69,7 @@ export function AbaEquipe() {
           </thead>
           <tbody>
             {membros.map((m) => (
-              <tr key={m.user_id} className={m.ativo ? "" : "opacity-50"}>
+              <tr key={m.user_id} className={m.ativo ? "" : "linha-apagada"}>
                 <td>
                   <input
                     className="entrada w-full min-w-40"

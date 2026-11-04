@@ -86,7 +86,7 @@ export function MenuLateral({ modulo, recolhido, aoRecolher }: { modulo: Modulo;
 
       <nav className="flex-1 space-y-0.5 overflow-y-auto px-3" aria-label="Ferramentas">
         {item({ href: "/", nome: "Início", icone: "casa", ativo: modulo === "hub" && rota === "/" })}
-        {!recolhido && <div className="px-3 pb-1.5 pt-5 text-[12px] text-[var(--nevoa)]/55">Suas ferramentas</div>}
+        {!recolhido && <div className="px-3 pb-1.5 pt-5 text-[12px] text-[var(--nevoa)]/80">Suas ferramentas</div>}
         {recolhido && <div className="mx-3 my-3 h-px bg-white/10" />}
         {escritorio.map((a) =>
           item({
@@ -131,7 +131,7 @@ export function MenuLateral({ modulo, recolhido, aoRecolher }: { modulo: Modulo;
         )}
         {(papel === "admin" || podeEditarCadastros) && (
           <>
-            {!recolhido && <div className="px-3 pb-1.5 pt-5 text-[12px] text-[var(--nevoa)]/55">Administração</div>}
+            {!recolhido && <div className="px-3 pb-1.5 pt-5 text-[12px] text-[var(--nevoa)]/80">Administração</div>}
             {recolhido && <div className="mx-3 my-3 h-px bg-white/10" />}
             {papel === "admin" &&
               item({ href: "/hub/acessos", nome: "Pessoas e acessos", icone: "pessoas", ativo: rota.startsWith("/hub/acessos") })}
@@ -161,7 +161,7 @@ export function MenuLateral({ modulo, recolhido, aoRecolher }: { modulo: Modulo;
           {!recolhido && (
             <div className="min-w-0 flex-1 leading-tight">
               <div className="truncate text-[13px] font-medium text-white">{eu.nome}</div>
-              <div className="truncate text-[12px] text-[var(--nevoa)]/60">{PAPEIS.find((p) => p.id === papel)?.nome}</div>
+              <div className="truncate text-[12px] text-[var(--nevoa)]/80">{PAPEIS.find((p) => p.id === papel)?.nome}</div>
             </div>
           )}
           <button
@@ -179,7 +179,7 @@ export function MenuLateral({ modulo, recolhido, aoRecolher }: { modulo: Modulo;
         {aoRecolher && (
           <button
             onClick={aoRecolher}
-            className={`mt-2 flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-[12px] text-[var(--nevoa)]/60 hover:bg-white/[0.05] hover:text-white ${recolhido ? "justify-center" : ""}`}
+            className={`mt-2 flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-[12px] text-[var(--nevoa)]/80 hover:bg-white/[0.05] hover:text-white ${recolhido ? "justify-center" : ""}`}
             aria-label={recolhido ? "Expandir menu" : "Recolher menu"}
             title={recolhido ? "Expandir menu" : "Recolher menu"}
           >

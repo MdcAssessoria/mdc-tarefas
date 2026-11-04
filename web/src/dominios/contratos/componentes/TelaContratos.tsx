@@ -312,7 +312,7 @@ export function TelaContratos() {
                 : "Cadastre aqui o que se repete todo mês: honorários dos clientes, aluguel, sistemas. O HUB lança a conta no Financeiro no dia 1 de cada mês, propõe o reajuste anual pelo índice do Banco Central e avisa antes do fim da vigência."}
             </EstadoVazio>
           ) : (
-            <QuadroTabela rotulo="Contratos">
+            <QuadroTabela rotulo="Contratos" acoesFixas>
               <thead>
                 <tr>
                   <th>Contrato</th>
@@ -330,7 +330,7 @@ export function TelaContratos() {
                 {filtrados.map(({ k, pendente, proximo, termina }) => {
                   const s = SITUACOES_RECORRENTE[k.situacao];
                   return (
-                    <tr key={k.id} className={k.situacao === "encerrado" ? "opacity-60" : ""}>
+                    <tr key={k.id} className={k.situacao === "encerrado" ? "linha-apagada" : ""}>
                       <td className="celula-titulo min-w-56">
                         <button className="text-left font-medium hover:underline" onClick={() => setJanela({ tipo: "ficha", k })}>
                           {k.descricao}

@@ -240,7 +240,7 @@ function Contratos() {
                 </thead>
                 <tbody>
                   {lista.map((k) => (
-                    <tr key={k.id} className={k.situacao === "encerrado" ? "opacity-60" : ""}>
+                    <tr key={k.id} className={k.situacao === "encerrado" ? "linha-apagada" : ""}>
                       <td className="min-w-44">
                         <span className="font-medium">{nomeDoCliente(k.cliente_id)}</span>{" "}
                         {bloqueados.has(k.cliente_id) && <EtiquetaBloqueado />}

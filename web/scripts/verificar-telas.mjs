@@ -12,6 +12,8 @@
 //   FOTOS=/tmp/telas        salva uma captura de cada tela nessa pasta
 //   TELA=celular            abre as telas na largura de um celular (390 px) em vez de 1280 px
 //   LARGURA_TELA=1440       largura do computador (padrão 1280 px)
+//   ACESSIBILIDADE=1        roda o axe-core (WCAG 2.2 AA) em cada tela e, no celular, mede alvos de toque < 44 px
+//                           e campos com letra < 16 px; mostra um resumo no fim (=detalhe lista cada elemento)
 //
 // Como funciona:
 //   - As rotas saem das pastas de src/app (cada page.tsx). Rotas com [id] usam os ids de IDS_EXEMPLO em
@@ -37,6 +39,79 @@ const WEB = fileURLToPath(new URL("..", import.meta.url));
 const BASE = "/hub-mdc";
 const PROJETO_SUPABASE = "bulqqdgfrrpqquqvjjfa";
 const ESPERA_CARREGAR_MS = 10_000;
+/** Resumo da acessibilidade (ACESSIBILIDADE=1): regra → { telas, elementos, exemplos }. */
+const ACHADOS_A11Y = new Map();
+function anotarA11y(regra, rota, alvos) {
+  if (!alvos.length) return;
+  const a = ACHADOS_A11Y.get(regra) ?? { telas: new Set(), elementos: 0, exemplos: [] };
+  a.telas.add(rota);
+  a.elementos += alvos.length;
+  for (const x of alvos) if (a.exemplos.length < 400) a.exemplos.push(`${rota}: ${x}`);
+  ACHADOS_A11Y.set(regra, a);
+}
+async function medirAcessibilidade(pagina, rota, celular) {
+  const caminhoAxe = require.resolve("axe-core/axe.min.js");
+  await pagina.addScriptTag({ path: caminhoAxe });
+  const r = await pagina.evaluate(async () => {
+    // eslint-disable-next-line no-undef
+    const res = await axe.run(document, { runOnly: { type: "tag", values: ["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"] } });
+    return res.violations.map((v) => ({ id: v.id, alvos: v.nodes.map((n) => n.target.join(" ") + (n.any?.[0]?.message ? ` — ${n.any[0].message}` : "")) }));
+  });
+  for (const v of r) anotarA11y(v.id, rota, v.alvos);
+  // botão cortado: o texto não cabe (rola por dentro) ou passa da borda direita da tela
+  const cortados = await pagina.evaluate(() =>
+    [...document.querySelectorAll(".btn, .btn-primario, .btn-azul, .btn-perigo, button")]
+      .filter((el) => {
+        const b = el.getBoundingClientRect();
+        if (!b.width || !b.height) return false;
+        const fora = b.right > document.documentElement.clientWidth + 1;
+        const apertado = el.scrollWidth > el.clientWidth + 1 && getComputedStyle(el).overflow !== "visible";
+        const cortadoPeloPai = (() => {
+          for (let p = el.parentElement; p; p = p.parentElement) {
+            const st = getComputedStyle(p);
+            if (st.overflowX === "hidden" || st.overflow === "hidden") {
+              const pb = p.getBoundingClientRect();
+              return b.right > pb.right + 1 || b.left < pb.left - 1;
+            }
+          }
+          return false;
+        })();
+        return fora || apertado || cortadoPeloPai;
+      })
+      .map((el) => `"${(el.getAttribute("aria-label") || el.textContent || "").trim().slice(0, 40)}"`),
+  );
+  anotarA11y("botao-cortado", rota, cortados);
+  if (celular) {
+    const m = await pagina.evaluate(() => {
+      const visivel = (el) => {
+        const b = el.getBoundingClientRect();
+        const st = getComputedStyle(el);
+        return b.width > 0 && b.height > 0 && st.visibility !== "hidden" && st.display !== "none";
+      };
+      const nome = (el) => (el.getAttribute("aria-label") || el.textContent || el.getAttribute("name") || el.tagName).trim().slice(0, 40);
+      const pequenos = [...document.querySelectorAll("a[href], button, [role=button], input[type=checkbox], input[type=radio], select, summary")]
+        .filter(visivel)
+        .filter((el) => !el.closest("[aria-hidden=true]"))
+        .filter((el) => {
+          const b = el.getBoundingClientRect();
+          // link dentro de texto corrido não precisa de 44 px (exceção da WCAG 2.5.8)
+          if (el.tagName === "A" && getComputedStyle(el).display === "inline") return false;
+          return b.width < 44 || b.height < 44;
+        })
+        .map((el) => {
+          const b = el.getBoundingClientRect();
+          return `${el.tagName.toLowerCase()} "${nome(el)}" ${Math.round(b.width)}×${Math.round(b.height)}`;
+        });
+      const letras = [...document.querySelectorAll("input:not([type=checkbox]):not([type=radio]):not([type=color]):not([type=file]), select, textarea")]
+        .filter(visivel)
+        .filter((el) => parseFloat(getComputedStyle(el).fontSize) < 16)
+        .map((el) => `${el.tagName.toLowerCase()} "${nome(el)}" ${getComputedStyle(el).fontSize}`);
+      return { pequenos, letras };
+    });
+    anotarA11y("alvo-de-toque-menor-que-44px", rota, m.pequenos);
+    anotarA11y("campo-com-letra-menor-que-16px", rota, m.letras);
+  }
+}
 
 const require = createRequire(import.meta.url);
 const { chromium } = carregarPlaywright();
@@ -329,6 +404,12 @@ async function medirNovoContrato(pagina, foto, nome) {
  * foto("sufixo") salva uma captura do momento quando a verificação roda com FOTOS.
  */
 const INTERACOES = {
+  // Início: concluir uma tarefa da fila mostra "Desfazer" (UX-05)
+  "/": async (p, foto) => {
+    await p.getByRole("button", { name: /^Concluir / }).first().click();
+    await p.getByRole("button", { name: "Desfazer" }).waitFor({ timeout: 3000 });
+    await foto("concluida-desfazer", { soTela: true });
+  },
   // Ledgra Link: a mensalidade com boleto/Pix emitido abre a janela com o Pix e a linha digitável
   "/licencas/cobrancas": (p) => abrirEFecharModal(p, "Ver boleto/Pix", "Boleto/Pix da mensalidade"),
   "/vencimentos": (p) => abrirEFecharModal(p, "Novo vencimento", "Novo vencimento"),
@@ -875,6 +956,13 @@ async function verificarTela(navegador, porta, rota, pastaFotos) {
     if (/Application error|This page could not be found|404: This page/.test(texto)) problemas.push("página de erro do Next.js");
     const final = new URL(pagina.url()).pathname.replace(BASE, "") || "/";
     if (final !== rota.caminho && !(rota.caminho === "/" && final === "/")) avisos.add(`redirecionou para ${final}`);
+    if (process.env.ACESSIBILIDADE) {
+      try {
+        await medirAcessibilidade(pagina, rota.caminho, celular);
+      } catch (e) {
+        avisos.add(`acessibilidade não medida: ${String(e.message ?? e).split("\n")[0]}`);
+      }
+    }
     if (pastaFotos)
       await pagina.screenshot({
         path: join(pastaFotos, (rota.caminho === "/" ? "inicio" : rota.chave.replace(/[^\w-]+/g, "_")) + ".png"),
@@ -932,6 +1020,13 @@ async function principal() {
   }
   const falhas = resultados.filter((r) => r.problemas.length);
   if (MEDIDAS_JANELAS.length) console.log(`\nJanelas largas:\n${MEDIDAS_JANELAS.map((m) => `  - ${m}`).join("\n")}`);
+  if (process.env.ACESSIBILIDADE) {
+    console.log(`\nAcessibilidade (${ACHADOS_A11Y.size ? "o que achou" : "nada achado"}):`);
+    for (const [regra, a] of [...ACHADOS_A11Y].sort((x, y) => y[1].elementos - x[1].elementos)) {
+      console.log(`  - ${regra}: ${a.elementos} elemento(s) em ${a.telas.size} tela(s)`);
+      if (process.env.ACESSIBILIDADE === "detalhe") for (const e of a.exemplos) console.log(`      ${e}`);
+    }
+  }
   console.log(`\n${resultados.length - falhas.length} de ${resultados.length} telas ok.`);
   if (falhas.length) {
     console.log(`Telas com problema: ${falhas.map((f) => f.rota.caminho).join(", ")}`);
