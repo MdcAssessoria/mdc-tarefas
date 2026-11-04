@@ -312,7 +312,7 @@ export function TelaContratos() {
                 : "Cadastre aqui o que se repete todo mês: honorários dos clientes, aluguel, sistemas. O HUB lança a conta no Financeiro no dia 1 de cada mês, propõe o reajuste anual pelo índice do Banco Central e avisa antes do fim da vigência."}
             </EstadoVazio>
           ) : (
-            <QuadroTabela rotulo="Contratos">
+            <QuadroTabela rotulo="Contratos" acoesFixas>
               <thead>
                 <tr>
                   <th>Contrato</th>

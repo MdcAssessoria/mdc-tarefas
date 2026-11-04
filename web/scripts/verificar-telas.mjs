@@ -57,6 +57,29 @@ async function medirAcessibilidade(pagina, rota, celular) {
     return res.violations.map((v) => ({ id: v.id, alvos: v.nodes.map((n) => n.target.join(" ") + (n.any?.[0]?.message ? ` — ${n.any[0].message}` : "")) }));
   });
   for (const v of r) anotarA11y(v.id, rota, v.alvos);
+  // botão cortado: o texto não cabe (rola por dentro) ou passa da borda direita da tela
+  const cortados = await pagina.evaluate(() =>
+    [...document.querySelectorAll(".btn, .btn-primario, .btn-azul, .btn-perigo, button")]
+      .filter((el) => {
+        const b = el.getBoundingClientRect();
+        if (!b.width || !b.height) return false;
+        const fora = b.right > document.documentElement.clientWidth + 1;
+        const apertado = el.scrollWidth > el.clientWidth + 1 && getComputedStyle(el).overflow !== "visible";
+        const cortadoPeloPai = (() => {
+          for (let p = el.parentElement; p; p = p.parentElement) {
+            const st = getComputedStyle(p);
+            if (st.overflowX === "hidden" || st.overflow === "hidden") {
+              const pb = p.getBoundingClientRect();
+              return b.right > pb.right + 1 || b.left < pb.left - 1;
+            }
+          }
+          return false;
+        })();
+        return fora || apertado || cortadoPeloPai;
+      })
+      .map((el) => `"${(el.getAttribute("aria-label") || el.textContent || "").trim().slice(0, 40)}"`),
+  );
+  anotarA11y("botao-cortado", rota, cortados);
   if (celular) {
     const m = await pagina.evaluate(() => {
       const visivel = (el) => {
@@ -380,6 +403,12 @@ async function medirNovoContrato(pagina, foto, nome) {
  * foto("sufixo") salva uma captura do momento quando a verificação roda com FOTOS.
  */
 const INTERACOES = {
+  // Início: concluir uma tarefa da fila mostra "Desfazer" (UX-05)
+  "/": async (p, foto) => {
+    await p.getByRole("button", { name: /^Concluir / }).first().click();
+    await p.getByRole("button", { name: "Desfazer" }).waitFor({ timeout: 3000 });
+    await foto("concluida-desfazer", { soTela: true });
+  },
   // Ledgra Link: a mensalidade com boleto/Pix emitido abre a janela com o Pix e a linha digitável
   "/licencas/cobrancas": (p) => abrirEFecharModal(p, "Ver boleto/Pix", "Boleto/Pix da mensalidade"),
   "/vencimentos": (p) => abrirEFecharModal(p, "Novo vencimento", "Novo vencimento"),

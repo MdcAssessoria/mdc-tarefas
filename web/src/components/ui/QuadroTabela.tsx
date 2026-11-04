@@ -7,6 +7,7 @@ export function QuadroTabela({
   rodape,
   rotulo,
   cartoes = true,
+  acoesFixas = false,
 }: {
   /** <thead>, <tbody> e <tfoot> da tabela. */
   children: React.ReactNode;
@@ -16,11 +17,16 @@ export function QuadroTabela({
   rotulo?: string;
   /** false mantém a tabela no celular (para listas de 2 colunas, como o resultado de caixa). Padrão: vira cartões. */
   cartoes?: boolean;
+  /** Última coluna (ações) presa à direita no computador quando a tabela não cabe na tela (ex.: 1280 px). */
+  acoesFixas?: boolean;
 }) {
   return (
     // tabIndex: o quadro rola de lado; pelo teclado, a pessoa foca nele e usa as setas (WCAG 2.1.1)
     <div className="quadro-tabela" tabIndex={0} role="region" aria-label={rotulo ?? "Tabela"}>
-      <table className={`tabela tabela-listrada ${cartoes ? "tabela-cartoes" : ""}`} aria-label={rotulo}>
+      <table
+        className={`tabela tabela-listrada ${cartoes ? "tabela-cartoes" : ""} ${acoesFixas ? "tabela-acoes-presas" : ""}`}
+        aria-label={rotulo}
+      >
         {children}
       </table>
       {rodape && <p className="border-t border-[var(--borda)] p-3 text-xs text-[var(--texto-suave)]">{rodape}</p>}

@@ -11,6 +11,7 @@ import { fmtDataLocal } from "@/lib/formato/datas";
 import { somarDias } from "@/lib/datas";
 import { traduzirErro } from "@/lib/erros";
 import { Carregando } from "@/components/ui/Carregando";
+import { useConfirmar } from "@/components/ui/JanelaConfirmar";
 import { numeroBr, valorParaCampo } from "@/dominios/financeiro/regras";
 import { formatarDocumento } from "@/lib/documento";
 import type { Categoria, CentroCusto, ContaBancaria, Item, LocalEstoque, Pessoa } from "@/dominios/financeiro/tipos";
@@ -91,6 +92,33 @@ export function LancarNota({
   );
   const [erro, setErro] = useState("");
   const [ocupado, setOcupado] = useState(false);
+  const [janelaConfirmar, confirmar] = useConfirmar();
+  // o que a pessoa já mexeu: ao voltar, pergunta antes de descartar (reauditoria UX-12)
+  const [inicio] = useState(() => ({ pessoa, local, dataEntrada, parcelas: JSON.stringify(parcelas) }));
+  const alterado =
+    tipo !== null ||
+    pessoa !== inicio.pessoa ||
+    categoria !== "" ||
+    centro !== "" ||
+    conta !== "" ||
+    local !== inicio.local ||
+    dataEntrada !== inicio.dataEntrada ||
+    obs.trim() !== "" ||
+    Object.keys(linhasEditadas).length > 0 ||
+    JSON.stringify(parcelas) !== inicio.parcelas;
+  async function voltar() {
+    if (alterado) {
+      const sim = await confirmar({
+        titulo: "Sair sem lançar a nota?",
+        descricao: "O que você escolheu nesta nota (tipo de entrada, fornecedor, itens, parcelas) não fica guardado.",
+        botao: "Sair sem lançar",
+        voltar: "Continuar lançando",
+        perigo: true,
+      });
+      if (!sim) return;
+    }
+    aoVoltar();
+  }
 
   const categoriaEfetiva = categoria || regra.categoria_id || "";
   const ativos = useMemo(() => cad.itens.filter((i) => i.ativo).sort((a, b) => a.nome.localeCompare(b.nome)), [cad.itens]);
@@ -172,9 +200,10 @@ export function LancarNota({
 
   return (
     <div className="space-y-4">
+      {janelaConfirmar}
       <div className="flex flex-wrap items-start gap-2">
         <div className="mr-auto">
-          <button className="btn-link text-sm" onClick={aoVoltar}>
+          <button className="btn-link text-sm" onClick={() => void voltar()}>
             ← Voltar à lista
           </button>
           <h2 className="text-lg font-semibold text-[var(--marca)]">
@@ -479,7 +508,7 @@ export function LancarNota({
 
       {erro && <p className="rounded-md bg-red-50 p-3 text-sm text-red-800">{erro}</p>}
       <div className="flex flex-wrap justify-end gap-2">
-        <button className="btn" onClick={aoVoltar}>
+        <button className="btn" onClick={() => void voltar()}>
           Voltar
         </button>
         <button className="btn-primario" onClick={lancar} disabled={ocupado || !itensNota.dados}>

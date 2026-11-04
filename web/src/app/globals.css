@@ -415,6 +415,19 @@ input[type="file"]:disabled::file-selector-button {
   }
 }
 
+/* Tabela larga no computador (QuadroTabela acoesFixas): a coluna das ações fica presa à direita, então os botões
+   nunca somem quando a tabela não cabe (reauditoria UX-13, 1280 px). No celular a tabela vira cartões. */
+@media (min-width: 640px) {
+  .tabela-acoes-presas th:last-child,
+  .tabela-acoes-presas td:last-child {
+    position: sticky;
+    right: 0;
+    z-index: 1;
+    background: var(--superficie);
+    box-shadow: -8px 0 8px -8px rgb(0 0 0 / 0.18);
+  }
+}
+
 /* Linha apagada (cancelada, inativa, encerrada): fundo cinza e texto suave, sem transparência — a opacidade
    derrubava o contraste dos textos menores abaixo de 4,5:1 (WCAG AA, reauditoria UX-10). */
 .linha-apagada {
