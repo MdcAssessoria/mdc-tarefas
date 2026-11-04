@@ -117,6 +117,11 @@ export interface EnvioDaFatura {
   tentativas: number;
   ultimo_erro: string | null;
   enviado_em: string | null;
+  /** 053: quando a fatura-enviar pode tentar de novo (nulo = parou; precisa de "Reenviar"). */
+  proxima_tentativa_em?: string | null;
+  falhas?: number;
+  reenvios?: number;
+  etapa?: "principal" | "boleto";
 }
 
 export interface ReajusteRecorrente {

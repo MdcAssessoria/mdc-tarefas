@@ -1,8 +1,10 @@
 // Módulo Contratos › Faturas (043): as faturas que o HUB gera no dia de gerar de cada contrato a receber. Molde 8.3.1:
 // filtros (período do vencimento, situação, busca), indicadores que filtram, quadro que vira cartão no celular, PDF e
 // Excel e tela vazia que ensina. Ações: ver a fatura (dados e envio por canal), baixar o PDF no papel timbrado,
-// cancelar com motivo e "Gerar fatura agora". Enquanto não há integração, avisa que e-mail, WhatsApp e boleto
-// aguardam configuração (o Portal do Cliente já recebe).
+// cancelar com motivo e "Gerar fatura agora".
+// Envio (053): e-mail e WhatsApp saem sozinhos pela Função fatura-enviar; cada canal mostra se foi, está na fila, falhou
+// (com o motivo) ou aguarda configuração, e "Reenviar" (com motivo) devolve o envio para a fila. Aviso no topo quando
+// algum canal ainda não foi ligado (Contratos › Envio) ou algum envio falhou.
 // NFS-e (046): "Emitir nota fiscal" abre a conferência (JanelaEmitirNfse, com o ambiente em destaque) e emite pelo
 // Emissor Nacional; a situação da nota aparece na lista com o motivo da recusa; "Ver a nota" abre o espelho DANFSe.
 // Boleto (049): "Gerar boleto" / "Ver boleto" abre JanelaBoleto (Ledgra Link, banco do contrato: Itaú ou Santander).
@@ -36,12 +38,14 @@ import { JanelaMotivo } from "@/components/ui/JanelaMotivo";
 import { Valor } from "@/components/ui/Valor";
 import { SemEmpresaGestao, useClienteGestao } from "@/dominios/organizacao/componentes/EmpresaEmGestao";
 import { baixarFaturaPdf } from "../baixarFatura";
-import { CANAIS_ENVIO, SITUACOES_ENVIO, SITUACOES_FATURA, textoConteudo } from "../faturamento";
+import { CANAIS_ENVIO, SITUACOES_FATURA, textoConteudo } from "../faturamento";
+import { explicarEnvio } from "../envio";
 import { lerBoletos, lerContratos, lerEmissoesNfse, lerEnvios, lerFaturas, lerOpcoesContrato, lerParametrosNfse } from "../leituras";
 import { cancelarFatura } from "../repositorio";
 import { notaEmitida, podeEmitirNota, situacaoDaNota, ultimasEmissoes } from "../nfse";
 import type { BoletoFatura, EmissaoNfse, EnvioDaFatura, Fatura, SituacaoFatura } from "../tipos";
 import { EspelhoNota } from "@/dominios/notas/componentes/EspelhoNota";
+import { JanelaReenviar } from "./JanelaReenviar";
 import { DetalheFatura, JanelaGerarFatura } from "./JanelasFatura";
 import { JanelaEmitirNfse } from "./JanelaEmitirNfse";
 import { JanelaBoleto, SITUACOES_BOLETO_EMITIDO } from "./JanelaBoleto";
@@ -61,6 +65,7 @@ const FILTROS_SITUACAO: { id: FiltroSituacao; nome: string }[] = [
 type Janela =
   | { tipo: "ver"; f: Fatura }
   | { tipo: "cancelar"; f: Fatura }
+  | { tipo: "reenviar"; f: Fatura; e: EnvioDaFatura }
   | { tipo: "gerar" }
   | { tipo: "emitir"; f: Fatura }
   | { tipo: "boleto"; f: Fatura }
@@ -147,7 +152,10 @@ export function TelaFaturas() {
   const faturado = validas.reduce((a, f) => a + Number(f.valor), 0);
   const conta = (s: SituacaoFatura) => doPeriodo.filter((f) => f.situacao === s).length;
   const totalLista = filtradas.filter((f) => f.situacao !== "cancelada").reduce((a, f) => a + Number(f.valor), 0);
-  const aguardandoConfig = (consulta.dados?.envios ?? []).some((e) => e.situacao === "aguardando_configuracao");
+  const enviosValidos = (consulta.dados?.envios ?? []).filter((e) => e.situacao !== "cancelado");
+  const aguardandoConfig = enviosValidos.filter((e) => e.situacao === "aguardando_configuracao").length;
+  const falharam = enviosValidos.filter((e) => e.situacao === "erro").length;
+  const agora = new Date();
 
   function fechar(msg?: string) {
     setJanela(null);
@@ -242,15 +250,35 @@ export function TelaFaturas() {
         }
       />
 
-      <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900" role="note">
-        <Icone nome="relogio" className="mt-0.5 h-5 w-5 shrink-0" />
-        <p>
-          <strong>Envio por e-mail/WhatsApp: aguardando configuração.</strong> As faturas já são geradas e ficam na fila; enquanto isso,
-          baixe o PDF e mande ao cliente. O Portal do Cliente já recebe as faturas publicadas. O boleto sai pelo Ledgra Link (botão do
-          banco em cada fatura).
-          {aguardandoConfig ? " Há envios esperando a configuração." : ""}
-        </p>
-      </div>
+      {aguardandoConfig > 0 && (
+        <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900" role="note">
+          <Icone nome="relogio" className="mt-0.5 h-5 w-5 shrink-0" />
+          <p>
+            <strong>{plural(aguardandoConfig, "envio")} por e-mail/WhatsApp aguardando configuração.</strong> As faturas ficam guardadas e
+            saem sozinhas quando o canal for ligado; enquanto isso, baixe o PDF e mande ao cliente.{" "}
+            {podeGerir ? (
+              <>
+                Veja o que falta em{" "}
+                <Link className="underline" href="/contratos/envio">
+                  Contratos › Envio
+                </Link>
+                .
+              </>
+            ) : (
+              "Quem gere o módulo Contratos vê o que falta em Contratos › Envio."
+            )}
+          </p>
+        </div>
+      )}
+      {falharam > 0 && (
+        <div className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-900" role="note">
+          <Icone nome="alerta" className="mt-0.5 h-5 w-5 shrink-0" />
+          <p>
+            <strong>{plural(falharam, "envio")} não saiu.</strong> Abra a fatura para ver o motivo. O HUB tenta de novo sozinho; quando o
+            endereço está errado, corrija no contrato e clique em Reenviar.
+          </p>
+        </div>
+      )}
       {temNfse && !parametrosNfse && consulta.dados && (
         <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900" role="note">
           <Icone nome="engrenagem" className="mt-0.5 h-5 w-5 shrink-0" />
@@ -446,12 +474,14 @@ export function TelaFaturas() {
                           <span className="flex flex-wrap gap-1.5">
                             {env.map((e) => {
                               const c = CANAIS_ENVIO.find((x) => x.id === e.canal);
-                              const se = SITUACOES_ENVIO[e.situacao];
+                              const se = explicarEnvio(e, agora);
                               return (
                                 <span
                                   key={e.id}
-                                  title={`${c?.nome}: ${se.nome} (${textoConteudo(e.conteudo)})`}
-                                  className="inline-flex items-center gap-1 rounded-full border border-[var(--borda)] px-2 py-0.5 text-xs"
+                                  title={`${c?.nome}: ${se.nome} (${textoConteudo(e.conteudo)}). ${se.texto}`}
+                                  className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs ${
+                                    se.tom === "vermelho" ? "border-red-200 bg-red-50 text-red-800" : "border-[var(--borda)]"
+                                  }`}
                                 >
                                   <Icone nome={c?.icone ?? "enviar"} className="h-3.5 w-3.5" />
                                   <span className="sr-only">{c?.nome}:</span>
@@ -557,6 +587,7 @@ export function TelaFaturas() {
           aoEmitir={podeOperar && podeEmitirNota(janela.f) ? () => setJanela({ tipo: "emitir", f: janela.f }) : undefined}
           aoBaixar={() => void baixar(janela.f)}
           aoCancelar={() => setJanela({ tipo: "cancelar", f: janela.f })}
+          aoReenviar={podeOperar ? (e) => setJanela({ tipo: "reenviar", f: janela.f, e }) : undefined}
           aoFechar={() => fechar()}
         />
       )}
@@ -617,6 +648,9 @@ export function TelaFaturas() {
             fechar(r.conta_cancelada ? "Fatura cancelada (a conta do mês foi cancelada junto)." : "Fatura cancelada.");
           }}
         />
+      )}
+      {janela?.tipo === "reenviar" && (
+        <JanelaReenviar envio={janela.e} numero={janela.f.numero} aoFechar={() => setJanela({ tipo: "ver", f: janela.f })} aoReenviar={fechar} />
       )}
       {janela?.tipo === "gerar" && consulta.dados && (
         <JanelaGerarFatura

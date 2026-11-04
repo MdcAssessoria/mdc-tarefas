@@ -103,7 +103,7 @@ export const lerEnvios = (cliente: string) =>
   lerTudo<EnvioDaFatura>((de, ate) =>
     supabase()
       .from("fin_envios")
-      .select("id,fatura_id,canal,destino,conteudo,situacao,tentativas,ultimo_erro,enviado_em")
+      .select("id,fatura_id,canal,destino,conteudo,situacao,tentativas,ultimo_erro,enviado_em,proxima_tentativa_em,falhas,reenvios,etapa")
       .eq("cliente_id", cliente)
       .order("id")
       .range(de, ate),

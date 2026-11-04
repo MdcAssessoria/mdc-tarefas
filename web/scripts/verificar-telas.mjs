@@ -747,7 +747,8 @@ const INTERACOES = {
   },
   // Faturas (043): aviso de "aguardando configuração", detalhe da fatura com a fila de envio, cancelar e gerar agora
   "/contratos/faturas": async (p, foto) => {
-    await p.getByText("Envio por e-mail/WhatsApp: aguardando configuração.").waitFor({ timeout: 3000 });
+    await p.getByText("por e-mail/WhatsApp aguardando configuração.", { exact: false }).waitFor({ timeout: 3000 });
+    await p.getByText("1 envio não saiu.").waitFor({ timeout: 3000 });
     // boleto (049): a fatura com boleto do Itaú mostra a linha digitável para copiar
     await p.getByRole("button", { name: /^Ver o boleto da fatura / }).first().click();
     const boleto = p.getByRole("dialog", { name: /^Boleto · Fatura / });
@@ -761,6 +762,17 @@ const INTERACOES = {
     await ver.waitFor({ timeout: 3000 });
     await ver.getByText("Envio ao cliente").waitFor({ timeout: 3000 });
     await foto("fatura");
+    // envio (053): o WhatsApp que falhou mostra o motivo e "Reenviar" pede o motivo do reenvio
+    if (await ver.getByRole("button", { name: "Reenviar" }).count()) {
+      await ver.getByText("O HUB parou de tentar", { exact: false }).first().waitFor({ timeout: 3000 });
+      await ver.getByRole("button", { name: "Reenviar" }).first().click();
+      const reenviar = p.getByRole("dialog", { name: /^Reenviar a fatura / });
+      await reenviar.waitFor({ timeout: 3000 });
+      await reenviar.getByText("Motivo do reenvio").waitFor({ timeout: 3000 });
+      await foto("reenviar");
+      await reenviar.getByRole("button", { name: "Voltar" }).click();
+      await ver.waitFor({ timeout: 3000 });
+    }
     await p.keyboard.press("Escape");
     await ver.waitFor({ state: "detached", timeout: 3000 });
     await p.getByRole("button", { name: /^Cancelar a fatura / }).first().click();
@@ -812,6 +824,13 @@ const INTERACOES = {
     for (const t of ["Código da conta no Ledgra Link", "Conta do Financeiro onde o dinheiro cai", "Boletos emitidos", "Não configurado"])
       await p.getByText(t, { exact: false }).first().waitFor({ timeout: 3000 });
     await foto("boleto-config");
+  },
+  // Envio (053): e-mail ligado, WhatsApp com os segredos faltando, a fila de cada canal e o envio que falhou
+  "/contratos/envio": async (p, foto) => {
+    for (const t of ["E-mail (Microsoft 365)", "WhatsApp (API oficial da Meta)", "Sai por:", "Faltam os segredos", "Envios que falharam", "Parou: reenviar"])
+      await p.getByText(t, { exact: false }).first().waitFor({ timeout: 3000 });
+    await p.getByRole("button", { name: "Enviar teste" }).first().waitFor({ timeout: 3000 });
+    await foto("envio-canais");
   },
   "/contratos/reajustes": async (p) => {
     await p.getByRole("button", { name: "Conferir e confirmar", exact: true }).first().click();
