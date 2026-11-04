@@ -24,6 +24,7 @@ export interface LinhaPdf {
   alerta?: boolean[];
 }
 export interface SecaoPdf {
+  /** Título da seção; vazio (ou igual ao do relatório) não é repetido (DES-06). */
   titulo: string;
   texto?: string;
   colunas: ColunaPdf[];
@@ -74,6 +75,31 @@ export async function gerarRelatorioPdf(o: {
   };
   const text = (s: string, x: number, yy: number, size: number, font: PDFFont, cor = TEXTO) =>
     page.drawText(limpar(s), { x, y: yy, size, font, color: cor });
+  /** Quebra o texto da célula em linhas que cabem na coluna (nada de "…" nas listas, DES-07). */
+  const quebrar = (s: string, larg: number, size: number, font: PDFFont): string[] => {
+    const linhas: string[] = [];
+    let atual = "";
+    for (const pal of s.split(/[ \t\n]+/).filter(Boolean)) {
+      let p = pal;
+      while (w(p, size, font) > larg && p.length > 1) {
+        let n = p.length - 1;
+        while (n > 1 && w(p.slice(0, n), size, font) > larg) n--;
+        if (atual) {
+          linhas.push(atual);
+          atual = "";
+        }
+        linhas.push(p.slice(0, n));
+        p = p.slice(n);
+      }
+      const t = atual ? `${atual} ${p}` : p;
+      if (atual && w(t, size, font) > larg) {
+        linhas.push(atual);
+        atual = p;
+      } else atual = t;
+    }
+    if (atual || !linhas.length) linhas.push(atual);
+    return linhas;
+  };
   const cortar = (s: string, larg: number, size: number, font: PDFFont) => {
     if (w(s, size, font) <= larg) return s;
     let t = s;
@@ -132,10 +158,13 @@ export async function gerarRelatorioPdf(o: {
   y -= 6;
 
   for (const sec of o.secoes) {
+    const temTitulo = !!sec.titulo.trim() && sec.titulo.trim() !== o.titulo.trim();
     garantir(70);
-    y -= 6;
-    text(sec.titulo, M, y - 12, 12, b, VERDE);
-    y -= 20;
+    if (temTitulo) {
+      y -= 6;
+      text(sec.titulo, M, y - 12, 12, b, VERDE);
+      y -= 20;
+    }
     if (sec.texto) paragrafo(sec.texto, 8.6);
 
     // barras horizontais (no prazo × com atraso), quando houver
@@ -170,6 +199,8 @@ export async function gerarRelatorioPdf(o: {
     const soma = sec.colunas.reduce((a, c) => a + c.peso, 0);
     const largs = sec.colunas.map((c) => (c.peso / soma) * (W - 2 * M));
     const lh = 15;
+    const entre = 10;
+    const nomeTabela = temTitulo ? sec.titulo : o.titulo;
     const cab = () => {
       garantir(lh * 2);
       page.drawRectangle({ x: M, y: y - lh, width: W - 2 * M, height: lh, color: VERDE });
@@ -183,20 +214,27 @@ export async function gerarRelatorioPdf(o: {
     };
     cab();
     sec.linhas.forEach((l, k) => {
-      if (y - lh < RODAPE) {
+      const font = l.negrito ? b : f;
+      // número numa linha só (alinhado à direita); texto quebra em quantas linhas precisar
+      const partes = sec.colunas.map((c, i) => (c.direita ? [l.celulas[i] ?? ""] : quebrar(l.celulas[i] ?? "", largs[i] - 8, 8, font)));
+      const rh = lh + (Math.max(1, ...partes.map((p) => p.length)) - 1) * entre;
+      if (y - rh < RODAPE) {
         novaPagina();
+        // DES-06: quem pega a folha do meio sabe de que tabela ela é
+        text(`${nomeTabela} (continuação)`, M, y - 10, 9, b, VERDE);
+        y -= 18;
         cab();
       }
-      if (l.fundo || k % 2 === 1) page.drawRectangle({ x: M, y: y - lh, width: W - 2 * M, height: lh, color: FUNDO });
+      if (l.fundo || k % 2 === 1) page.drawRectangle({ x: M, y: y - rh, width: W - 2 * M, height: rh, color: FUNDO });
       let x = M;
       sec.colunas.forEach((c, i) => {
-        const font = l.negrito ? b : f;
-        const t = cortar(l.celulas[i] ?? "", largs[i] - 8, 8, font);
-        text(t, c.direita ? x + largs[i] - 4 - w(t, 8, font) : x + 4, y - lh + 4.5, 8, font, l.alerta?.[i] ? PERIGO : TEXTO);
+        partes[i].forEach((t, j) => {
+          text(t, c.direita ? x + largs[i] - 4 - w(t, 8, font) : x + 4, y - lh + 4.5 - j * entre, 8, font, l.alerta?.[i] ? PERIGO : TEXTO);
+        });
         x += largs[i];
       });
-      page.drawLine({ start: { x: M, y: y - lh }, end: { x: W - M, y: y - lh }, thickness: 0.4, color: BORDA });
-      y -= lh;
+      page.drawLine({ start: { x: M, y: y - rh }, end: { x: W - M, y: y - rh }, thickness: 0.4, color: BORDA });
+      y -= rh;
     });
     if (!sec.linhas.length) paragrafo("Nada no período.", 8.6);
     y -= 10;
