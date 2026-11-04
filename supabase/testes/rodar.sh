@@ -86,3 +86,8 @@ for f in testes/107_base_049.sql migrations/049_faturas_boleto_ledgra_link.sql; 
   $P -v ON_ERROR_STOP=1 -f "$R/$f" 2>&1 | grep -v NOTICE || true
 done
 $P -f "$R/testes/108_boleto_049.sql" 2>&1 | grep -v "^SET$"
+# 050: Portal › Faturas (lista com NFS-e e boleto; XML da nota no bucket fiscal só para o próprio cliente)
+for f in testes/109_base_050.sql migrations/050_portal_faturas.sql; do
+  $P -v ON_ERROR_STOP=1 -f "$R/$f" 2>&1 | grep -v NOTICE || true
+done
+$P -f "$R/testes/110_portal_faturas_050.sql" 2>&1 | grep -v "^SET$"
