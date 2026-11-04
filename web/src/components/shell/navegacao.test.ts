@@ -112,6 +112,7 @@ describe("agruparLinks", () => {
       "/financeiro/bancos",
       "/financeiro/transferencias",
       "/financeiro/extratos",
+      "/financeiro/conciliacao",
     ]);
     expect(temGrupos("financeiro")).toBe(true);
   });

@@ -135,6 +135,7 @@ históricas acima que citam o Portal, `cliente_tem_modulo` e `financeiro_ver` va
 | Assunto | Módulos que gravam | Onde |
 | --- | --- | --- |
 | Contas a pagar/receber avulsas, baixas, estornos, transferências | Financeiro | `fin_lancar`, `fin_baixar`, `fin_estornar_baixa`, `fin_cancelar_titulo`, `fin_transferir`, política de `fin_titulos` |
+| Conciliação do extrato (051): conciliar, criar lançamento, transferência, ignorar e desfazer (operar; ignorar e desfazer com motivo); ler (ver) | Financeiro (só a empresa da gestão). `fin_conciliacoes` e `fin_conciliacao_itens`: leitura com `app.fin_pode(cliente,'ver')`, gravação direta revogada, gatilhos `gestao_so_empresa`, `cliente_mesma_org` e `nada_se_apaga`; linha de outra empresa é recusada; `app.fin_conciliar_ligar` não é executável pelo site | `fin_conciliar*`, `fin_extrato_ignorar`, `fin_conciliacao_desfazer`, `fin_conciliacao_dados` |
 | Notas de entrada: enviar XML, lançar, desfazer, de-para, manifestar, XML no Storage | Entradas, Financeiro | `fis_registrar_upload`, `fis_processar_nota`, `fis_desfazer_lancamento`, `fis_pode`, `fis_depara_itens`, `app.fis_caminho_pode` |
 | Pedido de venda | Saídas, Financeiro | gatilho `est_pedido_permissao`, `app.est_pedido_travar` |
 | Pedido de compra | Entradas, Financeiro | gatilho `est_pedido_permissao`, `app.est_pedido_travar` |

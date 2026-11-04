@@ -1497,6 +1497,70 @@ export const TABELAS = {
 
 /** Resultado de cada RPC (o nome é o que vem depois de /rest/v1/rpc/). RPC não listada devolve null. */
 export const RPCS = {
+  // Financeiro › Conciliação (051): extrato do Itaú com sugestões (valor igual, pagamento agrupado, boleto do Ledgra Link)
+  fin_conciliacao_dados: () => ({
+    conta: "f2000000-0000-4000-8000-000000000001",
+    de: dia(-30),
+    ate: dia(0),
+    pode_operar: true,
+    saldos: { extrato: 2650.5, hub: 2200, diferenca: 450.5 },
+    linhas: [
+      [11, -6, 3200, "PIX RECEBIDO CLIENTE ABC COMERCIO", "pendente"],
+      [12, -5, -500, "PAGAMENTO BOLETOS IMOBILIARIA CENTRO", "pendente"],
+      [13, -4, -149.5, "TARIFA PACOTE DE SERVIÇOS", "pendente"],
+      [14, -3, 900, "LIQUIDACAO COBRANCA BOLETO MARIA DA SILVA", "pendente"],
+      [15, -2, -1000, "TED ENVIADA SICOOB APLICACAO", "pendente"],
+      [16, -8, 200, "DEPOSITO TESTE", "ignorado"],
+      [17, -9, -1500, "PAGAMENTO FORNECEDOR XYZ", "conciliado"],
+    ].map(([id, d, valor, descricao, situacao]) => ({
+      id,
+      data: dia(d),
+      valor,
+      descricao,
+      documento: null,
+      situacao,
+      conciliacao:
+        situacao === "ignorado"
+          ? { id: 2, tipo: "ignorado", observacao: "Depósito de teste do banco, devolvido", em: momento(-1), itens: [] }
+          : situacao === "conciliado"
+            ? {
+                id: 1,
+                tipo: "lancamentos",
+                observacao: null,
+                em: momento(-1),
+                itens: [
+                  {
+                    valor: -1500,
+                    criado_aqui: false,
+                    descricao: "Aluguel",
+                    pessoa: "Imobiliária Centro Ltda",
+                    baixa: 9,
+                    transferencia: null,
+                  },
+                ],
+              }
+            : null,
+    })),
+    baixas: [
+      {
+        id: 21,
+        data: dia(-3),
+        valor: 900,
+        tipo: "receber",
+        descricao: "Honorários",
+        documento: null,
+        pessoa: "Maria da Silva",
+        forma: "Boleto (Ledgra Link)",
+      },
+    ],
+    titulos: [
+      ["f6000000-0000-4000-8000-000000000101", "receber", -6, 3200, "Honorários do mês", "Cliente ABC Comércio"],
+      ["f6000000-0000-4000-8000-000000000102", "pagar", -6, 300, "Aluguel sala 1", "Imobiliária Centro Ltda"],
+      ["f6000000-0000-4000-8000-000000000103", "pagar", -6, 200, "Aluguel sala 2", "Imobiliária Centro Ltda"],
+      ["f6000000-0000-4000-8000-000000000104", "pagar", 4, 780, "Energia elétrica", null],
+    ].map(([id, tipo, d, saldo, descricao, pessoa]) => ({ id, tipo, vencimento: dia(d), saldo, descricao, documento: null, pessoa })),
+    transferencias: [],
+  }),
   hub_meus_apps: () => APPS,
   hub_situacao_contas: () => [{ user_id: EU, confirmado: true, ultimo_acesso: momento(0) }],
   hub_pendencias_membro: () => ({ tarefas: 0, clientes: 0 }),
@@ -1558,10 +1622,29 @@ export const RPCS = {
       contrato: "Assessoria contábil Greencore",
       paga: x.paga,
       pago_em: x.paga ? dia(x.venc) : null,
-      tomador: { nome: "GREENCORE INDUSTRIA LTDA", documento: "12345678000195", email: "financeiro@greencore.com.br", cidade: "Bragança Paulista", uf: "SP" },
-      nfse: x.nota ? { numero: x.nota, chave: "35071052481401210001650000000000157" + "000000000000000", xml_caminho: `${ORG}/x/nfse-emitidas/2026/09/n${i}.xml` } : null,
+      tomador: {
+        nome: "GREENCORE INDUSTRIA LTDA",
+        documento: "12345678000195",
+        email: "financeiro@greencore.com.br",
+        cidade: "Bragança Paulista",
+        uf: "SP",
+      },
+      nfse: x.nota
+        ? {
+            numero: x.nota,
+            chave: "35071052481401210001650000000000157" + "000000000000000",
+            xml_caminho: `${ORG}/x/nfse-emitidas/2026/09/n${i}.xml`,
+          }
+        : null,
       boleto: x.boleto
-        ? { banco: "itau", linha_digitavel: "34191.79001 01043.510047 91020.150008 1 99990000185000", pix_copia_cola: "00020126580014br.gov.bcb.pix0136exemplo-mdc-portal", vencimento: dia(x.venc), valor: x.valor, situacao: "registrada" }
+        ? {
+            banco: "itau",
+            linha_digitavel: "34191.79001 01043.510047 91020.150008 1 99990000185000",
+            pix_copia_cola: "00020126580014br.gov.bcb.pix0136exemplo-mdc-portal",
+            vencimento: dia(x.venc),
+            valor: x.valor,
+            situacao: "registrada",
+          }
         : null,
     })),
   portal_rotinas: () => [
@@ -2502,7 +2585,8 @@ export const XML_EXEMPLO = {
       mensagens: [
         {
           codigo: "E0625",
-          descricao: "Não é permitido informar alíquota quando não há indicação de retenção do ISSQN (tpRetISSQN = 1) para o prestador ME/EPP",
+          descricao:
+            "Não é permitido informar alíquota quando não há indicação de retenção do ISSQN (tpRetISSQN = 1) para o prestador ME/EPP",
           complemento: null,
           texto: "Para ME/EPP do Simples sem retenção, a alíquota do ISS não vai na nota (o ISS está no DAS).",
         },
@@ -2522,8 +2606,17 @@ export const XML_EXEMPLO = {
       ambiente: "producao_restrita",
       modo: "conferir",
       hoje: dia(0),
-      fatura: { id: f.id, numero: f.numero, competencia: f.competencia, emissao: f.emissao, vencimento: f.vencimento, valor: f.valor,
-                situacao: f.situacao, nfse_situacao: f.nfse_situacao, nfse_numero: f.nfse_numero },
+      fatura: {
+        id: f.id,
+        numero: f.numero,
+        competencia: f.competencia,
+        emissao: f.emissao,
+        vencimento: f.vencimento,
+        valor: f.valor,
+        situacao: f.situacao,
+        nfse_situacao: f.nfse_situacao,
+        nfse_numero: f.nfse_numero,
+      },
       dps: {
         ambiente: "producao_restrita",
         serie: "1",
@@ -2532,7 +2625,12 @@ export const XML_EXEMPLO = {
         cLocEmi: "3507605",
         prestador: { cnpj: "48140121000165", nome: "MDC ASSESSORIA LTDA", im: "12345", opSimpNac: "3", regApTribSN: "1", regEspTrib: "0" },
         tomador: { documento: "44537381000118", nome: "Cliente ABC Comércio", email: "financeiro@clienteabc.com.br" },
-        servico: { cLocPrestacao: "3507605", cTribNac: "171901", descricao: `${f.descricao} · Fatura ${f.numero} · Vencimento ${f.vencimento.split("-").reverse().join("/")}`, cNBS: "113021000" },
+        servico: {
+          cLocPrestacao: "3507605",
+          cTribNac: "171901",
+          descricao: `${f.descricao} · Fatura ${f.numero} · Vencimento ${f.vencimento.split("-").reverse().join("/")}`,
+          cNBS: "113021000",
+        },
         valores: { vServ: f.valor, pTotTribSN: 6, tribISSQN: "1", tpRetISSQN: "1" },
       },
       iss: { aliquota_referencia: 2, valor_estimado: Math.round(f.valor * 2) / 100, retido: false },
@@ -2563,7 +2661,13 @@ export const XML_EXEMPLO = {
     const comFatura = new Set((TABELAS.fin_faturas ?? []).filter((f) => f.cliente_id === p_cliente).map((f) => f.pessoa_id));
     return {
       pessoas: pessoas.map(({ id, nome, tipo, ativo }) => ({ id, nome, tipo, ativo })),
-      categorias: doCliente(TABELAS.fin_categorias, p_cliente).map(({ id, nome, tipo, grupo, ativo }) => ({ id, nome, tipo, grupo, ativo })),
+      categorias: doCliente(TABELAS.fin_categorias, p_cliente).map(({ id, nome, tipo, grupo, ativo }) => ({
+        id,
+        nome,
+        tipo,
+        grupo,
+        ativo,
+      })),
       centros: doCliente(TABELAS.fin_centros_custo, p_cliente).map(({ id, nome, ativo }) => ({ id, nome, ativo })),
       contas: doCliente(TABELAS.fin_contas_bancarias, p_cliente).map(({ id, nome, ativo }) => ({ id, nome, ativo })),
       tomadores: pessoas

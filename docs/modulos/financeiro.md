@@ -17,7 +17,7 @@
 
 Desde o Financeiro v2 a gestão do cliente é dividida em **módulos**, cada um com item próprio no menu lateral
 (`hub_apps`) e liberável por cliente. As abas da barra superior ficam curtas; no Financeiro, "Bancos ▾" junta contas
-bancárias, transferências e extratos (no celular, botão "Telas"). Rotas antigas redirecionam (`next.config.ts`):
+bancárias, transferências, extratos e conciliação (no celular, botão "Telas"). Rotas antigas redirecionam (`next.config.ts`):
 `/financeiro/plano` → `/plano-contas` e `/financeiro/cadastros` → `/cadastros/pessoas`.
 
 | Módulo · endereço | Quem usa | O que faz |
@@ -28,6 +28,7 @@ bancárias, transferências e extratos (no celular, botão "Telas"). Rotas antig
 | Financeiro · `/financeiro/bancos` | Equipe (ver; cadastro e transferência com operar) | Contas bancárias: saldo atual, último lançamento, a conciliar, conta contábil ligada; indicadores (saldo, a conciliar, sem conta contábil); cadastrar, editar e "Transferir entre contas"; PDF e Excel |
 | Financeiro · `/financeiro/transferencias` | Equipe (ver; transferir e estornar com operar) | Transferências entre contas da MDC por período e conta; nova transferência; estorno com motivo; PDF e Excel |
 | Financeiro · `/financeiro/extratos` | Equipe (ver; importar com operar) | Importa OFX ou planilha numa conta (confere antes de gravar); lista com filtros de conta, período, busca e (em "Mais filtros") entradas/saídas e situação; totais; PDF e Excel |
+| Financeiro · `/financeiro/conciliacao` | Equipe (ver; conciliar com operar) | Escolhe a conta e o período; à esquerda os lançamentos do extrato (começa em "A conciliar"; busca, situação, entradas/saídas), à direita as **sugestões do HUB** para o escolhido com "Conciliar com esta". Janela larga "Conciliar" com abas: Contas do HUB (marcar um ou mais pagamentos já lançados, contas em aberto com juros/desconto ou transferências; conferência da soma), Criar lançamento (categoria, centro e fornecedor sugeridos), Transferência, Ignorar (motivo). Linha conciliada: "Desfazer conciliação" com motivo. Indicadores: movimento do extrato × do HUB no período e a **diferença** em destaque; PDF e Excel com a ligação de cada linha. Sem extrato: leva a Extratos |
 | Financeiro · `/financeiro/estoque` (provisório) | Equipe (ver; movimentar com operar; regra de negativo com gerir) | Abas Itens, Estoques e Movimentações. Sai do Financeiro quando o módulo Estoque (`/estoque`, Frente 3) entrar |
 | Plano de contas · `/plano-contas` | Equipe (ver; importar com operar) | Importa o plano de contas do Domínio (Excel/CSV); lista com busca e filtros; PDF e Excel |
 | Plano de contas · `/plano-contas/categorias` | Equipe (ver; cadastrar com operar) | Despesas e receitas, cada uma ligada a conta analítica ativa do plano; filtros, PDF e Excel |
@@ -109,7 +110,34 @@ trava a edição da conta bancária).
 | Situação na tela: Vencido (vencimento < hoje, com saldo), Vence hoje, A vencer, Pago em parte, Pago, Cancelado | `regras.situacaoDoTitulo` |
 | CPF/CNPJ só com números e dígitos verificadores conferidos na tela; único por empresa | `regras.documentoValido`, índice `fin_pessoas_documento` |
 | Nada se apaga (sem política de delete): cadastros inativam | RLS |
-| Saldo dos bancos continua vindo do extrato; pagamentos registrados aqui serão ligados às linhas do extrato na conciliação (etapa 2), sem contar duas vezes | — |
+| Saldo dos bancos continua vindo do extrato; pagamentos registrados aqui são ligados às linhas do extrato na conciliação (seção "Conciliação do extrato"), sem contar duas vezes | `fin_baixas.extrato_linha_id` (051) |
+
+## Conciliação do extrato (migração 051, auditoria T-02)
+
+Etapa 2 do extrato: cada linha importada é ligada ao que está no HUB. Tela `/financeiro/conciliacao`; regras puras e
+sugestão em `web/src/dominios/financeiro/conciliacao.ts` (teste `conciliacao.test.ts`); janela em
+`componentes/JanelaConciliar.tsx`, painel em `componentes/PainelConciliacao.tsx`.
+
+| Regra | Onde |
+| --- | --- |
+| Uma linha liga a **um ou mais** itens: pagamentos já lançados sem extrato, contas em aberto (baixa criada na data e na conta do extrato, forma "Conciliação do extrato") ou transferências; entrada só com contas a receber, saída só com a pagar | `fin_conciliar` → `app.fin_conciliar_ligar` |
+| A soma (com juros, multa e desconto de cada conta em aberto) precisa ser **igual** ao valor do extrato; senão recusa ("A soma escolhida … não bate"). Na tela, "Levar a diferença para juros/desconto" acerta a última conta escolhida | banco; `conciliacao.ajustarDiferenca` |
+| Criar lançamento: conta já paga/recebida no valor e na data da linha (categoria obrigatória; centro, fornecedor/cliente, documento opcionais; fornecedor novo cadastrado pelo nome) | `fin_conciliar_lancar` (usa `app.fin_lancar_titulos`) |
+| Transferência: cria a transferência entre a conta do extrato e a outra conta (sentido pelo sinal) e concilia; quando o extrato da outra conta chegar, a mesma transferência aparece lá para conciliar | `fin_conciliar_transferir` |
+| Ignorar: linha fora da conciliação, motivo com 5 letras ou mais; a diferença continua no quadro de saldos | `fin_extrato_ignorar` |
+| Uma linha só tem uma conciliação valendo; um pagamento só liga a uma linha; uma transferência só uma vez em cada conta | índices únicos de `fin_conciliacoes` e `fin_conciliacao_itens` |
+| **Nada se apaga:** desfazer marca a conciliação como desfeita (motivo, quem e quando), solta os pagamentos e a linha volta a "A conciliar"; pagamentos criados na conciliação continuam valendo (estorne na tela da conta, se for o caso) | `fin_conciliacao_desfazer`, gatilho `nada_se_apaga` |
+| Pagamento ou transferência conciliados não estornam; extrato com linha conciliada não se desfaz (desfaça a conciliação antes) | `fin_estornar_baixa`, `fin_estornar_transferencia` (051), `fin_desfazer_lote` |
+| Saldos do período: movimento do extrato (linhas não desfeitas) × movimento do HUB na conta (pagamentos pelo total e transferências); diferença = extrato − HUB | `fin_conciliacao_dados` |
+| Tudo auditado (`conciliar`, `ignorar_extrato`, `desfazer_conciliacao`) | `app.registrar` |
+
+**Sugestão automática** (`sugerir`): para cada candidato do mesmo sentido soma pontos — valor igual 50 (valor perto, até
+3%, 15: provável juros/desconto), data perto até 30 (pagamento ±5 dias; conta em aberto ±10 dias do vencimento), nome
+parecido até 20 (palavras do fornecedor/cliente ou da descrição no histórico, sem acento e sem as palavras comuns de
+extrato como PIX, TED, LTDA), mesmo documento 15 e boleto já baixado pelo Ledgra Link 10. Quando nenhuma conta sozinha
+bate o valor, procura 2 a 4 contas cuja soma dá o valor exato (pagamento agrupado). Mostra até 3 com 55 pontos ou mais;
+75 ou mais aparece como "Combina muito". "Conciliar com esta" grava na hora quando a soma bate; com juros/desconto abre
+a janela já marcada para conferir.
 
 ## 5. Acesso do cliente (Portal)
 
@@ -219,5 +247,5 @@ na ficha do contrato; as fotos saem como `*-ver-caminho-*.png`.
 2. **Pedido de venda ↔ nota de saída**: "Faturar" só guarda o número; a ligação vem com a emissão (Saídas).
 3. Índices para a busca pelo número: `fis_notas (cliente_id, numero)` e `est_pedidos (cliente_id, pessoa_id, tipo)` (hoje
    a busca é pequena, por fornecedor; vira índice se a carteira crescer).
-4. Conciliação: `fin_baixas.extrato_linha_id` já existe; quando a conciliação (etapa 2) entrar, a árvore pode mostrar a
+4. Conciliação: entrou na 051 (`fin_baixas.extrato_linha_id` preenchido ao conciliar); a árvore pode passar a mostrar a
    linha do extrato abaixo de cada pagamento.

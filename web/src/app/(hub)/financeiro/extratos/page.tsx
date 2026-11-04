@@ -1,7 +1,7 @@
 // Financeiro › Extratos: importa o extrato do banco (OFX, que todo banco exporta, ou planilha Excel/CSV) numa conta
 // bancária da empresa e lista os lançamentos com filtros simples (período, conta, entradas/saídas, situação, busca),
 // totais e exportação em PDF e Excel. Lançamento repetido (mesmo identificador do banco ou mesma data/valor/histórico)
-// não entra duas vezes. A conciliação (classificar cada lançamento) é a etapa 2.
+// não entra duas vezes. A conciliação (ligar cada lançamento ao HUB) fica em Financeiro › Conciliação.
 "use client";
 
 import { useCallback, useMemo, useState } from "react";

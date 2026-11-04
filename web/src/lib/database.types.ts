@@ -6529,6 +6529,20 @@ export type Database = {
         Args: { p_motivo: string; p_titulo: string };
         Returns: undefined;
       };
+      fin_conciliacao_dados: {
+        Args: { p_ate: string; p_conta: string; p_de: string };
+        Returns: Json;
+      };
+      fin_conciliacao_desfazer: {
+        Args: { p_linha: number; p_motivo: string };
+        Returns: Json;
+      };
+      fin_conciliar: { Args: { p: Json; p_linha: number }; Returns: Json };
+      fin_conciliar_lancar: { Args: { p: Json; p_linha: number }; Returns: Json };
+      fin_conciliar_transferir: {
+        Args: { p_linha: number; p_obs?: string; p_outra_conta: string };
+        Returns: Json;
+      };
       fin_desfazer_lote: {
         Args: { p_lote: string; p_motivo: string };
         Returns: Json;
@@ -6540,6 +6554,10 @@ export type Database = {
       fin_estornar_transferencia: {
         Args: { p_id: number; p_motivo: string };
         Returns: undefined;
+      };
+      fin_extrato_ignorar: {
+        Args: { p_linha: number; p_motivo: string };
+        Returns: Json;
       };
       fin_fatura_cancelar: {
         Args: { p_fatura: string; p_motivo: string };

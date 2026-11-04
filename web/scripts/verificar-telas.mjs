@@ -55,7 +55,10 @@ async function medirAcessibilidade(pagina, rota, celular) {
   const r = await pagina.evaluate(async () => {
     // eslint-disable-next-line no-undef
     const res = await axe.run(document, { runOnly: { type: "tag", values: ["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"] } });
-    return res.violations.map((v) => ({ id: v.id, alvos: v.nodes.map((n) => n.target.join(" ") + (n.any?.[0]?.message ? ` — ${n.any[0].message}` : "")) }));
+    return res.violations.map((v) => ({
+      id: v.id,
+      alvos: v.nodes.map((n) => n.target.join(" ") + (n.any?.[0]?.message ? ` — ${n.any[0].message}` : "")),
+    }));
   });
   for (const v of r) anotarA11y(v.id, rota, v.alvos);
   // botão cortado: o texto não cabe (rola por dentro) ou passa da borda direita da tela
@@ -89,7 +92,9 @@ async function medirAcessibilidade(pagina, rota, celular) {
         return b.width > 0 && b.height > 0 && st.visibility !== "hidden" && st.display !== "none";
       };
       const nome = (el) => (el.getAttribute("aria-label") || el.textContent || el.getAttribute("name") || el.tagName).trim().slice(0, 40);
-      const pequenos = [...document.querySelectorAll("a[href], button, [role=button], input[type=checkbox], input[type=radio], select, summary")]
+      const pequenos = [
+        ...document.querySelectorAll("a[href], button, [role=button], input[type=checkbox], input[type=radio], select, summary"),
+      ]
         .filter(visivel)
         .filter((el) => !el.closest("[aria-hidden=true]"))
         .filter((el) => {
@@ -102,7 +107,9 @@ async function medirAcessibilidade(pagina, rota, celular) {
           const b = el.getBoundingClientRect();
           return `${el.tagName.toLowerCase()} "${nome(el)}" ${Math.round(b.width)}×${Math.round(b.height)}`;
         });
-      const letras = [...document.querySelectorAll("input:not([type=checkbox]):not([type=radio]):not([type=color]):not([type=file]), select, textarea")]
+      const letras = [
+        ...document.querySelectorAll("input:not([type=checkbox]):not([type=radio]):not([type=color]):not([type=file]), select, textarea"),
+      ]
         .filter(visivel)
         .filter((el) => parseFloat(getComputedStyle(el).fontSize) < 16)
         .map((el) => `${el.tagName.toLowerCase()} "${nome(el)}" ${getComputedStyle(el).fontSize}`);
@@ -390,8 +397,8 @@ async function medirNovoContrato(pagina, foto, nome) {
   if (m.paginaRolaDeLado > 1) throw new Error(`a janela "Novo contrato" fez a página rolar ${m.paginaRolaDeLado} px de lado (${nome})`);
   if (m.janelaRolaDeLado > 1) throw new Error(`o corpo da janela "Novo contrato" rola ${m.janelaRolaDeLado} px de lado (${nome})`);
   if (nome === "celular") {
-    if (!m.umaColuna) throw new Error("no celular a janela \"Novo contrato\" deveria ter uma coluna só");
-    if (m.larguraJanela > m.vw) throw new Error("no celular a janela \"Novo contrato\" é mais larga que a tela");
+    if (!m.umaColuna) throw new Error('no celular a janela "Novo contrato" deveria ter uma coluna só');
+    if (m.larguraJanela > m.vw) throw new Error('no celular a janela "Novo contrato" é mais larga que a tela');
     if (m.letra < 14) throw new Error(`no celular a letra dos campos ficou com ${m.letra} px (mínimo 14)`);
   } else if (!m.ladoALado) throw new Error(`no computador a janela "Novo contrato" deveria ter duas colunas lado a lado (${nome})`);
   await pagina.keyboard.press("Escape");
@@ -406,7 +413,10 @@ async function medirNovoContrato(pagina, foto, nome) {
 const INTERACOES = {
   // Início: concluir uma tarefa da fila mostra "Desfazer" (UX-05)
   "/": async (p, foto) => {
-    await p.getByRole("button", { name: /^Concluir / }).first().click();
+    await p
+      .getByRole("button", { name: /^Concluir / })
+      .first()
+      .click();
     await p.getByRole("button", { name: "Desfazer" }).waitFor({ timeout: 3000 });
     await foto("concluida-desfazer", { soTela: true });
   },
@@ -455,6 +465,29 @@ const INTERACOES = {
   "/financeiro/receber": (p) => abrirEFecharModal(p, "Nova conta a receber", "Nova conta a receber"),
   "/financeiro/movimento": (p) => abrirEFecharModal(p, "Saída", "Nova conta a pagar"),
   "/financeiro/transferencias": (p) => abrirEFecharModal(p, "Nova transferência", "Transferir entre contas"),
+  // Conciliação: as sugestões aparecem ao lado da lista; a janela larga abre em "Contas do HUB" e em "Criar lançamento"
+  "/financeiro/conciliacao": async (p, foto) => {
+    await p.getByText("Combina muito").first().waitFor({ timeout: 3000 });
+    await p.getByRole("button", { name: "PAGAMENTO BOLETOS IMOBILIARIA CENTRO" }).click();
+    await p
+      .getByRole("region", { name: "Sugestões para o lançamento escolhido" })
+      .getByText("a soma de 2 contas dá o valor exato")
+      .waitFor({ timeout: 3000 });
+    await foto("agrupado");
+    await p.getByRole("button", { name: "Escolher no HUB" }).click();
+    const janela = p.getByRole("dialog", { name: "Conciliar lançamento do extrato" });
+    await janela.waitFor({ timeout: 3000 });
+    await janela.getByRole("button", { name: "Usar esta" }).first().click();
+    await janela.getByText("Bateu").waitFor({ timeout: 3000 });
+    await foto("janela-hub", { soTela: true });
+    await janela.getByRole("tab", { name: "Criar lançamento" }).click();
+    await janela.getByLabel(/Categoria de despesa/).waitFor({ timeout: 3000 });
+    await foto("janela-lancar", { soTela: true });
+    const largo = await janela.evaluate((d) => d.scrollWidth - d.clientWidth);
+    if (largo > 1) throw new Error(`a janela "Conciliar" rola ${largo} px de lado`);
+    await janela.getByRole("button", { name: "Voltar" }).click();
+    await janela.waitFor({ state: "detached", timeout: 3000 });
+  },
   "/cadastros/pessoas": (p) => abrirEFecharModal(p, "Novo cadastro", "Novo fornecedor ou cliente"),
   "/plano-contas/categorias": (p) => abrirEFecharModal(p, "Nova categoria", "Nova categoria"),
   "/centros-custo": (p) => abrirEFecharModal(p, "Novo centro de custo", "Novo centro de custo"),
@@ -749,21 +782,30 @@ const INTERACOES = {
   "/contratos/faturas": async (p, foto) => {
     await p.getByText("Envio por e-mail/WhatsApp: aguardando configuração.").waitFor({ timeout: 3000 });
     // boleto (049): a fatura com boleto do Itaú mostra a linha digitável para copiar
-    await p.getByRole("button", { name: /^Ver o boleto da fatura / }).first().click();
+    await p
+      .getByRole("button", { name: /^Ver o boleto da fatura / })
+      .first()
+      .click();
     const boleto = p.getByRole("dialog", { name: /^Boleto · Fatura / });
     await boleto.waitFor({ timeout: 3000 });
     await boleto.getByText("Linha digitável").waitFor({ timeout: 3000 });
     await foto("boleto");
     await p.keyboard.press("Escape");
     await boleto.waitFor({ state: "detached", timeout: 3000 });
-    await p.getByRole("button", { name: /^Ver a fatura / }).first().click();
+    await p
+      .getByRole("button", { name: /^Ver a fatura / })
+      .first()
+      .click();
     const ver = p.getByRole("dialog", { name: /^Fatura \d{4}\/\d{5}$/ });
     await ver.waitFor({ timeout: 3000 });
     await ver.getByText("Envio ao cliente").waitFor({ timeout: 3000 });
     await foto("fatura");
     await p.keyboard.press("Escape");
     await ver.waitFor({ state: "detached", timeout: 3000 });
-    await p.getByRole("button", { name: /^Cancelar a fatura / }).first().click();
+    await p
+      .getByRole("button", { name: /^Cancelar a fatura / })
+      .first()
+      .click();
     const canc = p.getByRole("dialog", { name: /^Cancelar a fatura / });
     await canc.waitFor({ timeout: 3000 });
     await p.keyboard.press("Escape");
@@ -772,7 +814,10 @@ const INTERACOES = {
     // NFS-e (046): aviso do ambiente de teste, situação da nota com o motivo da recusa, conferência e "Ver a nota"
     await p.getByText("Notas fiscais no ambiente de teste (sem valor fiscal).").waitFor({ timeout: 3000 });
     await p.getByText("Nota de teste recusada").first().waitFor({ timeout: 3000 });
-    await p.getByRole("button", { name: /^Emitir nota fiscal da fatura / }).first().click();
+    await p
+      .getByRole("button", { name: /^Emitir nota fiscal da fatura / })
+      .first()
+      .click();
     const emitir = p.getByRole("dialog", { name: /^Emitir nota fiscal · Fatura / });
     await emitir.waitFor({ timeout: 3000 });
     await emitir.getByText("Ambiente de teste (sem valor fiscal)", { exact: true }).waitFor({ timeout: 3000 });
@@ -790,7 +835,10 @@ const INTERACOES = {
       const xml = Object.entries(XML_EXEMPLO).find(([k]) => caminho.endsWith(k))?.[1];
       return r.fulfill({ status: xml ? 200 : 404, headers: { ...CORS, "content-type": "application/xml" }, body: xml ?? "{}" });
     });
-    await p.getByRole("button", { name: /^Ver a nota fiscal da fatura / }).first().click();
+    await p
+      .getByRole("button", { name: /^Ver a nota fiscal da fatura / })
+      .first()
+      .click();
     const espelho = p.getByRole("dialog", { name: /NFS-e|1287/ });
     await espelho.waitFor({ timeout: 3000 });
     await espelho.getByText("1287", { exact: false }).first().waitFor({ timeout: 5000 });

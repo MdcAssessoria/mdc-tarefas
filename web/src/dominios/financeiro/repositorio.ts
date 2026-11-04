@@ -245,3 +245,57 @@ export async function faturarPedido(pedido: string, documento: string) {
 export async function cancelarPedido(pedido: string, motivo: string) {
   exigir(await supabase().rpc("est_pedido_cancelar", { p_pedido: pedido, p_motivo: motivo }));
 }
+
+// ------------------------------------------------------------------ conciliação do extrato (051)
+
+/** Liga a linha do extrato a pagamentos já lançados, contas em aberto (baixa na data do extrato) e transferências. */
+export async function conciliar(
+  linha: number,
+  p: {
+    baixas?: number[];
+    titulos?: { id: string; valor: number; juros: number; desconto: number }[];
+    transferencias?: number[];
+    observacao?: string | null;
+  },
+) {
+  return exigir(await supabase().rpc("fin_conciliar", { p_linha: linha, p: p as unknown as Json })) as { conciliacao: number };
+}
+
+/** Cria a conta já paga/recebida a partir da linha do extrato e concilia. */
+export async function conciliarLancar(
+  linha: number,
+  p: {
+    categoria: string;
+    centro?: string | null;
+    pessoa?: string | null;
+    pessoa_nome?: string | null;
+    descricao: string;
+    documento?: string | null;
+    observacao?: string | null;
+  },
+) {
+  return exigir(await supabase().rpc("fin_conciliar_lancar", { p_linha: linha, p: p as unknown as Json })) as {
+    conciliacao: number;
+    titulo: string;
+  };
+}
+
+/** A linha é uma transferência entre contas da empresa: cria a transferência e concilia. */
+export async function conciliarTransferir(linha: number, outraConta: string, obs?: string | null) {
+  return exigir(
+    await supabase().rpc("fin_conciliar_transferir", { p_linha: linha, p_outra_conta: outraConta, p_obs: obs ?? undefined }),
+  ) as { conciliacao: number; transferencia: number };
+}
+
+/** Deixa a linha de fora da conciliação (com motivo; fica no histórico). */
+export async function ignorarLinha(linha: number, motivo: string) {
+  return exigir(await supabase().rpc("fin_extrato_ignorar", { p_linha: linha, p_motivo: motivo }));
+}
+
+/** Desfaz a conciliação (com motivo): a linha volta a "A conciliar"; os pagamentos lançados continuam valendo. */
+export async function desfazerConciliacao(linha: number, motivo: string) {
+  return exigir(await supabase().rpc("fin_conciliacao_desfazer", { p_linha: linha, p_motivo: motivo })) as {
+    linha: number;
+    lancados_aqui: number;
+  };
+}

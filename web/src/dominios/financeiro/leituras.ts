@@ -1,6 +1,8 @@
 // Leituras do Financeiro (sempre paginadas: o Supabase corta em 1000 linhas sem avisar).
 import { supabase } from "@/lib/supabase";
 import { lerTudo } from "@/lib/lerTudo";
+import { exigir } from "@/lib/exigir";
+import type { DadosConciliacao } from "./conciliacao";
 import type {
   Baixa,
   Categoria,
@@ -254,4 +256,11 @@ export async function lerPermiteNegativo(cliente: string): Promise<boolean> {
   const { data, error } = await supabase().from("est_parametros").select("permite_negativo").eq("cliente_id", cliente).maybeSingle();
   if (error) throw error;
   return !!data?.permite_negativo;
+}
+
+// ------------------------------------------------------------------ conciliação do extrato
+
+/** Tudo da tela de conciliação de uma conta no período: linhas do extrato, o que já está no HUB e os saldos (051). */
+export async function lerConciliacao(conta: string, de: string, ate: string): Promise<DadosConciliacao> {
+  return exigir(await supabase().rpc("fin_conciliacao_dados", { p_conta: conta, p_de: de, p_ate: ate })) as unknown as DadosConciliacao;
 }

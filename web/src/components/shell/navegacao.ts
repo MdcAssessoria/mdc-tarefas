@@ -94,6 +94,7 @@ export const NAV: Record<Modulo, { titulo: string; links: LinkModulo[]; grupos?:
       { href: "/financeiro/bancos", nome: "Contas bancárias", grupo: "Bancos" },
       { href: "/financeiro/transferencias", nome: "Transferências", grupo: "Bancos" },
       { href: "/financeiro/extratos", nome: "Extratos", grupo: "Bancos" },
+      { href: "/financeiro/conciliacao", nome: "Conciliação", grupo: "Bancos" },
     ],
   },
   licencas: {
