@@ -192,7 +192,7 @@ function CartaoProcesso({
       }`}
     >
       <div className="flex items-start justify-between gap-2">
-        <Link href={`/societario/${p.id}`} className="font-medium leading-snug text-[var(--marca)] hover:underline" draggable={false}>
+        <Link href={`/societario/${p.id}`} className="alvo-toque font-medium leading-snug text-[var(--marca)] hover:underline" draggable={false}>
           {l.cliente}
         </Link>
         <span className="num shrink-0 text-xs text-[var(--texto-suave)]">#{p.numero}</span>

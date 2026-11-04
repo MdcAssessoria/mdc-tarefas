@@ -327,7 +327,7 @@ function Detalhe() {
       {janelaConfirmar}
       {janelaEscolha}
       <div className="space-y-2 print:hidden">
-        <Link href="/demonstrativos" className="inline-flex items-center gap-1 text-sm text-neutral-600 hover:underline">
+        <Link href="/demonstrativos" className="alvo-toque inline-flex items-center gap-1 text-sm text-neutral-600 hover:underline">
           <Icone nome="voltar" className="h-4 w-4" />
           Balancetes
         </Link>

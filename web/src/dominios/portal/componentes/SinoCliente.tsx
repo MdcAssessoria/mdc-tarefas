@@ -49,7 +49,7 @@ export function SinoCliente({ uid }: { uid: string }) {
   return (
     <div className="relative" ref={caixa}>
       <button
-        className="relative grid h-9 w-9 place-items-center rounded-md hover:bg-white/10"
+        className="relative grid h-11 w-11 place-items-center sm:h-9 sm:w-9 rounded-md hover:bg-white/10"
         aria-expanded={aberto}
         aria-label={novas.length ? `Avisos (${novas.length} novo(s))` : "Avisos"}
         onClick={async () => {

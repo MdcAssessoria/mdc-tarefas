@@ -190,7 +190,7 @@ function Painel() {
                   <ul className="divide-y divide-[var(--borda)] text-sm">
                     {d.parados.map((a) => (
                       <li key={a.p.id} className="flex items-center justify-between gap-3 py-2">
-                        <Link href={`/societario/${a.p.id}`} className="min-w-0 hover:underline">
+                        <Link href={`/societario/${a.p.id}`} className="alvo-toque-bloco min-w-0 hover:underline">
                           <span className="block truncate font-medium">
                             <span className="text-[var(--texto-suave)]">#{a.p.numero}</span> {a.cliente}
                           </span>

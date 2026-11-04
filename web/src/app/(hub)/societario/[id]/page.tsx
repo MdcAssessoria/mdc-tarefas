@@ -189,7 +189,7 @@ function Ficha() {
 
   return (
     <div className="space-y-5">
-      <Link href="/societario" className="inline-flex items-center gap-1.5 text-sm text-[var(--texto-suave)] hover:underline">
+      <Link href="/societario" className="alvo-toque inline-flex items-center gap-1.5 text-sm text-[var(--texto-suave)] hover:underline">
         <Icone nome="voltar" className="h-4 w-4" />
         Processos
       </Link>

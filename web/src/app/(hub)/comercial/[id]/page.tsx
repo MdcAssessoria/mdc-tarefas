@@ -41,7 +41,7 @@ function Ficha() {
   const hoje = hojeISO(org.fuso);
 
   const voltar = (
-    <Link href="/comercial" className="inline-flex items-center gap-1 text-sm text-[var(--texto-suave)] hover:underline">
+    <Link href="/comercial" className="alvo-toque inline-flex items-center gap-1 text-sm text-[var(--texto-suave)] hover:underline">
       <Icone nome="voltar" className="h-4 w-4" />
       Voltar ao funil
     </Link>
