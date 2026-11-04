@@ -31,6 +31,7 @@ import { LancarNota } from "@/dominios/notas/componentes/LancarNota";
 import { RegrasTipos } from "@/dominios/notas/componentes/RegrasTipos";
 import { ArvoreDocumento } from "@/dominios/financeiro/componentes/ArvoreDocumento";
 import { BotaoVerCaminho } from "@/components/ui/BotaoVerCaminho";
+import { plural } from "@/lib/formato/numero";
 
 type Aba = "prontas" | "lancadas" | "regras";
 
@@ -103,7 +104,7 @@ function LancarNotaTela() {
             avisar={mostrar}
             montar={() => ({
               titulo: aba === "lancadas" ? "Notas lançadas" : "Notas prontas para lançar",
-              subtitulo: `${cliente ? nomeCliente(cliente) : ""} · ${lista.length} nota(s)`,
+              subtitulo: `${cliente ? nomeCliente(cliente) : ""} · ${plural(lista.length, "nota")}`,
               arquivo: nomeArquivo(aba === "lancadas" ? "Notas-lancadas" : "Notas-para-lancar", cliente ? nomeCliente(cliente) : "", hoje),
               logoUrl: org.logo_url,
               linhas: lista,

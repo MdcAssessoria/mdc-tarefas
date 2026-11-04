@@ -43,6 +43,7 @@ import { Icone } from "@/components/ui/Icone";
 import { QuadroTabela } from "@/components/ui/QuadroTabela";
 
 import { useAviso } from "@/components/ui/Aviso";
+import { plural } from "@/lib/formato/numero";
 
 interface Linha {
   chave: string;
@@ -288,7 +289,7 @@ export default function PaginaEntradasSaidas() {
               avisar={mostrar}
               montar={() => ({
                 titulo: "Entradas e saídas",
-                subtitulo: `${cliente ? nomeCliente(cliente) : ""} · ${rotuloPeriodo}${previsto ? " · com previstos" : ""} · ${lista.length} lançamento(s)`,
+                subtitulo: `${cliente ? nomeCliente(cliente) : ""} · ${rotuloPeriodo}${previsto ? " · com previstos" : ""} · ${plural(lista.length, "lançamento")}`,
                 arquivo: nomeArquivo("Entradas-e-saidas", cliente ? nomeCliente(cliente) : "", hoje),
                 logoUrl: org.logo_url,
                 linhas: lista,

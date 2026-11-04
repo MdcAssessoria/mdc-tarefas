@@ -20,6 +20,7 @@ import { EncerrarContrato, HistoricoContrato, ReajustarContrato } from "@/domini
 import { contratoVigente, reajustePendente } from "@/dominios/licencas/regras";
 import { INDICES } from "@/dominios/licencas/tipos";
 import type { Contrato } from "@/dominios/licencas/tipos";
+import { plural } from "@/lib/formato/numero";
 
 type FiltroSituacao = "ativos" | "encerrados" | "todos";
 type Janela =
@@ -101,7 +102,7 @@ function Contratos() {
           avisar={mostrar}
           montar={() => ({
             titulo: "Contratos de licença",
-            subtitulo: `${org.nome} · ${situacao === "ativos" ? "ativos" : situacao === "encerrados" ? "encerrados" : "todos"} · ${lista.length} contrato(s) · ${fmtData(hoje)}`,
+            subtitulo: `${org.nome} · ${situacao === "ativos" ? "ativos" : situacao === "encerrados" ? "encerrados" : "todos"} · ${plural(lista.length, "contrato")} · ${fmtData(hoje)}`,
             arquivo: nomeArquivo("Contratos-licenca", hoje),
             logoUrl: org.logo_url,
             linhas: lista,

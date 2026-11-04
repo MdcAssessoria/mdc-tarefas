@@ -2,7 +2,7 @@
 import { describe, expect, it } from "vitest";
 import { fmtCompetencia, fmtData, fmtDataHora, fmtDataLocal, mesAno, mesExtenso } from "./datas";
 import { brl } from "./moeda";
-import { fmtIndice, fmtNumero, fmtPercentual } from "./numero";
+import { fmtIndice, fmtNumero, fmtPercentual, plural } from "./numero";
 
 const NBSP = " ";
 
@@ -65,5 +65,19 @@ describe("números", () => {
     expect(fmtIndice(-1500, "R$")).toBe(`-R$${NBSP}1.500`);
     expect(fmtIndice(null, "x")).toBe("—");
     expect(fmtIndice(Infinity, "x")).toBe("—");
+  });
+});
+
+describe("plural (DES-03)", () => {
+  it("singular só para 1", () => {
+    expect(plural(1, "empregado")).toBe("1 empregado");
+    expect(plural(2, "empregado")).toBe("2 empregados");
+    expect(plural(0, "contrato")).toBe("0 contratos");
+    expect(plural(-1, "dia")).toBe("-1 dia");
+  });
+  it("plural irregular e milhar", () => {
+    expect(plural(3, "mês", "meses")).toBe("3 meses");
+    expect(plural(1200, "nota")).toBe("1.200 notas");
+    expect(plural(1, "fatura", undefined, { semNumero: true })).toBe("fatura");
   });
 });

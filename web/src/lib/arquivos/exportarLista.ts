@@ -42,7 +42,8 @@ export async function exportarPdf<L>(o: ListaExportavel<L>) {
     logo: await carregarLogo(o.logoUrl),
     secoes: [
       {
-        titulo: o.titulo,
+        // o título já está no topo do relatório: a tabela não o repete (DES-06)
+        titulo: "",
         colunas: o.colunas.map((c) => ({ titulo: c.titulo, peso: c.peso ?? 1, direita: c.formato === "moeda" || c.formato === "numero" })),
         linhas: [
           ...o.linhas.map((l) => ({
@@ -67,14 +68,43 @@ export async function exportarPdf<L>(o: ListaExportavel<L>) {
   baixarBytes(bytes, `${o.arquivo}.pdf`);
 }
 
+/** "31/12/2026" ou "2026-12-31" (só a data) → "2026-12-31"; outro texto → null. */
+export function dataDaCelula(v: unknown): string | null {
+  if (typeof v !== "string") return null;
+  const t = v.trim();
+  let m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(t);
+  if (m) return `${m[3]}-${m[2]}-${m[1]}`;
+  m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(t);
+  return m ? t : null;
+}
+
+/**
+ * Formato de cada coluna no Excel (D-08): coluna de texto em que todas as células preenchidas são datas vira data de
+ * verdade (filtra e ordena como data); número com casas decimais não é arredondado.
+ */
+export function formatoExcel<L>(c: ColunaLista<L>, linhas: L[]): ColunaExcel["formato"] {
+  if (c.formato === "moeda") return "moeda";
+  const valores = linhas.map((l) => c.valor(l)).filter((v) => v !== null && v !== "");
+  if (c.formato === "numero") return valores.some((v) => Number(v) % 1 !== 0) ? "decimal" : "numero";
+  if (valores.length && valores.every((v) => dataDaCelula(v) !== null)) return "data";
+  return "texto";
+}
+
 export async function exportarXlsx<L>(o: ListaExportavel<L>) {
   const colunas: ColunaExcel[] = o.colunas.map((c, i) => ({
     titulo: c.titulo,
     chave: `c${i}`,
     largura: c.largura ?? 16,
-    formato: c.formato === "moeda" ? "moeda" : c.formato === "numero" ? "numero" : "texto",
+    formato: formatoExcel(c, o.linhas),
   }));
-  const linhas = o.linhas.map((l) => Object.fromEntries(o.colunas.map((c, i) => [`c${i}`, c.valor(l)])));
+  const linhas = o.linhas.map((l) =>
+    Object.fromEntries(
+      o.colunas.map((c, i) => {
+        const v = c.valor(l);
+        return [`c${i}`, colunas[i].formato === "data" ? (dataDaCelula(v) ?? v) : v];
+      }),
+    ),
+  );
   const totais = o.totais
     ? Object.fromEntries(o.colunas.map((c, i) => [`c${i}`, c.titulo in o.totais! ? o.totais![c.titulo] : i === 0 ? "Total" : null]))
     : undefined;

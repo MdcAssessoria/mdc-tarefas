@@ -26,6 +26,7 @@ import type { Pessoa, TipoPessoa } from "../tipos";
 import { BotoesExportar } from "@/components/ui/BotoesExportar";
 import { Chip } from "@/components/ui/Chip";
 import type { PropsAba } from "./Comuns";
+import { plural } from "@/lib/formato/numero";
 
 export const TIPOS_PESSOA: Record<TipoPessoa, string> = { fornecedor: "Fornecedor", cliente: "Cliente", ambos: "Fornecedor e cliente" };
 const UFS = "AC AL AM AP BA CE DF ES GO MA MG MS MT PA PB PE PI PR RJ RN RO RR RS SC SE SP TO".split(" ");
@@ -118,7 +119,7 @@ export function CadPessoas({ cliente, podeOperar, avisar }: PropsAba) {
               avisar={avisar}
               montar={() => ({
                 titulo: "Fornecedores e clientes",
-                subtitulo: `${nomeCliente(cliente)} · ${lista.length} cadastro(s)`,
+                subtitulo: `${nomeCliente(cliente)} · ${plural(lista.length, "cadastro")}`,
                 arquivo: nomeArquivo("Fornecedores-e-clientes", nomeCliente(cliente), hojeISO(org.fuso)),
                 logoUrl: org.logo_url,
                 linhas: lista,

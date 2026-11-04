@@ -22,6 +22,7 @@ import type { Faixa, Inadimplente } from "@/dominios/licencas/regras";
 import { mensagemCobranca } from "@/dominios/licencas/mensagem";
 import { horaNoFuso } from "@/lib/datas";
 import { bloquearCliente, definirParametros, desbloquearCliente } from "@/dominios/licencas/repositorio";
+import { plural } from "@/lib/formato/numero";
 
 type Linha = Inadimplente & { bloqueado: boolean; sugerido: boolean };
 type Janela = { tipo: "bloquear" | "desbloquear"; cliente: string } | { tipo: "texto"; texto: string };
@@ -97,7 +98,7 @@ export default function PaginaInadimplentes() {
           avisar={mostrar}
           montar={() => ({
             titulo: "Inadimplentes de licença",
-            subtitulo: `${org.nome} · posição em ${fmtData(hoje)} · ${lista.length} cliente(s)`,
+            subtitulo: `${org.nome} · posição em ${fmtData(hoje)} · ${plural(lista.length, "cliente")}`,
             arquivo: nomeArquivo("Inadimplentes-licenca", hoje),
             logoUrl: org.logo_url,
             linhas: lista,

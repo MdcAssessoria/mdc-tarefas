@@ -33,6 +33,7 @@ import { EditorPedido, TEXTOS_PEDIDO } from "./EditorPedido";
 import { DetalhePedido, JanelaFaturar, JanelaLancar } from "./DetalhePedido";
 import { ArvoreDocumento } from "./ArvoreDocumento";
 import { BotaoVerCaminho } from "@/components/ui/BotaoVerCaminho";
+import { plural } from "@/lib/formato/numero";
 
 type Janela =
   | { tipo: "novo" }
@@ -222,7 +223,7 @@ export function TelaPedidos({ tipo, cliente, podeOperar, avisar }: PropsAba & { 
             avisar={avisar}
             montar={() => ({
               titulo: tipo === "venda" ? "Pedidos de venda" : "Pedidos de compra",
-              subtitulo: `${nomeCliente(cliente)} · ${intervalo.de ? `${fmtData(intervalo.de)} a ${fmtData(intervalo.ate ?? hoje)}` : "todo o período"} · ${lista.length} pedido(s)`,
+              subtitulo: `${nomeCliente(cliente)} · ${intervalo.de ? `${fmtData(intervalo.de)} a ${fmtData(intervalo.ate ?? hoje)}` : "todo o período"} · ${plural(lista.length, "pedido")}`,
               arquivo: nomeArquivo(tipo === "venda" ? "Pedidos-venda" : "Pedidos-compra", nomeCliente(cliente), hoje),
               logoUrl: org.logo_url,
               linhas: lista,

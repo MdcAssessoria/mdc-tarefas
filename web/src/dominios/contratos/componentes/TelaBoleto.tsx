@@ -27,6 +27,7 @@ import { lerBoletos, lerContasBanco, lerFaturas, lerOpcoesContrato } from "../le
 import { salvarContaBanco } from "../repositorio";
 import type { BancoBoleto, ContaBancoLink } from "../tipos";
 import { SITUACOES_BOLETO_EMITIDO } from "./JanelaBoleto";
+import { plural } from "@/lib/formato/numero";
 
 interface FormBanco {
   conta_link_id: string;
@@ -171,7 +172,7 @@ export function TelaBoleto() {
             avisar={mostrar}
             montar={() => ({
               titulo: "Boletos das faturas",
-              subtitulo: `${nomeCliente(cliente)} · ${d?.boletos.length ?? 0} boleto(s)`,
+              subtitulo: `${nomeCliente(cliente)} · ${plural(d?.boletos.length ?? 0, "boleto")}`,
               arquivo: nomeArquivo("Boletos", nomeCliente(cliente), hoje),
               logoUrl: org.logo_url,
               linhas: d?.boletos ?? [],

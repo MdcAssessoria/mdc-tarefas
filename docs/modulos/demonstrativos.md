@@ -60,6 +60,11 @@ Exportação:
     fica desligado e diz o que publicar (no Portal: "fica disponível quando a MDC concluir …").
   - A coluna de comparação com o ano anterior só aparece quando os dois períodos estão completos.
   - Limitação conhecida: empresa aberta no meio do ano cai em "lacuna" no PDF anual do primeiro exercício.
+  - Acabamento (04/11/2026): rascunho e período parcial levam marca d'água ("RASCUNHO"/"PERÍODO PARCIAL") e selo em
+    **todas** as páginas (D-03); descrição longa de conta quebra linha em vez de terminar em "…" (D-10); o balancete
+    de verificação fecha com o **total de débitos e créditos** das contas analíticas e diz se está equilibrado (DES-05);
+    o papel timbrado lê razão social, CNPJ e cidade da **empresa da Gestão** da organização (cadastro), com os dados
+    da MDC como reserva (D-11). Testes em `supabase/functions/demonstrativo-pdf/pdf_test.ts` (Deno).
 - **Excel do período** (`componentes/ExportarPeriodo.tsx`): planilha no navegador com os valores como número.
 
 ```mermaid

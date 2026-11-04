@@ -270,6 +270,16 @@ export function fmtIndice(v: number | null | undefined, f: FormatoIndice): strin
   return brlFormato(v, { centavos: false });
 }
 
+/**
+ * Quantidade com a palavra no singular ou no plural, sem "(s)" (DES-03):
+ * plural(1, "empregado") → "1 empregado"; plural(3, "nota", "notas") → "3 notas"; plural(2, "mês", "meses") → "2 meses".
+ * Sem o plural informado, acrescenta "s". Zero vai no plural ("0 contratos"). `semNumero` devolve só a palavra.
+ */
+export function plural(n: number, singular: string, plural?: string, o: { semNumero?: boolean } = {}): string {
+  const palavra = Math.abs(n) === 1 ? singular : (plural ?? `${singular}s`);
+  return o.semNumero ? palavra : `${n.toLocaleString("pt-BR")} ${palavra}`;
+}
+
 export interface OpcoesMoeda {
   /** false arredonda para reais inteiros ("R$ 1.235"), como nos painéis e textos dos demonstrativos. Padrão: true. */
   centavos?: boolean;

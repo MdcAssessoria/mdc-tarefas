@@ -28,6 +28,7 @@ import { Esqueleto } from "@/components/ui/Esqueleto";
 import { EstadoVazio } from "@/components/ui/EstadoVazio";
 import { Icone } from "@/components/ui/Icone";
 import { Indicador } from "@/components/ui/Indicador";
+import { plural } from "@/lib/formato/numero";
 
 export default function PaginaAtendimento() {
   return <Caixa />;
@@ -166,7 +167,7 @@ function Caixa() {
               avisar={mostrar}
               montar={() => ({
                 titulo: "Atendimentos",
-                subtitulo: `${org.nome} · ${FILTROS.find((f) => f.id === filtro)?.nome} · ${lista.length} conversa(s)`,
+                subtitulo: `${org.nome} · ${FILTROS.find((f) => f.id === filtro)?.nome} · ${plural(lista.length, "conversa")}`,
                 arquivo: nomeArquivo("Atendimentos", hojeISO(org.fuso)),
                 logoUrl: org.logo_url,
                 linhas: lista,

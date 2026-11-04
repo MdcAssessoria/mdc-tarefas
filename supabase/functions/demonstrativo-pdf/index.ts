@@ -36,6 +36,13 @@ async function baixar(url: string): Promise<Uint8Array | null> {
   }
 }
 
+/** "48140121000165" → "48.140.121/0001-65"; o que não tiver 14 números fica como veio (ou vazio). */
+function mascaraCnpj(c: string | null | undefined): string | undefined {
+  const d = String(c ?? "").replace(/\D/g, "");
+  if (d.length !== 14) return c?.trim() || undefined;
+  return `${d.slice(0, 2)}.${d.slice(2, 5)}.${d.slice(5, 8)}/${d.slice(8, 12)}-${d.slice(12)}`;
+}
+
 const CAMPOS_LINHA = "classificacao,codigo,descricao,nivel,analitica,saldo_anterior,debitos,creditos,saldo_atual,grupo";
 
 /** Todas as linhas do balancete, página por página: a API do Supabase corta cada consulta em 1.000 linhas sem avisar. */
@@ -237,8 +244,16 @@ async function finalizar(servico: Sb, orgId: string, publicado: boolean, cli: Cl
     if (c && new Date(c.valido_ate) > new Date()) cert = c;
   }
 
-  const { data: orgRow } = await servico.from("organizacoes").select("logo_url").eq("id", b.org_id).single();
-  const logoUrl = (orgRow as { logo_url: string | null } | null)?.logo_url ?? "";
+  const { data: orgRow } = await servico.from("organizacoes").select("logo_url,nome,cnpj,gestao_cliente_id").eq("id", b.org_id).single();
+  const org = orgRow as { logo_url: string | null; nome: string | null; cnpj: string | null; gestao_cliente_id: string | null } | null;
+  const logoUrl = org?.logo_url ?? "";
+  // papel timbrado com os dados do cadastro (empresa da Gestão da organização); o que faltar fica com o padrão MDC (D-11)
+  let escritorio: { razao?: string; cnpj?: string; cidadeUf?: string } | null = null;
+  if (org?.gestao_cliente_id) {
+    const { data: emp } = await servico.from("clientes").select("razao_social,cnpj,cidade,uf").eq("id", org.gestao_cliente_id).maybeSingle();
+    const e = emp as { razao_social: string | null; cnpj: string | null; cidade: string | null; uf: string | null } | null;
+    if (e) escritorio = { razao: e.razao_social ?? undefined, cnpj: mascaraCnpj(e.cnpj), cidadeUf: e.cidade && e.uf ? `${e.cidade}/${e.uf}` : undefined };
+  } else if (org?.cnpj) escritorio = { razao: org.nome ?? undefined, cnpj: mascaraCnpj(org.cnpj) };
   // só a logo da própria organização (Storage) ou do site da MDC
   const permitida =
     (logoUrl.startsWith("storage:") && logoUrl.slice(8).startsWith(`${b.org_id}/`) && !logoUrl.includes("..")) ||
@@ -258,6 +273,7 @@ async function finalizar(servico: Sb, orgId: string, publicado: boolean, cli: Cl
     cnpj: cliente.cnpj,
     assinatura: cert ? { titular: cert.titular, emissor: cert.emissor, validade: cert.valido_ate.slice(0, 10).split("-").reverse().join("/") } : null,
     logo,
+    escritorio,
   });
 
   let bytes: Uint8Array;

@@ -23,6 +23,7 @@ import { QuadroTabela } from "@/components/ui/QuadroTabela";
 import type { Tom } from "@/components/ui/Tons";
 import { nomeCliente } from "@/dominios/clientes/nome";
 import type { EmpresaPortal } from "../tipos";
+import { plural } from "@/lib/formato/numero";
 
 interface Rotina {
   tarefa_id: string;
@@ -88,7 +89,7 @@ export function PortalRotinas({ emp }: { emp: EmpresaPortal }) {
             avisar={mostrar}
             montar={() => ({
               titulo: "Rotinas do mês",
-              subtitulo: `${nomeCliente(emp)} · competência ${mesAno(mes + "-01")} · ${entregues} de ${todas.length} entregue(s)`,
+              subtitulo: `${nomeCliente(emp)} · competência ${mesAno(mes + "-01")} · ${entregues} de ${plural(todas.length, "entregue")}`,
               arquivo: nomeArquivo("Rotinas", nomeCliente(emp), mes),
               logoUrl: emp.logo_url,
               paisagem: false,

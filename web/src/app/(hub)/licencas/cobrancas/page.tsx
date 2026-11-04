@@ -25,6 +25,7 @@ import type { Cobranca } from "@/dominios/licencas/tipos";
 import { useConsulta } from "@/lib/useConsulta";
 import { JanelaBoletoPix } from "@/dominios/licencas/componentes/JanelaBoletoPix";
 import { emissaoValida, lerConfigLink, lerEmissoes, SITUACOES_EMISSAO } from "@/dominios/licencas/ledgraLink";
+import { plural } from "@/lib/formato/numero";
 
 type FiltroSituacao = "abertas" | "atrasada" | "a_vencer" | "paga" | "cancelada" | "todas";
 const FILTROS: { id: FiltroSituacao; nome: string }[] = [
@@ -140,7 +141,7 @@ export default function PaginaCobrancas() {
           avisar={mostrar}
           montar={() => ({
             titulo: "Mensalidades de licença",
-            subtitulo: `${org.nome} · ${rotuloMes} · ${FILTROS.find((x) => x.id === situacao)?.nome} · ${lista.length} mensalidade(s)`,
+            subtitulo: `${org.nome} · ${rotuloMes} · ${FILTROS.find((x) => x.id === situacao)?.nome} · ${plural(lista.length, "mensalidade")}`,
             arquivo: nomeArquivo("Mensalidades-licenca", mes || "todos", hoje),
             logoUrl: org.logo_url,
             linhas: lista,

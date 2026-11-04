@@ -110,8 +110,9 @@ describe("contrato em PDF", () => {
     const ultima = pgs[pgs.length - 1];
     const doc = await PDFDocument.create();
     const bold = await doc.embedFont(StandardFonts.HelveticaBold);
-    const contratada = ultima.find((t) => t.t === "CONTRATADA")!;
-    const contratante = ultima.find((t) => t.t === "CONTRATANTE")!;
+    // o rótulo da assinatura (tamanho 8); a palavra também aparece no texto das cláusulas
+    const contratada = ultima.find((t) => t.t === "CONTRATADA" && t.size === 8)!;
+    const contratante = ultima.find((t) => t.t === "CONTRATANTE" && t.size === 8)!;
     expect(contratada).toBeDefined();
     // nome inteiro, em duas linhas, sem corte por número de letras
     const linhasNome = ultima.filter((t) => t.x === contratante.x && t.y < contratante.y && t.y > contratante.y - 30 && t.size === 9);
@@ -134,6 +135,18 @@ describe("contrato em PDF", () => {
       expect(frases, `contrato com ${n} parágrafos`).toContain("3 de novembro de 2026.");
       // assinaturas e testemunhas na mesma página
       expect(pagina.some((t) => t.t === "TESTEMUNHA 2")).toBe(true);
+    }
+  });
+
+  it("a última cláusula vai junto do fecho: nunca uma página só com o \"E, por estarem de acordo\" (DES-02)", async () => {
+    for (let n = 1; n <= 30; n++) {
+      const pgs = await paginas(await contrato(n));
+      const pagina = pgs.find((p) => p.some((t) => t.t === "CONTRATANTE" && t.size === 8))!;
+      const ultimaClausula = `Cláusula ${Math.floor((n - 1) / 5) * 5 + 1}ª — Teste`;
+      const textos = pagina.map((t) => t.t);
+      // ou a cláusula inteira (título) ou pelo menos o último parágrafo dela está na página das assinaturas
+      const antesDoFecho = pagina.filter((t) => t.y > pagina.find((x) => x.t === "E,")!.y && t.size >= 10);
+      expect(textos.includes(ultimaClausula) || antesDoFecho.length > 0, `contrato com ${n} parágrafos`).toBe(true);
     }
   });
 

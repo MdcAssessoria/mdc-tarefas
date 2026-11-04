@@ -27,6 +27,7 @@ import { Icone } from "@/components/ui/Icone";
 import { Indicador } from "@/components/ui/Indicador";
 import { QuadroTabela } from "@/components/ui/QuadroTabela";
 import type { Tom } from "@/components/ui/Tons";
+import { plural } from "@/lib/formato/numero";
 
 type Registro = {
   id: number;
@@ -124,7 +125,7 @@ export default function PaginaImportacoes() {
               avisar={mostrar}
               montar={() => ({
                 titulo: "Histórico de importações de balancete",
-                subtitulo: `${nomePeriodo} · ${lista.length} registro(s): ${conta("importado")} importado(s), ${conta("revisar")} para revisar, ${conta("erro")} com erro`,
+                subtitulo: `${nomePeriodo} · ${plural(lista.length, "registro")}: ${plural(conta("importado"), "importado")}, ${conta("revisar")} para revisar, ${conta("erro")} com erro`,
                 arquivo: nomeArquivo("Historico-importacoes", hoje),
                 logoUrl: org.logo_url,
                 linhas: lista,

@@ -22,6 +22,7 @@ import { FiltroPeriodo } from "@/components/ui/FiltroPeriodo";
 import { JanelaMotivo } from "@/components/ui/JanelaMotivo";
 import type { PropsAba } from "./Comuns";
 import { ORIGENS, qtd, TIPOS_MOV, useBaseEstoque } from "./estoqueBase";
+import { plural } from "@/lib/formato/numero";
 
 // ------------------------------------------------------------------ movimentações
 
@@ -138,7 +139,7 @@ export function AbaMovimentos({ cliente, podeOperar, avisar }: PropsAba) {
             avisar={avisar}
             montar={() => ({
               titulo: "Movimentações de estoque",
-              subtitulo: `${nomeCliente(cliente)} · ${intervalo.de ? `${fmtData(intervalo.de)} a ${fmtData(intervalo.ate ?? "")}` : "todo o período"} · ${lista.length} movimento(s)`,
+              subtitulo: `${nomeCliente(cliente)} · ${intervalo.de ? `${fmtData(intervalo.de)} a ${fmtData(intervalo.ate ?? "")}` : "todo o período"} · ${plural(lista.length, "movimento")}`,
               arquivo: nomeArquivo("Movimentacoes-estoque", nomeCliente(cliente), hoje),
               logoUrl: org.logo_url,
               linhas: lista,

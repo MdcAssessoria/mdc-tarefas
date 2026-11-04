@@ -35,6 +35,7 @@ import { FichaContrato } from "./FichaContrato";
 import { JanelaReajuste } from "./JanelaReajuste";
 import { ArvoreDocumento } from "@/dominios/financeiro/componentes/ArvoreDocumento";
 import { BotaoVerCaminho } from "@/components/ui/BotaoVerCaminho";
+import { plural } from "@/lib/formato/numero";
 
 type FiltroTipo = "" | "receber" | "pagar";
 type FiltroSituacao = SituacaoRecorrente | "todos" | "vigentes";
@@ -178,7 +179,7 @@ export function TelaContratos() {
               avisar={mostrar}
               montar={() => ({
                 titulo: "Contratos",
-                subtitulo: `${cliente ? nomeCliente(cliente) : ""} · ${FILTROS_SITUACAO.find((x) => x.id === situacao)?.nome} · ${filtrados.length} contrato(s)`,
+                subtitulo: `${cliente ? nomeCliente(cliente) : ""} · ${FILTROS_SITUACAO.find((x) => x.id === situacao)?.nome} · ${plural(filtrados.length, "contrato")}`,
                 arquivo: nomeArquivo("Contratos", cliente ? nomeCliente(cliente) : "", hoje),
                 logoUrl: org.logo_url,
                 linhas: filtrados,

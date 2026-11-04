@@ -25,6 +25,7 @@ import type { Categoria, ContaContabil } from "../tipos";
 import { BotoesExportar } from "@/components/ui/BotoesExportar";
 import { Chip } from "@/components/ui/Chip";
 import type { PropsAba } from "./Comuns";
+import { plural } from "@/lib/formato/numero";
 
 export const TIPOS_CATEGORIA = { despesa: "Despesa", receita: "Receita" } as const;
 
@@ -141,7 +142,7 @@ export function CadCategorias({ cliente, podeOperar, avisar }: PropsAba) {
               avisar={avisar}
               montar={() => ({
                 titulo: "Despesas e receitas",
-                subtitulo: `${nomeCliente(cliente)} · ${lista.length} categoria(s)`,
+                subtitulo: `${nomeCliente(cliente)} · ${plural(lista.length, "categoria")}`,
                 arquivo: nomeArquivo("Categorias", nomeCliente(cliente), hojeISO(org.fuso)),
                 logoUrl: org.logo_url,
                 linhas: lista,

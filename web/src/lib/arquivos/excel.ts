@@ -7,7 +7,7 @@ export interface ColunaExcel {
   titulo: string;
   chave: string;
   largura?: number;
-  formato?: "texto" | "numero" | "moeda" | "data" | "percentual";
+  formato?: "texto" | "numero" | "decimal" | "moeda" | "data" | "percentual";
 }
 export interface AbaExcel {
   nome: string;
@@ -63,18 +63,22 @@ export async function exportarExcel(arquivo: string, titulo: string, subtitulo: 
         ? '"R$" #,##0.00'
         : c.formato === "numero"
           ? "#,##0"
-          : c.formato === "percentual"
-            ? "0.0%"
-            : c.formato === "data"
-              ? "dd/mm/yyyy"
-              : undefined;
+          : c.formato === "decimal"
+            ? "#,##0.00##"
+            : c.formato === "percentual"
+              ? "0.0%"
+              : c.formato === "data"
+                ? "dd/mm/yyyy"
+                : undefined;
 
     aba.linhas.forEach((l, k) => {
       const row = ws.addRow(
         Object.fromEntries(
           aba.colunas.map((c) => {
             const v = l[c.chave];
-            if (c.formato === "data" && typeof v === "string" && v) return [c.chave, new Date(v.length === 10 ? v + "T12:00:00" : v)];
+            // data à meia-noite UTC: o Excel guarda o dia sem fuso, e meio-dia local virava fração de dia
+            if (c.formato === "data" && typeof v === "string" && v)
+              return [c.chave, v.length === 10 ? new Date(`${v}T00:00:00Z`) : new Date(v)];
             return [c.chave, v ?? ""];
           }),
         ),

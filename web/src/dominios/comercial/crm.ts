@@ -1,6 +1,7 @@
 // CRM Comercial: tipos, etapas do funil, valores negociados e montagem do contrato a partir do modelo.
 import { hojeISO, primeiroDiaDoProximoMes } from "@/lib/datas";
 import { brl } from "@/lib/formato/moeda";
+import { plural } from "@/lib/formato/numero";
 import { IDENTIDADE_MDC } from "@/lib/identidade";
 
 export type Etapa = "novo" | "contato" | "reuniao" | "proposta" | "negociacao" | "ganho" | "perdido";
@@ -214,9 +215,9 @@ function ate999(n: number): string {
 
 /**
  * Inteiro por extenso, regra portuguesa: grupos de três algarismos (bilhão, milhão, mil, centenas) lidos em ordem;
- * o "e" liga o último grupo não zerado ao anterior quando esse grupo é menor que 100 ou uma centena redonda
- * (1.001.000 → "um milhão e mil"; 2.500.000 → "dois milhões e quinhentos mil"; 1.234 → "mil duzentos e trinta e quatro").
- * Mil sozinho é "mil", nunca "um mil".
+ * o "e" liga cada grupo ao anterior quando esse grupo é menor que 100 ou uma centena redonda (COD-08)
+ * (1.001.000 → "um milhão e mil"; 2.500.000 → "dois milhões e quinhentos mil"; 1.200.300 → "um milhão e duzentos mil e
+ * trezentos"; 1.234 → "mil duzentos e trinta e quatro"). Mil sozinho é "mil", nunca "um mil".
  */
 function inteiroExtenso(n: number): string {
   if (n === 0) return "zero";
@@ -235,14 +236,9 @@ function inteiroExtenso(n: number): string {
     const texto = base === 1 ? ate999(q) : base === 1e3 && q === 1 ? "mil" : `${ate999(q)} ${q === 1 ? sing : plur}`;
     grupos.push({ valor: q, texto });
   }
-  const ultimo = grupos[grupos.length - 1];
-  if (grupos.length > 1 && (ultimo.valor < 100 || ultimo.valor % 100 === 0)) {
-    return `${grupos
-      .slice(0, -1)
-      .map((g) => g.texto)
-      .join(" ")} e ${ultimo.texto}`;
-  }
-  return grupos.map((g) => g.texto).join(" ");
+  return grupos
+    .map((g, k) => (k === 0 ? g.texto : `${g.valor < 100 || g.valor % 100 === 0 ? "e " : ""}${g.texto}`))
+    .join(" ");
 }
 
 /** 1250,5 → "mil duzentos e cinquenta reais e cinquenta centavos"; 1.000.000 → "um milhão de reais". */
@@ -300,7 +296,7 @@ export function variaveis(v: Valores, numero: string): Record<string, string> {
     servicos: v.servicos.length ? v.servicos.map((s) => `- ${s}`).join("\n") : "- [preencher os serviços]",
     clausula_funcionarios:
       v.funcionarios_incluidos > 0
-        ? `O honorário mensal contempla a folha de pagamento de até ${v.funcionarios_incluidos} empregado(s); cada empregado adicional acrescerá ${brl(v.valor_funcionario_adicional || 0)} por mês.`
+        ? `O honorário mensal contempla a folha de pagamento de até ${plural(v.funcionarios_incluidos, "empregado")}; cada empregado adicional acrescerá ${brl(v.valor_funcionario_adicional || 0)} por mês.`
         : v.valor_funcionario_adicional > 0
           ? `Cada empregado registrado acrescerá ${brl(v.valor_funcionario_adicional)} por mês ao honorário.`
           : "",

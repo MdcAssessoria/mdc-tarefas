@@ -80,20 +80,20 @@ resolvido com a coluna de ações presa à direita no celular.
   - vencimento entre os dias 1 e 5;
   - cobrança do mês cheio no início e no fim do contrato;
   - IGP-M negativo reduz o valor ou não.
-- **COD-08:** regra do "e" no valor por extenso (1.200.300).
+- **COD-08 (resolvido em 04/11):** regra do "e" no valor por extenso (1.200.300 → "um milhão e duzentos mil e trezentos").
 
 ## Prioridade 4 — documentos e acabamento
 
-- **D-03:** "Rascunho" em todas as páginas do Demonstrativo.
-- **DES-02:** a última cláusula deve ir junto com o fecho do contrato.
-- **DES-03 / T-13:** plurais com "(s)", inclusive "1 empregado(s)" no contrato.
-- **DES-04 / D-10:** textos cortados com "…" no PDF do Demonstrativo.
-- **DES-05:** total no balancete de verificação.
-- **DES-06 / DES-07 / D-08:** PDF e Excel de lista (título repetido, "(continuação)", data como texto, decimais).
+- **D-03 (resolvido em 04/11, falta republicar `demonstrativo-pdf`):** "Rascunho" em todas as páginas do Demonstrativo.
+- **DES-02 (resolvido em 04/11):** a última cláusula deve ir junto com o fecho do contrato.
+- **DES-03 / T-13 (resolvido nos documentos em 04/11; nas mensagens de tela ainda há "(s)"):** plurais com "(s)", inclusive "1 empregado(s)" no contrato.
+- **DES-04 / D-10 (resolvido em 04/11, falta republicar `demonstrativo-pdf`):** textos cortados com "…" no PDF do Demonstrativo.
+- **DES-05 (resolvido em 04/11, falta republicar `demonstrativo-pdf`):** total no balancete de verificação.
+- **DES-06 / DES-07 / D-08 (resolvido em 04/11):** PDF e Excel de lista (título repetido, "(continuação)", data como texto, decimais).
 - **DES-08 / D-07:** cores com sentido único.
 - **DES-09:** posição dos botões fora do molde.
 - **DES-10:** gráfico "Seu ritmo" ilegível no celular.
-- **D-11:** dados da MDC escritos à mão no PDF do Demonstrativo.
+- **D-11 (resolvido em parte em 04/11):** dados da MDC escritos à mão no PDF do Demonstrativo. Razão social, CNPJ e cidade vêm do cadastro; telefone, site, e-mail e responsável técnico seguem fixos (o cadastro não tem esses campos).
 - **DES-12 a DES-17:** pequenos ajustes visuais.
 
 ## Código (manutenção)

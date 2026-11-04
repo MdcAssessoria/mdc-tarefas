@@ -22,6 +22,7 @@ import { useAviso } from "@/components/ui/Aviso";
 import { lerProcessos } from "@/dominios/societario/leituras";
 import { COLUNAS, DIAS_PARADO, diasParado, faseAtualDe, nomeStatusFase } from "@/dominios/societario/processos";
 import { GraficoFases } from "@/dominios/societario/componentes/GraficoFases";
+import { plural } from "@/lib/formato/numero";
 
 export default function PaginaPainelSocietario() {
   return <Painel />;
@@ -104,7 +105,7 @@ function Painel() {
               avisar={mostrar}
               montar={() => ({
                 titulo: "Processos societários em andamento",
-                subtitulo: `Posição de ${fmtData(hoje)} · ${d.abertos.length} processo(s) · ${d.atrasados} com fase atrasada`,
+                subtitulo: `Posição de ${fmtData(hoje)} · ${plural(d.abertos.length, "processo")} · ${d.atrasados} com fase atrasada`,
                 arquivo: nomeArquivo("Painel-societario", hoje),
                 logoUrl: org.logo_url,
                 linhas: d.abertos,
