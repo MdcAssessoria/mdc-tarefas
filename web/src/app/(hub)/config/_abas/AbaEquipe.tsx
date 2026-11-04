@@ -69,7 +69,7 @@ export function AbaEquipe() {
           </thead>
           <tbody>
             {membros.map((m) => (
-              <tr key={m.user_id} className={m.ativo ? "" : "opacity-50"}>
+              <tr key={m.user_id} className={m.ativo ? "" : "linha-apagada"}>
                 <td>
                   <input
                     className="entrada w-full min-w-40"

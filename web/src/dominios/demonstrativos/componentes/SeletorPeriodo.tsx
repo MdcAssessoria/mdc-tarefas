@@ -101,7 +101,7 @@ export function SeletorPeriodo<T extends RegPeriodo>({
                 disabled={!v.disponivel}
                 aria-pressed={escolha.visao === v.id}
                 title={v.motivo ? `Indisponível: ${v.motivo}.` : `Ver por ${v.nome.toLowerCase()}`}
-                className={`rounded-md px-3 py-1 ${escolha.visao === v.id ? "bg-[var(--marca)] text-white" : ""} disabled:cursor-not-allowed disabled:text-neutral-300`}
+                className={`min-h-11 rounded-md px-3 py-1 md:min-h-0 ${escolha.visao === v.id ? "bg-[var(--marca)] text-white" : ""} disabled:cursor-not-allowed disabled:text-neutral-300`}
                 onClick={() => periodo.mudarVisao(v.id)}
               >
                 {v.nome}

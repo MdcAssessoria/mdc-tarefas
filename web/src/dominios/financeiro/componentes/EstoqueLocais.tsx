@@ -118,7 +118,7 @@ export function AbaLocais({ cliente, podeOperar, avisar }: PropsAba) {
             </thead>
             <tbody>
               {locais.map((l) => (
-                <tr key={l.id} className={l.ativo ? "" : "opacity-60"}>
+                <tr key={l.id} className={l.ativo ? "" : "linha-apagada"}>
                   <td className="font-medium">
                     {l.nome}
                     {l.padrao && <span className="chip ml-2 bg-amber-50 text-amber-900">Padrão</span>}

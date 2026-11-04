@@ -201,7 +201,7 @@ export default function PaginaTransferencias() {
               </thead>
               <tbody>
                 {lista.map((t) => (
-                  <tr key={t.id} className={t.estornada ? "opacity-60" : ""}>
+                  <tr key={t.id} className={t.estornada ? "linha-apagada" : ""}>
                     <td data-rotulo="Data" className="num whitespace-nowrap">
                       {fmtData(t.data)}
                     </td>

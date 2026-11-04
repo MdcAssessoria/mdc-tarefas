@@ -61,7 +61,7 @@ export function ListaTarefas({ tarefas, abrir, mudarStatus, fuso, setorPorId, cl
           const feita = t.status === "concluida";
           const fechada = !estaAberta(t.status);
           return (
-            <tr key={t.id} className={t.status === "cancelada" ? "opacity-60" : ""}>
+            <tr key={t.id} className={t.status === "cancelada" ? "linha-apagada" : ""}>
               <td className="celula-titulo min-w-64">
                 <button type="button" className="w-full text-left" onClick={() => abrir(t)} title="Abrir a tarefa">
                   <span className="flex items-start gap-2">

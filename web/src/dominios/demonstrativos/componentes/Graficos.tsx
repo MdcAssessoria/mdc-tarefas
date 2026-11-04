@@ -5,7 +5,7 @@
 import { useState } from "react";
 import { brl } from "@/lib/formato/moeda";
 import { saltoRotulos, useLargura } from "@/lib/useLargura";
-import { COR } from "./paletas";
+import { COR, corTextoSobre } from "./paletas";
 
 const curto = (v: number) => {
   const a = Math.abs(v);
@@ -438,8 +438,8 @@ export function Pilha100({ partes }: { partes: { rotulo: string; valor: number; 
           return (
             <div
               key={p.rotulo}
-              className="relative flex items-center justify-center text-xs font-semibold text-white"
-              style={{ width: `${w}%`, background: p.cor, opacity: hover === null || hover === i ? 1 : 0.6 }}
+              className="relative flex items-center justify-center text-xs font-semibold"
+              style={{ width: `${w}%`, background: p.cor, color: corTextoSobre(p.cor), opacity: hover === null || hover === i ? 1 : 0.6 }}
               onMouseEnter={() => setHover(i)}
               onMouseLeave={() => setHover(null)}
               title={`${p.rotulo}: R$ ${w.toFixed(1).replace(".", ",")} de cada R$ 100 (${brl(p.valor, { centavos: false })})`}
@@ -476,16 +476,16 @@ export function CicloCaixa({ pme, pmr, pmp }: { pme: number | null; pmr: number 
         <div className="flex h-8 gap-[2px]">
           {e > 0 && (
             <div
-              className="flex min-w-0 items-center justify-center truncate rounded-l-md px-1 text-white"
-              style={{ width: pctW(e), background: COR.despesa }}
+              className="flex min-w-0 items-center justify-center truncate rounded-l-md px-1"
+              style={{ width: pctW(e), background: COR.despesa, color: corTextoSobre(COR.despesa) }}
               title={`PME ${e} dias`}
             >
               Estoque {e}d
             </div>
           )}
           <div
-            className={`flex min-w-0 items-center justify-center truncate px-1 text-white ${e > 0 ? "rounded-r-md" : "rounded-md"}`}
-            style={{ width: pctW(r), background: COR.receita }}
+            className={`flex min-w-0 items-center justify-center truncate px-1 ${e > 0 ? "rounded-r-md" : "rounded-md"}`}
+            style={{ width: pctW(r), background: COR.receita, color: corTextoSobre(COR.receita) }}
             title={`PMR ${r} dias`}
           >
             Recebimento {r}d
@@ -496,8 +496,8 @@ export function CicloCaixa({ pme, pmr, pmp }: { pme: number | null; pmr: number 
         <div className="mb-1 text-neutral-600">Prazo que os fornecedores dão (PMP)</div>
         <div className="flex h-8">
           <div
-            className="flex min-w-0 items-center justify-center truncate rounded-md px-1 text-white"
-            style={{ width: pctW(p), background: COR.lucro }}
+            className="flex min-w-0 items-center justify-center truncate rounded-md px-1"
+            style={{ width: pctW(p), background: COR.lucro, color: corTextoSobre(COR.lucro) }}
             title={`PMP ${p} dias`}
           >
             Pagamento {p}d
@@ -536,8 +536,8 @@ function ColunaComposicao({
             return (
               <div
                 key={x.rotulo}
-                className="flex items-center justify-center rounded-sm px-1 text-center text-xs font-semibold leading-tight text-white"
-                style={{ height: `${h}%`, background: x.cor }}
+                className="flex items-center justify-center rounded-sm px-1 text-center text-xs font-semibold leading-tight"
+                style={{ height: `${h}%`, background: x.cor, color: corTextoSobre(x.cor) }}
                 title={`${x.rotulo}: ${brl(x.valor, { centavos: false })} (${h.toFixed(0)}%)`}
               >
                 {h >= 8 ? `${h.toFixed(0)}%` : ""}

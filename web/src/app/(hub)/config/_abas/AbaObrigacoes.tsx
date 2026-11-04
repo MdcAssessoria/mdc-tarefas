@@ -340,7 +340,7 @@ export function AbaObrigacoes() {
             {modelos.map((m) => (
               <tr
                 key={m.id}
-                className={`cursor-pointer hover:bg-[var(--fundo)] ${m.ativo ? "" : "opacity-50"}`}
+                className={`cursor-pointer hover:bg-[var(--fundo)] ${m.ativo ? "" : "linha-apagada"}`}
                 onClick={() => setEditando(m)}
               >
                 <td className="font-medium">{m.titulo}</td>

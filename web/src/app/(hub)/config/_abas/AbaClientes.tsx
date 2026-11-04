@@ -351,7 +351,7 @@ export function AbaClientes() {
               const rs = resps.filter((r) => r.cliente_id === c.id);
               return (
                 <Fragment key={c.id}>
-                  <tr className={c.ativo ? "" : "opacity-50"}>
+                  <tr className={c.ativo ? "" : "linha-apagada"}>
                     <td>
                       <input
                         type="checkbox"

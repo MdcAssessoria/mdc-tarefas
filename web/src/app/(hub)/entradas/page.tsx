@@ -513,7 +513,7 @@ export default function PaginaNotasRecebidas() {
                 {lista.slice(0, MOSTRAR).map(({ n, s, pronta }) => {
                   const pode = temManifestacao(n) && manifestacoesPermitidas({ ...n, eventos: eventosAceitos.get(n.id) }, hoje).length > 0;
                   return (
-                    <tr key={n.id} className={`${LINHA} ${s.id === "cancelada" ? "opacity-60" : ""}`}>
+                    <tr key={n.id} className={`${LINHA} ${s.id === "cancelada" ? "linha-apagada" : ""}`}>
                       {podeOperar && (
                         <td data-rotulo={pode ? "Marcar" : undefined}>
                           {pode && (

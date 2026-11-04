@@ -280,7 +280,7 @@ export function TelaPedidos({ tipo, cliente, podeOperar, avisar }: PropsAba & { 
             return (
               <article
                 key={p.id}
-                className={`cartao flex flex-wrap items-center gap-3 p-3 ${p.situacao === "cancelado" ? "opacity-60" : ""}`}
+                className={`cartao flex flex-wrap items-center gap-3 p-3 ${p.situacao === "cancelado" ? "linha-apagada" : ""}`}
               >
                 <div className="min-w-48 flex-1">
                   <p className="font-medium text-[var(--marca)]">

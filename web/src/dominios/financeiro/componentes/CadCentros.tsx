@@ -126,7 +126,7 @@ export function CadCentros({ cliente, podeOperar, avisar }: PropsAba) {
           </thead>
           <tbody>
             {lista.map((c) => (
-              <tr key={c.id} className={c.ativo ? "" : "opacity-60"}>
+              <tr key={c.id} className={c.ativo ? "" : "linha-apagada"}>
                 <td data-rotulo="Código" className="num w-24">
                   {c.codigo ?? "—"}
                 </td>

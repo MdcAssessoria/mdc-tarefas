@@ -18,7 +18,8 @@ export function QuadroTabela({
   cartoes?: boolean;
 }) {
   return (
-    <div className="quadro-tabela">
+    // tabIndex: o quadro rola de lado; pelo teclado, a pessoa foca nele e usa as setas (WCAG 2.1.1)
+    <div className="quadro-tabela" tabIndex={0} role="region" aria-label={rotulo ?? "Tabela"}>
       <table className={`tabela tabela-listrada ${cartoes ? "tabela-cartoes" : ""}`} aria-label={rotulo}>
         {children}
       </table>

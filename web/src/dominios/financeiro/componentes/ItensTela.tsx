@@ -319,7 +319,7 @@ export function ItensTela({ cliente, podeOperar, avisar }: PropsAba) {
       ) : visao === "cartoes" ? (
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {lista.slice(0, limite).map((x) => (
-            <article key={x.i.id} className={`cartao flex flex-col gap-3 p-4 ${x.i.ativo ? "" : "opacity-60"}`}>
+            <article key={x.i.id} className={`cartao flex flex-col gap-3 p-4 ${x.i.ativo ? "" : "linha-apagada"}`}>
               <div className="flex gap-3">
                 <FotoItem caminho={x.i.foto_caminho} nome={x.i.nome} tamanho={56} />
                 <div className="min-w-0 flex-1">
@@ -369,7 +369,7 @@ export function ItensTela({ cliente, podeOperar, avisar }: PropsAba) {
             </thead>
             <tbody>
               {lista.slice(0, limite).map((x) => (
-                <tr key={x.i.id} className={x.i.ativo ? "" : "opacity-60"}>
+                <tr key={x.i.id} className={x.i.ativo ? "" : "linha-apagada"}>
                   <td className="min-w-56">
                     <div className="flex items-center gap-2">
                       <FotoItem caminho={x.i.foto_caminho} nome={x.i.nome} tamanho={32} />

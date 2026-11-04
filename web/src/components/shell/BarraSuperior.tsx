@@ -86,7 +86,7 @@ function MenuModuloCelular({ modulo, links, ativo }: { modulo: Modulo; links: Li
         type="button"
         onClick={() => setAberto((x) => !x)}
         aria-expanded={aberto}
-        className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[14px]"
+        className="flex min-h-11 w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-[14px]"
       >
         <span className="text-[var(--texto-suave)]">Você está em</span>
         <span className="font-medium text-[var(--marca)]">{atual?.nome ?? NAV[modulo].titulo}</span>
@@ -142,7 +142,7 @@ export function BarraSuperior({ modulo, aoMenu, aoBuscar }: { modulo: Modulo; ao
     <header className="sticky top-0 z-30 border-b border-[var(--borda)] bg-white/85 backdrop-blur print:hidden">
       <div className="mx-auto flex h-14 max-w-[1400px] items-center gap-3 px-4 sm:px-6 lg:px-8">
         <button
-          className="grid h-9 w-9 place-items-center rounded-lg text-[var(--marca)] hover:bg-[var(--fundo)] lg:hidden"
+          className="grid h-11 w-11 place-items-center rounded-lg text-[var(--marca)] hover:bg-[var(--fundo)] lg:hidden"
           onClick={aoMenu}
           aria-label="Abrir menu"
         >
@@ -174,7 +174,7 @@ export function BarraSuperior({ modulo, aoMenu, aoBuscar }: { modulo: Modulo; ao
         <div className="ml-auto flex items-center gap-1.5">
           <button
             onClick={aoBuscar}
-            className="flex h-9 items-center gap-2 rounded-lg border border-[var(--borda)] bg-white px-3 text-[13px] text-[var(--texto-suave)] hover:border-[var(--destaque-escuro)] sm:w-64"
+            className="flex h-11 min-w-11 items-center justify-center sm:justify-start md:h-9 gap-2 rounded-lg border border-[var(--borda)] bg-white px-3 text-[13px] text-[var(--texto-suave)] hover:border-[var(--destaque-escuro)] sm:w-64"
             aria-label="Buscar ou ir para"
           >
             <Icone nome="busca" className="h-4 w-4" />
@@ -192,7 +192,7 @@ export function BarraSuperior({ modulo, aoMenu, aoBuscar }: { modulo: Modulo; ao
             <Link
               key={l.href}
               href={l.href}
-              className={`whitespace-nowrap border-b-2 px-3 py-2 text-[13px] ${ativo(l.href) ? "border-[var(--destaque-escuro)] font-medium text-[var(--marca)]" : "border-transparent text-[var(--texto-suave)]"}`}
+              className={`inline-flex min-h-11 items-center whitespace-nowrap border-b-2 px-3 py-2 text-[13px] ${ativo(l.href) ? "border-[var(--destaque-escuro)] font-medium text-[var(--marca)]" : "border-transparent text-[var(--texto-suave)]"}`}
             >
               {l.nome}
             </Link>

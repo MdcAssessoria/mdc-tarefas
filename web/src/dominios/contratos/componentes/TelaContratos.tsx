@@ -330,7 +330,7 @@ export function TelaContratos() {
                 {filtrados.map(({ k, pendente, proximo, termina }) => {
                   const s = SITUACOES_RECORRENTE[k.situacao];
                   return (
-                    <tr key={k.id} className={k.situacao === "encerrado" ? "opacity-60" : ""}>
+                    <tr key={k.id} className={k.situacao === "encerrado" ? "linha-apagada" : ""}>
                       <td className="celula-titulo min-w-56">
                         <button className="text-left font-medium hover:underline" onClick={() => setJanela({ tipo: "ficha", k })}>
                           {k.descricao}

@@ -26,7 +26,7 @@ export function Abas<T extends string>({
           role="tab"
           aria-selected={valor === a.id}
           onClick={() => aoMudar(a.id)}
-          className={`whitespace-nowrap border-b-2 px-3 py-2 text-sm ${
+          className={`min-h-11 whitespace-nowrap border-b-2 px-3 py-2 text-sm md:min-h-0 ${
             valor === a.id
               ? "border-[var(--destaque-escuro)] font-medium text-[var(--marca)]"
               : "border-transparent text-[var(--texto-suave)]"

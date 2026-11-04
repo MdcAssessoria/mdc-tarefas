@@ -137,7 +137,7 @@ export default function PaginaProdutos() {
                 </thead>
                 <tbody>
                   {d.produtos.map((p) => (
-                    <tr key={p.id} className={p.ativo ? "" : "opacity-60"}>
+                    <tr key={p.id} className={p.ativo ? "" : "linha-apagada"}>
                       <td className="min-w-56">
                         <span className="font-medium">{p.nome}</span>{" "}
                         {!p.ativo && <span className="chip bg-neutral-100 text-neutral-600">Inativo</span>}
@@ -176,7 +176,7 @@ export default function PaginaProdutos() {
           {d.planos.map((p) => {
             const soma = somaTabela(p);
             return (
-              <div key={p.id} className={`cartao space-y-2 p-4 ${p.ativo ? "" : "opacity-60"}`}>
+              <div key={p.id} className={`cartao space-y-2 p-4 ${p.ativo ? "" : "linha-apagada"}`}>
                 <div className="flex items-start gap-2">
                   <div className="mr-auto">
                     <h2 className="font-semibold text-[var(--marca)]">
