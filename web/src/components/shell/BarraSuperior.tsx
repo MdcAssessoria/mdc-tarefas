@@ -193,8 +193,10 @@ export function BarraSuperior({ modulo, aoMenu, aoBuscar }: { modulo: Modulo; ao
             aria-label="Buscar ou ir para"
           >
             <Icone nome="busca" className="h-4 w-4" />
-            <span className="hidden sm:inline">Buscar ou ir para…</span>
-            <kbd className="ml-auto hidden rounded border border-[var(--borda)] px-1.5 text-[11px] sm:inline">{mac ? "⌘" : "Ctrl"} K</kbd>
+            <span className="hidden whitespace-nowrap sm:inline">Buscar ou ir para…</span>
+            <kbd className="ml-auto hidden whitespace-nowrap rounded border border-[var(--borda)] px-1.5 text-[11px] 2xl:inline">
+              {mac ? "⌘" : "Ctrl"} K
+            </kbd>
           </button>
           <Sino />
         </div>

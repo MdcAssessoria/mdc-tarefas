@@ -46,10 +46,23 @@ const VAZIO: Form = {
   ativo: true,
 };
 
-export function CadPessoas({ cliente, podeOperar, avisar }: PropsAba) {
+/** Textos de cada tela do PN (Parceiros de negócio): só clientes, só fornecedores ou todos. */
+const TELAS_PN = {
+  cliente: { titulo: "Clientes", novo: "Novo cliente", vazio: "Nenhum cliente cadastrado", arquivo: "Clientes" },
+  fornecedor: { titulo: "Fornecedores", novo: "Novo fornecedor", vazio: "Nenhum fornecedor cadastrado", arquivo: "Fornecedores" },
+  todos: { titulo: "Fornecedores e clientes", novo: "Novo cadastro", vazio: "Nenhum fornecedor ou cliente cadastrado", arquivo: "Fornecedores-e-clientes" },
+} as const;
+
+/**
+ * `fixo` (PN, 05/11/2026): a tela mostra só clientes ou só fornecedores (quem é "fornecedor e cliente" aparece nas
+ * duas) e o "Novo" já vem com o tipo marcado. Sem `fixo`, a lista traz todos com o filtro de tipo.
+ */
+export function CadPessoas({ cliente, podeOperar, avisar, fixo }: PropsAba & { fixo?: "cliente" | "fornecedor" }) {
   const { org } = useOrg();
+  const tela = TELAS_PN[fixo ?? "todos"];
+  const novoVazio: Form = { ...VAZIO, tipo: fixo ?? VAZIO.tipo };
   const [busca, setBusca] = useState("");
-  const [tipo, setTipo] = useState("");
+  const [tipo, setTipo] = useState<string>(fixo ?? "");
   const [inativos, setInativos] = useState(false);
   const [form, setForm] = useState<Form | null>(null);
   const [salvando, setSalvando] = useState(false);
@@ -61,6 +74,8 @@ export function CadPessoas({ cliente, podeOperar, avisar }: PropsAba) {
   }
 
   const consulta = useConsulta(useCallback(() => lerPessoas(cliente.id), [cliente.id]));
+  /** Há cadastro deste tipo (a tela vazia diz "nenhum neste filtro" em vez de "nenhum cadastrado"). */
+  const temNoTipo = !!consulta.dados?.some((p) => !fixo || p.tipo === fixo || p.tipo === "ambos");
   const lista = useMemo(() => {
     const q = busca.trim().toLowerCase();
     const qd = soDigitos(busca);
@@ -105,12 +120,12 @@ export function CadPessoas({ cliente, podeOperar, avisar }: PropsAba) {
   }
 
   const filtrosAtivos: FiltroAtivo[] = [
-    tipo && { id: "tipo", rotulo: tipo === "fornecedor" ? "Só fornecedores" : "Só clientes", aoTirar: () => setTipo("") },
+    !fixo && tipo && { id: "tipo", rotulo: tipo === "fornecedor" ? "Só fornecedores" : "Só clientes", aoTirar: () => setTipo("") },
     busca.trim() && { id: "busca", rotulo: `Busca: "${busca.trim()}"`, aoTirar: () => setBusca("") },
     inativos && { id: "inativos", rotulo: "Com inativos", aoTirar: () => setInativos(false) },
   ].filter((f): f is FiltroAtivo => !!f);
   const limparFiltros = () => {
-    setTipo("");
+    setTipo(fixo ?? "");
     setBusca("");
     setInativos(false);
   };
@@ -118,17 +133,23 @@ export function CadPessoas({ cliente, podeOperar, avisar }: PropsAba) {
   return (
     <div className="space-y-4">
       <CabecalhoPagina
-        titulo="Fornecedores e clientes"
-        descricao="Um cadastro só para a MDC toda: vale no Financeiro, nas compras, nas vendas e no estoque."
+        titulo={tela.titulo}
+        descricao={
+          fixo === "cliente"
+            ? "Quem compra da MDC (contratos a receber, contas a receber). Um cadastro só para a MDC toda."
+            : fixo === "fornecedor"
+              ? "De quem a MDC compra (contas a pagar, contratos a pagar). Um cadastro só para a MDC toda."
+              : "Um cadastro só para a MDC toda: vale no Financeiro e nos Contratos."
+        }
         acoes={
           <>
             <BotoesExportar
               vazio={!lista.length}
               avisar={avisar}
               montar={() => ({
-                titulo: "Fornecedores e clientes",
+                titulo: tela.titulo,
                 subtitulo: `${nomeCliente(cliente)} · ${plural(lista.length, "cadastro")}`,
-                arquivo: nomeArquivo("Fornecedores-e-clientes", nomeCliente(cliente), hojeISO(org.fuso)),
+                arquivo: nomeArquivo(tela.arquivo, nomeCliente(cliente), hojeISO(org.fuso)),
                 logoUrl: org.logo_url,
                 linhas: lista,
                 colunas: [
@@ -143,9 +164,9 @@ export function CadPessoas({ cliente, podeOperar, avisar }: PropsAba) {
               })}
             />
             {podeOperar && (
-              <button className="btn-primario" onClick={() => abrir({ ...VAZIO })}>
+              <button className="btn-primario" onClick={() => abrir({ ...novoVazio })}>
                 <Icone nome="mais" className="h-4 w-4" />
-                Novo cadastro
+                {tela.novo}
               </button>
             )}
           </>
@@ -153,14 +174,16 @@ export function CadPessoas({ cliente, podeOperar, avisar }: PropsAba) {
       />
 
       <CartaoFiltros ativos={filtrosAtivos} aoLimpar={limparFiltros}>
-        <label className="campo">
-          <span>Tipo</span>
-          <select value={tipo} onChange={(e) => setTipo(e.target.value)}>
-            <option value="">Todos</option>
-            <option value="fornecedor">Fornecedores</option>
-            <option value="cliente">Clientes</option>
-          </select>
-        </label>
+        {!fixo && (
+          <label className="campo">
+            <span>Tipo</span>
+            <select value={tipo} onChange={(e) => setTipo(e.target.value)}>
+              <option value="">Todos</option>
+              <option value="fornecedor">Fornecedores</option>
+              <option value="cliente">Clientes</option>
+            </select>
+          </label>
+        )}
         <label className="campo campo-largo">
           <span>Buscar</span>
           <input type="search" value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Nome, CPF/CNPJ ou cidade" />
@@ -181,15 +204,15 @@ export function CadPessoas({ cliente, podeOperar, avisar }: PropsAba) {
       ) : !lista.length ? (
         <EstadoVazio
           icone={consulta.dados?.length ? "filtro" : "pessoas"}
-          titulo={consulta.dados?.length ? "Nenhum cadastro neste filtro" : "Nenhum fornecedor ou cliente cadastrado"}
+          titulo={temNoTipo ? "Nenhum cadastro neste filtro" : tela.vazio}
           acao={
-            consulta.dados?.length ? (
+            temNoTipo ? (
               <button className="btn" onClick={limparFiltros}>
                 Limpar filtros
               </button>
             ) : (
               podeOperar && (
-                <button className="btn-primario" onClick={() => abrir({ ...VAZIO })}>
+                <button className="btn-primario" onClick={() => abrir({ ...novoVazio })}>
                   <Icone nome="mais" className="h-4 w-4" />
                   Cadastrar o primeiro
                 </button>
@@ -197,12 +220,12 @@ export function CadPessoas({ cliente, podeOperar, avisar }: PropsAba) {
             )
           }
         >
-          {consulta.dados?.length
+          {temNoTipo
             ? "Troque o tipo ou a busca."
             : "Cadastre aqui ou direto ao lançar uma conta: o fornecedor digitado na hora entra sozinho nesta lista."}
         </EstadoVazio>
       ) : (
-        <QuadroTabela rotulo="Fornecedores e clientes">
+        <QuadroTabela rotulo={tela.titulo}>
           <thead>
             <tr>
               <th>Nome</th>

@@ -154,10 +154,15 @@ export const NAV: Record<Modulo, { titulo: string; links: LinkModulo[]; grupos?:
       { href: "/contratos/envio", nome: "Envio (e-mail e WhatsApp)", icone: "enviar", minimo: "gerir" },
     ],
   },
+  // PN - Parceiros de negócio (05/11/2026): clientes e fornecedores em telas próprias (o mesmo cadastro, filtrado)
   cadastros: {
-    titulo: "Cadastros",
+    titulo: "PN - Parceiros de negócio",
     acesso: ["financeiro", "entradas", "saidas", "estoque"],
-    links: [{ href: "/cadastros/pessoas", nome: "Fornecedores e clientes", icone: "pessoas" }],
+    links: [
+      { href: "/cadastros/clientes", nome: "Clientes", icone: "alvo" },
+      { href: "/cadastros/fornecedores", nome: "Fornecedores", icone: "caixa" },
+      { href: "/cadastros/pessoas", nome: "Todos", icone: "pessoas" },
+    ],
   },
   entradas: {
     titulo: "Entradas",

@@ -525,13 +525,13 @@ const INTERACOES = {
   "/financeiro": async (p, foto) => {
     if (process.env.TELA !== "celular") {
       await p.getByRole("button", { name: /^Bancos/ }).click();
-      await p.getByRole("link", { name: "Transferências" }).waitFor({ timeout: 3000 });
+      await p.locator("header").getByRole("link", { name: "Transferências" }).waitFor({ timeout: 3000 });
       await p.waitForTimeout(250);
       await foto("menu-bancos");
       await p.keyboard.press("Escape");
     } else {
       await p.getByRole("button", { name: /Telas/ }).click();
-      await p.getByRole("link", { name: "Transferências" }).waitFor({ timeout: 3000 });
+      await p.locator("header").getByRole("link", { name: "Transferências" }).waitFor({ timeout: 3000 });
       await p.waitForTimeout(250);
       await foto("menu-telas");
     }
