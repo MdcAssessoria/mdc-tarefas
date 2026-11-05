@@ -124,3 +124,8 @@ for f in testes/121_base_056.sql migrations/056_item_servico.sql; do
   $P -v ON_ERROR_STOP=1 -f "$R/$f" 2>&1 | grep -v NOTICE || true
 done
 $P -f "$R/testes/122_item_servico_056.sql" 2>&1 | grep -v "^SET$"
+# 057: Regras fiscais por tipo de serviço (NBS, ISS, retenção, IBS/CBS) amarradas à nota
+for f in testes/123_base_057.sql migrations/057_regras_fiscais.sql; do
+  $P -v ON_ERROR_STOP=1 -f "$R/$f" 2>&1 | grep -v NOTICE || true
+done
+$P -f "$R/testes/124_regras_fiscais_057.sql" 2>&1 | grep -v "^SET$"

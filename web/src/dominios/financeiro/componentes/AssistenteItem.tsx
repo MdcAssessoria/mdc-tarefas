@@ -1,12 +1,15 @@
 // Assistente de cadastro de item em 4 passos, pensado para quem nunca cadastrou produto (serviço: tipo da LC 116 para a
-// nota fiscal, NBS e ISS no passo 2, migração 056):
+// nota fiscal no passo 2 (056); NBS, ISS e retenção vêm da regra fiscal do código, em Contratos › Regras fiscais, 057):
 // 1. O que é (produto para vender, serviço ou material de uso) · 2. Como vende e compra (unidade, caixa com N)
 // 3. Estoque (controla? mínimo, saldo inicial) · 4. Preços (custo, markup ou preço, margem calculada na hora).
 // Também serve para editar (todos os passos abertos) e duplicar (copia tudo, menos código, código de barras e foto).
 "use client";
 
-import { CampoNbs, CampoServico } from "@/components/ui/CampoServico";
-import { useMemo, useState } from "react";
+import { CampoServico } from "@/components/ui/CampoServico";
+import { ResumoRegra } from "@/dominios/contratos/componentes/ResumoRegra";
+import { lerRegrasServico } from "@/dominios/contratos/leituras";
+import { useConsulta } from "@/lib/useConsulta";
+import { useCallback, useMemo, useState } from "react";
 import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { traduzirErro } from "@/lib/erros";
 import { brl } from "@/lib/formato/moeda";
@@ -42,8 +45,6 @@ type Form = {
   codigo_barras: string;
   ncm: string;
   servico_codigo: string;
-  nbs: string;
-  iss: string;
   controla: boolean;
   estoque_minimo: string;
   saldo_inicial: string;
@@ -74,8 +75,6 @@ function formDoItem(i: Item | undefined, base: BaseEstoque, duplicar: boolean): 
     codigo_barras: i && !duplicar ? (i.codigo_barras ?? "") : "",
     ncm: i?.ncm ?? "",
     servico_codigo: i?.servico_codigo ?? "",
-    nbs: i?.nbs ?? "",
-    iss: i?.iss_aliquota != null ? valorParaCampo(i.iss_aliquota) : "",
     controla: i ? i.controla_estoque : true,
     estoque_minimo: i && Number(i.estoque_minimo) ? valorParaCampo(i.estoque_minimo, 0) : "",
     saldo_inicial: "",
@@ -116,6 +115,11 @@ export function AssistenteItem({
   const [enviandoFoto, setEnviandoFoto] = useState(false);
   const mudar = (p: Partial<Form>) => setF((x) => ({ ...x, ...p }));
   const servico = f.natureza === "servico";
+  // regras fiscais por tipo de serviço (057), para mostrar NBS, ISS e retenção do código escolhido
+  const regrasConsulta = useConsulta(
+    useCallback(() => (servico ? lerRegrasServico(cliente.id) : Promise.resolve(null)), [servico, cliente.id]),
+  );
+  const regras = regrasConsulta.dados ?? null;
   const controla = f.natureza === "revenda" && f.controla;
   const temSaldo = item && !duplicar ? (base.porItem.get(item.id) ?? 0) !== 0 : false;
 
@@ -145,10 +149,6 @@ export function AssistenteItem({
       }
       const ncm = f.ncm.replace(/\D/g, "");
       if (!servico && ncm && ncm.length !== 8) return "O NCM tem 8 números (ex.: 8471.30.12).";
-      if (servico && f.iss.trim()) {
-        const iss = numeroBr(f.iss);
-        if (Number.isNaN(iss) || iss < 0 || iss > 5) return "O ISS vai de 0% a 5% (ex.: 2).";
-      }
     }
     if (p === 2 && controla) {
       const [min, ini] = [numeroBr(f.estoque_minimo), numeroBr(f.saldo_inicial)];
@@ -220,8 +220,6 @@ export function AssistenteItem({
         markup: num(f.markup),
         ncm: servico ? null : f.ncm.replace(/\D/g, "") || null,
         servico_codigo: servico ? f.servico_codigo.replace(/\D/g, "") || null : null,
-        nbs: servico ? f.nbs.replace(/\D/g, "") || null : null,
-        iss_aliquota: servico && f.iss.trim() ? numeroBr(f.iss) : null,
         codigo_barras: f.codigo_barras.trim() || null,
         grupo: grupoExiste?.id ?? null,
         grupo_nome: grupoExiste ? null : f.grupo.trim() || null,
@@ -492,16 +490,7 @@ export function AssistenteItem({
             <fieldset className="space-y-3 rounded-md border border-[var(--borda)] p-3">
               <legend className="px-1 text-sm font-medium">Tipo de serviço para a nota fiscal (LC 116)</legend>
               <CampoServico valor={f.servico_codigo} aoMudar={(codigo) => mudar({ servico_codigo: codigo })} />
-              <div className="grid gap-3 sm:grid-cols-3">
-                <div className="sm:col-span-2">
-                  <CampoNbs valor={f.nbs} aoMudar={(nbs) => mudar({ nbs })} />
-                </div>
-                <label className="campo">
-                  <span>ISS (%) (opcional)</span>
-                  <input value={f.iss} onChange={(e) => mudar({ iss: e.target.value })} inputMode="decimal" placeholder="Ex.: 2" />
-                  <small className="text-xs text-[var(--texto-suave)]">Alíquota do município, de 0% a 5%.</small>
-                </label>
-              </div>
+              {f.servico_codigo && <ResumoRegra codigo={f.servico_codigo} regras={regras} />}
             </fieldset>
           )}
         </div>

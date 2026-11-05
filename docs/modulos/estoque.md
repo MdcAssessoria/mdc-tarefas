@@ -32,11 +32,11 @@ número no Documento) → contas → pagamentos e a entrada/saída do estoque ([
 2. **Venda e compra**: unidade de venda em botões (UN, CX, KG…), "compro em outra embalagem" (1 CX vem com N UN),
    código de barras e NCM (com explicação). **Serviço** (056, pedido do Edvaldo em 04/11/2026): no lugar do NCM,
    "Tipo de serviço para a nota fiscal (LC 116)" — busca na lista anexa à LC 116/2003 pelo número (17.19) ou por
-   palavra (contabilidade) e monta o código de tributação nacional da NFS-e (17.19.01; desdobramento editável), mais NBS
-   (opcional, lista carregada sob demanda) e ISS % (0 a 5). Peças: `components/ui/CampoServico.tsx` (`CampoServico`,
-   `CampoNbs`), regras em `lib/fiscal/servicos.ts` (com teste), listas em `lib/fiscal/lc116.ts` e `nbs.ts` (pacote
-   `@br-validators/core`, MIT). O banco guarda `servico_codigo`, `nbs`, `iss_aliquota` só em serviço
-   (`est_salvar_item`, 056). O contrato usa o mesmo `CampoServico` no "Tipo de serviço (LC 116)".
+   palavra (contabilidade) e monta o código de tributação nacional da NFS-e (17.19.01; desdobramento editável) e mostra a
+   regra fiscal do código (NBS, ISS, retenção — Contratos › Regras fiscais, 057; NBS e ISS saíram do item). Peças:
+   `components/ui/CampoServico.tsx` (`CampoServico`, `CampoNbs`), regras em `lib/fiscal/servicos.ts` (com teste), listas
+   em `lib/fiscal/lc116.ts` e `nbs.ts` (pacote `@br-validators/core`, MIT). O banco guarda só `servico_codigo` em
+   serviço (`est_salvar_item`, 056/057). O contrato usa o mesmo `CampoServico` no "Tipo de serviço (LC 116)".
 3. **Estoque**: controlar? estoque mínimo, "quanto tem hoje" e em qual estoque (saldo inicial, só no cadastro novo).
 4. **Preços**: preço de custo, markup desejado (botão "usar preço sugerido"), preço de venda; mostra na hora o lucro
    por unidade, a margem sobre o preço e o markup sobre o custo (vermelho se abaixo do custo); categorias de venda e

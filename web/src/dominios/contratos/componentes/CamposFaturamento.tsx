@@ -7,6 +7,9 @@
 "use client";
 
 import { CampoServico } from "@/components/ui/CampoServico";
+import { regraDoCodigo } from "../regrasFiscais";
+import type { RegraServico } from "../tipos";
+import { ResumoRegra } from "./ResumoRegra";
 import { Icone } from "@/components/ui/Icone";
 import type { Cliente } from "@/dominios/clientes/tipos";
 import { nomeCliente } from "@/dominios/clientes/nome";
@@ -22,9 +25,12 @@ export function CamposFaturamento({
   f,
   mudar,
   carteira,
+  regras = null,
   titulo = "Fatura e envio ao cliente",
 }: {
   titulo?: string;
+  /** Regras fiscais por tipo de serviço (057): ao escolher o serviço, ISS e texto da nota vêm da regra. */
+  regras?: RegraServico[] | null;
   f: FaturamentoForm;
   mudar: (p: Partial<FaturamentoForm>) => void;
   carteira: Cliente[];
@@ -128,10 +134,21 @@ export function CamposFaturamento({
             <CampoServico
               rotulo="Tipo de serviço (LC 116)"
               valor={f.servicoCodigo}
-              aoMudar={(codigo, descricao) =>
-                mudar({ servicoCodigo: codigo, ...(descricao && !f.servicoDescricao.trim() ? { servicoDescricao: descricao } : {}) })
-              }
+              aoMudar={(codigo, descricao) => {
+                const r = regraDoCodigo(regras ?? [], codigo);
+                const texto = r?.descricao_nota || descricao;
+                mudar({
+                  servicoCodigo: codigo,
+                  ...(texto && !f.servicoDescricao.trim() ? { servicoDescricao: texto } : {}),
+                  ...(r?.iss_aliquota != null && !f.iss.trim() ? { iss: String(Number(r.iss_aliquota)).replace(".", ",") } : {}),
+                });
+              }}
             />
+            {f.servicoCodigo && (
+              <div className="mt-2">
+                <ResumoRegra codigo={f.servicoCodigo} regras={regras} />
+              </div>
+            )}
           </div>
           <label className="campo @md:col-span-1">
             <span>ISS (%)</span>

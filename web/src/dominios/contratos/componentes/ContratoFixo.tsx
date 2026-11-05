@@ -8,7 +8,9 @@
 // embaixo; no celular, uma coluna só.
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
+import { useConsulta } from "@/lib/useConsulta";
+import { lerRegrasServico } from "../leituras";
 import { traduzirErro } from "@/lib/erros";
 import { somarMeses } from "@/lib/datas";
 import { brl } from "@/lib/formato/moeda";
@@ -167,6 +169,8 @@ export function ContratoFixo({
   }));
   const mudarFat = (p: Partial<FaturamentoForm>) => setFat((x) => ({ ...x, ...p }));
   const receber = f.tipo === "receber";
+  // regras fiscais por tipo de serviço (057): o tipo escolhido traz ISS, texto da nota, NBS e retenção
+  const regrasConsulta = useConsulta(useCallback(() => lerRegrasServico(cliente.id), [cliente.id]));
   const carteira = useMemo(() => clientes.filter((c) => c.ativo && c.id !== cliente.id), [clientes, cliente.id]);
 
   const tipoCat = f.tipo === "pagar" ? "despesa" : "receita";
@@ -571,7 +575,13 @@ export function ContratoFixo({
 
         <ColunaFormulario>
           {receber && f.geraContas && (
-            <CamposFaturamento titulo="5. Fatura e envio ao cliente" f={fat} mudar={mudarFat} carteira={carteira} />
+            <CamposFaturamento
+              titulo="5. Fatura e envio ao cliente"
+              f={fat}
+              mudar={mudarFat}
+              carteira={carteira}
+              regras={regrasConsulta.dados ?? null}
+            />
           )}
 
           <details

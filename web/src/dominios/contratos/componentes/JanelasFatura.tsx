@@ -97,7 +97,9 @@ export function DetalheFatura({
           {NOME_DOCUMENTO[f.documento]} · {nota ? nota.texto : SITUACOES_NFSE[f.nfse_situacao]}
           {!nota && f.nfse_numero ? ` nº ${f.nfse_numero}` : ""}
           {nota?.detalhe && (
-            <span className={`block text-xs ${nota.tom === "vermelho" ? "text-[var(--perigo)]" : "text-[var(--texto-suave)]"}`}>{nota.detalhe}</span>
+            <span className={`block text-xs ${nota.tom === "vermelho" ? "text-[var(--perigo)]" : "text-[var(--texto-suave)]"}`}>
+              {nota.detalhe}
+            </span>
           )}
         </Linha>
         <Linha rotulo="O que vai ao cliente">
@@ -132,7 +134,9 @@ export function DetalheFatura({
                     <span className="block truncate text-xs text-[var(--texto-suave)]">
                       {destino(e)} · {textoConteudo(e.conteudo)}
                     </span>
-                    <span className={`block text-xs ${se.tom === "vermelho" ? "text-[var(--perigo)]" : "text-[var(--texto-suave)]"}`}>{se.texto}</span>
+                    <span className={`block text-xs ${se.tom === "vermelho" ? "text-[var(--perigo)]" : "text-[var(--texto-suave)]"}`}>
+                      {se.texto}
+                    </span>
                   </span>
                   <Chip tom={se.tom}>{se.nome}</Chip>
                   {aoReenviar && podeReenviar(e, f.situacao === "cancelada") && (

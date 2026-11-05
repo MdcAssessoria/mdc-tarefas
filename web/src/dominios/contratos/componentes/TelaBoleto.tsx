@@ -66,7 +66,13 @@ function CartaoBanco({
     if (!f.fin_conta) return setErro("Escolha a conta bancária do Financeiro.");
     setSalvando(true);
     try {
-      await salvarContaBanco({ banco: banco.id as BancoBoleto, conta_link_id: f.conta_link_id.trim(), fin_conta: f.fin_conta, tipo: f.tipo, ativo: f.ativo });
+      await salvarContaBanco({
+        banco: banco.id as BancoBoleto,
+        conta_link_id: f.conta_link_id.trim(),
+        fin_conta: f.fin_conta,
+        tipo: f.tipo,
+        ativo: f.ativo,
+      });
       aoSalvar(`${banco.nome}: configuração salva.`);
     } catch (x) {
       setErro(traduzirErro(x));
@@ -84,7 +90,11 @@ function CartaoBanco({
         <h2 className="text-base font-semibold">{banco.nome}</h2>
         <span className="text-xs text-[var(--texto-suave)]">banco {banco.codigo}</span>
         <span className="ml-auto">
-          {atual ? <Chip tom={atual.ativo ? "verde" : "neutro"}>{atual.ativo ? "Ligado" : "Desligado"}</Chip> : <Chip tom="ambar">Não configurado</Chip>}
+          {atual ? (
+            <Chip tom={atual.ativo ? "verde" : "neutro"}>{atual.ativo ? "Ligado" : "Desligado"}</Chip>
+          ) : (
+            <Chip tom="ambar">Não configurado</Chip>
+          )}
         </span>
       </div>
       <div className="grid gap-3 sm:grid-cols-2">

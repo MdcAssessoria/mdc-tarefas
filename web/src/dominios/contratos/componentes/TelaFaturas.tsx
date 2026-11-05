@@ -288,12 +288,12 @@ export function TelaFaturas() {
               <>
                 Configure em{" "}
                 <Link className="underline" href="/contratos/nota-fiscal">
-                  Contratos › Nota fiscal (NFS-e)
+                  Contratos › Regras fiscais
                 </Link>{" "}
                 (começa no ambiente de teste, sem valor fiscal).
               </>
             ) : (
-              "Peça a quem gere o módulo Contratos para configurar em Contratos › Nota fiscal (NFS-e)."
+              "Peça a quem gere o módulo Contratos para configurar em Contratos › Regras fiscais."
             )}
           </p>
         </div>
@@ -302,8 +302,8 @@ export function TelaFaturas() {
         <div className="flex items-start gap-3 rounded-xl border-2 border-amber-400 bg-amber-50 p-3 text-sm text-amber-900" role="note">
           <Icone nome="alerta" className="mt-0.5 h-5 w-5 shrink-0" />
           <p>
-            <strong>Notas fiscais no ambiente de teste (sem valor fiscal).</strong> As notas emitidas agora servem só para conferir: não mudam a
-            fatura nem vão para o cliente.{podeGerir ? " Depois dos testes, mude para Produção em Contratos › Nota fiscal (NFS-e)." : ""}
+            <strong>Notas fiscais no ambiente de teste (sem valor fiscal).</strong> As notas emitidas agora servem só para conferir: não
+            mudam a fatura nem vão para o cliente.{podeGerir ? " Depois dos testes, mude para Produção em Contratos › Regras fiscais." : ""}
           </p>
         </div>
       )}
@@ -510,23 +510,31 @@ export function TelaFaturas() {
                           {ver && (
                             <button
                               className="btn !min-h-8 !px-2.5"
-                              onClick={() => setJanela({ tipo: "nota", caminho: ver.xml_caminho!, chave: ver.chave_acesso!, numero: ver.numero_nfse })}
+                              onClick={() =>
+                                setJanela({ tipo: "nota", caminho: ver.xml_caminho!, chave: ver.chave_acesso!, numero: ver.numero_nfse })
+                              }
                               aria-label={`Ver a nota fiscal da fatura ${f.numero}`}
                               title={ver.ambiente === "producao" ? "Ver a nota fiscal (espelho)" : "Ver a nota de teste (sem valor fiscal)"}
                             >
                               <Icone nome="arquivo" className="h-4 w-4" />
                             </button>
                           )}
-                          {f.boleto_situacao !== "nao_se_aplica" && f.situacao !== "cancelada" && (podeOperar || f.boleto_situacao === "gerado") && (
-                            <button
-                              className="btn !min-h-8 !px-2.5"
-                              onClick={() => setJanela({ tipo: "boleto", f })}
-                              aria-label={`${f.boleto_situacao === "gerado" ? "Ver o boleto" : "Gerar o boleto"} da fatura ${f.numero}`}
-                              title={f.boleto_situacao === "gerado" ? "Ver o boleto (linha digitável e Pix)" : "Gerar o boleto pelo Ledgra Link"}
-                            >
-                              <Icone nome="banco" className="h-4 w-4" />
-                            </button>
-                          )}
+                          {f.boleto_situacao !== "nao_se_aplica" &&
+                            f.situacao !== "cancelada" &&
+                            (podeOperar || f.boleto_situacao === "gerado") && (
+                              <button
+                                className="btn !min-h-8 !px-2.5"
+                                onClick={() => setJanela({ tipo: "boleto", f })}
+                                aria-label={`${f.boleto_situacao === "gerado" ? "Ver o boleto" : "Gerar o boleto"} da fatura ${f.numero}`}
+                                title={
+                                  f.boleto_situacao === "gerado"
+                                    ? "Ver o boleto (linha digitável e Pix)"
+                                    : "Gerar o boleto pelo Ledgra Link"
+                                }
+                              >
+                                <Icone nome="banco" className="h-4 w-4" />
+                              </button>
+                            )}
                           <button
                             className="btn !min-h-8 !px-3"
                             onClick={() => void baixar(f)}
@@ -650,7 +658,12 @@ export function TelaFaturas() {
         />
       )}
       {janela?.tipo === "reenviar" && (
-        <JanelaReenviar envio={janela.e} numero={janela.f.numero} aoFechar={() => setJanela({ tipo: "ver", f: janela.f })} aoReenviar={fechar} />
+        <JanelaReenviar
+          envio={janela.e}
+          numero={janela.f.numero}
+          aoFechar={() => setJanela({ tipo: "ver", f: janela.f })}
+          aoReenviar={fechar}
+        />
       )}
       {janela?.tipo === "gerar" && consulta.dados && (
         <JanelaGerarFatura

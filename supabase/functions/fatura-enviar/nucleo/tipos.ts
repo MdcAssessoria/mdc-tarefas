@@ -206,6 +206,26 @@ export interface MensagemNfse {
   texto: string;
 }
 
+/** Regra fiscal de um tipo de serviço (fis_regras_servico, 057): a nota, o contrato e o item leem daqui. */
+export interface RegraServico {
+  id: string;
+  cliente_id: string;
+  /** Código de tributação nacional da NFS-e (6 números, LC 116). */
+  servico_codigo: string;
+  nome: string;
+  descricao_nota: string | null;
+  nbs: string | null;
+  iss_aliquota: number | null;
+  iss_retencao: "nao" | "municipios" | "sempre";
+  /** "cidade sem acento/UF", ex.: "atibaia/SP". */
+  iss_retencao_municipios: string[];
+  cclasstrib: string | null;
+  cindop: string | null;
+  ativo: boolean;
+  inativo_motivo: string | null;
+  atualizado_em: string;
+}
+
 /** Parâmetros da emissão (nfse_parametros). */
 export interface ParametrosNfse {
   cliente_id: string;

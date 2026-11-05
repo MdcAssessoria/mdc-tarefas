@@ -14,7 +14,10 @@ import { BANCOS_BOLETO } from "../faturamento";
 import { gerarBoletoFatura } from "../repositorio";
 import type { BancoBoleto, BoletoFatura, Fatura, SituacaoBoletoEmitido } from "../tipos";
 
-export const SITUACOES_BOLETO_EMITIDO: Record<SituacaoBoletoEmitido, { nome: string; tom: "verde" | "azul" | "ambar" | "vermelho" | "neutro" }> = {
+export const SITUACOES_BOLETO_EMITIDO: Record<
+  SituacaoBoletoEmitido,
+  { nome: string; tom: "verde" | "azul" | "ambar" | "vermelho" | "neutro" }
+> = {
   registrada: { nome: "Registrado no banco", tom: "azul" },
   paga: { nome: "Pago", tom: "verde" },
   paga_parcial: { nome: "Pago a menos", tom: "ambar" },
@@ -73,9 +76,12 @@ export function JanelaBoleto({
 }) {
   const [gerando, setGerando] = useState(false);
   const [erro, setErro] = useState("");
-  const [novo, setNovo] = useState<{ linha_digitavel: string | null; pix_copia_cola: string | null; vencimento: string; aviso: string | null } | null>(
-    null,
-  );
+  const [novo, setNovo] = useState<{
+    linha_digitavel: string | null;
+    pix_copia_cola: string | null;
+    vencimento: string;
+    aviso: string | null;
+  } | null>(null);
   const valido = boleto && ["registrada", "paga", "paga_parcial", "vencida"].includes(boleto.situacao) ? boleto : null;
   const linha = novo?.linha_digitavel ?? valido?.linha_digitavel ?? null;
   const pix = novo?.pix_copia_cola ?? valido?.pix_copia_cola ?? null;

@@ -30,7 +30,8 @@ export function JanelaReenviar({
   async function reenviar(ev: React.FormEvent) {
     ev.preventDefault();
     setErro("");
-    if (motivo.replace(/[^\p{L}]/gu, "").length < 5) return setErro("Escreva o motivo (pelo menos 5 letras). Ele fica guardado no histórico do contrato.");
+    if (motivo.replace(/[^\p{L}]/gu, "").length < 5)
+      return setErro("Escreva o motivo (pelo menos 5 letras). Ele fica guardado no histórico do contrato.");
     setOcupado(true);
     try {
       const r = await reenviarEnvio(e.id, motivo.trim());

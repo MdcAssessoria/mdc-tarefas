@@ -141,7 +141,7 @@ export const NAV: Record<Modulo, { titulo: string; links: LinkModulo[]; grupos?:
       { href: "/contratos", nome: "Contratos" },
       { href: "/contratos/faturas", nome: "Faturas" },
       { href: "/contratos/reajustes", nome: "Reajustes" },
-      { href: "/contratos/nota-fiscal", nome: "Nota fiscal (NFS-e)", minimo: "gerir" },
+      { href: "/contratos/nota-fiscal", nome: "Regras fiscais", minimo: "gerir" },
       { href: "/contratos/boleto", nome: "Boleto", minimo: "gerir" },
       { href: "/contratos/envio", nome: "Envio (e-mail e WhatsApp)", minimo: "gerir" },
     ],

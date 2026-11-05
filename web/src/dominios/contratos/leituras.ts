@@ -3,7 +3,7 @@ import { supabase } from "@/lib/supabase";
 import { lerTudo } from "@/lib/lerTudo";
 import type { Arquivo } from "@/lib/arquivos/armazenamento";
 import type { Titulo } from "@/dominios/financeiro/tipos";
-import type { BoletoFatura, ContaBancoLink, EmissaoNfse, EnvioDaFatura, EventoContrato, Fatura, NumeracaoNfse, ParametrosNfse, ReajusteRecorrente, Recorrente } from "./tipos";
+import type { BoletoFatura, ContaBancoLink, EmissaoNfse, EnvioDaFatura, EventoContrato, Fatura, NumeracaoNfse, ParametrosNfse, ReajusteRecorrente, Recorrente, RegraServico } from "./tipos";
 
 /** Cliente de uma fatura, só com o que vai no PDF dela (047: Contratos não lê o cadastro inteiro). */
 export interface TomadorFatura {
@@ -124,6 +124,18 @@ export const lerEmissoesNfse = (cliente: string) =>
   );
 
 /** Parâmetros da emissão da NFS-e da MDC (null = ainda não configurado). */
+/** Regras fiscais por tipo de serviço da empresa (ativas e inativas; a tela filtra). */
+export async function lerRegrasServico(cliente: string): Promise<RegraServico[]> {
+  const { data, error } = await supabase()
+    .from("fis_regras_servico")
+    .select("*")
+    .eq("cliente_id", cliente)
+    .order("ativo", { ascending: false })
+    .order("servico_codigo");
+  if (error) throw error;
+  return (data ?? []) as unknown as RegraServico[];
+}
+
 export async function lerParametrosNfse(cliente: string): Promise<ParametrosNfse | null> {
   const { data, error } = await supabase().from("nfse_parametros").select("*").eq("cliente_id", cliente).maybeSingle();
   if (error) throw error;

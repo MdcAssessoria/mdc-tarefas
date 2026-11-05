@@ -66,9 +66,7 @@ function Mensagens({ lista }: { lista: MensagemNfse[] }) {
           {(m.codigo || m.descricao) && (
             <details className="text-xs opacity-80">
               <summary className="cursor-pointer select-none underline">Ver detalhes</summary>
-              <span className="block break-words font-mono">
-                {[m.codigo, m.descricao, m.complemento].filter(Boolean).join(" · ")}
-              </span>
+              <span className="block break-words font-mono">{[m.codigo, m.descricao, m.complemento].filter(Boolean).join(" · ")}</span>
             </details>
           )}
         </li>
@@ -235,7 +233,9 @@ export function JanelaEmitirNfse({
               )}
             </Linha>
             <Linha rotulo="Tributos aproximados">
-              {p.dps.valores.pTotTribSN != null ? `${String(Number(p.dps.valores.pTotTribSN).toFixed(2)).replace(".", ",")}% (Simples Nacional, Lei 12.741/2012)` : "—"}
+              {p.dps.valores.pTotTribSN != null
+                ? `${String(Number(p.dps.valores.pTotTribSN).toFixed(2)).replace(".", ",")}% (Simples Nacional, Lei 12.741/2012)`
+                : "—"}
             </Linha>
             <Linha rotulo="Número da DPS">
               Série {p.dps.serie ?? "—"} · próximo número {p.dps.proximo_ndps}
@@ -267,7 +267,8 @@ export function JanelaEmitirNfse({
                           </button>
                         )}
                       </span>
-                      {e.situacao !== "emitida" && (e.mensagens?.length ? <Mensagens lista={e.mensagens} /> : e.mensagem && <p>{e.mensagem}</p>)}
+                      {e.situacao !== "emitida" &&
+                        (e.mensagens?.length ? <Mensagens lista={e.mensagens} /> : e.mensagem && <p>{e.mensagem}</p>)}
                     </li>
                   );
                 })}
@@ -277,7 +278,9 @@ export function JanelaEmitirNfse({
 
           {erro && <p className="rounded-md bg-red-50 p-2 text-sm text-red-800">{erro}</p>}
           {!p.pode_emitir && (
-            <p className="text-sm text-[var(--texto-suave)]">Só quem opera o módulo Contratos emite a nota. Se precisar, peça ao administrador.</p>
+            <p className="text-sm text-[var(--texto-suave)]">
+              Só quem opera o módulo Contratos emite a nota. Se precisar, peça ao administrador.
+            </p>
           )}
         </>
       )}

@@ -55,7 +55,10 @@ function CartaoCanal({
   async function testar(ev: React.FormEvent) {
     ev.preventDefault();
     setErro("");
-    if (!destino.trim()) return setErro(canal === "email" ? "Informe o e-mail que vai receber o teste." : "Informe o WhatsApp (com DDD) que vai receber o teste.");
+    if (!destino.trim())
+      return setErro(
+        canal === "email" ? "Informe o e-mail que vai receber o teste." : "Informe o WhatsApp (com DDD) que vai receber o teste.",
+      );
     setOcupado(true);
     try {
       const r = await testarEnvio(org, canal, destino.trim());
@@ -145,7 +148,13 @@ export function TelaEnvio() {
     try {
       const r = await conferirEnvio(org.id);
       const ligados = (["email", "whatsapp"] as CanalAutomatico[]).filter((c) => r.canais[c]?.configurado).length;
-      mostrar(ligados === 2 ? "Os dois canais estão ligados." : ligados ? "Um canal ligado; veja o que falta no outro." : "Nenhum canal ligado ainda: veja o que falta.");
+      mostrar(
+        ligados === 2
+          ? "Os dois canais estão ligados."
+          : ligados
+            ? "Um canal ligado; veja o que falta no outro."
+            : "Nenhum canal ligado ainda: veja o que falta.",
+      );
       consulta.recarregar();
     } catch (x) {
       mostrar(traduzirErro(x), "erro");
@@ -179,7 +188,12 @@ export function TelaEnvio() {
                   { titulo: "Canal", valor: (p) => (p.canal === "email" ? "E-mail" : "WhatsApp"), peso: 0.7, largura: 10 },
                   { titulo: "Para", valor: destino, peso: 1.4, largura: 28 },
                   { titulo: "Motivo", valor: (p) => p.erro ?? "", peso: 2.6, largura: 60 },
-                  { titulo: "Próxima tentativa", valor: (p) => (p.proxima ? fmtDataHora(p.proxima) : "Parou: reenviar"), peso: 1, largura: 18 },
+                  {
+                    titulo: "Próxima tentativa",
+                    valor: (p) => (p.proxima ? fmtDataHora(p.proxima) : "Parou: reenviar"),
+                    peso: 1,
+                    largura: 18,
+                  },
                 ],
               })}
             />

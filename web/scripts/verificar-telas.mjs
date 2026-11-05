@@ -906,11 +906,28 @@ const INTERACOES = {
   // Nota fiscal (NFS-e) (046): parâmetros da emissão; ir para a produção pede confirmação
   "/contratos/nota-fiscal": async (p, foto) => {
     await p.getByRole("radiogroup", { name: "Ambiente da emissão" }).waitFor({ timeout: 3000 });
-    for (const t of ["Código NBS do serviço", "Tributos aproximados do Simples (%)", "Inscrição municipal", "Notas enviadas pelo HUB"])
+    for (const t of ["Código NBS do serviço", "Tributos aproximados do Simples (%)", "Inscrição municipal", "Tipos de serviço"])
       await p.getByText(t, { exact: false }).first().waitFor({ timeout: 3000 });
     await p.getByRole("radio", { name: /^Produção \(nota com valor fiscal\)/ }).check();
     await p.getByText("Confirmo que as notas de teste deram certo").waitFor({ timeout: 3000 });
     await foto("nota-fiscal-parametros");
+    // Regras fiscais (057): aba dos tipos de serviço com a lista e a janela de nova regra (LC 116, retenção, IBS/CBS)
+    await p.getByRole("tab", { name: /Tipos de serviço/ }).click();
+    await p.getByText("Honorários contábeis").first().waitFor({ timeout: 3000 });
+    await p.getByText("Retém em municípios").first().waitFor({ timeout: 3000 });
+    await foto("regras-servico");
+    await p.getByRole("button", { name: "Nova regra" }).click();
+    const nova = p.getByRole("dialog", { name: "Nova regra fiscal" });
+    await nova.getByRole("combobox", { name: /Lei Complementar 116/ }).fill("auditoria");
+    await nova.getByRole("option").filter({ hasText: "17.16" }).getByRole("button").click();
+    await nova.getByText("17.16.01").waitFor({ timeout: 3000 });
+    await nova.getByRole("radio", { name: /Retém em alguns municípios/ }).check();
+    await nova.getByLabel(/Municípios que retêm/).fill("Jundiaí/SP");
+    await foto("regras-servico-nova", { soTela: true });
+    await nova.getByRole("button", { name: "Voltar" }).click();
+    await nova.waitFor({ state: "detached", timeout: 3000 });
+    await p.getByRole("tab", { name: /Notas enviadas/ }).click();
+    await p.getByText("Notas enviadas pelo HUB").waitFor({ timeout: 3000 });
   },
   // Boleto (049): contas do Itaú (configurado) e do Santander (não configurado) no Ledgra Link
   "/contratos/boleto": async (p, foto) => {

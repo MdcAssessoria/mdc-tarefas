@@ -179,31 +179,30 @@ export function JanelaReajuste({
               </span>
             </label>
           )}
-          {p.contas &&
-            (p.contas.ajuste_manual.length > 0 || p.contas.documento_emitido.length > 0 || p.contas.pagas.length > 0) && (
-              <ul className="space-y-1 rounded-md bg-[var(--fundo)] p-3 text-xs text-[var(--texto-suave)]">
-                {p.contas.ajuste_manual.length > 0 && (
-                  <li>
-                    Não mudam porque o valor foi ajustado à mão:{" "}
-                    {p.contas.ajuste_manual.map((c) => `${fmtCompetencia(c.competencia)} (${brl(Number(c.valor))})`).join("; ")}.
-                  </li>
-                )}
-                {p.contas.documento_emitido.length > 0 && (
-                  <li>
-                    Não mudam porque a nota fiscal ou o boleto já foi emitido:{" "}
-                    {p.contas.documento_emitido.map((c) => fmtCompetencia(c.competencia)).join("; ")}.
-                  </li>
-                )}
-                {p.contas.pagas.length > 0 && (
-                  <li>
-                    Já pagas com o valor antigo: {p.contas.pagas.map((c) => fmtCompetencia(c.competencia)).join("; ")}
-                    {novo != null && diferencaPagas(p.contas.pagas, novo) > 0
-                      ? ` — diferença de ${brl(diferencaPagas(p.contas.pagas, novo))} (não é lançada sozinha; lance à parte se for cobrar).`
-                      : "."}
-                  </li>
-                )}
-              </ul>
-            )}
+          {p.contas && (p.contas.ajuste_manual.length > 0 || p.contas.documento_emitido.length > 0 || p.contas.pagas.length > 0) && (
+            <ul className="space-y-1 rounded-md bg-[var(--fundo)] p-3 text-xs text-[var(--texto-suave)]">
+              {p.contas.ajuste_manual.length > 0 && (
+                <li>
+                  Não mudam porque o valor foi ajustado à mão:{" "}
+                  {p.contas.ajuste_manual.map((c) => `${fmtCompetencia(c.competencia)} (${brl(Number(c.valor))})`).join("; ")}.
+                </li>
+              )}
+              {p.contas.documento_emitido.length > 0 && (
+                <li>
+                  Não mudam porque a nota fiscal ou o boleto já foi emitido:{" "}
+                  {p.contas.documento_emitido.map((c) => fmtCompetencia(c.competencia)).join("; ")}.
+                </li>
+              )}
+              {p.contas.pagas.length > 0 && (
+                <li>
+                  Já pagas com o valor antigo: {p.contas.pagas.map((c) => fmtCompetencia(c.competencia)).join("; ")}
+                  {novo != null && diferencaPagas(p.contas.pagas, novo) > 0
+                    ? ` — diferença de ${brl(diferencaPagas(p.contas.pagas, novo))} (não é lançada sozinha; lance à parte se for cobrar).`
+                    : "."}
+                </li>
+              )}
+            </ul>
+          )}
           {podeOperar && (
             <label className="campo">
               <span>Observação (opcional)</span>

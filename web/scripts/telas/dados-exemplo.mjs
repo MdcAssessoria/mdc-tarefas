@@ -2502,7 +2502,12 @@ export const XML_EXEMPLO = {
   // Contratos › Envio (053): e-mail ligado pelo Microsoft 365; WhatsApp sem os segredos ainda
   RPCS.fin_envio_situacao = () => ({
     canais: {
-      email: { configurado: true, detalhe: "Microsoft 365 conferido: o aplicativo do HUB entrou.", remetente: "hub@mdcassessoria.com", verificado_em: momento(0) },
+      email: {
+        configurado: true,
+        detalhe: "Microsoft 365 conferido: o aplicativo do HUB entrou.",
+        remetente: "hub@mdcassessoria.com",
+        verificado_em: momento(0),
+      },
       whatsapp: {
         configurado: false,
         detalhe: "Faltam os segredos WHATSAPP_TOKEN, WHATSAPP_NUMERO_ID, WHATSAPP_MODELO em Edge Functions › Secrets do Supabase.",
@@ -2585,6 +2590,45 @@ export const XML_EXEMPLO = {
       nbs_padrao: "113021000",
       p_tot_trib_sn: 6,
       atualizado_em: momento(-2),
+      atualizado_por: EU,
+    },
+  ];
+  // Regras fiscais por tipo de serviço (057): contabilidade sem retenção e assessoria que retém em Atibaia/SP
+  TABELAS.fis_regras_servico = [
+    {
+      id: "f5000000-0000-4000-8000-000000000001",
+      org_id: ORG,
+      cliente_id: CM,
+      servico_codigo: "171901",
+      nome: "Honorários contábeis",
+      descricao_nota: "Serviços de contabilidade, escrituração fiscal e folha de pagamento",
+      nbs: "113021000",
+      iss_aliquota: 2,
+      iss_retencao: "nao",
+      iss_retencao_municipios: [],
+      cclasstrib: "000001",
+      cindop: null,
+      ativo: true,
+      inativo_motivo: null,
+      atualizado_em: momento(-1),
+      atualizado_por: EU,
+    },
+    {
+      id: "f5000000-0000-4000-8000-000000000002",
+      org_id: ORG,
+      cliente_id: CM,
+      servico_codigo: "172001",
+      nome: "Consultoria financeira",
+      descricao_nota: null,
+      nbs: null,
+      iss_aliquota: 3,
+      iss_retencao: "municipios",
+      iss_retencao_municipios: ["atibaia/SP"],
+      cclasstrib: null,
+      cindop: null,
+      ativo: true,
+      inativo_motivo: null,
+      atualizado_em: momento(-1),
       atualizado_por: EU,
     },
   ];

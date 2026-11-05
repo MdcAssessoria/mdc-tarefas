@@ -175,6 +175,28 @@ export interface DadosParametrosNfse {
 }
 
 /** Salva os parâmetros da emissão (Contratos: gerir). Ir para produção pede confirmo_producao; ligar o automático, confirmo_automatico. */
+export interface DadosRegraServico {
+  id?: string;
+  cliente: string;
+  servico_codigo: string;
+  nome: string;
+  descricao_nota?: string | null;
+  nbs?: string | null;
+  iss_aliquota?: number | null;
+  iss_retencao: "nao" | "municipios" | "sempre";
+  /** "Cidade/UF" (o banco tira acento e padroniza). */
+  iss_retencao_municipios?: string[];
+  cclasstrib?: string | null;
+  cindop?: string | null;
+  ativo?: boolean;
+  motivo?: string | null;
+}
+
+/** Cria, edita ou inativa (com motivo) a regra fiscal de um tipo de serviço (057; Contratos: gerir). */
+export async function salvarRegraServico(r: DadosRegraServico) {
+  return exigir(await supabase().rpc("fis_regra_servico_salvar", { p: r as unknown as Json }));
+}
+
 export async function salvarParametrosNfse(p: DadosParametrosNfse) {
   return exigir(await supabase().rpc("nfse_parametros_salvar", { p: { ...p, op_simples: "3" } as unknown as Json })) as unknown as ParametrosNfse & {
     proximo_ndps: number | null;
