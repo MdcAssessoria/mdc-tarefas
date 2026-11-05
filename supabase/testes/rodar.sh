@@ -129,3 +129,8 @@ for f in testes/123_base_057.sql migrations/057_regras_fiscais.sql; do
   $P -v ON_ERROR_STOP=1 -f "$R/$f" 2>&1 | grep -v NOTICE || true
 done
 $P -f "$R/testes/124_regras_fiscais_057.sql" 2>&1 | grep -v "^SET$"
+# 058: nota de entrada × pedido de compra (não lança a mesma compra duas vezes)
+for f in testes/125_base_058.sql migrations/058_nota_pedido.sql; do
+  $P -v ON_ERROR_STOP=1 -f "$R/$f" 2>&1 | grep -v NOTICE || true
+done
+$P -f "$R/testes/126_nota_pedido_058.sql" 2>&1 | grep -v "^SET$"

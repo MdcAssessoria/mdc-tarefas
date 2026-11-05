@@ -2593,6 +2593,11 @@ export const XML_EXEMPLO = {
       atualizado_por: EU,
     },
   ];
+  // Nota × pedido de compra (058): um pedido aguardando entrega do mesmo fornecedor aparece para escolher ao lançar
+  RPCS.fis_pedidos_da_nota = () => [
+    { id: "f5800000-0000-4000-8000-000000000001", numero: 7, situacao: "confirmado", total: 1500, documento: null, data: dia(-5),
+      cita_nota: false, mesmo_total: false, sugerido: false },
+  ];
   // Regras fiscais por tipo de serviço (057): contabilidade sem retenção e assessoria que retém em Atibaia/SP
   TABELAS.fis_regras_servico = [
     {

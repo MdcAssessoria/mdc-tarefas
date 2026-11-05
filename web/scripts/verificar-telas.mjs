@@ -733,9 +733,14 @@ const INTERACOES = {
     await p.keyboard.press("Escape");
     await arvore.waitFor({ state: "detached", timeout: 3000 });
   },
-  "/entradas/lancar": async (p) => {
+  "/entradas/lancar": async (p, foto) => {
     await p.getByRole("button", { name: "Lançar", exact: true }).first().click();
     await p.getByRole("heading", { name: "O que é esta nota?" }).waitFor({ timeout: 3000 });
+    // 058: com pedido de compra do fornecedor em aberto, a tela pergunta se a nota é dele (e mostra "não tem pedido")
+    await p.getByRole("heading", { name: "Esta nota é de um pedido de compra?" }).waitFor({ timeout: 3000 });
+    await p.getByRole("radio", { name: /Pedido nº 7/ }).check();
+    await p.getByText("As contas a pagar são as do pedido de compra nº 7").waitFor({ timeout: 3000 });
+    await foto("lancar-nota-pedido");
     await p.getByRole("button", { name: "Voltar à lista" }).click();
     for (const aba of await p.getByRole("tab").all()) {
       await aba.click();

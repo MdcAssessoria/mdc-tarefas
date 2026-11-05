@@ -222,7 +222,7 @@ function Importar() {
     <div className="space-y-5">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <Link href="/config" className="btn-link text-sm">
+          <Link href="/config" className="btn-link inline-flex items-center gap-1 text-sm">
             <Icone nome="voltar" className="h-4 w-4" />
             Configurações
           </Link>

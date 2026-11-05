@@ -100,10 +100,34 @@ export interface LancamentoNota {
     lembrar?: boolean;
   }[];
   parcelas: { vencimento: string; valor: number }[];
+  /** 058: id do pedido de compra desta nota, ou "nenhum". Obrigatório quando há pedido em aberto do fornecedor. */
+  pedido?: string | null;
+}
+
+/** Pedido de compra do mesmo fornecedor que pode ser desta nota (058). */
+export interface PedidoDaNota {
+  id: string;
+  numero: number;
+  situacao: "confirmado" | "recebido";
+  total: number;
+  documento: string | null;
+  data: string;
+  cita_nota: boolean;
+  mesmo_total: boolean;
+  sugerido: boolean;
+}
+
+export async function lerPedidosDaNota(nota: string): Promise<PedidoDaNota[]> {
+  return (exigir(await supabase().rpc("fis_pedidos_da_nota", { p_nota: nota })) ?? []) as unknown as PedidoDaNota[];
 }
 
 export async function lancarNota(l: LancamentoNota) {
-  return exigir(await supabase().rpc("fis_processar_nota", { p: l as unknown as Json })) as { titulos: string[]; movimentos: number[] };
+  return exigir(await supabase().rpc("fis_processar_nota", { p: l as unknown as Json })) as {
+    titulos: string[];
+    movimentos: number[];
+    pedido?: { id: string; numero: number } | null;
+    aviso?: string | null;
+  };
 }
 
 export async function desfazerLancamento(nota: string, motivo: string) {

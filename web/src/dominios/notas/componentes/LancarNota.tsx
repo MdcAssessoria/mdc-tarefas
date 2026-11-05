@@ -16,8 +16,8 @@ import { numeroBr, valorParaCampo } from "@/dominios/financeiro/regras";
 import { formatarDocumento } from "@/lib/documento";
 import type { Categoria, CentroCusto, ContaBancaria, Item, LocalEstoque, Pessoa } from "@/dominios/financeiro/tipos";
 import { lerItensDasNotas } from "../leituras";
-import { lancarNota } from "../repositorio";
-import type { LancamentoNota } from "../repositorio";
+import { lancarNota, lerPedidosDaNota } from "../repositorio";
+import type { LancamentoNota, PedidoDaNota } from "../repositorio";
 import { regraDoTipo, sugerirTipoEntrada, TIPOS_ENTRADA } from "../tiposEntrada";
 import type { CodigoTipoEntrada } from "../tiposEntrada";
 import type { DeParaItem, Nota, TipoEntradaRegra } from "../tipos";
@@ -70,6 +70,12 @@ export function LancarNota({
   const podeCriarCategoria = pode("plano_contas", "operar") || pode("financeiro", "operar");
   const [novaCategoria, setNovaCategoria] = useState(false);
   const itensNota = useConsulta(useCallback(() => lerItensDasNotas([nota.id]), [nota.id]));
+  // 058: pedidos de compra deste fornecedor que podem ser desta nota (escolher evita lançar a compra duas vezes)
+  const pedidosConsulta = useConsulta(useCallback(() => lerPedidosDaNota(nota.id), [nota.id]));
+  const pedidos: PedidoDaNota[] = pedidosConsulta.dados ?? [];
+  const [pedidoEscolhido, setPedidoEscolhido] = useState<string | null>(null);
+  const pedidoEfetivo = pedidoEscolhido ?? (pedidos.filter((x) => x.sugerido).length === 1 ? pedidos.find((x) => x.sugerido)!.id : null);
+  const pedidoLigado = pedidoEfetivo && pedidoEfetivo !== "nenhum" ? (pedidos.find((x) => x.id === pedidoEfetivo) ?? null) : null;
   const [tipo, setTipo] = useState<CodigoTipoEntrada | null>(null);
   const tipoEfetivo: CodigoTipoEntrada =
     tipo ?? sugerirTipoEntrada(nota.modelo, [nota.cfop_principal, ...(itensNota.dados ?? []).map((i) => i.cfop)], tipoAnterior);
@@ -139,10 +145,13 @@ export function LancarNota({
 
   async function lancar() {
     setErro("");
-    if (regra.movimenta_estoque && linhas.some((l) => !l.escolha))
+    if (pedidos.length && !pedidoEfetivo)
+      return setErro("Diga se esta nota é de um dos pedidos de compra deste fornecedor (ou marque que não tem pedido).");
+    const ligado = !!pedidoLigado;
+    if (regra.movimenta_estoque && !ligado && linhas.some((l) => !l.escolha))
       return setErro("Ligue todos os itens a um item do estoque (ou cadastre um novo).");
-    if (regra.movimenta_estoque && !local) return setErro("Escolha o estoque onde a mercadoria entra.");
-    if (regra.gera_pagar) {
+    if (regra.movimenta_estoque && !ligado && !local) return setErro("Escolha o estoque onde a mercadoria entra.");
+    if (regra.gera_pagar && !ligado) {
       if (!categoriaEfetiva) return setErro("Escolha a categoria (despesa) desta compra.");
       if (!parcelas.length || parcelas.some((p) => !p.vencimento || !(numeroBr(p.valor) > 0)))
         return setErro("Confira as parcelas: cada uma precisa de vencimento e valor.");
@@ -152,10 +161,10 @@ export function LancarNota({
       nota: nota.id,
       tipo_entrada: tipoEfetivo,
       pessoa: pessoa || null,
-      categoria: regra.gera_pagar ? categoriaEfetiva : null,
+      categoria: regra.gera_pagar && !ligado ? categoriaEfetiva : null,
       centro: centro || null,
       conta_prevista: conta || null,
-      local: regra.movimenta_estoque ? local : null,
+      local: regra.movimenta_estoque && !ligado ? local : null,
       data_entrada: dataEntrada || null,
       observacao: obs || null,
       itens: linhas.map((l) => {
@@ -177,12 +186,17 @@ export function LancarNota({
           lembrar: l.lembrar,
         };
       }),
-      parcelas: regra.gera_pagar ? parcelas.map((p) => ({ vencimento: p.vencimento, valor: numeroBr(p.valor) })) : [],
+      parcelas: regra.gera_pagar && !ligado ? parcelas.map((p) => ({ vencimento: p.vencimento, valor: numeroBr(p.valor) })) : [],
+      pedido: pedidos.length ? pedidoEfetivo : null,
     };
     setOcupado(true);
     try {
       const r = await lancarNota(corpo);
-      aoLancar(`Nota ${nota.numero ?? ""} lançada: ${r.titulos.length} conta(s) a pagar e ${r.movimentos.length} entrada(s) no estoque.`);
+      aoLancar(
+        r.pedido
+          ? `Nota ${nota.numero ?? ""} ligada ao pedido de compra nº ${r.pedido.numero}: as contas a pagar e o estoque são os do pedido.${r.aviso ? ` Atenção: ${r.aviso}.` : ""}`
+          : `Nota ${nota.numero ?? ""} lançada: ${r.titulos.length} conta(s) a pagar e ${r.movimentos.length} entrada(s) no estoque.`,
+      );
     } catch (e) {
       setErro(traduzirErro(e));
       setOcupado(false);
@@ -204,7 +218,7 @@ export function LancarNota({
       {janelaConfirmar}
       <div className="flex flex-wrap items-start gap-2">
         <div className="mr-auto">
-          <button className="btn-link text-sm" onClick={() => void voltar()}>
+          <button className="btn-link inline-flex items-center gap-1 text-sm" onClick={() => void voltar()}>
             <Icone nome="voltar" className="h-4 w-4" /> Voltar à lista
           </button>
           <h2 className="text-lg font-semibold text-[var(--marca)]">
@@ -269,6 +283,72 @@ export function LancarNota({
         </div>,
       )}
 
+      {pedidos.length > 0 && (
+        <section className="cartao space-y-3 border-[var(--destaque-escuro)] p-4" aria-labelledby="titulo-pedido-nota">
+          <h2 id="titulo-pedido-nota" className="flex items-center gap-2 font-semibold">
+            <Icone nome="ramificacao" className="h-5 w-5 text-[var(--marca)]" />
+            Esta nota é de um pedido de compra?
+          </h2>
+          <p className="text-sm text-neutral-700">
+            Há {pedidos.length === 1 ? "um pedido" : `${pedidos.length} pedidos`} de compra deste fornecedor sem nota. Se a nota for de um
+            deles, o HUB não lança a compra de novo: as contas a pagar e o estoque são os do pedido (pedido aguardando entrega é recebido
+            agora).
+          </p>
+          <div role="radiogroup" aria-label="Pedido de compra desta nota" className="grid gap-2 sm:grid-cols-2">
+            {pedidos.map((pd) => (
+              <label
+                key={pd.id}
+                className={`flex cursor-pointer gap-3 rounded-lg border p-3 text-sm ${pedidoEfetivo === pd.id ? "border-[var(--destaque-escuro)] bg-amber-50/50" : "border-[var(--borda)]"}`}
+              >
+                <input
+                  type="radio"
+                  name="pedido"
+                  className="mt-1"
+                  checked={pedidoEfetivo === pd.id}
+                  onChange={() => setPedidoEscolhido(pd.id)}
+                />
+                <span>
+                  <span className="block font-medium">
+                    Pedido nº {pd.numero} · {brl(Number(pd.total))}
+                  </span>
+                  <span className="block text-xs text-neutral-600">
+                    {pd.situacao === "recebido"
+                      ? "Já recebido: a nota só se liga a ele"
+                      : "Aguardando entrega: lançar a nota recebe o pedido"}
+                    {pd.documento ? ` · documento ${pd.documento}` : ""}
+                  </span>
+                  {(pd.cita_nota || pd.mesmo_total) && (
+                    <span className="mt-1 block text-xs font-medium text-emerald-800">
+                      {pd.cita_nota ? "O documento do pedido cita esta nota" : "Mesmo total da nota"}
+                    </span>
+                  )}
+                  {!pd.mesmo_total && (
+                    <span className="mt-1 block text-xs text-amber-800">
+                      Total diferente da nota ({brl(Number(nota.valor_total))}): confira
+                    </span>
+                  )}
+                </span>
+              </label>
+            ))}
+            <label
+              className={`flex cursor-pointer gap-3 rounded-lg border p-3 text-sm ${pedidoEfetivo === "nenhum" ? "border-[var(--destaque-escuro)] bg-amber-50/50" : "border-[var(--borda)]"}`}
+            >
+              <input
+                type="radio"
+                name="pedido"
+                className="mt-1"
+                checked={pedidoEfetivo === "nenhum"}
+                onChange={() => setPedidoEscolhido("nenhum")}
+              />
+              <span>
+                <span className="block font-medium">Esta nota não tem pedido no HUB</span>
+                <span className="block text-xs text-neutral-600">Lança normal: contas a pagar e estoque pela nota.</span>
+              </span>
+            </label>
+          </div>
+        </section>
+      )}
+
       {passo(
         3,
         regra.movimenta_estoque ? "Itens que entram no estoque" : "Itens da nota",
@@ -276,7 +356,12 @@ export function LancarNota({
           <Carregando />
         ) : (
           <>
-            {regra.movimenta_estoque ? (
+            {pedidoLigado ? (
+              <p className="text-xs text-neutral-600">
+                O estoque entra pelo pedido nº {pedidoLigado.numero}. Ligar os itens aqui só ajuda o HUB a reconhecer os produtos nas
+                próximas notas.
+              </p>
+            ) : regra.movimenta_estoque ? (
               <div className="flex flex-wrap gap-3">
                 <label className="campo">
                   <span>Estoque de entrada</span>
@@ -392,7 +477,14 @@ export function LancarNota({
           }}
         />
       )}
-      {regra.gera_pagar ? (
+      {pedidoLigado ? (
+        <p className="cartao flex items-start gap-2 p-4 text-sm text-neutral-700">
+          <Icone nome="check" className="mt-0.5 h-4 w-4 shrink-0 text-[var(--marca)]" />
+          As contas a pagar são as do pedido de compra nº {pedidoLigado.numero}
+          {pedidoLigado.situacao === "confirmado" ? ", geradas ao lançar a nota (o pedido é recebido agora)" : ""}. Esta nota não gera
+          outras.
+        </p>
+      ) : regra.gera_pagar ? (
         passo(
           4,
           "Contas a pagar",
