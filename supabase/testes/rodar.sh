@@ -142,3 +142,6 @@ $P -f "$R/testes/128_sistemas_059.sql" 2>&1 | grep -v "^SET$"
 # 060: Cobrança Ledgra fora do menu e grupo Gestão reorganizado (só dados)
 $P -v ON_ERROR_STOP=1 -f "$R/migrations/060_menu_gestao.sql" 2>&1 | grep -v NOTICE || true
 $P -f "$R/testes/129_menu_060.sql" 2>&1 | grep -v "^SET$"
+# 061: "Notas fiscais" (entradas) de volta ao menu (só dados)
+$P -v ON_ERROR_STOP=1 -f "$R/migrations/061_notas_fiscais_menu.sql" 2>&1 | grep -v NOTICE || true
+$P -f "$R/testes/130_notas_061.sql" 2>&1 | grep -v "^SET$"

@@ -253,7 +253,7 @@ function Atalhos() {
     { href: "/financeiro/pagar?nova=1", nome: "Nova conta a pagar", dica: "Boleto, aluguel, fornecedor", icone: "seta-saida" },
     { href: "/financeiro/receber?nova=1", nome: "Nova conta a receber", dica: "Venda, serviço, mensalidade", icone: "seta-entrada" },
     { href: "/financeiro/extratos", nome: "Importar extrato", dica: "Arquivo OFX ou planilha do banco", icone: "importar" },
-    { href: "/financeiro/estoque", nome: "Cadastrar item", dica: "Produto ou serviço", icone: "caixa" },
+    { href: "/contratos/faturas", nome: "Emitir nota fiscal", dica: "NFS-e das faturas dos contratos", icone: "documento" },
   ];
   return (
     <nav aria-label="Atalhos" className="grid grid-cols-2 gap-3 lg:grid-cols-4">

@@ -1,8 +1,9 @@
 # Módulo Entradas — notas fiscais recebidas
 
-> **Desligado desde 05/11/2026 (migração 059):** o HUB passou a servir só às finanças da MDC e à receita dos sistemas
-> licenciados, então este módulo saiu do menu (status `desligado` em `hub_apps`). O código, os dados e as regras do banco
-> continuam; para religar, volte o status para `ativo`. O certificado digital está em Financeiro › Certificado digital.
+> **"Notas fiscais" (migração 061, 05/11/2026):** a 059 tinha desligado este módulo; o Edvaldo não achou onde ver as
+> notas emitidas contra o CNPJ da MDC, então ele voltou com o nome **Notas fiscais**, com as abas Notas recebidas,
+> Lançar no Financeiro, Carga tributária e Certificado digital. Pedidos de compra fica fora (Estoque desligado). A tela
+> de notas recebidas tem o botão "Emitir nota fiscal", que leva a Contratos › Faturas e notas fiscais.
 
 > **Resumo:** com o certificado A1 (e-CNPJ) da empresa, o HUB busca sozinho as NF-e na SEFAZ (Distribuição DF-e do
 > Ambiente Nacional) e as NFS-e no Ambiente de Dados Nacional (ADN), mostra cada nota em linguagem simples

@@ -138,6 +138,49 @@ body {
   form .justify-end > .btn-primario {
     order: -1;
   }
+  /* Botões com imagem (pedido do Edvaldo, 05/11/2026): no botão branco, o ícone ganha a cor do que ele faz, para
+     reconhecer a ação pelo desenho (Editar azul, Excluir/Inativar vermelho, Excel verde, PDF vermelho, Novo dourado…).
+     Botão escuro (btn-primario) e botões com cor própria (text-[var(--perigo)]) não mudam. */
+  .btn > svg[data-icone] {
+    color: var(--destaque-escuro);
+    width: 18px;
+    height: 18px;
+  }
+  .btn > svg[data-icone="editar"],
+  .btn > svg[data-icone="enviar"],
+  .btn > svg[data-icone="copiar"],
+  .btn > svg[data-icone="olho"],
+  .btn > svg[data-icone="externo"] {
+    color: #2563eb;
+  }
+  .btn > svg[data-icone="lixeira"],
+  .btn > svg[data-icone="cancelar"],
+  .btn > svg[data-icone="fechar"],
+  .btn > svg[data-icone="documento"] {
+    color: #dc2626;
+  }
+  .btn > svg[data-icone="planilha"],
+  .btn > svg[data-icone="check"],
+  .btn > svg[data-icone="importar"],
+  .btn > svg[data-icone="baixar"],
+  .btn > svg[data-icone="seta-entrada"] {
+    color: #16a34a;
+  }
+  .btn > svg[data-icone="atualizar"],
+  .btn > svg[data-icone="transferir"],
+  .btn > svg[data-icone="calendario"],
+  .btn > svg[data-icone="relogio"] {
+    color: #0d9488;
+  }
+  .btn > svg[data-icone="voltar"],
+  .btn > svg[data-icone="filtro"],
+  .btn > svg[data-icone="imprimir"],
+  .btn > svg[data-icone="reticencias"] {
+    color: var(--texto-suave);
+  }
+  .btn[class*="perigo"] > svg[data-icone] {
+    color: currentColor;
+  }
   .btn-primario:disabled,
   .btn:disabled {
     opacity: 0.55;

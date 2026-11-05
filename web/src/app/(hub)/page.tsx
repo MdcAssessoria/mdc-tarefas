@@ -1,3 +1,4 @@
+// Início do HUB: saudação, "Seus módulos" (cartões com ícone e cor de cada módulo) e o resumo do dia nas Tarefas.
 "use client";
 
 import Link from "next/link";
@@ -15,6 +16,7 @@ import { traduzirErro } from "@/lib/erros";
 import type { Prioridade, Status } from "@/dominios/tarefas/tipos";
 import { fmtData } from "@/lib/formato/datas";
 import { nomeCliente } from "@/dominios/clientes/nome";
+import { CartoesModulos } from "@/components/shell/CartoesModulos";
 
 export default function Inicio() {
   return <Hub />;
@@ -203,12 +205,13 @@ function Hub() {
     return nomeCliente(c, "Internas");
   };
 
-  const livro: { rotulo: string; valor: string; href: string; quente?: boolean }[] = [
-    { rotulo: "atrasadas", valor: String(n.atrasadas), href: "/tarefas", quente: n.atrasadas > 0 },
-    { rotulo: "vencem hoje", valor: String(n.hoje), href: "/tarefas" },
-    { rotulo: "nos próximos 7 dias", valor: String(n.semana), href: "/tarefas" },
-    { rotulo: "abertas com você", valor: String(n.abertas), href: "/tarefas" },
+  const livro: { rotulo: string; valor: string; href: string; icone: string; quente?: boolean }[] = [
+    { rotulo: "atrasadas", valor: String(n.atrasadas), href: "/tarefas", icone: "alerta", quente: n.atrasadas > 0 },
+    { rotulo: "vencem hoje", valor: String(n.hoje), href: "/tarefas", icone: "calendario" },
+    { rotulo: "nos próximos 7 dias", valor: String(n.semana), href: "/tarefas", icone: "relogio" },
+    { rotulo: "abertas com você", valor: String(n.abertas), href: "/tarefas", icone: "lista" },
     {
+      icone: "check",
       rotulo: n.pctPrazo === null ? "concluídas no mês" : `concluídas no mês · ${n.pctPrazo}% no prazo`,
       valor: String(n.concluidasMes),
       href: "/tarefas/relatorio",
@@ -231,6 +234,8 @@ function Hub() {
         )}
       </header>
 
+      <CartoesModulos />
+
       {!temTarefas ? (
         <p className="max-w-xl rounded-2xl border border-[var(--borda)] bg-white p-6 text-[14px] text-[var(--texto-suave)]">
           Suas ferramentas estão no menu ao lado. Quando o módulo de Tarefas for liberado para você, o resumo do seu dia aparece aqui.
@@ -246,6 +251,12 @@ function Hub() {
                   className="group relative min-w-0 flex-1 px-5 py-4 transition-colors hover:bg-[var(--fundo)]"
                 >
                   {i.quente && <span className="absolute inset-x-0 top-0 h-[3px] bg-[var(--perigo)]" aria-hidden="true" />}
+                  <span
+                    aria-hidden="true"
+                    className={`mb-2 grid h-9 w-9 place-items-center rounded-xl ${i.quente ? "bg-red-50 text-[var(--perigo)]" : "bg-[var(--fundo)] text-[var(--destaque-escuro)]"}`}
+                  >
+                    <Icone nome={i.icone} className="h-5 w-5" />
+                  </span>
                   <div
                     className={`font-display num text-[38px] font-medium leading-none ${i.quente ? "text-[var(--perigo)]" : "text-[var(--marca)]"}`}
                   >

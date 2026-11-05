@@ -2812,7 +2812,9 @@ export const XML_EXEMPLO = {
 // contas. Entradas, Saídas, Estoque e Cobrança Ledgra estão desligados na produção; aqui continuam ligados (no fim da
 // lista) só para as fotos das telas deles continuarem sendo conferidas.
 (() => {
-  const ORDEM = { financeiro: 35, contratos: 36, relatorios: 37, centros_custo: 38, plano_contas: 39, entradas: 91, saidas: 92, estoque: 93, licencas: 94 };
+  const ORDEM = { financeiro: 35, contratos: 36, entradas: 37, relatorios: 38, centros_custo: 39, plano_contas: 40, saidas: 92, estoque: 93, licencas: 94 };
+  const notas = APPS.find((a) => a.slug === "entradas");
+  if (notas) Object.assign(notas, { nome: "Notas fiscais", descricao: "Notas emitidas contra o CNPJ da MDC (NF-e e NFS-e) e lançamento no Financeiro" });
   for (const a of APPS) if (a.slug in ORDEM) a.ordem = ORDEM[a.slug];
   APPS.sort((a, b) => a.ordem - b.ordem);
 })();

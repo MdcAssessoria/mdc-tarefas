@@ -253,6 +253,7 @@ export function Icone({ nome, className = "h-5 w-5" }: { nome: NomeIcone | (stri
       strokeLinejoin="round"
       className={className}
       aria-hidden="true"
+      data-icone={conhecido ? nome : "grade"}
     >
       {conhecido ? P[nome] : P.grade}
     </svg>

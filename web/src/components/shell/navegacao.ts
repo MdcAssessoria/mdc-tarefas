@@ -147,7 +147,7 @@ export const NAV: Record<Modulo, { titulo: string; links: LinkModulo[]; grupos?:
     links: [
       { href: "/contratos", nome: "Contratos", icone: "documento" },
       { href: "/contratos/sistemas", nome: "Receita por sistema", icone: "tendencia" },
-      { href: "/contratos/faturas", nome: "Faturas", icone: "arquivo" },
+      { href: "/contratos/faturas", nome: "Faturas e notas fiscais", icone: "arquivo" },
       { href: "/contratos/reajustes", nome: "Reajustes", icone: "seta-cima" },
       { href: "/contratos/nota-fiscal", nome: "Regras fiscais", icone: "escudo", minimo: "gerir" },
       { href: "/contratos/boleto", nome: "Boleto", icone: "banco", minimo: "gerir" },
@@ -164,12 +164,14 @@ export const NAV: Record<Modulo, { titulo: string; links: LinkModulo[]; grupos?:
       { href: "/cadastros/pessoas", nome: "Todos", icone: "pessoas" },
     ],
   },
+  // Notas fiscais (antigo Entradas): religado na 061 (05/11/2026) só com as notas emitidas contra o CNPJ da MDC (NF-e e
+  // NFS-e, busca automática), o lançamento delas no Financeiro, a carga tributária e o certificado. Pedidos de compra
+  // ficam fora (o Estoque está desligado). A emissão da NFS-e é em Contratos › Faturas e notas fiscais.
   entradas: {
-    titulo: "Entradas",
+    titulo: "Notas fiscais",
     links: [
       { href: "/entradas", nome: "Notas recebidas", icone: "importar" },
-      { href: "/entradas/lancar", nome: "Lançar nota", icone: "mais", minimo: "operar" },
-      { href: "/entradas/compras", nome: "Pedidos de compra", icone: "caixa" },
+      { href: "/entradas/lancar", nome: "Lançar no Financeiro", minimo: "operar", icone: "seta-saida" },
       { href: "/entradas/carga-tributaria", nome: "Carga tributária", icone: "grafico" },
       { href: "/entradas/certificado", nome: "Certificado digital", icone: "escudo" },
     ],

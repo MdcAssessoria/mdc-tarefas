@@ -248,9 +248,16 @@ export default function PaginaNotasRecebidas() {
         <div className="mr-auto">
           <h1 className="text-xl font-semibold text-[var(--marca)]">Notas recebidas</h1>
           <p className="text-sm text-neutral-600">
-            Notas de compra e de serviço que chegaram para a MDC: responda à SEFAZ e lance no financeiro.
+            Notas emitidas contra o CNPJ da MDC (compras e serviços), buscadas sozinhas na SEFAZ e na NFS-e Nacional: confira e lance
+            no Financeiro.
           </p>
         </div>
+        {pode("contratos") && (
+          <Link href="/contratos/faturas" className="btn">
+            <Icone nome="enviar" className="h-4 w-4" />
+            Emitir nota fiscal
+          </Link>
+        )}
         <BotoesExportar
           vazio={!lista.length}
           avisar={mostrar}
