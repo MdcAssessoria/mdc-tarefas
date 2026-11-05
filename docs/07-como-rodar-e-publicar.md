@@ -145,6 +145,8 @@ npx supabase functions deploy convite --project-ref bulqqdgfrrpqquqvjjfa --impor
   status `desligado`); 3 funções conferidas por md5; avisos de segurança sem novidade; tipos regenerados.
 - **05/11/2026:** 060 aplicada (só dados em `hub_apps`: Cobrança Ledgra desligada e ordem do grupo Gestão); conferida
   por consulta; nenhuma função nem tipo mudou.
+- **05/11/2026:** 061 aplicada (só dados em `hub_apps`: Entradas volta como "Notas fiscais" e nova ordem da Gestão);
+  nenhuma função nem tipo mudou.
 - **Ajustes finais (052, branch `ajustes-finais`).** Ordem: testes (`bash supabase/testes/rodar.sh`, blocos 111 a 114)
   → aplicar a 052 → regenerar `database.types.ts` (os tipos da 052 foram escritos à mão) e rodar os Advisors → publicar
   as funções → push do site.
