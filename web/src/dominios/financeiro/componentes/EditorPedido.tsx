@@ -21,6 +21,7 @@ import type { Cadastros } from "./LancarTitulo";
 import type { BaseEstoque } from "./estoqueBase";
 import { BuscaItem } from "./BuscaItem";
 import { CadastroRapido } from "./CadastroRapido";
+import { Icone } from "@/components/ui/Icone";
 
 type Linha = { chave: string; item: string; nome: string; quantidade: string; preco: string; desconto: string; emCompra: boolean };
 let seq = 0;
@@ -376,7 +377,7 @@ export function EditorPedido({
                         aria-label={`Tirar ${it?.nome ?? l.nome} do pedido`}
                         onClick={() => setLinhas((ls) => ls.filter((x) => x.chave !== l.chave))}
                       >
-                        ✕
+                        <Icone nome="fechar" className="h-4 w-4" />
                       </button>
                     </div>
                   </div>
@@ -473,7 +474,8 @@ export function EditorPedido({
                   className="btn"
                   onClick={() => setManuais((m) => [...m, { vencimento: data, valor: dif > 0 ? valorParaCampo(dif) : "" }])}
                 >
-                  + Parcela
+                  <Icone nome="mais" className="inline h-4 w-4 align-[-3px]" />
+                  Parcela
                 </button>
               </div>
             ) : (
@@ -505,7 +507,10 @@ export function EditorPedido({
                 </select>
               </label>
               <label className="campo">
-                <span title="Para onde vai o valor nos relatórios do Financeiro.">Categoria ({T.categoria}) ⓘ</span>
+                <span title="Para onde vai o valor nos relatórios do Financeiro.">
+                  Categoria ({T.categoria}){" "}
+                  <Icone nome="info" className="ml-0.5 inline h-3.5 w-3.5 align-[-2px] text-[var(--texto-suave)]" />
+                </span>
                 <select value={categoria} onChange={(e) => setCategoria(e.target.value)}>
                   <option value="">{categorias.length ? "Escolha…" : `Cadastre uma ${T.categoria} em Financeiro › Cadastros`}</option>
                   {categorias.map((c) => (

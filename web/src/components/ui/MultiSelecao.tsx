@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { Icone } from "@/components/ui/Icone";
 
 export interface OpcaoMulti {
   id: string;
@@ -62,7 +63,7 @@ export function MultiSelecao({
       >
         <span className="truncate">{resumo}</span>
         <span className="text-neutral-400" aria-hidden="true">
-          ▾
+          <Icone nome="chevron-baixo" className="h-4 w-4" />
         </span>
       </button>
       {aberto && (

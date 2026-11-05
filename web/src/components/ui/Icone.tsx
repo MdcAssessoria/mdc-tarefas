@@ -211,6 +211,21 @@ const P = {
       <path d="M18 3.5v4h-4M6 20.5v-4h4" />
     </>
   ),
+  // 04/11/2026: no lugar dos símbolos de texto (⋯, ▸, →, ▲/▼, ★) que apareciam na tela
+  reticencias: (
+    <>
+      <circle cx="5.5" cy="12" r="1.2" fill="currentColor" />
+      <circle cx="12" cy="12" r="1.2" fill="currentColor" />
+      <circle cx="18.5" cy="12" r="1.2" fill="currentColor" />
+    </>
+  ),
+  "chevron-direita": <path d="M9.5 6l6 6-6 6" />,
+  "seta-direita": <path d="M4 12h16M14 6l6 6-6 6" />,
+  "seta-cima": <path d="M12 20V4M6 10l6-6 6 6" />,
+  "seta-baixo": <path d="M12 4v16M6 14l6 6 6-6" />,
+  exclamacao: <path d="M12 5.5v8.5M12 18.4v.1" />,
+  traco: <path d="M6 12h12" />,
+  estrela: <path d="M12 3.6l2.6 5.3 5.8.8-4.2 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z" />,
 } satisfies Record<string, React.ReactNode>;
 
 /** Nomes de ícone que existem. Use este tipo em props novas; `nome` aceita texto livre por causa do banco. */

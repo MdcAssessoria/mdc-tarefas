@@ -451,7 +451,7 @@ const INTERACOES = {
     const conta = p.getByRole("dialog", { name: "Nova conta a pagar" });
     await conta.waitFor({ timeout: 3000 });
     await foto("nova-conta", { soTela: true });
-    await conta.getByRole("button", { name: "+ Nova categoria" }).click();
+    await conta.getByRole("button", { name: "Nova categoria" }).click();
     const cat = p.getByRole("dialog", { name: "Nova categoria de despesa" });
     await cat.waitFor({ timeout: 3000 });
     await cat.getByLabel("Conta contábil").waitFor({ timeout: 3000 });
@@ -736,7 +736,7 @@ const INTERACOES = {
   "/entradas/lancar": async (p) => {
     await p.getByRole("button", { name: "Lançar", exact: true }).first().click();
     await p.getByRole("heading", { name: "O que é esta nota?" }).waitFor({ timeout: 3000 });
-    await p.getByRole("button", { name: "← Voltar à lista" }).click();
+    await p.getByRole("button", { name: "Voltar à lista" }).click();
     for (const aba of await p.getByRole("tab").all()) {
       await aba.click();
       if ((await aba.getAttribute("aria-selected")) !== "true") throw new Error(`a aba "${await aba.innerText()}" não ficou selecionada`);
@@ -766,7 +766,7 @@ const INTERACOES = {
     await novo.getByLabel("Valor mensal (R$)").fill("2.500,00");
     await novo.getByText("Todo dia 1º o HUB lança").waitFor({ timeout: 3000 });
     await foto("novo-contrato");
-    await novo.getByRole("button", { name: "+ Nova categoria" }).click();
+    await novo.getByRole("button", { name: "Nova categoria" }).click();
     const cat = p.getByRole("dialog", { name: "Nova categoria de despesa" });
     await cat.waitFor({ timeout: 3000 });
     await cat.getByRole("button", { name: "Voltar" }).click();

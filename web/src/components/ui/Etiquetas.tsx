@@ -1,6 +1,7 @@
 "use client";
 
 import { useId, useState } from "react";
+import { Icone } from "@/components/ui/Icone";
 
 /** Etiquetas livres (grupos de clientes): digita e Enter para incluir, sugestões das já usadas. */
 export function Etiquetas({
@@ -37,7 +38,7 @@ export function Etiquetas({
             onClick={() => aoMudar(valor.filter((x) => x !== g))}
             aria-label={`Remover ${g}`}
           >
-            ✕
+            <Icone nome="fechar" className="h-4 w-4" />
           </button>
         </span>
       ))}

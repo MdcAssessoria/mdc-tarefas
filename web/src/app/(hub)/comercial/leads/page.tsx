@@ -367,7 +367,7 @@ function Leads() {
                   <th>Recebido</th>
                   <th>Empresa</th>
                   <th>Contato</th>
-                  <th>Regime → melhor</th>
+                  <th>Regime atual e melhor</th>
                   <th className="text-right">Economia estimada</th>
                   <th>Etapa</th>
                   <th>
@@ -428,9 +428,11 @@ function Leads() {
                           )}
                         </span>
                       </td>
-                      <td data-rotulo="Regime → melhor" className="whitespace-nowrap">
+                      <td data-rotulo="Regime atual e melhor" className="whitespace-nowrap">
                         <span>
-                          {nomeRegime(o.regime_atual)} → <b>{nomeRegime(d.melhor_regime)}</b>
+                          {nomeRegime(o.regime_atual)}
+                          <Icone nome="seta-direita" className="mx-1 inline h-3.5 w-3.5 align-[-2px] text-[var(--texto-suave)]" />
+                          <b>{nomeRegime(d.melhor_regime)}</b>
                         </span>
                       </td>
                       <td data-rotulo="Economia estimada" className="text-right">

@@ -65,7 +65,9 @@ export default function PaginaTransferencias() {
   const ativas = (consulta.dados?.contas ?? []).filter((c) => c.ativo).length;
 
   const rotuloPeriodo =
-    intervalo.de || intervalo.ate ? `${fmtData(intervalo.de ?? "") || "início"} a ${fmtData(intervalo.ate ?? "") || "hoje"}` : "Todo o período";
+    intervalo.de || intervalo.ate
+      ? `${fmtData(intervalo.de ?? "") || "início"} a ${fmtData(intervalo.ate ?? "") || "hoje"}`
+      : "Todo o período";
   const filtrosAtivos: FiltroAtivo[] = [
     periodo !== "90" && {
       id: "periodo",
@@ -160,7 +162,12 @@ export default function PaginaTransferencias() {
       ) : (
         <>
           <div className="grid gap-3 sm:grid-cols-3">
-            <Indicador titulo="Transferido no período" icone="transferir" valor={brl(total)} detalhe={`${validas.length} transferência(s)`} />
+            <Indicador
+              titulo="Transferido no período"
+              icone="transferir"
+              valor={brl(total)}
+              detalhe={`${validas.length} transferência(s)`}
+            />
             <Indicador
               titulo="Estornadas"
               icone="fechar"
@@ -190,7 +197,7 @@ export default function PaginaTransferencias() {
               <thead>
                 <tr>
                   <th>Data</th>
-                  <th>De → Para</th>
+                  <th>De / para</th>
                   <th className="text-right">Valor</th>
                   <th>Situação</th>
                   {podeOperar && (

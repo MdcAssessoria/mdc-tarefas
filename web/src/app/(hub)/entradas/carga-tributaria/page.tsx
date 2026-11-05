@@ -291,13 +291,15 @@ export default function PaginaCargaTributaria() {
           <p className="text-sm text-neutral-700">{resumo}</p>
           <div className="grid gap-3 sm:grid-cols-3">
             <Indicador icone="moeda" titulo="Valor das compras" valor={brl(valor)} detalhe={`${qtdNotas} nota(s)`} />
-            <Indicador icone="alerta"
+            <Indicador
+              icone="alerta"
               titulo="Impostos no preço"
               valor={brl(impostos)}
               detalhe={`${cargaPercentual(impostos, valor).toLocaleString("pt-BR")}% do valor`}
               tom="ambar"
             />
-            <Indicador icone="seta-entrada"
+            <Indicador
+              icone="seta-entrada"
               titulo="Créditos estimados"
               valor={brl(credito)}
               detalhe={regime ? `pelo ${nomeRegime} · estimativa` : "informe o regime da empresa"}

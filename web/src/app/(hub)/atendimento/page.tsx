@@ -334,7 +334,15 @@ function Caixa() {
                       <div className="break-words font-semibold">{atual.titulo}</div>
                       <div className="text-xs text-neutral-500">
                         {nomeCli(atual.cliente_id)} · {nomeAssunto(atual.assunto)} · aberto em {fmtDataHora(atual.criado_em)}
-                        {atual.avaliacao && ` · avaliação ${"★".repeat(atual.avaliacao)}`}
+                        {atual.avaliacao && (
+                          <span className="inline-flex items-center gap-0.5" aria-label={`avaliação ${atual.avaliacao} de 5`}>
+                            {" "}
+                            · avaliação
+                            {Array.from({ length: atual.avaliacao }, (_, k) => (
+                              <Icone key={k} nome="estrela" className="h-3.5 w-3.5 fill-current text-[var(--destaque-escuro)]" />
+                            ))}
+                          </span>
+                        )}
                       </div>
                     </div>
                     {!podeOperar && <ChipConversa status={atual.status} nome={nomeStatus(atual.status)} />}

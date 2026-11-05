@@ -405,7 +405,7 @@ function Funil() {
               }
             >
               {visao === "arquivados" && !nArquivadas
-                ? "Quando uma oportunidade não for para frente, arquive pelo menu “⋯” do cartão ou pelo botão “Limpar funil”. Ela vem para cá e pode voltar ao funil."
+                ? "Quando uma oportunidade não for para frente, arquive pelo botão de mais ações (três pontinhos) do cartão ou pelo botão “Limpar funil”. Ela vem para cá e pode voltar ao funil."
                 : "Troque a situação ou o período, ou limpe os filtros para ver tudo."}
             </EstadoVazio>
           ) : visao === "quadro" ? (

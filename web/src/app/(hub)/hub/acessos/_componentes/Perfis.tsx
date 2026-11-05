@@ -8,6 +8,7 @@ import type { Perfil } from "@/dominios/acessos/tipos";
 import { Chips } from "./Chips";
 import { EditorPerfil } from "./EditorPerfil";
 import { JanelaMotivo } from "@/dominios/financeiro/componentes/Comuns";
+import { Icone } from "@/components/ui/Icone";
 
 export function Perfis({
   perfis,
@@ -48,7 +49,8 @@ export function Perfis({
     <div className="space-y-3">
       <div className="flex justify-end">
         <button className="btn" onClick={() => setEditando({ id: "", nome: "", apps: {} })}>
-          + Novo perfil
+          <Icone nome="mais" className="inline h-4 w-4 align-[-3px]" />
+          Novo perfil
         </button>
       </div>
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">

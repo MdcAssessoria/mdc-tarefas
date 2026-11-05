@@ -26,6 +26,7 @@ import { BotoesExportar } from "@/components/ui/BotoesExportar";
 import { nomeArquivo } from "@/lib/arquivos/exportarLista";
 import { hojeISO } from "@/lib/datas";
 import { PAPEIS } from "@/dominios/organizacao/tipos";
+import { Icone } from "@/components/ui/Icone";
 
 export default function PaginaAcessos() {
   return <Acessos />;
@@ -193,7 +194,8 @@ function Acessos() {
           </p>
         </div>
         <button className="btn-primario" onClick={() => setConvite(true)}>
-          + Cadastrar pessoa
+          <Icone nome="mais" className="inline h-4 w-4 align-[-3px]" />
+          Cadastrar pessoa
         </button>
       </div>
 
@@ -238,7 +240,8 @@ function Acessos() {
                 { titulo: "Papel", valor: (m) => PAPEIS.find((p) => p.id === m.papel)?.nome ?? m.papel, peso: 0.9, largura: 14 },
                 {
                   titulo: "Perfil",
-                  valor: (m) => (m.papel === "admin" ? "Administrador (tudo)" : (perfis.find((p) => p.id === m.perfil_id)?.nome ?? "Acesso manual")),
+                  valor: (m) =>
+                    m.papel === "admin" ? "Administrador (tudo)" : (perfis.find((p) => p.id === m.perfil_id)?.nome ?? "Acesso manual"),
                   peso: 1.2,
                   largura: 22,
                 },

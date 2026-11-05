@@ -283,7 +283,9 @@ function Importar() {
                 <ul className="space-y-1.5 text-sm">
                   {analise.conferencias.map((c) => (
                     <li key={c.nome} className="flex items-start gap-2">
-                      <span className={c.ok ? "text-emerald-700" : "text-[var(--perigo)]"}>{c.ok ? "✓" : "✕"}</span>
+                      <span className={c.ok ? "text-emerald-700" : "text-[var(--perigo)]"}>
+                        <Icone nome={c.ok ? "check" : "fechar"} className="inline h-4 w-4" />
+                      </span>
                       <span>
                         {c.nome}
                         {!c.ok && <span className="block text-xs text-neutral-500">{c.detalhe}</span>}

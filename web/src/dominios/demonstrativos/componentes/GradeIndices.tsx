@@ -11,6 +11,7 @@ import type { Tendencia } from "@/dominios/demonstrativos/tendencia";
 import { brl } from "@/lib/formato/moeda";
 import { fmtIndice, fmtNumero } from "@/lib/formato/numero";
 import type { BalanceteReg } from "@/dominios/demonstrativos/tipos";
+import { Icone } from "@/components/ui/Icone";
 
 /** Grade de índices com a curva dos últimos meses e a faixa de alerta. */
 export function GradeIndices({ sel, historico }: { sel: Selecao<BalanceteReg>; historico: BalanceteReg[] }) {
@@ -89,7 +90,12 @@ export function GradeIndices({ sel, historico }: { sel: Selecao<BalanceteReg>; h
                   </div>
                   <p className="mt-1 text-xs text-neutral-600">{info.leitura}.</p>
                   <LinhaTendencia t={tend.get(info.id) ?? null} formato={info.formato} />
-                  {ruim && <p className="mt-1 text-xs font-medium text-[var(--perigo)]">⚠ Fora da faixa de referência da MDC</p>}
+                  {ruim && (
+                    <p className="mt-1 text-xs font-medium text-[var(--perigo)]">
+                      <Icone nome="alerta" className="mr-1 inline h-3.5 w-3.5 align-[-2px]" />
+                      Fora da faixa de referência da MDC
+                    </p>
+                  )}
                 </div>
               );
             })}
@@ -130,7 +136,7 @@ function LinhaTendencia({ t, formato }: { t: Tendencia | null; formato: "x" | "%
       title={`Reta de mínimos quadrados sobre ${t.n} meses. R² ${t.r2.toFixed(2)}.`}
     >
       <span className="font-semibold" style={{ color: s.cor }}>
-        {s.icone} Tendência linear: {s.nome}
+        <Icone nome={s.icone} className="inline h-3.5 w-3.5 align-[-2px]" /> Tendência linear: {s.nome}
       </span>{" "}
       · {fmtVariacao(t.inclinacao, formato)}/mês · R² {t.r2.toLocaleString("pt-BR", { maximumFractionDigits: 2 })} · projeção em 3 meses:{" "}
       <b>{fmtIndice(t.projecao3, formato)}</b>
@@ -158,7 +164,7 @@ function ResumoTendencia({ tend, meses }: { tend: Map<string, Tendencia | null>;
         {(["melhora", "piora", "estavel"] as const).map((k) => (
           <div key={k} className="rounded-lg border border-[var(--borda)] p-3">
             <div className="text-2xl font-semibold tabular-nums" style={{ color: SENTIDO[k].cor }}>
-              {SENTIDO[k].icone} {grupo(k).length}
+              <Icone nome={SENTIDO[k].icone} className="inline h-6 w-6 align-[-3px]" /> {grupo(k).length}
             </div>
             <div className="text-xs text-neutral-600">{k === "estavel" ? "sem tendência clara" : `índices ${SENTIDO[k].nome}`}</div>
           </div>

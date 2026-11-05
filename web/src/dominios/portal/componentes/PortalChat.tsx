@@ -154,7 +154,7 @@ export function PortalChat({ emp }: { emp: EmpresaPortal }) {
                           aria-label={`Nota ${n} de 5`}
                           aria-pressed={(atual.avaliacao ?? 0) >= n}
                         >
-                          ★
+                          <Icone nome="estrela" className={`h-5 w-5 ${(atual.avaliacao ?? 0) >= n ? "fill-current" : ""}`} />
                         </button>
                       ))}
                     </div>

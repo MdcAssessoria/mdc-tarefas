@@ -5,6 +5,7 @@ import { useOrgOpcional } from "@/dominios/organizacao/OrgProvider";
 import { useLogo } from "@/lib/marca";
 import type { Organizacao } from "@/dominios/organizacao/tipos";
 import { nomeCliente } from "@/dominios/clientes/nome";
+import { Icone } from "@/components/ui/Icone";
 
 export interface Kpis {
   abertas: number;
@@ -242,7 +243,11 @@ export function PainelTV({
                         <td className="py-[0.55vw] pr-[1vw]">
                           <div className="line-clamp-1 font-medium text-white">
                             {(v.prioridade === "urgente" || v.prioridade === "alta") && (
-                              <span style={{ color: v.prioridade === "urgente" ? VERMELHO : AMBAR }}>● </span>
+                              <span
+                                className="mr-1.5 inline-block h-2.5 w-2.5 rounded-full align-middle"
+                                style={{ background: v.prioridade === "urgente" ? VERMELHO : AMBAR }}
+                                aria-hidden="true"
+                              />
                             )}
                             {v.titulo}
                           </div>
@@ -344,7 +349,10 @@ export function PainelTV({
           <div className="tv-letreiro inline-block" style={{ color: TEXTO_SUAVE }}>
             {(dados?.concluidas ?? []).map((c) => (
               <span key={c.id} className="mr-[3vw]">
-                <span style={{ color: "#32D583" }}>✓</span> {nm(c.responsavel_id) || "Equipe"} · {c.titulo}
+                <span style={{ color: "#32D583" }}>
+                  <Icone nome="check" className="inline h-5 w-5 align-[-3px]" />
+                </span>{" "}
+                {nm(c.responsavel_id) || "Equipe"} · {c.titulo}
                 {nc(c.cliente_id) ? ` · ${nc(c.cliente_id)}` : ""}
               </span>
             ))}

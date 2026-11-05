@@ -16,6 +16,7 @@ import { encerrarContrato, reajustarContrato } from "../repositorio";
 import { lerReajustes } from "../leituras";
 import { INDICES } from "../tipos";
 import type { Cobranca, Contrato } from "../tipos";
+import { Icone } from "@/components/ui/Icone";
 
 export function ReajustarContrato({
   contrato,
@@ -189,7 +190,9 @@ export function HistoricoContrato({
           <ul className="list-disc pl-5">
             {reajustes.dados.map((r) => (
               <li key={r.id}>
-                {fmtData(r.data)}: {r.indice} {r.percentual.toLocaleString("pt-BR")}% · {brl(r.valor_antes)} → {brl(r.valor_depois)}
+                {fmtData(r.data)}: {r.indice} {r.percentual.toLocaleString("pt-BR")}% · {brl(r.valor_antes)}
+                <Icone nome="seta-direita" className="mx-1 inline h-3.5 w-3.5 align-[-2px] text-[var(--texto-suave)]" />
+                {brl(r.valor_depois)}
                 {r.observacao ? ` (${r.observacao})` : ""}
               </li>
             ))}

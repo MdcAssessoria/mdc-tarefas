@@ -169,7 +169,7 @@ export function TarefaEditor({
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-[var(--borda)] bg-[var(--superficie)] px-5 py-3">
           <h2 className="font-semibold text-[var(--marca)]">{tarefa ? "Editar tarefa" : "Nova tarefa"}</h2>
           <button className="btn" onClick={aoFechar} aria-label="Fechar">
-            ✕
+            <Icone nome="fechar" className="h-4 w-4" />
           </button>
         </div>
 
@@ -424,10 +424,7 @@ export function TarefaEditor({
         <JanelaMotivo
           titulo="Retirar anexo"
           descricao={
-            <>
-              O anexo “{retirando.nome}” sai da tarefa e do Portal do cliente. Nada se apaga: o arquivo e o motivo ficam no
-              histórico.
-            </>
+            <>O anexo “{retirando.nome}” sai da tarefa e do Portal do cliente. Nada se apaga: o arquivo e o motivo ficam no histórico.</>
           }
           botao="Retirar anexo"
           aoConfirmar={async (motivo) => {

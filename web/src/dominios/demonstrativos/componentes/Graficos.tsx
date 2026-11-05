@@ -375,9 +375,9 @@ export function Faisca({
 
 /** Cores e rótulos do status de saúde financeira (bom, atenção, crítico). */
 export const STATUS_SAUDE = {
-  bom: { cor: "#067647", fundo: "#ECFDF3", icone: "✔", rotulo: "Bom" },
-  atencao: { cor: "#B54708", fundo: "#FFFAEB", icone: "!", rotulo: "Atenção" },
-  critico: { cor: "#B42318", fundo: "#FEF3F2", icone: "✖", rotulo: "Crítico" },
+  bom: { cor: "#067647", fundo: "#ECFDF3", icone: "check", rotulo: "Bom" },
+  atencao: { cor: "#B54708", fundo: "#FFFAEB", icone: "exclamacao", rotulo: "Atenção" },
+  critico: { cor: "#B42318", fundo: "#FEF3F2", icone: "fechar", rotulo: "Crítico" },
 } as const;
 
 /** Termômetro (meio círculo) de 0 a 100 com três faixas. Desenhado em ~240 px, mostrado com até 260 px. */

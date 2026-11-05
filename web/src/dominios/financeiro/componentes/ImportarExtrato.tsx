@@ -17,6 +17,7 @@ import { brl } from "@/lib/formato/moeda";
 import { fmtData } from "@/lib/formato/datas";
 import type { TomAviso } from "@/components/ui/Aviso";
 import { CampoArquivo } from "@/components/ui/CampoArquivo";
+import { Icone } from "@/components/ui/Icone";
 
 type Previa = { arquivo: string; formato: "ofx" | "planilha"; extrato: ExtratoLido };
 
@@ -175,7 +176,9 @@ export function ImportarExtrato({
       {previa && (
         <div className="space-y-2 rounded-md bg-neutral-50 p-3 text-sm">
           <p>
-            <b>{previa.arquivo}</b> → {nomeConta(contaImportar)}: {previa.extrato.lancamentos.length} lançamento(s)
+            <b>{previa.arquivo}</b>
+            <Icone nome="seta-direita" className="mx-1 inline h-3.5 w-3.5 align-[-2px] text-[var(--texto-suave)]" />
+            {nomeConta(contaImportar)}: {previa.extrato.lancamentos.length} lançamento(s)
             {previa.extrato.inicio ? ` de ${fmtData(previa.extrato.inicio)} a ${fmtData(previa.extrato.fim ?? "")}` : ""}.
           </p>
           <p>

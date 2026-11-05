@@ -16,6 +16,7 @@ import { lancar } from "../repositorio";
 import { dividirParcelas, numeroBr, valorParaCampo } from "../regras";
 import { FORMAS_PAGAMENTO } from "../tipos";
 import type { Categoria, CentroCusto, ContaBancaria, Pessoa, Titulo, TipoTitulo } from "../tipos";
+import { Icone } from "@/components/ui/Icone";
 
 export const TEXTOS = {
   pagar: { titulo: "Contas a pagar", conta: "conta a pagar", pessoa: "Fornecedor", verbo: "Pagar", pago: "Já foi pago", feito: "Pago" },
@@ -251,7 +252,8 @@ export function LancarTitulo({
               </select>
               {podeCriarCategoria && (
                 <button type="button" className="btn-link self-start text-xs" onClick={() => setNovaCategoria(true)}>
-                  + Nova categoria
+                  <Icone nome="mais" className="inline h-4 w-4 align-[-3px]" />
+                  Nova categoria
                 </button>
               )}
               {novaCategoria && (

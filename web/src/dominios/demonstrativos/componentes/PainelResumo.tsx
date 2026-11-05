@@ -13,6 +13,7 @@ import { brl } from "@/lib/formato/moeda";
 import { fmtIndice } from "@/lib/formato/numero";
 import { mesExtenso } from "@/lib/formato/datas";
 import type { BalanceteReg } from "@/dominios/demonstrativos/tipos";
+import { Icone } from "@/components/ui/Icone";
 
 function Kpi({
   rotulo,
@@ -24,7 +25,7 @@ function Kpi({
 }: {
   rotulo: string;
   valor: string;
-  sub?: string;
+  sub?: React.ReactNode;
   negativo?: boolean;
   serie?: (number | null)[];
   dica?: string;
@@ -69,13 +70,26 @@ export function PainelResumo({
   const grupos = useMemo(() => serieDaVisao(historico, sel.escolha), [historico, sel.escolha]);
   const mesmoPeriodoAnoAnterior = anterior?.ag ?? null;
   const anteriorGrupo = grupos.length > 1 ? grupos[grupos.length - 2] : null;
-  const pct = (a: number, b: number) =>
-    `${a >= b ? "▲" : "▼"} ${Math.abs(((a - b) / Math.abs(b)) * 100)
-      .toFixed(1)
-      .replace(".", ",")}%`;
+  const pct = (a: number, b: number) => (
+    <>
+      <Icone nome={a >= b ? "seta-cima" : "seta-baixo"} className="inline h-3 w-3 align-[-1px]" />{" "}
+      {Math.abs(((a - b) / Math.abs(b)) * 100)
+        .toFixed(1)
+        .replace(".", ",")}
+      %
+    </>
+  );
   // compara com o mesmo período do ano anterior quando existe; senão, com o período imediatamente anterior
   const variacao = (a: number, ano?: number | null, seq?: number | null) =>
-    ano ? `${pct(a, ano)} sobre ${anterior?.rotulo ?? ""}` : seq ? `${pct(a, seq)} sobre ${anteriorGrupo?.rotulo ?? ""}` : undefined;
+    ano ? (
+      <>
+        {pct(a, ano)} sobre {anterior?.rotulo ?? ""}
+      </>
+    ) : seq ? (
+      <>
+        {pct(a, seq)} sobre {anteriorGrupo?.rotulo ?? ""}
+      </>
+    ) : undefined;
   const serie = (fn: (g: (typeof grupos)[number]) => number | null | undefined) =>
     grupos.length > 1 ? grupos.map((g) => fn(g) ?? null) : undefined;
   const rotuloPeriodo = t === "mensal" && sel.fonte === "mensal" ? "mês" : sel.rotulo;
@@ -112,7 +126,7 @@ export function PainelResumo({
                       style={{ background: st.cor }}
                       aria-hidden
                     >
-                      {st.icone}
+                      <Icone nome={st.icone} className="h-3.5 w-3.5" />
                     </span>
                     {p.nome} <span className="ml-auto text-[11px] font-medium">{st.rotulo}</span>
                   </div>
@@ -144,7 +158,12 @@ export function PainelResumo({
           negativo={resumo.disponivel < 0}
           serie={serie((g) => g.disponivel)}
           sub={
-            dfc ? `${dfc.variacao >= 0 ? "▲ entrou" : "▼ saiu"} ${brl(Math.abs(dfc.variacao), { centavos: false })} no período` : undefined
+            dfc ? (
+              <>
+                <Icone nome={dfc.variacao >= 0 ? "seta-cima" : "seta-baixo"} className="inline h-3 w-3 align-[-1px]" />{" "}
+                {dfc.variacao >= 0 ? "entrou" : "saiu"} {brl(Math.abs(dfc.variacao), { centavos: false })} no período
+              </>
+            ) : undefined
           }
         />
         <Kpi

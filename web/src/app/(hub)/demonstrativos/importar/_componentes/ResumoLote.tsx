@@ -15,6 +15,7 @@ import { hojeISO } from "@/lib/datas";
 import { traduzirErro } from "@/lib/erros";
 import { fmtCompetencia, fmtData } from "@/lib/formato/datas";
 import { carregarLogo } from "@/lib/marca";
+import { Icone } from "@/components/ui/Icone";
 
 export function ResumoLote({ resultados, aoRecomecar }: { resultados: ResultadoLote[]; aoRecomecar: () => void }) {
   const { org } = useOrg();
@@ -125,7 +126,7 @@ export function ResumoLote({ resultados, aoRecomecar }: { resultados: ResultadoL
               {g.itens.map((i, k) => (
                 <li key={k} className="flex items-start gap-2">
                   <span className={i.entrou ? "text-emerald-700" : "text-[var(--perigo)]"} aria-hidden>
-                    {i.entrou ? "✓" : "✕"}
+                    <Icone nome={i.entrou ? "check" : "fechar"} className="inline h-4 w-4" />
                   </span>
                   <span className="min-w-0">
                     <b>{fmtCompetencia(i.competencia) || "sem mês"}</b> · <span className="break-all text-neutral-600">{i.arquivo}</span>

@@ -7,6 +7,7 @@ import { useId, useMemo, useState } from "react";
 import { brl } from "@/lib/formato/moeda";
 import { combinaBusca, qtdBr } from "../estoqueRegras";
 import type { Item } from "../tipos";
+import { Icone } from "@/components/ui/Icone";
 
 export function BuscaItem({
   itens,
@@ -117,7 +118,8 @@ export function BuscaItem({
                 onClick={() => aoCadastrar(q.trim())}
                 className="w-full rounded-md px-3 py-2 text-left text-sm text-[var(--marca)] hover:bg-[var(--fundo)]"
               >
-                + Cadastrar &quot;{q.trim()}&quot; como item novo
+                <Icone nome="mais" className="inline h-4 w-4 align-[-3px]" />
+                Cadastrar &quot;{q.trim()}&quot; como item novo
               </button>
             </li>
           )}

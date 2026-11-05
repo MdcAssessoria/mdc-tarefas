@@ -19,6 +19,7 @@ import { soDigitos } from "@/lib/documento";
 import { carregarSheetJS, corrigirXlsDominio } from "@/lib/arquivos/planilha";
 import { fmtData } from "@/lib/formato/datas";
 import { CampoArquivo } from "@/components/ui/CampoArquivo";
+import { Icone } from "@/components/ui/Icone";
 
 async function lerArquivo(arq: File): Promise<{ abas: string[]; dados: Record<string, string[][]> }> {
   const XLSX = await carregarSheetJS();
@@ -222,7 +223,8 @@ function Importar() {
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <Link href="/config" className="btn-link text-sm">
-            ← Configurações
+            <Icone nome="voltar" className="h-4 w-4" />
+            Configurações
           </Link>
           <h1 className="text-xl font-semibold text-[var(--marca)]">Importar clientes</h1>
           <p className="text-sm text-[var(--texto-suave)]">

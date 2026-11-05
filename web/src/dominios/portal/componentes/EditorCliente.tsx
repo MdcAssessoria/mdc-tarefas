@@ -7,6 +7,7 @@ import { enviarConvite } from "@/dominios/acessos/convite";
 import { nomeCliente } from "@/dominios/clientes/nome";
 import { PERFIS_CLIENTE, PERMISSOES_PORTAL, perfilDasPerms } from "@/dominios/portal/permissoes";
 import type { VinculoCliente } from "@/dominios/portal/tipos";
+import { Icone } from "@/components/ui/Icone";
 
 export function EditorCliente({
   pessoa,
@@ -175,7 +176,7 @@ export function EditorCliente({
                   onClick={() => alternar(id)}
                   title="Remover"
                 >
-                  {nomeCli(id)} ✕
+                  {nomeCli(id)} <Icone nome="fechar" className="ml-1 inline h-3.5 w-3.5 align-[-2px]" />
                 </button>
               ))}
             </div>

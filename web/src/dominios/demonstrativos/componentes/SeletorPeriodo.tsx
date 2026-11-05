@@ -17,6 +17,7 @@ import {
 } from "@/dominios/demonstrativos/selecaoPeriodo";
 import type { Escolha, RegPeriodo, Selecao, Visao } from "@/dominios/demonstrativos/selecaoPeriodo";
 import { CHAVES, useEstadoLembrado } from "@/lib/armazenamentoLocal";
+import { Icone } from "@/components/ui/Icone";
 
 export interface Periodo<T extends RegPeriodo> {
   escolha: Escolha | null;
@@ -134,7 +135,7 @@ export function SeletorPeriodo<T extends RegPeriodo>({
             className={`chip max-w-full whitespace-normal ${sel.completo ? "bg-emerald-50 text-emerald-800" : "bg-amber-50 text-amber-900"}`}
             title={sel.completo ? "Todos os meses do período estão no Hub" : "Os números somam só os meses importados"}
           >
-            {sel.completo ? "✓" : "!"} {sel.completude}
+            <Icone nome={sel.completo ? "check" : "alerta"} className="inline h-3.5 w-3.5 align-[-2px]" /> {sel.completude}
           </span>
           <span className="chip max-w-full whitespace-normal bg-[var(--fundo)] text-neutral-700">
             {anterior ? `Comparando com ${anterior.rotulo}` : `Sem o mesmo período de ${escolha.ano - 1} para comparar`}

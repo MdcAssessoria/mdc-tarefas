@@ -23,6 +23,7 @@ import { enviarFotoItem, salvarItem } from "../repositorio";
 import type { Item } from "../tipos";
 import type { BaseEstoque } from "./estoqueBase";
 import { FotoItem, reduzirImagem } from "./FotoItem";
+import { Icone } from "@/components/ui/Icone";
 
 type Natureza = "revenda" | "servico" | "consumo";
 const NATUREZAS: { id: Natureza; titulo: string; texto: string }[] = [
@@ -480,7 +481,7 @@ export function AssistenteItem({
             {!servico && (
               <label className="campo">
                 <span title="Classificação fiscal da mercadoria, usada na nota. Se não souber, pergunte ao setor fiscal.">
-                  NCM (opcional) ⓘ
+                  NCM (opcional) <Icone nome="info" className="ml-0.5 inline h-3.5 w-3.5 align-[-2px] text-[var(--texto-suave)]" />
                 </span>
                 <input value={f.ncm} onChange={(e) => mudar({ ncm: e.target.value })} inputMode="numeric" placeholder="0000.00.00" />
               </label>
@@ -526,7 +527,9 @@ export function AssistenteItem({
               {f.controla && (
                 <div className="grid gap-3 sm:grid-cols-3">
                   <label className="campo">
-                    <span title="Quando o saldo chegar neste número, o item aparece como 'abaixo do mínimo'.">Estoque mínimo ⓘ</span>
+                    <span title="Quando o saldo chegar neste número, o item aparece como 'abaixo do mínimo'.">
+                      Estoque mínimo <Icone nome="info" className="ml-0.5 inline h-3.5 w-3.5 align-[-2px] text-[var(--texto-suave)]" />
+                    </span>
                     <input
                       value={f.estoque_minimo}
                       onChange={(e) => mudar({ estoque_minimo: e.target.value })}
@@ -575,7 +578,7 @@ export function AssistenteItem({
           <div className="grid gap-3 sm:grid-cols-3">
             <label className="campo">
               <span title="Quanto você paga por 1 unidade de venda. Depois das compras, o HUB calcula o custo médio sozinho.">
-                Preço de custo (R$) ⓘ
+                Preço de custo (R$) <Icone nome="info" className="ml-0.5 inline h-3.5 w-3.5 align-[-2px] text-[var(--texto-suave)]" />
               </span>
               <input value={f.custo} onChange={(e) => mudar({ custo: e.target.value })} inputMode="decimal" placeholder="0,00" />
               {editando && item?.custo_medio != null && (
@@ -583,7 +586,9 @@ export function AssistenteItem({
               )}
             </label>
             <label className="campo">
-              <span title="Quanto quer ganhar sobre o custo. Ex.: custo 10 + markup 50% = preço 15.">Markup desejado (%) ⓘ</span>
+              <span title="Quanto quer ganhar sobre o custo. Ex.: custo 10 + markup 50% = preço 15.">
+                Markup desejado (%) <Icone nome="info" className="ml-0.5 inline h-3.5 w-3.5 align-[-2px] text-[var(--texto-suave)]" />
+              </span>
               <input value={f.markup} onChange={(e) => mudar({ markup: e.target.value })} inputMode="decimal" placeholder="Ex.: 50" />
               {sugerido != null && (
                 <button
@@ -615,13 +620,13 @@ export function AssistenteItem({
               </p>
               <p>
                 <span className="block text-xs opacity-70" title="Quanto do preço de venda sobra depois do custo.">
-                  Margem sobre o preço ⓘ
+                  Margem sobre o preço <Icone nome="info" className="ml-0.5 inline h-3.5 w-3.5 align-[-2px] text-[var(--texto-suave)]" />
                 </span>
                 <strong>{pct(margem(preco, custoRef))}</strong>
               </p>
               <p>
                 <span className="block text-xs opacity-70" title="Quanto o preço está acima do custo.">
-                  Markup sobre o custo ⓘ
+                  Markup sobre o custo <Icone nome="info" className="ml-0.5 inline h-3.5 w-3.5 align-[-2px] text-[var(--texto-suave)]" />
                 </span>
                 <strong>{pct(markupDe(preco, custoRef))}</strong>
               </p>
@@ -631,7 +636,10 @@ export function AssistenteItem({
           <p className="text-xs text-neutral-500">Margem e lucro não incluem impostos; para a carga tributária da venda, fale com a MDC.</p>
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="campo">
-              <span title="Para onde vai o dinheiro das vendas deste item nos relatórios.">Categoria na venda (receita) ⓘ</span>
+              <span title="Para onde vai o dinheiro das vendas deste item nos relatórios.">
+                Categoria na venda (receita){" "}
+                <Icone nome="info" className="ml-0.5 inline h-3.5 w-3.5 align-[-2px] text-[var(--texto-suave)]" />
+              </span>
               <select value={f.categoria_receita} onChange={(e) => mudar({ categoria_receita: e.target.value })}>
                 <option value="">Nenhuma</option>
                 {cats

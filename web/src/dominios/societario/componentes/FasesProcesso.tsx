@@ -57,7 +57,7 @@ export function FasesProcesso({
             <th>Situação</th>
             <th>Responsável</th>
             <th>Prazo</th>
-            <th>Início → fim</th>
+            <th>Início e fim</th>
             <th>
               <span className="sr-only">Ações</span>
             </th>
@@ -81,7 +81,9 @@ export function FasesProcesso({
                     {atual && <Chip tom="azul">Fase atual</Chip>}
                   </span>
                   {atual && (
-                    <span className="block text-xs font-normal text-[var(--texto-suave)]">há {diasParado(f.mudou_em)} dia(s) nesta fase</span>
+                    <span className="block text-xs font-normal text-[var(--texto-suave)]">
+                      há {diasParado(f.mudou_em)} dia(s) nesta fase
+                    </span>
                   )}
                 </td>
                 <td data-rotulo="Situação">
@@ -137,8 +139,16 @@ export function FasesProcesso({
                     f.prazo_em && <span className="num">{fmtData(f.prazo_em)}</span>
                   )}
                 </td>
-                <td data-rotulo="Início → fim" className="num whitespace-nowrap text-xs text-[var(--texto-suave)]">
-                  {f.inicio_em || f.fim_em ? `${fmtData(f.inicio_em) || "—"} → ${fmtData(f.fim_em) || "…"}` : "—"}
+                <td data-rotulo="Início e fim" className="num whitespace-nowrap text-xs text-[var(--texto-suave)]">
+                  {f.inicio_em || f.fim_em ? (
+                    <>
+                      {fmtData(f.inicio_em) || "—"}
+                      <Icone nome="seta-direita" className="mx-1 inline h-3.5 w-3.5 align-[-2px] text-[var(--texto-suave)]" />
+                      {fmtData(f.fim_em) || "…"}
+                    </>
+                  ) : (
+                    "—"
+                  )}
                 </td>
                 <td className="celula-acoes whitespace-nowrap text-right">
                   <div className="flex justify-end gap-1">
@@ -150,7 +160,9 @@ export function FasesProcesso({
                     )}
                     {podeOperar && (
                       <label
-                        className={`btn !min-h-8 cursor-pointer !px-2.5 ${editavel || atual ? "" : "max-sm:!hidden"}`} title={`Anexar documento na fase ${f.nome}`}>
+                        className={`btn !min-h-8 cursor-pointer !px-2.5 ${editavel || atual ? "" : "max-sm:!hidden"}`}
+                        title={`Anexar documento na fase ${f.nome}`}
+                      >
                         <Icone nome="clipe" className="h-4 w-4" />
                         Anexar
                         <input type="file" multiple className="sr-only" onChange={(e) => aoAnexar(e.target.files, f.nome)} />

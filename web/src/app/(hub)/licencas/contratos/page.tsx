@@ -21,6 +21,7 @@ import { contratoVigente, reajustePendente } from "@/dominios/licencas/regras";
 import { INDICES } from "@/dominios/licencas/tipos";
 import type { Contrato } from "@/dominios/licencas/tipos";
 import { plural } from "@/lib/formato/numero";
+import { Icone } from "@/components/ui/Icone";
 
 type FiltroSituacao = "ativos" | "encerrados" | "todos";
 type Janela =
@@ -96,7 +97,10 @@ function Contratos() {
 
   return (
     <div className="space-y-4">
-      <Cabecalho titulo="Assinaturas do Ledgra" descricao="Quem assina o Ledgra, com qual plano ou produto, por quanto e com que vencimento.">
+      <Cabecalho
+        titulo="Assinaturas do Ledgra"
+        descricao="Quem assina o Ledgra, com qual plano ou produto, por quanto e com que vencimento."
+      >
         <BotoesExportar
           vazio={!lista.length}
           avisar={mostrar}
@@ -165,8 +169,8 @@ function Contratos() {
         {cliente && (
           <span className="chip bg-[var(--fundo)] text-neutral-800">
             Só {nomeDoCliente(cliente)}
-            <button className="ml-1 font-bold" onClick={() => setCliente("")} aria-label="Mostrar todos os clientes">
-              ×
+            <button className="ml-1 inline-flex items-center" onClick={() => setCliente("")} aria-label="Mostrar todos os clientes">
+              <Icone nome="fechar" className="h-3.5 w-3.5" />
             </button>
           </span>
         )}
@@ -193,18 +197,21 @@ function Contratos() {
       ) : (
         <>
           <div className="grid gap-3 sm:grid-cols-3">
-            <Indicador icone="documento"
+            <Indicador
+              icone="documento"
               titulo="Valendo hoje (neste filtro)"
               valor={brl(mrr)}
               detalhe={`${vigentes.length} contrato(s) por mês`}
               tom="verde"
             />
-            <Indicador icone="etiqueta"
+            <Indicador
+              icone="etiqueta"
               titulo="Preço de tabela desses contratos"
               valor={brl(tabela)}
               detalhe={tabela > mrr ? `${brl(tabela - mrr)} em descontos` : "sem descontos"}
             />
-            <Indicador icone="tendencia"
+            <Indicador
+              icone="tendencia"
               titulo="Reajustes a fazer"
               valor={String(reajustes)}
               detalhe="mês do reajuste já chegou"
@@ -275,7 +282,7 @@ function Contratos() {
                       <td className="whitespace-nowrap text-right">
                         <details className="relative">
                           <summary className="btn !min-h-8 list-none" aria-label="Ações do contrato">
-                            ⋯
+                            <Icone nome="reticencias" className="h-5 w-5" />
                           </summary>
                           <div className="absolute right-0 z-10 mt-1 w-44 rounded-md border border-[var(--borda)] bg-white py-1 text-left text-sm shadow-lg">
                             <button

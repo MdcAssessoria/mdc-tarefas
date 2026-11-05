@@ -19,6 +19,7 @@ import { nomeArquivo } from "@/lib/arquivos/exportarLista";
 import { BotoesExportar } from "@/components/ui/BotoesExportar";
 import type { PropsAba } from "./Comuns";
 import { useBaseEstoque } from "./estoqueBase";
+import { Icone } from "@/components/ui/Icone";
 
 export function EstoqueInventario({ cliente, podeOperar, avisar }: PropsAba) {
   const { org } = useOrg();
@@ -249,7 +250,9 @@ export function EstoqueInventario({ cliente, podeOperar, avisar }: PropsAba) {
                     <li key={x.i.id} className="flex justify-between gap-2 border-b border-[var(--borda)] py-1">
                       <span>{x.i.nome}</span>
                       <span className="tabular-nums">
-                        {qtdBr(x.sistema)} → <strong>{qtdBr(x.contado)}</strong> ({x.dif! > 0 ? "+" : ""}
+                        {qtdBr(x.sistema)}
+                        <Icone nome="seta-direita" className="mx-1 inline h-3.5 w-3.5 align-[-2px] text-[var(--texto-suave)]" />
+                        <strong>{qtdBr(x.contado)}</strong> ({x.dif! > 0 ? "+" : ""}
                         {qtdBr(x.dif)})
                       </span>
                     </li>

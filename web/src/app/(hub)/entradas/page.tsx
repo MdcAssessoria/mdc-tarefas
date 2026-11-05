@@ -587,7 +587,7 @@ export default function PaginaNotasRecebidas() {
                               aria-label="Mais ações"
                               title="Mais ações"
                             >
-                              ⋯
+                              <Icone nome="reticencias" className="h-5 w-5" />
                             </summary>
                             <div className="absolute right-0 z-10 mt-1 w-56 rounded-xl border border-[var(--borda)] bg-white p-1 text-left text-sm shadow-lg">
                               <button

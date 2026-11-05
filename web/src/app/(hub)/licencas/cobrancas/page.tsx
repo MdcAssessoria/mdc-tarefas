@@ -26,6 +26,7 @@ import { useConsulta } from "@/lib/useConsulta";
 import { JanelaBoletoPix } from "@/dominios/licencas/componentes/JanelaBoletoPix";
 import { emissaoValida, lerConfigLink, lerEmissoes, SITUACOES_EMISSAO } from "@/dominios/licencas/ledgraLink";
 import { plural } from "@/lib/formato/numero";
+import { Icone } from "@/components/ui/Icone";
 
 type FiltroSituacao = "abertas" | "atrasada" | "a_vencer" | "paga" | "cancelada" | "todas";
 const FILTROS: { id: FiltroSituacao; nome: string }[] = [
@@ -342,7 +343,7 @@ export default function PaginaCobrancas() {
                             {c.situacao !== "cancelada" && (
                               <details className="relative">
                                 <summary className="btn !min-h-8 list-none" aria-label="Mais ações">
-                                  ⋯
+                                  <Icone nome="reticencias" className="h-5 w-5" />
                                 </summary>
                                 <div className="absolute right-0 z-10 mt-1 w-44 rounded-md border border-[var(--borda)] bg-white py-1 text-left text-sm shadow-lg">
                                   {c.situacao === "paga" ? (

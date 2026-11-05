@@ -18,9 +18,9 @@ export const PAL_PASSIVO = ["#6250d6", "#c93a39", "#008300", "#eda100", "#1B8263
 
 /** Sentido da tendência linear de um índice. */
 export const SENTIDO = {
-  melhora: { icone: "▲", cor: "#067647", nome: "melhorando" },
-  piora: { icone: "▼", cor: "#B42318", nome: "piorando" },
-  estavel: { icone: "●", cor: "#5D6661", nome: "sem tendência clara" },
+  melhora: { icone: "seta-cima", cor: "#067647", nome: "melhorando" },
+  piora: { icone: "seta-baixo", cor: "#B42318", nome: "piorando" },
+  estavel: { icone: "traco", cor: "#5D6661", nome: "sem tendência clara" },
 } as const;
 
 /** Luminância relativa (WCAG) de uma cor "#rrggbb". */

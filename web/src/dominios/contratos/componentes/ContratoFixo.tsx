@@ -31,6 +31,7 @@ import type { IndiceRecorrente, Recorrente } from "../tipos";
 import { CamposFaturamento } from "./CamposFaturamento";
 import { CampoPessoaContrato } from "./CampoPessoaContrato";
 import type { PessoaEscolhida } from "./CampoPessoaContrato";
+import { Icone } from "@/components/ui/Icone";
 
 const TIPOS: { id: TipoTitulo; nome: string; exemplo: string }[] = [
   { id: "receber", nome: "A receber", exemplo: "Honorários mensais, mensalidades de clientes" },
@@ -381,7 +382,8 @@ export function ContratoFixo({
                 </select>
                 {podeCriarCategoria && (
                   <button type="button" className="btn-link self-start text-xs" onClick={() => setNovaCategoria(true)}>
-                    + Nova categoria
+                    <Icone nome="mais" className="inline h-4 w-4 align-[-3px]" />
+                    Nova categoria
                   </button>
                 )}
                 {novaCategoria && (

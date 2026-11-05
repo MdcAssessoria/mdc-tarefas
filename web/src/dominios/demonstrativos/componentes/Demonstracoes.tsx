@@ -9,6 +9,7 @@ import type { BalanceteReg } from "@/dominios/demonstrativos/tipos";
 import { brl } from "@/lib/formato/moeda";
 import { fmtIndice, fmtNumero } from "@/lib/formato/numero";
 import { fmtData } from "@/lib/formato/datas";
+import { Icone } from "@/components/ui/Icone";
 
 const fmt = (v: number) => (Math.abs(v) < 0.5 ? "—" : (v < 0 ? "(" : "") + fmtNumero(Math.abs(v)) + (v < 0 ? ")" : ""));
 
@@ -127,9 +128,10 @@ function TabelaBalanco({ b, inicio, fim }: { b: Balanco; inicio: string; fim: st
         <BlocoBalanco titulo="Passivo e patrimônio líquido" linhas={b.passivo} total={b.total_passivo} inicio={inicio} fim={fim} />
       </div>
       <p className={`text-xs ${fecha ? "text-emerald-700" : "text-[var(--perigo)]"}`}>
+        <Icone nome={fecha ? "check" : "fechar"} className="mr-1 inline h-3.5 w-3.5 align-[-2px]" />
         {fecha
-          ? "✔ Ativo igual a passivo + patrimônio líquido."
-          : `✖ Diferença de ${brl(b.total_ativo.atual - b.total_passivo.atual, { centavos: false })} entre ativo e passivo + PL.`}{" "}
+          ? "Ativo igual a passivo + patrimônio líquido."
+          : `Diferença de ${brl(b.total_ativo.atual - b.total_passivo.atual, { centavos: false })} entre ativo e passivo + PL.`}{" "}
         Período de {fmtData(inicio)} a {fmtData(fim)}. * Saldo inicial = saldo de abertura do período.
       </p>
     </div>
@@ -279,9 +281,10 @@ export function TabelaDfc({ colunas }: { colunas: { titulo: string; f: Dfc }[] }
         </table>
       </div>
       <p className={`text-xs ${f0.fechado ? "text-emerald-700" : "text-[var(--perigo)]"}`}>
+        <Icone nome={f0.fechado ? "check" : "fechar"} className="mr-1 inline h-3.5 w-3.5 align-[-2px]" />
         {f0.fechado
-          ? "✔ A soma dos três fluxos é igual à variação do caixa no balancete."
-          : "✖ A DFC não fecha com a variação do caixa — revise os grupos das contas."}
+          ? "A soma dos três fluxos é igual à variação do caixa no balancete."
+          : "A DFC não fecha com a variação do caixa — revise os grupos das contas."}
       </p>
     </div>
   );

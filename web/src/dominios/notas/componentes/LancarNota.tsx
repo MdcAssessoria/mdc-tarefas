@@ -24,6 +24,7 @@ import type { DeParaItem, Nota, TipoEntradaRegra } from "../tipos";
 import { fornecedorDa, nomeModelo } from "./Comuns";
 import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { NovaCategoriaRapida } from "@/dominios/financeiro/componentes/NovaCategoriaRapida";
+import { Icone } from "@/components/ui/Icone";
 
 export interface CadastrosLancamento {
   itens: Item[];
@@ -204,7 +205,7 @@ export function LancarNota({
       <div className="flex flex-wrap items-start gap-2">
         <div className="mr-auto">
           <button className="btn-link text-sm" onClick={() => void voltar()}>
-            ← Voltar à lista
+            <Icone nome="voltar" className="h-4 w-4" /> Voltar à lista
           </button>
           <h2 className="text-lg font-semibold text-[var(--marca)]">
             {nomeModelo(nota.modelo)} {nota.numero} · {fornecedorDa(nota)}
@@ -409,7 +410,8 @@ export function LancarNota({
                 </select>
                 {podeCriarCategoria ? (
                   <button type="button" className="btn-link self-start text-xs" onClick={() => setNovaCategoria(true)}>
-                    + Nova categoria
+                    <Icone nome="mais" className="inline h-4 w-4 align-[-3px]" />
+                    Nova categoria
                   </button>
                 ) : (
                   despesas.length === 0 && (
@@ -482,7 +484,8 @@ export function LancarNota({
                   setParcelas((x) => [...x, { vencimento: somarDias(x[x.length - 1]?.vencimento || dataEntrada, 30), valor: "" }])
                 }
               >
-                + Parcela
+                <Icone nome="mais" className="inline h-4 w-4 align-[-3px]" />
+                Parcela
               </button>
               <p className={`text-sm ${Math.abs(somaParcelas - aPagar) > 0.01 ? "text-amber-800" : "text-neutral-600"}`}>
                 Soma das parcelas: {brl(somaParcelas)}

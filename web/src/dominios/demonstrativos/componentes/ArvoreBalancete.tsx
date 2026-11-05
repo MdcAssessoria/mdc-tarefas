@@ -6,6 +6,7 @@ import { useState } from "react";
 import { nomeGrupo } from "@/dominios/demonstrativos/balancete/classificacao";
 import { fmtNumero } from "@/lib/formato/numero";
 import type { LinhaReg } from "@/dominios/demonstrativos/tipos";
+import { Icone } from "@/components/ui/Icone";
 
 /** Balancete em árvore, com busca e comparação com o mês anterior. */
 export function ArvoreBalancete({
@@ -81,7 +82,7 @@ export function ArvoreBalancete({
                         }
                         aria-label={fechado ? "Abrir" : "Recolher"}
                       >
-                        {fechado ? "▸" : "▾"}
+                        <Icone nome={fechado ? "chevron-direita" : "chevron-baixo"} className="h-4 w-4" />
                       </button>
                     ) : null}
                     {l.descricao}

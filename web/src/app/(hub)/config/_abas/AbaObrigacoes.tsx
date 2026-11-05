@@ -17,6 +17,7 @@ import { useMensagem } from "./useMensagem";
 import { BotoesExportar } from "@/components/ui/BotoesExportar";
 import { nomeArquivo } from "@/lib/arquivos/exportarLista";
 import { hojeISO } from "@/lib/datas";
+import { Icone } from "@/components/ui/Icone";
 
 const MESES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
@@ -100,7 +101,11 @@ export function AbaObrigacoes() {
           : m.map((x) => MESES[x - 1]).join(", ");
   const descreverPrazo = (m: Modelo) =>
     `Dia ${m.dia_vencimento}${
-      m.meses_apos_competencia === 0 ? " do mês" : m.meses_apos_competencia === 1 ? " do mês seguinte" : ` (+${m.meses_apos_competencia} meses)`
+      m.meses_apos_competencia === 0
+        ? " do mês"
+        : m.meses_apos_competencia === 1
+          ? " do mês seguinte"
+          : ` (+${m.meses_apos_competencia} meses)`
     }`;
   const descreverAlcance = (m: Modelo) =>
     !m.regimes && !m.segmentos?.length && !m.grupos?.length
@@ -128,7 +133,8 @@ export function AbaObrigacoes() {
           Gerar tarefas
         </button>
         <button className="btn" onClick={() => setEditando({ ...MODELO_VAZIO })}>
-          + Nova obrigação
+          <Icone nome="mais" className="inline h-4 w-4 align-[-3px]" />
+          Nova obrigação
         </button>
         <BotoesExportar
           vazio={!modelos.length}
