@@ -3256,6 +3256,7 @@ export type Database = {
           numero: string | null;
           org_id: string;
           origem: string;
+          pedido_id: string | null;
           pessoa_id: string | null;
           pis_valor: number;
           processada: boolean;
@@ -3315,6 +3316,7 @@ export type Database = {
           numero?: string | null;
           org_id: string;
           origem: string;
+          pedido_id?: string | null;
           pessoa_id?: string | null;
           pis_valor?: number;
           processada?: boolean;
@@ -3374,6 +3376,7 @@ export type Database = {
           numero?: string | null;
           org_id?: string;
           origem?: string;
+          pedido_id?: string | null;
           pessoa_id?: string | null;
           pis_valor?: number;
           processada?: boolean;
@@ -3407,6 +3410,13 @@ export type Database = {
             columns: ["org_id"];
             isOneToOne: false;
             referencedRelation: "organizacoes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "fis_notas_pedido_id_fkey";
+            columns: ["pedido_id"];
+            isOneToOne: false;
+            referencedRelation: "est_pedidos";
             referencedColumns: ["id"];
           },
           {
@@ -7078,6 +7088,7 @@ export type Database = {
         Returns: undefined;
       };
       fis_gravar_documento: { Args: { p: Json }; Returns: Json };
+      fis_pedidos_da_nota: { Args: { p_nota: string }; Returns: Json };
       fis_pode: {
         Args: { p_cliente: string; p_nivel?: string };
         Returns: boolean;
