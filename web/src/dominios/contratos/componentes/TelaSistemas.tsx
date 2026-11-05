@@ -82,7 +82,11 @@ export function TelaSistemas() {
     }
   }
 
-  const colunasMes = meses.map((m, i) => ({ titulo: mesCurto(m), valor: (l: LinhaReceitaSistema) => l.por_mes[i] ?? 0, formato: "moeda" as const }));
+  const colunasMes = meses.map((m, i) => ({
+    titulo: mesCurto(m),
+    valor: (l: LinhaReceitaSistema) => l.por_mes[i] ?? 0,
+    formato: "moeda" as const,
+  }));
 
   return (
     <div className="space-y-4">
@@ -176,16 +180,40 @@ export function TelaSistemas() {
             ) : undefined
           }
         >
-          Cadastre cada sistema ou módulo que a MDC licencia. Depois, em cada contrato a receber, escolha o sistema vendido: a
-          receita de cada um aparece aqui.
+          Cadastre cada sistema ou módulo que a MDC licencia. Depois, em cada contrato a receber, escolha o sistema vendido: a receita de
+          cada um aparece aqui.
         </EstadoVazio>
       ) : (
         <>
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            <Indicador titulo="Receita mensal contratada" icone="moeda" valor={brl(t.mensal)} detalhe={plural(t.contratos, "licença ativa", "licenças ativas")} tom="azul" />
-            <Indicador titulo={`Recebido em ${fmtCompetencia(mes)}`} icone="check" valor={brl(t.recebido)} detalhe={`de ${brl(t.faturado)} faturado`} tom="verde" />
-            <Indicador titulo="Em atraso" icone="alerta" valor={brl(t.atraso)} detalhe="Contas vencidas e não pagas" tom={t.atraso > 0 ? "vermelho" : "neutro"} />
-            <Indicador titulo="Previsto nos próximos 12 meses" icone="tendencia" valor={brl(t.previsto)} detalhe="Pelos contratos ativos, sem reajustes" tom="violeta" />
+            <Indicador
+              titulo="Receita mensal contratada"
+              icone="moeda"
+              valor={brl(t.mensal)}
+              detalhe={plural(t.contratos, "licença ativa", "licenças ativas")}
+              tom="azul"
+            />
+            <Indicador
+              titulo={`Recebido em ${fmtCompetencia(mes)}`}
+              icone="check"
+              valor={brl(t.recebido)}
+              detalhe={`de ${brl(t.faturado)} faturado`}
+              tom="verde"
+            />
+            <Indicador
+              titulo="Em atraso"
+              icone="alerta"
+              valor={brl(t.atraso)}
+              detalhe="Contas vencidas e não pagas"
+              tom={t.atraso > 0 ? "vermelho" : "neutro"}
+            />
+            <Indicador
+              titulo="Previsto nos próximos 12 meses"
+              icone="tendencia"
+              valor={brl(t.previsto)}
+              detalhe="Pelos contratos ativos, sem reajustes"
+              tom="violeta"
+            />
           </div>
 
           <QuadroTabela rotulo="Receita por sistema">
@@ -282,8 +310,8 @@ export function TelaSistemas() {
             </p>
           )}
           <p className="text-xs text-[var(--texto-suave)]">
-            Para ligar uma licença a um sistema, abra o contrato a receber em Contratos e escolha o “Sistema vendido”. Contratos sem
-            sistema (honorários e outros serviços) aparecem em “Sem sistema”.
+            Para ligar uma licença a um sistema, abra o contrato a receber em Contratos e escolha o “Sistema vendido”. Contratos sem sistema
+            (honorários e outros serviços) aparecem em “Sem sistema”.
           </p>
         </>
       )}
@@ -310,7 +338,11 @@ function Barrinhas({ valores, meses }: { valores: number[]; meses: string[] }) {
   const max = Math.max(0, ...valores);
   if (!(max > 0)) return <span className="text-xs text-[var(--texto-suave)]">Sem faturamento</span>;
   return (
-    <div className="flex h-8 items-end gap-0.5" role="img" aria-label={`Faturado nos últimos 12 meses: ${valores.map((v, i) => `${mesCurto(meses[i] ?? "")} ${brl(v)}`).join(", ")}`}>
+    <div
+      className="flex h-8 items-end gap-0.5"
+      role="img"
+      aria-label={`Faturado nos últimos 12 meses: ${valores.map((v, i) => `${mesCurto(meses[i] ?? "")} ${brl(v)}`).join(", ")}`}
+    >
       {valores.map((v, i) => (
         <span
           key={meses[i] ?? i}

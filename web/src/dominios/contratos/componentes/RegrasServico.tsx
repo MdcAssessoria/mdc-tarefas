@@ -5,7 +5,8 @@
 
 import { useState } from "react";
 import { BotoesExportar } from "@/components/ui/BotoesExportar";
-import { CampoNbs, CampoServico } from "@/components/ui/CampoServico";
+import { CampoServico } from "@/components/ui/CampoServico";
+import { CampoNbsLegal } from "./CampoNbsLegal";
 import { Chip } from "@/components/ui/Chip";
 import { EstadoVazio } from "@/components/ui/EstadoVazio";
 import { Icone } from "@/components/ui/Icone";
@@ -352,7 +353,7 @@ function JanelaRegra({
             <legend className="px-1 text-sm font-medium">2. NBS e ISS</legend>
             <div className="grid gap-3 sm:grid-cols-3">
               <div className="sm:col-span-2">
-                <CampoNbs valor={nbs} aoMudar={setNbs} />
+                <CampoNbsLegal servico={codigo} valor={nbs} aoMudar={setNbs} />
               </div>
               <label className="campo">
                 <span>ISS (%)</span>

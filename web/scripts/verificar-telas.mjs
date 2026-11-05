@@ -915,8 +915,17 @@ const INTERACOES = {
   // Nota fiscal (NFS-e) (046): parâmetros da emissão; ir para a produção pede confirmação
   "/contratos/nota-fiscal": async (p, foto) => {
     await p.getByRole("radiogroup", { name: "Ambiente da emissão" }).waitFor({ timeout: 3000 });
-    for (const t of ["Código NBS do serviço", "Tributos aproximados do Simples (%)", "Inscrição municipal", "Tipos de serviço"])
+    for (const t of ["NBS padrão da nota", "Tributos aproximados do Simples (%)", "Inscrição municipal", "Tipos de serviço"])
       await p.getByText(t, { exact: false }).first().waitFor({ timeout: 3000 });
+    // 062: NBS só da tabela oficial (17.19 = 3 códigos) e o cálculo dos tributos aproximados pela LC 123
+    const nbs = p.getByLabel("NBS padrão da nota");
+    await nbs.selectOption("113022100");
+    if ((await nbs.locator("option").count()) !== 4) throw new Error("NBS de 17.19 deveria listar só os 3 da tabela oficial");
+    await p.getByLabel("Receita bruta dos 12 meses (RBT12)").fill("300.000,00");
+    await p.getByText("sem o ISS").waitFor({ timeout: 3000 });
+    await p.getByRole("button", { name: "Usar 5,49%" }).click();
+    if ((await p.getByLabel("Tributos aproximados do Simples (%)").inputValue()) !== "5,49") throw new Error("Usar o percentual não preencheu o campo");
+    await foto("nota-fiscal-nbs-simples");
     await p.getByRole("radio", { name: /^Produção \(nota com valor fiscal\)/ }).check();
     await p.getByText("Confirmo que as notas de teste deram certo").waitFor({ timeout: 3000 });
     await foto("nota-fiscal-parametros");

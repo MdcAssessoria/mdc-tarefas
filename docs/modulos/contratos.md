@@ -322,3 +322,25 @@ o status para `ativo`). O certificado A1 da NFS-e passou para **Financeiro › C
 **Cobrança Ledgra e menu (060, 05/11/2026).** A Cobrança Ledgra também foi desligada (o Ledgra cobra os próprios
 clientes; as licenças vendidas ficam aqui). O grupo Gestão do menu ficou em dois blocos: Financeiro, Contratos e
 Relatórios; depois Fornecedores e clientes, Centros de custo e Plano de contas (`hub_apps.ordem` + `MenuLateral`).
+
+## 8. NBS e tributos aproximados conforme a legislação (migração 062, 05/11/2026)
+
+**NBS filtrado pela tabela oficial.** O campo NBS (Regras fiscais › Emitente e cada tipo de serviço) mostra só os
+códigos que o **Anexo VIII da NFS-e Nacional** (correlação item da LC 116 × NBS × atividade do Simples) permite para o
+serviço escolhido; NBS fora da tabela aparece em vermelho (o Emissor pode recusar a nota). Se a tabela não traz o
+serviço, volta a busca na lista completa, com aviso. Componentes: `CampoNbsLegal.tsx`, `NbsETributosSimples.tsx`.
+
+**Atualização automática.** A Função Edge `fiscal-tabelas` roda toda segunda às 07h10 (pg_cron, token interno do
+Vault, como a `nfse-automatica`): abre a página da documentação técnica (RTC) no portal da NFS-e, acha a planilha do
+Anexo VIII de versão mais alta e, se for mais nova que a carregada, baixa, lê (`_fiscal/anexoViii.ts`) e troca a tabela
+de uma vez (`fis_tabela_carregar`, que recusa versão igual/menor e planilha com menos de 500 linhas) e avisa os
+administradores no sino. A 1ª carga é feita logo depois de publicada; se o portal não responder nessa hora, usa uma
+cópia pública da planilha oficial v1.02.00. Tabelas `fis_lc116_nbs` e `fis_tabelas` (leitura para quem tem login;
+gravação só pela Função, com a chave de serviço).
+
+**Tributos aproximados do Simples (pTotTribSN).** A Lei 12.741/2012 (art. 1º, §6º) deixa o optante do Simples informar
+a alíquota a que está sujeito. O HUB calcula a **alíquota efetiva** da LC 123, art. 18, §1º-A: (RBT12 × alíquota
+nominal − parcela a deduzir) ÷ RBT12, com o anexo pela atividade do Anexo VIII (III, IV ou Fator R com a folha dos 12
+meses: 28% ou mais = Anexo III) e a faixa pelo RBT12; escritório contábil com ISS fixo (art. 18, §22-A) tira a parte do
+ISS da repartição do Anexo III. O botão "Usar X%" preenche o campo; a pessoa salva. Regra em `lib/fiscal/simples.ts`
+(com testes).

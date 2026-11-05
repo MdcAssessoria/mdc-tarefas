@@ -145,3 +145,8 @@ $P -f "$R/testes/129_menu_060.sql" 2>&1 | grep -v "^SET$"
 # 061: "Notas fiscais" (entradas) de volta ao menu (só dados)
 $P -v ON_ERROR_STOP=1 -f "$R/migrations/061_notas_fiscais_menu.sql" 2>&1 | grep -v NOTICE || true
 $P -f "$R/testes/130_notas_061.sql" 2>&1 | grep -v "^SET$"
+# 062: tabela oficial serviço × NBS (Anexo VIII) e atualização automática
+for f in migrations/062_nbs_anexo_viii.sql testes/132_base_062.sql; do
+  $P -v ON_ERROR_STOP=1 -f "$R/$f" 2>&1 | grep -v NOTICE || true
+done
+$P -f "$R/testes/131_nbs_062.sql" 2>&1 | grep -v "^SET$"

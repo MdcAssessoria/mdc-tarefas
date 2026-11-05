@@ -56,6 +56,12 @@ import_map = "./functions/nfse-emitir/deno.json"
 verify_jwt = false
 import_map = "./functions/nfse-automatica/deno.json"
 
+# Tabela serviço × NBS (migração 062): fiscal-tabelas é chamada pelo agendador (toda segunda) com token próprio
+# (x-agente-token, conferido no banco); confere o Anexo VIII no portal da NFS-e e atualiza se houver versão nova.
+[functions.fiscal-tabelas]
+verify_jwt = false
+import_map = "./functions/fiscal-tabelas/deno.json"
+
 # Envio das faturas (migração 053): fatura-enviar é chamada pelo agendador com token próprio (x-agente-token) ou pela
 # tela Contratos › Envio com o login (a função confere a permissão no banco); por isso a checagem padrão fica desligada.
 # Segredos (Edge Functions › Secrets): GRAPH_TENANT_ID, GRAPH_CLIENT_ID, GRAPH_CLIENT_SECRET, GRAPH_REMETENTE,

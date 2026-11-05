@@ -84,7 +84,11 @@ export function TelaContratos() {
   const consulta = useConsulta(
     useCallback(async () => {
       if (!cliente) return null;
-      const [contratos, reajustes, sistemas] = await Promise.all([lerContratos(cliente.id), lerReajustes(cliente.id), lerSistemas(cliente.id)]);
+      const [contratos, reajustes, sistemas] = await Promise.all([
+        lerContratos(cliente.id),
+        lerReajustes(cliente.id),
+        lerSistemas(cliente.id),
+      ]);
       return { contratos, reajustes, sistemas };
     }, [cliente]),
   );

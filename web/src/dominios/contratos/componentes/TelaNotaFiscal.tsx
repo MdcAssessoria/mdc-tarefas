@@ -24,6 +24,8 @@ import { Esqueleto } from "@/components/ui/Esqueleto";
 import { Icone } from "@/components/ui/Icone";
 import { QuadroTabela } from "@/components/ui/QuadroTabela";
 import { useAviso } from "@/components/ui/Aviso";
+import { NbsETributosSimples } from "./NbsETributosSimples";
+import { formatarCodigoNacional } from "@/lib/fiscal/servicos";
 import { lerEmissoesNfse, lerFaturas, lerNumeracaoNfse, lerParametrosNfse, lerRegrasServico } from "../leituras";
 import { Abas } from "@/components/ui/Abas";
 import { RegrasServico } from "./RegrasServico";
@@ -282,29 +284,6 @@ export function TelaNotaFiscal() {
                       />
                       <small className="text-xs text-[var(--texto-suave)]">Bragança Paulista = 3507605</small>
                     </label>
-                    <label className="campo">
-                      <span>
-                        <abbr title="Nomenclatura Brasileira de Serviços: código de 9 números que a nota exige">Código NBS do serviço</abbr>
-                      </span>
-                      <input
-                        inputMode="numeric"
-                        value={form.nbs_padrao}
-                        disabled={!podeGerir}
-                        onChange={(e) => mudar("nbs_padrao", e.target.value)}
-                        placeholder="Ex.: 1.1302.10.00"
-                      />
-                    </label>
-                    <label className="campo">
-                      <span>Tributos aproximados do Simples (%)</span>
-                      <input
-                        inputMode="decimal"
-                        value={form.p_tot_trib_sn}
-                        disabled={!podeGerir}
-                        onChange={(e) => mudar("p_tot_trib_sn", e.target.value)}
-                        placeholder="Ex.: 6,00"
-                      />
-                      <small className="text-xs text-[var(--texto-suave)]">Vai na nota (Lei 12.741/2012): a alíquota do DAS da MDC</small>
-                    </label>
                   </div>
                   <p className="text-xs text-[var(--texto-suave)]">
                     O código do serviço (tributação nacional, 6 números) e a descrição vêm de cada contrato. A nota é assinada com o
@@ -314,6 +293,23 @@ export function TelaNotaFiscal() {
                     </Link>
                     .
                   </p>
+                </section>
+
+                <section className="cartao space-y-3 p-4 lg:col-span-2">
+                  <h2 className="flex items-center gap-2 font-semibold">
+                    <Icone nome="escudo" className="h-5 w-5 text-[var(--destaque-escuro)]" />
+                    NBS e tributos aproximados (conforme a legislação)
+                  </h2>
+                  <NbsETributosSimples
+                    servicoInicial={
+                      formatarCodigoNacional((d?.regras ?? []).find((r) => r.ativo && r.servico_codigo)?.servico_codigo) ?? "17.19.01"
+                    }
+                    nbs={form.nbs_padrao}
+                    aoNbs={(v) => mudar("nbs_padrao", v)}
+                    ptot={form.p_tot_trib_sn}
+                    aoPtot={(v) => mudar("p_tot_trib_sn", v)}
+                    desabilitado={!podeGerir}
+                  />
                 </section>
 
                 <section className="cartao space-y-3 p-4 lg:col-span-2">

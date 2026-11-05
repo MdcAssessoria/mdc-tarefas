@@ -2818,3 +2818,37 @@ export const XML_EXEMPLO = {
   for (const a of APPS) if (a.slug in ORDEM) a.ordem = ORDEM[a.slug];
   APPS.sort((a, b) => a.ordem - b.ordem);
 })();
+
+// ---------------------------------------------------------------- NBS pela tabela oficial (062, 05/11/2026)
+// Anexo VIII v1.02.00: contabilidade (17.19) tem 3 NBS, atividade 7 (Anexo III); análise de sistemas (01.01), Fator R.
+RPCS.fis_nbs_do_servico = ({ p_servico }) => {
+  const d = String(p_servico ?? "").replace(/\D/g, "");
+  const base = { versao: "1.02.00", publicada_em: "2026-10-26", conferida_em: "2026-11-02T10:10:00Z" };
+  const a3 = "Prestação de serviços, cessão de direitos, de uso ou de espaço com incidência de ISS, tributados exclusivamente pelo Anexo III";
+  if (d.startsWith("1719"))
+    return {
+      ...base,
+      item: "17.19",
+      item_descricao: "Contabilidade, Inclusive Serviços Técnicos E Auxiliares.",
+      nbs: [
+        { nbs: "113022100", descricao: "Serviços de contabilidade", ativ_sn: "7", ativ_sn_descricao: a3 },
+        { nbs: "113022200", descricao: "Serviços de escrituração mercantil", ativ_sn: "7", ativ_sn_descricao: a3 },
+        { nbs: "113022300", descricao: "Serviços de folha de pagamento", ativ_sn: "7", ativ_sn_descricao: a3 },
+      ],
+    };
+  if (d.startsWith("0101"))
+    return {
+      ...base,
+      item: "01.01",
+      item_descricao: "Análise E Desenvolvimento De Sistemas.",
+      nbs: [
+        {
+          nbs: "115021000",
+          descricao: "Serviços de projeto, desenvolvimento e instalação de aplicativos e programas não personalizados (não customizados)",
+          ativ_sn: "9",
+          ativ_sn_descricao: "Prestação de serviços - Sujeitos ao Fator “R” – Anexo III ou V",
+        },
+      ],
+    };
+  return { ...base, item: d.length >= 4 ? `${d.slice(0, 2)}.${d.slice(2, 4)}` : null, item_descricao: null, nbs: [] };
+};

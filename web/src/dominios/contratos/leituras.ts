@@ -218,3 +218,18 @@ export async function lerReceitaSistemas(cliente: string, mes: string): Promise<
     })),
   };
 }
+
+/** NBS que a tabela oficial (Anexo VIII da NFS-e Nacional) permite para o serviço, com a versão da tabela (062). */
+export interface NbsDoServico {
+  item: string | null;
+  item_descricao: string | null;
+  versao: string | null;
+  publicada_em: string | null;
+  conferida_em: string | null;
+  nbs: { nbs: string; descricao: string | null; ativ_sn: string | null; ativ_sn_descricao: string | null }[];
+}
+export async function lerNbsDoServico(servico: string): Promise<NbsDoServico> {
+  const { data, error } = await supabase().rpc("fis_nbs_do_servico", { p_servico: servico });
+  if (error) throw error;
+  return data as unknown as NbsDoServico;
+}
