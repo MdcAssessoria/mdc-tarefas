@@ -222,7 +222,8 @@ export const MODULOS_GESTAO = [
   "relatorios",
   // Contratos fixos (041): honorários, aluguel, sistemas; lança as contas no Financeiro e propõe o reajuste anual
   "contratos",
-  // Cobrança Ledgra (antigo Licenças): cobra os assinantes do Ledgra (decisão do Edvaldo, 02/11/2026)
+  // Cobrança Ledgra (antigo Licenças): cobrava os assinantes do Ledgra (02/11/2026). Desligada na 060 (05/11/2026): o
+  // Ledgra cobra os próprios clientes; o HUB controla as licenças vendidas em Contratos › Receita por sistema
   "licencas",
 ] as const;
 export const ehModuloGestao = (slug: string) => (MODULOS_GESTAO as readonly string[]).includes(slug);

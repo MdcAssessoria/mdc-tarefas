@@ -19,7 +19,10 @@ type Integracao = { config: Config; ativo: boolean; ultima_execucao: string | nu
 const PADRAO: Config = { site: "", biblioteca: "Documentos", pasta: "HUB-MDC/Balancetes/Entrada" };
 
 export function AbaIntegracoes() {
-  const { org } = useOrg();
+  const { org, apps } = useOrg();
+  // Ledgra Link da Cobrança Ledgra: só aparece se a Cobrança Ledgra estiver ligada (desligada desde a 060; o boleto das
+  // faturas dos contratos é configurado em Contratos › Boleto)
+  const cobrancaLedgra = apps.some((x) => x.slug === "licencas");
   const { mostrar, el } = useMensagem();
   const consulta = useConsulta(
     useCallback(
@@ -162,7 +165,7 @@ export function AbaIntegracoes() {
           </div>
         </div>
       </div>
-      <CartaoLedgraLink />
+      {cobrancaLedgra && <CartaoLedgraLink />}
     </div>
   );
 }

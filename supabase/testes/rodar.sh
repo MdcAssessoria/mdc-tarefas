@@ -139,3 +139,6 @@ for f in migrations/059_sistemas_receita.sql testes/127_base_059.sql; do
   $P -v ON_ERROR_STOP=1 -f "$R/$f" 2>&1 | grep -v NOTICE || true
 done
 $P -f "$R/testes/128_sistemas_059.sql" 2>&1 | grep -v "^SET$"
+# 060: Cobrança Ledgra fora do menu e grupo Gestão reorganizado (só dados)
+$P -v ON_ERROR_STOP=1 -f "$R/migrations/060_menu_gestao.sql" 2>&1 | grep -v NOTICE || true
+$P -f "$R/testes/129_menu_060.sql" 2>&1 | grep -v "^SET$"

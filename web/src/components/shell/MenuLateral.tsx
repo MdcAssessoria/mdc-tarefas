@@ -32,12 +32,19 @@ function Iniciais({ nome, className = "" }: { nome: string; className?: string }
   );
 }
 
+/** Cadastros de apoio da Gestão: ficam no fim do grupo, depois de Fornecedores e clientes (060). */
+const CADASTROS_DE_APOIO = ["centros_custo", "plano_contas"];
+
 export function MenuLateral({ modulo, recolhido, aoRecolher }: { modulo: Modulo; recolhido: boolean; aoRecolher?: () => void }) {
   const { apps, eu, papel, org, orgs, trocarOrg, podeEditarCadastros, pode } = useOrg();
   const rota = usePathname();
   const ferramentas = apps.filter((a) => a.papel && a.status !== "em_breve");
   const escritorio = ferramentas.filter((a) => !ehModuloGestao(a.slug));
   const gestao = ferramentas.filter((a) => ehModuloGestao(a.slug));
+  // Gestão em dois blocos (060): o dia a dia (Financeiro, Contratos, Relatórios) e, depois de Fornecedores e clientes,
+  // os cadastros de apoio (Centros de custo, Plano de contas). A ordem dentro de cada bloco vem de hub_apps.ordem.
+  const gestaoDiaADia = gestao.filter((a) => !CADASTROS_DE_APOIO.includes(a.slug));
+  const gestaoApoio = gestao.filter((a) => CADASTROS_DE_APOIO.includes(a.slug));
   // Fornecedores e clientes só faz sentido com algum módulo de gestão em uso no menu (Cobrança Ledgra não usa)
   const temCadastros = gestao.some((a) => a.slug !== "licencas") && podeModulo("cadastros", pode);
   const naGestao = ehModuloGestao(modulo) || modulo === "cadastros";
@@ -119,12 +126,15 @@ export function MenuLateral({ modulo, recolhido, aoRecolher }: { modulo: Modulo;
             )}
             {(abrirGestao || recolhido) && (
               <div className={recolhido ? "space-y-0.5" : "ml-4 space-y-0.5 border-l border-white/10 pl-2"}>
-                {gestao.map((a) =>
+                {gestaoDiaADia.map((a) =>
                   item({ href: a.rota, nome: a.nome, icone: a.icone, ativo: modulo === a.slug, externo: a.externo, nivel: a.papel }),
                 )}
-                {/* cadastro comum a todos os módulos de gestão (Financeiro, Entradas, Saídas, Estoque) */}
+                {/* cadastro comum a todos os módulos de gestão (Financeiro e Contratos) */}
                 {temCadastros &&
                   item({ href: "/cadastros/pessoas", nome: "Fornecedores e clientes", icone: "pessoas", ativo: modulo === "cadastros" })}
+                {gestaoApoio.map((a) =>
+                  item({ href: a.rota, nome: a.nome, icone: a.icone, ativo: modulo === a.slug, externo: a.externo, nivel: a.papel }),
+                )}
               </div>
             )}
           </div>

@@ -2806,3 +2806,13 @@ export const XML_EXEMPLO = {
     ],
   });
 })();
+
+// ---------------------------------------------------------------- Menu da Gestão reorganizado (060, 05/11/2026)
+// Mesma ordem da produção: Financeiro, Contratos, Relatórios, (Fornecedores e clientes), Centros de custo, Plano de
+// contas. Entradas, Saídas, Estoque e Cobrança Ledgra estão desligados na produção; aqui continuam ligados (no fim da
+// lista) só para as fotos das telas deles continuarem sendo conferidas.
+(() => {
+  const ORDEM = { financeiro: 35, contratos: 36, relatorios: 37, centros_custo: 38, plano_contas: 39, entradas: 91, saidas: 92, estoque: 93, licencas: 94 };
+  for (const a of APPS) if (a.slug in ORDEM) a.ordem = ORDEM[a.slug];
+  APPS.sort((a, b) => a.ordem - b.ordem);
+})();

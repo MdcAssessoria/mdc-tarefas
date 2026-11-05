@@ -1,5 +1,10 @@
 # Módulo Cobrança Ledgra (antigo Licenças)
 
+> **Desligado desde 05/11/2026 (migração 060):** o Ledgra cuida dos clientes dele e tem a própria cobrança. No HUB fica
+> só o controle das licenças vendidas, em **Contratos › Receita por sistema** (059). A ferramenta `licencas` está com
+> status `desligado` em `hub_apps` (fora do menu; o cartão do Ledgra Link em Configurações também some). Nada foi
+> apagado: tabelas `lic_*` e `link_*`, telas e regras continuam; para religar, volte o status para `ativo`.
+
 > **Mudança de 02/11/2026 (migração 040):** o HUB deixou de vender módulos aos clientes. O produto para os clientes é o
 > **Ledgra**, desenvolvido do zero, à parte. Este módulo virou a **Cobrança Ledgra**, no grupo Gestão do menu: os
 > "produtos" e "planos" passam a ser os do Ledgra (cadastre em Produtos e planos), e contratos, mensalidades, baixas e

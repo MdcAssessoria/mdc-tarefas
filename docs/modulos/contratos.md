@@ -318,3 +318,7 @@ sem). A aba **Contratos › Receita por sistema** soma tudo por sistema, no mês
 **Menu enxuto (mesma migração).** Estoque, Entradas e Saídas ficam com status `desligado` em `hub_apps`: somem do menu
 (`hub_meus_apps`, 015) e a Guarda barra as rotas; nada foi apagado e as regras do banco não mudam (para religar, volte
 o status para `ativo`). O certificado A1 da NFS-e passou para **Financeiro › Certificado digital** (mesma tela).
+
+**Cobrança Ledgra e menu (060, 05/11/2026).** A Cobrança Ledgra também foi desligada (o Ledgra cobra os próprios
+clientes; as licenças vendidas ficam aqui). O grupo Gestão do menu ficou em dois blocos: Financeiro, Contratos e
+Relatórios; depois Fornecedores e clientes, Centros de custo e Plano de contas (`hub_apps.ordem` + `MenuLateral`).
