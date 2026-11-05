@@ -134,6 +134,9 @@ npx supabase functions deploy convite --project-ref bulqqdgfrrpqquqvjjfa --impor
   `app.fin_recorrente_conferir` conferida por md5); Novo contrato em etapas com a carteira da MDC no campo Cliente.
 - **04/11/2026 (noite):** 056 aplicada (Estoque: item de serviço com código da LC 116/NFS-e, NBS e ISS;
   `est_salvar_item` conferida por md5); tipos regenerados.
+- **04/11/2026 (noite):** 057 aplicada (Regras fiscais: `fis_regras_servico`, `fis_regra_servico_salvar`, `app.nfse_dados`
+  com NBS da regra e trava de ISS retido, `est_salvar_item` só com o código; NBS e ISS saíram de `est_itens`); 4 funções
+  conferidas por md5; avisos de segurança sem novidade; tipos regenerados.
 - **Ajustes finais (052, branch `ajustes-finais`).** Ordem: testes (`bash supabase/testes/rodar.sh`, blocos 111 a 114)
   → aplicar a 052 → regenerar `database.types.ts` (os tipos da 052 foram escritos à mão) e rodar os Advisors → publicar
   as funções → push do site.

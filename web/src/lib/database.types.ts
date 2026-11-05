@@ -524,10 +524,8 @@ export type Database = {
           foto_caminho: string | null;
           grupo_id: string | null;
           id: string;
-          iss_aliquota: number | null;
           marca: string | null;
           markup: number | null;
-          nbs: string | null;
           ncm: string | null;
           nome: string;
           observacao: string | null;
@@ -555,10 +553,8 @@ export type Database = {
           foto_caminho?: string | null;
           grupo_id?: string | null;
           id?: string;
-          iss_aliquota?: number | null;
           marca?: string | null;
           markup?: number | null;
-          nbs?: string | null;
           ncm?: string | null;
           nome: string;
           observacao?: string | null;
@@ -586,10 +582,8 @@ export type Database = {
           foto_caminho?: string | null;
           grupo_id?: string | null;
           id?: string;
-          iss_aliquota?: number | null;
           marca?: string | null;
           markup?: number | null;
-          nbs?: string | null;
           ncm?: string | null;
           nome?: string;
           observacao?: string | null;
@@ -3530,6 +3524,78 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "fis_regras_credito_org_id_fkey";
+            columns: ["org_id"];
+            isOneToOne: false;
+            referencedRelation: "organizacoes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      fis_regras_servico: {
+        Row: {
+          ativo: boolean;
+          atualizado_em: string;
+          atualizado_por: string | null;
+          cclasstrib: string | null;
+          cindop: string | null;
+          cliente_id: string;
+          descricao_nota: string | null;
+          id: string;
+          inativo_motivo: string | null;
+          iss_aliquota: number | null;
+          iss_retencao: string;
+          iss_retencao_municipios: string[];
+          nbs: string | null;
+          nome: string;
+          org_id: string;
+          servico_codigo: string;
+        };
+        Insert: {
+          ativo?: boolean;
+          atualizado_em?: string;
+          atualizado_por?: string | null;
+          cclasstrib?: string | null;
+          cindop?: string | null;
+          cliente_id: string;
+          descricao_nota?: string | null;
+          id?: string;
+          inativo_motivo?: string | null;
+          iss_aliquota?: number | null;
+          iss_retencao?: string;
+          iss_retencao_municipios?: string[];
+          nbs?: string | null;
+          nome: string;
+          org_id: string;
+          servico_codigo: string;
+        };
+        Update: {
+          ativo?: boolean;
+          atualizado_em?: string;
+          atualizado_por?: string | null;
+          cclasstrib?: string | null;
+          cindop?: string | null;
+          cliente_id?: string;
+          descricao_nota?: string | null;
+          id?: string;
+          inativo_motivo?: string | null;
+          iss_aliquota?: number | null;
+          iss_retencao?: string;
+          iss_retencao_municipios?: string[];
+          nbs?: string | null;
+          nome?: string;
+          org_id?: string;
+          servico_codigo?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "fis_regras_servico_cliente_id_fkey";
+            columns: ["cliente_id"];
+            isOneToOne: false;
+            referencedRelation: "clientes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "fis_regras_servico_org_id_fkey";
             columns: ["org_id"];
             isOneToOne: false;
             referencedRelation: "organizacoes";
@@ -7028,6 +7094,7 @@ export type Database = {
         Returns: number;
       };
       fis_registrar_upload: { Args: { p: Json }; Returns: Json };
+      fis_regra_servico_salvar: { Args: { p: Json }; Returns: Json };
       fis_salvar_parametros: {
         Args: { p: Json; p_cliente: string };
         Returns: undefined;
