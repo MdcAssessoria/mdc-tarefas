@@ -150,3 +150,5 @@ for f in migrations/062_nbs_anexo_viii.sql testes/132_base_062.sql; do
   $P -v ON_ERROR_STOP=1 -f "$R/$f" 2>&1 | grep -v NOTICE || true
 done
 $P -f "$R/testes/131_nbs_062.sql" 2>&1 | grep -v "^SET$"
+# 063: carga da tabela NBS com DELETE ... WHERE (pg_safeupdate do Supabase); mesma lógica testada na 131 (T9 a T11)
+$P -v ON_ERROR_STOP=1 -f "$R/migrations/063_nbs_carga.sql" 2>&1 | grep -v NOTICE || true

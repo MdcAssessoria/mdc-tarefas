@@ -3143,6 +3143,39 @@ export type Database = {
           },
         ];
       };
+      fis_lc116_nbs: {
+        Row: {
+          ativ_sn: string | null;
+          ativ_sn_descricao: string | null;
+          indop: string | null;
+          item: string;
+          item_descricao: string | null;
+          nbs: string;
+          nbs_descricao: string | null;
+          versao: string;
+        };
+        Insert: {
+          ativ_sn?: string | null;
+          ativ_sn_descricao?: string | null;
+          indop?: string | null;
+          item: string;
+          item_descricao?: string | null;
+          nbs: string;
+          nbs_descricao?: string | null;
+          versao: string;
+        };
+        Update: {
+          ativ_sn?: string | null;
+          ativ_sn_descricao?: string | null;
+          indop?: string | null;
+          item?: string;
+          item_descricao?: string | null;
+          nbs?: string;
+          nbs_descricao?: string | null;
+          versao?: string;
+        };
+        Relationships: [];
+      };
       fis_nota_itens: {
         Row: {
           cbs_valor: number;
@@ -3676,6 +3709,36 @@ export type Database = {
             referencedColumns: ["id"];
           },
         ];
+      };
+      fis_tabelas: {
+        Row: {
+          carregada_em: string;
+          conferida_em: string | null;
+          fonte: string | null;
+          publicada_em: string | null;
+          tabela: string;
+          ultima_mensagem: string | null;
+          versao: string;
+        };
+        Insert: {
+          carregada_em?: string;
+          conferida_em?: string | null;
+          fonte?: string | null;
+          publicada_em?: string | null;
+          tabela: string;
+          ultima_mensagem?: string | null;
+          versao: string;
+        };
+        Update: {
+          carregada_em?: string;
+          conferida_em?: string | null;
+          fonte?: string | null;
+          publicada_em?: string | null;
+          tabela?: string;
+          ultima_mensagem?: string | null;
+          versao?: string;
+        };
+        Relationships: [];
       };
       fis_tipos_entrada: {
         Row: {
@@ -7157,6 +7220,7 @@ export type Database = {
         Returns: undefined;
       };
       fis_gravar_documento: { Args: { p: Json }; Returns: Json };
+      fis_nbs_do_servico: { Args: { p_servico: string }; Returns: Json };
       fis_pedidos_da_nota: { Args: { p_nota: string }; Returns: Json };
       fis_pode: {
         Args: { p_cliente: string; p_nivel?: string };
@@ -7180,6 +7244,22 @@ export type Database = {
         Returns: undefined;
       };
       fis_salvar_tipo_entrada: { Args: { p: Json }; Returns: string };
+      fis_tabela_carregar: {
+        Args: {
+          p_fonte: string;
+          p_linhas: Json;
+          p_publicada: string;
+          p_tabela: string;
+          p_versao: string;
+        };
+        Returns: Json;
+      };
+      fis_tabela_conferida: {
+        Args: { p_mensagem: string; p_tabela: string };
+        Returns: undefined;
+      };
+      fis_tabela_versao: { Args: { p_tabela: string }; Returns: string };
+      fis_tabelas_token_confere: { Args: { p_token: string }; Returns: boolean };
       fis_token_confere: { Args: { p_token: string }; Returns: boolean };
       gerar_competencia: {
         Args: { p_competencia: string; p_org: string };

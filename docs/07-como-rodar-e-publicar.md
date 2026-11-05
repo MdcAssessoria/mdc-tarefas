@@ -147,6 +147,10 @@ npx supabase functions deploy convite --project-ref bulqqdgfrrpqquqvjjfa --impor
   por consulta; nenhuma função nem tipo mudou.
 - **05/11/2026:** 061 aplicada (só dados em `hub_apps`: Entradas volta como "Notas fiscais" e nova ordem da Gestão);
   nenhuma função nem tipo mudou.
+- **05/11/2026:** 062 e 063 aplicadas (tabela oficial serviço × NBS — Anexo VIII da NFS-e — e atualização automática;
+  a 063 corrige o DELETE da carga, que o Supabase exige com WHERE); 5 funções conferidas por md5; Função `fiscal-tabelas`
+  v1 publicada (pacote único, `verify_jwt = false`, token interno do Vault) e agendada toda segunda 07h10; 1ª carga feita
+  pelo portal gov.br: versão 1.02.00, 997 pares em 208 itens; avisos de segurança sem novidade; tipos regenerados.
 - **Ajustes finais (052, branch `ajustes-finais`).** Ordem: testes (`bash supabase/testes/rodar.sh`, blocos 111 a 114)
   → aplicar a 052 → regenerar `database.types.ts` (os tipos da 052 foram escritos à mão) e rodar os Advisors → publicar
   as funções → push do site.
