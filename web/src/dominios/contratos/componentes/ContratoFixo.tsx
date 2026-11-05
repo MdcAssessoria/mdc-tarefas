@@ -5,7 +5,7 @@
 // Editar vale para as próximas contas; as já lançadas não mudam. Contrato A RECEBER tem também o faturamento (043):
 // dia de gerar (ao lado do "Vence todo dia"), o que enviar ao cliente e por onde (CamposFaturamento).
 // Janela larga (03/11/2026): no computador, dados e vigência à esquerda, valor e faturamento à direita, botões fixos
-// embaixo; no celular, uma coluna só.
+// embaixo; no celular, uma coluna só. Contrato a receber escolhe o "Sistema vendido" (059) para a receita por sistema.
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
@@ -30,6 +30,7 @@ import type { FaturamentoForm } from "../faturamento";
 import type { IndiceRecorrente, Recorrente } from "../tipos";
 import { CamposFaturamento } from "./CamposFaturamento";
 import { CampoPessoaContrato } from "./CampoPessoaContrato";
+import { CampoSistemaContrato } from "./CampoSistemaContrato";
 import type { PessoaEscolhida } from "./CampoPessoaContrato";
 import { Icone } from "@/components/ui/Icone";
 
@@ -61,6 +62,8 @@ type Form = {
   centro: string;
   conta: string;
   observacao: string;
+  /** Sistema vendido (059; só a receber). */
+  sistema: string;
 };
 
 /** Mês e ano em duas listas (funciona em qualquer navegador, inclusive no celular). Valor "AAAA-MM". */
@@ -151,6 +154,7 @@ export function ContratoFixo({
     centro: editar?.centro_id ?? "",
     conta: editar?.conta_prevista_id ?? "",
     observacao: editar?.observacao ?? "",
+    sistema: editar?.sistema_id ?? "",
   }));
   const mudar = (p: Partial<Form>) => setF((x) => ({ ...x, ...p }));
   const [escolhida, setEscolhida] = useState<PessoaEscolhida | null>(() =>
@@ -253,6 +257,7 @@ export function ContratoFixo({
               servico_codigo: fat.servicoCodigo.trim() || null,
               iss_aliquota: nf || fat.iss.trim() ? numeroBr(fat.iss) : null,
               boleto_banco: fat.envio === "fatura" ? null : fat.boletoBanco || null,
+              sistema: f.sistema || null,
             }
           : {}),
       });
@@ -400,6 +405,14 @@ export function ContratoFixo({
                 )}
               </div>
             </div>
+            {receber && (
+              <CampoSistemaContrato
+                cliente={cliente.id}
+                valor={f.sistema}
+                aoMudar={(id) => mudar({ sistema: id })}
+                podeCriar={pode("contratos", "gerir")}
+              />
+            )}
             <label className="campo">
               <span>Objeto do contrato (opcional)</span>
               <textarea

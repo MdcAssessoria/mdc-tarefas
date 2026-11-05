@@ -1,5 +1,9 @@
 # Estoque, pedidos de venda (Saídas) e pedidos de compra (Entradas)
 
+> **Desligado desde 05/11/2026 (migração 059):** o HUB passou a servir só às finanças da MDC e à receita dos sistemas
+> licenciados, então este módulo saiu do menu (status `desligado` em `hub_apps`). O código, os dados e as regras do banco
+> continuam; para religar, volte o status para `ativo`. O certificado digital está em Financeiro › Certificado digital.
+
 > **Resumo:** cadastro de itens fácil para o próprio cliente (assistente em 4 passos, cadastro rápido, planilha,
 > duplicar, foto), estoque com custo médio ponderado e ficha (kardex), inventário guiado, e pedidos de venda e de
 > compra que mexem no estoque e no Financeiro sozinhos. Migração `033_estoque_pedidos.sql` (sobre a 029). Frente 3 do

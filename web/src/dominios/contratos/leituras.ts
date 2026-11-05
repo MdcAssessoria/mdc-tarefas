@@ -3,7 +3,21 @@ import { supabase } from "@/lib/supabase";
 import { lerTudo } from "@/lib/lerTudo";
 import type { Arquivo } from "@/lib/arquivos/armazenamento";
 import type { Titulo } from "@/dominios/financeiro/tipos";
-import type { BoletoFatura, ContaBancoLink, EmissaoNfse, EnvioDaFatura, EventoContrato, Fatura, NumeracaoNfse, ParametrosNfse, ReajusteRecorrente, Recorrente, RegraServico } from "./tipos";
+import type {
+  BoletoFatura,
+  ContaBancoLink,
+  EmissaoNfse,
+  EnvioDaFatura,
+  EventoContrato,
+  Fatura,
+  NumeracaoNfse,
+  ParametrosNfse,
+  ReajusteRecorrente,
+  ReceitaSistemas,
+  Recorrente,
+  RegraServico,
+  Sistema,
+} from "./tipos";
 
 /** Cliente de uma fatura, só com o que vai no PDF dela (047: Contratos não lê o cadastro inteiro). */
 export interface TomadorFatura {
@@ -166,4 +180,41 @@ export async function lerContasBanco(cliente: string): Promise<ContaBancoLink[]>
   const { data, error } = await supabase().from("link_contas_banco").select("*").eq("cliente_id", cliente).order("banco");
   if (error) throw error;
   return (data ?? []) as ContaBancoLink[];
+}
+
+/** Sistemas que a empresa licencia (059), ativos e inativos. */
+export const lerSistemas = (cliente: string) =>
+  lerTudo<Sistema>((de, ate) =>
+    supabase()
+      .from("fin_sistemas")
+      .select("id,cliente_id,nome,descricao,ativo,ordem")
+      .eq("cliente_id", cliente)
+      .order("ordem")
+      .order("nome")
+      .order("id")
+      .range(de, ate),
+  );
+
+/** Painel de receita por sistema do mês (primeiro dia do mês, AAAA-MM-01), calculado no banco (059). */
+export async function lerReceitaSistemas(cliente: string, mes: string): Promise<ReceitaSistemas> {
+  const { data, error } = await supabase().rpc("fin_receita_sistemas", { p_cliente: cliente, p_mes: mes });
+  if (error) throw error;
+  const r = data as unknown as ReceitaSistemas;
+  return {
+    ...r,
+    linhas: (r.linhas ?? []).map((l) => ({
+      ...l,
+      contratos: Number(l.contratos),
+      suspensos: Number(l.suspensos),
+      clientes: Number(l.clientes),
+      mensal: Number(l.mensal),
+      faturado: Number(l.faturado),
+      recebido: Number(l.recebido),
+      atraso: Number(l.atraso),
+      novos: Number(l.novos),
+      encerrados: Number(l.encerrados),
+      previsto: Number(l.previsto),
+      por_mes: (l.por_mes ?? []).map(Number),
+    })),
+  };
 }

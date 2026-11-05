@@ -1,5 +1,9 @@
 # Módulo Entradas — notas fiscais recebidas
 
+> **Desligado desde 05/11/2026 (migração 059):** o HUB passou a servir só às finanças da MDC e à receita dos sistemas
+> licenciados, então este módulo saiu do menu (status `desligado` em `hub_apps`). O código, os dados e as regras do banco
+> continuam; para religar, volte o status para `ativo`. O certificado digital está em Financeiro › Certificado digital.
+
 > **Resumo:** com o certificado A1 (e-CNPJ) da empresa, o HUB busca sozinho as NF-e na SEFAZ (Distribuição DF-e do
 > Ambiente Nacional) e as NFS-e no Ambiente de Dados Nacional (ADN), mostra cada nota em linguagem simples
 > ("Aguardando sua resposta", "Prazo vencendo", "Confirmada"…), responde à SEFAZ (manifestação do destinatário, com

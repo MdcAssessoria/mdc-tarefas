@@ -82,7 +82,8 @@ export const NAV: Record<Modulo, { titulo: string; links: LinkModulo[]; grupos?:
     ],
   },
   // Gestão do cliente (modelo Conta Azul/Omie): cada módulo é um item do menu lateral, vendável e liberável por cliente.
-  // Entradas (/entradas), Saídas (/saidas) e Estoque (/estoque) entram aqui pelas frentes que os constroem.
+  // Entradas (/entradas), Saídas (/saidas) e Estoque (/estoque) continuam no código, mas desde a 059 (05/11/2026) as
+  // ferramentas ficam "desligadas" no catálogo: o HUB serve às finanças da MDC e à receita dos sistemas licenciados.
   financeiro: {
     titulo: "Financeiro",
     grupos: ["Bancos"],
@@ -95,6 +96,8 @@ export const NAV: Record<Modulo, { titulo: string; links: LinkModulo[]; grupos?:
       { href: "/financeiro/transferencias", nome: "Transferências", grupo: "Bancos" },
       { href: "/financeiro/extratos", nome: "Extratos", grupo: "Bancos" },
       { href: "/financeiro/conciliacao", nome: "Conciliação", grupo: "Bancos" },
+      // certificado da NFS-e (059): saiu de Entradas, que ficou desligada
+      { href: "/financeiro/certificado", nome: "Certificado digital", minimo: "gerir" },
     ],
   },
   licencas: {
@@ -139,6 +142,7 @@ export const NAV: Record<Modulo, { titulo: string; links: LinkModulo[]; grupos?:
     titulo: "Contratos",
     links: [
       { href: "/contratos", nome: "Contratos" },
+      { href: "/contratos/sistemas", nome: "Receita por sistema" },
       { href: "/contratos/faturas", nome: "Faturas" },
       { href: "/contratos/reajustes", nome: "Reajustes" },
       { href: "/contratos/nota-fiscal", nome: "Regras fiscais", minimo: "gerir" },

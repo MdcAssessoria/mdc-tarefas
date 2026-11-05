@@ -63,6 +63,8 @@ export interface DadosContrato {
   iss_aliquota?: number | null;
   /** Banco do boleto (048): itau ou santander, quando o envio tem boleto. */
   boleto_banco?: BancoBoleto | null;
+  /** Sistema vendido (059; só a receber). Sem a chave, o contrato mantém o que tinha. */
+  sistema?: string | null;
 }
 
 /** Cria ou edita; ao criar, o banco já lança a conta do mês atual (devolve quantas lançou). */
@@ -249,4 +251,9 @@ export async function conferirEnvio(org: string) {
 /** Manda uma mensagem de teste (Contratos: gerir; até 5 por hora). */
 export async function testarEnvio(org: string, canal: CanalAutomatico, destino: string) {
   return chamarFuncao<{ ok: boolean; mensagem?: string; erro?: string }>("fatura-enviar", { corpo: { acao: "teste", org, canal, destino } });
+}
+
+/** Cria ou edita um sistema vendido (059; Contratos: gerir). Inativar = ativo false (nada se apaga). */
+export async function salvarSistema(s: { id?: string; cliente?: string; nome: string; descricao?: string | null; ativo?: boolean }) {
+  return exigir(await supabase().rpc("fin_sistema_salvar", { p: s as unknown as Json })) as { id: string };
 }

@@ -794,6 +794,9 @@ const INTERACOES = {
     await rec.getByRole("combobox", { name: /Tipo de serviço/ }).fill("17.19");
     await rec.getByRole("option").filter({ hasText: "Contabilidade" }).getByRole("button").click();
     await rec.getByText("17.19.01").waitFor({ timeout: 3000 });
+    // 059: licença de um sistema — o "Sistema vendido" lista os ativos (Ledgra e EXato; o inativo não)
+    await rec.getByLabel("Sistema vendido").selectOption({ label: "EXato" });
+    if ((await rec.getByLabel("Sistema vendido").locator("option").count()) !== 3) throw new Error("Sistema vendido deveria ter Nenhum + 2 ativos");
     await rec.getByRole("checkbox", { name: /E-mail/ }).check();
     await rec.getByRole("checkbox", { name: /Portal do Cliente/ }).check();
     await rec.getByText("Envio por e-mail e WhatsApp: aguardando configuração").waitFor({ timeout: 3000 });
@@ -946,6 +949,17 @@ const INTERACOES = {
       await p.getByText(t, { exact: false }).first().waitFor({ timeout: 3000 });
     await p.getByRole("button", { name: "Enviar teste" }).first().waitFor({ timeout: 3000 });
     await foto("envio-canais");
+  },
+  "/contratos/sistemas": async (p, foto) => {
+    await p.getByRole("cell", { name: /Ledgra/ }).first().waitFor({ timeout: 3000 });
+    await p.getByText("Previsto nos próximos 12 meses").waitFor({ timeout: 3000 });
+    await p.getByRole("button", { name: "Novo sistema", exact: true }).click();
+    const j = p.getByRole("dialog", { name: "Novo sistema" });
+    await j.waitFor({ timeout: 3000 });
+    await j.getByLabel("Nome do sistema").fill("Ledgra IA");
+    await foto("novo-sistema");
+    await j.getByRole("button", { name: "Voltar" }).click();
+    await j.waitFor({ state: "detached", timeout: 3000 });
   },
   "/contratos/reajustes": async (p) => {
     await p.getByRole("button", { name: "Conferir e confirmar", exact: true }).first().click();

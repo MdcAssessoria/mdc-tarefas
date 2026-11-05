@@ -18,6 +18,11 @@
 > conferência (ambiente em destaque) e a Função Edge `nfse-emitir` manda a DPS assinada com o A1 da MDC à API da Sefin
 > Nacional. Começa no **ambiente de teste** (produção restrita, sem valor fiscal). Seção 5. Migração `046_nfse_emissao.sql`;
 > testes `101_base_046.sql` e `102_nfse_046.sql`.
+>
+> **Receita por sistema (059, decisão do Edvaldo em 05/11/2026):** o HUB controla as finanças da MDC e a receita das
+> licenças dos sistemas e módulos que ela vende (Ledgra, EXato e os próximos). O Ledgra cuida dos clientes e da cobrança
+> deles; no HUB fica o controle das licenças vendidas e a previsibilidade da receita. Seção 7. Migração
+> `059_sistemas_receita.sql`; testes `127_base_059.sql` e `128_sistemas_059.sql`.
 
 ## 1. Telas
 
@@ -168,6 +173,10 @@ Azure com `Mail.Send` só nessa caixa pelo RBAC para Aplicativos) e WhatsApp pel
   linha digitável e o Pix; o WhatsApp sobe o PDF e manda o modelo com 5 campos (nome, número, valor, vencimento, como
   pagar). Testes 113/114 (SQL) e `envio_test.ts` (Deno, sem rede).
 
+### Receita por sistema (migração 059, 05/11/2026)
+
+Ver a seção 7.
+
 ## 4. Pendências
 
 - Contrato com valor variável (ex.: honorário por faixa de faturamento) e contrato sem valor mensal: hoje todo contrato
@@ -277,3 +286,35 @@ grava o resultado (`nfse_auto_registrar`). As três funções são só da chave 
 Testes: `supabase/testes/111_base_052.sql` e `112_ajustes_052.sql` (token, lista, uma vez por dia, aviso no sino,
 confirmação ao ligar, nada se apaga).
 
+
+## 7. Receita por sistema (migração 059, 05/11/2026)
+
+**Para quê.** Cada sistema ou módulo que a MDC licencia (Ledgra, EXato…) é cadastrado uma vez; cada licença vendida é um
+**contrato a receber** que aponta o sistema no campo **Sistema vendido** (opcional; honorários e outros serviços ficam
+sem). A aba **Contratos › Receita por sistema** soma tudo por sistema, no mês escolhido.
+
+**Tela (`TelaSistemas.tsx`, `JanelaSistema.tsx`, `CampoSistemaContrato.tsx`).**
+
+- Indicadores: receita mensal contratada (com o número de licenças ativas), recebido no mês (de quanto foi faturado),
+  em atraso e **previsto nos próximos 12 meses**.
+- Tabela por sistema: licenças ativas (com novas e encerradas nos últimos 12 meses), receita mensal e % da receita,
+  recebido/faturado no mês, em atraso, previsto e barrinhas do faturado dos 12 meses. "Sem sistema" aparece quando há
+  contrato a receber sem sistema. PDF e Excel trazem também os 12 meses em colunas e a linha de total.
+- Quem **gere** Contratos cadastra (botão "Novo sistema", sugestões de um clique na tela vazia), edita e
+  inativa/reativa (com confirmação). Inativo some da lista do contrato novo, mas o contrato que já usa continua igual.
+- No contrato a receber, "Sistema vendido" com "+ Novo sistema" sem sair da janela; a lista e a ficha mostram o sistema.
+
+**Regras (banco).**
+
+- `fin_sistemas` (nome único por empresa, sem diferenciar maiúsculas/espaços); grava só `fin_sistema_salvar`
+  (Contratos: gerir); nada se apaga (gatilho `nada_se_apaga`: inative).
+- `fin_recorrentes.sistema_id`: só contrato a receber (no a pagar é ignorado); sistema de outra empresa ou inativo é
+  recusado; editar sem mandar o sistema mantém o que estava.
+- `fin_receita_sistemas(cliente, mês)` (Contratos: ver): faturado e recebido pela **competência** das contas do
+  contrato (canceladas não contam); em atraso = saldo das contas em aberto vencidas até hoje; novos = início da vigência
+  nos 12 meses até o mês; encerrados = encerrados nesses 12 meses; **previsto** = valor atual de cada contrato ativo que
+  lança contas × meses dos 12 seguintes dentro da vigência (a partir da primeira conta; reajustes futuros não entram).
+
+**Menu enxuto (mesma migração).** Estoque, Entradas e Saídas ficam com status `desligado` em `hub_apps`: somem do menu
+(`hub_meus_apps`, 015) e a Guarda barra as rotas; nada foi apagado e as regras do banco não mudam (para religar, volte
+o status para `ativo`). O certificado A1 da NFS-e passou para **Financeiro › Certificado digital** (mesma tela).

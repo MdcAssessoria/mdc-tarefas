@@ -67,6 +67,47 @@ export interface Recorrente {
   boleto_banco: BancoBoleto | null;
   /** Renovação automática: meses por renovação (048, padrão 12). */
   renovacao_meses: number;
+  /** Sistema vendido por este contrato a receber (059); vazio = honorários e outros serviços. */
+  sistema_id: string | null;
+}
+
+/** Sistema que a empresa licencia (EXato, Ledgra…), para somar a receita por sistema (059). */
+export interface Sistema {
+  id: string;
+  cliente_id: string;
+  nome: string;
+  descricao: string | null;
+  ativo: boolean;
+  ordem: number;
+}
+
+/** Uma linha do painel de receita por sistema (fin_receita_sistemas, 059). `sistema` nulo = "Sem sistema". */
+export interface LinhaReceitaSistema {
+  sistema: string | null;
+  nome: string;
+  descricao: string | null;
+  ativo: boolean;
+  contratos: number;
+  suspensos: number;
+  clientes: number;
+  /** Receita recorrente contratada: soma do valor mensal dos contratos ativos. */
+  mensal: number;
+  faturado: number;
+  recebido: number;
+  atraso: number;
+  novos: number;
+  encerrados: number;
+  /** Receita prevista dos 12 meses seguintes: valor atual dos contratos ativos nos meses dentro da vigência. */
+  previsto: number;
+  /** Faturado em cada um dos 12 meses (do mais antigo ao mês escolhido), na ordem de `meses`. */
+  por_mes: number[];
+}
+
+export interface ReceitaSistemas {
+  mes: string;
+  hoje: string;
+  meses: string[];
+  linhas: LinhaReceitaSistema[];
 }
 
 export type SituacaoFatura = "gerada" | "aguardando_nf" | "pronta" | "enviada" | "cancelada";

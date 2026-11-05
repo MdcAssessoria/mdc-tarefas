@@ -54,6 +54,7 @@ export function FichaContrato({
   contrato: k,
   pessoa,
   categoria,
+  sistema,
   podeOperar,
   abaInicial = "dados",
   aoFechar,
@@ -63,6 +64,8 @@ export function FichaContrato({
   contrato: Recorrente;
   pessoa: string;
   categoria: string;
+  /** Nome do sistema vendido (059), quando o contrato a receber tem um. */
+  sistema?: string;
   podeOperar: boolean;
   abaInicial?: AbaFicha;
   aoFechar: () => void;
@@ -175,6 +178,7 @@ export function FichaContrato({
           )}
           <Linha rotulo="Reajuste">{textoReajuste(k)}</Linha>
           <Linha rotulo="Categoria">{categoria}</Linha>
+          {sistema && <Linha rotulo="Sistema vendido">{sistema}</Linha>}
           {k.objeto && <Linha rotulo="Objeto">{k.objeto}</Linha>}
           {k.situacao !== "ativo" && k.situacao_motivo && (
             <Linha rotulo={k.situacao === "suspenso" ? "Motivo da suspensão" : "Motivo do encerramento"}>

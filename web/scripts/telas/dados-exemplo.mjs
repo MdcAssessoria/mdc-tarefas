@@ -2772,3 +2772,37 @@ export const XML_EXEMPLO = {
     };
   };
 })();
+
+// ---------------------------------------------------------------- Receita por sistema (059, 05/11/2026)
+// Ledgra e EXato cadastrados (mais um inativo sem contrato); a "Mensalidade do portal" é licença do Ledgra. O painel
+// traz Ledgra, EXato e "Sem sistema" (honorários), com 12 meses de faturamento e a receita prevista.
+(() => {
+  const S = (n) => `f5900000-0000-4000-8000-00000000000${n}`;
+  TABELAS.fin_sistemas = [
+    { id: S(1), org_id: ORG, cliente_id: CM, nome: "Ledgra", descricao: "Plataforma contábil (licenças)", ativo: true, ordem: 100 },
+    { id: S(2), org_id: ORG, cliente_id: CM, nome: "EXato", descricao: "Gestão de diaristas", ativo: true, ordem: 100 },
+    { id: S(3), org_id: ORG, cliente_id: CM, nome: "MDC Tarefas", descricao: null, ativo: false, ordem: 100 },
+  ];
+  for (const k of TABELAS.fin_recorrentes) if (!("sistema_id" in k)) k.sistema_id = null;
+  const portal = TABELAS.fin_recorrentes.find((k) => k.descricao === "Mensalidade do portal");
+  if (portal) portal.sistema_id = S(1);
+  const hoje = new Date();
+  const meses = Array.from({ length: 12 }, (_, i) => {
+    const d = new Date(hoje.getFullYear(), hoje.getMonth() - 11 + i, 1);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-01`;
+  });
+  const serie = (base, cresce) => meses.map((_, i) => Math.round((base + cresce * i) * 100) / 100);
+  RPCS.fin_receita_sistemas = ({ p_mes }) => ({
+    mes: p_mes ?? meses[11],
+    hoje: meses[11],
+    meses,
+    linhas: [
+      { sistema: S(1), nome: "Ledgra", descricao: "Plataforma contábil (licenças)", ativo: true, contratos: 18, suspensos: 1, clientes: 17,
+        mensal: 8982, faturado: 8982, recebido: 7385, atraso: 499, novos: 9, encerrados: 2, previsto: 107784, por_mes: serie(4200, 430) },
+      { sistema: S(2), nome: "EXato", descricao: "Gestão de diaristas", ativo: true, contratos: 3, suspensos: 0, clientes: 3,
+        mensal: 4500, faturado: 4500, recebido: 4500, atraso: 0, novos: 3, encerrados: 0, previsto: 54000, por_mes: serie(0, 410) },
+      { sistema: null, nome: "Sem sistema (honorários e outros)", descricao: null, ativo: true, contratos: 2, suspensos: 0, clientes: 2,
+        mensal: 3250, faturado: 3250, recebido: 1850, atraso: 1400, novos: 0, encerrados: 1, previsto: 39000, por_mes: serie(3250, 0) },
+    ],
+  });
+})();

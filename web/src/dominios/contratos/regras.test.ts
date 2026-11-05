@@ -57,6 +57,7 @@ const base: Recorrente = {
   iss_aliquota: null,
   boleto_banco: null,
   renovacao_meses: 12,
+  sistema_id: null,
 };
 
 describe("vencimento no mês", () => {

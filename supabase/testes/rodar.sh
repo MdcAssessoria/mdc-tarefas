@@ -134,3 +134,8 @@ for f in testes/125_base_058.sql migrations/058_nota_pedido.sql; do
   $P -v ON_ERROR_STOP=1 -f "$R/$f" 2>&1 | grep -v NOTICE || true
 done
 $P -f "$R/testes/126_nota_pedido_058.sql" 2>&1 | grep -v "^SET$"
+# 059: HUB enxuto (Estoque/Entradas/Saídas fora do menu) e receita por sistema nos contratos
+for f in migrations/059_sistemas_receita.sql testes/127_base_059.sql; do
+  $P -v ON_ERROR_STOP=1 -f "$R/$f" 2>&1 | grep -v NOTICE || true
+done
+$P -f "$R/testes/128_sistemas_059.sql" 2>&1 | grep -v "^SET$"

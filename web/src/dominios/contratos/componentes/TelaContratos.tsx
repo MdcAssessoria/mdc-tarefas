@@ -26,7 +26,7 @@ import { Indicador } from "@/components/ui/Indicador";
 import { JanelaMotivo } from "@/components/ui/JanelaMotivo";
 import { Valor } from "@/components/ui/Valor";
 import { SemEmpresaGestao, useClienteGestao } from "@/dominios/organizacao/componentes/EmpresaEmGestao";
-import { lerContratos, lerOpcoesContrato, lerReajustes } from "../leituras";
+import { lerContratos, lerOpcoesContrato, lerReajustes, lerSistemas } from "../leituras";
 import { encerrarContrato, reativarContrato, suspenderContrato } from "../repositorio";
 import { proximoReajuste, reajustePendente, SITUACOES_RECORRENTE, terminaEm, textoReajuste, textoVigencia } from "../regras";
 import type { Recorrente, SituacaoRecorrente } from "../tipos";
@@ -84,8 +84,8 @@ export function TelaContratos() {
   const consulta = useConsulta(
     useCallback(async () => {
       if (!cliente) return null;
-      const [contratos, reajustes] = await Promise.all([lerContratos(cliente.id), lerReajustes(cliente.id)]);
-      return { contratos, reajustes };
+      const [contratos, reajustes, sistemas] = await Promise.all([lerContratos(cliente.id), lerReajustes(cliente.id), lerSistemas(cliente.id)]);
+      return { contratos, reajustes, sistemas };
     }, [cliente]),
   );
 
@@ -93,8 +93,9 @@ export function TelaContratos() {
     () => ({
       pessoa: new Map((cad.dados?.pessoas ?? []).map((p) => [p.id, p.nome])),
       categoria: new Map((cad.dados?.categorias ?? []).map((c) => [c.id, c.nome])),
+      sistema: new Map((consulta.dados?.sistemas ?? []).map((x) => [x.id, x.nome])),
     }),
-    [cad.dados],
+    [cad.dados, consulta.dados],
   );
 
   const linhas = useMemo(
@@ -118,7 +119,8 @@ export function TelaContratos() {
         (!q ||
           k.descricao.toLowerCase().includes(q) ||
           (k.numero ?? "").toLowerCase().includes(q) ||
-          (nomes.pessoa.get(k.pessoa_id) ?? "").toLowerCase().includes(q)),
+          (nomes.pessoa.get(k.pessoa_id) ?? "").toLowerCase().includes(q) ||
+          (k.sistema_id ? (nomes.sistema.get(k.sistema_id) ?? "") : "").toLowerCase().includes(q)),
     );
   }, [linhas, tipo, situacao, destaque, busca, nomes]);
 
@@ -339,6 +341,7 @@ export function TelaContratos() {
                         <span className="block text-xs font-normal text-[var(--texto-suave)]">
                           {k.tipo === "pagar" ? "A pagar" : "A receber"} · {nomes.categoria.get(k.categoria_id)}
                           {k.numero && ` · nº ${k.numero}`}
+                          {k.sistema_id && nomes.sistema.has(k.sistema_id) && ` · Sistema: ${nomes.sistema.get(k.sistema_id)}`}
                         </span>
                       </td>
                       <td data-rotulo="Cliente / fornecedor" className="min-w-32">
@@ -474,6 +477,7 @@ export function TelaContratos() {
           contrato={janela.k}
           pessoa={nomePessoa(janela.k)}
           categoria={nomes.categoria.get(janela.k.categoria_id) ?? "—"}
+          sistema={janela.k.sistema_id ? nomes.sistema.get(janela.k.sistema_id) : undefined}
           podeOperar={podeOperar}
           aoFechar={() => fechar()}
           aoMudar={(m) => {

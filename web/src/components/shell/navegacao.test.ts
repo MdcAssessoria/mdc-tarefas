@@ -98,7 +98,7 @@ describe("agruparLinks", () => {
     expect(temGrupos("tarefas")).toBe(false);
   });
 
-  it("Financeiro: abas curtas, com Bancos (contas, transferências, extratos) num menu", () => {
+  it("Financeiro: abas curtas, com Bancos (contas, transferências, extratos) num menu e o certificado no fim", () => {
     const e = agruparLinks(NAV.financeiro.links, NAV.financeiro.grupos);
     expect(e.map((x) => (x.tipo === "link" ? x.link.nome : `${x.nome} ▾`))).toEqual([
       "Início",
@@ -106,6 +106,8 @@ describe("agruparLinks", () => {
       "A receber",
       "Entradas e saídas",
       "Bancos ▾",
+      // 059: o certificado da NFS-e saiu de Entradas (desligada) e veio para o Financeiro
+      "Certificado digital",
     ]);
     const bancos = e[4];
     expect(bancos.tipo === "grupo" && bancos.links.map((x) => x.href)).toEqual([

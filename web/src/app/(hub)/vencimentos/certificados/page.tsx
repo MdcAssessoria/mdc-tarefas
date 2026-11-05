@@ -222,7 +222,7 @@ export default function PaginaCertificados() {
             ) : (
               <EstadoVazio icone="escudo" titulo="Nenhum certificado guardado ainda">
                 O certificado da MDC para assinar os demonstrativos é enviado em Demonstrativos › Certificado; o de cada empresa para as
-                notas fiscais, em Entradas › Certificado. Os certificados dos bancos são cadastrados no Ledgra Link. Assim que forem
+                notas fiscais, em Financeiro › Certificado digital. Os certificados dos bancos são cadastrados no Ledgra Link. Assim que forem
                 enviados, aparecem aqui com a validade.
               </EstadoVazio>
             )

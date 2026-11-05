@@ -309,8 +309,8 @@ export function TelaNotaFiscal() {
                   <p className="text-xs text-[var(--texto-suave)]">
                     O código do serviço (tributação nacional, 6 números) e a descrição vêm de cada contrato. A nota é assinada com o
                     certificado A1 da MDC de{" "}
-                    <Link className="underline" href="/entradas/certificado">
-                      Entradas › Certificado digital
+                    <Link className="underline" href="/financeiro/certificado">
+                      Financeiro › Certificado digital
                     </Link>
                     .
                   </p>
