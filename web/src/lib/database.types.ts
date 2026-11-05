@@ -2431,6 +2431,7 @@ export type Database = {
           renovacao_meses: number;
           servico_codigo: string | null;
           servico_descricao: string | null;
+          sistema_id: string | null;
           situacao: string;
           situacao_em: string | null;
           situacao_motivo: string | null;
@@ -2484,6 +2485,7 @@ export type Database = {
           renovacao_meses?: number;
           servico_codigo?: string | null;
           servico_descricao?: string | null;
+          sistema_id?: string | null;
           situacao?: string;
           situacao_em?: string | null;
           situacao_motivo?: string | null;
@@ -2537,6 +2539,7 @@ export type Database = {
           renovacao_meses?: number;
           servico_codigo?: string | null;
           servico_descricao?: string | null;
+          sistema_id?: string | null;
           situacao?: string;
           situacao_em?: string | null;
           situacao_motivo?: string | null;
@@ -2597,6 +2600,67 @@ export type Database = {
             columns: ["pessoa_id"];
             isOneToOne: false;
             referencedRelation: "fin_pessoas";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "fin_recorrentes_sistema_id_fkey";
+            columns: ["sistema_id"];
+            isOneToOne: false;
+            referencedRelation: "fin_sistemas";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      fin_sistemas: {
+        Row: {
+          ativo: boolean;
+          atualizado_em: string;
+          cliente_id: string;
+          criado_em: string;
+          descricao: string | null;
+          id: string;
+          nome: string;
+          ordem: number;
+          org_id: string;
+          por: string | null;
+        };
+        Insert: {
+          ativo?: boolean;
+          atualizado_em?: string;
+          cliente_id: string;
+          criado_em?: string;
+          descricao?: string | null;
+          id?: string;
+          nome: string;
+          ordem?: number;
+          org_id: string;
+          por?: string | null;
+        };
+        Update: {
+          ativo?: boolean;
+          atualizado_em?: string;
+          cliente_id?: string;
+          criado_em?: string;
+          descricao?: string | null;
+          id?: string;
+          nome?: string;
+          ordem?: number;
+          org_id?: string;
+          por?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "fin_sistemas_cliente_id_fkey";
+            columns: ["cliente_id"];
+            isOneToOne: false;
+            referencedRelation: "clientes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "fin_sistemas_org_id_fkey";
+            columns: ["org_id"];
+            isOneToOne: false;
+            referencedRelation: "organizacoes";
             referencedColumns: ["id"];
           },
         ];
@@ -7004,6 +7068,10 @@ export type Database = {
       };
       fin_indices_atualizar: { Args: { p_cliente: string }; Returns: Json };
       fin_lancar: { Args: { p: Json }; Returns: Json };
+      fin_receita_sistemas: {
+        Args: { p_cliente: string; p_mes?: string };
+        Returns: Json;
+      };
       fin_recorrente_anexo: {
         Args: { p_arquivo: string; p_contrato: string };
         Returns: undefined;
@@ -7032,6 +7100,7 @@ export type Database = {
         Args: { p_contrato: string; p_motivo: string };
         Returns: undefined;
       };
+      fin_sistema_salvar: { Args: { p: Json }; Returns: Json };
       fin_transferir: {
         Args: {
           p_data: string;

@@ -140,6 +140,9 @@ npx supabase functions deploy convite --project-ref bulqqdgfrrpqquqvjjfa --impor
 - **05/11/2026:** 058 aplicada (nota de entrada × pedido de compra: `fis_notas.pedido_id`, `fis_pedidos_da_nota`,
   `fis_processar_nota` com escolha obrigatória do pedido, `fis_desfazer_lancamento`, gatilho `est_pedido_nota`); 6 funções
   conferidas por md5; avisos de segurança sem novidade; tipos regenerados.
+- **05/11/2026:** 059 aplicada (receita por sistema: `fin_sistemas`, `fin_sistema_salvar`, `fin_recorrentes.sistema_id`,
+  `fin_recorrente_salvar` com o sistema, `fin_receita_sistemas` com a receita prevista; Estoque, Entradas e Saídas com
+  status `desligado`); 3 funções conferidas por md5; avisos de segurança sem novidade; tipos regenerados.
 - **Ajustes finais (052, branch `ajustes-finais`).** Ordem: testes (`bash supabase/testes/rodar.sh`, blocos 111 a 114)
   → aplicar a 052 → regenerar `database.types.ts` (os tipos da 052 foram escritos à mão) e rodar os Advisors → publicar
   as funções → push do site.
