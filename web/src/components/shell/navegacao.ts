@@ -2,6 +2,8 @@
 // e o filtro de quais abas cada pessoa pode ver. Usado pelo menu, pela barra superior e pela busca rápida.
 import type { PapelApp } from "@/dominios/acessos/tipos";
 
+import type { NomeIcone } from "@/components/ui/Icone";
+
 export type Modulo =
   | "hub"
   | "tarefas"
@@ -28,6 +30,8 @@ export type Modulo =
 export interface LinkModulo {
   href: string;
   nome: string;
+  /** Ícone da aba (Icone.tsx), ao lado do nome: deixa a barra mais fácil de reconhecer pelo desenho. */
+  icone?: NomeIcone;
   minimo?: PapelApp;
   gestor?: boolean;
   grupo?: string;
@@ -45,40 +49,40 @@ export const NAV: Record<Modulo, { titulo: string; links: LinkModulo[]; grupos?:
   tarefas: {
     titulo: "Tarefas",
     links: [
-      { href: "/tarefas", nome: "Tarefas" },
-      { href: "/tarefas/relatorio", nome: "Relatórios" },
-      { href: "/tv", nome: "Painel TV" },
-      { href: "/config", nome: "Configurações", gestor: true },
+      { href: "/tarefas", nome: "Tarefas", icone: "check" },
+      { href: "/tarefas/relatorio", nome: "Relatórios", icone: "grafico" },
+      { href: "/tv", nome: "Painel TV", icone: "tv" },
+      { href: "/config", nome: "Configurações", icone: "engrenagem", gestor: true },
     ],
   },
   societario: {
     titulo: "Societário",
     links: [
-      { href: "/societario", nome: "Processos" },
-      { href: "/societario/painel", nome: "Painel" },
+      { href: "/societario", nome: "Processos", icone: "pasta" },
+      { href: "/societario/painel", nome: "Painel", icone: "grade" },
     ],
   },
   demonstrativos: {
     titulo: "Demonstrativos",
     links: [
-      { href: "/demonstrativos", nome: "Balancetes" },
-      { href: "/demonstrativos/importar", nome: "Importar", minimo: "operar" },
-      { href: "/demonstrativos/importacoes", nome: "Histórico de importações" },
-      { href: "/demonstrativos/riscos", nome: "Riscos da carteira" },
+      { href: "/demonstrativos", nome: "Balancetes", icone: "planilha" },
+      { href: "/demonstrativos/importar", nome: "Importar", icone: "importar", minimo: "operar" },
+      { href: "/demonstrativos/importacoes", nome: "Histórico de importações", icone: "relogio" },
+      { href: "/demonstrativos/riscos", nome: "Riscos da carteira", icone: "alerta" },
     ],
   },
   atendimento: {
     titulo: "Atendimento",
     links: [
-      { href: "/atendimento", nome: "Caixa de entrada" },
-      { href: "/atendimento/portal", nome: "Acessos do portal", minimo: "gerir" },
+      { href: "/atendimento", nome: "Caixa de entrada", icone: "chat" },
+      { href: "/atendimento/portal", nome: "Acessos do portal", icone: "pessoas", minimo: "gerir" },
     ],
   },
   vencimentos: {
     titulo: "Vencimentos",
     links: [
-      { href: "/vencimentos", nome: "Vencimentos" },
-      { href: "/vencimentos/certificados", nome: "Certificados digitais" },
+      { href: "/vencimentos", nome: "Vencimentos", icone: "relogio" },
+      { href: "/vencimentos/certificados", nome: "Certificados digitais", icone: "escudo" },
     ],
   },
   // Gestão do cliente (modelo Conta Azul/Omie): cada módulo é um item do menu lateral, vendável e liberável por cliente.
@@ -88,90 +92,90 @@ export const NAV: Record<Modulo, { titulo: string; links: LinkModulo[]; grupos?:
     titulo: "Financeiro",
     grupos: ["Bancos"],
     links: [
-      { href: "/financeiro", nome: "Início" },
-      { href: "/financeiro/pagar", nome: "A pagar" },
-      { href: "/financeiro/receber", nome: "A receber" },
-      { href: "/financeiro/movimento", nome: "Entradas e saídas" },
-      { href: "/financeiro/bancos", nome: "Contas bancárias", grupo: "Bancos" },
-      { href: "/financeiro/transferencias", nome: "Transferências", grupo: "Bancos" },
-      { href: "/financeiro/extratos", nome: "Extratos", grupo: "Bancos" },
-      { href: "/financeiro/conciliacao", nome: "Conciliação", grupo: "Bancos" },
+      { href: "/financeiro", nome: "Início", icone: "casa" },
+      { href: "/financeiro/pagar", nome: "A pagar", icone: "seta-saida" },
+      { href: "/financeiro/receber", nome: "A receber", icone: "seta-entrada" },
+      { href: "/financeiro/movimento", nome: "Entradas e saídas", icone: "lista" },
+      { href: "/financeiro/bancos", nome: "Contas bancárias", icone: "banco", grupo: "Bancos" },
+      { href: "/financeiro/transferencias", nome: "Transferências", icone: "transferir", grupo: "Bancos" },
+      { href: "/financeiro/extratos", nome: "Extratos", icone: "documento", grupo: "Bancos" },
+      { href: "/financeiro/conciliacao", nome: "Conciliação", icone: "check", grupo: "Bancos" },
       // certificado da NFS-e (059): saiu de Entradas, que ficou desligada
-      { href: "/financeiro/certificado", nome: "Certificado digital", minimo: "gerir" },
+      { href: "/financeiro/certificado", nome: "Certificado digital", icone: "escudo", minimo: "gerir" },
     ],
   },
   licencas: {
     titulo: "Cobrança Ledgra",
     links: [
-      { href: "/licencas", nome: "Painel" },
-      { href: "/licencas/cobrancas", nome: "Mensalidades" },
-      { href: "/licencas/inadimplentes", nome: "Inadimplentes" },
-      { href: "/licencas/contratos", nome: "Contratos" },
-      { href: "/licencas/faturamento", nome: "Faturamento do mês" },
-      { href: "/licencas/produtos", nome: "Produtos e planos" },
+      { href: "/licencas", nome: "Painel", icone: "grade" },
+      { href: "/licencas/cobrancas", nome: "Mensalidades", icone: "moeda" },
+      { href: "/licencas/inadimplentes", nome: "Inadimplentes", icone: "alerta" },
+      { href: "/licencas/contratos", nome: "Contratos", icone: "documento" },
+      { href: "/licencas/faturamento", nome: "Faturamento do mês", icone: "calendario" },
+      { href: "/licencas/produtos", nome: "Produtos e planos", icone: "caixa" },
     ],
   },
   estoque: {
     titulo: "Estoque",
     links: [
-      { href: "/estoque", nome: "Itens" },
-      { href: "/estoque/posicao", nome: "Posição" },
-      { href: "/estoque/ficha", nome: "Ficha do item" },
-      { href: "/estoque/movimentos", nome: "Movimentações" },
-      { href: "/estoque/inventario", nome: "Inventário", minimo: "operar" },
-      { href: "/estoque/locais", nome: "Estoques" },
+      { href: "/estoque", nome: "Itens", icone: "caixa" },
+      { href: "/estoque/posicao", nome: "Posição", icone: "grafico" },
+      { href: "/estoque/ficha", nome: "Ficha do item", icone: "documento" },
+      { href: "/estoque/movimentos", nome: "Movimentações", icone: "transferir" },
+      { href: "/estoque/inventario", nome: "Inventário", icone: "lista", minimo: "operar" },
+      { href: "/estoque/locais", nome: "Estoques", icone: "pasta" },
     ],
   },
   saidas: {
     titulo: "Saídas",
-    links: [{ href: "/saidas", nome: "Pedidos de venda" }],
+    links: [{ href: "/saidas", nome: "Pedidos de venda", icone: "enviar" }],
   },
   plano_contas: {
     titulo: "Plano de contas",
     links: [
-      { href: "/plano-contas", nome: "Plano do Domínio" },
-      { href: "/plano-contas/categorias", nome: "Despesas e receitas" },
+      { href: "/plano-contas", nome: "Plano do Domínio", icone: "lista" },
+      { href: "/plano-contas/categorias", nome: "Despesas e receitas", icone: "etiqueta" },
     ],
   },
-  centros_custo: { titulo: "Centros de custo", links: [{ href: "/centros-custo", nome: "Centros de custo" }] },
-  relatorios: { titulo: "Relatórios", links: [{ href: "/relatorios", nome: "Relatórios" }] },
+  centros_custo: { titulo: "Centros de custo", links: [{ href: "/centros-custo", nome: "Centros de custo", icone: "etiqueta" }] },
+  relatorios: { titulo: "Relatórios", links: [{ href: "/relatorios", nome: "Relatórios", icone: "grafico" }] },
   // Contratos fixos (041): cadastro, vigência, anexos, contas do mês no Financeiro e reajuste anual; faturas (043);
   // parâmetros da emissão da NFS-e pelo Emissor Nacional, só para quem gere (046); boleto pelo Ledgra Link (049);
   // envio automático por e-mail e WhatsApp, só para quem gere (053)
   contratos: {
     titulo: "Contratos",
     links: [
-      { href: "/contratos", nome: "Contratos" },
-      { href: "/contratos/sistemas", nome: "Receita por sistema" },
-      { href: "/contratos/faturas", nome: "Faturas" },
-      { href: "/contratos/reajustes", nome: "Reajustes" },
-      { href: "/contratos/nota-fiscal", nome: "Regras fiscais", minimo: "gerir" },
-      { href: "/contratos/boleto", nome: "Boleto", minimo: "gerir" },
-      { href: "/contratos/envio", nome: "Envio (e-mail e WhatsApp)", minimo: "gerir" },
+      { href: "/contratos", nome: "Contratos", icone: "documento" },
+      { href: "/contratos/sistemas", nome: "Receita por sistema", icone: "tendencia" },
+      { href: "/contratos/faturas", nome: "Faturas", icone: "arquivo" },
+      { href: "/contratos/reajustes", nome: "Reajustes", icone: "seta-cima" },
+      { href: "/contratos/nota-fiscal", nome: "Regras fiscais", icone: "escudo", minimo: "gerir" },
+      { href: "/contratos/boleto", nome: "Boleto", icone: "banco", minimo: "gerir" },
+      { href: "/contratos/envio", nome: "Envio (e-mail e WhatsApp)", icone: "enviar", minimo: "gerir" },
     ],
   },
   cadastros: {
     titulo: "Cadastros",
     acesso: ["financeiro", "entradas", "saidas", "estoque"],
-    links: [{ href: "/cadastros/pessoas", nome: "Fornecedores e clientes" }],
+    links: [{ href: "/cadastros/pessoas", nome: "Fornecedores e clientes", icone: "pessoas" }],
   },
   entradas: {
     titulo: "Entradas",
     links: [
-      { href: "/entradas", nome: "Notas recebidas" },
-      { href: "/entradas/lancar", nome: "Lançar nota", minimo: "operar" },
-      { href: "/entradas/compras", nome: "Pedidos de compra" },
-      { href: "/entradas/carga-tributaria", nome: "Carga tributária" },
-      { href: "/entradas/certificado", nome: "Certificado digital" },
+      { href: "/entradas", nome: "Notas recebidas", icone: "importar" },
+      { href: "/entradas/lancar", nome: "Lançar nota", icone: "mais", minimo: "operar" },
+      { href: "/entradas/compras", nome: "Pedidos de compra", icone: "caixa" },
+      { href: "/entradas/carga-tributaria", nome: "Carga tributária", icone: "grafico" },
+      { href: "/entradas/certificado", nome: "Certificado digital", icone: "escudo" },
     ],
   },
   comercial: {
     titulo: "CRM Comercial",
     links: [
-      { href: "/comercial", nome: "Funil" },
-      { href: "/comercial/leads", nome: "Leads" },
-      { href: "/comercial/contratos", nome: "Contratos" },
-      { href: "/comercial/modelo", nome: "Modelo de contrato", minimo: "gerir" },
+      { href: "/comercial", nome: "Funil", icone: "funil" },
+      { href: "/comercial/leads", nome: "Leads", icone: "alvo" },
+      { href: "/comercial/contratos", nome: "Contratos", icone: "documento" },
+      { href: "/comercial/modelo", nome: "Modelo de contrato", icone: "arquivo", minimo: "gerir" },
     ],
   },
 };

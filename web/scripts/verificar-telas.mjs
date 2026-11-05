@@ -369,9 +369,10 @@ async function medirNovoContrato(pagina, foto, nome) {
     const rb = botao?.getBoundingClientRect();
     const meio = rb && document.elementFromPoint(rb.left + rb.width / 2, rb.top + rb.height / 2);
     const corpo = d.querySelector("[data-corpo-janela]") ?? d;
-    const legenda = (t) => [...d.querySelectorAll("legend")].find((l) => l.textContent.trim() === t)?.closest("fieldset");
-    const vig = legenda("1. O contrato: quem e o quê")?.getBoundingClientRect();
-    const val = legenda("2. Valor e contas do mês")?.getBoundingClientRect();
+    // títulos das etapas com número desenhado (TituloEtapa): procura pelo fim do texto
+    const legenda = (t) => [...d.querySelectorAll("legend")].find((l) => l.textContent.trim().endsWith(t))?.closest("fieldset");
+    const vig = legenda("O contrato: quem e o quê")?.getBoundingClientRect();
+    const val = legenda("Valor e contas do mês")?.getBoundingClientRect();
     const entrada = d.querySelector("input:not([type=checkbox]):not([type=radio])");
     return {
       vw,

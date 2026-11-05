@@ -2,7 +2,7 @@
 // Janela de diálogo sobre a tela (formulários de cadastro, confirmações com escolhas). Acessível: role="dialog",
 // aria-modal, fecha com Esc ou clique fora, põe o foco no primeiro campo, mantém o Tab dentro e devolve o foco ao sair.
 // A janela nunca passa da altura da tela: o título fica fixo em cima, só o corpo rola e, com `rodape`, os botões
-// ficam fixos embaixo (o botão principal sempre à vista). Formulário longo: largura "5xl"/"6xl"/"7xl" e as colunas de
+// ficam fixos embaixo (o botão principal sempre à vista). Formulário longo: largura "5xl"/"6xl"/"7xl"/"tela" e as colunas de
 // `ColunasFormulario` (duas no computador, uma no celular). Regra em docs/08-convencoes.md, seção 8.3.1.
 import { useEffect, useEffectEvent, useId, useRef } from "react";
 
@@ -16,6 +16,8 @@ const LARGURAS = {
   "5xl": "max-w-5xl",
   "6xl": "max-w-6xl",
   "7xl": "max-w-7xl",
+  /** Quase a tela toda (formulários grandes em etapas, como o contrato): até 1760 px. */
+  tela: "max-w-[110rem]",
 } as const;
 const FOCAVEIS =
   'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';

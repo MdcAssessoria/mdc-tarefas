@@ -35,12 +35,10 @@ export function CampoSistemaContrato({
           </option>
         ))}
       </select>
-      <small className="text-xs text-[var(--texto-suave)]">
-        Licença de um sistema ou módulo da MDC: a receita aparece em Contratos › Receita por sistema.
-      </small>
+      <small className="text-xs text-[var(--texto-suave)]">Licença de um sistema da MDC: a receita aparece em Receita por sistema.</small>
       {podeCriar && (
-        <button type="button" className="btn-link self-start text-xs" onClick={() => setNovo(true)}>
-          <Icone nome="mais" className="inline h-4 w-4 align-[-3px]" />
+        <button type="button" className="btn mt-1 self-start !min-h-8 !px-3 text-xs" onClick={() => setNovo(true)}>
+          <Icone nome="mais" className="h-4 w-4" />
           Novo sistema
         </button>
       )}

@@ -1,5 +1,5 @@
 // Barra superior do HUB: botão do menu no celular, abas do módulo ativo, botão de busca rápida e sino de notificações.
-// Módulo com abas agrupadas (navegacao.ts, campo `grupo`) mostra cada grupo como um menu suspenso no computador e,
+// Cada aba tem ícone (navegacao.ts, `icone`), também no menu do grupo e no celular. Módulo com abas agrupadas (navegacao.ts, campo `grupo`) mostra cada grupo como um menu suspenso no computador e,
 // no celular, um botão com a página atual que abre a lista completa por grupos (não estoura com muitas telas). Sem
 // grupos, até 3 telas aparecem lado a lado no celular; com mais, entra o mesmo botão "Telas" (nada fica escondido).
 "use client";
@@ -30,8 +30,19 @@ function useFecharFora(aberto: boolean, fechar: () => void) {
   return caixa;
 }
 
+/** Ícone da aba (navegacao.ts, campo `icone`): dourado na aba aberta, cinza nas outras. */
+function IconeAba({ link, ativa }: { link?: LinkModulo; ativa: boolean }) {
+  if (!link?.icone) return null;
+  return (
+    <Icone
+      nome={link.icone}
+      className={`h-[17px] w-[17px] shrink-0 ${ativa ? "text-[var(--destaque-escuro)]" : "text-[var(--texto-suave)]"}`}
+    />
+  );
+}
+
 const classeAba = (ativa: boolean) =>
-  `flex items-center gap-1 whitespace-nowrap border-b-2 px-3 text-[14px] ${
+  `flex items-center gap-1.5 whitespace-nowrap border-b-2 px-3 text-[14px] ${
     ativa
       ? "border-[var(--destaque-escuro)] font-medium text-[var(--marca)]"
       : "border-transparent text-[var(--texto-suave)] hover:text-[var(--marca)]"
@@ -45,6 +56,7 @@ function MenuGrupo({ nome, links, ativo }: { nome: string; links: LinkModulo[]; 
   return (
     <div ref={caixa} className="relative flex" onClick={(e) => (e.target as HTMLElement).closest("a") && setAberto(false)}>
       <button type="button" className={classeAba(!!atual)} aria-expanded={aberto} aria-haspopup="true" onClick={() => setAberto((x) => !x)}>
+        <IconeAba link={links[0]} ativa={!!atual} />
         {nome}
         {atual && <span className="font-normal text-[var(--texto-suave)]">· {atual.nome}</span>}
         <Icone nome="chevron-baixo" className={`h-4 w-4 transition-transform ${aberto ? "rotate-180" : ""}`} />
@@ -60,7 +72,7 @@ function MenuGrupo({ nome, links, ativo }: { nome: string; links: LinkModulo[]; 
                 ativo(l.href) ? "bg-[var(--fundo)] font-medium text-[var(--marca)]" : "text-[var(--texto)] hover:bg-[var(--fundo)]"
               }`}
             >
-              <span className={`h-1.5 w-1.5 rounded-full ${ativo(l.href) ? "bg-[var(--destaque-escuro)]" : "bg-transparent"}`} />
+              <IconeAba link={l} ativa={ativo(l.href)} />
               {l.nome}
             </Link>
           ))}
@@ -105,8 +117,9 @@ function MenuModuloCelular({ modulo, links, ativo }: { modulo: Modulo; links: Li
               <Link
                 key={e.link.href}
                 href={e.link.href}
-                className={`block rounded-lg px-3 py-2.5 text-[15px] ${ativo(e.link.href) ? "bg-[var(--fundo)] font-medium text-[var(--marca)]" : ""}`}
+                className={`flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-[15px] ${ativo(e.link.href) ? "bg-[var(--fundo)] font-medium text-[var(--marca)]" : ""}`}
               >
+                <IconeAba link={e.link} ativa={ativo(e.link.href)} />
                 {e.link.nome}
               </Link>
             ) : (
@@ -116,8 +129,9 @@ function MenuModuloCelular({ modulo, links, ativo }: { modulo: Modulo; links: Li
                   <Link
                     key={l.href}
                     href={l.href}
-                    className={`block rounded-lg px-3 py-2.5 text-[15px] ${ativo(l.href) ? "bg-[var(--fundo)] font-medium text-[var(--marca)]" : ""}`}
+                    className={`flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-[15px] ${ativo(l.href) ? "bg-[var(--fundo)] font-medium text-[var(--marca)]" : ""}`}
                   >
+                    <IconeAba link={l} ativa={ativo(l.href)} />
                     {l.nome}
                   </Link>
                 ))}
@@ -162,6 +176,7 @@ export function BarraSuperior({ modulo, aoMenu, aoBuscar }: { modulo: Modulo; ao
                   aria-current={ativo(e.link.href) ? "page" : undefined}
                   className={classeAba(ativo(e.link.href))}
                 >
+                  <IconeAba link={e.link} ativa={ativo(e.link.href)} />
                   {e.link.nome}
                 </Link>
               ) : (
@@ -174,7 +189,7 @@ export function BarraSuperior({ modulo, aoMenu, aoBuscar }: { modulo: Modulo; ao
         <div className="ml-auto flex items-center gap-1.5">
           <button
             onClick={aoBuscar}
-            className="flex h-11 min-w-11 items-center justify-center sm:justify-start md:h-9 gap-2 rounded-lg border border-[var(--borda)] bg-white px-3 text-[13px] text-[var(--texto-suave)] hover:border-[var(--destaque-escuro)] sm:w-64"
+            className="flex h-11 min-w-11 items-center justify-center sm:justify-start md:h-9 gap-2 rounded-lg border border-[var(--borda)] bg-white px-3 text-[13px] text-[var(--texto-suave)] hover:border-[var(--destaque-escuro)] sm:w-48 2xl:w-64"
             aria-label="Buscar ou ir para"
           >
             <Icone nome="busca" className="h-4 w-4" />
@@ -192,8 +207,9 @@ export function BarraSuperior({ modulo, aoMenu, aoBuscar }: { modulo: Modulo; ao
             <Link
               key={l.href}
               href={l.href}
-              className={`inline-flex min-h-11 items-center whitespace-nowrap border-b-2 px-3 py-2 text-[13px] ${ativo(l.href) ? "border-[var(--destaque-escuro)] font-medium text-[var(--marca)]" : "border-transparent text-[var(--texto-suave)]"}`}
+              className={`inline-flex min-h-11 items-center gap-1.5 whitespace-nowrap border-b-2 px-3 py-2 text-[13px] ${ativo(l.href) ? "border-[var(--destaque-escuro)] font-medium text-[var(--marca)]" : "border-transparent text-[var(--texto-suave)]"}`}
             >
+              <IconeAba link={l} ativa={ativo(l.href)} />
               {l.nome}
             </Link>
           ))}

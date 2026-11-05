@@ -6,6 +6,7 @@
 // grande) cada opção ocupa uma linha; na coluna da direita do notebook, duas por linha.
 "use client";
 
+import { TituloEtapa } from "@/components/ui/TituloEtapa";
 import { CampoServico } from "@/components/ui/CampoServico";
 import { regraDoCodigo } from "../regrasFiscais";
 import type { RegraServico } from "../tipos";
@@ -27,8 +28,11 @@ export function CamposFaturamento({
   carteira,
   regras = null,
   titulo = "Fatura e envio ao cliente",
+  numero,
 }: {
   titulo?: string;
+  /** Número da etapa no formulário do contrato (5). */
+  numero?: number;
   /** Regras fiscais por tipo de serviço (057): ao escolher o serviço, ISS e texto da nota vêm da regra. */
   regras?: RegraServico[] | null;
   f: FaturamentoForm;
@@ -41,8 +45,10 @@ export function CamposFaturamento({
     mudar({ canais: sim ? [...f.canais.filter((x) => x !== c), c] : f.canais.filter((x) => x !== c) });
 
   return (
-    <fieldset className="@container rounded-md border border-[var(--borda)] p-3">
-      <legend className="px-1 text-sm font-medium">{titulo}</legend>
+    <fieldset className="@container min-w-0 rounded-lg border border-[var(--borda)] p-4">
+      <TituloEtapa numero={numero} icone="enviar">
+        {titulo}
+      </TituloEtapa>
       <p className="mb-2 text-xs text-[var(--texto-suave)]">
         Todo mês, no dia de gerar, o HUB cria a conta a receber e a fatura deste contrato e manda para o cliente pelos canais marcados.
       </p>

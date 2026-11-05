@@ -31,12 +31,19 @@ import type { IndiceRecorrente, Recorrente } from "../tipos";
 import { CamposFaturamento } from "./CamposFaturamento";
 import { CampoPessoaContrato } from "./CampoPessoaContrato";
 import { CampoSistemaContrato } from "./CampoSistemaContrato";
+import { TituloEtapa } from "@/components/ui/TituloEtapa";
 import type { PessoaEscolhida } from "./CampoPessoaContrato";
 import { Icone } from "@/components/ui/Icone";
 
-const TIPOS: { id: TipoTitulo; nome: string; exemplo: string }[] = [
-  { id: "receber", nome: "A receber", exemplo: "Honorários mensais, mensalidades de clientes" },
-  { id: "pagar", nome: "A pagar", exemplo: "Aluguel, sistemas, internet, serviços" },
+const TIPOS: { id: TipoTitulo; nome: string; exemplo: string; icone: string; cor: string }[] = [
+  {
+    id: "receber",
+    nome: "A receber",
+    exemplo: "Honorários mensais, mensalidades de clientes",
+    icone: "seta-entrada",
+    cor: "bg-emerald-50 text-emerald-700",
+  },
+  { id: "pagar", nome: "A pagar", exemplo: "Aluguel, sistemas, internet, serviços", icone: "seta-saida", cor: "bg-red-50 text-red-700" },
 ];
 
 type Form = {
@@ -281,7 +288,7 @@ export function ContratoFixo({
       titulo={editar ? "Editar contrato" : "Novo contrato"}
       descricao="Algo que se repete todo mês. O HUB lança a conta no Financeiro (a receber: com a fatura, no dia de gerar) e lembra do reajuste e do fim da vigência."
       aoFechar={aoFechar}
-      largura="7xl"
+      largura="tela"
       avisoRodape={
         erro && (
           <p role="alert" className="rounded-md bg-red-50 p-2 text-sm text-red-800">
@@ -292,10 +299,12 @@ export function ContratoFixo({
       rodape={
         <>
           <button className="btn" onClick={aoFechar}>
-            Cancelar
+            <Icone nome="voltar" className="h-4 w-4" />
+            Voltar
           </button>
           <button className="btn-primario" onClick={salvar} disabled={salvando}>
-            {salvando ? "Salvando…" : editar ? "Salvar" : "Cadastrar contrato"}
+            <Icone nome="check" className="h-4 w-4" />
+            {salvando ? "Salvando…" : editar ? "Salvar alterações" : "Cadastrar contrato"}
           </button>
         </>
       }
@@ -304,8 +313,10 @@ export function ContratoFixo({
           1 e 5 à esquerda, 2–4 à direita; monitor grande: três colunas; celular: uma coluna na ordem dos números */}
       <ColunasFormulario colunas="2-3">
         <ColunaFormulario>
-          <fieldset className="space-y-3 rounded-md border border-[var(--borda)] p-3">
-            <legend className="px-1 text-sm font-medium">1. O contrato: quem e o quê</legend>
+          <fieldset className="min-w-0 space-y-3 rounded-lg border border-[var(--borda)] p-4">
+            <TituloEtapa numero={1} icone="documento">
+              O contrato: quem e o quê
+            </TituloEtapa>
             {!editar && (
               <div className="grid gap-2 sm:grid-cols-2" role="radiogroup" aria-label="Tipo do contrato">
                 {TIPOS.map((t) => (
@@ -325,18 +336,18 @@ export function ContratoFixo({
                         : "border-[var(--borda)] hover:bg-[var(--fundo)]"
                     }`}
                   >
-                    <span className="flex items-center gap-2 font-medium">
-                      <span
-                        aria-hidden="true"
-                        className={`grid h-4 w-4 shrink-0 place-items-center rounded-full border ${
-                          f.tipo === t.id ? "border-[var(--marca)] bg-[var(--marca)]" : "border-neutral-400 bg-white"
-                        }`}
-                      >
-                        {f.tipo === t.id && <span className="h-1.5 w-1.5 rounded-full bg-white" />}
+                    <span className="flex items-start gap-3">
+                      <span aria-hidden="true" className={`grid h-10 w-10 shrink-0 place-items-center rounded-full ${t.cor}`}>
+                        <Icone nome={t.icone} className="h-5 w-5" />
                       </span>
-                      {t.nome}
+                      <span className="min-w-0 flex-1">
+                        <span className="flex items-center gap-2 font-medium">
+                          {t.nome}
+                          {f.tipo === t.id && <Icone nome="check" className="ml-auto h-4 w-4 text-[var(--destaque-escuro)]" />}
+                        </span>
+                        <span className="block text-xs text-[var(--texto-suave)]">{t.exemplo}</span>
+                      </span>
                     </span>
-                    <span className="block pl-6 text-xs text-[var(--texto-suave)]">{t.exemplo}</span>
                   </button>
                 ))}
               </div>
@@ -355,25 +366,25 @@ export function ContratoFixo({
                 <input value={f.numero} onChange={(e) => mudar({ numero: e.target.value })} placeholder="Ex.: 2026/015" />
               </label>
             </div>
+            <CampoPessoaContrato
+              rotulo={rotuloPessoa}
+              receber={receber}
+              escolhida={escolhida}
+              pessoas={pessoasDoTipo}
+              carteira={carteira}
+              aoEscolher={(p) => {
+                setEscolhida(p);
+                mudar({ pessoa: p?.nome ?? "" });
+                if (p && receber)
+                  setFat((x) => ({
+                    ...x,
+                    carteira: p.carteira ?? x.carteira,
+                    email: x.email.trim() ? x.email : (p.dados?.email ?? x.email),
+                    whatsapp: x.whatsapp.trim() ? x.whatsapp : (p.dados?.telefone ?? x.whatsapp),
+                  }));
+              }}
+            />
             <div className="grid gap-3 sm:grid-cols-2">
-              <CampoPessoaContrato
-                rotulo={rotuloPessoa}
-                receber={receber}
-                escolhida={escolhida}
-                pessoas={pessoasDoTipo}
-                carteira={carteira}
-                aoEscolher={(p) => {
-                  setEscolhida(p);
-                  mudar({ pessoa: p?.nome ?? "" });
-                  if (p && receber)
-                    setFat((x) => ({
-                      ...x,
-                      carteira: p.carteira ?? x.carteira,
-                      email: x.email.trim() ? x.email : (p.dados?.email ?? x.email),
-                      whatsapp: x.whatsapp.trim() ? x.whatsapp : (p.dados?.telefone ?? x.whatsapp),
-                    }));
-                }}
-              />
               <div className="campo">
                 <span>Categoria ({tipoCat})</span>
                 <select value={f.categoria} onChange={(e) => mudar({ categoria: e.target.value })} aria-label={`Categoria (${tipoCat})`}>
@@ -386,8 +397,8 @@ export function ContratoFixo({
                   ))}
                 </select>
                 {podeCriarCategoria && (
-                  <button type="button" className="btn-link self-start text-xs" onClick={() => setNovaCategoria(true)}>
-                    <Icone nome="mais" className="inline h-4 w-4 align-[-3px]" />
+                  <button type="button" className="btn mt-1 self-start !min-h-8 !px-3 text-xs" onClick={() => setNovaCategoria(true)}>
+                    <Icone nome="mais" className="h-4 w-4" />
                     Nova categoria
                   </button>
                 )}
@@ -404,15 +415,15 @@ export function ContratoFixo({
                   />
                 )}
               </div>
+              {receber && (
+                <CampoSistemaContrato
+                  cliente={cliente.id}
+                  valor={f.sistema}
+                  aoMudar={(id) => mudar({ sistema: id })}
+                  podeCriar={pode("contratos", "gerir")}
+                />
+              )}
             </div>
-            {receber && (
-              <CampoSistemaContrato
-                cliente={cliente.id}
-                valor={f.sistema}
-                aoMudar={(id) => mudar({ sistema: id })}
-                podeCriar={pode("contratos", "gerir")}
-              />
-            )}
             <label className="campo">
               <span>Objeto do contrato (opcional)</span>
               <textarea
@@ -426,8 +437,10 @@ export function ContratoFixo({
         </ColunaFormulario>
 
         <ColunaFormulario className="lg:row-span-2 2xl:row-span-1">
-          <fieldset className="rounded-md border border-[var(--borda)] p-3">
-            <legend className="px-1 text-sm font-medium">2. Valor e contas do mês</legend>
+          <fieldset className="min-w-0 rounded-lg border border-[var(--borda)] p-4">
+            <TituloEtapa numero={2} icone="moeda">
+              Valor e contas do mês
+            </TituloEtapa>
             <div className={`grid gap-3 ${receber ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>
               <label className="campo">
                 <span>Valor mensal (R$)</span>
@@ -473,8 +486,10 @@ export function ContratoFixo({
               </div>
             )}
           </fieldset>
-          <fieldset className="rounded-md border border-[var(--borda)] p-3">
-            <legend className="px-1 text-sm font-medium">3. Vigência</legend>
+          <fieldset className="min-w-0 rounded-lg border border-[var(--borda)] p-4">
+            <TituloEtapa numero={3} icone="calendario">
+              Vigência
+            </TituloEtapa>
             <div className="grid gap-3 sm:grid-cols-3">
               <label className="campo">
                 <span>Começa em</span>
@@ -544,8 +559,10 @@ export function ContratoFixo({
             </p>
           </fieldset>
 
-          <fieldset className="rounded-md border border-[var(--borda)] p-3">
-            <legend className="px-1 text-sm font-medium">4. Reajuste anual</legend>
+          <fieldset className="min-w-0 rounded-lg border border-[var(--borda)] p-4">
+            <TituloEtapa numero={4} icone="tendencia">
+              Reajuste anual
+            </TituloEtapa>
             <div className="grid gap-3 sm:grid-cols-2">
               <label className="campo">
                 <span>Índice</span>
@@ -590,20 +607,17 @@ export function ContratoFixo({
 
         <ColunaFormulario>
           {receber && f.geraContas && (
-            <CamposFaturamento
-              titulo="5. Fatura e envio ao cliente"
-              f={fat}
-              mudar={mudarFat}
-              carteira={carteira}
-              regras={regrasConsulta.dados ?? null}
-            />
+            <CamposFaturamento numero={5} f={fat} mudar={mudarFat} carteira={carteira} regras={regrasConsulta.dados ?? null} />
           )}
 
           <details
             className="rounded-md border border-[var(--borda)] p-3"
             open={!!editar && !!(editar.centro_id || editar.conta_prevista_id || editar.observacao)}
           >
-            <summary className="cursor-pointer text-sm text-neutral-700">Mais informações (centro de custo, banco, observação)</summary>
+            <summary className="flex cursor-pointer items-center gap-2 text-sm font-medium text-[var(--marca)]">
+              <Icone nome="mais" className="h-4 w-4 text-[var(--destaque-escuro)]" />
+              Mais informações (centro de custo, banco, observação)
+            </summary>
             <div className="mt-3 space-y-3">
               <div className="grid gap-3 sm:grid-cols-2">
                 <label className="campo">
