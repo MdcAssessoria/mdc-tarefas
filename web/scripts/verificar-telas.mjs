@@ -555,6 +555,19 @@ const INTERACOES = {
     await foto("assistente");
     await p.keyboard.press("Escape");
     await assistente.waitFor({ state: "detached", timeout: 3000 });
+    // serviço (056): no passo 2 escolhe o tipo de serviço da LC 116 e o HUB monta o código da NFS-e
+    await p.getByRole("button", { name: "Novo item", exact: true }).click();
+    await assistente.waitFor({ timeout: 3000 });
+    await assistente.getByRole("radio", { name: /Serviço/ }).click();
+    await assistente.getByLabel("Nome do item").fill("Honorários contábeis");
+    await assistente.getByRole("button", { name: "Continuar", exact: true }).click();
+    const lc = assistente.getByRole("combobox", { name: /Lei Complementar 116/ });
+    await lc.fill("contabil");
+    await assistente.getByRole("option").filter({ hasText: "17.19" }).getByRole("button").click();
+    await assistente.getByText("17.19.01").waitFor({ timeout: 3000 });
+    await foto("assistente-servico");
+    await p.keyboard.press("Escape");
+    await assistente.waitFor({ state: "detached", timeout: 3000 });
     await abrirEFecharModal(p, "Cadastro rápido", "Cadastro rápido de item");
     await abrirEFecharModal(p, "Importar planilha", "Importar itens de uma planilha");
     await abrirEFecharModal(p, "Grupos", "Grupos de produto");
@@ -772,7 +785,10 @@ const INTERACOES = {
     const opcoes = rec.getByRole("radiogroup", { name: "O que enviar ao cliente" }).getByRole("radio");
     if ((await opcoes.count()) !== 4) throw new Error(`"O que enviar" deveria ter 4 opções, tem ${await opcoes.count()}`);
     await rec.getByRole("radio", { name: /^Nota fiscal \+ fatura \+ boleto/ }).click();
-    await rec.getByLabel("Código do serviço").fill("17.01.01");
+    // tipo de serviço pela lista da LC 116 (056): 17.19 Contabilidade → código 17.19.01 e a descrição preenchida
+    await rec.getByRole("combobox", { name: /Tipo de serviço/ }).fill("17.19");
+    await rec.getByRole("option").filter({ hasText: "Contabilidade" }).getByRole("button").click();
+    await rec.getByText("17.19.01").waitFor({ timeout: 3000 });
     await rec.getByRole("checkbox", { name: /E-mail/ }).check();
     await rec.getByRole("checkbox", { name: /Portal do Cliente/ }).check();
     await rec.getByText("Envio por e-mail e WhatsApp: aguardando configuração").waitFor({ timeout: 3000 });

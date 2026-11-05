@@ -190,6 +190,10 @@ export interface Item {
   preco_venda: number | null;
   custo: number | null;
   ncm: string | null;
+  /** Serviço (056): código de tributação nacional da NFS-e (6 números, LC 116), NBS (9 números) e ISS (%). */
+  servico_codigo?: string | null;
+  nbs?: string | null;
+  iss_aliquota?: number | null;
   codigo_barras: string | null;
   categoria_receita_id: string | null;
   categoria_despesa_id: string | null;

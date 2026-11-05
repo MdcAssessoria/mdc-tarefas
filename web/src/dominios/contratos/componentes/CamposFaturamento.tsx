@@ -6,6 +6,7 @@
 // grande) cada opção ocupa uma linha; na coluna da direita do notebook, duas por linha.
 "use client";
 
+import { CampoServico } from "@/components/ui/CampoServico";
 import { Icone } from "@/components/ui/Icone";
 import type { Cliente } from "@/dominios/clientes/tipos";
 import { nomeCliente } from "@/dominios/clientes/nome";
@@ -123,12 +124,16 @@ export function CamposFaturamento({
               placeholder="Ex.: Serviços de contabilidade, escrituração fiscal e folha de pagamento"
             />
           </label>
-          <label className="campo @md:col-span-2">
-            <span>Código do serviço</span>
-            <input value={f.servicoCodigo} onChange={(e) => mudar({ servicoCodigo: e.target.value })} placeholder="17.01.01" />
-            <small className="text-xs text-[var(--texto-suave)]">Código de tributação nacional (ou o item da LC 116, ex.: 17.01).</small>
-          </label>
-          <label className="campo @md:col-span-2">
+          <div className="@md:col-span-3">
+            <CampoServico
+              rotulo="Tipo de serviço (LC 116)"
+              valor={f.servicoCodigo}
+              aoMudar={(codigo, descricao) =>
+                mudar({ servicoCodigo: codigo, ...(descricao && !f.servicoDescricao.trim() ? { servicoDescricao: descricao } : {}) })
+              }
+            />
+          </div>
+          <label className="campo @md:col-span-1">
             <span>ISS (%)</span>
             <input value={f.iss} onChange={(e) => mudar({ iss: e.target.value })} inputMode="decimal" placeholder="2" />
             <small className="text-xs text-[var(--texto-suave)]">Alíquota do município, de 0% a 5%.</small>

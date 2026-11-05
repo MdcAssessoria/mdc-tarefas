@@ -145,6 +145,10 @@ export interface ItemParaSalvar {
   custo?: number | null;
   markup?: number | null;
   ncm?: string | null;
+  /** Serviço (056): código nacional da NFS-e (17.19.01), NBS e ISS; o banco limpa em produto. */
+  servico_codigo?: string | null;
+  nbs?: string | null;
+  iss_aliquota?: number | null;
   codigo_barras?: string | null;
   grupo?: string | null;
   grupo_nome?: string | null;

@@ -119,3 +119,8 @@ for f in testes/119_base_055.sql migrations/055_contrato_cliente.sql; do
   $P -v ON_ERROR_STOP=1 -f "$R/$f" 2>&1 | grep -v NOTICE || true
 done
 $P -f "$R/testes/120_contrato_cliente_055.sql" 2>&1 | grep -v "^SET$"
+# 056: item de serviço com código da LC 116 / NFS-e nacional, NBS e ISS
+for f in testes/121_base_056.sql migrations/056_item_servico.sql; do
+  $P -v ON_ERROR_STOP=1 -f "$R/$f" 2>&1 | grep -v NOTICE || true
+done
+$P -f "$R/testes/122_item_servico_056.sql" 2>&1 | grep -v "^SET$"
