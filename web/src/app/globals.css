@@ -540,8 +540,8 @@ input[type="file"]:disabled::file-selector-button {
       flex-direction: column;
       justify-content: center;
     }
-    td a:not(.btn):not(.btn-primario):not(.btn-azul):not(.btn-perigo):not(.alvo-toque),
-    td button:not(.btn):not(.btn-primario):not(.btn-azul):not(.btn-perigo):not([role="checkbox"]) {
+    td a:not(.btn):not(.btn-primario):not(.btn-azul):not(.btn-perigo):not(.alvo-toque):not(.menu-acoes *),
+    td button:not(.btn):not(.btn-primario):not(.btn-azul):not(.btn-perigo):not([role="checkbox"]):not(.menu-acoes *) {
       min-height: 44px;
       min-width: 44px;
       display: inline-flex;
@@ -549,6 +549,11 @@ input[type="file"]:disabled::file-selector-button {
       justify-content: center;
     }
     [role="group"] > button {
+      min-height: 44px;
+    }
+    /* itens do menu "Mais ações" (MenuAcoes): linha com ícone à esquerda, altura de toque */
+    .menu-acoes button,
+    .menu-acoes a {
       min-height: 44px;
     }
   }

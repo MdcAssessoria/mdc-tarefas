@@ -1,7 +1,8 @@
 // Módulo Contratos › Faturas (043): as faturas que o HUB gera no dia de gerar de cada contrato a receber. Molde 8.3.1:
 // filtros (período do vencimento, situação, busca), indicadores que filtram, quadro que vira cartão no celular, PDF e
 // Excel e tela vazia que ensina. Ações: ver a fatura (dados e envio por canal), baixar o PDF no papel timbrado,
-// cancelar com motivo e "Gerar fatura agora".
+// cancelar com motivo e "Gerar fatura agora" (com "Novo cliente": abre o Novo contrato para cadastrar quem ainda não
+// tem contrato, 09/11/2026).
 // Envio (053): e-mail e WhatsApp saem sozinhos pela Função fatura-enviar; cada canal mostra se foi, está na fila, falhou
 // (com o motivo) ou aguarda configuração, e "Reenviar" (com motivo) devolve o envio para a fila. Aviso no topo quando
 // algum canal ainda não foi ligado (Contratos › Envio) ou algum envio falhou.
@@ -46,6 +47,7 @@ import { notaEmitida, podeEmitirNota, situacaoDaNota, ultimasEmissoes } from "..
 import type { BoletoFatura, EmissaoNfse, EnvioDaFatura, Fatura, SituacaoFatura } from "../tipos";
 import { EspelhoNota } from "@/dominios/notas/componentes/EspelhoNota";
 import { JanelaReenviar } from "./JanelaReenviar";
+import { ContratoFixo } from "./ContratoFixo";
 import { DetalheFatura, JanelaGerarFatura } from "./JanelasFatura";
 import { JanelaEmitirNfse } from "./JanelaEmitirNfse";
 import { JanelaBoleto, SITUACOES_BOLETO_EMITIDO } from "./JanelaBoleto";
@@ -67,6 +69,7 @@ type Janela =
   | { tipo: "cancelar"; f: Fatura }
   | { tipo: "reenviar"; f: Fatura; e: EnvioDaFatura }
   | { tipo: "gerar" }
+  | { tipo: "contrato" }
   | { tipo: "emitir"; f: Fatura }
   | { tipo: "boleto"; f: Fatura }
   | { tipo: "nota"; caminho: string; chave: string; numero: string | null; voltar?: Fatura };
@@ -91,16 +94,17 @@ export function TelaFaturas() {
   const consulta = useConsulta(
     useCallback(async () => {
       if (!cliente) return null;
-      const [faturas, envios, contratos, pessoas, emissoes, parametrosNfse, boletos] = await Promise.all([
+      const [faturas, envios, contratos, opcoes, emissoes, parametrosNfse, boletos] = await Promise.all([
         lerFaturas(cliente.id),
         lerEnvios(cliente.id),
         lerContratos(cliente.id),
-        lerOpcoesContrato(cliente.id).then((o) => o.tomadores),
+        lerOpcoesContrato(cliente.id),
         lerEmissoesNfse(cliente.id),
         lerParametrosNfse(cliente.id),
         lerBoletos(cliente.id),
       ]);
-      return { faturas, envios, contratos, pessoas, emissoes, parametrosNfse, boletos };
+      // opcoes: cadastros do Novo contrato (aberto pelo "Novo cliente" da janela Gerar fatura agora)
+      return { faturas, envios, contratos, pessoas: opcoes.tomadores, opcoes, emissoes, parametrosNfse, boletos };
     }, [cliente]),
   );
 
@@ -303,7 +307,17 @@ export function TelaFaturas() {
           <Icone nome="alerta" className="mt-0.5 h-5 w-5 shrink-0" />
           <p>
             <strong>Notas fiscais no ambiente de teste (sem valor fiscal).</strong> As notas emitidas agora servem só para conferir: não
-            mudam a fatura nem vão para o cliente.{podeGerir ? " Depois dos testes, mude para Produção em Contratos › Regras fiscais." : ""}
+            mudam a fatura nem vão para o cliente.
+            {podeGerir && (
+              <>
+                {" "}
+                Depois dos testes, mude para Produção em{" "}
+                <Link href="/contratos/nota-fiscal" className="font-medium underline">
+                  Contratos › Regras fiscais
+                </Link>
+                .
+              </>
+            )}
           </p>
         </div>
       )}
@@ -672,6 +686,18 @@ export function TelaFaturas() {
           hoje={hoje}
           aoFechar={() => fechar()}
           aoGerar={fechar}
+          aoNovoCliente={podeOperar && cliente ? () => setJanela({ tipo: "contrato" }) : undefined}
+        />
+      )}
+      {janela?.tipo === "contrato" && cliente && consulta.dados && (
+        <ContratoFixo
+          cliente={cliente}
+          cad={consulta.dados.opcoes}
+          hoje={hoje}
+          tipoInicial="receber"
+          aoFechar={() => setJanela({ tipo: "gerar" })}
+          aoSalvar={fechar}
+          aoRecarregarCadastros={consulta.recarregar}
         />
       )}
     </div>

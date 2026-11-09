@@ -25,6 +25,7 @@ import { CartaoFiltros, MaisFiltros } from "@/components/ui/CartaoFiltros";
 import type { FiltroAtivo } from "@/components/ui/CartaoFiltros";
 import { Indicador } from "@/components/ui/Indicador";
 import { Icone } from "@/components/ui/Icone";
+import { MenuAcoes } from "@/components/ui/MenuAcoes";
 import { QuadroTabela } from "@/components/ui/QuadroTabela";
 import { intervaloDoPeriodo } from "@/dominios/financeiro/regras";
 import type { Periodo } from "@/dominios/financeiro/regras";
@@ -248,8 +249,8 @@ export default function PaginaNotasRecebidas() {
         <div className="mr-auto">
           <h1 className="text-xl font-semibold text-[var(--marca)]">Notas recebidas</h1>
           <p className="text-sm text-neutral-600">
-            Notas emitidas contra o CNPJ da MDC (compras e serviços), buscadas sozinhas na SEFAZ e na NFS-e Nacional: confira e lance
-            no Financeiro.
+            Notas emitidas contra o CNPJ da MDC (compras e serviços), buscadas sozinhas na SEFAZ e na NFS-e Nacional: confira e lance no
+            Financeiro.
           </p>
         </div>
         {pode("contratos") && (
@@ -588,40 +589,31 @@ export default function PaginaNotasRecebidas() {
                             </button>
                           )}
                           <BotoesVerNota nota={n} avisar={mostrar} aoVer={() => setJanela({ tipo: "espelho", nota: n })} />
-                          <details className="relative">
-                            <summary
-                              className="btn !min-h-10 !w-10 list-none !p-0 [&::-webkit-details-marker]:hidden"
-                              aria-label="Mais ações"
-                              title="Mais ações"
+                          <MenuAcoes grande>
+                            <button
+                              className={ITEM_MENU}
+                              title="Ver caminho: de onde veio esta nota e para onde foi (pedido, contas, pagamentos e estoque)"
+                              onClick={(e) => menu(e, { tipo: "caminho", nota: n })}
                             >
-                              <Icone nome="reticencias" className="h-5 w-5" />
-                            </summary>
-                            <div className="absolute right-0 z-10 mt-1 w-56 rounded-xl border border-[var(--borda)] bg-white p-1 text-left text-sm shadow-lg">
+                              <Icone nome="ramificacao" className="h-4 w-4 text-[var(--texto-suave)]" />
+                              Ver caminho
+                            </button>
+                            {n.xml_caminho && (
                               <button
                                 className={ITEM_MENU}
-                                title="Ver caminho: de onde veio esta nota e para onde foi (pedido, contas, pagamentos e estoque)"
-                                onClick={(e) => menu(e, { tipo: "caminho", nota: n })}
+                                title="Mostra a nota no layout do DANFE / DANFSe e baixa em PDF"
+                                onClick={(e) => menu(e, { tipo: "espelho", nota: n })}
                               >
-                                <Icone nome="ramificacao" className="h-4 w-4 text-[var(--texto-suave)]" />
-                                Ver caminho
+                                <Icone nome="olho" className="h-4 w-4 text-[var(--texto-suave)]" />
+                                Ver a nota
                               </button>
-                              {n.xml_caminho && (
-                                <button
-                                  className={ITEM_MENU}
-                                  title="Mostra a nota no layout do DANFE / DANFSe e baixa em PDF"
-                                  onClick={(e) => menu(e, { tipo: "espelho", nota: n })}
-                                >
-                                  <Icone nome="olho" className="h-4 w-4 text-[var(--texto-suave)]" />
-                                  Ver a nota
-                                </button>
-                              )}
-                              <button className={ITEM_MENU} onClick={(e) => menu(e, { tipo: "detalhe", nota: n })}>
-                                <Icone nome="lista" className="h-4 w-4 text-[var(--texto-suave)]" />
-                                Ver itens e histórico
-                              </button>
-                              <BotaoXml compacto caminho={n.xml_caminho} avisar={mostrar} />
-                            </div>
-                          </details>
+                            )}
+                            <button className={ITEM_MENU} onClick={(e) => menu(e, { tipo: "detalhe", nota: n })}>
+                              <Icone nome="lista" className="h-4 w-4 text-[var(--texto-suave)]" />
+                              Ver itens e histórico
+                            </button>
+                            <BotaoXml compacto caminho={n.xml_caminho} avisar={mostrar} />
+                          </MenuAcoes>
                         </div>
                       </td>
                     </tr>

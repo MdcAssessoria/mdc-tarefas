@@ -17,6 +17,7 @@ import type { FiltroAtivo } from "@/components/ui/CartaoFiltros";
 import { Esqueleto } from "@/components/ui/Esqueleto";
 import { EstadoVazio } from "@/components/ui/EstadoVazio";
 import { Icone } from "@/components/ui/Icone";
+import { MenuAcoes } from "@/components/ui/MenuAcoes";
 import { QuadroTabela } from "@/components/ui/QuadroTabela";
 import { useAviso } from "@/components/ui/Aviso";
 import { SemEmpresaGestao, useClienteGestao } from "@/dominios/organizacao/componentes/EmpresaEmGestao";
@@ -453,42 +454,33 @@ export function TelaTitulos({ tipo }: { tipo: TipoTitulo }) {
                           </button>
                         )}
                         <BotaoVerCaminho compacto aoClicar={() => setJanela({ tipo: "caminho", t })} />
-                        <details className="relative">
-                          <summary
-                            className="btn !min-h-8 list-none !px-2.5 [&::-webkit-details-marker]:hidden"
-                            aria-label="Mais ações"
-                            title="Mais ações"
+                        <MenuAcoes largura={208}>
+                          <button
+                            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left hover:bg-[var(--fundo)]"
+                            onClick={(e) => menu(e, { tipo: "historico", t })}
                           >
-                            <Icone nome="reticencias" className="h-5 w-5" />
-                          </summary>
-                          <div className="absolute right-0 z-10 mt-1 w-52 rounded-xl border border-[var(--borda)] bg-white p-1 text-left text-sm shadow-lg">
+                            <Icone nome="relogio" className="h-4 w-4 text-[var(--texto-suave)]" />
+                            Histórico de pagamentos
+                          </button>
+                          {podeOperar && t.situacao === "aberto" && (
                             <button
                               className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left hover:bg-[var(--fundo)]"
-                              onClick={(e) => menu(e, { tipo: "historico", t })}
+                              onClick={(e) => menu(e, { tipo: "editar", t })}
                             >
-                              <Icone nome="relogio" className="h-4 w-4 text-[var(--texto-suave)]" />
-                              Histórico de pagamentos
+                              <Icone nome="editar" className="h-4 w-4 text-[var(--texto-suave)]" />
+                              Editar
                             </button>
-                            {podeOperar && t.situacao === "aberto" && (
-                              <button
-                                className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left hover:bg-[var(--fundo)]"
-                                onClick={(e) => menu(e, { tipo: "editar", t })}
-                              >
-                                <Icone nome="editar" className="h-4 w-4 text-[var(--texto-suave)]" />
-                                Editar
-                              </button>
-                            )}
-                            {podeOperar && t.situacao === "aberto" && Number(t.valor_pago) === 0 && (
-                              <button
-                                className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-[var(--perigo)] hover:bg-red-50"
-                                onClick={(e) => menu(e, { tipo: "cancelar", t })}
-                              >
-                                <Icone nome="fechar" className="h-4 w-4" />
-                                Cancelar lançamento
-                              </button>
-                            )}
-                          </div>
-                        </details>
+                          )}
+                          {podeOperar && t.situacao === "aberto" && Number(t.valor_pago) === 0 && (
+                            <button
+                              className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-[var(--perigo)] hover:bg-red-50"
+                              onClick={(e) => menu(e, { tipo: "cancelar", t })}
+                            >
+                              <Icone nome="fechar" className="h-4 w-4" />
+                              Cancelar lançamento
+                            </button>
+                          )}
+                        </MenuAcoes>
                       </div>
                     </td>
                   </tr>

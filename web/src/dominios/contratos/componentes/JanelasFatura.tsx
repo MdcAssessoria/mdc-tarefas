@@ -1,7 +1,8 @@
 // Janelas da tela de Faturas (043): detalhe da fatura (dados, nota fiscal, boleto e a fila de envio por canal, com o
 // motivo da falha e "Reenviar" — 053) e
 // "Gerar fatura agora" (um mês à mão, com motivo: mês que a rotina não gerou, adiantar o deste mês ou refazer depois
-// de cancelar). O banco confere tudo (fin_fatura_gerar_agora) e não deixa duplicar.
+// de cancelar). O banco confere tudo (fin_fatura_gerar_agora) e não deixa duplicar. "Novo cliente" leva ao Novo contrato
+// (cliente novo com CNPJ pela Receita): a fatura nasce do contrato.
 "use client";
 
 import { useMemo, useState } from "react";
@@ -182,12 +183,15 @@ export function JanelaGerarFatura({
   hoje,
   aoFechar,
   aoGerar,
+  aoNovoCliente,
 }: {
   contratos: Recorrente[];
   nomePessoa: (k: Recorrente) => string;
   hoje: string;
   aoFechar: () => void;
   aoGerar: (msg: string) => void;
+  /** Cliente que ainda não tem contrato: abre o Novo contrato (com "Cadastrar novo cliente" e CNPJ pela Receita). */
+  aoNovoCliente?: () => void;
 }) {
   const ativos = useMemo(() => contratos.filter((k) => k.situacao === "ativo" && k.gera_contas && k.tipo === "receber"), [contratos]);
   const [id, setId] = useState(ativos[0]?.id ?? "");
@@ -225,25 +229,42 @@ export function JanelaGerarFatura({
       largura="lg"
     >
       {!ativos.length ? (
-        <p className="rounded-md bg-[var(--fundo)] p-3 text-sm">Nenhum contrato a receber ativo que lance contas.</p>
+        <p className="rounded-md bg-[var(--fundo)] p-3 text-sm">
+          Nenhum contrato a receber ativo que lance contas.
+          {aoNovoCliente && " Cadastre o cliente e o contrato dele no botão abaixo; a fatura sai em seguida."}
+        </p>
       ) : (
         <>
-          <label className="campo">
-            <span>Contrato</span>
-            <select
-              value={id}
-              onChange={(e) => {
-                setId(e.target.value);
-                setVenc("");
-              }}
-            >
-              {ativos.map((x) => (
-                <option key={x.id} value={x.id}>
-                  {x.descricao} · {nomePessoa(x)}
-                </option>
-              ))}
-            </select>
-          </label>
+          <div className="grid items-end gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
+            <label className="campo">
+              <span>Contrato</span>
+              <select
+                value={id}
+                onChange={(e) => {
+                  setId(e.target.value);
+                  setVenc("");
+                }}
+              >
+                {ativos.map((x) => (
+                  <option key={x.id} value={x.id}>
+                    {x.descricao} · {nomePessoa(x)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            {aoNovoCliente && (
+              <button type="button" className="btn-azul" onClick={aoNovoCliente}>
+                <Icone nome="pessoas" className="h-4 w-4" />
+                Novo cliente
+              </button>
+            )}
+          </div>
+          {aoNovoCliente && (
+            <small className="-mt-1 block text-xs text-[var(--texto-suave)]">
+              Cliente que não está na lista? Clique em Novo cliente: você cadastra o cliente (o CNPJ vem da Receita) e o contrato dele, e a
+              fatura do mês sai em seguida.
+            </small>
+          )}
           <CampoMes
             rotulo="Mês da fatura"
             valor={mes}
@@ -271,8 +292,15 @@ export function JanelaGerarFatura({
       {erro && <p className="rounded-md bg-red-50 p-2 text-sm text-red-800">{erro}</p>}
       <div className="flex justify-end gap-2 pt-2">
         <button className="btn" onClick={aoFechar}>
+          <Icone nome="voltar" className="h-4 w-4" />
           Voltar
         </button>
+        {!ativos.length && aoNovoCliente && (
+          <button type="button" className="btn-azul" onClick={aoNovoCliente}>
+            <Icone nome="pessoas" className="h-4 w-4" />
+            Novo cliente
+          </button>
+        )}
         <button className="btn-primario" onClick={gerar} disabled={ocupado || !ativos.length}>
           <Icone nome="mais" className="h-4 w-4" />
           {ocupado ? "Gerando…" : "Gerar fatura"}

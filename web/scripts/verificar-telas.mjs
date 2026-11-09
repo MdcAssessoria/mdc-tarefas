@@ -774,6 +774,21 @@ const INTERACOES = {
   },
   // Contratos (041): novo contrato com "+ Nova categoria", reajuste pendente (índice → novo valor) e a ficha com as abas
   "/contratos": async (p, foto) => {
+    // "Mais ações" da última linha (09/11/2026): o menu abre solto na tela, inteiro à vista, sem ser cortado pelo quadro
+    {
+      const ultima = p.locator('summary[aria-label="Mais ações"]').last();
+      await ultima.click();
+      const painel = ultima.locator("xpath=following-sibling::div[1]");
+      const item = painel.getByRole("button").last();
+      await item.waitFor({ timeout: 3000 });
+      const caixa = await item.boundingBox();
+      const vp = p.viewportSize();
+      if (!caixa || caixa.y < 0 || caixa.y + caixa.height > vp.height)
+        throw new Error("o menu Mais ações da última linha ficou cortado ou fora da tela");
+      await foto("menu-acoes");
+      await p.keyboard.press("Escape");
+      await item.waitFor({ state: "hidden", timeout: 3000 });
+    }
     // janela larga: no notebook (1366×768) e no monitor (1920×1080) o botão fica à vista; no celular, uma coluna
     if (process.env.TELA === "celular") await medirNovoContrato(p, foto, "celular");
     else {
@@ -900,6 +915,18 @@ const INTERACOES = {
     await p.keyboard.press("Escape");
     await canc.waitFor({ state: "detached", timeout: 3000 });
     await abrirEFecharModal(p, "Gerar fatura agora", "Gerar fatura agora");
+    // "Novo cliente" (09/11/2026): da janela Gerar fatura agora abre o Novo contrato; Voltar retorna à janela de origem
+    await p.getByRole("button", { name: "Gerar fatura agora", exact: true }).click();
+    const gerarJ = p.getByRole("dialog", { name: "Gerar fatura agora" });
+    await gerarJ.waitFor({ timeout: 3000 });
+    await gerarJ.getByRole("button", { name: "Novo cliente" }).click();
+    const novoK = p.getByRole("dialog", { name: "Novo contrato" });
+    await novoK.waitFor({ timeout: 3000 });
+    await foto("fatura-novo-cliente");
+    await novoK.getByRole("button", { name: "Voltar" }).click();
+    await gerarJ.waitFor({ timeout: 3000 });
+    await p.keyboard.press("Escape");
+    await gerarJ.waitFor({ state: "detached", timeout: 3000 });
     // NFS-e (046): aviso do ambiente de teste, situação da nota com o motivo da recusa, conferência e "Ver a nota"
     await p.getByText("Notas fiscais no ambiente de teste (sem valor fiscal).").waitFor({ timeout: 3000 });
     await p.getByText("Nota de teste recusada").first().waitFor({ timeout: 3000 });

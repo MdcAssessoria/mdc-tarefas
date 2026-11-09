@@ -22,6 +22,7 @@ import { INDICES } from "@/dominios/licencas/tipos";
 import type { Contrato } from "@/dominios/licencas/tipos";
 import { plural } from "@/lib/formato/numero";
 import { Icone } from "@/components/ui/Icone";
+import { MenuAcoes } from "@/components/ui/MenuAcoes";
 
 type FiltroSituacao = "ativos" | "encerrados" | "todos";
 type Janela =
@@ -280,41 +281,36 @@ function Contratos() {
                         {reajustePendente(k, hoje) && <span className="chip ml-1 bg-amber-50 text-amber-900">a fazer</span>}
                       </td>
                       <td className="whitespace-nowrap text-right">
-                        <details className="relative">
-                          <summary className="btn !min-h-8 list-none" aria-label="Ações do contrato">
-                            <Icone nome="reticencias" className="h-5 w-5" />
-                          </summary>
-                          <div className="absolute right-0 z-10 mt-1 w-44 rounded-md border border-[var(--borda)] bg-white py-1 text-left text-sm shadow-lg">
-                            <button
-                              className="block w-full px-3 py-1.5 text-left hover:bg-neutral-50"
-                              onClick={(e) => menu(e, { tipo: "historico", k })}
-                            >
-                              Histórico
-                            </button>
-                            {podeGerir && k.situacao === "ativo" && (
-                              <>
-                                <button
-                                  className="block w-full px-3 py-1.5 text-left hover:bg-neutral-50"
-                                  onClick={(e) => menu(e, { tipo: "editar", k })}
-                                >
-                                  Editar
-                                </button>
-                                <button
-                                  className="block w-full px-3 py-1.5 text-left hover:bg-neutral-50"
-                                  onClick={(e) => menu(e, { tipo: "reajustar", k })}
-                                >
-                                  Reajustar valor
-                                </button>
-                                <button
-                                  className="block w-full px-3 py-1.5 text-left text-[var(--perigo)] hover:bg-red-50"
-                                  onClick={(e) => menu(e, { tipo: "encerrar", k })}
-                                >
-                                  Encerrar contrato
-                                </button>
-                              </>
-                            )}
-                          </div>
-                        </details>
+                        <MenuAcoes rotulo="Ações do contrato" largura={176}>
+                          <button
+                            className="block w-full px-3 py-1.5 text-left hover:bg-neutral-50"
+                            onClick={(e) => menu(e, { tipo: "historico", k })}
+                          >
+                            Histórico
+                          </button>
+                          {podeGerir && k.situacao === "ativo" && (
+                            <>
+                              <button
+                                className="block w-full px-3 py-1.5 text-left hover:bg-neutral-50"
+                                onClick={(e) => menu(e, { tipo: "editar", k })}
+                              >
+                                Editar
+                              </button>
+                              <button
+                                className="block w-full px-3 py-1.5 text-left hover:bg-neutral-50"
+                                onClick={(e) => menu(e, { tipo: "reajustar", k })}
+                              >
+                                Reajustar valor
+                              </button>
+                              <button
+                                className="block w-full px-3 py-1.5 text-left text-[var(--perigo)] hover:bg-red-50"
+                                onClick={(e) => menu(e, { tipo: "encerrar", k })}
+                              >
+                                Encerrar contrato
+                              </button>
+                            </>
+                          )}
+                        </MenuAcoes>
                       </td>
                     </tr>
                   ))}

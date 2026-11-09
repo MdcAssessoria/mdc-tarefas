@@ -18,6 +18,7 @@ import type { FiltroAtivo } from "@/components/ui/CartaoFiltros";
 import { Esqueleto } from "@/components/ui/Esqueleto";
 import { EstadoVazio } from "@/components/ui/EstadoVazio";
 import { Icone } from "@/components/ui/Icone";
+import { MenuAcoes } from "@/components/ui/MenuAcoes";
 import { QuadroTabela } from "@/components/ui/QuadroTabela";
 import { useAviso } from "@/components/ui/Aviso";
 import { BotoesExportar } from "@/components/ui/BotoesExportar";
@@ -394,54 +395,45 @@ export function TelaContratos() {
                             </button>
                           )}
                           <BotaoVerCaminho compacto aoClicar={() => setJanela({ tipo: "caminho", k })} />
-                          <details className="relative">
-                            <summary
-                              className="btn !min-h-8 list-none !px-2.5 [&::-webkit-details-marker]:hidden"
-                              aria-label="Mais ações"
-                              title="Mais ações"
-                            >
-                              <Icone nome="reticencias" className="h-5 w-5" />
-                            </summary>
-                            <div className="absolute right-0 z-10 mt-1 w-56 rounded-xl border border-[var(--borda)] bg-white p-1 text-left text-sm shadow-lg">
-                              <button className={ITEM_MENU} onClick={(e) => menu(e, { tipo: "ficha", k })}>
-                                <Icone nome="olho" className="h-4 w-4 text-[var(--texto-suave)]" />
-                                Ficha, contas e anexos
+                          <MenuAcoes>
+                            <button className={ITEM_MENU} onClick={(e) => menu(e, { tipo: "ficha", k })}>
+                              <Icone nome="olho" className="h-4 w-4 text-[var(--texto-suave)]" />
+                              Ficha, contas e anexos
+                            </button>
+                            {k.indice !== "nenhum" && (
+                              <button className={ITEM_MENU} onClick={(e) => menu(e, { tipo: "reajuste", k })}>
+                                <Icone nome="tendencia" className="h-4 w-4 text-[var(--texto-suave)]" />
+                                Ver reajuste
                               </button>
-                              {k.indice !== "nenhum" && (
-                                <button className={ITEM_MENU} onClick={(e) => menu(e, { tipo: "reajuste", k })}>
-                                  <Icone nome="tendencia" className="h-4 w-4 text-[var(--texto-suave)]" />
-                                  Ver reajuste
-                                </button>
-                              )}
-                              {podeOperar && k.situacao !== "encerrado" && (
-                                <button className={ITEM_MENU} onClick={(e) => menu(e, { tipo: "editar", k })}>
-                                  <Icone nome="editar" className="h-4 w-4 text-[var(--texto-suave)]" />
-                                  Editar
-                                </button>
-                              )}
-                              {podeOperar && k.situacao === "ativo" && (
-                                <button className={ITEM_MENU} onClick={(e) => menu(e, { tipo: "suspender", k })}>
-                                  <Icone nome="cancelar" className="h-4 w-4 text-[var(--texto-suave)]" />
-                                  Suspender
-                                </button>
-                              )}
-                              {podeOperar && k.situacao === "suspenso" && (
-                                <button className={ITEM_MENU} onClick={(e) => menu(e, { tipo: "reativar", k })}>
-                                  <Icone nome="atualizar" className="h-4 w-4 text-[var(--texto-suave)]" />
-                                  Reativar
-                                </button>
-                              )}
-                              {podeOperar && k.situacao !== "encerrado" && (
-                                <button
-                                  className={`${ITEM_MENU} text-[var(--perigo)] hover:bg-red-50`}
-                                  onClick={(e) => menu(e, { tipo: "encerrar", k })}
-                                >
-                                  <Icone nome="fechar" className="h-4 w-4" />
-                                  Encerrar contrato
-                                </button>
-                              )}
-                            </div>
-                          </details>
+                            )}
+                            {podeOperar && k.situacao !== "encerrado" && (
+                              <button className={ITEM_MENU} onClick={(e) => menu(e, { tipo: "editar", k })}>
+                                <Icone nome="editar" className="h-4 w-4 text-[var(--texto-suave)]" />
+                                Editar
+                              </button>
+                            )}
+                            {podeOperar && k.situacao === "ativo" && (
+                              <button className={ITEM_MENU} onClick={(e) => menu(e, { tipo: "suspender", k })}>
+                                <Icone nome="cancelar" className="h-4 w-4 text-[var(--texto-suave)]" />
+                                Suspender
+                              </button>
+                            )}
+                            {podeOperar && k.situacao === "suspenso" && (
+                              <button className={ITEM_MENU} onClick={(e) => menu(e, { tipo: "reativar", k })}>
+                                <Icone nome="atualizar" className="h-4 w-4 text-[var(--texto-suave)]" />
+                                Reativar
+                              </button>
+                            )}
+                            {podeOperar && k.situacao !== "encerrado" && (
+                              <button
+                                className={`${ITEM_MENU} text-[var(--perigo)] hover:bg-red-50`}
+                                onClick={(e) => menu(e, { tipo: "encerrar", k })}
+                              >
+                                <Icone nome="fechar" className="h-4 w-4" />
+                                Encerrar contrato
+                              </button>
+                            )}
+                          </MenuAcoes>
                         </div>
                       </td>
                     </tr>
