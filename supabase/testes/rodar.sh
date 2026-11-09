@@ -152,3 +152,6 @@ done
 $P -f "$R/testes/131_nbs_062.sql" 2>&1 | grep -v "^SET$"
 # 063: carga da tabela NBS com DELETE ... WHERE (pg_safeupdate do Supabase); mesma lógica testada na 131 (T9 a T11)
 $P -v ON_ERROR_STOP=1 -f "$R/migrations/063_nbs_carga.sql" 2>&1 | grep -v NOTICE || true
+# 064: cadastro no Ledgra Link pelo HUB (Contratos › gerir)
+$P -v ON_ERROR_STOP=1 -f "$R/migrations/064_ledgra_link_cadastros.sql" 2>&1 | grep -v NOTICE || true
+$P -f "$R/testes/133_ledgra_cadastros_064.sql" 2>&1 | grep -v "^SET$"

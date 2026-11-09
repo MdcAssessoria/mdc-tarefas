@@ -140,7 +140,8 @@ export const NAV: Record<Modulo, { titulo: string; links: LinkModulo[]; grupos?:
   centros_custo: { titulo: "Centros de custo", links: [{ href: "/centros-custo", nome: "Centros de custo", icone: "etiqueta" }] },
   relatorios: { titulo: "Relatórios", links: [{ href: "/relatorios", nome: "Relatórios", icone: "grafico" }] },
   // Contratos fixos (041): cadastro, vigência, anexos, contas do mês no Financeiro e reajuste anual; faturas (043);
-  // parâmetros da emissão da NFS-e pelo Emissor Nacional, só para quem gere (046); boleto pelo Ledgra Link (049);
+  // parâmetros da emissão da NFS-e pelo Emissor Nacional, só para quem gere (046); boleto pelo Ledgra Link (049) e o
+  // cadastro das empresas e contas no Ledgra Link (064);
   // envio automático por e-mail e WhatsApp, só para quem gere (053)
   contratos: {
     titulo: "Contratos",
@@ -150,6 +151,7 @@ export const NAV: Record<Modulo, { titulo: string; links: LinkModulo[]; grupos?:
       { href: "/contratos/faturas", nome: "Faturas e notas fiscais", icone: "arquivo" },
       { href: "/contratos/reajustes", nome: "Reajustes", icone: "seta-cima" },
       { href: "/contratos/nota-fiscal", nome: "Regras fiscais", icone: "escudo", minimo: "gerir" },
+      { href: "/contratos/ledgra-link", nome: "Ledgra Link (contas)", icone: "escudo", minimo: "gerir" },
       { href: "/contratos/boleto", nome: "Boleto", icone: "banco", minimo: "gerir" },
       { href: "/contratos/envio", nome: "Envio (e-mail e WhatsApp)", icone: "enviar", minimo: "gerir" },
     ],

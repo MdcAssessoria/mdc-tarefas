@@ -7425,6 +7425,7 @@ export type Database = {
         Args: { p_dados: Json; p_evento: string; p_tipo: string };
         Returns: string;
       };
+      link_pode_cadastrar: { Args: { p_org: string }; Returns: boolean };
       link_pode_emitir: { Args: { p_cobranca: string }; Returns: boolean };
       link_pode_ver_certificados: { Args: { p_org: string }; Returns: boolean };
       link_registrar_emissao: {

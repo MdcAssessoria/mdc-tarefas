@@ -35,6 +35,24 @@ import { importarEmLote } from "./telas/interacoes-importacao.mjs";
 import { trocarPeriodo } from "./telas/interacoes-periodo.mjs";
 import { interacoesPortal } from "./telas/interacoes-portal.mjs";
 
+const LEDGRA_LINK_CADASTROS = {
+  titulares: [
+    {
+      id: "11111111-1111-4111-8111-111111111111", documento: "48140121000165", razao_social: "MDC ASSESSORIA LTDA",
+      autoriza_cobranca: true, autoriza_extrato: true,
+      contas: [{ id: "7d1b6f2e-2222-4a3c-9d1e-0000000000bb", codigo_compe: "033", banco: "Santander", agencia: "1234",
+        conta: "130001234", conta_dv: "5", apelido: "Santander MDC", ambiente: "producao", status: "ativa",
+        produtos_ativos: ["cobranca", "pix"] }],
+    },
+    {
+      id: "22222222-2222-4222-8222-222222222222", documento: "45723174000110", razao_social: "GRUPO GREENCORE LTDA",
+      autoriza_cobranca: true, autoriza_extrato: false, contas: [],
+    },
+  ],
+  certificados: [{ id: "c1", titular_id: "11111111-1111-4111-8111-111111111111", tipo: "icp_a1_ecnpj", apelido: "e-CNPJ MDC 2026",
+    valido_ate: "2027-05-10T00:00:00Z", dias_para_vencer: 182, situacao: "ok", status: "ativo" }],
+};
+
 const WEB = fileURLToPath(new URL("..", import.meta.url));
 const BASE = "/hub-mdc";
 const PROJETO_SUPABASE = "bulqqdgfrrpqquqvjjfa";
@@ -244,7 +262,12 @@ function criarRespostaSupabase(avisos) {
     if (p.startsWith("/auth/v1/")) return json(200, {});
     if (p.startsWith("/storage/v1/object/list")) return json(200, []);
     if (p.startsWith("/storage/v1/")) return json(200, { signedURL: "/vazio", signedUrl: "/vazio" });
-    if (p.startsWith("/functions/v1/")) return json(200, {});
+    if (p.startsWith("/functions/v1/")) {
+      // Contratos › Ledgra Link (064): cadastros de exemplo (empresa pronta e empresa no meio do caminho)
+      const corpo = p.endsWith("/ledgra-link") ? (req.postDataJSON?.() ?? {}) : {};
+      if (corpo?.acao === "cadastros") return json(200, LEDGRA_LINK_CADASTROS);
+      return json(200, {});
+    }
 
     if (p.startsWith("/rest/v1/rpc/")) {
       const nome = p.slice("/rest/v1/rpc/".length);
@@ -952,6 +975,18 @@ const INTERACOES = {
     for (const t of ["Código da conta no Ledgra Link", "Conta do Financeiro onde o dinheiro cai", "Boletos emitidos", "Não configurado"])
       await p.getByText(t, { exact: false }).first().waitFor({ timeout: 3000 });
     await foto("boleto-config");
+  },
+  // Ledgra Link (064): MDC pronta (conta com cobrança) e Greencore só com o termo; janela de nova conta
+  "/contratos/ledgra-link": async (p, foto) => {
+    for (const t of ["MDC ASSESSORIA LTDA", "Pronta para usar", "Falta: certificado digital", "Copiar código"])
+      await p.getByText(t, { exact: false }).first().waitFor({ timeout: 3000 });
+    await foto("ledgra-link-empresas");
+    await p.getByRole("button", { name: "Fazer agora" }).first().click();
+    const j = p.getByRole("dialog");
+    await j.waitFor({ timeout: 3000 });
+    await foto("ledgra-link-certificado", { soTela: true });
+    await j.getByRole("button", { name: "Voltar" }).click();
+    await j.waitFor({ state: "detached", timeout: 3000 });
   },
   // Envio (053): e-mail ligado, WhatsApp com os segredos faltando, a fila de cada canal e o envio que falhou
   "/contratos/envio": async (p, foto) => {

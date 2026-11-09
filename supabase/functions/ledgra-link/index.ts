@@ -12,9 +12,20 @@
 //   POST { acao: "certificados", org } → certificados bancários guardados no cofre do Ledgra Link (só dados públicos),
 //                                        para o painel Vencimentos › Certificados digitais. Confere Vencimentos › ver.
 //
+// Cadastro das empresas e contas bancárias (Contratos › Ledgra Link, migração 064; confere link_pode_cadastrar =
+// Contratos › gerir). As senhas, o client_secret e o arquivo do certificado passam por aqui direto para o cofre do
+// Ledgra Link: não ficam gravados no HUB nem voltam na resposta.
+//   POST { acao: "cadastros", org }    → empresas (titulares), contas de cada uma e certificados.
+//   POST { acao: "titular", org, documento, razao_social, email_contato? }
+//   POST formulário acao=autorizacao   → termo de autorização assinado (PDF): guarda o PDF no HUB
+//                                        (<org>/ledgra-link/termos/…), calcula o SHA-256 e registra no Ledgra Link.
+//   POST { acao: "conta", org, titular_id, codigo_compe, agencia, conta, … }
+//   POST formulário acao=certificado   → certificado .pfx/.p12 e a senha, direto para o cofre.
+//   POST { acao: "credencial", org, conta_id, produto, client_id, client_secret, certificado_id? }
+//
 // Segredos (Edge Functions › Secrets): LEDGRA_LINK_URL, LEDGRA_LINK_CHAVE.
 import { bancoServico, bancoUsuario, cabecalhos, resposta } from "../_ledgra_link/http.ts";
-import { ErroLedgraLink, LedgraLink } from "../_ledgra_link/ledgra-link-cliente.ts";
+import { type CertificadoVencimento, ErroLedgraLink, LedgraLink } from "../_ledgra_link/ledgra-link-cliente.ts";
 
 const DESLIGADO = "O Ledgra Link ainda não está ligado neste servidor. Fale com o administrador do HUB.";
 
@@ -23,6 +34,160 @@ function cliente(email?: string): LedgraLink | null {
   const chave = Deno.env.get("LEDGRA_LINK_CHAVE");
   if (!url || !chave) return null;
   return new LedgraLink({ url, chave, usuario: email, timeoutMs: 40_000 });
+}
+
+const ACOES_CADASTRO = new Set(["cadastros", "titular", "autorizacao", "conta", "certificado", "credencial"]);
+const UUID = /^[0-9a-f-]{36}$/i;
+const texto = (v: unknown, max = 200) => String(v ?? "").trim().slice(0, max);
+const digitos = (v: unknown) => String(v ?? "").replace(/\D/g, "");
+const opcional = (v: unknown, max = 200) => texto(v, max) || undefined;
+
+/** SHA-256 em hexadecimal minúsculo (o Ledgra Link guarda o hash do termo para provar que o PDF não mudou). */
+async function sha256(bytes: ArrayBuffer): Promise<string> {
+  const h = new Uint8Array(await crypto.subtle.digest("SHA-256", bytes));
+  return [...h].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+/** Nome de arquivo sem acentos nem símbolos, para o caminho no armazenamento. */
+const nomeSeguro = (n: string) => n.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\w.\-]+/g, "_").slice(-80);
+
+/** Cadastro de empresas, termos, contas, certificados e credenciais no Ledgra Link (Contratos › gerir). */
+async function cadastro(
+  corpo: Record<string, unknown>,
+  form: FormData | null,
+  usuario: ReturnType<typeof bancoUsuario>,
+  email: string | undefined,
+  json: (status: number, corpo: unknown) => Response,
+): Promise<Response> {
+  const org = texto(corpo.org, 36);
+  if (!UUID.test(org)) return json(400, { erro: "Organização inválida." });
+  const { data: pode } = await usuario.rpc("link_pode_cadastrar", { p_org: org });
+  if (pode !== true) return json(403, { erro: "Só quem gere Contratos pode cadastrar empresas e contas no Ledgra Link." });
+  const link = cliente(email);
+  if (!link) return json(503, { erro: DESLIGADO });
+
+  try {
+    switch (corpo.acao) {
+      case "cadastros": {
+        const [{ titulares }, certs] = await Promise.all([
+          link.titulares.listar(),
+          link.certificados.vencimentos().catch(() => ({ certificados: [] as CertificadoVencimento[] })),
+        ]);
+        const comContas = await Promise.all(
+          titulares.map(async (t) => ({ ...t, contas: (await link.contas.listar(t.id)).contas })),
+        );
+        return json(200, { titulares: comContas, certificados: certs.certificados });
+      }
+      case "titular": {
+        const r = await link.titulares.cadastrar({
+          documento: digitos(corpo.documento),
+          razao_social: texto(corpo.razao_social, 150),
+          email_contato: opcional(corpo.email_contato, 150),
+          ref_externa: `HUB-${org}`,
+        });
+        return json(200, r);
+      }
+      case "autorizacao": {
+        const titular = texto(corpo.titular_id, 36);
+        const arquivo = form?.get("termo");
+        if (!UUID.test(titular)) return json(400, { erro: "Escolha a empresa." });
+        if (!(arquivo instanceof File) || !arquivo.size) return json(400, { erro: "Anexe o termo de autorização assinado (PDF)." });
+        if (arquivo.size > 10 * 1024 * 1024) return json(400, { erro: "O termo passa de 10 MB. Envie um PDF menor." });
+        const bytes = await arquivo.arrayBuffer();
+        if (new TextDecoder().decode(new Uint8Array(bytes.slice(0, 5))) !== "%PDF-") {
+          return json(400, { erro: "O termo precisa ser um arquivo PDF." });
+        }
+        const hash = await sha256(bytes);
+        const caminho = `${org}/ledgra-link/termos/${titular}/${Date.now()}-${nomeSeguro(arquivo.name || "termo.pdf")}`;
+        const { error: erroArquivo } = await bancoServico().storage.from("hub-arquivos")
+          .upload(caminho, bytes, { contentType: "application/pdf" });
+        if (erroArquivo) return json(500, { erro: "Não foi possível guardar o PDF do termo. Tente de novo." });
+        const escopos = texto(corpo.escopos, 60).split(",").filter((e) => ["cobranca", "extrato", "pagamento", "pix"].includes(e));
+        const r = await link.titulares.registrarAutorizacao(titular, {
+          escopos: escopos as Array<"cobranca" | "extrato" | "pagamento" | "pix">,
+          documento_termo: `hub:${caminho}`,
+          hash_termo: hash,
+          assinado_por_nome: texto(corpo.assinado_por_nome, 120),
+          assinado_por_cpf: digitos(corpo.assinado_por_cpf),
+          // data da assinatura ao meio-dia de Brasília (o dia não muda com o fuso)
+          assinado_em: `${texto(corpo.assinado_em, 10)}T12:00:00-03:00`,
+          vigente_ate: opcional(corpo.vigente_ate, 10),
+        }, { idempotencia: `termo-${hash}` });
+        return json(200, { ...r, hash });
+      }
+      case "conta": {
+        const r = await link.contas.cadastrar({
+          titular_id: texto(corpo.titular_id, 36),
+          codigo_compe: texto(corpo.codigo_compe, 3),
+          agencia: digitos(corpo.agencia),
+          conta: digitos(corpo.conta),
+          conta_dv: opcional(corpo.conta_dv, 2),
+          apelido: texto(corpo.apelido, 60),
+          convenio: opcional(corpo.convenio, 20),
+          carteira: opcional(corpo.carteira, 10),
+          workspace_id: opcional(corpo.workspace_id, 80),
+          chave_pix: opcional(corpo.chave_pix, 77),
+          ambiente: (["sandbox", "homologacao", "producao"].includes(String(corpo.ambiente)) ? corpo.ambiente : "producao") as
+            "sandbox" | "homologacao" | "producao",
+        });
+        return json(200, r);
+      }
+      case "certificado": {
+        const arquivo = form?.get("arquivo");
+        if (!(arquivo instanceof File) || !arquivo.size) return json(400, { erro: "Escolha o arquivo do certificado (.pfx ou .p12)." });
+        if (arquivo.size > 64 * 1024) return json(400, { erro: "O arquivo é grande demais para um certificado A1. Confira se é o .pfx." });
+        const tipo = texto(corpo.tipo, 20);
+        const r = await link.certificados.enviar({
+          titular_id: texto(corpo.titular_id, 36),
+          tipo: (["icp_a1_ecnpj", "icp_a1_ecpf", "banco_mtls", "webhook_servidor"].includes(tipo) ? tipo : "icp_a1_ecnpj") as
+            "icp_a1_ecnpj",
+          apelido: texto(corpo.apelido, 60),
+          arquivo: new Uint8Array(await arquivo.arrayBuffer()),
+          nome_arquivo: nomeSeguro(arquivo.name || "certificado.pfx"),
+          senha: String(form?.get("senha") ?? ""),
+        });
+        return json(200, r);
+      }
+      case "credencial": {
+        const conta = texto(corpo.conta_id, 36);
+        if (!UUID.test(conta)) return json(400, { erro: "Escolha a conta." });
+        const produto = texto(corpo.produto, 12);
+        const segredo = String(corpo.client_secret ?? "");
+        if (!segredo) return json(400, { erro: "Informe o Client Secret do portal do banco." });
+        const r = await link.contas.cadastrarCredencial(conta, {
+          produto: (["pix", "cobranca", "extrato", "pagamentos"].includes(produto) ? produto : "cobranca") as "cobranca",
+          client_id: texto(corpo.client_id, 200),
+          segredos: { client_secret: segredo },
+          certificado_id: UUID.test(texto(corpo.certificado_id, 36)) ? texto(corpo.certificado_id, 36) : undefined,
+        });
+        return json(200, r);
+      }
+    }
+    return json(400, { erro: "Ação desconhecida." });
+  } catch (e) {
+    if (e instanceof ErroLedgraLink) return json(e.temporario ? 503 : 422, { erro: traduzirLink(e) });
+    console.error("ledgra-link cadastro", corpo.acao, e instanceof Error ? e.name : "erro");
+    return json(500, { erro: "Não foi possível gravar agora. Tente de novo em instantes." });
+  }
+}
+
+/** Nome do campo do Ledgra Link como a pessoa vê na tela. */
+const CAMPOS: Record<string, string> = {
+  documento: "CPF ou CNPJ", razao_social: "razão social", email_contato: "e-mail", escopos: "o que a MDC pode fazer",
+  assinado_por_nome: "nome de quem assinou", assinado_por_cpf: "CPF de quem assinou", assinado_em: "data da assinatura",
+  vigente_ate: "válido até", codigo_compe: "banco", agencia: "agência", conta: "conta", conta_dv: "dígito da conta",
+  apelido: "apelido", convenio: "convênio", carteira: "carteira", chave_pix: "chave Pix", client_id: "Client ID",
+  titular_id: "empresa",
+};
+
+/** Mensagem do Ledgra Link em português simples (erro de validação vira a lista dos campos a revisar). */
+function traduzirLink(e: ErroLedgraLink): string {
+  const campos = (e.detalhes as { campos?: string[] } | undefined)?.campos;
+  if (e.codigo === "dados_invalidos" && campos?.length) {
+    const nomes = [...new Set(campos.map((c) => CAMPOS[c.split(".")[0]!] ?? c))];
+    return `Revise: ${nomes.join(", ")}.`;
+  }
+  return e.message;
 }
 
 /** Soma dias a uma data AAAA-MM-DD sem depender do fuso do servidor. */
@@ -43,7 +208,13 @@ Deno.serve(async (req) => {
   const { data: u } = await usuario.auth.getUser();
   if (!u?.user) return json(401, { erro: "Sessão expirada. Entre de novo." });
 
-  const corpo = (await req.json().catch(() => ({}))) as { acao?: string; cobranca?: string; org?: string; fatura?: string };
+  // Formulário com arquivo (termo e certificado) ou JSON (o resto).
+  const ehFormulario = (req.headers.get("content-type") ?? "").includes("multipart/form-data");
+  const form = ehFormulario ? await req.formData().catch(() => null) : null;
+  const corpo = (form ? Object.fromEntries([...form.entries()].filter(([, v]) => typeof v === "string"))
+    : await req.json().catch(() => ({}))) as { acao?: string; cobranca?: string; org?: string; fatura?: string } & Record<string, unknown>;
+
+  if (corpo.acao && ACOES_CADASTRO.has(corpo.acao)) return await cadastro(corpo, form, usuario, u.user.email, json);
 
   if (corpo.acao === "situacao") {
     const link = cliente(u.user.email);
