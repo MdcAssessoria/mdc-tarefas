@@ -4,7 +4,7 @@
 // O PDF sai no papel timbrado da MDC pelo mesmo gerador do contrato (comercial/contratoPdf.ts). Testado em
 // termoLedgraLink.test.ts. Texto revisável pelo jurídico: mude só aqui.
 import { IDENTIDADE_MDC } from "@/lib/identidade";
-import { formatarDocumento, soDigitos } from "@/lib/documento";
+import { cpfValido, formatarDocumento, soDigitos } from "@/lib/documento";
 import { ESCOPOS, nomeBanco, type ContaLink, type Escopo } from "./ledgraLinkCadastro";
 
 const BRANCO = "______________________________";
@@ -26,7 +26,7 @@ const documento = (doc: string | null | undefined, rotulo = "CNPJ") => {
 
 export interface DadosTermo {
   empresa: { razao_social: string; documento: string };
-  representante: { nome: string; cpf: string };
+  representante: { nome: string; cpf: string; cargo?: string };
   escopos: Escopo[];
   contas: Pick<ContaLink, "codigo_compe" | "agencia" | "conta" | "conta_dv">[];
   /** Data da assinatura (AAAA-MM-DD); vazia sai em branco. */
@@ -61,17 +61,35 @@ export async function baixarTermoPdf(d: DadosTermo, logoUrl: string | null | und
     contratante: {
       nome: empresa,
       documento: d.empresa.documento,
-      representante: d.representante.nome.trim() || "Representante: ______________________",
+      representante:
+        [d.representante.nome.trim(), d.representante.cargo?.trim()].filter(Boolean).join(" · ") ||
+        "Representante: ______________________",
     },
     logo: await carregarLogo(logoUrl),
   });
   baixarBytes(bytes, `${nomeArquivo("Termo de autorizacao Ledgra Link", empresa.split(" ").slice(0, 3).join(" "))}.pdf`);
 }
 
+/** Confere se o termo vai sair todo preenchido (nada de linha em branco); devolve o que falta ou null. */
+export function conferirModeloTermo(d: DadosTermo): string | null {
+  if (d.representante.nome.trim().length < 3) return "Preencha o nome de quem vai assinar pela empresa.";
+  if (!cpfValido(d.representante.cpf)) return "Preencha o CPF de quem vai assinar (CPF válido).";
+  if (!d.escopos.length) return "Marque pelo menos uma coisa que a MDC pode fazer nas contas.";
+  if (!d.contas.length) return "Informe pelo menos uma conta (banco, agência e conta).";
+  for (const [k, c] of d.contas.entries()) {
+    const n = d.contas.length > 1 ? ` da ${k + 1}ª conta` : " da conta";
+    if (!/^\d{3}$/.test(c.codigo_compe)) return `Escolha o banco${n}.`;
+    if (!/^\d{1,5}$/.test(c.agencia.trim())) return `Agência${n}: só números, até 5 dígitos, sem o dígito.`;
+    if (!/^\d{1,13}$/.test(c.conta.trim())) return `Número${n}: só números, sem o dígito (o dígito vai no campo ao lado).`;
+  }
+  return null;
+}
+
 /** Texto do termo em markdown simples (# título, ## cláusula, - item, **negrito**), pronto para o gerador de PDF. */
 export function textoTermo(d: DadosTermo): string {
   const empresa = d.empresa.razao_social.trim().toUpperCase() || BRANCO;
   const rep = d.representante.nome.trim() || BRANCO;
+  const cargo = d.representante.cargo?.trim();
   const cpfRep = documento(d.representante.cpf, "CPF");
   const mdc = IDENTIDADE_MDC;
 
@@ -90,7 +108,7 @@ export function textoTermo(d: DadosTermo): string {
 
   return [
     "# Termo de autorização de acesso a contas bancárias",
-    `Pelo presente termo, **${empresa}**, inscrita no ${documento(d.empresa.documento)}, neste ato representada por **${rep}**, ${cpfRep}, doravante **AUTORIZANTE**, autoriza a **${mdc.razaoSocial.toUpperCase()}**, inscrita no CNPJ ${mdc.cnpj}, com sede em ${mdc.cidadeUf}, doravante **AUTORIZADA**, a acessar as contas bancárias abaixo pela interface oficial de programação (API) dos bancos, por meio da plataforma Ledgra Link, nas condições a seguir.`,
+    `Pelo presente termo, **${empresa}**, inscrita no ${documento(d.empresa.documento)}, neste ato representada por ${cargo ? `seu(sua) ${cargo}, ` : ""}**${rep}**, ${cpfRep}, doravante **AUTORIZANTE**, autoriza a **${mdc.razaoSocial.toUpperCase()}**, inscrita no CNPJ ${mdc.cnpj}, com sede em ${mdc.cidadeUf}, doravante **AUTORIZADA**, a acessar as contas bancárias abaixo pela interface oficial de programação (API) dos bancos, por meio da plataforma Ledgra Link, nas condições a seguir.`,
     "## Cláusula 1ª · Contas abrangidas",
     ...contas,
     "Ficam abrangidas também outras contas de titularidade da AUTORIZANTE que ela vier a informar por escrito à AUTORIZADA.",

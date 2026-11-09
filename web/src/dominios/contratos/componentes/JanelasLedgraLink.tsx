@@ -11,6 +11,7 @@ import { Modal } from "@/components/ui/Modal";
 import { Icone } from "@/components/ui/Icone";
 import { CampoArquivo } from "@/components/ui/CampoArquivo";
 import { ColunaFormulario, ColunasFormulario } from "@/components/ui/ColunasFormulario";
+import { TituloEtapa } from "@/components/ui/TituloEtapa";
 import {
   AMBIENTES,
   BANCOS_LINK,
@@ -33,8 +34,11 @@ import {
   type NovoTitular,
   type TitularLink,
 } from "../ledgraLinkCadastro";
-import { baixarTermoPdf } from "../termoLedgraLink";
+import { baixarTermoPdf, conferirModeloTermo, type DadosTermo } from "../termoLedgraLink";
 import { cadastrarConta, cadastrarCredencial, cadastrarTitular, enviarCertificado, registrarTermo } from "../ledgraLinkChamadas";
+
+type ContaTermo = Omit<DadosTermo["contas"][number], "conta_dv"> & { conta_dv: string };
+const CONTA_VAZIA: ContaTermo = { codigo_compe: "033", agencia: "", conta: "", conta_dv: "" };
 
 /** Moldura comum: título, erro acima dos botões, Voltar e o botão de enviar (trava enquanto envia). */
 function JanelaEnvio({
@@ -51,7 +55,7 @@ function JanelaEnvio({
   titulo: string;
   descricao: React.ReactNode;
   botao: string;
-  largura?: "lg" | "2xl" | "4xl";
+  largura?: "lg" | "2xl" | "4xl" | "5xl";
   aoFechar: () => void;
   /** Confere e envia; devolve a mensagem de erro (o que faltou) ou null quando deu certo. */
   enviar: () => Promise<string | null>;
@@ -177,23 +181,32 @@ export function JanelaTermo({
     escopos: ["cobranca", "pix"], assinado_por_nome: "", assinado_por_cpf: "", assinado_em: hoje, vigente_ate: "", arquivo: null,
   });
   const mudar = (p: Partial<NovoTermo>) => setT((x) => ({ ...x, ...p }));
+  const [cargo, setCargo] = useState("");
+  // contas que entram no termo: as já cadastradas na empresa ou uma linha para preencher
+  const [contas, setContas] = useState<ContaTermo[]>(() =>
+    titular.contas.length
+      ? titular.contas.map((c) => ({ codigo_compe: c.codigo_compe, agencia: c.agencia, conta: c.conta, conta_dv: c.conta_dv ?? "" }))
+      : [{ ...CONTA_VAZIA }],
+  );
+  const mudarConta = (k: number, p: Partial<ContaTermo>) => setContas((l) => l.map((c, i) => (i === k ? { ...c, ...p } : c)));
   const [baixando, setBaixando] = useState(false);
   const [erroModelo, setErroModelo] = useState("");
+
   async function baixarModelo() {
-    setBaixando(true);
     setErroModelo("");
+    const dados = {
+      empresa: { razao_social: titular.razao_social, documento: titular.documento },
+      representante: { nome: t.assinado_por_nome, cpf: t.assinado_por_cpf, cargo },
+      escopos: t.escopos,
+      contas: contas.map((c) => ({ ...c, agencia: c.agencia.trim(), conta: c.conta.trim(), conta_dv: c.conta_dv.trim() || null })),
+      data: hoje,
+      vigente_ate: t.vigente_ate,
+    };
+    const falta = conferirModeloTermo(dados);
+    if (falta) return setErroModelo(falta);
+    setBaixando(true);
     try {
-      await baixarTermoPdf(
-        {
-          empresa: { razao_social: titular.razao_social, documento: titular.documento },
-          representante: { nome: t.assinado_por_nome, cpf: t.assinado_por_cpf },
-          escopos: t.escopos,
-          contas: titular.contas,
-          data: "",
-          vigente_ate: t.vigente_ate,
-        },
-        logoUrl,
-      );
+      await baixarTermoPdf(dados, logoUrl);
     } catch (x) {
       setErroModelo(traduzirErro(x));
     } finally {
@@ -202,13 +215,14 @@ export function JanelaTermo({
   }
   const alternar = (e: Escopo) =>
     mudar({ escopos: t.escopos.includes(e) ? t.escopos.filter((x) => x !== e) : [...t.escopos, e] });
+
   return (
     <JanelaEnvio
       id="form-link-termo"
       titulo={`Termo de autorização · ${titular.razao_social}`}
-      descricao="O PDF assinado pelo responsável da empresa. O HUB guarda o PDF e o Ledgra Link guarda a impressão digital dele (SHA-256), que prova que o arquivo não mudou."
-      botao="Registrar termo"
-      largura="4xl"
+      descricao={`Preencha os dados, baixe o termo já pronto para assinar e, depois de assinado, anexe o PDF. Empresa: ${formatarDocumento(titular.documento)}.`}
+      botao="Registrar termo assinado"
+      largura="5xl"
       aoFechar={aoFechar}
       enviar={async () => {
         const falta = conferirTermo(t, hoje);
@@ -218,54 +232,114 @@ export function JanelaTermo({
         return null;
       }}
     >
-      <div className="flex flex-wrap items-center gap-3 rounded-xl border border-[var(--borda)] bg-[var(--fundo)] p-3 text-sm">
-        <Icone nome="documento" className="h-5 w-5 shrink-0 text-[var(--marca)]" />
-        <span className="min-w-0 flex-1 basis-64">
-          <strong>Ainda não tem o termo?</strong> Marque abaixo o que a MDC pode fazer, preencha quem vai assinar e baixe o
-          modelo já com os dados da empresa{titular.contas.length ? " e das contas" : ""}. Depois de assinado, anexe o PDF aqui.
-        </span>
-        <button type="button" className="btn" onClick={baixarModelo} disabled={baixando}>
-          <Icone nome="baixar" className="h-4 w-4" />
-          {baixando ? "Gerando…" : "Baixar termo para assinar"}
-        </button>
-        {erroModelo && <p role="alert" className="w-full text-red-800">{erroModelo}</p>}
-      </div>
-      <ColunasFormulario>
-        <ColunaFormulario>
-          <CampoArquivo accept=".pdf" escolhido={t.arquivo?.name} titulo="Arraste o PDF do termo assinado ou clique para escolher"
-            aoEscolher={([a]) => mudar({ arquivo: a ?? null })} />
-          <fieldset className="space-y-2">
-            <legend className="text-sm font-medium">O que a MDC pode fazer nesta conta</legend>
-            {ESCOPOS.map((e) => (
-              <label key={e.id} className="flex items-center gap-2 text-sm">
-                <input type="checkbox" checked={t.escopos.includes(e.id)} onChange={() => alternar(e.id)} />
-                {e.nome}
+      <fieldset className="space-y-3 rounded-xl border border-[var(--borda)] p-3">
+        <TituloEtapa numero={1} icone="documento">Dados do termo</TituloEtapa>
+        <ColunasFormulario>
+          <ColunaFormulario>
+            <label className="campo">
+              <span>Nome de quem assina pela empresa</span>
+              <input required maxLength={120} value={t.assinado_por_nome} onChange={(e) => mudar({ assinado_por_nome: e.target.value })}
+                placeholder="Representante legal" />
+            </label>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <label className="campo">
+                <span>CPF de quem assina</span>
+                <input required inputMode="numeric" className="num" value={t.assinado_por_cpf} placeholder="000.000.000-00"
+                  onChange={(e) => mudar({ assinado_por_cpf: e.target.value })}
+                  onBlur={() => mudar({ assinado_por_cpf: formatarDocumento(t.assinado_por_cpf) })} />
               </label>
+              <label className="campo">
+                <span>Cargo (opcional)</span>
+                <input maxLength={60} value={cargo} onChange={(e) => setCargo(e.target.value)} placeholder="Ex.: sócio administrador" />
+              </label>
+            </div>
+            <fieldset className="space-y-2">
+              <legend className="text-sm font-medium">O que a MDC pode fazer nas contas</legend>
+              {ESCOPOS.map((e) => (
+                <label key={e.id} className="flex items-center gap-2 text-sm">
+                  <input type="checkbox" checked={t.escopos.includes(e.id)} onChange={() => alternar(e.id)} />
+                  {e.nome}
+                </label>
+              ))}
+            </fieldset>
+            <label className="campo">
+              <span>Válido até (opcional; em branco = sem prazo)</span>
+              <input type="date" value={t.vigente_ate} onChange={(e) => mudar({ vigente_ate: e.target.value })} />
+            </label>
+          </ColunaFormulario>
+          <ColunaFormulario>
+            <p className="text-sm font-medium">Contas que entram no termo</p>
+            {contas.map((c, k) => (
+              <div key={k} className="space-y-2 rounded-lg border border-[var(--borda)] p-2">
+                <div className="flex items-end gap-2">
+                  <label className="campo min-w-0 flex-1">
+                    <span>Banco</span>
+                    <select value={c.codigo_compe} onChange={(e) => mudarConta(k, { codigo_compe: e.target.value })}>
+                      {BANCOS_LINK.map((b) => (
+                        <option key={b.codigo} value={b.codigo}>{b.codigo} · {b.nome}</option>
+                      ))}
+                    </select>
+                  </label>
+                  {contas.length > 1 && (
+                    <button type="button" className="btn" aria-label={`Tirar a ${k + 1}ª conta do termo`}
+                      onClick={() => setContas((l) => l.filter((_, i) => i !== k))}>
+                      <Icone nome="lixeira" className="h-4 w-4" />
+                      Tirar
+                    </button>
+                  )}
+                </div>
+                <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,2fr)_minmax(0,4rem)] gap-2 [&_input]:min-w-0 [&_input]:w-full">
+                  <label className="campo">
+                    <span>Agência</span>
+                    <input inputMode="numeric" maxLength={5} className="num" value={c.agencia} placeholder="1234"
+                      onChange={(e) => mudarConta(k, { agencia: e.target.value })} />
+                  </label>
+                  <label className="campo">
+                    <span>Conta</span>
+                    <input inputMode="numeric" maxLength={13} className="num" value={c.conta} placeholder="13000123"
+                      onChange={(e) => mudarConta(k, { conta: e.target.value })} />
+                  </label>
+                  <label className="campo">
+                    <span>Dígito</span>
+                    <input maxLength={2} className="num" value={c.conta_dv} onChange={(e) => mudarConta(k, { conta_dv: e.target.value })} />
+                  </label>
+                </div>
+              </div>
             ))}
-          </fieldset>
-        </ColunaFormulario>
-        <ColunaFormulario>
-          <label className="campo">
-            <span>Nome de quem assinou</span>
-            <input required maxLength={120} value={t.assinado_por_nome} onChange={(e) => mudar({ assinado_por_nome: e.target.value })} />
-          </label>
-          <label className="campo">
-            <span>CPF de quem assinou</span>
-            <input required inputMode="numeric" className="num" value={t.assinado_por_cpf} placeholder="000.000.000-00"
-              onChange={(e) => mudar({ assinado_por_cpf: e.target.value })}
-              onBlur={() => mudar({ assinado_por_cpf: formatarDocumento(t.assinado_por_cpf) })} />
-          </label>
-          <label className="campo">
-            <span>Data da assinatura</span>
-            <input required type="date" max={hoje} value={t.assinado_em} onChange={(e) => mudar({ assinado_em: e.target.value })} />
-          </label>
-          <label className="campo">
-            <span>Válido até (opcional)</span>
-            <input type="date" value={t.vigente_ate} onChange={(e) => mudar({ vigente_ate: e.target.value })} />
-          </label>
-        </ColunaFormulario>
-      </ColunasFormulario>
-      <p className="text-xs text-[var(--texto-suave)]">Empresa: {formatarDocumento(titular.documento)}. O CPF de quem assinou fica guardado mascarado.</p>
+            <button type="button" className="btn" onClick={() => setContas((l) => [...l, { ...CONTA_VAZIA }])}>
+              <Icone nome="mais" className="h-4 w-4" />
+              Mais uma conta
+            </button>
+          </ColunaFormulario>
+        </ColunasFormulario>
+        <div className="flex flex-wrap items-center justify-end gap-3 border-t border-[var(--borda)] pt-3">
+          {erroModelo && <p role="alert" className="mr-auto rounded-md bg-red-50 p-2 text-sm text-red-800">{erroModelo}</p>}
+          <button type="button" className="btn font-semibold ring-2 ring-[var(--destaque)]" onClick={baixarModelo} disabled={baixando}>
+            <Icone nome="baixar" className="h-4 w-4" />
+            {baixando ? "Gerando…" : "Baixar termo preenchido (PDF)"}
+          </button>
+        </div>
+      </fieldset>
+
+      <fieldset className="space-y-3 rounded-xl border border-[var(--borda)] p-3">
+        <TituloEtapa numero={2} icone="clipe">Termo assinado</TituloEtapa>
+        <ColunasFormulario>
+          <ColunaFormulario>
+            <CampoArquivo accept=".pdf" escolhido={t.arquivo?.name} compacto titulo="Arraste o PDF assinado ou clique para escolher"
+              aoEscolher={([a]) => mudar({ arquivo: a ?? null })} />
+          </ColunaFormulario>
+          <ColunaFormulario>
+            <label className="campo">
+              <span>Data da assinatura</span>
+              <input required type="date" max={hoje} value={t.assinado_em} onChange={(e) => mudar({ assinado_em: e.target.value })} />
+            </label>
+            <p className="text-xs text-[var(--texto-suave)]">
+              O HUB guarda o PDF e o Ledgra Link guarda a impressão digital dele (SHA-256), que prova que o arquivo não mudou. O CPF
+              de quem assinou fica guardado mascarado.
+            </p>
+          </ColunaFormulario>
+        </ColunasFormulario>
+      </fieldset>
     </JanelaEnvio>
   );
 }

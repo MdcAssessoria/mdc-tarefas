@@ -1,7 +1,7 @@
 // Testes do modelo do termo de autorização do Ledgra Link: dados preenchidos, brancos para preencher à mão e o PDF.
 import { describe, expect, it } from "vitest";
 import { gerarContratoPdf } from "@/dominios/comercial/contratoPdf";
-import { dataPorExtenso, textoTermo, type DadosTermo } from "./termoLedgraLink";
+import { conferirModeloTermo, dataPorExtenso, textoTermo, type DadosTermo } from "./termoLedgraLink";
 
 const base: DadosTermo = {
   empresa: { razao_social: "Exrh Ltda", documento: "33509782000148" },
@@ -36,6 +36,21 @@ describe("termo de autorização do Ledgra Link", () => {
     expect(t.match(/- Banco ____/g)).toHaveLength(2);
     expect(t).toContain("até 31 de dezembro de 2027");
     expect(t).toContain("Bragança Paulista, ____ de");
+  });
+
+  it("cargo do representante entra no texto", () => {
+    const t = textoTermo({ ...base, representante: { ...base.representante, cargo: "sócia administradora" } });
+    expect(t).toContain("representada por seu(sua) sócia administradora, **Fulana de Tal**");
+  });
+
+  it("só libera o modelo com representante, CPF, item marcado e contas completas", () => {
+    expect(conferirModeloTermo(base)).toBeNull();
+    expect(conferirModeloTermo({ ...base, representante: { nome: "", cpf: "52998224725" } })).toMatch(/nome/);
+    expect(conferirModeloTermo({ ...base, representante: { nome: "Fulana", cpf: "123" } })).toMatch(/CPF/);
+    expect(conferirModeloTermo({ ...base, escopos: [] })).toMatch(/Marque/);
+    expect(conferirModeloTermo({ ...base, contas: [] })).toMatch(/pelo menos uma conta/);
+    const duas = [base.contas[0]!, { codigo_compe: "341", agencia: "12-3", conta: "1", conta_dv: null }];
+    expect(conferirModeloTermo({ ...base, contas: duas })).toMatch(/Agência da 2ª conta/);
   });
 
   it("gera o PDF no papel timbrado com as partes AUTORIZANTE e AUTORIZADA", async () => {

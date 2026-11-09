@@ -989,7 +989,7 @@ const INTERACOES = {
     await j.waitFor({ state: "detached", timeout: 3000 });
     await p.getByRole("button", { name: "Adicionar outro" }).first().click();
     const termo = p.getByRole("dialog");
-    await termo.getByRole("button", { name: "Baixar termo para assinar" }).waitFor({ timeout: 3000 });
+    await termo.getByRole("button", { name: "Baixar termo preenchido (PDF)" }).waitFor({ timeout: 3000 });
     await foto("ledgra-link-termo", { soTela: true });
     await termo.getByRole("button", { name: "Voltar" }).click();
     await termo.waitFor({ state: "detached", timeout: 3000 });
