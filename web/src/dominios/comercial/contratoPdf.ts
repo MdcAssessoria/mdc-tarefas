@@ -118,11 +118,15 @@ export interface DadosContratoPdf {
   contratante: { nome: string; representante: string; documento?: string };
   logo?: Uint8Array | null; // PNG ou JPG
   rascunho?: boolean;
+  /** Outros documentos no mesmo papel timbrado (ex.: termo de autorização do Ledgra Link). Padrão: contrato. */
+  cabecalho?: string; // linha acima do texto (padrão "Contrato nº <número>")
+  rotulos?: { parte: string; mdc: string }; // nomes das partes nas assinaturas (padrão CONTRATANTE / CONTRATADA)
+  tituloArquivo?: string; // título nas propriedades do PDF
 }
 
 export async function gerarContratoPdf(d: DadosContratoPdf): Promise<Uint8Array> {
   const pdf = await PDFDocument.create();
-  pdf.setTitle(`Contrato ${d.numero} — ${d.contratante.nome}`);
+  pdf.setTitle(d.tituloArquivo ?? `Contrato ${d.numero} — ${d.contratante.nome}`);
   pdf.setAuthor(IDENTIDADE_MDC.nomeComercial);
   pdf.setCreator("HUB-MDC");
   const f = await pdf.embedFont(StandardFonts.Helvetica);
@@ -176,7 +180,7 @@ export async function gerarContratoPdf(d: DadosContratoPdf): Promise<Uint8Array>
       text(t, W - MD - w(t, sz, fo), yy, sz, fo, cor);
       yy -= sz + 6;
     }
-    const num = `Contrato nº ${d.numero}${d.rascunho ? "  ·  MINUTA PARA CONFERÊNCIA" : ""}`;
+    const num = `${d.cabecalho ?? `Contrato nº ${d.numero}`}${d.rascunho ? "  ·  MINUTA PARA CONFERÊNCIA" : ""}`;
     text(num, W - MD - w(num, 7.5, d.rascunho ? b : f), H - BANDA - 16, 7.5, d.rascunho ? b : f, d.rascunho ? DOURADO_ESC : SUAVE);
     y = H - BANDA - 34;
   };
@@ -301,8 +305,8 @@ export async function gerarContratoPdf(d: DadosContratoPdf): Promise<Uint8Array>
     };
     return { altura, desenhar };
   };
-  const contratante = parte("CONTRATANTE", d.contratante.nome, [linhaDocumento(d.contratante.documento), d.contratante.representante]);
-  const contratada = parte("CONTRATADA", IDENTIDADE_MDC.razaoSocial.toUpperCase(), [
+  const contratante = parte(d.rotulos?.parte ?? "CONTRATANTE", d.contratante.nome, [linhaDocumento(d.contratante.documento), d.contratante.representante]);
+  const contratada = parte(d.rotulos?.mdc ?? "CONTRATADA", IDENTIDADE_MDC.razaoSocial.toUpperCase(), [
     linhaDocumento(IDENTIDADE_MDC.cnpj),
     `${IDENTIDADE_MDC.responsavelTecnico.nome} · CRC ${IDENTIDADE_MDC.responsavelTecnico.crc}`,
   ]);

@@ -33,6 +33,7 @@ import {
   type NovoTitular,
   type TitularLink,
 } from "../ledgraLinkCadastro";
+import { baixarTermoPdf } from "../termoLedgraLink";
 import { cadastrarConta, cadastrarCredencial, cadastrarTitular, enviarCertificado, registrarTermo } from "../ledgraLinkChamadas";
 
 /** Moldura comum: título, erro acima dos botões, Voltar e o botão de enviar (trava enquanto envia). */
@@ -161,12 +162,14 @@ export function JanelaTermo({
   org,
   titular,
   hoje,
+  logoUrl,
   aoFechar,
   aoSalvar,
 }: {
   org: string;
   titular: TitularLink;
   hoje: string;
+  logoUrl: string | null;
   aoFechar: () => void;
   aoSalvar: (msg: string) => void;
 }) {
@@ -174,6 +177,29 @@ export function JanelaTermo({
     escopos: ["cobranca", "pix"], assinado_por_nome: "", assinado_por_cpf: "", assinado_em: hoje, vigente_ate: "", arquivo: null,
   });
   const mudar = (p: Partial<NovoTermo>) => setT((x) => ({ ...x, ...p }));
+  const [baixando, setBaixando] = useState(false);
+  const [erroModelo, setErroModelo] = useState("");
+  async function baixarModelo() {
+    setBaixando(true);
+    setErroModelo("");
+    try {
+      await baixarTermoPdf(
+        {
+          empresa: { razao_social: titular.razao_social, documento: titular.documento },
+          representante: { nome: t.assinado_por_nome, cpf: t.assinado_por_cpf },
+          escopos: t.escopos,
+          contas: titular.contas,
+          data: "",
+          vigente_ate: t.vigente_ate,
+        },
+        logoUrl,
+      );
+    } catch (x) {
+      setErroModelo(traduzirErro(x));
+    } finally {
+      setBaixando(false);
+    }
+  }
   const alternar = (e: Escopo) =>
     mudar({ escopos: t.escopos.includes(e) ? t.escopos.filter((x) => x !== e) : [...t.escopos, e] });
   return (
@@ -192,6 +218,18 @@ export function JanelaTermo({
         return null;
       }}
     >
+      <div className="flex flex-wrap items-center gap-3 rounded-xl border border-[var(--borda)] bg-[var(--fundo)] p-3 text-sm">
+        <Icone nome="documento" className="h-5 w-5 shrink-0 text-[var(--marca)]" />
+        <span className="min-w-0 flex-1 basis-64">
+          <strong>Ainda não tem o termo?</strong> Marque abaixo o que a MDC pode fazer, preencha quem vai assinar e baixe o
+          modelo já com os dados da empresa{titular.contas.length ? " e das contas" : ""}. Depois de assinado, anexe o PDF aqui.
+        </span>
+        <button type="button" className="btn" onClick={baixarModelo} disabled={baixando}>
+          <Icone nome="baixar" className="h-4 w-4" />
+          {baixando ? "Gerando…" : "Baixar termo para assinar"}
+        </button>
+        {erroModelo && <p role="alert" className="w-full text-red-800">{erroModelo}</p>}
+      </div>
       <ColunasFormulario>
         <ColunaFormulario>
           <CampoArquivo accept=".pdf" escolhido={t.arquivo?.name} titulo="Arraste o PDF do termo assinado ou clique para escolher"

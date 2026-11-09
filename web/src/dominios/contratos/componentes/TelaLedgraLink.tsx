@@ -233,7 +233,7 @@ export function TelaLedgraLink() {
 
       {janela?.tipo === "empresa" && <JanelaEmpresa org={org.id} aoFechar={() => setJanela(null)} aoSalvar={salvo} />}
       {janela?.tipo === "termo" && (
-        <JanelaTermo org={org.id} titular={janela.titular} hoje={hoje} aoFechar={() => setJanela(null)} aoSalvar={salvo} />
+        <JanelaTermo org={org.id} titular={janela.titular} hoje={hoje} logoUrl={org.logo_url} aoFechar={() => setJanela(null)} aoSalvar={salvo} />
       )}
       {janela?.tipo === "certificado" && (
         <JanelaCertificado org={org.id} titular={janela.titular} aoFechar={() => setJanela(null)} aoSalvar={salvo} />

@@ -987,6 +987,12 @@ const INTERACOES = {
     await foto("ledgra-link-certificado", { soTela: true });
     await j.getByRole("button", { name: "Voltar" }).click();
     await j.waitFor({ state: "detached", timeout: 3000 });
+    await p.getByRole("button", { name: "Adicionar outro" }).first().click();
+    const termo = p.getByRole("dialog");
+    await termo.getByRole("button", { name: "Baixar termo para assinar" }).waitFor({ timeout: 3000 });
+    await foto("ledgra-link-termo", { soTela: true });
+    await termo.getByRole("button", { name: "Voltar" }).click();
+    await termo.waitFor({ state: "detached", timeout: 3000 });
   },
   // Envio (053): e-mail ligado, WhatsApp com os segredos faltando, a fila de cada canal e o envio que falhou
   "/contratos/envio": async (p, foto) => {
