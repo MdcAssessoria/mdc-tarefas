@@ -5,6 +5,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import Link from "next/link";
 import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { nomeCliente } from "@/dominios/clientes/nome";
 import { SemEmpresaGestao, useClienteGestao } from "@/dominios/organizacao/componentes/EmpresaEmGestao";
@@ -199,13 +200,18 @@ export function TelaBoleto() {
         }
       />
       {aviso}
-      <p className="flex items-start gap-2 rounded-xl border border-[var(--borda)] bg-[var(--fundo)] p-3 text-sm">
+      <div className="flex flex-wrap items-start gap-2 rounded-xl border border-[var(--borda)] bg-[var(--fundo)] p-3 text-sm">
         <Icone nome="info" className="mt-0.5 h-5 w-5 shrink-0 text-[var(--marca)]" />
-        <span>
+        <span className="min-w-0 flex-1 basis-64">
           Antes de ligar um banco, a conta da MDC nesse banco precisa estar cadastrada no Ledgra Link (com as credenciais de cobrança do
-          banco). O código da conta aparece no painel do Ledgra Link. Cada contrato escolhe o banco do boleto no próprio cadastro.
+          banco). O código da conta fica em Contratos › Ledgra Link (contas), no botão &quot;Copiar código&quot;. Cada contrato escolhe o banco
+          do boleto no próprio cadastro.
         </span>
-      </p>
+        <Link href="/contratos/ledgra-link" className="btn ml-auto shrink-0 self-center">
+          <Icone nome="escudo" className="h-4 w-4" />
+          Cadastrar contas no Ledgra Link
+        </Link>
+      </div>
       {consulta.erro && <p className="rounded-md bg-red-50 p-3 text-sm text-red-800">{consulta.erro}</p>}
       {!d ? (
         !consulta.erro && <Esqueleto linhas={6} />
