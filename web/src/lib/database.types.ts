@@ -7513,6 +7513,8 @@ export type Database = {
         Args: { p: Json; p_emissao: string };
         Returns: Json;
       };
+      nfse_relay_confere: { Args: { p_token: string }; Returns: boolean };
+      nfse_relay_token: { Args: never; Returns: string };
       nfse_reservar: {
         Args: { p_fatura: string; p_por?: string };
         Returns: Json;

@@ -151,6 +151,11 @@ npx supabase functions deploy convite --project-ref bulqqdgfrrpqquqvjjfa --impor
   a 063 corrige o DELETE da carga, que o Supabase exige com WHERE); 5 funções conferidas por md5; Função `fiscal-tabelas`
   v1 publicada (pacote único, `verify_jwt = false`, token interno do Vault) e agendada toda segunda 07h10; 1ª carga feita
   pelo portal gov.br: versão 1.02.00, 997 pares em 208 itens; avisos de segurança sem novidade; tipos regenerados.
+- **10/11/2026:** 066 aplicada (código interno do retransmissor da NFS-e no Vault, gerado pelo banco). A emissão dava
+  "Connection reset by peer": a Sefin Nacional (IIS) pede o certificado da empresa por renegociação TLS 1.2 e o Deno
+  (rustls) não renegocia. Agora as Funções `nfse-emitir` e `nfse-automatica` assinam a DPS e entregam pelo retransmissor
+  do site (`/hub-mdc/api/nfse-relay`, Node na Vercel), que confere o código, só fala com a Sefin e não guarda nada.
+  Ordem desta vez: migração → site (o retransmissor) → Funções.
 - **10/11/2026:** 065 aplicada (notas fiscais de saída: `nfse_notas`, gatilho na fatura, `app.nfse_dados` com os ajustes,
   `nfse_nota_salvar`, `nfse_saidas`); 1 nota criada para a fatura com NFS-e que já existia; avisos de segurança sem
   novidade (as duas funções novas aparecem no padrão "security definer para authenticated", com checagem interna);
