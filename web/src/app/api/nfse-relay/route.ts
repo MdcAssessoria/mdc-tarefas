@@ -8,20 +8,20 @@
 import { request } from "node:https";
 import { createPrivateKey, createPublicKey, X509Certificate } from "node:crypto";
 import { enderecoSefin } from "@/lib/fiscal/enderecoSefin";
+import { SUPABASE_KEY, SUPABASE_URL } from "@/lib/supabase";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const PROJETO_URL = "https://bulqqdgfrrpqquqvjjfa.supabase.co";
 const SEM_CACHE = { "cache-control": "no-store" };
 
 const responder = (status: number, corpo: unknown) => Response.json(corpo, { status, headers: SEM_CACHE });
 
 async function codigoConfere(token: string): Promise<boolean> {
   if (!/^[0-9a-f]{64}$/.test(token)) return false;
-  const url = process.env.NEXT_PUBLIC_MDC_SUPABASE_URL || PROJETO_URL;
-  const chave = process.env.NEXT_PUBLIC_MDC_SUPABASE_KEY;
-  if (!chave) return false;
+  // mesmo projeto e chave pública do resto do site (a Vercel não tem NEXT_PUBLIC_MDC_SUPABASE_KEY: 10/11/2026)
+  const url = SUPABASE_URL;
+  const chave = SUPABASE_KEY;
   const r = await fetch(`${url}/rest/v1/rpc/nfse_relay_confere`, {
     method: "POST",
     headers: { apikey: chave, Authorization: `Bearer ${chave}`, "Content-Type": "application/json" },
