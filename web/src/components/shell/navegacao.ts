@@ -174,10 +174,13 @@ export const NAV: Record<Modulo, { titulo: string; links: LinkModulo[]; grupos?:
   // ficam fora (o Estoque está desligado). A emissão da NFS-e é em Contratos › Faturas e notas fiscais.
   entradas: {
     titulo: "Notas fiscais",
+    // Saída (065, 10/11/2026): as NFS-e que a MDC emite, uma por fatura com nota; Entrada: as recebidas contra o CNPJ
+    grupos: ["Saída", "Entrada"],
     links: [
-      { href: "/entradas", nome: "Notas recebidas", icone: "importar" },
-      { href: "/entradas/lancar", nome: "Lançar no Financeiro", minimo: "operar", icone: "seta-saida" },
-      { href: "/entradas/carga-tributaria", nome: "Carga tributária", icone: "grafico" },
+      { href: "/entradas/saida", nome: "Notas de saída", icone: "enviar", grupo: "Saída" },
+      { href: "/entradas", nome: "Notas recebidas", icone: "importar", grupo: "Entrada" },
+      { href: "/entradas/lancar", nome: "Lançar no Financeiro", minimo: "operar", icone: "seta-saida", grupo: "Entrada" },
+      { href: "/entradas/carga-tributaria", nome: "Carga tributária", icone: "grafico", grupo: "Entrada" },
       { href: "/entradas/certificado", nome: "Certificado digital", icone: "escudo" },
     ],
   },

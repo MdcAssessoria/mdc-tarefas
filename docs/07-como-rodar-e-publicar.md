@@ -151,6 +151,11 @@ npx supabase functions deploy convite --project-ref bulqqdgfrrpqquqvjjfa --impor
   a 063 corrige o DELETE da carga, que o Supabase exige com WHERE); 5 funções conferidas por md5; Função `fiscal-tabelas`
   v1 publicada (pacote único, `verify_jwt = false`, token interno do Vault) e agendada toda segunda 07h10; 1ª carga feita
   pelo portal gov.br: versão 1.02.00, 997 pares em 208 itens; avisos de segurança sem novidade; tipos regenerados.
+- **10/11/2026:** 065 aplicada (notas fiscais de saída: `nfse_notas`, gatilho na fatura, `app.nfse_dados` com os ajustes,
+  `nfse_nota_salvar`, `nfse_saidas`); 1 nota criada para a fatura com NFS-e que já existia; avisos de segurança sem
+  novidade (as duas funções novas aparecem no padrão "security definer para authenticated", com checagem interna);
+  tipos regenerados. Função `nfse-emitir` v5 publicada: a falha de conexão com o Emissor agora mostra o motivo técnico
+  na tela e no log (antes só "sem resposta certa").
 - **Ajustes finais (052, branch `ajustes-finais`).** Ordem: testes (`bash supabase/testes/rodar.sh`, blocos 111 a 114)
   → aplicar a 052 → regenerar `database.types.ts` (os tipos da 052 foram escritos à mão) e rodar os Advisors → publicar
   as funções → push do site.

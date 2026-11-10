@@ -155,3 +155,6 @@ $P -v ON_ERROR_STOP=1 -f "$R/migrations/063_nbs_carga.sql" 2>&1 | grep -v NOTICE
 # 064: cadastro no Ledgra Link pelo HUB (Contratos › gerir)
 $P -v ON_ERROR_STOP=1 -f "$R/migrations/064_ledgra_link_cadastros.sql" 2>&1 | grep -v NOTICE || true
 $P -f "$R/testes/133_ledgra_cadastros_064.sql" 2>&1 | grep -v "^SET$"
+# 065: notas fiscais de saída (uma por fatura com NFS-e, ajustes antes de emitir, lista)
+$P -v ON_ERROR_STOP=1 -f "$R/migrations/065_notas_saida.sql" 2>&1 | grep -v NOTICE || true
+$P -f "$R/testes/134_notas_saida_065.sql" 2>&1 | grep -v "^SET$"

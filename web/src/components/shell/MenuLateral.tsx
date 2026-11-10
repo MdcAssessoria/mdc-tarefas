@@ -33,9 +33,10 @@ function Iniciais({ nome, className = "" }: { nome: string; className?: string }
   );
 }
 
-/** Módulos da Gestão que abrem as telas deles embaixo, no próprio menu (Financeiro 05/11, Contratos 10/11/2026). O PN
+/** Módulos da Gestão que abrem as telas deles embaixo, no próprio menu (Financeiro 05/11, Contratos e Notas fiscais
+ *  10/11/2026). O PN
  *  também abre. */
-const COM_SUBMENU = ["financeiro", "contratos"];
+const COM_SUBMENU = ["financeiro", "contratos", "entradas"];
 
 /** Cadastros de apoio da Gestão: ficam no fim do grupo, depois de Fornecedores e clientes (060). */
 const CADASTROS_DE_APOIO = ["centros_custo", "plano_contas"];

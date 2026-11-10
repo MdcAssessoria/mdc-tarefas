@@ -38,19 +38,47 @@ import { interacoesPortal } from "./telas/interacoes-portal.mjs";
 const LEDGRA_LINK_CADASTROS = {
   titulares: [
     {
-      id: "11111111-1111-4111-8111-111111111111", documento: "48140121000165", razao_social: "MDC ASSESSORIA LTDA",
-      autoriza_cobranca: true, autoriza_extrato: true,
-      contas: [{ id: "7d1b6f2e-2222-4a3c-9d1e-0000000000bb", codigo_compe: "033", banco: "Santander", agencia: "1234",
-        conta: "130001234", conta_dv: "5", apelido: "Santander MDC", ambiente: "producao", status: "ativa",
-        produtos_ativos: ["cobranca", "pix"] }],
+      id: "11111111-1111-4111-8111-111111111111",
+      documento: "48140121000165",
+      razao_social: "MDC ASSESSORIA LTDA",
+      autoriza_cobranca: true,
+      autoriza_extrato: true,
+      contas: [
+        {
+          id: "7d1b6f2e-2222-4a3c-9d1e-0000000000bb",
+          codigo_compe: "033",
+          banco: "Santander",
+          agencia: "1234",
+          conta: "130001234",
+          conta_dv: "5",
+          apelido: "Santander MDC",
+          ambiente: "producao",
+          status: "ativa",
+          produtos_ativos: ["cobranca", "pix"],
+        },
+      ],
     },
     {
-      id: "22222222-2222-4222-8222-222222222222", documento: "45723174000110", razao_social: "GRUPO GREENCORE LTDA",
-      autoriza_cobranca: true, autoriza_extrato: false, contas: [],
+      id: "22222222-2222-4222-8222-222222222222",
+      documento: "45723174000110",
+      razao_social: "GRUPO GREENCORE LTDA",
+      autoriza_cobranca: true,
+      autoriza_extrato: false,
+      contas: [],
     },
   ],
-  certificados: [{ id: "c1", titular_id: "11111111-1111-4111-8111-111111111111", tipo: "icp_a1_ecnpj", apelido: "e-CNPJ MDC 2026",
-    valido_ate: "2027-05-10T00:00:00Z", dias_para_vencer: 182, situacao: "ok", status: "ativo" }],
+  certificados: [
+    {
+      id: "c1",
+      titular_id: "11111111-1111-4111-8111-111111111111",
+      tipo: "icp_a1_ecnpj",
+      apelido: "e-CNPJ MDC 2026",
+      valido_ate: "2027-05-10T00:00:00Z",
+      dias_para_vencer: 182,
+      situacao: "ok",
+      status: "ativo",
+    },
+  ],
 };
 
 const WEB = fileURLToPath(new URL("..", import.meta.url));
@@ -435,16 +463,24 @@ async function medirNovoContrato(pagina, foto, nome) {
   const nova = pagina.getByRole("dialog", { name: "Novo cliente" });
   await nova.getByRole("button", { name: "Buscar dados" }).waitFor({ timeout: 3000 });
   await foto(`janela-${nome}-novo-cliente`, { soTela: true });
-  await nova.getByRole("button", { name: "Voltar" }).click({ timeout: 4000 }).catch((e) => {
-    throw new Error(`Novo cliente: Voltar não respondeu (${e.message.split("\n")[0]})`);
-  });
+  await nova
+    .getByRole("button", { name: "Voltar" })
+    .click({ timeout: 4000 })
+    .catch((e) => {
+      throw new Error(`Novo cliente: Voltar não respondeu (${e.message.split("\n")[0]})`);
+    });
   await nova.waitFor({ state: "detached", timeout: 3000 });
   await campoCliente.click({ timeout: 4000 }).catch((e) => {
     throw new Error(`campo Cliente não respondeu ao voltar (${e.message.split("\n")[0]})`);
   });
-  await lista.getByRole("option").first().getByRole("button").click({ timeout: 4000 }).catch((e) => {
-    throw new Error(`escolher da lista não respondeu (${e.message.split("\n")[0]})`);
-  });
+  await lista
+    .getByRole("option")
+    .first()
+    .getByRole("button")
+    .click({ timeout: 4000 })
+    .catch((e) => {
+      throw new Error(`escolher da lista não respondeu (${e.message.split("\n")[0]})`);
+    });
   await janela.getByRole("button", { name: "Trocar" }).waitFor({ timeout: 3000 });
   await pagina.keyboard.press("Escape");
   await janela.waitFor({ state: "detached", timeout: 3000 });
@@ -722,7 +758,7 @@ const INTERACOES = {
       const linha = p.getByRole("row").filter({ hasText: nota });
       if (pelo === "menu") {
         await linha.getByLabel("Mais ações").click();
-        await linha.locator("details").getByRole("button", { name: "Ver a nota", exact: true }).click();
+        await p.locator(".menu-acoes").getByRole("button", { name: "Ver a nota", exact: true }).click();
       } else await linha.getByRole("button", { name: "Ver a nota", exact: true }).click();
       const janela = p.getByRole("dialog", { name: new RegExp(`^${nota}`) });
       await janela.waitFor({ timeout: 3000 });
@@ -745,7 +781,7 @@ const INTERACOES = {
     // "Ver caminho" da NF-e 1188: sobe até o pedido de compra que cita a nota; "Ver a nota" abre o espelho e volta
     const linha = p.getByRole("row").filter({ hasText: "NF-e 1188" });
     await linha.getByRole("button", { name: "Mais ações" }).or(linha.locator("summary")).first().click();
-    const arvore = await abrirCaminho(p, linha, "NF-e nº 1188", ["Pedido de compra", "Você abriu daqui"], foto, "nota");
+    const arvore = await abrirCaminho(p, p.locator(".menu-acoes"), "NF-e nº 1188", ["Pedido de compra", "Você abriu daqui"], foto, "nota");
     await arvore
       .getByRole("button", { name: /^Ver a nota/ })
       .first()
@@ -774,17 +810,30 @@ const INTERACOES = {
   },
   // Contratos (041): novo contrato com "+ Nova categoria", reajuste pendente (índice → novo valor) e a ficha com as abas
   "/contratos": async (p, foto) => {
-    // "Mais ações" da última linha (09/11/2026): o menu abre solto na tela, inteiro à vista, sem ser cortado pelo quadro
+    // "Mais ações" da 1ª linha (09-10/11/2026): o menu abre solto na tela, inteiro à vista, sem ser cortado nem coberto
     {
-      const ultima = p.locator('summary[aria-label="Mais ações"]').last();
+      const ultima = p.locator('summary[aria-label="Mais ações"]').first();
       await ultima.click();
-      const painel = ultima.locator("xpath=following-sibling::div[1]");
+      const painel = p.locator(".menu-acoes").last();
       const item = painel.getByRole("button").last();
       await item.waitFor({ timeout: 3000 });
       const caixa = await item.boundingBox();
       const vp = p.viewportSize();
       if (!caixa || caixa.y < 0 || caixa.y + caixa.height > vp.height)
         throw new Error("o menu Mais ações da última linha ficou cortado ou fora da tela");
+      // nada por cima do menu (a coluna de ações fixa das outras linhas cobria o menu, 10/11/2026)
+      const porCima = await p.evaluate(
+        ([x, y]) => !document.elementFromPoint(x, y)?.closest(".menu-acoes"),
+        [caixa.x + caixa.width / 2, caixa.y + caixa.height / 2],
+      );
+      if (porCima) throw new Error("algo da tabela ficou por cima do menu Mais ações");
+      // e o primeiro item (perto das linhas de baixo) também à vista
+      const primeiro = await painel.getByRole("button").first().boundingBox();
+      const cobreTopo = await p.evaluate(
+        ([x, y]) => !document.elementFromPoint(x, y)?.closest(".menu-acoes"),
+        [primeiro.x + primeiro.width / 2, primeiro.y + primeiro.height / 2],
+      );
+      if (cobreTopo) throw new Error("a linha de baixo cobre o primeiro item do menu Mais ações");
       await foto("menu-acoes");
       await p.keyboard.press("Escape");
       await item.waitFor({ state: "hidden", timeout: 3000 });
@@ -835,7 +884,8 @@ const INTERACOES = {
     await rec.getByText("17.19.01").waitFor({ timeout: 3000 });
     // 059: licença de um sistema — o "Sistema vendido" lista os ativos (Ledgra e EXato; o inativo não)
     await rec.getByLabel("Sistema vendido").selectOption({ label: "EXato" });
-    if ((await rec.getByLabel("Sistema vendido").locator("option").count()) !== 3) throw new Error("Sistema vendido deveria ter Nenhum + 2 ativos");
+    if ((await rec.getByLabel("Sistema vendido").locator("option").count()) !== 3)
+      throw new Error("Sistema vendido deveria ter Nenhum + 2 ativos");
     await rec.getByRole("checkbox", { name: /E-mail/ }).check();
     await rec.getByRole("checkbox", { name: /Portal do Cliente/ }).check();
     await rec.getByText("Envio por e-mail e WhatsApp: aguardando configuração").waitFor({ timeout: 3000 });
@@ -930,21 +980,10 @@ const INTERACOES = {
     // NFS-e (046): aviso do ambiente de teste, situação da nota com o motivo da recusa, conferência e "Ver a nota"
     await p.getByText("Notas fiscais no ambiente de teste (sem valor fiscal).").waitFor({ timeout: 3000 });
     await p.getByText("Nota de teste recusada").first().waitFor({ timeout: 3000 });
-    await p
-      .getByRole("button", { name: /^Emitir nota fiscal da fatura / })
-      .first()
-      .click();
-    const emitir = p.getByRole("dialog", { name: /^Emitir nota fiscal · Fatura / });
-    await emitir.waitFor({ timeout: 3000 });
-    await emitir.getByText("Ambiente de teste (sem valor fiscal)", { exact: true }).waitFor({ timeout: 3000 });
-    for (const t of ["Cliente (tomador)", "17.19.01", "NBS 1.1302.10.00", "Recolhido no DAS", "Tentativas anteriores", "Ver detalhes"])
-      await emitir.getByText(t, { exact: false }).first().waitFor({ timeout: 3000 });
-    await emitir.getByRole("button", { name: "Emitir nota de teste" }).waitFor({ timeout: 3000 });
-    const largaEmitir = await p.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
-    if (largaEmitir) throw new Error('a janela "Emitir nota fiscal" fez a página rolar na horizontal');
-    await foto("emitir-nfse");
-    await p.keyboard.press("Escape");
-    await emitir.waitFor({ state: "detached", timeout: 3000 });
+    // 065: "Emitir nota" leva à nota de saída (Notas fiscais › Saída), onde ajusta e emite
+    const linkEmitir = p.getByRole("link", { name: /^Emitir nota fiscal da fatura / }).first();
+    if (!/\/entradas\/saida\?fatura=/.test((await linkEmitir.getAttribute("href")) ?? ""))
+      throw new Error('"Emitir nota" deveria levar a Notas fiscais › Saída');
     await p.route(/\/storage\/v1\/object\/(authenticated\/)?fiscal\//, (r) => {
       if (r.request().method() === "OPTIONS") return r.fulfill({ status: 204, headers: CORS });
       const caminho = decodeURIComponent(new URL(r.request().url()).pathname);
@@ -962,6 +1001,28 @@ const INTERACOES = {
     await p.keyboard.press("Escape");
     await espelho.waitFor({ state: "detached", timeout: 3000 });
   },
+  // Notas fiscais › Saída (065): lista das notas, abrir a nota, ajustar (aparece "Salvar ajustes") e emitir
+  "/entradas/saida": async (p, foto) => {
+    await p.getByRole("heading", { name: "Notas fiscais de saída" }).waitFor({ timeout: 3000 });
+    await p
+      .getByRole("button", { name: /^Abrir e emitir a nota da fatura / })
+      .first()
+      .click();
+    const emitir = p.getByRole("dialog", { name: /^Nota fiscal de saída · Fatura / });
+    await emitir.waitFor({ timeout: 3000 });
+    await emitir.getByText("Ambiente de teste (sem valor fiscal)", { exact: true }).waitFor({ timeout: 3000 });
+    for (const t of ["Ajustes desta nota", "Cliente (tomador)", "17.19.01", "Recolhido no DAS", "Tentativas anteriores"])
+      await emitir.getByText(t, { exact: false }).first().waitFor({ timeout: 3000 });
+    await emitir.getByLabel("Texto da nota (discriminação do serviço)").fill("Honorários contábeis de novembro");
+    await emitir.getByRole("button", { name: "Salvar ajustes" }).waitFor({ timeout: 3000 });
+    await emitir.getByRole("button", { name: "Voltar ao texto do contrato" }).waitFor({ timeout: 3000 });
+    await emitir.getByRole("button", { name: "Emitir nota de teste" }).waitFor({ timeout: 3000 });
+    const larga = await p.evaluate(() => document.documentElement.scrollWidth > window.innerWidth + 1);
+    if (larga) throw new Error('a janela "Nota fiscal de saída" fez a página rolar na horizontal');
+    await foto("nota-saida");
+    await p.keyboard.press("Escape");
+    await emitir.waitFor({ state: "detached", timeout: 3000 });
+  },
   // Nota fiscal (NFS-e) (046): parâmetros da emissão; ir para a produção pede confirmação
   "/contratos/nota-fiscal": async (p, foto) => {
     await p.getByRole("radiogroup", { name: "Ambiente da emissão" }).waitFor({ timeout: 3000 });
@@ -974,7 +1035,8 @@ const INTERACOES = {
     await p.getByLabel("Receita bruta dos 12 meses (RBT12)").fill("300.000,00");
     await p.getByText("sem o ISS").waitFor({ timeout: 3000 });
     await p.getByRole("button", { name: "Usar 5,49%" }).click();
-    if ((await p.getByLabel("Tributos aproximados do Simples (%)").inputValue()) !== "5,49") throw new Error("Usar o percentual não preencheu o campo");
+    if ((await p.getByLabel("Tributos aproximados do Simples (%)").inputValue()) !== "5,49")
+      throw new Error("Usar o percentual não preencheu o campo");
     await foto("nota-fiscal-nbs-simples");
     await p.getByRole("radio", { name: /^Produção \(nota com valor fiscal\)/ }).check();
     await p.getByText("Confirmo que as notas de teste deram certo").waitFor({ timeout: 3000 });
@@ -1023,13 +1085,23 @@ const INTERACOES = {
   },
   // Envio (053): e-mail ligado, WhatsApp com os segredos faltando, a fila de cada canal e o envio que falhou
   "/contratos/envio": async (p, foto) => {
-    for (const t of ["E-mail (Microsoft 365)", "WhatsApp (API oficial da Meta)", "Sai por:", "Faltam os segredos", "Envios que falharam", "Parou: reenviar"])
+    for (const t of [
+      "E-mail (Microsoft 365)",
+      "WhatsApp (API oficial da Meta)",
+      "Sai por:",
+      "Faltam os segredos",
+      "Envios que falharam",
+      "Parou: reenviar",
+    ])
       await p.getByText(t, { exact: false }).first().waitFor({ timeout: 3000 });
     await p.getByRole("button", { name: "Enviar teste" }).first().waitFor({ timeout: 3000 });
     await foto("envio-canais");
   },
   "/contratos/sistemas": async (p, foto) => {
-    await p.getByRole("cell", { name: /Ledgra/ }).first().waitFor({ timeout: 3000 });
+    await p
+      .getByRole("cell", { name: /Ledgra/ })
+      .first()
+      .waitFor({ timeout: 3000 });
     await p.getByText("Previsto nos próximos 12 meses").waitFor({ timeout: 3000 });
     await p.getByRole("button", { name: "Novo sistema", exact: true }).click();
     const j = p.getByRole("dialog", { name: "Novo sistema" });
@@ -1122,7 +1194,8 @@ const INTERACOES = {
       // Organização e painel: o cartão do papel timbrado (052) carrega os dados do escritório
       if (/Organização/.test(await aba.innerText())) {
         await p.getByRole("heading", { name: "Papel timbrado dos documentos" }).waitFor({ timeout: 5000 });
-        if ((await p.getByLabel("CRC do responsável").inputValue()) !== "1SP346098-O/0") throw new Error("o papel timbrado não carregou o CRC");
+        if ((await p.getByLabel("CRC do responsável").inputValue()) !== "1SP346098-O/0")
+          throw new Error("o papel timbrado não carregou o CRC");
         await foto("organizacao");
       }
     }

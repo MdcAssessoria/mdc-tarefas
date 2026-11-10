@@ -37,6 +37,19 @@ export type ResultadoEmissao =
 
 const SEM_CONEXAO = "O Emissor Nacional não respondeu (sem conexão ou demora). O HUB confere no Emissor antes de tentar de novo.";
 
+/** Motivo técnico da falha de conexão (10/11/2026): vai no log da Função e, curto, no fim da mensagem, para o
+ *  suporte saber se foi certificado do servidor, recusa do certificado da empresa, tempo esgotado ou rede. */
+export function motivoConexao(e: unknown): string {
+  const m = String((e as Error)?.message ?? e ?? "").replace(/\s+/g, " ").trim();
+  console.error("nfse: falha de conexão com o Emissor Nacional:", m.slice(0, 500));
+  if (/UnknownIssuer|unknown issuer|certificate verify|self.signed|invalid peer certificate/i.test(m))
+    return "o servidor do Emissor usa um certificado que a Função não reconhece";
+  if (/bad ?certificate|certificate required|handshake|alert/i.test(m)) return "o Emissor recusou o certificado digital da empresa na conexão";
+  if (/timed? ?out|TimeoutError|aborted/i.test(m)) return "o Emissor demorou mais de 60 segundos";
+  if (/dns|lookup|resolve/i.test(m)) return "não achou o endereço do Emissor (rede)";
+  return m.slice(0, 160) || "erro de rede";
+}
+
 /** DPS completa e assinada (o <Signature> vai logo depois do infDPS, dentro do <DPS>). */
 export function dpsAssinada(d: DadosDps, a: Assinante): string {
   const id = idDps(d.cLocEmi, d.prestador.cnpj, d.serie, d.nDps);
@@ -69,10 +82,10 @@ export async function emitirNfse(d: DadosDps, o: { reenvio: boolean; transporte:
     try {
       const r = await t.obterJson(urlConsultarDps(d.ambiente, id));
       c = lerConsultaDps(r.status, r.corpo);
-    } catch {
+    } catch (e) {
       return {
         situacao: "erro",
-        mensagem: "Não deu para conferir no Emissor Nacional se a nota da tentativa anterior saiu (sem conexão). Tente de novo em alguns minutos.",
+        mensagem: `Não deu para conferir no Emissor Nacional se a nota da tentativa anterior saiu (sem conexão: ${motivoConexao(e)}). Tente de novo em alguns minutos.`,
         dpsAssinada: null,
       };
     }
@@ -84,8 +97,8 @@ export async function emitirNfse(d: DadosDps, o: { reenvio: boolean; transporte:
   let r: { status: number; corpo: unknown };
   try {
     r = await t.postarJson(urlEmitir(d.ambiente), await corpoEnvioDps(xml));
-  } catch {
-    return { situacao: "erro", mensagem: SEM_CONEXAO, dpsAssinada: xml };
+  } catch (e) {
+    return { situacao: "erro", mensagem: `${SEM_CONEXAO} Motivo técnico: ${motivoConexao(e)}.`, dpsAssinada: xml };
   }
   const ret = lerRetornoEmissao(r.status, r.corpo);
   if (ret.tipo === "rejeitada") return { situacao: "rejeitada", mensagem: ret.mensagem, mensagens: ret.mensagens, dpsAssinada: xml };

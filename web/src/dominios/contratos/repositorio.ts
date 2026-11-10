@@ -15,6 +15,7 @@ import type {
   IndiceRecorrente,
   ModoNfse,
   ParametrosNfse,
+  NotaSaida,
   PreparoNfse,
   PropostaReajuste,
   ResultadoEmissaoNfse,
@@ -155,6 +156,18 @@ export async function prepararNfse(fatura: string) {
  * assina com o certificado A1 da MDC e envia ao Emissor Nacional). Recusa e falta de resposta voltam como resultado
  * (situacao), não como erro; erro é só o que impediu de tentar (permissão, pendência, envio em andamento).
  */
+/** Notas fiscais de saída (065): uma por fatura com NFS-e, por competência (de/até em AAAA-MM-DD). */
+export async function lerNotasSaida(cliente: string, de: string | null, ate: string | null) {
+  return exigir(
+    await supabase().rpc("nfse_saidas", { p_cliente: cliente, p_de: de ?? undefined, p_ate: ate ?? undefined }),
+  ) as unknown as NotaSaida[];
+}
+
+/** Ajusta a nota de saída antes de emitir (065). Campo vazio = volta ao padrão do contrato e das regras. */
+export async function salvarNotaSaida(p: { id: string; servico_codigo: string; nbs: string; descricao: string; p_tot_trib_sn: string }) {
+  return exigir(await supabase().rpc("nfse_nota_salvar", { p }));
+}
+
 export async function emitirNfse(fatura: string) {
   return chamarFuncao<ResultadoEmissaoNfse>("nfse-emitir", { corpo: { fatura } });
 }
@@ -200,7 +213,9 @@ export async function salvarRegraServico(r: DadosRegraServico) {
 }
 
 export async function salvarParametrosNfse(p: DadosParametrosNfse) {
-  return exigir(await supabase().rpc("nfse_parametros_salvar", { p: { ...p, op_simples: "3" } as unknown as Json })) as unknown as ParametrosNfse & {
+  return exigir(
+    await supabase().rpc("nfse_parametros_salvar", { p: { ...p, op_simples: "3" } as unknown as Json }),
+  ) as unknown as ParametrosNfse & {
     proximo_ndps: number | null;
   };
 }
@@ -238,7 +253,9 @@ export async function lerSituacaoEnvio(org: string) {
 
 /** Volta o envio para a fila agora (Contratos: operar; motivo com 5 letras; fica no histórico do contrato). */
 export async function reenviarEnvio(envio: number, motivo: string) {
-  return exigir(await supabase().rpc("fin_envio_reenviar", { p_envio: envio, p_motivo: motivo })) as unknown as { situacao: EnvioDaFatura["situacao"] };
+  return exigir(await supabase().rpc("fin_envio_reenviar", { p_envio: envio, p_motivo: motivo })) as unknown as {
+    situacao: EnvioDaFatura["situacao"];
+  };
 }
 
 /** Pede para a fatura-enviar conferir os segredos e a conexão de cada canal agora. */
@@ -250,7 +267,9 @@ export async function conferirEnvio(org: string) {
 
 /** Manda uma mensagem de teste (Contratos: gerir; até 5 por hora). */
 export async function testarEnvio(org: string, canal: CanalAutomatico, destino: string) {
-  return chamarFuncao<{ ok: boolean; mensagem?: string; erro?: string }>("fatura-enviar", { corpo: { acao: "teste", org, canal, destino } });
+  return chamarFuncao<{ ok: boolean; mensagem?: string; erro?: string }>("fatura-enviar", {
+    corpo: { acao: "teste", org, canal, destino },
+  });
 }
 
 /** Cria ou edita um sistema vendido (059; Contratos: gerir). Inativar = ativo false (nada se apaga). */

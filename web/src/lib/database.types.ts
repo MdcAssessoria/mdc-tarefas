@@ -5338,6 +5338,70 @@ export type Database = {
           },
         ];
       };
+      nfse_notas: {
+        Row: {
+          atualizado_em: string | null;
+          atualizado_por: string | null;
+          cliente_id: string;
+          criado_em: string;
+          descricao: string | null;
+          fatura_id: string;
+          id: string;
+          nbs: string | null;
+          org_id: string;
+          p_tot_trib_sn: number | null;
+          servico_codigo: string | null;
+        };
+        Insert: {
+          atualizado_em?: string | null;
+          atualizado_por?: string | null;
+          cliente_id: string;
+          criado_em?: string;
+          descricao?: string | null;
+          fatura_id: string;
+          id?: string;
+          nbs?: string | null;
+          org_id: string;
+          p_tot_trib_sn?: number | null;
+          servico_codigo?: string | null;
+        };
+        Update: {
+          atualizado_em?: string | null;
+          atualizado_por?: string | null;
+          cliente_id?: string;
+          criado_em?: string;
+          descricao?: string | null;
+          fatura_id?: string;
+          id?: string;
+          nbs?: string | null;
+          org_id?: string;
+          p_tot_trib_sn?: number | null;
+          servico_codigo?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "nfse_notas_cliente_id_fkey";
+            columns: ["cliente_id"];
+            isOneToOne: false;
+            referencedRelation: "clientes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "nfse_notas_fatura_id_fkey";
+            columns: ["fatura_id"];
+            isOneToOne: true;
+            referencedRelation: "fin_faturas";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "nfse_notas_org_id_fkey";
+            columns: ["org_id"];
+            isOneToOne: false;
+            referencedRelation: "organizacoes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       nfse_numeracao: {
         Row: {
           ambiente: string;
@@ -7442,6 +7506,7 @@ export type Database = {
         Args: { p_fatura: string; p_mensagem?: string; p_resultado: string };
         Returns: string;
       };
+      nfse_nota_salvar: { Args: { p: Json }; Returns: Json };
       nfse_parametros_salvar: { Args: { p: Json }; Returns: Json };
       nfse_preparar: { Args: { p_fatura: string }; Returns: Json };
       nfse_registrar_resultado: {
@@ -7450,6 +7515,10 @@ export type Database = {
       };
       nfse_reservar: {
         Args: { p_fatura: string; p_por?: string };
+        Returns: Json;
+      };
+      nfse_saidas: {
+        Args: { p_ate?: string; p_cliente: string; p_de?: string };
         Returns: Json;
       };
       nfse_token_confere: { Args: { p_token: string }; Returns: boolean };

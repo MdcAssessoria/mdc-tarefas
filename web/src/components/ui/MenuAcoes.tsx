@@ -2,10 +2,12 @@
 // cortava o menu aberto nas últimas linhas (09/11/2026). Aqui o menu abre "solto" na tela (position: fixed), alinhado
 // ao botão: para baixo quando cabe, para cima quando não cabe, e com rolagem própria se for maior que a tela. Acompanha o
 // botão ao rolar a página e fecha ao clicar fora, com Esc ou ao escolher uma ação (os itens continuam chamando
-// `closest("details")?.removeAttribute("open")`).
+// `closest("details")?.removeAttribute("open")`). O menu é desenhado no fim da página (portal, 10/11/2026): dentro da
+// coluna de ações fixa da tabela ele ficava por baixo das linhas de baixo (camadas da coluna fixa).
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import type { CSSProperties, ReactNode } from "react";
 import { Icone } from "./Icone";
 
@@ -29,6 +31,7 @@ export function MenuAcoes({
   const ref = useRef<HTMLDetailsElement>(null);
   const painel = useRef<HTMLDivElement>(null);
   const [estilo, setEstilo] = useState<CSSProperties>({ visibility: "hidden" });
+  const [aberto, setAberto] = useState(false);
 
   const fechar = useCallback(() => ref.current?.removeAttribute("open"), []);
 
@@ -55,15 +58,21 @@ export function MenuAcoes({
     });
   }, [largura]);
 
+  // aberto: o painel entra no fim da página e só então é medido e posicionado
+  useEffect(() => {
+    if (aberto) posicionar();
+  }, [aberto, posicionar]);
+
   useEffect(() => {
     const d = ref.current;
     if (!d) return;
     function aoAlternar() {
-      if (!d!.open) return setEstilo({ visibility: "hidden" });
-      posicionar();
+      if (!d!.open) setEstilo({ visibility: "hidden" });
+      setAberto(d!.open);
     }
     function foraDele(e: Event) {
-      if (d!.open && !d!.contains(e.target as Node)) fechar();
+      const alvo = e.target as Node;
+      if (d!.open && !d!.contains(alvo) && !painel.current?.contains(alvo)) fechar();
     }
     function tecla(e: KeyboardEvent) {
       if (e.key === "Escape" && d!.open) {
@@ -98,13 +107,21 @@ export function MenuAcoes({
       >
         <Icone nome="reticencias" className="h-5 w-5" />
       </summary>
-      <div
-        ref={painel}
-        style={estilo}
-        className="menu-acoes z-50 overflow-y-auto rounded-xl border border-[var(--borda)] bg-white p-1 text-left text-sm shadow-lg"
-      >
-        {children}
-      </div>
+      {aberto &&
+        createPortal(
+          <div
+            ref={painel}
+            style={estilo}
+            // escolher uma ação fecha o menu (depois que a ação do item rodou)
+            onClick={(e) => {
+              if ((e.target as HTMLElement).closest("button, a")) setTimeout(fechar, 0);
+            }}
+            className="menu-acoes z-[60] overflow-y-auto rounded-xl border border-[var(--borda)] bg-white p-1 text-left text-sm shadow-lg"
+          >
+            {children}
+          </div>,
+          document.body,
+        )}
     </details>
   );
 }

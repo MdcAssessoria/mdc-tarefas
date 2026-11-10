@@ -2595,8 +2595,17 @@ export const XML_EXEMPLO = {
   ];
   // Nota × pedido de compra (058): um pedido aguardando entrega do mesmo fornecedor aparece para escolher ao lançar
   RPCS.fis_pedidos_da_nota = () => [
-    { id: "f5800000-0000-4000-8000-000000000001", numero: 7, situacao: "confirmado", total: 1500, documento: null, data: dia(-5),
-      cita_nota: false, mesmo_total: false, sugerido: false },
+    {
+      id: "f5800000-0000-4000-8000-000000000001",
+      numero: 7,
+      situacao: "confirmado",
+      total: 1500,
+      documento: null,
+      data: dia(-5),
+      cita_nota: false,
+      mesmo_total: false,
+      sugerido: false,
+    },
   ];
   // Regras fiscais por tipo de serviço (057): contabilidade sem retenção e assessoria que retém em Atibaia/SP
   TABELAS.fis_regras_servico = [
@@ -2731,8 +2740,62 @@ export const XML_EXEMPLO = {
       },
       iss: { aliquota_referencia: 2, valor_estimado: Math.round(f.valor * 2) / 100, retido: false },
       emissoes: TABELAS.nfse_emissoes.filter((e) => e.fatura_id === f.id),
+      // nota de saída (065): sem ajustes, com o padrão de cada campo
+      nota: {
+        id: `fa500000-0000-4000-8000-${f.id.slice(-12)}`,
+        servico_codigo: null,
+        nbs: null,
+        descricao: null,
+        p_tot_trib_sn: null,
+        atualizado_em: null,
+        padrao: {
+          servico_codigo: "171901",
+          nbs: "113021000",
+          descricao: `${f.descricao} · Fatura ${f.numero} · Vencimento ${f.vencimento.split("-").reverse().join("/")}`,
+          p_tot_trib_sn: 6,
+        },
+      },
     };
   };
+  // Notas fiscais › Saída (065): uma nota por fatura com NFS-e; situação pela fatura e pela última tentativa
+  RPCS.nfse_saidas = () =>
+    TABELAS.fin_faturas
+      .filter((f) => f.documento === "nfse")
+      .map((f) => {
+        const ult = TABELAS.nfse_emissoes.filter((e) => e.fatura_id === f.id).at(-1);
+        const situacao =
+          f.situacao === "cancelada"
+            ? "cancelada"
+            : f.nfse_situacao === "emitida"
+              ? "emitida"
+              : ult?.situacao === "rejeitada"
+                ? "recusada"
+                : "para_emitir";
+        const pessoa = TABELAS.fin_pessoas.find((x) => x.id === f.pessoa_id);
+        return {
+          id: `fa500000-0000-4000-8000-${f.id.slice(-12)}`,
+          fatura: f.id,
+          fatura_numero: f.numero,
+          competencia: f.competencia,
+          vencimento: f.vencimento,
+          emissao_fatura: f.emissao,
+          valor: f.valor,
+          descricao: f.descricao,
+          servico_codigo: "171901",
+          tomador: pessoa?.nome ?? "Cliente ABC Comércio",
+          tomador_documento: pessoa?.documento ?? "44537381000118",
+          ajustada: false,
+          situacao,
+          numero_nfse: situacao === "emitida" ? (f.nfse_numero ?? ult?.numero_nfse) : null,
+          chave_acesso: situacao === "emitida" ? ult?.chave_acesso : null,
+          xml_caminho: situacao === "emitida" ? ult?.xml_caminho : null,
+          emitida_em: situacao === "emitida" ? ult?.respondido_em : null,
+          ambiente: ult?.ambiente ?? null,
+          mensagem: ult?.situacao === "rejeitada" ? ult.mensagem : null,
+          tentativas: ult?.tentativas ?? null,
+        };
+      });
+  RPCS.nfse_nota_salvar = ({ p }) => ({ id: p.id, nbs: p.nbs || null });
   XML_EXEMPLO[caminho] = `<?xml version="1.0" encoding="UTF-8"?>
 <NFSe versao="1.01" xmlns="http://www.sped.fazenda.gov.br/nfse"><infNFSe Id="NFS${CHAVE_1287}">
 <xLocEmi>Bragança Paulista</xLocEmi><xLocPrestacao>Bragança Paulista</xLocPrestacao><nNFSe>1287</nNFSe><xLocIncid>Bragança Paulista</xLocIncid>
@@ -2797,12 +2860,57 @@ export const XML_EXEMPLO = {
     hoje: meses[11],
     meses,
     linhas: [
-      { sistema: S(1), nome: "Ledgra", descricao: "Plataforma contábil (licenças)", ativo: true, contratos: 18, suspensos: 1, clientes: 17,
-        mensal: 8982, faturado: 8982, recebido: 7385, atraso: 499, novos: 9, encerrados: 2, previsto: 107784, por_mes: serie(4200, 430) },
-      { sistema: S(2), nome: "EXato", descricao: "Gestão de diaristas", ativo: true, contratos: 3, suspensos: 0, clientes: 3,
-        mensal: 4500, faturado: 4500, recebido: 4500, atraso: 0, novos: 3, encerrados: 0, previsto: 54000, por_mes: serie(0, 410) },
-      { sistema: null, nome: "Sem sistema (honorários e outros)", descricao: null, ativo: true, contratos: 2, suspensos: 0, clientes: 2,
-        mensal: 3250, faturado: 3250, recebido: 1850, atraso: 1400, novos: 0, encerrados: 1, previsto: 39000, por_mes: serie(3250, 0) },
+      {
+        sistema: S(1),
+        nome: "Ledgra",
+        descricao: "Plataforma contábil (licenças)",
+        ativo: true,
+        contratos: 18,
+        suspensos: 1,
+        clientes: 17,
+        mensal: 8982,
+        faturado: 8982,
+        recebido: 7385,
+        atraso: 499,
+        novos: 9,
+        encerrados: 2,
+        previsto: 107784,
+        por_mes: serie(4200, 430),
+      },
+      {
+        sistema: S(2),
+        nome: "EXato",
+        descricao: "Gestão de diaristas",
+        ativo: true,
+        contratos: 3,
+        suspensos: 0,
+        clientes: 3,
+        mensal: 4500,
+        faturado: 4500,
+        recebido: 4500,
+        atraso: 0,
+        novos: 3,
+        encerrados: 0,
+        previsto: 54000,
+        por_mes: serie(0, 410),
+      },
+      {
+        sistema: null,
+        nome: "Sem sistema (honorários e outros)",
+        descricao: null,
+        ativo: true,
+        contratos: 2,
+        suspensos: 0,
+        clientes: 2,
+        mensal: 3250,
+        faturado: 3250,
+        recebido: 1850,
+        atraso: 1400,
+        novos: 0,
+        encerrados: 1,
+        previsto: 39000,
+        por_mes: serie(3250, 0),
+      },
     ],
   });
 })();
@@ -2812,9 +2920,23 @@ export const XML_EXEMPLO = {
 // contas. Entradas, Saídas, Estoque e Cobrança Ledgra estão desligados na produção; aqui continuam ligados (no fim da
 // lista) só para as fotos das telas deles continuarem sendo conferidas.
 (() => {
-  const ORDEM = { financeiro: 35, contratos: 36, entradas: 37, relatorios: 38, centros_custo: 39, plano_contas: 40, saidas: 92, estoque: 93, licencas: 94 };
+  const ORDEM = {
+    financeiro: 35,
+    contratos: 36,
+    entradas: 37,
+    relatorios: 38,
+    centros_custo: 39,
+    plano_contas: 40,
+    saidas: 92,
+    estoque: 93,
+    licencas: 94,
+  };
   const notas = APPS.find((a) => a.slug === "entradas");
-  if (notas) Object.assign(notas, { nome: "Notas fiscais", descricao: "Notas emitidas contra o CNPJ da MDC (NF-e e NFS-e) e lançamento no Financeiro" });
+  if (notas)
+    Object.assign(notas, {
+      nome: "Notas fiscais",
+      descricao: "Notas emitidas contra o CNPJ da MDC (NF-e e NFS-e) e lançamento no Financeiro",
+    });
   for (const a of APPS) if (a.slug in ORDEM) a.ordem = ORDEM[a.slug];
   APPS.sort((a, b) => a.ordem - b.ordem);
 })();
@@ -2824,7 +2946,8 @@ export const XML_EXEMPLO = {
 RPCS.fis_nbs_do_servico = ({ p_servico }) => {
   const d = String(p_servico ?? "").replace(/\D/g, "");
   const base = { versao: "1.02.00", publicada_em: "2026-10-26", conferida_em: "2026-11-02T10:10:00Z" };
-  const a3 = "Prestação de serviços, cessão de direitos, de uso ou de espaço com incidência de ISS, tributados exclusivamente pelo Anexo III";
+  const a3 =
+    "Prestação de serviços, cessão de direitos, de uso ou de espaço com incidência de ISS, tributados exclusivamente pelo Anexo III";
   if (d.startsWith("1719"))
     return {
       ...base,

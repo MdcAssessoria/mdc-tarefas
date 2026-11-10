@@ -6,13 +6,14 @@
 // Envio (053): e-mail e WhatsApp saem sozinhos pela Função fatura-enviar; cada canal mostra se foi, está na fila, falhou
 // (com o motivo) ou aguarda configuração, e "Reenviar" (com motivo) devolve o envio para a fila. Aviso no topo quando
 // algum canal ainda não foi ligado (Contratos › Envio) ou algum envio falhou.
-// NFS-e (046): "Emitir nota fiscal" abre a conferência (JanelaEmitirNfse, com o ambiente em destaque) e emite pelo
+// NFS-e (046; 065): "Emitir nota" leva à nota de saída (Notas fiscais › Saída), onde a pessoa ajusta e emite pelo
 // Emissor Nacional; a situação da nota aparece na lista com o motivo da recusa; "Ver a nota" abre o espelho DANFSe.
 // Boleto (049): "Gerar boleto" / "Ver boleto" abre JanelaBoleto (Ledgra Link, banco do contrato: Itaú ou Santander).
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { nomeCliente } from "@/dominios/clientes/nome";
 import { useConsulta } from "@/lib/useConsulta";
@@ -49,7 +50,6 @@ import { EspelhoNota } from "@/dominios/notas/componentes/EspelhoNota";
 import { JanelaReenviar } from "./JanelaReenviar";
 import { ContratoFixo } from "./ContratoFixo";
 import { DetalheFatura, JanelaGerarFatura } from "./JanelasFatura";
-import { JanelaEmitirNfse } from "./JanelaEmitirNfse";
 import { JanelaBoleto, SITUACOES_BOLETO_EMITIDO } from "./JanelaBoleto";
 import { plural } from "@/lib/formato/numero";
 
@@ -70,7 +70,6 @@ type Janela =
   | { tipo: "reenviar"; f: Fatura; e: EnvioDaFatura }
   | { tipo: "gerar" }
   | { tipo: "contrato" }
-  | { tipo: "emitir"; f: Fatura }
   | { tipo: "boleto"; f: Fatura }
   | { tipo: "nota"; caminho: string; chave: string; numero: string | null; voltar?: Fatura };
 
@@ -81,6 +80,7 @@ export function TelaFaturas() {
   const podeOperar = pode("contratos", "operar");
   const podeGerir = pode("contratos", "gerir");
   const { aviso, mostrar } = useAviso();
+  const roteador = useRouter();
   const hoje = hojeISO(org.fuso);
 
   const [periodo, setPeriodo] = useState<Periodo>("tudo");
@@ -511,15 +511,15 @@ export function TelaFaturas() {
                       <td className="celula-acoes whitespace-nowrap text-right">
                         <div className="flex flex-wrap justify-end gap-1">
                           {podeOperar && podeEmitirNota(f) && (
-                            <button
+                            <Link
                               className="btn-primario !min-h-8 !px-3"
-                              onClick={() => setJanela({ tipo: "emitir", f })}
+                              href={`/entradas/saida?fatura=${f.id}`}
                               aria-label={`Emitir nota fiscal da fatura ${f.numero}`}
-                              title="Conferir e emitir a nota fiscal pelo Emissor Nacional"
+                              title="Abre a nota em Notas fiscais › Saída: ajuste o que precisar e emita pelo Emissor Nacional"
                             >
                               <Icone nome="enviar" className="h-4 w-4" />
                               Emitir nota
-                            </button>
+                            </Link>
                           )}
                           {ver && (
                             <button
@@ -606,23 +606,11 @@ export function TelaFaturas() {
           nomeCarteira={nomeCarteira}
           podeOperar={podeOperar}
           nota={nota(janela.f)}
-          aoEmitir={podeOperar && podeEmitirNota(janela.f) ? () => setJanela({ tipo: "emitir", f: janela.f }) : undefined}
+          aoEmitir={podeOperar && podeEmitirNota(janela.f) ? () => roteador.push(`/entradas/saida?fatura=${janela.f.id}`) : undefined}
           aoBaixar={() => void baixar(janela.f)}
           aoCancelar={() => setJanela({ tipo: "cancelar", f: janela.f })}
           aoReenviar={podeOperar ? (e) => setJanela({ tipo: "reenviar", f: janela.f, e }) : undefined}
           aoFechar={() => fechar()}
-        />
-      )}
-      {janela?.tipo === "emitir" && (
-        <JanelaEmitirNfse
-          fatura={janela.f}
-          cliente={nomePessoa(janela.f.pessoa_id)}
-          podeGerir={podeGerir}
-          aoVerNota={(caminho, chave, numero) => setJanela({ tipo: "nota", caminho, chave, numero, voltar: janela.f })}
-          aoFechar={(mudou) => {
-            setJanela(null);
-            if (mudou) consulta.recarregar();
-          }}
         />
       )}
       {janela?.tipo === "boleto" && (

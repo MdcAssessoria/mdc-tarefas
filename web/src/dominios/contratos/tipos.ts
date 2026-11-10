@@ -318,19 +318,85 @@ export interface PreparoNfse {
   pode_emitir: boolean;
   ambiente: AmbienteNfse | null;
   modo: ModoNfse | null;
-  fatura: { id: string; numero: string; competencia: string; valor: number; vencimento: string; nfse_situacao: SituacaoNfse; nfse_numero: string | null };
+  fatura: {
+    id: string;
+    numero: string;
+    competencia: string;
+    valor: number;
+    vencimento: string;
+    nfse_situacao: SituacaoNfse;
+    nfse_numero: string | null;
+  };
   dps: {
     serie: string | null;
     proximo_ndps: number;
     dCompet: string;
     cLocEmi: string | null;
-    prestador: { cnpj: string | null; nome: string | null; im: string | null; opSimpNac: string | null; regApTribSN: string | null; regEspTrib: string | null };
+    prestador: {
+      cnpj: string | null;
+      nome: string | null;
+      im: string | null;
+      opSimpNac: string | null;
+      regApTribSN: string | null;
+      regEspTrib: string | null;
+    };
     tomador: { documento: string | null; nome: string | null; email: string | null };
     servico: { cLocPrestacao: string | null; cTribNac: string | null; descricao: string; cNBS: string | null };
     valores: { vServ: number; pTotTribSN: number | null };
   };
   iss: { aliquota_referencia: number | null; valor_estimado: number | null; retido: boolean };
-  emissoes: Pick<EmissaoNfse, "id" | "ambiente" | "situacao" | "ndps" | "numero_nfse" | "chave_acesso" | "mensagem" | "mensagens" | "tentativas" | "enviado_em" | "respondido_em" | "xml_caminho">[];
+  emissoes: Pick<
+    EmissaoNfse,
+    | "id"
+    | "ambiente"
+    | "situacao"
+    | "ndps"
+    | "numero_nfse"
+    | "chave_acesso"
+    | "mensagem"
+    | "mensagens"
+    | "tentativas"
+    | "enviado_em"
+    | "respondido_em"
+    | "xml_caminho"
+  >[];
+  /** Nota de saída (065): ajustes desta nota (null = segue o contrato/regras) e o padrão de cada campo. */
+  nota?: {
+    id: string | null;
+    servico_codigo: string | null;
+    nbs: string | null;
+    descricao: string | null;
+    p_tot_trib_sn: number | null;
+    atualizado_em: string | null;
+    padrao: { servico_codigo: string | null; nbs: string | null; descricao: string; p_tot_trib_sn: number | null };
+  };
+}
+
+/** Situação da nota de saída em palavras simples (065, nfse_saidas). */
+export type SituacaoNotaSaida = "para_emitir" | "enviando" | "incerta" | "recusada" | "teste" | "emitida" | "cancelada";
+
+/** Linha da lista de notas fiscais de saída (065). */
+export interface NotaSaida {
+  id: string;
+  fatura: string;
+  fatura_numero: string;
+  competencia: string;
+  vencimento: string;
+  emissao_fatura: string;
+  valor: number;
+  descricao: string;
+  servico_codigo: string | null;
+  tomador: string | null;
+  tomador_documento: string | null;
+  ajustada: boolean;
+  situacao: SituacaoNotaSaida;
+  numero_nfse: string | null;
+  chave_acesso: string | null;
+  xml_caminho: string | null;
+  emitida_em: string | null;
+  ambiente: AmbienteNfse | null;
+  mensagem: string | null;
+  tentativas: number | null;
 }
 
 /** Resposta da Função Edge nfse-emitir. */
