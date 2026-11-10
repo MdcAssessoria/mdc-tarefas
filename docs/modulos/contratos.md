@@ -228,6 +228,7 @@ mostra código e texto oficiais). O resultado aparece na janela. A lista mostra 
 | Emitida em produção → `fin_faturas.nfse_situacao = 'emitida'`, `nfse_numero`, `app.fin_fatura_processar` (libera o Portal); recusa/erro → `nfse_situacao = 'erro'` (fatura segue "aguardando nota fiscal") | `app.nfse_registrar_resultado` |
 | Não cancela a fatura com nota sendo enviada ou com resultado incerto em produção; com nota emitida já não cancelava (045) | gatilho `fatura_nfse_aberta` |
 | Simples ME/EPP: opSimpNac 3, regApTribSN obrigatório, regime especial 0 com ISS pelo Simples, ISS tributável e não retido **sem alíquota** (E0625/E0631), totTrib = pTotTribSN (E0712). Série de 1 a 49999 (E0010) | `dps.ts`, `nfse_parametros_salvar` |
+| Leiaute da **NT 009** (v1.01): `finNFSe` = 0 (NFS-e regular) entre `tpEmit` e `cLocEmi`, e `cNBS` antes de `xDescServ` no `cServ`. Vale na produção restrita desde 20/10/2026 e na produção a partir de 01/12/2026 (`INICIO_NT009_PRODUCAO`); antes disso a produção segue o leiaute antigo. Sem isso: E1235 (falha no esquema) | `dps.ts` (`leiauteNt009`) |
 | Nada se apaga; leitura com Contratos (ver); gravação só pelas funções; empresa da gestão | 046 |
 
 **Banco.** `nfse_parametros`, `nfse_numeracao`, `nfse_emissoes`; funções `nfse_preparar` (ver), `nfse_parametros_salvar`

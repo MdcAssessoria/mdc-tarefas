@@ -96,6 +96,7 @@ describe("XML da DPS (leiaute 1.01)", () => {
       "nDPS",
       "dCompet",
       "tpEmit",
+      "finNFSe",
       "cLocEmi",
       "prest",
       "toma",
@@ -127,6 +128,15 @@ describe("XML da DPS (leiaute 1.01)", () => {
     expect(txt(infDps, "serv/cServ/cTribNac")).toBe("171901");
     expect(txt(infDps, "serv/cServ/xDescServ")).toBe("Serviços de contabilidade - escrituração e folha · 11/2026 · Fatura 2026/00005");
     expect(txt(infDps, "serv/cServ/cNBS")).toBe("113021000");
+  });
+  it("leiaute da NT 009: finNFSe 0 e NBS antes da descrição (produção restrita já; produção a partir de 01/12/2026)", () => {
+    expect(txt(infDps, "finNFSe")).toBe("0");
+    expect(infDps.filhos.find((f) => f.nome === "serv")!.filhos[1].filhos.map((f) => f.nome)).toEqual(["cTribNac", "cNBS", "xDescServ"]);
+    const antigo = lerXml(montarInfDps({ ...DPS, ambiente: "producao", dhEmi: "2026-11-30T23:59:00-03:00" }));
+    expect(antigo.filhos.map((f) => f.nome)).not.toContain("finNFSe");
+    expect(antigo.filhos.find((f) => f.nome === "serv")!.filhos[1].filhos.map((f) => f.nome)).toEqual(["cTribNac", "xDescServ", "cNBS"]);
+    const novo = lerXml(montarInfDps({ ...DPS, ambiente: "producao", dhEmi: "2026-12-01T00:00:00-03:00" }));
+    expect(txt(novo, "finNFSe")).toBe("0");
   });
   it("valores: vServ, ISS tributável não retido SEM alíquota (vai no DAS) e % do Simples", () => {
     expect(txt(infDps, "valores/vServPrest/vServ")).toBe("1850.50");

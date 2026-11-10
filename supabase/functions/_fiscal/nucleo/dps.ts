@@ -144,6 +144,15 @@ export function conferirDps(d: DadosDps): string[] {
 }
 
 /**
+ * Leiaute da NT 009 (SE/CGNFS-e, v1.01): na produção restrita desde 20/10/2026 e na produção a partir de 01/12/2026.
+ * Muda duas coisas no que o HUB manda: `finNFSe` (0 = NFS-e regular) entre `tpEmit` e `cLocEmi`, e no `cServ` o
+ * `cNBS` passa a vir antes do `xDescServ`. Sem isso a Sefin recusa com E1235 (falha no esquema).
+ */
+export const INICIO_NT009_PRODUCAO = "2026-12-01";
+export const leiauteNt009 = (ambiente: AmbienteNfse, dhEmi: string) =>
+  ambiente !== "producao" || dhEmi.slice(0, 10) >= INICIO_NT009_PRODUCAO;
+
+/**
  * infDPS do leiaute 1.01. Com `comNamespace`, na forma canônica (C14N) do subconjunto — a declaração xmlns herdada do
  * <DPS> aparece no elemento —, que é o texto do DigestValue. Sem, é o texto que vai dentro do <DPS>.
  * Tags vazias não são enviadas; a ordem é a do esquema.
@@ -156,6 +165,9 @@ export function montarInfDps(d: DadosDps, comNamespace = false): string {
   const email = d.tomador.email && /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(d.tomador.email.trim()) ? textoNfse(d.tomador.email, 80) : null;
   const id = idDps(d.cLocEmi, d.prestador.cnpj, d.serie, d.nDps);
   const ns = comNamespace ? ` xmlns="${NS_NFSE}"` : "";
+  const nt009 = leiauteNt009(d.ambiente, d.dhEmi);
+  const descricao = t("xDescServ", textoNfse(d.servico.descricao, 2000, true));
+  const nbs = t("cNBS", so(d.servico.cNBS));
   return (
     `<infDPS${ns} Id="${id}">` +
     t("tpAmb", tpAmbNfse(d.ambiente)) +
@@ -165,14 +177,14 @@ export function montarInfDps(d: DadosDps, comNamespace = false): string {
     t("nDPS", String(Number(so(d.nDps)))) +
     t("dCompet", d.dCompet) +
     t("tpEmit", "1") +
+    (nt009 ? "<finNFSe>0</finNFSe>" : "") +
     t("cLocEmi", so(d.cLocEmi)) +
     `<prest>${t("CNPJ", so(d.prestador.cnpj))}${t("IM", d.prestador.im ? textoNfse(d.prestador.im, 15) : null)}` +
     `<regTrib>${t("opSimpNac", d.prestador.opSimpNac)}${t("regApTribSN", d.prestador.opSimpNac === "3" ? d.prestador.regApTribSN : null)}` +
     `${t("regEspTrib", d.prestador.regEspTrib)}</regTrib></prest>` +
     `<toma>${t(doc.length === 11 ? "CPF" : "CNPJ", doc)}${t("xNome", textoNfse(d.tomador.nome, 300))}${t("email", email)}</toma>` +
     `<serv><locPrest>${t("cLocPrestacao", so(d.servico.cLocPrestacao))}</locPrest>` +
-    `<cServ>${t("cTribNac", so(d.servico.cTribNac))}${t("xDescServ", textoNfse(d.servico.descricao, 2000, true))}` +
-    `${t("cNBS", so(d.servico.cNBS))}</cServ></serv>` +
+    `<cServ>${t("cTribNac", so(d.servico.cTribNac))}${nt009 ? nbs + descricao : descricao + nbs}</cServ></serv>` +
     `<valores><vServPrest>${t("vServ", valorNfse(d.valores.vServ))}</vServPrest>` +
     // ISS do Simples sem retenção: tributável, não retido e SEM alíquota (vai no DAS); total aproximado pelo % do Simples
     `<trib><tribMun>${t("tribISSQN", "1")}${t("tpRetISSQN", "1")}</tribMun>` +
