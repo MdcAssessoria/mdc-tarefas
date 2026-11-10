@@ -10,6 +10,8 @@ export interface Produto {
   preco: number;
   ativo: boolean;
   ordem: number;
+  /** De que sistema é o módulo: o próprio HUB ou o ERP Ledgra (migração 067). */
+  sistema: "hub" | "ledgra";
 }
 
 export interface Plano {
@@ -48,6 +50,8 @@ export interface Contrato {
   reajuste_mes: number | null;
   ultimo_reajuste: string | null;
   situacao: "ativo" | "encerrado";
+  /** gratuita (valor zero), pacote (plano ou módulos com valor) ou full (todos os módulos do Ledgra). */
+  modalidade: "gratuita" | "pacote" | "full";
   encerrado_em: string | null;
   encerrado_motivo: string | null;
   observacao: string | null;

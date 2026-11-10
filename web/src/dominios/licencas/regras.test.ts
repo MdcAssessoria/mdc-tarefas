@@ -46,6 +46,7 @@ const contrato = (p: Partial<Contrato>): Contrato => ({
   org_id: "o",
   cliente_id: "c1",
   plano_id: null,
+  modalidade: "pacote",
   valor_tabela: 200,
   valor_mensal: 150,
   dia_vencimento: 10,

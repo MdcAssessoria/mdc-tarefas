@@ -4549,6 +4549,7 @@ export type Database = {
           fim: string | null;
           id: string;
           inicio: string;
+          modalidade: string;
           observacao: string | null;
           org_id: string;
           plano_id: string | null;
@@ -4570,6 +4571,7 @@ export type Database = {
           fim?: string | null;
           id?: string;
           inicio: string;
+          modalidade?: string;
           observacao?: string | null;
           org_id: string;
           plano_id?: string | null;
@@ -4591,6 +4593,7 @@ export type Database = {
           fim?: string | null;
           id?: string;
           inicio?: string;
+          modalidade?: string;
           observacao?: string | null;
           org_id?: string;
           plano_id?: string | null;
@@ -4626,6 +4629,51 @@ export type Database = {
             referencedColumns: ["id"];
           },
         ];
+      };
+      lic_ledgra_chaves: {
+        Row: {
+          cliente_id: string;
+          chave_hash: string;
+          criada_em: string;
+          criada_por: string | null;
+          id: string;
+          org_id: string;
+          prefixo: string;
+          revogada_em: string | null;
+          revogada_motivo: string | null;
+          revogada_por: string | null;
+          ultimo_uso_em: string | null;
+          ultimo_uso_situacao: string | null;
+        };
+        Insert: {
+          cliente_id: string;
+          chave_hash: string;
+          criada_em?: string;
+          criada_por?: string | null;
+          id?: string;
+          org_id: string;
+          prefixo: string;
+          revogada_em?: string | null;
+          revogada_motivo?: string | null;
+          revogada_por?: string | null;
+          ultimo_uso_em?: string | null;
+          ultimo_uso_situacao?: string | null;
+        };
+        Update: {
+          cliente_id?: string;
+          chave_hash?: string;
+          criada_em?: string;
+          criada_por?: string | null;
+          id?: string;
+          org_id?: string;
+          prefixo?: string;
+          revogada_em?: string | null;
+          revogada_motivo?: string | null;
+          revogada_por?: string | null;
+          ultimo_uso_em?: string | null;
+          ultimo_uso_situacao?: string | null;
+        };
+        Relationships: [];
       };
       lic_parametros: {
         Row: {
@@ -4745,6 +4793,7 @@ export type Database = {
           org_id: string;
           preco: number;
           slug: string;
+          sistema: string;
         };
         Insert: {
           ativo?: boolean;
@@ -4756,6 +4805,7 @@ export type Database = {
           org_id: string;
           preco?: number;
           slug: string;
+          sistema?: string;
         };
         Update: {
           ativo?: boolean;
@@ -4767,6 +4817,7 @@ export type Database = {
           org_id?: string;
           preco?: number;
           slug?: string;
+          sistema?: string;
         };
         Relationships: [
           {
@@ -7478,6 +7529,9 @@ export type Database = {
         Args: { p_competencia: string; p_org: string };
         Returns: number;
       };
+      lic_ledgra_chave_gerar: { Args: { p_cliente: string }; Returns: string };
+      lic_ledgra_chave_revogar: { Args: { p_id: string; p_motivo: string }; Returns: undefined };
+      lic_ledgra_validar: { Args: { p_chave: string; p_cnpj: string }; Returns: Json };
       lic_reajustar_contrato: {
         Args: { p_contrato: string; p_obs?: string; p_percentual: number };
         Returns: number;

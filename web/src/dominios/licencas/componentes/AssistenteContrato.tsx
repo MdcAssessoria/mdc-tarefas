@@ -1,4 +1,4 @@
-// Assistente de contrato de licença em 5 passos: cliente → o que foi vendido (plano ou módulos avulsos) → valor e
+// Assistente de contrato de licença em 5 passos: cliente → o que foi vendido (plano, módulos avulsos ou Ledgra full) → valor e
 // vencimento → reajuste → conferir e salvar. Também edita um contrato ativo (mesmos passos, cliente fixo).
 "use client";
 
@@ -56,7 +56,15 @@ export function AssistenteContrato({
   const [f, setF] = useState({
     cliente: editar?.cliente_id ?? clienteInicial ?? "",
     busca: "",
-    modo: (editar ? (editar.plano_id ? "plano" : "avulso") : planos.some((p) => p.ativo) ? "plano" : "avulso") as "plano" | "avulso",
+    modo: (editar
+      ? editar.modalidade === "full"
+        ? "full"
+        : editar.plano_id
+          ? "plano"
+          : "avulso"
+      : planos.some((p) => p.ativo)
+        ? "plano"
+        : "avulso") as "plano" | "avulso" | "full",
     plano: editar?.plano_id ?? "",
     avulsos: editar && !editar.plano_id ? editar.produtos : ([] as string[]),
     valor: editar ? valorParaCampo(editar.valor_mensal) : "",
@@ -77,9 +85,11 @@ export function AssistenteContrato({
   const ativosProd = produtos.filter((p) => p.ativo || (editar?.produtos.includes(p.id) ?? false));
   const planosVisiveis = planos.filter((p) => p.ativo || p.id === editar?.plano_id);
   const plano = planos.find((p) => p.id === f.plano);
-  const escolhidos = f.modo === "plano" ? (plano?.produtos ?? []) : f.avulsos;
+  // Ledgra full: todos os módulos ativos do ERP Ledgra (o banco confere a lista na hora de salvar)
+  const doLedgra = produtos.filter((p) => p.sistema === "ledgra" && p.ativo);
+  const escolhidos = f.modo === "plano" ? (plano?.produtos ?? []) : f.modo === "full" ? doLedgra.map((p) => p.id) : f.avulsos;
   const tabela =
-    f.modo === "plano" ? (plano?.preco ?? 0) : produtos.filter((p) => f.avulsos.includes(p.id)).reduce((s, p) => s + p.preco, 0);
+    f.modo === "plano" ? (plano?.preco ?? 0) : produtos.filter((p) => escolhidos.includes(p.id)).reduce((s, p) => s + p.preco, 0);
   const valor = f.valorMexido ? numeroBr(f.valor) : tabela;
   const dia = Number(f.dia);
   const nomeProd = (id: string) => produtos.find((p) => p.id === id)?.nome ?? "";
@@ -94,7 +104,12 @@ export function AssistenteContrato({
   function validar(p: number): string {
     if (p === 0 && !f.cliente) return "Escolha o cliente.";
     if (p === 1) {
-      if (!escolhidos.length) return f.modo === "plano" ? "Escolha o plano." : "Marque ao menos um módulo.";
+      if (!escolhidos.length)
+        return f.modo === "plano"
+          ? "Escolha o plano."
+          : f.modo === "full"
+            ? "Não há módulo ativo do Ledgra."
+            : "Marque ao menos um módulo.";
       if (repetidos.length)
         return `O cliente já tem contrato ativo com ${repetidos.map(nomeProd).join(", ")}. Edite aquele contrato ou encerre antes.`;
     }
@@ -135,6 +150,7 @@ export function AssistenteContrato({
         id: editar?.id,
         cliente: f.cliente,
         plano: f.modo === "plano" ? f.plano : null,
+        modalidade: f.modo === "full" ? "full" : undefined,
         produtos: escolhidos,
         valor_mensal: Math.round(valor * 100) / 100,
         dia_vencimento: dia,
@@ -225,7 +241,7 @@ export function AssistenteContrato({
       {passo === 1 && (
         <div className="space-y-3">
           <div className="flex gap-2" role="radiogroup" aria-label="Forma de contratação">
-            {(["plano", "avulso"] as const).map((m) => (
+            {(["plano", "avulso", "full"] as const).map((m) => (
               <button
                 key={m}
                 type="button"
@@ -234,11 +250,21 @@ export function AssistenteContrato({
                 className={`btn flex-1 ${f.modo === m ? "!border-[var(--marca)] !bg-[var(--marca)] !text-white" : ""}`}
                 onClick={() => mudar({ modo: m })}
               >
-                {m === "plano" ? "Um plano (pacote)" : "Módulos avulsos"}
+                {m === "plano" ? "Um plano (pacote)" : m === "avulso" ? "Módulos avulsos" : "Ledgra full"}
               </button>
             ))}
           </div>
-          {f.modo === "plano" ? (
+          {f.modo === "full" ? (
+            <div className="rounded-md border border-[var(--borda)] p-3 text-sm">
+              <p>
+                <b>Todos os módulos do ERP Ledgra</b>, inclusive os que forem criados depois.
+              </p>
+              <p className="mt-1 text-neutral-700">{doLedgra.map((p) => p.nome).join(", ") || "Nenhum módulo do Ledgra ativo."}</p>
+              <p className="mt-2 text-xs text-neutral-600">
+                Valor zero = licença gratuita. Depois de salvar, gere a chave em Ações › Chave do Ledgra.
+              </p>
+            </div>
+          ) : f.modo === "plano" ? (
             planosVisiveis.length ? (
               <div className="grid gap-2 sm:grid-cols-2">
                 {planosVisiveis.map((p) => (
@@ -379,9 +405,12 @@ export function AssistenteContrato({
             <dd className="font-medium">{clienteSel ? nomeCliente(clienteSel) : "—"}</dd>
             <dt className="text-neutral-500">Contratou</dt>
             <dd>
-              {f.modo === "plano" && plano
-                ? `Plano ${plano.nome} (${escolhidos.map(nomeProd).join(", ")})`
-                : escolhidos.map(nomeProd).join(", ")}
+              {f.modo === "full"
+                ? `Ledgra full (${escolhidos.map(nomeProd).join(", ")})`
+                : f.modo === "plano" && plano
+                  ? `Plano ${plano.nome} (${escolhidos.map(nomeProd).join(", ")})`
+                  : escolhidos.map(nomeProd).join(", ")}
+              {valor === 0 && <span className="block text-xs text-emerald-700">Licença gratuita (sem mensalidade)</span>}
             </dd>
             <dt className="text-neutral-500">Valor mensal</dt>
             <dd>

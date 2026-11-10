@@ -10,7 +10,17 @@ import { useConsulta } from "@/lib/useConsulta";
 import { lerSituacaoPortal } from "../leituras";
 
 /** Módulos da gestão (mesma lista de MODULOS_GESTAO em components/shell/navegacao.ts): não existem mais no Portal. */
-const SO_DA_MDC = new Set(["financeiro", "entradas", "saidas", "estoque", "centros_custo", "plano_contas", "relatorios", "contratos", "licencas"]);
+const SO_DA_MDC = new Set([
+  "financeiro",
+  "entradas",
+  "saidas",
+  "estoque",
+  "centros_custo",
+  "plano_contas",
+  "relatorios",
+  "contratos",
+  "licencas",
+]);
 const ehModuloGestao = (slug: string) => SO_DA_MDC.has(slug);
 
 export function AvisoBloqueioPortal({ cliente, telefone, aoFalar }: { cliente: string; telefone: string; aoFalar?: () => void }) {
@@ -23,8 +33,8 @@ export function AvisoBloqueioPortal({ cliente, telefone, aoFalar }: { cliente: s
     <section role="status" className="mb-5 rounded-xl border border-amber-200 bg-amber-50 p-4 text-amber-950">
       <h2 className="font-semibold">Parte do seu Portal está pausada</h2>
       <p className="mt-1 text-sm">
-        {modulos ? `O acesso a ${modulos} está pausado no momento.` : "Parte do Portal está pausada no momento."} Seus
-        dados continuam guardados com segurança e voltam a aparecer assim que tudo for regularizado.
+        {modulos ? `O acesso a ${modulos} está pausado no momento.` : "Parte do Portal está pausada no momento."} Seus dados continuam
+        guardados com segurança e voltam a aparecer assim que tudo for regularizado.
       </p>
       <p className="mt-2 text-sm">
         Fale com a MDC pelo telefone {telefone}

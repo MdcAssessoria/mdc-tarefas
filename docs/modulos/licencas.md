@@ -154,3 +154,17 @@ Regras:
 
 Testes: `supabase/testes/99_ledgra_link_043.sql` (permissão, emissão, aviso repetido, pago a menor, já baixada, cobrança
 desconhecida, desfazer, tela sem gravar direto) e `web/src/dominios/licencas/ledgraLink.test.ts` (mensagem do WhatsApp).
+
+
+## Licença do ERP Ledgra (migração 067)
+
+- **Módulos do Ledgra** entram em Produtos e planos sozinhos (`lic_produtos.sistema = 'ledgra'`: Financeiro, Compras,
+  Vendas, Estoque, Produção e Ledgra Auditor; preço zero até a MDC definir). Toda organização nova recebe a lista.
+- **Modalidade do contrato** (`lic_contratos.modalidade`): **gratuita** (valor zero, a MDC escolhe os módulos),
+  **pacote** (plano ou módulos com valor) e **full** ("Ledgra full" no assistente: todos os módulos ativos do Ledgra,
+  inclusive os criados depois).
+- **Chave do Ledgra**: no contrato, Ações › Chave do Ledgra. Gera `LDG-` + 6 grupos de 5 (o texto aparece uma vez; o
+  banco guarda só o hash), mostra a última conferência do Ledgra e revoga com motivo. Gerar outra revoga a anterior.
+- **Conferência**: o Ledgra chama `lic_ledgra_validar(chave, cnpj)` ao salvar a chave e todo dia às 6h30. Devolve
+  ativa, bloqueada (cliente em Inadimplentes), sem_contrato, cnpj_diferente ou inválida, com os módulos liberados.
+  Sem resposta do HUB, o Ledgra mantém a última licença boa por 7 dias.

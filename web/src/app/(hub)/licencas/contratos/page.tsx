@@ -17,6 +17,7 @@ import { nomeArquivo } from "@/lib/arquivos/exportarLista";
 import { Cabecalho, EtiquetaBloqueado, useDadosLicencas } from "@/dominios/licencas/componentes/Base";
 import { AssistenteContrato, MESES } from "@/dominios/licencas/componentes/AssistenteContrato";
 import { EncerrarContrato, HistoricoContrato, ReajustarContrato } from "@/dominios/licencas/componentes/JanelasContrato";
+import { JanelaChaveLedgra } from "@/dominios/licencas/componentes/JanelaChaveLedgra";
 import { contratoVigente, reajustePendente } from "@/dominios/licencas/regras";
 import { INDICES } from "@/dominios/licencas/tipos";
 import type { Contrato } from "@/dominios/licencas/tipos";
@@ -30,7 +31,8 @@ type Janela =
   | { tipo: "editar"; k: Contrato }
   | { tipo: "reajustar"; k: Contrato }
   | { tipo: "encerrar"; k: Contrato }
-  | { tipo: "historico"; k: Contrato };
+  | { tipo: "historico"; k: Contrato }
+  | { tipo: "chave"; k: Contrato };
 
 export default function PaginaContratos() {
   return (
@@ -298,6 +300,12 @@ function Contratos() {
                               </button>
                               <button
                                 className="block w-full px-3 py-1.5 text-left hover:bg-neutral-50"
+                                onClick={(e) => menu(e, { tipo: "chave", k })}
+                              >
+                                Chave do Ledgra
+                              </button>
+                              <button
+                                className="block w-full px-3 py-1.5 text-left hover:bg-neutral-50"
                                 onClick={(e) => menu(e, { tipo: "reajustar", k })}
                               >
                                 Reajustar valor
@@ -344,6 +352,9 @@ function Contratos() {
           aoFechar={() => fechar()}
           aoSalvar={fechar}
         />
+      )}
+      {janela?.tipo === "chave" && (
+        <JanelaChaveLedgra contrato={janela.k} cliente={nomeDoCliente(janela.k.cliente_id)} aoFechar={() => fechar()} />
       )}
       {janela?.tipo === "historico" && d && (
         <HistoricoContrato

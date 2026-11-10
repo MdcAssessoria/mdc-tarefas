@@ -10,8 +10,14 @@ import { hojeISO } from "@/lib/datas";
 import { lerBaixas, lerBloqueios, lerCobrancas, lerContratos, lerParametros, lerPlanos, lerProdutos } from "../leituras";
 import type { Contrato, Plano, Produto } from "../tipos";
 
-/** "Plano Gestão" ou "Financeiro, Estoque" (módulos avulsos). */
-export function rotuloContrato(k: Pick<Contrato, "plano_id" | "produtos">, produtos: Map<string, Produto>, planos: Map<string, Plano>) {
+/** "Plano Gestão", "Ledgra full" ou "Financeiro, Estoque" (módulos avulsos); "(gratuita)" quando o valor é zero. */
+export function rotuloContrato(
+  k: Pick<Contrato, "plano_id" | "produtos"> & Partial<Pick<Contrato, "modalidade">>,
+  produtos: Map<string, Produto>,
+  planos: Map<string, Plano>,
+): string {
+  if (k.modalidade === "full") return "Ledgra full";
+  if (k.modalidade === "gratuita") return `${rotuloContrato({ ...k, modalidade: undefined }, produtos, planos)} (gratuita)`;
   if (k.plano_id && planos.get(k.plano_id)) return `Plano ${planos.get(k.plano_id)!.nome}`;
   return (
     k.produtos
@@ -54,7 +60,8 @@ export function useDadosLicencas({ baixas = false }: { baixas?: boolean } = {}) 
     ...mapas,
     hoje,
     nomeDoCliente,
-    rotulo: (k: Pick<Contrato, "plano_id" | "produtos">) => rotuloContrato(k, mapas.produtos, mapas.planos),
+    rotulo: (k: Pick<Contrato, "plano_id" | "produtos"> & Partial<Pick<Contrato, "modalidade">>) =>
+      rotuloContrato(k, mapas.produtos, mapas.planos),
     podeOperar: pode("licencas", "operar"),
     podeGerir: pode("licencas", "gerir"),
   };

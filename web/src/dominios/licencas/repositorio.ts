@@ -41,6 +41,8 @@ export interface DadosContrato {
   reajuste_indice: IndiceReajuste;
   reajuste_mes: number | null;
   observacao: string | null;
+  /** "full" = todos os módulos ativos do Ledgra; sem ele o banco decide entre gratuita (valor zero) e pacote. */
+  modalidade?: "full";
 }
 
 export const salvarContrato = (p: DadosContrato) => rpc<string>("lic_salvar_contrato", { p: p as unknown as Json });
@@ -85,3 +87,9 @@ export const desbloquearCliente = (cliente: string, motivo: string) =>
 
 export const definirParametros = (org: string, dias: number) =>
   rpc<null>("lic_definir_parametros", { p_org: org, p_dias_sugerir_bloqueio: dias });
+
+/** Chave do Ledgra do cliente (migração 067): gera uma nova (a anterior deixa de valer) e devolve o texto UMA vez. */
+export const gerarChaveLedgra = (cliente: string) => rpc<string>("lic_ledgra_chave_gerar", { p_cliente: cliente });
+
+/** Revoga a chave do Ledgra: na próxima conferência o Ledgra fecha os módulos pagos daquela empresa. */
+export const revogarChaveLedgra = (id: string, motivo: string) => rpc<null>("lic_ledgra_chave_revogar", { p_id: id, p_motivo: motivo });
