@@ -382,7 +382,7 @@ export function JanelaCertificado({
         certificado depois; para trocar, envie o novo aqui.
       </AvisoCofre>
       <CampoArquivo accept=".pfx,.p12" escolhido={c.arquivo?.name} titulo="Arraste o certificado (.pfx) ou clique para escolher"
-        aoEscolher={([a]) => mudar({ arquivo: a ?? null, apelido: c.apelido || (a ? a.name.replace(/\.(pfx|p12)$/i, "") : "") })} />
+        aoEscolher={([a]) => mudar({ arquivo: a ?? null })} />
       <div className="grid gap-3 sm:grid-cols-2">
         <label className="campo">
           <span>Tipo</span>
@@ -395,6 +395,7 @@ export function JanelaCertificado({
         <label className="campo">
           <span>Apelido</span>
           <input required maxLength={60} value={c.apelido} onChange={(e) => mudar({ apelido: e.target.value })} placeholder="Ex.: e-CNPJ MDC 2026" />
+          <small className="text-xs text-[var(--texto-suave)]">Aparece nas telas e no painel de vencimentos: nunca escreva a senha aqui.</small>
         </label>
         <label className="campo sm:col-span-2">
           <span>Senha do certificado</span>

@@ -204,7 +204,7 @@ export function TelaBoleto() {
         <Icone nome="info" className="mt-0.5 h-5 w-5 shrink-0 text-[var(--marca)]" />
         <span className="min-w-0 flex-1 basis-64">
           Antes de ligar um banco, a conta da MDC nesse banco precisa estar cadastrada no Ledgra Link (com as credenciais de cobrança do
-          banco). O código da conta fica em Contratos › Ledgra Link (contas), no botão &quot;Copiar código&quot;. Cada contrato escolhe o banco
+          banco). O código da conta fica em Contratos › Ledgra Link (bancos), no botão &quot;Copiar código&quot;. Cada contrato escolhe o banco
           do boleto no próprio cadastro.
         </span>
         <Link href="/contratos/ledgra-link" className="btn ml-auto shrink-0 self-center">

@@ -147,11 +147,11 @@ export const NAV: Record<Modulo, { titulo: string; links: LinkModulo[]; grupos?:
     titulo: "Contratos",
     links: [
       { href: "/contratos", nome: "Contratos", icone: "documento" },
+      { href: "/contratos/ledgra-link", nome: "Ledgra Link (bancos)", icone: "banco", minimo: "gerir" },
       { href: "/contratos/sistemas", nome: "Receita por sistema", icone: "tendencia" },
       { href: "/contratos/faturas", nome: "Faturas e notas fiscais", icone: "arquivo" },
       { href: "/contratos/reajustes", nome: "Reajustes", icone: "seta-cima" },
       { href: "/contratos/nota-fiscal", nome: "Regras fiscais", icone: "escudo", minimo: "gerir" },
-      { href: "/contratos/ledgra-link", nome: "Ledgra Link (contas)", icone: "escudo", minimo: "gerir" },
       { href: "/contratos/boleto", nome: "Boleto", icone: "banco", minimo: "gerir" },
       { href: "/contratos/envio", nome: "Envio (e-mail e WhatsApp)", icone: "enviar", minimo: "gerir" },
     ],
