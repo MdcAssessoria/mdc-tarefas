@@ -152,6 +152,8 @@ export function BarraSuperior({ modulo, aoMenu, aoBuscar }: { modulo: Modulo; ao
   const agrupado = temGrupos(modulo);
   const entradas = agruparLinks(links, NAV[modulo].grupos);
   const mac = typeof navigator !== "undefined" && /Mac/i.test(navigator.platform);
+  // módulo com menus suspensos (grupos) não rola de lado: até 1536 px a busca vira só a lupa para as abas caberem
+  const compacta = agrupado;
   return (
     <header className="sticky top-0 z-30 border-b border-[var(--borda)] bg-white/85 backdrop-blur print:hidden">
       <div className="mx-auto flex h-14 max-w-[1400px] items-center gap-3 px-4 sm:px-6 lg:px-8">
@@ -189,11 +191,11 @@ export function BarraSuperior({ modulo, aoMenu, aoBuscar }: { modulo: Modulo; ao
         <div className="ml-auto flex items-center gap-1.5">
           <button
             onClick={aoBuscar}
-            className="flex h-11 min-w-11 items-center justify-center sm:justify-start md:h-9 gap-2 rounded-lg border border-[var(--borda)] bg-white px-3 text-[13px] text-[var(--texto-suave)] hover:border-[var(--destaque-escuro)] sm:w-48 2xl:w-64"
+            className={`flex h-11 min-w-11 items-center justify-center sm:justify-start md:h-9 gap-2 rounded-lg border border-[var(--borda)] bg-white px-3 text-[13px] text-[var(--texto-suave)] hover:border-[var(--destaque-escuro)] sm:w-48 2xl:w-64 ${compacta ? "md:w-auto" : ""}`}
             aria-label="Buscar ou ir para"
           >
             <Icone nome="busca" className="h-4 w-4" />
-            <span className="hidden whitespace-nowrap sm:inline">Buscar ou ir para…</span>
+            <span className={`hidden whitespace-nowrap sm:inline ${compacta ? "md:hidden 2xl:inline" : ""}`}>Buscar ou ir para…</span>
             <kbd className="ml-auto hidden whitespace-nowrap rounded border border-[var(--borda)] px-1.5 text-[11px] 2xl:inline">
               {mac ? "⌘" : "Ctrl"} K
             </kbd>
