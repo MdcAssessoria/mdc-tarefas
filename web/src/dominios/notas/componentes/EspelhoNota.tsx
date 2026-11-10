@@ -11,6 +11,7 @@ import { useConsulta } from "@/lib/useConsulta";
 import { traduzirErro } from "@/lib/erros";
 import { baixarBytes } from "@/lib/arquivos/baixar";
 import { barras128C } from "@/lib/codigoBarras128";
+import { carregarLogo } from "@/lib/marca";
 import { lerEspelhoDaNota } from "../leituras";
 import { FAIXA_ESPELHO } from "../espelho";
 import type { BlocoEspelho, CampoEspelho, Espelho } from "../espelho";
@@ -24,8 +25,11 @@ export function EspelhoNota({
   nota,
   avisar,
   aoFechar,
+  logoUrl,
 }: {
   nota: NotaParaEspelho;
+  /** Logo de quem emitiu, no PDF (só nas notas que a própria MDC emite: Saída e Faturas, 10/11/2026). */
+  logoUrl?: string | null;
   avisar: (t: string, tom?: "erro") => void;
   aoFechar: () => void;
 }) {
@@ -44,7 +48,7 @@ export function EspelhoNota({
     setOcupado(acao);
     try {
       const { gerarEspelhoPdf } = await import("../espelhoPdf");
-      const bytes = await gerarEspelhoPdf(e);
+      const bytes = await gerarEspelhoPdf(e, { logo: logoUrl ? await carregarLogo(logoUrl) : null });
       if (acao === "pdf") baixarBytes(bytes, e.arquivo);
       else imprimirPdf(bytes);
     } catch (erro) {

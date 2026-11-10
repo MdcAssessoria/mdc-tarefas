@@ -19,6 +19,25 @@ function nfeComItens(n: number): string {
 const paginas = async (bytes: Uint8Array) => (await PDFDocument.load(bytes)).getPageCount();
 
 describe("PDF do espelho", () => {
+  it("nota de saída da MDC sai com o logo do emitente (imagem no PDF); sem logo, sem imagem", async () => {
+    // PNG 2x1 (pixel dourado e verde), gerado à mão
+    const png = Uint8Array.from(
+      atob(
+        "iVBORw0KGgoAAAANSUhEUgAAAAIAAAABCAIAAAB7QOjdAAAAEElEQVR4nGPYccPYOLc0FwAIhwLOZ+Vz/wAAAABJRU5ErkJggg==",
+      ),
+      (c) => c.charCodeAt(0),
+    );
+    const temImagem = async (bytes: Uint8Array) => {
+      const doc = await PDFDocument.load(bytes);
+      return doc.context.enumerateIndirectObjects().some(([, o]) => String(o.toString()).includes("/Subtype /Image"));
+    };
+    const com = await gerarEspelhoPdf(montarEspelho(NFSE_COMPLETA), { logo: png });
+    const sem = await gerarEspelhoPdf(montarEspelho(NFSE_COMPLETA));
+    expect(await temImagem(com)).toBe(true);
+    expect(await temImagem(sem)).toBe(false);
+    expect(await paginas(com)).toBe(1);
+  });
+
   it("NF-e com 3 itens cabe em uma folha A4 retrato", async () => {
     const bytes = await gerarEspelhoPdf(montarEspelho(PROC_NFE_COMPLETA), { geradoEm: new Date("2026-11-02T12:00:00Z") });
     const doc = await PDFDocument.load(bytes);

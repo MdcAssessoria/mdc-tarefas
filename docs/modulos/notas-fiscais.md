@@ -29,6 +29,10 @@ entrada no estoque ([Financeiro, seção 8](financeiro.md#8-ver-caminho-árvore-
 
 ### 1.1 Ver a nota (espelho DANFE / DANFSe) — 02/11/2026
 
+Nas notas que a própria MDC emite (Notas fiscais › Saída e Contratos › Faturas) o PDF do espelho sai com o **logo da
+MDC** no quadro do prestador (o mesmo de Configurações › Organização, `org.logo_url`; 10/11/2026). A NFS-e oficial não
+tem campo de logo: ele vai só no PDF que o HUB gera. Notas recebidas continuam sem logo.
+
 Na coluna de ações de cada nota, à vista (desde 03/11/2026, pedido do Edvaldo), há dois botões só com ícone, com nome
 acessível e dica: **Ver a nota** (olho) e **Baixar PDF** (seta para baixo), que gera e baixa o PDF do espelho direto, sem
 abrir janela (`componentes/BotoesVerNota.tsx`; área de toque de 40 px; sem XML guardado ficam desligados com a dica "O XML

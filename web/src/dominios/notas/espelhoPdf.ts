@@ -2,7 +2,7 @@
 // biblioteca dos relatórios e contratos). Desenha o mesmo Espelho da janela (espelho.ts): cabeçalho com emitente,
 // sigla e chave (com o código de barras CODE-128C quando for NF-e/CT-e), quadros de campos, tabela de itens com quebra
 // de página (o cabeçalho e os títulos das colunas se repetem em cada folha) e a faixa "Espelho gerado pelo HUB-MDC".
-import { PDFDocument, PDFFont, PDFPage, StandardFonts, rgb } from "pdf-lib";
+import { PDFDocument, PDFFont, PDFImage, PDFPage, StandardFonts, rgb } from "pdf-lib";
 import type { RGB } from "pdf-lib";
 import { barras128C } from "@/lib/codigoBarras128";
 import { FAIXA_ESPELHO } from "./espelho";
@@ -38,7 +38,10 @@ interface Fontes {
   b: PDFFont;
 }
 
-export async function gerarEspelhoPdf(e: Espelho, opcoes: { geradoEm?: Date } = {}): Promise<Uint8Array> {
+export async function gerarEspelhoPdf(
+  e: Espelho,
+  opcoes: { geradoEm?: Date; /** Logo de quem emitiu (nota de saída da MDC, 10/11/2026): PNG ou JPG. */ logo?: Uint8Array | null } = {},
+): Promise<Uint8Array> {
   const pdf = await PDFDocument.create();
   pdf.setTitle(e.titulo);
   pdf.setSubject(FAIXA_ESPELHO);
@@ -46,6 +49,9 @@ export async function gerarEspelhoPdf(e: Espelho, opcoes: { geradoEm?: Date } = 
   pdf.setCreator("HUB-MDC");
   const fontes: Fontes = { f: await pdf.embedFont(StandardFonts.Helvetica), b: await pdf.embedFont(StandardFonts.HelveticaBold) };
   const { f, b } = fontes;
+  const logoImg: PDFImage | null = opcoes.logo
+    ? await pdf.embedPng(opcoes.logo).catch(() => pdf.embedJpg(opcoes.logo!).catch(() => null))
+    : null;
 
   // largura caractere a caractere (o pdf-lib mede com kerning, mas não o aplica ao desenhar)
   const cache = new Map<PDFFont, Map<string, number>>();
@@ -124,9 +130,14 @@ export async function gerarEspelhoPdf(e: Espelho, opcoes: { geradoEm?: Date } = 
     const xD = xM + wM;
     const pad = 6;
 
-    const nomeL = quebrar(e.emitente.nome, wE - 2 * pad, 9.5, b).slice(0, 3);
-    const linhasE = e.emitente.linhas.flatMap((l) => quebrar(l, wE - 2 * pad, 7, f));
-    const altE = 10 + nomeL.length * 11.5 + 3 + linhasE.length * 8.8 + 6;
+    // logo do emitente (quando veio): à esquerda, no alto do quadro; o texto vai para o lado
+    const lw = logoImg ? Math.min(wE * 0.3, (logoImg.width * 34) / logoImg.height) : 0;
+    const lh = logoImg ? (lw * logoImg.height) / logoImg.width : 0;
+    const xT = M + pad + (lw ? lw + 6 : 0);
+    const wT = wE - 2 * pad - (lw ? lw + 6 : 0);
+    const nomeL = quebrar(e.emitente.nome, wT, 9.5, b).slice(0, 3);
+    const linhasE = e.emitente.linhas.flatMap((l) => quebrar(l, wT, 7, f));
+    const altE = Math.max(10 + nomeL.length * 11.5 + 3 + linhasE.length * 8.8 + 6, lh + 22);
 
     const sigla = e.sigla;
     const tamSigla = larg(sigla, 15, b) > wM - 2 * pad ? 11 : 15;
@@ -149,14 +160,15 @@ export async function gerarEspelhoPdf(e: Espelho, opcoes: { geradoEm?: Date } = 
     // emitente
     let yy = topo - 10 - 9.5;
     texto((e.emitente.rotulo ?? "Identificação do emitente").toUpperCase(), M + pad, topo - 8, 5.2, f, ROTULO);
+    if (logoImg) page.drawImage(logoImg, { x: M + pad, y: topo - 13 - lh, width: lw, height: lh });
     yy = topo - 12 - 9;
     for (const l of nomeL) {
-      texto(l, M + pad, yy, 9.5, b);
+      texto(l, xT, yy, 9.5, b);
       yy -= 11.5;
     }
     yy -= 2;
     for (const l of linhasE) {
-      texto(l, M + pad, yy, 7);
+      texto(l, xT, yy, 7);
       yy -= 8.8;
     }
 

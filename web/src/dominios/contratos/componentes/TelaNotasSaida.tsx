@@ -420,6 +420,7 @@ function TelaNotasSaidaConteudo() {
             emitente_nome: null,
             modelo: "nfse",
           }}
+          logoUrl={org.logo_url}
           avisar={mostrar}
           aoFechar={() => setNota(null)}
         />

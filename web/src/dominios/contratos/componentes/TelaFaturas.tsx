@@ -639,6 +639,7 @@ export function TelaFaturas() {
             emitente_nome: cliente ? nomeCliente(cliente) : null,
             modelo: "nfse",
           }}
+          logoUrl={org.logo_url}
           avisar={mostrar}
           aoFechar={() => {
             const voltar = janela.voltar;
