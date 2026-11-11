@@ -141,3 +141,16 @@ continuam obrigatórias em toda publicação. Quando a auditoria for pedida:
    Achados críticos e altos viram correção antes de liberar a funcionalidade aos clientes.
 4. A **auditoria semanal agendada** (segunda-feira de manhã) foi **pausada** em 01/11/2026 junto com essa mudança;
    pode ser religada nas tarefas agendadas do Claude quando o Edvaldo quiser.
+
+## 8.7 Modelos do Claude neste repositório
+
+Decisão do Edvaldo (02/11/2026), gravada em `.claude/settings.json`:
+
+- **Conversa principal (o "conselheiro"): Opus** (`"model": "opus"`). É quem planeja, decide e revisa.
+- **Subagentes: Haiku** (`CLAUDE_CODE_SUBAGENT_MODEL=haiku`). Buscas, leituras e tarefas de apoio ficam mais
+  rápidas e baratas.
+- **Exceção:** o agente `auditor-hub` continua em **Opus**, porque o modelo escrito na definição do agente
+  (`model: opus` em `.claude/agents/auditor-hub.md`) vale mais que o padrão dos subagentes.
+
+Para trocar, edite `.claude/settings.json` (ou use `/model` só na sessão atual). O mesmo arquivo existe no
+repositório `mdc-simulador`.
