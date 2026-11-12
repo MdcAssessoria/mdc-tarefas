@@ -45,7 +45,7 @@ Deno.serve(async (req) => {
   const auth = req.headers.get("Authorization");
   if (!auth) return json(401, { erro: "Faça login." });
 
-  let corpo: { email?: string; nome?: string; origem?: string; so_link?: boolean; senha_provisoria?: boolean } = {};
+  let corpo: { email?: string; nome?: string; origem?: string; so_link?: boolean; senha_provisoria?: boolean; senha?: string } = {};
   try {
     corpo = await req.json();
   } catch {
@@ -65,7 +65,11 @@ Deno.serve(async (req) => {
     const { data: podeSenha, error: eSenha } = await usuario.rpc("hub_pode_senha_provisoria", { p_email: email });
     if (eSenha) return json(401, { erro: "Sessão expirada. Entre de novo." });
     if (!podeSenha) return json(403, { erro: "Você não pode gerar a senha desta pessoa." });
-    const senha = senhaProvisoria();
+    // o administrador pode digitar a senha provisória (mesma regra de web/src/lib/senhaProvisoria.ts); vazio = gerada
+    const digitada = typeof corpo.senha === "string" ? corpo.senha : "";
+    if (digitada && (digitada.trim() !== digitada || digitada.length < 8 || digitada.length > 72))
+      return json(400, { erro: "A senha provisória precisa ter de 8 a 72 caracteres, sem espaço no começo ou no fim." });
+    const senha = digitada || senhaProvisoria();
     const nomeP = String(corpo.nome ?? "").trim().slice(0, 120) || undefined;
     const { data: id } = await servico.rpc("hub_conta_id", { p_email: email });
     const { error: eConta } = id

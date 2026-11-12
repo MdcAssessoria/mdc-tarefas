@@ -13,6 +13,7 @@ import { perfilDasPerms } from "@/dominios/portal/permissoes";
 import type { VinculoCliente } from "@/dominios/portal/tipos";
 import { EditorCliente } from "./EditorCliente";
 import { gerarSenhaProvisoria } from "@/dominios/acessos/convite";
+import { JanelaSenhaProvisoria } from "@/dominios/acessos/componentes/JanelaSenhaProvisoria";
 import type { SenhaGerada } from "@/dominios/acessos/convite";
 import { JanelaMotivo } from "@/components/ui/JanelaMotivo";
 import { exigir } from "@/lib/exigir";
@@ -25,6 +26,7 @@ export function AcessosClientes({
   aoErro: (e: unknown) => void;
 }) {
   const { org, clientes, clientePorId } = useOrg();
+  const [janelaSenha, setJanelaSenha] = useState<{ email: string; nome: string } | null>(null);
   const [vinculos, setVinculos] = useState<VinculoCliente[]>([]);
   const [novo, setNovo] = useState(false);
   const [editar, setEditar] = useState<string | null>(null); // e-mail
@@ -69,14 +71,15 @@ export function AcessosClientes({
 
   const pessoaEditada = pessoas.find((p) => p.email === editar) ?? null;
 
-  /** Senha provisória para mandar pelo WhatsApp (071); no primeiro acesso o cliente cria a própria senha. */
-  async function senhaProvisoria(email: string, nome: string) {
-    const r = await gerarSenhaProvisoria(email, nome === email ? undefined : nome);
-    if (!r.senha) return aoErro(r.erro ?? "Não foi possível gerar a senha agora.");
+  /** Senha provisória para mandar pelo WhatsApp (071): o administrador digita ou deixa o HUB gerar. */
+  async function confirmarSenha(alvo: { email: string; nome: string }, senha: string) {
+    const r = await gerarSenhaProvisoria(alvo.email, alvo.nome === alvo.email ? undefined : alvo.nome, senha || undefined);
+    if (!r.senha) throw new Error(r.erro ?? "Não foi possível salvar a senha agora.");
+    setJanelaSenha(null);
     aoAviso(
-      `Senha provisória de ${nome} pronta. Mande pelo WhatsApp; no primeiro acesso o HUB pede para criar a própria senha.`,
-      { senha: r.senha, email, endereco: r.endereco ?? "" },
-      nome === email ? undefined : nome,
+      `Senha provisória de ${alvo.nome} pronta. Mande pelo WhatsApp; no primeiro acesso o HUB pede para criar a própria senha.`,
+      { senha: r.senha, email: alvo.email, endereco: r.endereco ?? "" },
+      alvo.nome === alvo.email ? undefined : alvo.nome,
     );
     await carregar();
   }
@@ -132,7 +135,7 @@ export function AcessosClientes({
                     {pendente && (
                       <div className="mt-1 space-y-1">
                         <span className="chip bg-amber-50 text-amber-900">Sem acesso ainda</span>
-                        <button className="btn-link block text-sm" onClick={() => senhaProvisoria(p.email, p.nome)}>
+                        <button className="btn-link block text-sm" onClick={() => setJanelaSenha({ email: p.email, nome: p.nome })}>
                           Gerar senha provisória
                         </button>
                         <button
@@ -187,6 +190,14 @@ export function AcessosClientes({
             aoAviso(`Convite de ${cancelar.nome} cancelado.`);
             await carregar();
           }}
+        />
+      )}
+      {janelaSenha && (
+        <JanelaSenhaProvisoria
+          {...janelaSenha}
+          redefinir={false}
+          aoFechar={() => setJanelaSenha(null)}
+          aoConfirmar={(senha) => confirmarSenha(janelaSenha, senha)}
         />
       )}
       {(novo || pessoaEditada) && (

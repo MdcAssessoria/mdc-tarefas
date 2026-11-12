@@ -14,6 +14,7 @@ import type { Acesso, Auditoria, Conta, Perfil } from "@/dominios/acessos/tipos"
 import type { Json } from "@/lib/database.types";
 import { ADMIN } from "./_componentes/niveis";
 import { SenhaCopiavel } from "./_componentes/SenhaCopiavel";
+import { JanelaSenhaProvisoria } from "@/dominios/acessos/componentes/JanelaSenhaProvisoria";
 import { LinhaPessoa } from "./_componentes/LinhaPessoa";
 import { ConvitesAguardando, type ConviteAguardando } from "./_componentes/ConvitesAguardando";
 import { Perfis } from "./_componentes/Perfis";
@@ -44,6 +45,7 @@ function Acessos() {
   const [contas, setContas] = useState<Map<string, Conta>>(new Map());
   const [historico, setHistorico] = useState<Auditoria[]>([]);
   const [aguardando, setAguardando] = useState<ConviteAguardando[]>([]);
+  const [janelaSenha, setJanelaSenha] = useState<{ email: string; nome: string; redefinir: boolean } | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [aviso, setAviso] = useState<{ texto: string; senha?: SenhaGerada; nome?: string } | null>(null);
   const [convite, setConvite] = useState(false);
@@ -155,23 +157,19 @@ function Acessos() {
     await depois();
   }
 
-  /** Senha provisória para mandar pelo WhatsApp (071): primeiro acesso ou senha esquecida; a anterior deixa de valer. */
-  async function gerarSenha(m: { email?: string | null; nome: string }, redefinir = false) {
-    if (!m.email) return;
-    if (redefinir) {
-      const sim = await confirmar({
-        titulo: `Redefinir a senha de ${m.nome}?`,
-        descricao: "A senha atual deixa de valer. A pessoa entra com a senha provisória e cria uma nova no primeiro acesso.",
-        botao: "Gerar senha provisória",
-      });
-      if (!sim) return;
-    }
-    const r = await gerarSenhaProvisoria(m.email, m.nome);
-    if (!r.senha) return falhar(r.erro ?? "Não foi possível gerar a senha agora.");
+  /** Abre a janela da senha provisória (primeiro acesso ou senha esquecida); a anterior deixa de valer. */
+  function gerarSenha(m: { email?: string | null; nome: string }, redefinir = false) {
+    if (m.email) setJanelaSenha({ email: m.email, nome: m.nome, redefinir });
+  }
+
+  async function confirmarSenha(alvo: { email: string; nome: string }, senha: string) {
+    const r = await gerarSenhaProvisoria(alvo.email, alvo.nome, senha || undefined);
+    if (!r.senha) throw new Error(r.erro ?? "Não foi possível salvar a senha agora.");
+    setJanelaSenha(null);
     avisar(
-      `Senha provisória de ${m.nome} pronta. Mande pelo WhatsApp; no primeiro acesso o HUB pede para criar a própria senha.`,
-      { senha: r.senha, email: m.email, endereco: r.endereco ?? `${window.location.origin}${caminho("/login")}` },
-      m.nome,
+      `Senha provisória de ${alvo.nome} pronta. Mande pelo WhatsApp; no primeiro acesso o HUB pede para criar a própria senha.`,
+      { senha: r.senha, email: alvo.email, endereco: r.endereco ?? `${window.location.origin}${caminho("/login")}` },
+      alvo.nome,
     );
     await depois(); // convite vira conta: a pessoa passa para a lista da equipe
   }
@@ -418,6 +416,14 @@ function Acessos() {
             avisar(`${texto} ${campos.nome} vê ${Object.keys(modulos).length} módulo(s).`);
             await depois();
           }}
+        />
+      )}
+
+      {janelaSenha && (
+        <JanelaSenhaProvisoria
+          {...janelaSenha}
+          aoFechar={() => setJanelaSenha(null)}
+          aoConfirmar={(senha) => confirmarSenha(janelaSenha, senha)}
         />
       )}
 

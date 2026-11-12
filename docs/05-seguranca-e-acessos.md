@@ -73,7 +73,8 @@ Ninguém cria conta sozinho: o cadastro público está desligado. O e-mail de co
 configurar, então o acesso passou a ser por **senha provisória** (migração 071, decisão do Edvaldo):
 
 1. O administrador cadastra a pessoa (Pessoas e acessos › Cadastrar pessoa, ou o acesso de cliente no Portal).
-2. O HUB gera uma senha provisória **diferente para cada pessoa** (`Mdc-XXXX-0000`, aleatória), mostrada uma vez só, com
+2. O administrador **digita a senha provisória** (8 a 72 caracteres) ou deixa em branco para o HUB gerar uma aleatória
+   (`Mdc-XXXX-0000`). A senha aparece uma vez só, com
    "Enviar pelo WhatsApp" e "Copiar mensagem" (endereço, e-mail e senha). Quem pode gerar: `hub_pode_senha_provisoria`
    (equipe: administrador da organização; Portal: gestor ou Atendimento › gerir). A Função `convite`
    (`{ senha_provisoria: true }`) cria a conta (`admin.createUser`, já confirmada; os gatilhos de convite ligam à

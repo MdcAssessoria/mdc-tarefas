@@ -7,6 +7,7 @@ import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { supabase } from "@/lib/supabase";
 import { traduzirErro } from "@/lib/erros";
 import { gerarSenhaProvisoria, type SenhaGerada } from "@/dominios/acessos/convite";
+import { problemaSenhaProvisoria, SENHA_PROVISORIA } from "@/lib/senhaProvisoria";
 import { PAPEIS } from "@/dominios/organizacao/tipos";
 import type { Papel } from "@/dominios/organizacao/tipos";
 import type { HubApp, Perfil } from "@/dominios/acessos/tipos";
@@ -38,6 +39,7 @@ export function Cadastro({
   const [modo, setModo] = useState<"modulos" | "perfil">("modulos");
   const [modulos, setModulos] = useState<Modulos>({ tarefas: "operar" });
   const [perfil, setPerfil] = useState(perfis[0]?.id ?? "");
+  const [senhaProv, setSenhaProv] = useState("");
   const [erro, setErro] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
   const admin = papel === "admin";
@@ -48,6 +50,8 @@ export function Cadastro({
     setErro(null);
     if (!admin && modo === "modulos" && Object.keys(modulos).length === 0) return setErro("Marque ao menos um módulo para a pessoa ver.");
     if (!admin && modo === "perfil" && !perfil) return setErro("Escolha o perfil de acesso.");
+    const problema = problemaSenhaProvisoria(senhaProv);
+    if (problema) return setErro(problema);
     setEnviando(true);
     const { data, error } = await supabase().rpc("hub_convidar", {
       p_org: org.id,
@@ -67,7 +71,7 @@ export function Cadastro({
       return aoCadastrar(`${nome || email} já tinha conta no Hub e recebeu o acesso agora.`);
     }
     // senha provisória (071): sem e-mail; o administrador manda pelo WhatsApp e a pessoa troca no 1º acesso
-    const r = await gerarSenhaProvisoria(email, nome);
+    const r = await gerarSenhaProvisoria(email, nome, senhaProv || undefined);
     setEnviando(false);
     if (r.senha)
       return aoCadastrar(
@@ -83,7 +87,7 @@ export function Cadastro({
   return (
     <Modal
       titulo="Cadastrar pessoa da equipe"
-      descricao="Escolha o que a pessoa vai ver no HUB. O HUB gera uma senha provisória para você mandar pelo WhatsApp; no primeiro acesso a pessoa cria a própria senha."
+      descricao="Escolha o que a pessoa vai ver no HUB. Informe uma senha provisória (ou deixe em branco para o HUB gerar) e mande pelo WhatsApp; no primeiro acesso a pessoa cria a própria senha."
       aoFechar={aoFechar}
       largura="6xl"
       avisoRodape={
@@ -100,13 +104,13 @@ export function Cadastro({
           </button>
           <button type="submit" form={idForm} className="btn-primario" disabled={enviando}>
             <Icone nome="escudo" className="h-4 w-4" />
-            {enviando ? "Cadastrando…" : "Cadastrar e gerar senha"}
+            {enviando ? "Cadastrando…" : "Cadastrar"}
           </button>
         </>
       }
     >
       <form id={idForm} onSubmit={enviar} className="space-y-3">
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
           <label className="campo">
             <span>Nome</span>
             <input required value={nome} onChange={(e) => setNome(e.target.value)} />
@@ -124,6 +128,17 @@ export function Cadastro({
                 </option>
               ))}
             </select>
+          </label>
+          <label className="campo">
+            <span>Senha provisória</span>
+            <input
+              type="text"
+              autoComplete="off"
+              maxLength={SENHA_PROVISORIA.maximo}
+              placeholder="Em branco, o HUB gera"
+              value={senhaProv}
+              onChange={(e) => setSenhaProv(e.target.value)}
+            />
           </label>
           <label className="campo">
             <span>Setor</span>
