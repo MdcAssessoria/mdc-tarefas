@@ -4632,8 +4632,8 @@ export type Database = {
       };
       lic_ledgra_chaves: {
         Row: {
-          cliente_id: string;
           chave_hash: string;
+          cliente_id: string;
           criada_em: string;
           criada_por: string | null;
           id: string;
@@ -4646,8 +4646,8 @@ export type Database = {
           ultimo_uso_situacao: string | null;
         };
         Insert: {
-          cliente_id: string;
           chave_hash: string;
+          cliente_id: string;
           criada_em?: string;
           criada_por?: string | null;
           id?: string;
@@ -4660,8 +4660,8 @@ export type Database = {
           ultimo_uso_situacao?: string | null;
         };
         Update: {
-          cliente_id?: string;
           chave_hash?: string;
+          cliente_id?: string;
           criada_em?: string;
           criada_por?: string | null;
           id?: string;
@@ -4673,7 +4673,22 @@ export type Database = {
           ultimo_uso_em?: string | null;
           ultimo_uso_situacao?: string | null;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "lic_ledgra_chaves_cliente_id_fkey";
+            columns: ["cliente_id"];
+            isOneToOne: false;
+            referencedRelation: "clientes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "lic_ledgra_chaves_org_id_fkey";
+            columns: ["org_id"];
+            isOneToOne: false;
+            referencedRelation: "organizacoes";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       lic_parametros: {
         Row: {
@@ -4792,8 +4807,8 @@ export type Database = {
           ordem: number;
           org_id: string;
           preco: number;
-          slug: string;
           sistema: string;
+          slug: string;
         };
         Insert: {
           ativo?: boolean;
@@ -4804,8 +4819,8 @@ export type Database = {
           ordem?: number;
           org_id: string;
           preco?: number;
-          slug: string;
           sistema?: string;
+          slug: string;
         };
         Update: {
           ativo?: boolean;
@@ -4816,8 +4831,8 @@ export type Database = {
           ordem?: number;
           org_id?: string;
           preco?: number;
-          slug?: string;
           sistema?: string;
+          slug?: string;
         };
         Relationships: [
           {
@@ -7393,6 +7408,7 @@ export type Database = {
         Returns: undefined;
       };
       hub_conta_existe: { Args: { p_email: string }; Returns: boolean };
+      hub_conta_id: { Args: { p_email: string }; Returns: string };
       hub_convidar: {
         Args: {
           p_apps?: Json;
@@ -7460,11 +7476,13 @@ export type Database = {
         Returns: Json;
       };
       hub_pode_enviar_convite: { Args: { p_email: string }; Returns: boolean };
+      hub_pode_senha_provisoria: { Args: { p_email: string }; Returns: boolean };
       hub_pode_ver_link_convite: { Args: { p_email: string }; Returns: boolean };
       hub_receber_arquivo_temp: {
         Args: { p_chave: string; p_dados: string };
         Returns: boolean;
       };
+      hub_senha_trocada: { Args: never; Returns: undefined };
       hub_situacao_contas: {
         Args: { p_org: string };
         Returns: {
@@ -7530,8 +7548,14 @@ export type Database = {
         Returns: number;
       };
       lic_ledgra_chave_gerar: { Args: { p_cliente: string }; Returns: string };
-      lic_ledgra_chave_revogar: { Args: { p_id: string; p_motivo: string }; Returns: undefined };
-      lic_ledgra_validar: { Args: { p_chave: string; p_cnpj: string }; Returns: Json };
+      lic_ledgra_chave_revogar: {
+        Args: { p_id: string; p_motivo: string };
+        Returns: undefined;
+      };
+      lic_ledgra_validar: {
+        Args: { p_chave: string; p_cnpj: string };
+        Returns: Json;
+      };
       lic_reajustar_contrato: {
         Args: { p_contrato: string; p_obs?: string; p_percentual: number };
         Returns: number;
