@@ -75,7 +75,7 @@ export function Cadastro({
     aoCadastrar(
       r.link
         ? `${nome || email} foi cadastrado, mas o e-mail não pôde ser enviado. Mande o acesso pelo WhatsApp:`
-        : `${nome || email} foi cadastrado, mas o e-mail não pôde ser enviado${r.erro ? ` (${r.erro})` : ""}. Use “Link para WhatsApp” na linha da pessoa para mandar o acesso por lá.`,
+        : `${nome || email} foi cadastrado, mas o e-mail não pôde ser enviado${r.erro ? ` (${r.erro})` : ""}. Use “Link para WhatsApp” em “Convites aguardando”, logo abaixo da lista, para mandar o acesso por lá.`,
       r.link,
     );
   }

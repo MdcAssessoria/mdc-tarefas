@@ -90,6 +90,13 @@ sequenceDiagram
     HUB->>DB: gatilho aplicar_convites liga a conta à organização e ao perfil
 ```
 
+Quando o e-mail não sai (SMTP lento ou bloqueado), a pessoa fica em **Convites aguardando** (`convites_pendentes`), logo
+abaixo da lista da equipe, com **Link para WhatsApp**, **Reenviar e-mail** e **Cancelar convite** (12/11/2026). O link
+para WhatsApp cria a conta sem e-mail (`generateLink`) e, ao abrir, a pessoa passa para a lista da equipe como
+"Aguardando criar a senha". Conta que já existe e ainda não tem senha recebe o e-mail de "criar senha" (recuperação) e
+continua podendo receber link (069); a lista só mostra "ativa" quem já criou a senha (070). E-mail que estoura o tempo
+não devolve link na hora, porque o envio atrasado do Supabase criaria outro link e anularia o primeiro.
+
 ## 5.5 Cuidados que valem para qualquer mudança
 
 - **Nunca** use a chave `service_role` no navegador. O app usa só a chave publicável (pública por natureza).

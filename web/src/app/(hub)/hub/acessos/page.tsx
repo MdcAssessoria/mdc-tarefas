@@ -14,6 +14,7 @@ import type { Json } from "@/lib/database.types";
 import { ADMIN } from "./_componentes/niveis";
 import { LinkCopiavel } from "./_componentes/LinkCopiavel";
 import { LinhaPessoa } from "./_componentes/LinhaPessoa";
+import { ConvitesAguardando, type ConviteAguardando } from "./_componentes/ConvitesAguardando";
 import { Perfis } from "./_componentes/Perfis";
 import { Cadastro } from "./_componentes/Cadastro";
 import { EditarPessoa } from "./_componentes/EditarPessoa";
@@ -41,6 +42,7 @@ function Acessos() {
   const [perfis, setPerfis] = useState<Perfil[]>([]);
   const [contas, setContas] = useState<Map<string, Conta>>(new Map());
   const [historico, setHistorico] = useState<Auditoria[]>([]);
+  const [aguardando, setAguardando] = useState<ConviteAguardando[]>([]);
   const [erro, setErro] = useState<string | null>(null);
   const [aviso, setAviso] = useState<{ texto: string; link?: string; nome?: string } | null>(null);
   const [convite, setConvite] = useState(false);
@@ -53,19 +55,21 @@ function Acessos() {
 
   const carregar = useCallback(async () => {
     const sb = supabase();
-    const [a, p, h, c] = await Promise.all([
+    const [a, p, h, c, cv] = await Promise.all([
       sb.from("hub_acessos").select("user_id,app,papel").eq("org_id", org.id),
       sb.from("hub_perfis").select("id,nome,apps").eq("org_id", org.id).eq("ativo", true).order("nome"),
       sb.from("hub_auditoria").select("*").eq("org_id", org.id).order("em", { ascending: false }).limit(60),
       sb.rpc("hub_situacao_contas", { p_org: org.id }),
+      sb.rpc("convites_pendentes", { p_org: org.id }),
     ]);
-    const falha = a.error ?? p.error ?? h.error ?? c.error;
+    const falha = a.error ?? p.error ?? h.error ?? c.error ?? cv.error;
     if (falha) setErro(traduzirErro(falha));
     if (a.error) return;
     setAcessos(a.data as Acesso[]);
     setPerfis((p.data as Perfil[]) ?? []);
     setHistorico((h.data as Auditoria[]) ?? []);
     setContas(new Map(((c.data as Conta[]) ?? []).map((x) => [x.user_id, x])));
+    setAguardando((cv.data as ConviteAguardando[]) ?? []);
   }, [org.id]);
 
   useEffect(() => {
@@ -150,7 +154,7 @@ function Acessos() {
     await depois();
   }
 
-  async function reenviar(m: Membro) {
+  async function reenviar(m: { email?: string | null; nome: string }) {
     if (!m.email) return;
     const r = await enviarConvite(m.email, m.nome);
     if (r.erro) return falhar(r.erro);
@@ -166,15 +170,31 @@ function Acessos() {
   }
 
   /** Link de criar senha para mandar pelo WhatsApp (o link do e-mail anterior deixa de valer). */
-  async function linkWhats(m: Membro) {
+  async function linkWhats(m: { email?: string | null; nome: string }) {
     if (!m.email) return;
     const r = await gerarLinkConvite(m.email, m.nome);
     if (!r.link) return falhar(r.erro ?? "Não foi possível gerar o link agora.");
+    void depois(); // o link cria a conta: a pessoa passa dos convites aguardando para a lista da equipe
     avisar(
       `Link de criar senha de ${m.nome} pronto. Se ${m.nome.split(" ")[0]} já recebeu o e-mail, aquele link deixa de valer: use este.`,
       r.link,
       m.nome,
     );
+  }
+
+  async function cancelarConvite(c: ConviteAguardando) {
+    const nome = c.nome || c.email;
+    const sim = await confirmar({
+      titulo: `Cancelar o convite de ${nome}?`,
+      descricao: "O link enviado deixa de dar acesso. Se precisar, cadastre a pessoa de novo depois.",
+      botao: "Cancelar convite",
+      perigo: true,
+    });
+    if (!sim) return;
+    const { error } = await supabase().rpc("hub_cancelar_convite", { p_org: org.id, p_email: c.email });
+    if (error) return falhar(error);
+    avisar(`Convite de ${nome} cancelado.`);
+    await depois();
   }
 
   const ativos = membros.filter((m) => m.ativo);
@@ -316,6 +336,15 @@ function Acessos() {
             </details>
           )}
         </div>
+      )}
+
+      {aba === "pessoas" && (
+        <ConvitesAguardando
+          convites={aguardando}
+          aoLink={(c) => linkWhats({ email: c.email, nome: c.nome || c.email })}
+          aoReenviar={(c) => reenviar({ email: c.email, nome: c.nome || c.email })}
+          aoCancelar={cancelarConvite}
+        />
       )}
 
       {aba === "clientes" && <AcessosClientes aoAviso={avisar} aoErro={falhar} />}

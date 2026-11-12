@@ -1205,6 +1205,11 @@ const INTERACOES = {
     await janela.getByRole("radio", { name: /Usar um perfil pronto/ }).click();
     await janela.getByLabel("Perfil de acesso").waitFor({ timeout: 3000 });
     await p.keyboard.press("Escape");
+    // convite cadastrado sem conta (e-mail não saiu) aparece em "Convites aguardando", com o link para WhatsApp
+    const aguardando = p.getByRole("region", { name: /Convites aguardando/ });
+    await aguardando.getByText("jean@exemplo.com").waitFor({ timeout: 3000 });
+    await aguardando.getByRole("button", { name: "Link para WhatsApp" }).waitFor({ timeout: 3000 });
+    await foto("convites-aguardando", { soTela: true });
   },
   "/config": async (p, foto) => {
     for (const aba of await p.getByRole("tab").all()) {

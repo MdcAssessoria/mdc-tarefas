@@ -1577,6 +1577,7 @@ export const RPCS = {
   }),
   hub_meus_apps: () => APPS,
   hub_situacao_contas: () => [{ user_id: EU, confirmado: true, ultimo_acesso: momento(0) }],
+  convites_pendentes: () => [{ email: "jean@exemplo.com", nome: "Jean Exemplo", papel: "analista", setor_id: null, criado_em: momento(0) }],
   hub_pendencias_membro: () => ({ tarefas: 0, clientes: 0 }),
   portal_minhas_empresas: () => [
     {
