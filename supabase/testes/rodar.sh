@@ -161,3 +161,8 @@ $P -f "$R/testes/134_notas_saida_065.sql" 2>&1 | grep -v "^SET$"
 # 066: código interno do retransmissor da NFS-e (envio pelo site, Node)
 $P -v ON_ERROR_STOP=1 -f "$R/migrations/066_nfse_retransmissor.sql" 2>&1 | grep -v NOTICE || true
 $P -f "$R/testes/135_relay_066.sql" 2>&1 | grep -v "^SET$"
+# 069/070: convite/link de criar senha para conta confirmada pelo link mas ainda sem senha (e a lista de Acessos)
+$P -v ON_ERROR_STOP=1 -f "$R/migrations/069_convite_sem_senha.sql" 2>&1 | grep -v NOTICE || true
+$P -f "$R/testes/136_convite_069.sql" 2>&1 | grep -v "^SET$"
+$P -v ON_ERROR_STOP=1 -f "$R/migrations/070_situacao_conta_senha.sql" 2>&1 | grep -v NOTICE || true
+$P -f "$R/testes/137_situacao_070.sql" 2>&1 | grep -v "^SET$"

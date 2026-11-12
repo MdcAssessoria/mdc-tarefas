@@ -52,9 +52,21 @@ Deno.serve(async (req) => {
 
   const nome = String(corpo.nome ?? "").trim().slice(0, 120) || undefined;
   if (!corpo.so_link) {
-    const { error } = await servico.auth.admin.inviteUserByEmail(email, { redirectTo, data: nome ? { nome } : undefined });
+    // conta já criada pelo convite anterior (e ainda sem senha): o e-mail sai como "criar/redefinir senha"
+    const { data: jaTem } = await servico.rpc("hub_conta_existe", { p_email: email });
+    const { error } = jaTem === true
+      ? await servico.auth.resetPasswordForEmail(email, { redirectTo })
+      : await servico.auth.admin.inviteUserByEmail(email, { redirectTo, data: nome ? { nome } : undefined });
     if (!error) return json(200, { enviado: true });
-    console.error("convite por e-mail falhou", error.message);
+    console.error("convite por e-mail falhou", error.status ?? "", error.message);
+    // E-mail que demorou (servidor de e-mail lento): o Supabase termina o envio depois e cria um link novo, que anularia
+    // o link gerado aqui (12/11/2026). Então não entrega link agora: pede para gerar o link daqui a pouco.
+    if ((error.status ?? 0) >= 500 || /timeout|deadline|tempo/i.test(error.message)) {
+      return json(502, {
+        erro: "O e-mail de convite demorou para sair e pode chegar atrasado. Se não chegar, espere 1 minuto e use " +
+          "\"Link para WhatsApp\" (o link novo substitui o do e-mail).",
+      });
+    }
   }
 
   // link para repassar (WhatsApp): só para quem pode e só para conta que nunca entrou

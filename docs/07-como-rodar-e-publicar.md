@@ -151,6 +151,12 @@ npx supabase functions deploy convite --project-ref bulqqdgfrrpqquqvjjfa --impor
   a 063 corrige o DELETE da carga, que o Supabase exige com WHERE); 5 funções conferidas por md5; Função `fiscal-tabelas`
   v1 publicada (pacote único, `verify_jwt = false`, token interno do Vault) e agendada toda segunda 07h10; 1ª carga feita
   pelo portal gov.br: versão 1.02.00, 997 pares em 208 itens; avisos de segurança sem novidade; tipos regenerados.
+- **12/11/2026 (tarde):** 069 e 070 aplicadas e `convite` v8. Conta que abriu o link mas não criou a senha volta a
+  receber convite e link (antes ficava travada), e a lista de Acessos só mostra "ativa" quem já tem senha. Na Função, conta
+  já criada recebe o e-mail de "criar senha" (recuperação) em vez de novo convite, e e-mail que demora (SMTP lento) não
+  devolve mais link na hora: o envio atrasado do Supabase criava um link novo e anulava o do WhatsApp. SMTP autenticado
+  liberado só na caixa `hub@` (Microsoft 365); o bloqueio geral da organização continua ligado. A Microsoft desliga por
+  padrão o SMTP com senha no fim de 12/2026: o caminho definitivo é o Graph (seção 7.7).
 - **12/11/2026:** DNS de `hub.mdcassessoria.com` no ar. `convite` v7 publicada com a origem `hub.mdcassessoria.com` (a v6
   no ar ainda não tinha: o convite feito pelo novo endereço falhava no navegador). No Supabase › Authentication › URL
   Configuration: Site URL `https://hub.mdcassessoria.com/hub-mdc` e Redirect URL `https://hub.mdcassessoria.com/hub-mdc/**`.
