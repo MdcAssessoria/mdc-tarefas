@@ -4,6 +4,8 @@
 // Link para repassar pelo WhatsApp: com { so_link: true } (ou quando o e-mail falha) devolve o link de criar senha,
 // só para quem pode convidar aquela pessoa e só se a conta nunca entrou (hub_pode_ver_link_convite, migração 024).
 // Gerar um link novo invalida o do e-mail anterior (o Supabase guarda um link válido por conta).
+// Senha provisória ({ senha_provisoria: true }, migração 071): cria ou redefine a conta com uma senha aleatória que o
+// administrador manda pelo WhatsApp; a marca trocar_senha obriga a pessoa a criar a própria senha no 1º acesso.
 // Com os segredos GRAPH_* o e-mail sai pelo Microsoft Graph (caixa hub@); sem eles, pelo SMTP do Supabase.
 import { createClient } from "@supabase/supabase-js";
 import { enviarPeloGraph, lerGraph } from "../_email/graph.ts";
@@ -12,6 +14,15 @@ import { ASSUNTO_CONVITE, ASSUNTO_SENHA, htmlConvite, htmlSenha } from "../_emai
 // endereços onde o Hub roda; o link do convite só pode voltar para um deles
 const ORIGENS = ["https://mdcassessoria.com", "https://www.mdcassessoria.com", "https://hub.mdcassessoria.com", "https://mdc-tarefas.vercel.app"];
 const BASE = "/hub-mdc";
+
+// Senha provisória: "Mdc-" + 4 letras + "-" + 4 números (sem letras que confundem: I, L, O). Aleatória a cada vez.
+function senhaProvisoria(): string {
+  const letras = "ABCDEFGHJKMNPQRSTUVWXYZ";
+  const n = crypto.getRandomValues(new Uint32Array(8));
+  const l = Array.from(n.slice(0, 4), (x) => letras[x % letras.length]).join("");
+  const d = Array.from(n.slice(4), (x) => String(x % 10)).join("");
+  return `Mdc-${l}-${d}`;
+}
 
 const CORS = {
   "Access-Control-Allow-Origin": "https://mdc-tarefas.vercel.app",
@@ -34,7 +45,7 @@ Deno.serve(async (req) => {
   const auth = req.headers.get("Authorization");
   if (!auth) return json(401, { erro: "Faça login." });
 
-  let corpo: { email?: string; nome?: string; origem?: string; so_link?: boolean } = {};
+  let corpo: { email?: string; nome?: string; origem?: string; so_link?: boolean; senha_provisoria?: boolean } = {};
   try {
     corpo = await req.json();
   } catch {
@@ -48,6 +59,30 @@ Deno.serve(async (req) => {
   const url = Deno.env.get("SUPABASE_URL")!;
   const usuario = createClient(url, Deno.env.get("SUPABASE_ANON_KEY")!, { global: { headers: { Authorization: auth } }, auth: { persistSession: false } });
   const servico = createClient(url, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, { auth: { persistSession: false } });
+
+  // senha provisória (071): o administrador recebe uma senha para mandar pelo WhatsApp; no 1º acesso a pessoa troca
+  if (corpo.senha_provisoria) {
+    const { data: podeSenha, error: eSenha } = await usuario.rpc("hub_pode_senha_provisoria", { p_email: email });
+    if (eSenha) return json(401, { erro: "Sessão expirada. Entre de novo." });
+    if (!podeSenha) return json(403, { erro: "Você não pode gerar a senha desta pessoa." });
+    const senha = senhaProvisoria();
+    const nomeP = String(corpo.nome ?? "").trim().slice(0, 120) || undefined;
+    const { data: id } = await servico.rpc("hub_conta_id", { p_email: email });
+    const { error: eConta } = id
+      ? await servico.auth.admin.updateUserById(String(id), { password: senha, email_confirm: true, app_metadata: { trocar_senha: true } })
+      : await servico.auth.admin.createUser({
+          email,
+          password: senha,
+          email_confirm: true,
+          user_metadata: nomeP ? { nome: nomeP } : undefined,
+          app_metadata: { trocar_senha: true },
+        });
+    if (eConta) {
+      console.error("senha provisória falhou:", eConta.status ?? "", eConta.message);
+      return json(500, { erro: "Não foi possível criar a senha provisória agora. Tente de novo em instantes." });
+    }
+    return json(200, { enviado: false, senha, endereco: `${origem}${BASE}/login` });
+  }
 
   const { data: pode, error: ePode } = await usuario.rpc("hub_pode_enviar_convite", { p_email: email });
   if (ePode) return json(/limite/i.test(ePode.message) ? 429 : 401, { erro: /limite/i.test(ePode.message) ? ePode.message : "Sessão expirada. Entre de novo." });

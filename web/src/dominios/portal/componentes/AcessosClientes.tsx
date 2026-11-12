@@ -12,7 +12,8 @@ import { nomeCliente } from "@/dominios/clientes/nome";
 import { perfilDasPerms } from "@/dominios/portal/permissoes";
 import type { VinculoCliente } from "@/dominios/portal/tipos";
 import { EditorCliente } from "./EditorCliente";
-import { gerarLinkConvite } from "@/dominios/acessos/convite";
+import { gerarSenhaProvisoria } from "@/dominios/acessos/convite";
+import type { SenhaGerada } from "@/dominios/acessos/convite";
 import { JanelaMotivo } from "@/components/ui/JanelaMotivo";
 import { exigir } from "@/lib/exigir";
 
@@ -20,7 +21,7 @@ export function AcessosClientes({
   aoAviso,
   aoErro,
 }: {
-  aoAviso: (t: string, link?: string, nome?: string) => void;
+  aoAviso: (t: string, senha?: SenhaGerada, nome?: string) => void;
   aoErro: (e: unknown) => void;
 }) {
   const { org, clientes, clientePorId } = useOrg();
@@ -68,11 +69,16 @@ export function AcessosClientes({
 
   const pessoaEditada = pessoas.find((p) => p.email === editar) ?? null;
 
-  /** Link de criar senha para mandar pelo WhatsApp (o link do e-mail anterior deixa de valer). */
-  async function linkWhats(email: string, nome: string) {
-    const r = await gerarLinkConvite(email, nome === email ? undefined : nome);
-    if (!r.link) return aoErro(r.erro ?? "Não foi possível gerar o link agora.");
-    aoAviso(`Link de criar senha de ${nome} pronto. Se a pessoa já recebeu o e-mail, aquele link deixa de valer: use este.`, r.link, nome);
+  /** Senha provisória para mandar pelo WhatsApp (071); no primeiro acesso o cliente cria a própria senha. */
+  async function senhaProvisoria(email: string, nome: string) {
+    const r = await gerarSenhaProvisoria(email, nome === email ? undefined : nome);
+    if (!r.senha) return aoErro(r.erro ?? "Não foi possível gerar a senha agora.");
+    aoAviso(
+      `Senha provisória de ${nome} pronta. Mande pelo WhatsApp; no primeiro acesso o HUB pede para criar a própria senha.`,
+      { senha: r.senha, email, endereco: r.endereco ?? "" },
+      nome === email ? undefined : nome,
+    );
+    await carregar();
   }
 
   return (
@@ -125,9 +131,9 @@ export function AcessosClientes({
                     <div className="text-xs text-neutral-500">{p.email}</div>
                     {pendente && (
                       <div className="mt-1 space-y-1">
-                        <span className="chip bg-amber-50 text-amber-900">Aguardando criar a senha</span>
-                        <button className="btn-link block text-sm" onClick={() => linkWhats(p.email, p.nome)}>
-                          Link para WhatsApp
+                        <span className="chip bg-amber-50 text-amber-900">Sem acesso ainda</span>
+                        <button className="btn-link block text-sm" onClick={() => senhaProvisoria(p.email, p.nome)}>
+                          Gerar senha provisória
                         </button>
                         <button
                           className="btn-link block text-sm !text-[var(--perigo)]"
@@ -192,10 +198,10 @@ export function AcessosClientes({
             setNovo(false);
             setEditar(null);
           }}
-          aoSalvar={async (t, link) => {
+          aoSalvar={async (t, senha, nome) => {
             setNovo(false);
             setEditar(null);
-            aoAviso(t, link);
+            aoAviso(t, senha, nome);
             await carregar();
           }}
           aoErro={aoErro}

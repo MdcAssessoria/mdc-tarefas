@@ -6,7 +6,7 @@ import { useId, useState } from "react";
 import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { supabase } from "@/lib/supabase";
 import { traduzirErro } from "@/lib/erros";
-import { enviarConvite } from "@/dominios/acessos/convite";
+import { gerarSenhaProvisoria, type SenhaGerada } from "@/dominios/acessos/convite";
 import { PAPEIS } from "@/dominios/organizacao/tipos";
 import type { Papel } from "@/dominios/organizacao/tipos";
 import type { HubApp, Perfil } from "@/dominios/acessos/tipos";
@@ -27,7 +27,7 @@ export function Cadastro({
   setores: { id: string; nome: string }[];
   ferramentas: HubApp[];
   aoFechar: () => void;
-  aoCadastrar: (txt: string, link?: string) => void;
+  aoCadastrar: (txt: string, senha?: SenhaGerada, nome?: string) => void;
 }) {
   const { org } = useOrg();
   const idForm = useId();
@@ -66,24 +66,24 @@ export function Cadastro({
       setEnviando(false);
       return aoCadastrar(`${nome || email} já tinha conta no Hub e recebeu o acesso agora.`);
     }
-    const r = await enviarConvite(email, nome);
+    // senha provisória (071): sem e-mail; o administrador manda pelo WhatsApp e a pessoa troca no 1º acesso
+    const r = await gerarSenhaProvisoria(email, nome);
     setEnviando(false);
-    if (r.enviado)
+    if (r.senha)
       return aoCadastrar(
-        `Convite enviado para ${email}. A pessoa recebe um e-mail com o link para criar a senha. Se preferir, use também “Link para WhatsApp” na linha da pessoa.`,
+        `${nome || email} foi cadastrado. Mande a senha provisória pelo WhatsApp; no primeiro acesso o HUB pede para criar a própria senha.`,
+        { senha: r.senha, email: email.trim().toLowerCase(), endereco: r.endereco ?? "" },
+        nome || email,
       );
     aoCadastrar(
-      r.link
-        ? `${nome || email} foi cadastrado, mas o e-mail não pôde ser enviado. Mande o acesso pelo WhatsApp:`
-        : `${nome || email} foi cadastrado, mas o e-mail não pôde ser enviado${r.erro ? ` (${r.erro})` : ""}. Use “Link para WhatsApp” em “Convites aguardando”, logo abaixo da lista, para mandar o acesso por lá.`,
-      r.link,
+      `${nome || email} foi cadastrado, mas a senha provisória não foi gerada${r.erro ? ` (${r.erro})` : ""}. Use “Gerar senha provisória” em “Convites aguardando”.`,
     );
   }
 
   return (
     <Modal
       titulo="Cadastrar pessoa da equipe"
-      descricao="Escolha o que a pessoa vai ver no HUB. Ela recebe um e-mail e cria a própria senha; você não define senha."
+      descricao="Escolha o que a pessoa vai ver no HUB. O HUB gera uma senha provisória para você mandar pelo WhatsApp; no primeiro acesso a pessoa cria a própria senha."
       aoFechar={aoFechar}
       largura="6xl"
       avisoRodape={
@@ -99,8 +99,8 @@ export function Cadastro({
             Voltar
           </button>
           <button type="submit" form={idForm} className="btn-primario" disabled={enviando}>
-            <Icone nome="enviar" className="h-4 w-4" />
-            {enviando ? "Enviando…" : "Cadastrar e enviar convite"}
+            <Icone nome="escudo" className="h-4 w-4" />
+            {enviando ? "Cadastrando…" : "Cadastrar e gerar senha"}
           </button>
         </>
       }

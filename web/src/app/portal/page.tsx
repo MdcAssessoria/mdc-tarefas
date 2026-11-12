@@ -7,6 +7,7 @@ import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 import { traduzirErro } from "@/lib/erros";
 import { Icone } from "@/components/ui/Icone";
+import { precisaTrocarSenha } from "@/lib/senhaProvisoria";
 import { caminho } from "@/lib/caminho";
 import { nomeCliente } from "@/dominios/clientes/nome";
 import { CHAVES, gravarLocal, lerLocal } from "@/lib/armazenamentoLocal";
@@ -55,6 +56,7 @@ export default function Portal() {
 
   useEffect(() => {
     if (session === null) window.location.replace(caminho("/login?next=/portal"));
+    else if (precisaTrocarSenha(session)) window.location.replace(caminho("/login?trocar=1&next=/portal"));
     if (!session) return;
     supabase()
       .rpc("portal_minhas_empresas")

@@ -6,6 +6,10 @@ export interface RespostaConvite {
   enviado: boolean;
   link?: string;
   erro?: string;
+  /** Senha provisória (só no modo senha_provisoria): aparece uma vez, para o administrador repassar. */
+  senha?: string;
+  /** Endereço de entrada do HUB, para ir na mensagem junto com a senha. */
+  endereco?: string;
 }
 
 /**
@@ -25,7 +29,22 @@ export async function gerarLinkConvite(email: string, nome?: string): Promise<Re
   return chamar({ email, nome, so_link: true });
 }
 
-async function chamar(pedido: { email: string; nome?: string; so_link?: boolean }): Promise<RespostaConvite> {
+/**
+ * Senha provisória (071): cria a conta (ou redefine a senha de quem já tem) com uma senha aleatória para mandar pelo
+ * WhatsApp. No primeiro acesso o HUB obriga a pessoa a criar a própria senha. Não depende de e-mail.
+ */
+/** Senha provisória pronta para repassar (tela de Acessos e do Portal). */
+export interface SenhaGerada {
+  senha: string;
+  email: string;
+  endereco: string;
+}
+
+export async function gerarSenhaProvisoria(email: string, nome?: string): Promise<RespostaConvite> {
+  return chamar({ email, nome, senha_provisoria: true });
+}
+
+async function chamar(pedido: { email: string; nome?: string; so_link?: boolean; senha_provisoria?: boolean }): Promise<RespostaConvite> {
   try {
     return await chamarFuncao<RespostaConvite>("convite", { corpo: { ...pedido, origem: window.location.origin } });
   } catch (e) {

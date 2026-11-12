@@ -5,14 +5,15 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { supabase } from "@/lib/supabase";
+import { caminho } from "@/lib/caminho";
 import { traduzirErro } from "@/lib/erros";
-import { enviarConvite, gerarLinkConvite } from "@/dominios/acessos/convite";
+import { gerarSenhaProvisoria, type SenhaGerada } from "@/dominios/acessos/convite";
 import type { Membro, Papel } from "@/dominios/organizacao/tipos";
 import { fmtDataHora } from "@/lib/formato/datas";
 import type { Acesso, Auditoria, Conta, Perfil } from "@/dominios/acessos/tipos";
 import type { Json } from "@/lib/database.types";
 import { ADMIN } from "./_componentes/niveis";
-import { LinkCopiavel } from "./_componentes/LinkCopiavel";
+import { SenhaCopiavel } from "./_componentes/SenhaCopiavel";
 import { LinhaPessoa } from "./_componentes/LinhaPessoa";
 import { ConvitesAguardando, type ConviteAguardando } from "./_componentes/ConvitesAguardando";
 import { Perfis } from "./_componentes/Perfis";
@@ -44,7 +45,7 @@ function Acessos() {
   const [historico, setHistorico] = useState<Auditoria[]>([]);
   const [aguardando, setAguardando] = useState<ConviteAguardando[]>([]);
   const [erro, setErro] = useState<string | null>(null);
-  const [aviso, setAviso] = useState<{ texto: string; link?: string; nome?: string } | null>(null);
+  const [aviso, setAviso] = useState<{ texto: string; senha?: SenhaGerada; nome?: string } | null>(null);
   const [convite, setConvite] = useState(false);
   const [editando, setEditando] = useState<Membro | null>(null);
   const [transferir, setTransferir] = useState<{ m: Membro; inativar: boolean } | null>(null);
@@ -78,9 +79,9 @@ function Acessos() {
 
   if (papel !== "admin") return <p className="text-sm text-neutral-600">Apenas administradores gerenciam acessos.</p>;
 
-  const avisar = (texto: string, link?: string, nome?: string) => {
+  const avisar = (texto: string, senha?: SenhaGerada, nome?: string) => {
     setErro(null);
-    setAviso({ texto, link, nome });
+    setAviso({ texto, senha, nome });
   };
   const falhar = (e: unknown) => {
     setAviso(null);
@@ -154,32 +155,25 @@ function Acessos() {
     await depois();
   }
 
-  async function reenviar(m: { email?: string | null; nome: string }) {
+  /** Senha provisória para mandar pelo WhatsApp (071): primeiro acesso ou senha esquecida; a anterior deixa de valer. */
+  async function gerarSenha(m: { email?: string | null; nome: string }, redefinir = false) {
     if (!m.email) return;
-    const r = await enviarConvite(m.email, m.nome);
-    if (r.erro) return falhar(r.erro);
+    if (redefinir) {
+      const sim = await confirmar({
+        titulo: `Redefinir a senha de ${m.nome}?`,
+        descricao: "A senha atual deixa de valer. A pessoa entra com a senha provisória e cria uma nova no primeiro acesso.",
+        botao: "Gerar senha provisória",
+      });
+      if (!sim) return;
+    }
+    const r = await gerarSenhaProvisoria(m.email, m.nome);
+    if (!r.senha) return falhar(r.erro ?? "Não foi possível gerar a senha agora.");
     avisar(
-      r.enviado
-        ? `Convite reenviado para ${m.email}.`
-        : r.link
-          ? `O e-mail não pôde ser enviado agora. Mande o acesso de ${m.nome} pelo WhatsApp:`
-          : `O e-mail não pôde ser enviado agora. Use “Link para WhatsApp” na linha da pessoa para mandar o acesso por lá.`,
-      r.link,
+      `Senha provisória de ${m.nome} pronta. Mande pelo WhatsApp; no primeiro acesso o HUB pede para criar a própria senha.`,
+      { senha: r.senha, email: m.email, endereco: r.endereco ?? `${window.location.origin}${caminho("/login")}` },
       m.nome,
     );
-  }
-
-  /** Link de criar senha para mandar pelo WhatsApp (o link do e-mail anterior deixa de valer). */
-  async function linkWhats(m: { email?: string | null; nome: string }) {
-    if (!m.email) return;
-    const r = await gerarLinkConvite(m.email, m.nome);
-    if (!r.link) return falhar(r.erro ?? "Não foi possível gerar o link agora.");
-    void depois(); // o link cria a conta: a pessoa passa dos convites aguardando para a lista da equipe
-    avisar(
-      `Link de criar senha de ${m.nome} pronto. Se ${m.nome.split(" ")[0]} já recebeu o e-mail, aquele link deixa de valer: use este.`,
-      r.link,
-      m.nome,
-    );
+    await depois(); // convite vira conta: a pessoa passa para a lista da equipe
   }
 
   async function cancelarConvite(c: ConviteAguardando) {
@@ -238,7 +232,13 @@ function Acessos() {
         {aviso && (
           <div className="rounded-md bg-emerald-50 p-3 text-sm text-emerald-900">
             {aviso.texto}
-            {aviso.link && <LinkCopiavel link={aviso.link} nome={aviso.nome} />}
+            {aviso.senha && (
+              <SenhaCopiavel
+                {...aviso.senha}
+                endereco={aviso.senha.endereco || `${window.location.origin}${caminho("/login")}`}
+                nome={aviso.nome}
+              />
+            )}
           </div>
         )}
       </div>
@@ -307,8 +307,7 @@ function Acessos() {
                   conta={contas.get(m.user_id)}
                   aoVincular={(p) => vincular(m, p)}
                   aoDefinir={(app, v) => definirManual(m, app, v)}
-                  aoReenviar={() => reenviar(m)}
-                  aoLinkWhats={() => linkWhats(m)}
+                  aoSenha={() => gerarSenha(m, !!contas.get(m.user_id)?.confirmado)}
                   aoEditar={() => setEditando(m)}
                   aoInativar={(pendente) => inativar(m, pendente)}
                   aoTransferir={() => setTransferir({ m, inativar: false })}
@@ -341,8 +340,7 @@ function Acessos() {
       {aba === "pessoas" && (
         <ConvitesAguardando
           convites={aguardando}
-          aoLink={(c) => linkWhats({ email: c.email, nome: c.nome || c.email })}
-          aoReenviar={(c) => reenviar({ email: c.email, nome: c.nome || c.email })}
+          aoSenha={(c) => gerarSenha({ email: c.email, nome: c.nome || c.email })}
           aoCancelar={cancelarConvite}
         />
       )}
@@ -429,8 +427,8 @@ function Acessos() {
           setores={setores}
           ferramentas={ferramentas}
           aoFechar={() => setConvite(false)}
-          aoCadastrar={async (txt, link) => {
-            avisar(txt, link);
+          aoCadastrar={async (txt, senha, nome) => {
+            avisar(txt, senha, nome);
             setConvite(false);
             setAba("pessoas");
             await depois();

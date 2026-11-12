@@ -8,6 +8,7 @@ import type { HubApp, PapelApp } from "@/dominios/acessos/tipos";
 import type { Membro, Organizacao, Papel, Setor } from "./tipos";
 import { podeNoApp } from "@/dominios/acessos/permissoes";
 import { traduzirErro } from "@/lib/erros";
+import { precisaTrocarSenha } from "@/lib/senhaProvisoria";
 import { caminho } from "@/lib/caminho";
 import { CHAVES, gravarLocal, lerLocal } from "@/lib/armazenamentoLocal";
 
@@ -82,6 +83,9 @@ export function OrgProvider({ children }: { children: React.ReactNode }) {
     if (session === null) {
       const next = encodeURIComponent(window.location.pathname + window.location.search);
       window.location.replace(caminho(`/login?next=${next}`));
+    } else if (precisaTrocarSenha(session)) {
+      // entrou com senha provisória: cria a própria senha antes de usar o HUB (071)
+      window.location.replace(caminho("/login?trocar=1"));
     }
   }, [session]);
 

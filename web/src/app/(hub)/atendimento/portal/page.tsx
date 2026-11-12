@@ -8,10 +8,12 @@ import { traduzirErro } from "@/lib/erros";
 import { AcessosClientes } from "@/dominios/portal/componentes/AcessosClientes";
 import { Aviso } from "@/components/ui/Aviso";
 import { CabecalhoPagina } from "@/components/ui/CabecalhoPagina";
-import { LinkCopiavel } from "@/app/(hub)/hub/acessos/_componentes/LinkCopiavel";
+import { SenhaCopiavel } from "@/app/(hub)/hub/acessos/_componentes/SenhaCopiavel";
+import { caminho } from "@/lib/caminho";
+import type { SenhaGerada } from "@/dominios/acessos/convite";
 
 export default function PaginaAcessosPortal() {
-  const [aviso, setAviso] = useState<{ texto: string; link?: string; nome?: string } | null>(null);
+  const [aviso, setAviso] = useState<{ texto: string; senha?: SenhaGerada; nome?: string } | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   return (
     <div className="space-y-4">
@@ -23,13 +25,19 @@ export default function PaginaAcessosPortal() {
       {aviso && (
         <div role="status" className="rounded-md bg-emerald-50 p-3 text-sm text-emerald-900">
           {aviso.texto}
-          {aviso.link && <LinkCopiavel link={aviso.link} nome={aviso.nome} />}
+          {aviso.senha && (
+            <SenhaCopiavel
+              {...aviso.senha}
+              endereco={aviso.senha.endereco || `${window.location.origin}${caminho("/login")}`}
+              nome={aviso.nome}
+            />
+          )}
         </div>
       )}
       <AcessosClientes
-        aoAviso={(texto, link, nome) => {
+        aoAviso={(texto, senha, nome) => {
           setErro(null);
-          setAviso({ texto, link, nome });
+          setAviso({ texto, senha, nome });
         }}
         aoErro={(e) => {
           setAviso(null);

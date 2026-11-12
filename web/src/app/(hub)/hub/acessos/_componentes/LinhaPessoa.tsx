@@ -19,8 +19,7 @@ export function LinhaPessoa({
   conta,
   aoVincular,
   aoDefinir,
-  aoReenviar,
-  aoLinkWhats,
+  aoSenha,
   aoEditar,
   aoInativar,
   aoTransferir,
@@ -33,8 +32,8 @@ export function LinhaPessoa({
   conta?: Conta;
   aoVincular: (perfil: string) => void;
   aoDefinir: (app: string, valor: string) => void;
-  aoReenviar: () => void;
-  aoLinkWhats: () => void;
+  /** Gera senha provisória (pendente: primeiro acesso; ativa: redefinir a senha esquecida). */
+  aoSenha: () => void;
   aoEditar: () => void;
   aoInativar: (pendente: boolean) => void;
   aoTransferir: () => void;
@@ -118,11 +117,8 @@ export function LinhaPessoa({
         ) : (
           <div className="space-y-1">
             <span className="chip bg-amber-50 text-amber-900">Aguardando criar a senha</span>
-            <button className="btn-link block" onClick={aoReenviar}>
-              Reenviar convite
-            </button>
-            <button className="btn-link block" onClick={aoLinkWhats}>
-              Link para WhatsApp
+            <button className="btn-link block" onClick={aoSenha}>
+              Gerar senha provisória
             </button>
           </div>
         )}
@@ -138,6 +134,11 @@ export function LinhaPessoa({
         >
           Transferir
         </button>
+        {!souEu && conta?.confirmado && (
+          <button className="btn-link mr-3 text-sm" onClick={aoSenha} title="Gera uma senha provisória para a pessoa que esqueceu a dela">
+            Redefinir senha
+          </button>
+        )}
         {!souEu && (
           <button className="btn-link text-sm !text-[var(--perigo)]" onClick={() => aoInativar(!!conta && !conta.confirmado)}>
             {conta && !conta.confirmado ? "Cancelar convite" : "Inativar"}

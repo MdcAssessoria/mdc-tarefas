@@ -67,35 +67,27 @@ Para gravar, a política de `insert/update` costuma exigir `operar`; para exclui
 de negócio (convidar, publicar balancete, transferir trabalho) passam por funções `public.*` que conferem a
 permissão na primeira linha.
 
-## 5.4 Convite e criação de senha
+## 5.4 Acesso novo: senha provisória (desde 12/11/2026)
 
-Ninguém cria conta sozinho: o cadastro público está desligado.
+Ninguém cria conta sozinho: o cadastro público está desligado. O e-mail de convite pela Microsoft ficou complexo de
+configurar, então o acesso passou a ser por **senha provisória** (migração 071, decisão do Edvaldo):
 
-```mermaid
-sequenceDiagram
-    participant Adm as Administrador
-    participant HUB as Tela Pessoas e acessos
-    participant DB as Banco (hub_convidar)
-    participant EF as Edge Function convite
-    participant Mail as hub@mdcassessoria.com
-    participant P as Pessoa convidada
-    Adm->>HUB: nome, e-mail, perfil
-    HUB->>DB: hub_convidar(...)
-    DB-->>HUB: convite registrado
-    HUB->>EF: enviar convite
-    EF->>DB: hub_pode_enviar_convite(e-mail)? (limite 40/dia)
-    EF->>Mail: inviteUserByEmail (modelo "Seu acesso ao HUB-MDC")
-    Mail-->>P: e-mail com link
-    P->>HUB: abre o link, cria a senha (login?convite=1)
-    HUB->>DB: gatilho aplicar_convites liga a conta à organização e ao perfil
-```
+1. O administrador cadastra a pessoa (Pessoas e acessos › Cadastrar pessoa, ou o acesso de cliente no Portal).
+2. O HUB gera uma senha provisória **diferente para cada pessoa** (`Mdc-XXXX-0000`, aleatória), mostrada uma vez só, com
+   "Enviar pelo WhatsApp" e "Copiar mensagem" (endereço, e-mail e senha). Quem pode gerar: `hub_pode_senha_provisoria`
+   (equipe: administrador da organização; Portal: gestor ou Atendimento › gerir). A Função `convite`
+   (`{ senha_provisoria: true }`) cria a conta (`admin.createUser`, já confirmada; os gatilhos de convite ligam à
+   organização ou às empresas do Portal) ou troca a senha de quem já tem conta, e grava `app_metadata.trocar_senha`.
+3. No primeiro acesso, o login vê a marca e abre "Crie sua senha"; o `OrgProvider` e o Portal também mandam para
+   `/login?trocar=1` enquanto a marca existir. Ao salvar, `hub_senha_trocada()` tira a marca da própria conta e a sessão é
+   renovada.
+4. Senha esquecida: "Esqueci a senha" orienta a pedir ao administrador, que usa **Redefinir senha** na linha da pessoa
+   (gera outra provisória; a anterior deixa de valer). Na lista, conta com senha provisória aparece como "Aguardando criar
+   a senha" (`hub_situacao_contas`).
 
-Quando o e-mail não sai (SMTP lento ou bloqueado), a pessoa fica em **Convites aguardando** (`convites_pendentes`), logo
-abaixo da lista da equipe, com **Link para WhatsApp**, **Reenviar e-mail** e **Cancelar convite** (12/11/2026). O link
-para WhatsApp cria a conta sem e-mail (`generateLink`) e, ao abrir, a pessoa passa para a lista da equipe como
-"Aguardando criar a senha". Conta que já existe e ainda não tem senha recebe o e-mail de "criar senha" (recuperação) e
-continua podendo receber link (069); a lista só mostra "ativa" quem já criou a senha (070). E-mail que estoura o tempo
-não devolve link na hora, porque o envio atrasado do Supabase criaria outro link e anularia o primeiro.
+O caminho por e-mail continua no código: com os segredos `GRAPH_*` (aplicativo "HUB-MDC envio de e-mails" já registrado
+no Entra, ID `d0840295-11fd-45b5-8f9c-5a02de661dfa`), a Função `convite` manda o e-mail pela caixa `hub@` (Microsoft Graph,
+`supabase/functions/_email`). Falta só a permissão Mail.Send restrita à caixa (RBAC do Exchange, seção 7.7) e os segredos.
 
 ## 5.5 Cuidados que valem para qualquer mudança
 

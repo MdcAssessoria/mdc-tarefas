@@ -294,6 +294,9 @@ function criarRespostaSupabase(avisos) {
       // Contratos › Ledgra Link (064): cadastros de exemplo (empresa pronta e empresa no meio do caminho)
       const corpo = p.endsWith("/ledgra-link") ? (req.postDataJSON?.() ?? {}) : {};
       if (corpo?.acao === "cadastros") return json(200, LEDGRA_LINK_CADASTROS);
+      // Acessos (071): senha provisória gerada para mandar pelo WhatsApp
+      if (p.endsWith("/convite") && req.postDataJSON?.()?.senha_provisoria)
+        return json(200, { enviado: false, senha: "Mdc-KQXP-4821", endereco: "https://hub.mdcassessoria.com/hub-mdc/login" });
       return json(200, {});
     }
 
@@ -1208,8 +1211,12 @@ const INTERACOES = {
     // convite cadastrado sem conta (e-mail não saiu) aparece em "Convites aguardando", com o link para WhatsApp
     const aguardando = p.getByRole("region", { name: /Convites aguardando/ });
     await aguardando.getByText("jean@exemplo.com").waitFor({ timeout: 3000 });
-    await aguardando.getByRole("button", { name: "Link para WhatsApp" }).waitFor({ timeout: 3000 });
     await foto("convites-aguardando", { soTela: true });
+    // senha provisória: aparece uma vez com "Enviar pelo WhatsApp" e "Copiar senha"
+    await aguardando.getByRole("button", { name: "Gerar senha provisória" }).click();
+    await p.getByText("Mdc-KQXP-4821").waitFor({ timeout: 3000 });
+    await p.getByRole("link", { name: "Enviar pelo WhatsApp" }).waitFor({ timeout: 3000 });
+    await foto("senha-provisoria", { soTela: true });
   },
   "/config": async (p, foto) => {
     for (const aba of await p.getByRole("tab").all()) {

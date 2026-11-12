@@ -4,18 +4,20 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { traduzirErro } from "@/lib/erros";
 import { caminho } from "@/lib/caminho";
-import { chamarFuncaoPublica } from "@/lib/funcoesEdge";
 import { LINHA_EMPRESA } from "@/lib/identidade";
+import { precisaTrocarSenha } from "@/lib/senhaProvisoria";
 
-// Contas são criadas pelo administrador (convite por e-mail); aqui a pessoa entra,
-// cria a senha pelo link do convite ou redefine a senha esquecida.
-type Modo = "entrar" | "recuperar" | "nova" | "convite";
+// Contas são criadas pelo administrador. Desde 12/11/2026 o acesso vai por senha provisória (WhatsApp): quem entra com
+// ela cai no modo "trocar" e precisa criar a própria senha antes de usar o HUB (marca trocar_senha, migração 071).
+// Os links antigos de convite e de nova senha (e-mail) continuam funcionando ("convite" e "nova").
+type Modo = "entrar" | "recuperar" | "nova" | "convite" | "trocar";
 
 const TITULO: Record<Modo, string> = {
   entrar: "Entrar",
   recuperar: "Recuperar senha",
   nova: "Nova senha",
   convite: "Crie sua senha",
+  trocar: "Crie sua senha",
 };
 
 export default function Login() {
@@ -26,6 +28,16 @@ export default function Login() {
   const [msg, setMsg] = useState<{ tipo: "erro" | "ok"; texto: string } | null>(null);
   const [enviando, setEnviando] = useState(false);
   const [semSessao, setSemSessao] = useState(false);
+
+  // chegou com ?trocar=1 (o HUB mandou trocar a senha provisória): só vale com sessão aberta
+  useEffect(() => {
+    if (!new URLSearchParams(window.location.search).get("trocar")) return;
+    void supabase()
+      .auth.getSession()
+      .then(({ data }) => {
+        if (precisaTrocarSenha(data.session)) setModo("trocar");
+      });
+  }, []);
 
   useEffect(() => {
     const q = new URLSearchParams(window.location.search);
@@ -55,7 +67,7 @@ export default function Login() {
   async function enviar(e: React.FormEvent) {
     e.preventDefault();
     setMsg(null);
-    if ((modo === "nova" || modo === "convite") && senha !== confirma) {
+    if ((modo === "nova" || modo === "convite" || modo === "trocar") && senha !== confirma) {
       setMsg({ tipo: "erro", texto: "As duas senhas não conferem." });
       return;
     }
@@ -63,8 +75,24 @@ export default function Login() {
     const sb = supabase();
     try {
       if (modo === "entrar") {
-        const { error } = await sb.auth.signInWithPassword({ email, password: senha });
+        const { data, error } = await sb.auth.signInWithPassword({ email, password: senha });
         if (error) throw error;
+        if (precisaTrocarSenha(data.session)) {
+          // senha provisória: cria a própria antes de entrar
+          setSenha("");
+          setConfirma("");
+          setModo("trocar");
+          return;
+        }
+        window.location.replace(destino());
+        return;
+      }
+      if (modo === "trocar") {
+        const { error } = await sb.auth.updateUser({ password: senha });
+        if (error) throw error;
+        const { error: eMarca } = await sb.rpc("hub_senha_trocada");
+        if (eMarca) throw eMarca;
+        await sb.auth.refreshSession();
         window.location.replace(destino());
         return;
       }
@@ -74,11 +102,6 @@ export default function Login() {
         window.location.replace(caminho("/"));
         return;
       }
-      if (modo === "recuperar") {
-        // pela Função "senha" (e-mail da caixa do HUB pelo Microsoft 365, com limite de pedidos; 12/11/2026)
-        const r = await chamarFuncaoPublica<{ texto?: string }>("senha", { email, origem: window.location.origin });
-        setMsg({ tipo: "ok", texto: r.texto ?? "Se o e-mail estiver cadastrado, você receberá um link para criar uma nova senha." });
-      }
     } catch (err) {
       setMsg({ tipo: "erro", texto: traduzirErro(err) });
     } finally {
@@ -86,7 +109,7 @@ export default function Login() {
     }
   }
 
-  const definindoSenha = modo === "nova" || modo === "convite";
+  const definindoSenha = modo === "nova" || modo === "convite" || modo === "trocar";
 
   return (
     <div className="grid min-h-screen lg:grid-cols-[1.15fr_1fr]">
@@ -114,14 +137,25 @@ export default function Login() {
             {modo === "convite" && (
               <p className="mt-1 text-sm text-neutral-600">Você foi convidado pela MDC. Defina a senha que vai usar para entrar.</p>
             )}
+            {modo === "trocar" && (
+              <p className="mt-1 text-sm text-neutral-600">
+                Você entrou com uma senha provisória. Crie a sua senha para continuar; a provisória deixa de valer.
+              </p>
+            )}
           </div>
-          {definindoSenha && semSessao && (
+          {modo === "recuperar" && (
+            <p className="rounded-md bg-[var(--fundo)] p-3 text-sm text-neutral-700">
+              Peça ao administrador da MDC uma <b>senha provisória</b>. Ele gera na hora e manda pelo WhatsApp; ao entrar com ela, o HUB
+              pede para você criar uma senha nova.
+            </p>
+          )}
+          {definindoSenha && semSessao && modo !== "trocar" && (
             <p className="rounded-md bg-amber-50 p-3 text-sm text-amber-900">
               Este link expirou ou já foi usado.{" "}
               {modo === "convite" ? "Peça ao administrador para reenviar o convite" : "Peça um novo link em “Esqueci a senha”"}.
             </p>
           )}
-          {!definindoSenha && (
+          {!definindoSenha && modo !== "recuperar" && (
             <label className="campo">
               <span>E-mail</span>
               <input type="email" required autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} />
@@ -154,11 +188,19 @@ export default function Login() {
             </label>
           )}
           {msg && <p className={`text-sm ${msg.tipo === "erro" ? "text-[var(--perigo)]" : "text-[var(--sucesso)]"}`}>{msg.texto}</p>}
-          <button className="btn-primario w-full" disabled={enviando || (definindoSenha && semSessao)}>
-            {enviando
-              ? "Aguarde…"
-              : { entrar: "Entrar", recuperar: "Enviar link", nova: "Salvar senha", convite: "Criar senha e entrar" }[modo]}
-          </button>
+          {modo !== "recuperar" && (
+            <button className="btn-primario w-full" disabled={enviando || (definindoSenha && semSessao && modo !== "trocar")}>
+              {enviando
+                ? "Aguarde…"
+                : {
+                    entrar: "Entrar",
+                    recuperar: "",
+                    nova: "Salvar senha",
+                    convite: "Criar senha e entrar",
+                    trocar: "Salvar senha e entrar",
+                  }[modo]}
+            </button>
+          )}
           <div className="flex justify-between text-sm">
             {modo !== "entrar" ? (
               <button type="button" className="btn-link" onClick={() => setModo("entrar")}>
@@ -172,7 +214,7 @@ export default function Login() {
           </div>
           {modo === "entrar" && (
             <p className="pt-2 text-xs text-neutral-500">
-              O acesso é liberado pela MDC. Ainda não recebeu o convite? Fale com o administrador do Hub.
+              O acesso é liberado pela MDC. Ainda não recebeu a sua senha? Fale com o administrador do Hub.
             </p>
           )}
         </form>

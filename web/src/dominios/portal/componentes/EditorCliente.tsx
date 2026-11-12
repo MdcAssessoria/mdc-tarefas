@@ -3,7 +3,7 @@
 
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { enviarConvite } from "@/dominios/acessos/convite";
+import { gerarSenhaProvisoria, type SenhaGerada } from "@/dominios/acessos/convite";
 import { nomeCliente } from "@/dominios/clientes/nome";
 import { PERFIS_CLIENTE, PERMISSOES_PORTAL, perfilDasPerms } from "@/dominios/portal/permissoes";
 import type { VinculoCliente } from "@/dominios/portal/tipos";
@@ -22,7 +22,7 @@ export function EditorCliente({
   clientes: { id: string; razao_social: string; nome_fantasia: string | null; cnpj: string | null }[];
   nomeCli: (id: string) => string;
   aoFechar: () => void;
-  aoSalvar: (t: string, link?: string) => void;
+  aoSalvar: (t: string, senha?: SenhaGerada, nome?: string) => void;
   aoErro: (e: unknown) => void;
   orgId: string;
 }) {
@@ -78,17 +78,17 @@ export function EditorCliente({
       }
       const novaConta = houveConvite && !(pessoa?.vs.some((v) => v.user_id) ?? false);
       if (novaConta) {
-        const r = await enviarConvite(email, nome);
+        // senha provisória (071): sem e-mail; mande pelo WhatsApp e o cliente troca no 1º acesso
+        const r = await gerarSenhaProvisoria(email, nome);
         setEnviando(false);
-        if (r.enviado)
+        if (r.senha)
           return aoSalvar(
-            `Convite enviado para ${email}. A pessoa cria a senha pelo e-mail e já entra vendo ${empresas.length} empresa(s).`,
+            `Acesso cadastrado: ${empresas.length} empresa(s). Mande a senha provisória pelo WhatsApp; no primeiro acesso o cliente cria a própria senha.`,
+            { senha: r.senha, email: email.trim().toLowerCase(), endereco: r.endereco ?? "" },
+            nome || undefined,
           );
         return aoSalvar(
-          r.link
-            ? "Acesso cadastrado, mas o e-mail não pôde ser enviado. Mande o acesso pelo WhatsApp:"
-            : `Acesso cadastrado, mas o e-mail não pôde ser enviado${r.erro ? ` (${r.erro})` : ""}. Use “Link para WhatsApp” na linha da pessoa para mandar o acesso por lá.`,
-          r.link,
+          `Acesso cadastrado, mas a senha provisória não foi gerada${r.erro ? ` (${r.erro})` : ""}. Use “Gerar senha provisória” na linha da pessoa.`,
         );
       }
       setEnviando(false);

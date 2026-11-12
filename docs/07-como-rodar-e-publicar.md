@@ -151,6 +151,9 @@ npx supabase functions deploy convite --project-ref bulqqdgfrrpqquqvjjfa --impor
   a 063 corrige o DELETE da carga, que o Supabase exige com WHERE); 5 funções conferidas por md5; Função `fiscal-tabelas`
   v1 publicada (pacote único, `verify_jwt = false`, token interno do Vault) e agendada toda segunda 07h10; 1ª carga feita
   pelo portal gov.br: versão 1.02.00, 997 pares em 208 itens; avisos de segurança sem novidade; tipos regenerados.
+- **12/11/2026 (fim da tarde):** 071 (senha provisória) e `convite` v9: acesso novo e senha esquecida por senha provisória
+  gerada pelo administrador e enviada pelo WhatsApp; troca obrigatória no primeiro acesso (seção 5.4). "Esqueci a senha"
+  passa a orientar a pedir ao administrador. E-mail pela Microsoft (Graph) fica pronto para quando houver os segredos.
 - **12/11/2026 (tarde):** 069 e 070 aplicadas e `convite` v8. Conta que abriu o link mas não criou a senha volta a
   receber convite e link (antes ficava travada), e a lista de Acessos só mostra "ativa" quem já tem senha. Na Função, conta
   já criada recebe o e-mail de "criar senha" (recuperação) em vez de novo convite, e e-mail que demora (SMTP lento) não
