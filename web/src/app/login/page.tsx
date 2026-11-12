@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { traduzirErro } from "@/lib/erros";
-import { caminho, enderecoHub } from "@/lib/caminho";
+import { caminho } from "@/lib/caminho";
+import { chamarFuncaoPublica } from "@/lib/funcoesEdge";
 import { LINHA_EMPRESA } from "@/lib/identidade";
 
 // Contas são criadas pelo administrador (convite por e-mail); aqui a pessoa entra,
@@ -74,9 +75,9 @@ export default function Login() {
         return;
       }
       if (modo === "recuperar") {
-        const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: enderecoHub("/login?redefinir=1") });
-        if (error) throw error;
-        setMsg({ tipo: "ok", texto: "Se o e-mail estiver cadastrado, você receberá um link para criar uma nova senha." });
+        // pela Função "senha" (e-mail da caixa do HUB pelo Microsoft 365, com limite de pedidos; 12/11/2026)
+        const r = await chamarFuncaoPublica<{ texto?: string }>("senha", { email, origem: window.location.origin });
+        setMsg({ tipo: "ok", texto: r.texto ?? "Se o e-mail estiver cadastrado, você receberá um link para criar uma nova senha." });
       }
     } catch (err) {
       setMsg({ tipo: "erro", texto: traduzirErro(err) });

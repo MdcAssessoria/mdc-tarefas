@@ -4,7 +4,10 @@
 // Link para repassar pelo WhatsApp: com { so_link: true } (ou quando o e-mail falha) devolve o link de criar senha,
 // só para quem pode convidar aquela pessoa e só se a conta nunca entrou (hub_pode_ver_link_convite, migração 024).
 // Gerar um link novo invalida o do e-mail anterior (o Supabase guarda um link válido por conta).
+// Com os segredos GRAPH_* o e-mail sai pelo Microsoft Graph (caixa hub@); sem eles, pelo SMTP do Supabase.
 import { createClient } from "@supabase/supabase-js";
+import { enviarPeloGraph, lerGraph } from "../_email/graph.ts";
+import { ASSUNTO_CONVITE, ASSUNTO_SENHA, htmlConvite, htmlSenha } from "../_email/modelos.ts";
 
 // endereços onde o Hub roda; o link do convite só pode voltar para um deles
 const ORIGENS = ["https://mdcassessoria.com", "https://www.mdcassessoria.com", "https://hub.mdcassessoria.com", "https://mdc-tarefas.vercel.app"];
@@ -51,6 +54,31 @@ Deno.serve(async (req) => {
   if (!pode) return json(403, { erro: "Este e-mail não tem convite pendente feito por você, ou a conta já está ativa." });
 
   const nome = String(corpo.nome ?? "").trim().slice(0, 120) || undefined;
+  const graph = lerGraph((n) => Deno.env.get(n));
+  if (!corpo.so_link && graph) {
+    // e-mail pelo Microsoft Graph (12/11/2026): o HUB gera o link e manda; sem corrida com envio atrasado do Supabase
+    const { data: jaTem } = await servico.rpc("hub_conta_existe", { p_email: email });
+    const recuperar = jaTem === true;
+    const { data, error: eLink } = await servico.auth.admin.generateLink(
+      recuperar ? { type: "recovery", email, options: { redirectTo } } : { type: "invite", email, options: { redirectTo, data: nome ? { nome } : undefined } },
+    );
+    const link = data?.properties?.action_link;
+    if (eLink || !link) {
+      console.error("link do convite falhou", eLink?.message);
+      return json(500, { erro: "Não foi possível gerar o link. Tente de novo em instantes." });
+    }
+    try {
+      await enviarPeloGraph(graph, recuperar ? { para: email, assunto: ASSUNTO_SENHA, html: htmlSenha(link) } : { para: email, assunto: ASSUNTO_CONVITE, html: htmlConvite(link) });
+      return json(200, { enviado: true });
+    } catch (e) {
+      console.error("convite pelo Microsoft 365 falhou:", (e as Error).message);
+      // o link gerado continua valendo (nenhum outro envio vai anulá-lo): devolve para mandar pelo WhatsApp
+      const { data: verLink } = await usuario.rpc("hub_pode_ver_link_convite", { p_email: email });
+      return verLink
+        ? json(200, { enviado: false, link })
+        : json(502, { erro: `O e-mail não saiu: ${(e as Error).message}. Tente de novo mais tarde ou peça ao administrador.` });
+    }
+  }
   if (!corpo.so_link) {
     // conta já criada pelo convite anterior (e ainda sem senha): o e-mail sai como "criar/redefinir senha"
     const { data: jaTem } = await servico.rpc("hub_conta_existe", { p_email: email });

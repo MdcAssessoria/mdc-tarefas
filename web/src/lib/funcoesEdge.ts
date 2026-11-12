@@ -56,3 +56,20 @@ export async function chamarFuncao<T>(nome: string, o: OpcoesFuncao = {}): Promi
   const r = await chamarFuncaoBruta(nome, o);
   return (await r.json().catch(() => ({}))) as T;
 }
+
+/** Função pública (sem login, ex.: "esqueci a senha"): só com a chave publicável. Falhas viram ErroApp em português. */
+export async function chamarFuncaoPublica<T>(nome: string, corpo: unknown): Promise<T> {
+  let r: Response;
+  try {
+    r = await fetch(endereco(nome, undefined), {
+      method: "POST",
+      headers: { apikey: SUPABASE_KEY, "Content-Type": "application/json" },
+      body: JSON.stringify(corpo),
+    });
+  } catch (e) {
+    throw new ErroApp(traduzirErro(e));
+  }
+  const j = (await r.json().catch(() => null)) as ({ erro?: unknown } & T) | null;
+  if (!r.ok) throw new ErroApp(typeof j?.erro === "string" && j.erro ? j.erro : SEM_RESPOSTA);
+  return (j ?? {}) as T;
+}

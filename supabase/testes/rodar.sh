@@ -166,3 +166,6 @@ $P -v ON_ERROR_STOP=1 -f "$R/migrations/069_convite_sem_senha.sql" 2>&1 | grep -
 $P -f "$R/testes/136_convite_069.sql" 2>&1 | grep -v "^SET$"
 $P -v ON_ERROR_STOP=1 -f "$R/migrations/070_situacao_conta_senha.sql" 2>&1 | grep -v NOTICE || true
 $P -f "$R/testes/137_situacao_070.sql" 2>&1 | grep -v "^SET$"
+# 071: "esqueci a senha" pelo e-mail do HUB, com limite de pedidos
+$P -v ON_ERROR_STOP=1 -f "$R/migrations/071_pedido_senha.sql" 2>&1 | grep -v NOTICE || true
+$P -f "$R/testes/138_senha_071.sql" 2>&1 | grep -v "^SET$"
