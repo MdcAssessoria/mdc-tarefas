@@ -151,6 +151,9 @@ npx supabase functions deploy convite --project-ref bulqqdgfrrpqquqvjjfa --impor
   a 063 corrige o DELETE da carga, que o Supabase exige com WHERE); 5 funções conferidas por md5; Função `fiscal-tabelas`
   v1 publicada (pacote único, `verify_jwt = false`, token interno do Vault) e agendada toda segunda 07h10; 1ª carga feita
   pelo portal gov.br: versão 1.02.00, 997 pares em 208 itens; avisos de segurança sem novidade; tipos regenerados.
+- **12/11/2026:** DNS de `hub.mdcassessoria.com` no ar. `convite` v7 publicada com a origem `hub.mdcassessoria.com` (a v6
+  no ar ainda não tinha: o convite feito pelo novo endereço falhava no navegador). No Supabase › Authentication › URL
+  Configuration: Site URL `https://hub.mdcassessoria.com/hub-mdc` e Redirect URL `https://hub.mdcassessoria.com/hub-mdc/**`.
 - **10/11/2026:** 066 aplicada (código interno do retransmissor da NFS-e no Vault, gerado pelo banco). A emissão dava
   "Connection reset by peer": a Sefin Nacional (IIS) pede o certificado da empresa por renegociação TLS 1.2 e o Deno
   (rustls) não renegocia. Agora as Funções `nfse-emitir` e `nfse-automatica` assinam a DPS e entregam pelo retransmissor
