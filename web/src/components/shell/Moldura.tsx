@@ -5,6 +5,8 @@
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { CHAVES, useEstadoLembrado } from "@/lib/armazenamentoLocal";
+import { lerLarguraMenu } from "@/lib/larguraMenu";
+import { AlcaMenu } from "./AlcaMenu";
 import { BarraSuperior } from "./BarraSuperior";
 import { BuscaRapida } from "./BuscaRapida";
 import { Guarda } from "./Guarda";
@@ -15,6 +17,10 @@ import { moduloDaRota } from "./navegacao";
 export function Moldura({ children }: { children: React.ReactNode }) {
   const [menuRecolhido, setMenuRecolhido] = useEstadoLembrado<"0" | "1">(CHAVES.menuRecolhido, "0", (v) => v === "0" || v === "1");
   const recolhido = menuRecolhido === "1";
+  // largura escolhida arrastando a borda (guardada neste navegador); durante o arraste vale só na tela
+  const [larguraSalva, setLarguraSalva] = useEstadoLembrado<string>(CHAVES.larguraMenu, "");
+  const [arrastando, setArrastando] = useState<number | null>(null);
+  const largura = arrastando ?? lerLarguraMenu(larguraSalva);
   const [gaveta, setGaveta] = useState(false);
   const [busca, setBusca] = useState(false);
   const rota = usePathname();
@@ -38,11 +44,22 @@ export function Moldura({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen lg:flex">
       {/* menu lateral fixo (desktop) */}
       <aside
-        className={`sticky top-0 hidden h-screen shrink-0 flex-col bg-[var(--marca)] text-[var(--nevoa)] transition-[width] duration-200 print:hidden lg:flex ${
-          recolhido ? "w-[72px]" : "w-[248px]"
+        className={`sticky top-0 hidden h-screen shrink-0 flex-col bg-[var(--marca)] text-[var(--nevoa)] print:hidden lg:flex ${
+          arrastando === null ? "transition-[width] duration-200" : ""
         }`}
+        style={{ width: recolhido ? 72 : largura }}
       >
         <MenuLateral modulo={modulo} recolhido={recolhido} aoRecolher={alternar} />
+        {!recolhido && (
+          <AlcaMenu
+            largura={largura}
+            aoMudar={setArrastando}
+            aoTerminar={(px) => {
+              setArrastando(null);
+              setLarguraSalva(String(px));
+            }}
+          />
+        )}
       </aside>
 
       {/* gaveta (celular e tablet) */}

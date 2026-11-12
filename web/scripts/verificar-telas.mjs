@@ -500,6 +500,26 @@ const INTERACOES = {
       .click();
     await p.getByRole("button", { name: "Desfazer" }).waitFor({ timeout: 3000 });
     await foto("concluida-desfazer", { soTela: true });
+    // menu lateral ajustável (computador): arrastar a borda alarga e guarda; duplo clique volta ao padrão
+    const alca = p.getByRole("separator", { name: "Largura do menu" });
+    if (await alca.isVisible()) {
+      const menu = p.locator("aside").first();
+      const antes = (await menu.boundingBox()).width;
+      const b = await alca.boundingBox();
+      await p.mouse.move(b.x + b.width / 2, b.y + 200);
+      await p.mouse.down();
+      await p.mouse.move(b.x + b.width / 2 + 100, b.y + 200, { steps: 5 });
+      await p.mouse.up();
+      await p.waitForTimeout(300);
+      const depois = (await menu.boundingBox()).width;
+      if (Math.abs(depois - antes - 100) > 4) throw new Error(`menu lateral: arrastar 100 px mudou ${depois - antes} px`);
+      const salvo = await p.evaluate(() => localStorage.getItem("hub-mdc:menu-largura"));
+      if (salvo !== String(Math.round(depois))) throw new Error(`menu lateral: largura não foi guardada (${salvo})`);
+      await foto("menu-largo", { soTela: true });
+      await alca.dblclick();
+      await p.waitForTimeout(300);
+      if (Math.abs((await menu.boundingBox()).width - 248) > 2) throw new Error("menu lateral: duplo clique não voltou ao padrão");
+    }
   },
   // Ledgra Link: a mensalidade com boleto/Pix emitido abre a janela com o Pix e a linha digitável
   "/licencas/cobrancas": (p) => abrirEFecharModal(p, "Ver boleto/Pix", "Boleto/Pix da mensalidade"),

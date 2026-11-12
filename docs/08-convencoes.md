@@ -100,6 +100,8 @@ clientes e continua listando clientes. As peças:
 | Gráficos | `dominios/financeiro/componentes/GraficosPainel`, `dominios/demonstrativos/componentes/Graficos` | SVG puro nas cores de `demonstrativos/componentes/paletas.ts`; o SVG acompanha a largura do quadro com `lib/useLargura` (viewBox = largura real, letra de 11 px de verdade no celular); rótulos do eixo com `saltoRotulos`; legenda em HTML |
 
 Navegação dos módulos: cada módulo é um item do menu lateral (linha em `hub_apps`); os módulos de gestão (`MODULOS_GESTAO` em `navegacao.ts`: Financeiro, Entradas, Saídas, Estoque, Centros de custo, Plano de contas, Relatórios, Cobrança Ledgra, mais Fornecedores e clientes) ficam juntos no grupo recolhível **Gestão** (02/11/2026), cada um com permissão própria. Desde 02/11/2026 a MDC usa a gestão só para ela mesma; o produto para os clientes é o Ledgra (sistema à parte), e só a cobrança dos assinantes do Ledgra fica no HUB com abas curtas na barra superior
+
+Menu lateral ajustável (12/11/2026): no computador, arrastar a borda direita do menu alarga ou estreita (de 220 a 420 px; padrão 248). A largura fica guardada no navegador da pessoa (`CHAVES.larguraMenu`, regras em `lib/larguraMenu.ts`), duplo clique na borda volta ao padrão e, pelo teclado, a borda aceita ← → e Home (`components/shell/AlcaMenu.tsx`). O botão de recolher continua igual.
 (`components/shell/navegacao.ts`). Módulo com muitas telas junta as parecidas num grupo (`grupo` no link): no computador
 vira aba com menu suspenso ("Bancos ▾"), no celular um botão "Você está em … · Telas" que abre todas as telas por grupo. Sem grupos, até 3 telas aparecem lado a lado no celular; com mais de 3, entra o mesmo botão "Telas" (04/11/2026, UX-08).
 

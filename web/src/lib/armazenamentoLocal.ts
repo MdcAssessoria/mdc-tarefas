@@ -15,6 +15,8 @@ export const CHAVES = {
   visaoItens: "hub-mdc:estoque:visao-itens",
   /** Grupo "Gestão" do menu lateral aberto ("1") ou fechado ("0"). */
   menuGestao: "hub-mdc:menu-gestao",
+  /** Largura do menu lateral em px, escolhida arrastando a borda (lib/larguraMenu.ts). */
+  larguraMenu: "hub-mdc:menu-largura",
 } as const;
 
 const memoria = new Map<string, string>();
