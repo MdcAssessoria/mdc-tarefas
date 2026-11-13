@@ -171,3 +171,14 @@ desconhecida, desfazer, tela sem gravar direto) e `web/src/dominios/licencas/led
 - **Conferência**: o Ledgra chama `lic_ledgra_validar(chave, cnpj)` ao salvar a chave e todo dia às 6h30. Devolve
   ativa, bloqueada (cliente em Inadimplentes), sem_contrato, cnpj_diferente ou inválida, com os módulos liberados.
   Sem resposta do HUB, o Ledgra mantém a última licença boa por 7 dias.
+
+## Licenças Ledgra: cadastro aberto, valores guardados (migração 074, 13/11/2026)
+- O módulo voltou ao menu como **Licenças Ledgra**, só com **Licenças** e **Produtos e planos**. A cobrança mensal fica em
+  Gestão › Contratos (decisão de 05/11); `/licencas` abre direto a lista de licenças.
+- Níveis da permissão `licencas`: **ver** = licenças sem nenhum valor; **operar** = cadastra/altera a licença e gera ou
+  revoga a chave do Ledgra; **gerir** = valores (preços, valor do contrato, reajuste, mensalidades, encerrar).
+- Proteção no banco: as colunas de preço/valor de `lic_produtos`, `lic_planos` e `lic_contratos` não são legíveis pelo
+  navegador; voltam só pela `lic_valores(org)` (gerir). `lic_cobrancas`, `lic_baixas` e `lic_reajustes` só com gerir.
+  Quem opera sem gerir cadastra pelo preço de tabela; na alteração o valor atual é mantido.
+- Ligação com o Ledgra pelo CNPJ: o servidor do Ledgra chama `lic_ledgra_vincular_cnpj(cnpj)` (só chave de serviço) e
+  recebe uma chave nova da licença ativa daquele CNPJ (botão "Buscar no HUB" na aba Licença da empresa no Ledgra).
