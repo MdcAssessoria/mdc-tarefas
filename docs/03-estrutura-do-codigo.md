@@ -18,7 +18,7 @@ hub-mdc/
 │   ├── migrations/          001…0NN_*.sql: o banco, em ordem; nunca editar uma migração já aplicada (cap. 4)
 │   ├── functions/           funções Edge (Deno): convite, certificado, demonstrativo-pdf
 │   ├── templates/           e-mails de convite e de recuperação de senha
-│   ├── simulador/           SQL do simulador de regime (encaminhamento de leads para o CRM)
+│   ├── simulador/           SQL antigo do simulador (repasse de leads; desde 13/11/2026 o Simulador mora em web/public/ferramentas)
 │   └── seed_mdc.sql         dados iniciais da MDC
 ├── scripts/
 │   ├── sync-funcoes.sh      copia o núcleo de cálculo do site para a função demonstrativo-pdf (seção 3.6)

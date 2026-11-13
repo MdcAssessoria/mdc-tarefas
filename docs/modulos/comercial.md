@@ -11,6 +11,7 @@
 | --- | --- | --- |
 | `/comercial` | ver (mover, arquivar, cadastrar: operar) | Funil. Filtros: busca, "Entrou no funil" (período), situação (em andamento, ganhas, perdidas, todas); em "Mais filtros" responsável, origem e "só retornos atrasados". Indicadores: em andamento (com valor em negociação), retornos atrasados, viraram cliente (conversão e média) e perdidas — os três últimos filtram ao clicar. Três vistas em abas: **Quadro por etapa** (no computador colunas com arrastar e soltar e o menu "⋯" do cartão com "Mover para…"; no celular um seletor de etapa com a quantidade e os cartões daquela etapa empilhados, cada um com "Mover para"), **Lista** e **Arquivadas** ("Voltar ao funil"). "Limpar funil" arquiva de uma vez perdidas e paradas há X dias. PDF e Excel do que está filtrado |
 | `/comercial/leads` | ver (arquivar/voltar em lote: operar) | Leads (padrão: só os do Simulador). Filtros: busca, "Recebido" (período), como chegou; em "Mais filtros" etapa e "Mostrar" (no funil, arquivados, todos). Indicadores que filtram: ainda não contatados, em andamento, viraram cliente; e a economia estimada somada. Seleção em lote para arquivar ou devolver ao funil. PDF e Excel |
+| `/comercial/ferramentas` | ver | **Ferramentas abertas** (13/11/2026): páginas públicas da MDC no domínio do HUB, sem login, que trazem leads para o Funil. Cada cartão: link oficial `hub.mdcassessoria.com/hub-mdc/ferramentas/<id>` com o canal de divulgação ("Onde vai divulgar" vira `utm_source` e aparece em "Como chegou"), Abrir, Copiar link, Enviar pelo WhatsApp (convite pronto), Código para o site (iframe para o WordPress, altura automática), Ver leads; leads no mês e no total. PDF e Excel do catálogo |
 | `/comercial/[id]` | ver (editar: operar) | Ficha: contato (WhatsApp, e-mail), arquivar, "Fechou: virar cliente", etapas clicáveis e duas abas — **Acompanhamento** (histórico e próximos passos; dados da empresa, contato e negociação; respostas do Simulador) e **Proposta e contrato** (valores negociados, prévia, PDF, enviado, assinado, renegociar, versões anteriores). No celular o histórico vem antes dos dados |
 | `/comercial/contratos` | ver | Contratos de todas as oportunidades: busca, período de criação, situação (padrão: sem os cancelados); indicadores em ajuste, aguardando assinatura e assinados no mês; PDF de cada contrato; PDF e Excel da lista |
 | `/comercial/modelo` | gerir | Texto-base com as variáveis (`{{honorario_mensal}}`…), logo do cabeçalho do contrato, prévia e PDF de exemplo. Cada gravação gera versão nova; contratos já gerados não mudam |
@@ -65,3 +66,19 @@ As três ações que gravavam em vários passos pelo navegador viraram funções
   inicial. Tipos `contrato` e `etapa` são só do sistema.
 
 Testes: `supabase/testes/91_base_038.sql` e `92_crm_038.sql` (inclui a corrida pelo `dblink`).
+
+## Ferramentas abertas (13/11/2026)
+
+- **Onde ficam:** cada ferramenta é uma página estática em `web/public/ferramentas/<id>/index.html`, servida em
+  `hub.mdcassessoria.com/hub-mdc/ferramentas/<id>` (rewrite em `web/next.config.ts`). Não passa pelo login nem pela
+  Guarda do HUB. O catálogo da tela (nome, texto, origem no CRM, convite) fica em `dominios/comercial/ferramentas.ts`.
+- **Leads:** a página chama direto `crm_receber_lead` com a chave publicável do HUB (pública por natureza). A função só
+  aceita lead com consentimento, no máximo 20 por minuto, e não duplica (`origem_ref` = id gerado na página).
+- **Site da MDC:** a página pode ser embutida em `mdcassessoria.com` (cabeçalho `frame-ancestors` só para
+  `/ferramentas/*`); o código pronto sai pelo botão "Código para o site".
+- **Simulador de Regime 2027:** saiu do GitHub Pages (`mdcassessoria.github.io/mdc-simulador`, que agora redireciona) e
+  do banco separado `mdc-simulador`; o lead não passa mais pelo repasse `supabase/simulador/001_encaminhar_leads_hub.sql`.
+  O banco separado fica só como histórico dos leads antigos.
+- **Ferramenta nova:** criar `public/ferramentas/<id>/index.html` (enviando o lead por `crm_receber_lead`) e uma linha
+  em `FERRAMENTAS`. Se a origem for nova, incluí-la em `ORIGENS` (`dominios/comercial/crm.ts`) e na função do banco.
+

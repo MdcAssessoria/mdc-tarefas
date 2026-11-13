@@ -21,6 +21,11 @@ const nextConfig: NextConfig = {
       { source: "/financeiro/cadastros", destination: "/cadastros/pessoas", permanent: false },
     ];
   },
+  // Ferramentas abertas (sem login, ex.: Simulador de Regime): páginas estáticas em public/ferramentas/<nome>/index.html,
+  // servidas no endereço limpo /hub-mdc/ferramentas/<nome>. Catálogo em dominios/comercial/ferramentas.ts.
+  async rewrites() {
+    return [{ source: "/ferramentas/:nome([a-z0-9-]+)", destination: "/ferramentas/:nome/index.html" }];
+  },
   async headers() {
     return [
       {
@@ -30,6 +35,14 @@ const nextConfig: NextConfig = {
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
           { key: "X-Frame-Options", value: "SAMEORIGIN" },
           { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+        ],
+      },
+      // ferramentas abertas podem ser embutidas no site da MDC (WordPress); o navegador segue o frame-ancestors
+      {
+        source: "/ferramentas/:path*",
+        headers: [
+          { key: "X-Frame-Options", value: "ALLOWALL" },
+          { key: "Content-Security-Policy", value: "frame-ancestors 'self' https://mdcassessoria.com https://*.mdcassessoria.com" },
         ],
       },
     ];

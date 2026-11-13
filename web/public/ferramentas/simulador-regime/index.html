@@ -1,0 +1,1178 @@
+<!doctype html>
+<!-- Simulador de Regime 2027: ferramenta ABERTA do HUB-MDC (sem login), em hub.mdcassessoria.com/hub-mdc/ferramentas/simulador-regime.
+     O lead vai direto para o CRM (Comercial › Leads) por crm_receber_lead. Catálogo e links: Comercial › Ferramentas
+     (dominios/comercial/ferramentas.ts). Mudou o cálculo? Atualize aqui e confira no navegador. -->
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Simulador de Regime 2027 · MDC</title>
+<meta name="description" content="Simule gratuitamente como a reforma tributária muda os impostos da sua empresa em 2027, receba um parecer técnico e descubra o regime mais econômico. MDC Assessoria Contábil.">
+<meta property="og:title" content="Quanto sua empresa vai pagar de imposto em 2027?">
+<meta property="og:description" content="Simulação gratuita com parecer técnico da MDC Assessoria: Simples, Lucro Presumido e Lucro Real com a CBS de 11,3% calculada pelo TCU.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: faixa verde com a tese + cartão-formulário em 4 etapas sobreposto; resultado com % de carga por regime e parecer técnico imprimível; abaixo, apresentação da MDC e contatos. */
+:root{
+  --verde:#0B2820; --verde-2:#14392F; --verde-txt:#C6D3CC;
+  --ouro:#E2C17E; --ouro-esc:#8A6A2A;
+  --papel:#F6F4EE; --branco:#FFFFFF; --tinta:#16231E; --tinta-2:#4E5C56; --linha:#DCD8CB;
+  --bom:#2F7A52; --alerta:#B5651D; --ruim:#A3361F;
+  --f-display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --f-texto:"Figtree", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --f-num:"IBM Plex Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
+  color-scheme: light;
+}
+*{box-sizing:border-box} [hidden]{display:none!important}
+html,body{margin:0}
+body{background:var(--papel);color:var(--tinta);font:16px/1.55 var(--f-texto);-webkit-font-smoothing:antialiased}
+.gutter{padding-left:max(16px, env(safe-area-inset-left,0px));padding-right:max(16px, env(safe-area-inset-right,0px))}
+.wrap{max-width:980px;margin:0 auto}
+a{color:inherit}
+
+/* Topo */
+.topo{background:var(--verde);color:var(--verde-txt);padding-block:18px 120px;position:relative;overflow:hidden}
+.topo::after{content:"";position:absolute;right:-120px;top:-160px;width:460px;height:460px;border-radius:50%;border:1px solid rgba(226,193,126,.18);box-shadow:0 0 0 60px rgba(226,193,126,.04),0 0 0 140px rgba(226,193,126,.03);pointer-events:none}
+.barra{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;position:relative;z-index:1}
+.marca{display:flex;align-items:center;gap:12px;text-decoration:none;color:var(--ouro)}
+.marca img{height:40px;width:auto;display:block}
+.marca .mono{font:800 26px/1 var(--f-display);letter-spacing:.04em;color:var(--ouro)}
+.marca small{display:block;font:500 11px/1.2 var(--f-texto);letter-spacing:.14em;text-transform:uppercase;color:var(--verde-txt)}
+.redes{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.redes a{display:inline-flex;align-items:center;gap:6px;font:600 12.5px/1 var(--f-texto);color:var(--verde-txt);text-decoration:none;border:1px solid rgba(198,211,204,.28);padding:8px 11px;border-radius:999px}
+.redes a:hover{border-color:var(--ouro);color:var(--ouro)}
+.redes a.zap{background:var(--ouro);color:var(--verde);border-color:var(--ouro)}
+.redes svg{width:14px;height:14px;flex:none}
+.tese{margin-top:44px;max-width:640px;position:relative;z-index:1}
+.eyebrow{font:600 12px/1 var(--f-texto);letter-spacing:.16em;text-transform:uppercase;color:var(--ouro)}
+.tese h1{font:800 clamp(30px,5.4vw,52px)/1.05 var(--f-display);color:#fff;margin:14px 0 16px;text-wrap:balance;letter-spacing:-.01em}
+.tese h1 em{font-style:normal;color:var(--ouro)}
+.tese p{margin:0;max-width:56ch;font-size:17px}
+.fatos{display:flex;flex-wrap:wrap;gap:10px 28px;margin-top:24px;font-size:14px}
+.fatos b{font:600 20px/1 var(--f-num);color:#fff;display:block;margin-bottom:4px}
+
+/* Cartão */
+.cartao{background:var(--branco);border-radius:20px;box-shadow:0 1px 0 var(--linha),0 24px 60px -30px rgba(11,40,32,.45);margin-top:-88px;position:relative;z-index:2;overflow:hidden}
+.passos{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid var(--linha);background:#FBFAF6;margin:0;padding:0}
+.passos li{list-style:none;padding:14px 16px;font-size:13px;color:var(--tinta-2);display:flex;gap:10px;align-items:center;border-right:1px solid var(--linha)}
+.passos li:last-child{border-right:0}
+.passos .n{font:600 12px/1 var(--f-num);width:24px;height:24px;border-radius:50%;display:grid;place-items:center;border:1px solid var(--linha);flex:none}
+.passos li.ativo{color:var(--tinta);font-weight:600}
+.passos li.ativo .n{background:var(--verde);color:var(--ouro);border-color:var(--verde)}
+.passos li.feito .n{background:var(--ouro);color:var(--verde);border-color:var(--ouro)}
+.corpo{padding:28px clamp(18px,4vw,40px) 32px}
+.etapa h2{font:700 24px/1.2 var(--f-display);margin:0 0 6px;text-wrap:balance}
+.etapa .sub{margin:0 0 24px;color:var(--tinta-2)}
+.grade{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px 24px}
+.grade .full{grid-column:1/-1}
+.campo{display:flex;flex-direction:column;gap:8px;min-width:0}
+.campo label,.campo .rot{font-weight:600;font-size:14px}
+.campo .ajuda{font-size:13px;color:var(--tinta-2);margin-top:-2px}
+input[type=text],input[type=email],input[type=tel],select{width:100%;font:500 16px/1.3 var(--f-texto);color:var(--tinta);background:#fff;border:1.5px solid var(--linha);border-radius:10px;padding:12px 14px;transition:border-color .15s}
+input:focus-visible,select:focus-visible,button:focus-visible,a:focus-visible,.opc input:focus-visible+span{outline:3px solid rgba(226,193,126,.6);outline-offset:2px;border-color:var(--verde)}
+.linha-cnpj{display:flex;gap:10px}
+.linha-cnpj input{flex:1;min-width:0;font-family:var(--f-num)}
+.moeda{position:relative}
+.moeda::before{content:"R$";position:absolute;left:14px;top:50%;transform:translateY(-50%);font:600 14px var(--f-num);color:var(--tinta-2)}
+.moeda input{padding-left:44px;font-family:var(--f-num);font-variant-numeric:tabular-nums}
+.ficha{border:1px solid var(--linha);border-radius:12px;padding:14px 16px;background:#FBFAF6;font-size:14px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 20px}
+.ficha .t{grid-column:1/-1;font-weight:700;font-size:15px}
+.ficha dt{font-size:12px;color:var(--tinta-2);text-transform:uppercase;letter-spacing:.06em}
+.ficha dd{margin:0 0 4px;font-weight:600;overflow-wrap:anywhere}
+.ficha .aviso-cnae{grid-column:1/-1;font-size:13px;color:var(--ouro-esc);font-weight:600}
+.status-busca{font-size:13px;color:var(--tinta-2);min-height:1em}
+.status-busca.erro{color:var(--ruim)}
+.opcoes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.opc{position:relative;display:block;cursor:pointer}
+.opc input{position:absolute;opacity:0;inset:0}
+.opc span{display:block;border:1.5px solid var(--linha);border-radius:12px;padding:12px 14px;font-size:14px;line-height:1.3;height:100%;transition:all .15s}
+.opc span b{display:block;font-size:15px;margin-bottom:2px}
+.opc span i{font-style:normal;color:var(--tinta-2);font-size:12.5px}
+.opc input:checked+span{border-color:var(--verde);background:rgba(11,40,32,.05);box-shadow:inset 0 0 0 1px var(--verde)}
+.opc .sug{display:none;font-style:normal;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ouro-esc);margin-top:6px}
+.opc.sugerido .sug{display:block}
+.faixa{display:flex;align-items:center;gap:14px}
+.faixa input[type=range]{flex:1;accent-color:var(--verde)}
+.faixa output{font:600 15px var(--f-num);min-width:56px;text-align:right}
+details.avanc{border-top:1px dashed var(--linha);padding-top:16px}
+details.avanc summary{cursor:pointer;font-weight:600;color:var(--ouro-esc)}
+.acoes{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:28px;flex-wrap:wrap}
+.btn{font:700 16px/1 var(--f-texto);border:0;border-radius:12px;padding:16px 22px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:10px}
+.btn-pri{background:var(--verde);color:var(--ouro)}
+.btn-pri:hover{background:var(--verde-2)}
+.btn-sec{background:transparent;color:var(--tinta-2);padding-inline:6px}
+.btn-borda{background:#fff;color:var(--verde);border:1.5px solid var(--verde);padding:14px 18px;font-size:15px}
+.btn-zap{background:#1F7A4D;color:#fff}
+.btn[disabled]{opacity:.6;cursor:progress}
+.erro{color:var(--ruim);font-size:13px;min-height:1em}
+.lgpd{display:flex;gap:12px;align-items:flex-start;font-size:13px;color:var(--tinta-2);background:var(--papel);border-radius:12px;padding:14px}
+.lgpd input{margin-top:3px;accent-color:var(--verde);width:18px;height:18px;flex:none}
+.hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
+
+/* Resultado */
+.veredito{background:var(--verde);color:var(--verde-txt);border-radius:16px;padding:22px 24px;display:grid;grid-template-columns:1fr auto;gap:14px 24px;align-items:end}
+.veredito h3{font:800 clamp(22px,3.6vw,30px)/1.15 var(--f-display);color:#fff;margin:8px 0 4px;text-wrap:balance}
+.veredito .lin2{font-size:14px}
+.veredito .eco{text-align:right}
+.veredito .eco b{font:600 clamp(30px,5vw,44px)/1 var(--f-num);color:var(--ouro);display:block}
+.veredito .eco small{font-size:13px;display:block;margin-top:4px}
+.tit-sec{font:700 18px/1.25 var(--f-display);margin:28px 0 4px}
+.sub-sec{margin:0 0 14px;color:var(--tinta-2);font-size:14px}
+.tabela-reg{display:flex;flex-direction:column;gap:14px}
+.reg{display:grid;grid-template-columns:190px minmax(0,1fr) 92px 120px;gap:14px;align-items:center}
+.reg .nome{font-weight:600;font-size:15px;line-height:1.25}
+.reg .nome small{display:block;font-weight:500;color:var(--tinta-2);font-size:12px}
+.barras{display:flex;flex-direction:column;gap:5px;min-width:0}
+.bar{height:12px;border-radius:6px;position:relative}
+.bar.b26{background:#D8D3C2}
+.bar.b27{background:var(--ouro-esc)}
+.reg.melhor .bar.b27{background:var(--verde)}
+.reg.inel{opacity:.45}
+.reg .pct{font:600 22px/1 var(--f-num);text-align:right;font-variant-numeric:tabular-nums}
+.reg.melhor .pct{color:var(--verde)}
+.reg .pct small{display:block;font:500 11px var(--f-texto);color:var(--tinta-2);margin-top:4px}
+.reg .val{font:600 14px/1.25 var(--f-num);text-align:right;font-variant-numeric:tabular-nums}
+.reg .val small{display:block;font:500 12px var(--f-texto);color:var(--tinta-2)}
+.var-up{color:var(--alerta)!important} .var-down{color:var(--bom)!important}
+.legenda{display:flex;gap:18px;font-size:12.5px;color:var(--tinta-2);margin-top:8px;flex-wrap:wrap}
+.legenda span::before{content:"";display:inline-block;width:14px;height:8px;border-radius:4px;margin-right:6px;vertical-align:middle}
+.legenda .l26::before{background:#D8D3C2}.legenda .l27::before{background:var(--ouro-esc)}
+.checks{display:flex;flex-direction:column;gap:8px}
+.chk{display:flex;gap:10px;align-items:flex-start;font-size:14px;border:1px solid var(--linha);border-radius:10px;padding:10px 12px}
+.chk .s{flex:none;font:700 11px/1 var(--f-texto);letter-spacing:.06em;text-transform:uppercase;padding:5px 8px;border-radius:999px}
+.chk.ok .s{background:#EDF6F1;color:var(--bom)} .chk.at .s{background:#FBF1E6;color:var(--alerta)} .chk.di .s{background:#FBEDEA;color:var(--ruim)}
+.parecer{border:1px solid var(--linha);border-radius:16px;padding:24px clamp(16px,3vw,28px);margin-top:28px;background:#fff}
+.parecer .cab{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-start;border-bottom:2px solid var(--verde);padding-bottom:12px;margin-bottom:14px}
+.parecer .cab .mono{font:800 22px/1 var(--f-display);color:var(--verde)}
+.parecer .cab .mono span{color:var(--ouro-esc)}
+.parecer h4{font:700 20px/1.2 var(--f-display);margin:0}
+.parecer h5{font:700 14px/1.2 var(--f-texto);text-transform:uppercase;letter-spacing:.08em;color:var(--ouro-esc);margin:18px 0 8px}
+.parecer p,.parecer li{font-size:14.5px;max-width:72ch}
+.parecer ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+.parecer table{border-collapse:collapse;width:100%;font-size:14px}
+.parecer td,.parecer th{border-bottom:1px solid var(--linha);padding:7px 8px;text-align:left}
+.parecer td.n,.parecer th.n{text-align:right;font-family:var(--f-num);font-variant-numeric:tabular-nums;white-space:nowrap}
+.parecer .tab{overflow-x:auto}
+.parecer .ass{margin-top:20px;padding-top:12px;border-top:1px solid var(--linha);font-size:13px;color:var(--tinta-2)}
+.parecer .ass b{color:var(--tinta)}
+.cta{margin-top:24px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;border-top:1px solid var(--linha);padding-top:22px}
+.cta p{margin:0;max-width:48ch}
+.cta .bts{display:flex;gap:10px;flex-wrap:wrap}
+.aviso{font-size:12px;color:var(--tinta-2);margin-top:18px}
+
+/* MDC */
+.sobre{padding-block:64px 24px}
+.sobre .eyebrow{color:var(--ouro-esc)}
+.sobre h2{font:800 clamp(26px,4vw,38px)/1.1 var(--f-display);margin:12px 0 12px;max-width:22ch;text-wrap:balance}
+.sobre .lead{max-width:62ch;color:var(--tinta-2);font-size:17px;margin:0}
+.numero{display:grid;grid-template-columns:auto 1fr;gap:6px 24px;align-items:center;background:var(--verde);color:var(--verde-txt);border-radius:20px;padding:26px 28px;margin-top:32px}
+.numero b{font:600 clamp(40px,7vw,64px)/1 var(--f-num);color:var(--ouro);grid-row:span 2}
+.numero strong{color:#fff;font-size:18px}
+.pilares{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:16px}
+.pilar{background:#fff;border:1px solid var(--linha);border-radius:16px;padding:20px}
+.pilar .k{font:600 12px/1 var(--f-num);color:var(--ouro-esc)}
+.pilar h3{font:700 18px/1.25 var(--f-display);margin:10px 0 8px}
+.pilar p{margin:0;font-size:14.5px;color:var(--tinta-2)}
+.frentes{margin-top:28px}
+.frentes h3{font:700 18px/1.25 var(--f-display);margin:0 0 12px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chips span{border:1px solid var(--linha);background:#fff;border-radius:999px;padding:8px 13px;font-size:13.5px}
+.contato{margin-top:40px;background:#fff;border:1px solid var(--linha);border-radius:20px;padding:24px 28px;display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:24px;align-items:center}
+.contato h3{font:800 24px/1.15 var(--f-display);margin:0 0 6px}
+.contato p{margin:0;color:var(--tinta-2)}
+.lista-contato{display:flex;flex-direction:column;gap:10px;font-size:15px}
+.lista-contato a{display:flex;align-items:center;gap:10px;text-decoration:none;font-weight:600}
+.lista-contato a:hover{color:var(--ouro-esc)}
+.lista-contato svg{width:18px;height:18px;flex:none;color:var(--ouro-esc)}
+.rodape{padding-block:32px 28px;font-size:13px;color:var(--tinta-2)}
+.rodape .wrap{display:flex;flex-wrap:wrap;gap:8px 24px;justify-content:space-between}
+.rodape a{color:var(--ouro-esc)}
+
+@media (max-width:760px){
+  .grade,.opcoes,.pilares,.contato,.ficha{grid-template-columns:minmax(0,1fr)}
+  .passos li{padding:12px 8px;justify-content:center}
+  .passos li .t{display:none}
+  .reg{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"n p" "b b" "v v"}
+  .reg .nome{grid-area:n}.reg .pct{grid-area:p}.reg .barras{grid-area:b}.reg .val{grid-area:v;text-align:left}
+  .veredito{grid-template-columns:1fr}.veredito .eco{text-align:left}
+  .topo{padding-block:16px 110px}
+  .numero{grid-template-columns:1fr}.numero b{grid-row:auto}
+  .linha-cnpj{flex-direction:column}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+@media (prefers-reduced-motion:no-preference){.etapa{animation:entra .35s ease both}@keyframes entra{from{opacity:.4;transform:translateY(6px)}to{opacity:1;transform:none}}}
+@media print{
+  @page{margin:14mm}
+  body{background:#fff}
+  .topo,.passos,.veredito,.tit-sec,.sub-sec,.tabela-reg,.legenda,.checks,.cta,.aviso,.acoes,.sobre,.rodape,.no-print{display:none!important}
+  .cartao{box-shadow:none;margin:0;border-radius:0}
+  .corpo{padding:0}
+  .parecer{border:0;padding:0;margin:0}
+}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-zap" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M3 21l1.65-3.8A9 9 0 1 1 7.6 20L3 21zM9 10a.5.5 0 0 0 1 0V9a.5.5 0 0 0-1 0v1a5 5 0 0 0 5 5h1a.5.5 0 0 0 0-1h-1a.5.5 0 0 0 0 1"/></symbol>
+  <symbol id="i-insta" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="17.5" cy="6.5" r="1.2" fill="currentColor"/></symbol>
+  <symbol id="i-in" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 11v5M8 8v.01M12 16v-5M16 16v-3a2 2 0 0 0-4 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-web" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3.6 9h16.8M3.6 15h16.8M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+  <symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3 7l9 6 9-6" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="10" r="2.5" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+</svg>
+
+<header class="topo gutter">
+  <div class="wrap">
+    <div class="barra">
+      <a class="marca" href="https://mdcassessoria.com" target="_blank" rel="noopener">
+        <img src="https://mdcassessoria.com/wp-content/uploads/2024/07/Logo-MDC5.png" alt="MDC Assessoria" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'mono',textContent:'MDC'}))">
+        <span><small>Assessoria Contábil, Tributária<br>e Gestão Financeira</small></span>
+      </a>
+      <nav class="redes" aria-label="Contatos da MDC">
+        <a href="https://mdcassessoria.com" target="_blank" rel="noopener"><svg><use href="#i-web"/></svg>Site</a>
+        <a href="https://instagram.com/mdcassessoria_" target="_blank" rel="noopener"><svg><use href="#i-insta"/></svg>@mdcassessoria_</a>
+        <a href="https://www.linkedin.com/company/mdc-assessoria-e-consultoria-cont%C3%A1bil" target="_blank" rel="noopener"><svg><use href="#i-in"/></svg>LinkedIn</a>
+        <a class="zap" href="https://wa.me/5511988598041" target="_blank" rel="noopener"><svg><use href="#i-zap"/></svg>(11) 98859-8041</a>
+      </nav>
+    </div>
+    <div class="tese">
+      <div class="eyebrow">Reforma tributária · janeiro de 2027</div>
+      <h1>Quanto sua empresa vai pagar de imposto em <em>2027</em>?</h1>
+      <p>PIS e COFINS acabam e a CBS entra com 11,3% calculados pelo TCU. Informe seu CNPJ, compare Simples, Lucro Presumido e Lucro Real e receba um parecer técnico gratuito da MDC.</p>
+      <div class="fatos">
+        <div><b>11,3%</b>CBS de referência 2027</div>
+        <div><b>R$ 15 mi</b>em créditos recuperados para clientes</div>
+        <div><b>3 min</b>para o seu parecer</div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main class="gutter">
+<div class="wrap">
+<section class="cartao" aria-live="polite">
+  <ol class="passos" aria-label="Etapas">
+    <li data-p="1" class="ativo"><span class="n">1</span><span class="t">Empresa</span></li>
+    <li data-p="2"><span class="n">2</span><span class="t">Custos</span></li>
+    <li data-p="3"><span class="n">3</span><span class="t">Contato</span></li>
+    <li data-p="4"><span class="n">4</span><span class="t">Resultado e parecer</span></li>
+  </ol>
+  <div class="corpo">
+  <form id="form" novalidate>
+
+    <!-- ETAPA 1 -->
+    <div class="etapa" data-etapa="1">
+      <h2>Sobre a sua empresa</h2>
+      <p class="sub">Comece pelo CNPJ: buscamos na Receita Federal o CNAE, a situação e o enquadramento atual. Valores aproximados dos últimos 12 meses bastam.</p>
+      <div class="grade">
+        <div class="campo full">
+          <label for="cnpj">CNPJ da empresa</label>
+          <div class="linha-cnpj">
+            <input id="cnpj" name="cnpj" type="text" inputmode="numeric" maxlength="18" placeholder="00.000.000/0000-00" autocomplete="off">
+            <button type="button" class="btn btn-borda" id="buscar">Buscar dados</button>
+          </div>
+          <span class="status-busca" id="status-busca" role="status"></span>
+        </div>
+        <div class="full" id="ficha" hidden></div>
+        <div class="campo full" id="campo-cnae">
+          <label for="cnae">CNAE principal <span style="font-weight:400;color:var(--tinta-2)">(preenchido pelo CNPJ ou digite)</span></label>
+          <input id="cnae" name="cnae" type="text" inputmode="numeric" maxlength="12" placeholder="0000-0/00">
+          <span class="ajuda" id="cnae-ajuda">O CNAE define o anexo do Simples, a presunção do Lucro Presumido e a alíquota da CBS/IBS.</span>
+        </div>
+        <div class="campo full">
+          <span class="rot" id="rot-ativ">Atividade principal</span>
+          <div class="opcoes" role="radiogroup" aria-labelledby="rot-ativ">
+            <label class="opc" data-v="servicos"><input type="radio" name="atividade" value="servicos" checked><span><b>Serviços em geral</b><i>TI, marketing, consultoria, RH, manutenção</i><em class="sug">Indicado pelo CNAE</em></span></label>
+            <label class="opc" data-v="profissional"><input type="radio" name="atividade" value="profissional"><span><b>Profissão regulamentada</b><i>Contábil, jurídica, engenharia, arquitetura</i><em class="sug">Indicado pelo CNAE</em></span></label>
+            <label class="opc" data-v="saude"><input type="radio" name="atividade" value="saude"><span><b>Saúde ou educação</b><i>Clínicas, terapias, escolas, cursos</i><em class="sug">Indicado pelo CNAE</em></span></label>
+            <label class="opc" data-v="obras"><input type="radio" name="atividade" value="obras"><span><b>Obras, limpeza, vigilância</b><i>Construção, conservação, segurança</i><em class="sug">Indicado pelo CNAE</em></span></label>
+            <label class="opc" data-v="comercio"><input type="radio" name="atividade" value="comercio"><span><b>Comércio</b><i>Revenda, varejo, atacado</i><em class="sug">Indicado pelo CNAE</em></span></label>
+            <label class="opc" data-v="industria"><input type="radio" name="atividade" value="industria"><span><b>Indústria</b><i>Fabricação e transformação</i><em class="sug">Indicado pelo CNAE</em></span></label>
+          </div>
+        </div>
+        <div class="campo">
+          <label for="regime">Regime atual</label>
+          <select id="regime" name="regime">
+            <option value="simples">Simples Nacional</option>
+            <option value="presumido" selected>Lucro Presumido</option>
+            <option value="real">Lucro Real</option>
+            <option value="nao_sei">Não sei / abrindo empresa</option>
+          </select>
+        </div>
+        <div class="campo">
+          <label for="fat">Faturamento anual</label>
+          <div class="moeda"><input id="fat" name="fat" type="text" inputmode="numeric" value="1.800.000"></div>
+          <span class="ajuda">Receita bruta dos últimos 12 meses</span>
+        </div>
+        <div class="campo full">
+          <label for="b2b">Quanto das suas vendas é para outras empresas?</label>
+          <div class="faixa"><input id="b2b" name="b2b" type="range" min="0" max="100" step="5" value="70"><output for="b2b" id="b2b-o">70%</output></div>
+          <span class="ajuda">Empresas compradoras aproveitam crédito da CBS. Isso pesa na escolha do regime.</span>
+        </div>
+      </div>
+      <div class="acoes"><span></span><button type="button" class="btn btn-pri" data-ir="2">Continuar →</button></div>
+    </div>
+
+    <!-- ETAPA 2 -->
+    <div class="etapa" data-etapa="2" hidden>
+      <h2>Custos da operação</h2>
+      <p class="sub">A folha não gera crédito na reforma; compras de fornecedores do regime normal geram.</p>
+      <div class="grade">
+        <div class="campo">
+          <label for="folha">Folha de pagamento anual</label>
+          <div class="moeda"><input id="folha" name="folha" type="text" inputmode="numeric" value="450.000"></div>
+          <span class="ajuda">Salários, 13º, férias e pró-labore</span>
+        </div>
+        <div class="campo">
+          <label for="compras">Compras e despesas com nota</label>
+          <div class="moeda"><input id="compras" name="compras" type="text" inputmode="numeric" value="300.000"></div>
+          <span class="ajuda">Mercadorias, insumos, aluguel, energia, serviços contratados</span>
+        </div>
+        <div class="campo full">
+          <label for="margem">Lucro antes dos impostos sobre o lucro</label>
+          <div class="faixa"><input id="margem" name="margem" type="range" min="0" max="50" step="1" value="15"><output for="margem" id="margem-o">15%</output></div>
+          <span class="ajuda">Percentual aproximado do faturamento que sobra antes de IRPJ e CSLL</span>
+        </div>
+        <details class="avanc full">
+          <summary>Ajustes avançados (opcional)</summary>
+          <div class="grade" style="margin-top:16px">
+            <div class="campo">
+              <label for="icmsiss">ICMS ou ISS médio sobre o faturamento</label>
+              <div class="faixa"><input id="icmsiss" name="icmsiss" type="range" min="0" max="12" step="0.5" value="5"><output for="icmsiss" id="icmsiss-o">5,0%</output></div>
+              <span class="ajuda">Ajustado pela atividade; altere se souber o seu</span>
+            </div>
+            <div class="campo">
+              <label for="pctreg">Compras de fornecedores fora do Simples</label>
+              <div class="faixa"><input id="pctreg" name="pctreg" type="range" min="0" max="100" step="5" value="80"><output for="pctreg" id="pctreg-o">80%</output></div>
+              <span class="ajuda">Fornecedores do Simples geram crédito menor</span>
+            </div>
+          </div>
+        </details>
+      </div>
+      <div class="acoes"><button type="button" class="btn btn-sec" data-ir="1">← Voltar</button><button type="button" class="btn btn-pri" data-ir="3">Continuar →</button></div>
+    </div>
+
+    <!-- ETAPA 3 -->
+    <div class="etapa" data-etapa="3" hidden>
+      <h2>Para quem preparamos o parecer?</h2>
+      <p class="sub">O resultado e o parecer técnico aparecem na próxima tela. Um especialista da MDC pode revisar os números com você, sem custo.</p>
+      <div class="grade">
+        <div class="campo"><label for="nome">Seu nome</label><input id="nome" name="nome" type="text" autocomplete="name" maxlength="120" required></div>
+        <div class="campo"><label for="empresa">Empresa</label><input id="empresa" name="empresa" type="text" autocomplete="organization" maxlength="160" required></div>
+        <div class="campo"><label for="email">E-mail</label><input id="email" name="email" type="email" autocomplete="email" maxlength="160" required></div>
+        <div class="campo"><label for="whats">WhatsApp</label><input id="whats" name="whats" type="tel" autocomplete="tel" inputmode="tel" maxlength="20" placeholder="(11) 90000-0000" required></div>
+        <div class="campo full"><label for="cidade">Cidade / UF</label><input id="cidade" name="cidade" type="text" maxlength="80" placeholder="Bragança Paulista / SP"></div>
+        <div class="hp" aria-hidden="true"><label for="site">Não preencha</label><input id="site" name="site" type="text" tabindex="-1" autocomplete="off"></div>
+        <label class="lgpd full" for="consent">
+          <input id="consent" name="consent" type="checkbox" required>
+          <span id="consent-txt">Autorizo a MDC Assessoria Ltda (CNPJ 48.140.121/0001-65) a armazenar os dados desta simulação, consultar dados públicos do CNPJ informado e entrar em contato por e-mail ou WhatsApp para apresentar o diagnóstico tributário. Posso pedir a exclusão a qualquer momento pelo e-mail edvaldo@mdcassessoria.com (LGPD, Lei 13.709/2018).</span>
+        </label>
+      </div>
+      <p class="erro" id="erro3" role="alert"></p>
+      <div class="acoes"><button type="button" class="btn btn-sec" data-ir="2">← Voltar</button><button type="submit" class="btn btn-pri" id="enviar">Ver resultado e parecer →</button></div>
+    </div>
+  </form>
+
+    <!-- ETAPA 4 -->
+    <div class="etapa" data-etapa="4" hidden id="res">
+      <div class="veredito">
+        <div>
+          <div class="eyebrow" id="v-eyebrow">Regime indicado para 2027</div>
+          <h3 id="v-titulo">—</h3>
+          <div class="lin2" id="v-lin2"></div>
+        </div>
+        <div class="eco"><b id="v-num">—</b><small id="v-sub">do faturamento em impostos</small></div>
+      </div>
+
+      <h3 class="tit-sec">Carga tributária por regime</h3>
+      <p class="sub-sec">Percentual do faturamento que vai para impostos em 2027 (CBS, IBS, ICMS/ISS, IRPJ, CSLL e INSS patronal).</p>
+      <div class="tabela-reg" id="tabela"></div>
+      <div class="legenda"><span class="l26">2026 (sistema atual)</span><span class="l27">2027 (com CBS)</span></div>
+
+      <h3 class="tit-sec">Conferência com os dados da Receita</h3>
+      <p class="sub-sec">Comparação entre o que você informou, o CNAE e o cadastro público do CNPJ.</p>
+      <div class="checks" id="checks"></div>
+
+      <article class="parecer" id="parecer"></article>
+
+      <div class="cta">
+        <p><b>Quer validar com um especialista?</b> A MDC revisa a simulação com seus números reais e aponta créditos que podem ser recuperados.</p>
+        <div class="bts">
+          <button type="button" class="btn btn-borda" id="imprimir">Baixar parecer em PDF</button>
+          <a class="btn btn-zap" id="zap" href="https://wa.me/5511988598041" target="_blank" rel="noopener">Falar no WhatsApp</a>
+        </div>
+      </div>
+      <p class="aviso" id="aviso-envio"></p>
+      <p class="aviso">Estimativa simplificada com CBS de 11,3% (cálculo do TCU de 28/10/2026, sujeito à resolução do Senado), IBS de 0,1% em 2027, ICMS/ISS e INSS patronal aproximados e acréscimo da LC 224/2025 no Lucro Presumido acima de R$ 5 milhões. Dados cadastrais obtidos de bases públicas da Receita Federal. Não substitui a análise individual das operações.</p>
+      <div class="acoes"><button type="button" class="btn btn-sec" id="refazer">↺ Simular outro cenário</button></div>
+    </div>
+  </div>
+</section>
+
+<section class="sobre" id="mdc">
+  <div class="eyebrow">Quem prepara o seu parecer</div>
+  <h2>A MDC trabalha para a sua empresa pagar o imposto certo, e nada a mais.</h2>
+  <p class="lead">Somos uma assessoria contábil e tributária de Bragança Paulista que acompanha cada cliente de perto. Antecipamos mudanças como a reforma tributária, revisamos o enquadramento e transformamos impostos pagos a maior em caixa para o negócio.</p>
+
+  <div class="numero">
+    <b>R$ 15 mi</b>
+    <strong>em créditos tributários já recuperados para clientes</strong>
+    <span>Diversos casos de sucesso em revisão fiscal, retificação de obrigações e recuperação de tributos pagos indevidamente, com segurança técnica e documentação completa.</span>
+  </div>
+
+  <div class="pilares">
+    <div class="pilar"><span class="k">Planejamento</span><h3>Planejamento tributário de perto</h3><p>Escolha do regime, revisão de preços e processos fiscais e regimes especiais de ICMS, com ações antecipadas para melhorar o resultado.</p></div>
+    <div class="pilar"><span class="k">Recuperação</span><h3>Créditos que viram caixa</h3><p>Levantamento dos últimos 5 anos, retificação de EFD e DCTF e pedido de compensação ou restituição junto à Receita.</p></div>
+    <div class="pilar"><span class="k">Equipe</span><h3>Equipe consultiva no dia a dia</h3><p>Profissionais treinados e capacitados para o trabalho consultivo, que assessoram a empresa na rotina e respondem rápido quando surge uma decisão.</p></div>
+  </div>
+
+  <div class="frentes">
+    <h3>Onde costumamos encontrar dinheiro de volta</h3>
+    <div class="chips">
+      <span>PIS/COFINS sobre insumos</span><span>ICMS e ISS na base do PIS/COFINS</span><span>Produtos monofásicos no Simples</span><span>INSS sobre verbas indenizatórias</span><span>IRPJ/CSLL pagos a maior</span><span>Créditos de ICMS acumulados</span><span>Revisão de enquadramento e anexo do Simples</span>
+    </div>
+  </div>
+
+  <div class="contato">
+    <div>
+      <h3>Fale com a MDC</h3>
+      <p>Atendimento em Bragança Paulista e região, e para empresas de todo o Brasil de forma digital.</p>
+    </div>
+    <div class="lista-contato">
+      <a href="https://wa.me/5511988598041" target="_blank" rel="noopener"><svg><use href="#i-zap"/></svg>WhatsApp (11) 98859-8041</a>
+      <a href="mailto:edvaldo@mdcassessoria.com"><svg><use href="#i-mail"/></svg>edvaldo@mdcassessoria.com</a>
+      <a href="https://mdcassessoria.com" target="_blank" rel="noopener"><svg><use href="#i-web"/></svg>mdcassessoria.com</a>
+      <a href="https://instagram.com/mdcassessoria_" target="_blank" rel="noopener"><svg><use href="#i-insta"/></svg>Instagram @mdcassessoria_</a>
+      <a href="https://www.linkedin.com/company/mdc-assessoria-e-consultoria-cont%C3%A1bil" target="_blank" rel="noopener"><svg><use href="#i-in"/></svg>LinkedIn MDC Assessoria</a>
+      <span style="display:flex;gap:10px;align-items:center;color:var(--tinta-2)"><svg style="width:18px;height:18px;color:var(--ouro-esc)"><use href="#i-pin"/></svg>Bragança Paulista / SP</span>
+    </div>
+  </div>
+</section>
+</div>
+</main>
+
+<footer class="rodape gutter">
+  <div class="wrap">
+    <span>MDC Assessoria Ltda · CNPJ 48.140.121/0001-65 · Bragança Paulista/SP</span>
+    <span>Responsável técnico: Edvaldo Ribeiro de Carvalho, Contador CRC 1SP346098-O/0</span>
+  </div>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+/* ===================== CONFIGURAÇÃO ===================== */
+const CONFIG = {
+  /* Lead vai direto para o CRM do HUB-MDC (Comercial › Leads) pela função crm_receber_lead, que só aceita lead com
+     consentimento e no máximo 20 por minuto. A chave abaixo é a publicável do HUB: pública por natureza. */
+  HUB_URL: "https://bulqqdgfrrpqquqvjjfa.supabase.co",
+  HUB_CHAVE: "sb_publishable_PZ8K_Udj-1cbUEAaTnkgYA_AmtuSLqU",
+  WHATSAPP: "5511988598041",
+  VERSAO_CONSENTIMENTO: "2026-10-29b"
+};
+
+/* ===================== MOTOR DE CÁLCULO ===================== */
+/* MOTOR-INICIO */
+const P = {cbs:0.113, red01:0.001, ibs27:0.001, pcCum:0.0365, pcNc:0.0925, irpj:0.15, adIR:0.10, limAd:240000,
+  csll:0.09, lim224:5e6, acr224:0.10, tetoSN:4.8e6, tetoLP:78e6, inss:0.278, inssIV:0.22, fatorR:0.28};
+const LIM = [0,180000.01,360000.01,720000.01,1800000.01,3600000.01];
+const NOM = {I:[[.04,0],[.073,5940],[.095,13860],[.107,22500],[.143,87300],[.19,378000]],
+  II:[[.045,0],[.078,5940],[.10,13860],[.112,22500],[.147,85500],[.30,720000]],
+  III:[[.06,0],[.112,9360],[.135,17640],[.16,35640],[.21,125640],[.33,648000]],
+  IV:[[.045,0],[.09,8100],[.102,12420],[.14,39780],[.22,183780],[.33,828000]],
+  V:[[.155,0],[.18,4500],[.195,9900],[.205,17100],[.23,62100],[.305,540000]]};
+const PART = {I:[[.155,.34],[.155,.34],[.155,.34],[.155,.34],[.155,.34],[.344,0]],
+  II:[[.14,.395],[.14,.395],[.14,.395],[.14,.395],[.14,.395],[.255,.35]],
+  III:[[.156,.335],[.171,.32],[.166,.325],[.166,.325],[.156,.335],[.195,0]],
+  IV:[[.215,.445],[.25,.40],[.24,.40],[.23,.40],[.22,.40],[.25,0]],
+  V:[[.1715,.14],[.1715,.17],[.1815,.19],[.1915,.21],[.1715,.235],[.20,0]]};
+const ATIV = {
+  servicos:{nome:"Serviços em geral", anexo:"FR", pir:.32, pcs:.32, red:0, icmsiss:.05},
+  profissional:{nome:"Profissão regulamentada", anexo:"FR", pir:.32, pcs:.32, red:.30, icmsiss:.05},
+  saude:{nome:"Saúde ou educação", anexo:"FR", pir:.32, pcs:.32, red:.60, icmsiss:.03},
+  obras:{nome:"Obras, limpeza, vigilância", anexo:"IV", pir:.32, pcs:.32, red:0, icmsiss:.05},
+  comercio:{nome:"Comércio", anexo:"I", pir:.08, pcs:.12, red:0, icmsiss:.04},
+  industria:{nome:"Indústria", anexo:"II", pir:.08, pcs:.12, red:0, icmsiss:.04}
+};
+/* Enquadramento aproximado pelo CNAE (subclasse de 7 dígitos). Retorna atividade sugerida e ajustes. */
+function classificarCNAE(c){
+  c = String(c||"").replace(/\D/g,"");
+  if (c.length < 4) return null;
+  const d = Number(c.slice(0,2)), g = Number(c.slice(0,3)), k = Number(c.slice(0,4));
+  const r = {atividade:"servicos", anexo:null, pir:null, pcs:null, notas:[]};
+  if (d<=3){ r.atividade="comercio"; r.notas.push("Atividade rural: produtor rural tem regras próprias de crédito presumido na reforma."); }
+  else if (d<=33){ r.atividade="industria"; }
+  else if (d>=41 && d<=43){ r.atividade="obras"; r.notas.push("Construção por empreitada com fornecimento de materiais usa presunção de 8% no Lucro Presumido; sem material, 32%."); }
+  else if (d>=45 && d<=47){ r.atividade="comercio"; if (k===4731){ r.pir=.016; r.notas.push("Revenda de combustíveis: presunção de 1,6% e regime monofásico de IBS/CBS."); } }
+  else if (d===49){ if (k===4930){ r.pir=.08; r.pcs=.12; r.anexo="III"; r.notas.push("Transporte de cargas: presunção de 8% (IRPJ) e Anexo III do Simples."); }
+                    else if (k>=4921 && k<=4929){ r.pir=.16; r.pcs=.12; r.anexo="III"; r.notas.push("Transporte de passageiros: presunção de 16% (IRPJ); transporte coletivo tem tratamento específico na reforma."); } }
+  else if (d===55 || d===56){ r.atividade="comercio"; r.notas.push("Hotelaria, bares e restaurantes têm regime específico de IBS/CBS na LC 214/2025."); }
+  else if (d>=64 && d<=66){ r.notas.push("Serviços financeiros têm regime específico de IBS/CBS e diversas vedações ao Simples Nacional."); }
+  else if (d===68){ r.notas.push("Operações com imóveis têm regime específico, com redutores e redutor social na locação."); }
+  else if (d===69){ r.atividade="profissional"; if (k===6911){ r.anexo="IV"; r.notas.push("Advocacia é tributada no Anexo IV do Simples, com INSS patronal fora do DAS."); } else if (g===692){ r.anexo="III"; r.notas.push("Serviços contábeis são tributados no Anexo III do Simples, sem Fator R."); } }
+  else if (d===71 || d===75){ r.atividade="profissional"; }
+  else if (d===80){ r.atividade="obras"; }
+  else if (d===81){ if (k===8121 || k===8122 || k===8129 || g===811) r.atividade="obras"; }
+  else if (d===85){ r.atividade="saude"; r.anexo="III"; r.notas.push("Educação tem redução de 60% de IBS/CBS para os serviços listados na LC 214/2025."); }
+  else if (d>=86 && d<=88){ r.atividade="saude"; r.notas.push("Serviços de saúde têm redução de 60% de IBS/CBS; serviços hospitalares podem usar presunção de 8% no Presumido."); }
+  return r;
+}
+function simular(d){
+  const a = Object.assign({}, ATIV[d.atividade]);
+  if (d.pir) a.pir = d.pir; if (d.pcs) a.pcs = d.pcs; if (d.anexo) a.anexo = d.anexo;
+  const rb = Math.max(0, d.fat);
+  const folha = d.folha, compReg = d.compras*d.pctReg, compSN = d.compras*(1-d.pctReg);
+  const icmsiss = d.icmsiss, b2b = d.b2b, margem = d.margem;
+  const base = rb*(1-icmsiss);
+  const per = {};
+  for (const ano of [2026, 2027]){
+    const aCbs = ano===2026 ? 0 : (P.cbs-P.red01)*(1-a.red);
+    const aIbs = ano===2026 ? 0 : P.ibs27*(1-a.red);
+    const aComp = ano===2026 ? 0 : (P.cbs-P.red01+P.ibs27);
+    const deb = base*(aCbs+aIbs);
+    const cred = compReg*aComp + (ano===2026?0:compSN*0.03);
+    const iva = deb - cred;
+    const icms = rb*icmsiss;
+    const inss = folha*P.inss;
+    const fr = rb>0 ? folha/rb : 0;
+    const anx = a.anexo==="FR" ? (fr>=P.fatorR ? "III" : "V") : a.anexo;
+    let fx = 0; for (let i=0;i<LIM.length;i++) if (rb>=LIM[i]) fx=i;
+    const [nom, ded] = NOM[anx][fx];
+    const aef = rb>0 ? (rb*nom-ded)/rb : 0;
+    const das = rb*aef;
+    const [ppc, pict] = PART[anx][fx];
+    const cppIV = anx==="IV" ? folha*P.inssIV : 0;
+    const sn = das + cppIV;
+    const snCred = ano===2026 ? 0 : das*ppc*b2b;
+    const hib = ano===2026 ? sn : das*(1-ppc) + iva + cppIV;
+    const hibCred = ano===2026 ? 0 : deb*b2b;
+    const presBase = p => rb<=P.lim224 ? rb*p : P.lim224*p + (rb-P.lim224)*p*(1+P.acr224);
+    const bir = presBase(a.pir), bcs = presBase(a.pcs);
+    const irp = bir*P.irpj + Math.max(0,bir-P.limAd)*P.adIR, csp = bcs*P.csll;
+    const pcp = ano===2026 ? base*P.pcCum : 0;
+    const lp = irp + csp + pcp + iva + icms + inss;
+    const pcr = ano===2026 ? Math.max(0, base*P.pcNc - d.compras*P.pcNc) : 0;
+    const lair = rb*margem - pcr;
+    const irr = Math.max(0,lair)*P.irpj + Math.max(0,lair-P.limAd)*P.adIR, csr = Math.max(0,lair)*P.csll;
+    const lr = irr + csr + pcr + iva + icms + inss;
+    per[ano] = {sn, hib, lp, lr, snCred, hibCred, regCred: deb*b2b, anx, aef, fr, fx};
+  }
+  const elegSN = rb <= P.tetoSN, elegLP = rb <= P.tetoLP;
+  const regs = [
+    {id:"simples", nome:"Simples Nacional", sub:"IBS/CBS dentro do DAS", c26:per[2026].sn, c27:per[2027].sn, cred:per[2027].snCred, eleg:elegSN},
+    {id:"hibrido", nome:"Simples híbrido", sub:"IBS/CBS por fora do DAS", c26:per[2026].hib, c27:per[2027].hib, cred:per[2027].hibCred, eleg:elegSN},
+    {id:"presumido", nome:"Lucro Presumido", sub:"IRPJ/CSLL presumidos", c26:per[2026].lp, c27:per[2027].lp, cred:per[2027].regCred, eleg:elegLP},
+    {id:"real", nome:"Lucro Real", sub:"IRPJ/CSLL sobre o lucro", c26:per[2026].lr, c27:per[2027].lr, cred:per[2027].regCred, eleg:true}
+  ];
+  regs.forEach(r=>{ r.p26 = rb>0 ? r.c26/rb : 0; r.p27 = rb>0 ? r.c27/rb : 0; });
+  const ok = regs.filter(r=>r.eleg);
+  const melhor = ok.reduce((m,r)=> r.c27<m.c27 ? r : m, ok[0]);
+  const melhorCadeia = ok.reduce((m,r)=> (r.c27-r.cred)<(m.c27-m.cred) ? r : m, ok[0]);
+  const atualId = d.regime==="nao_sei" ? null : d.regime;
+  const atual = regs.find(r=>r.id===atualId) || null;
+  return {regs, melhor, melhorCadeia, atual, anexo: per[2027].anx, aef: per[2027].aef, fatorR: per[2027].fr, faixa: per[2027].fx+1,
+    pir: a.pir, pcs: a.pcs, red: a.red, economia: atual ? Math.max(0, atual.c27 - melhor.c27) : 0};
+}
+/* MOTOR-FIM */
+if (typeof module !== "undefined") module.exports = {simular, classificarCNAE};
+
+/* ===================== PARECER EM PDF ===================== */
+/* PDF-INICIO */
+function construirPDF(jsPDF, p){
+  const doc = new jsPDF({unit:"mm", format:"a4", compress:true});
+  const W = 210, H = 297, M = 16, CW = W - 2*M, BASE = H - 16;
+  const C = {verde:[11,40,32], verde2:[20,57,47], vtxt:[198,211,204], ouro:[226,193,126], ouroE:[138,106,42],
+    papel:[246,244,238], tinta:[22,35,30], tinta2:[78,92,86], linha:[220,216,203], branco:[255,255,255],
+    bom:[47,122,82], bomF:[237,246,241], alerta:[181,101,29], alertaF:[251,241,230], ruim:[163,54,31], ruimF:[251,237,234], bar26:[216,211,194]};
+  const fill = c => doc.setFillColor(c[0],c[1],c[2]);
+  const draw = c => doc.setDrawColor(c[0],c[1],c[2]);
+  const ink = c => doc.setTextColor(c[0],c[1],c[2]);
+  const font = (size, style) => { doc.setFont("helvetica", style||"normal"); doc.setFontSize(size); };
+  const pc = (v,c) => (v*100).toLocaleString("pt-BR",{minimumFractionDigits:c==null?1:c, maximumFractionDigits:c==null?1:c}) + "%";
+  const brl = v => "R$ " + Math.round(v||0).toLocaleString("pt-BR");
+  const lines = (s, w) => doc.splitTextToSize(String(s||""), w);
+  let y = 0;
+
+  function cabecalhoInterno(){
+    fill(C.verde); doc.rect(0,0,W,13,"F");
+    fill(C.ouro); doc.rect(0,13,W,0.8,"F");
+    font(13,"bold"); ink(C.ouro); doc.text("MDC", M, 8.8);
+    font(7.5,"normal"); ink(C.vtxt); doc.text("PARECER TÉCNICO PRELIMINAR  ·  " + p.empresa.toUpperCase().slice(0,60), W-M, 8.4, {align:"right"});
+    y = 24;
+  }
+  function garantir(h){ if (y + h > BASE){ doc.addPage(); cabecalhoInterno(); } }
+  function secao(num, titulo){
+    garantir(16);
+    y += 1.5;
+    font(8,"bold"); ink(C.ouroE); doc.text(num, M, y);
+    font(12.5,"bold"); ink(C.verde); doc.text(titulo, M + 8, y);
+    draw(C.linha); doc.setLineWidth(0.3); doc.line(M, y+2.6, W-M, y+2.6);
+    y += 7.5;
+  }
+  function paragrafo(s, opt){
+    opt = opt||{}; const size = opt.size||9.6, lh = size*0.43;
+    font(size, opt.style||"normal"); ink(opt.color||C.tinta);
+    const ls = lines(s, opt.w||CW);
+    ls.forEach(l => { garantir(lh+1); doc.text(l, opt.x||M, y); y += lh; });
+    y += opt.after==null ? 2 : opt.after;
+  }
+  function marcadores(itens){
+    itens.forEach(t => {
+      font(9.5,"normal"); const ls = lines(t, CW-6); const h = ls.length*4.0 + 1.2;
+      garantir(h);
+      fill(C.ouro); doc.rect(M+0.4, y-2.6, 2, 2, "F");
+      ink(C.tinta); ls.forEach((l,i)=> doc.text(l, M+5.5, y + i*4.0));
+      y += h;
+    });
+    y += 1.5;
+  }
+
+  /* ---------------- CAPA ---------------- */
+  fill(C.verde); doc.rect(0,0,W,66,"F");
+  draw([40,74,62]); doc.setLineWidth(0.4);
+  doc.circle(W-14, 4, 46, "S"); doc.circle(W-14, 4, 62, "S");
+  font(34,"bold"); ink(C.ouro); doc.text("MDC", M, 27);
+  font(7,"normal"); ink(C.vtxt); doc.text("ASSESSORIA CONTÁBIL, TRIBUTÁRIA E GESTÃO FINANCEIRA", M, 33.5, {charSpace:0.4});
+  font(7.5,"bold"); ink(C.ouro); doc.text("PARECER TÉCNICO PRELIMINAR", W-M, 18, {align:"right", charSpace:0.5});
+  font(8.5,"normal"); ink(C.vtxt); doc.text(p.data + "  ·  Protocolo " + p.protocolo, W-M, 23.5, {align:"right"});
+  font(21,"bold"); ink(C.branco); doc.text("Enquadramento tributário 2027", M, 50);
+  font(9.5,"normal"); ink(C.vtxt); doc.text("Reforma tributária do consumo · CBS de referência de 11,3% (TCU, 28/10/2026)", M, 57);
+  fill(C.ouro); doc.rect(0,66,W,1.2,"F");
+
+  y = 78;
+  font(7.5,"bold"); ink(C.ouroE); doc.text("EMPRESA ANALISADA", M, y, {charSpace:0.4}); y += 6.5;
+  font(15,"bold"); ink(C.tinta); lines(p.empresa, CW).slice(0,2).forEach(l=>{ doc.text(l, M, y); y += 6.4; });
+  const info = [p.cnpj ? "CNPJ " + p.cnpj : null, p.cnae ? "CNAE " + p.cnae + (p.cnaeDesc ? " — " + p.cnaeDesc : "") : null].filter(Boolean).join("   ·   ");
+  const info2 = [p.municipio, p.situacao ? "Situação " + p.situacao : null, p.porte, "Regime informado: " + p.regimeInformado].filter(Boolean).join("   ·   ");
+  font(8.8,"normal"); ink(C.tinta2);
+  if (info) lines(info, CW).forEach(l=>{ doc.text(l, M, y); y += 4.2; });
+  lines(info2, CW).forEach(l=>{ doc.text(l, M, y); y += 4.2; });
+  y += 4;
+
+  // Resumo executivo
+  const hR = 36;
+  fill(C.papel); draw(C.linha); doc.setLineWidth(0.3); doc.roundedRect(M, y, CW, hR, 3, 3, "FD");
+  fill(C.verde); doc.rect(M, y+6, 1.6, hR-12, "F");
+  font(7.5,"bold"); ink(C.ouroE); doc.text("REGIME INDICADO PARA 2027", M+7, y+9, {charSpace:0.4});
+  font(19,"bold"); ink(C.verde); doc.text(p.melhorNome, M+7, y+18.5);
+  font(9,"normal"); ink(C.tinta2);
+  lines(p.resumoLinha, CW-72).slice(0,3).forEach((l,i)=> doc.text(l, M+7, y+25 + i*4.2));
+  font(30,"bold"); ink(C.ouroE); doc.text(pc(p.melhorPct), W-M-7, y+20, {align:"right"});
+  font(8.5,"normal"); ink(C.tinta2); doc.text("do faturamento em impostos", W-M-7, y+26, {align:"right"});
+  y += hR + 10;
+
+  // Gráfico
+  font(11,"bold"); ink(C.verde); doc.text("Carga tributária por regime", M, y);
+  font(8,"normal"); ink(C.tinta2); doc.text("% do faturamento · CBS, IBS, ICMS/ISS, IRPJ, CSLL e INSS patronal", W-M, y, {align:"right"});
+  y += 6;
+  const maxP = Math.max(...p.regs.map(r=>Math.max(r.p26, r.p27)), 0.01);
+  const xBar = M + 46, wBar = CW - 46 - 22;
+  p.regs.forEach(r => {
+    font(9.2, r.melhor ? "bold" : "normal"); ink(r.eleg ? C.tinta : C.tinta2);
+    doc.text(r.nome + (r.melhor ? "  (indicado)" : ""), M, y+3.6);
+    font(7,"normal"); ink(C.tinta2); doc.text(r.eleg ? r.sub : "Faturamento acima do limite", M, y+7.4);
+    fill(C.bar26); doc.roundedRect(xBar, y, Math.max(0.8, wBar*r.p26/maxP), 3.2, 1.2, 1.2, "F");
+    fill(r.melhor ? C.verde : (r.eleg ? C.ouroE : C.linha)); doc.roundedRect(xBar, y+4.4, Math.max(0.8, wBar*r.p27/maxP), 3.6, 1.2, 1.2, "F");
+    font(10.5,"bold"); ink(r.melhor ? C.verde : C.tinta); doc.text(pc(r.p27), W-M, y+5, {align:"right"});
+    font(7,"normal"); ink(C.tinta2); doc.text("2026: " + pc(r.p26), W-M, y+8.6, {align:"right"});
+    y += 12.5;
+  });
+  font(7.5,"normal"); ink(C.tinta2);
+  fill(C.bar26); doc.rect(xBar, y-1.8, 5, 2.2, "F"); doc.text("2026 (sistema atual)", xBar+6.5, y);
+  fill(C.ouroE); doc.rect(xBar+42, y-1.8, 5, 2.2, "F"); doc.text("2027 (com CBS)", xBar+48.5, y);
+  y += 8;
+
+  // Tabela
+  const cols = [{t:"Regime", w:64, a:"left"},{t:"Carga 2026", w:28, a:"right"},{t:"Carga 2027", w:28, a:"right"},{t:"Valor 2027", w:32, a:"right"},{t:"Situação", w:CW-152, a:"right"}];
+  garantir(8 + p.regs.length*7);
+  fill(C.verde); doc.rect(M, y, CW, 7, "F");
+  font(8,"bold"); ink(C.ouro);
+  let x = M; cols.forEach(c=>{ doc.text(c.t, c.a==="right" ? x+c.w-2.5 : x+2.5, y+4.7, {align:c.a}); x += c.w; });
+  y += 7;
+  p.regs.forEach((r,i)=>{
+    if (i%2===0){ fill(C.papel); doc.rect(M, y, CW, 7, "F"); }
+    const vals = [r.nome, pc(r.p26), pc(r.p27), brl(r.c27), r.melhor ? "Indicado" : (r.eleg ? "Elegível" : "Inelegível")];
+    x = M; cols.forEach((c,j)=>{ font(8.8, (r.melhor && (j===0||j===4)) ? "bold":"normal"); ink(r.melhor && j===4 ? C.bom : (r.eleg ? C.tinta : C.tinta2)); doc.text(vals[j], c.a==="right" ? x+c.w-2.5 : x+2.5, y+4.7, {align:c.a}); x += c.w; });
+    y += 7;
+  });
+  draw(C.linha); doc.line(M, y, W-M, y);
+  y += 6;
+  paragrafo(p.conclusao, {size:9.6});
+
+  /* ---------------- ANÁLISE ---------------- */
+  doc.addPage(); cabecalhoInterno();
+  secao("01", "Identificação");
+  const ident = [["Razão social", p.empresa], ["CNPJ", p.cnpj||"Não informado"], ["CNAE principal", p.cnae ? p.cnae + (p.cnaeDesc ? " — " + p.cnaeDesc : "") : "Não informado"],
+    ["Natureza jurídica", p.natureza||"—"], ["Situação e porte", [p.situacao, p.porte].filter(Boolean).join(" · ")||"—"], ["Município", p.municipio||"—"],
+    ["Regime informado", p.regimeInformado], ["Faturamento anual", brl(p.fat) + " · " + Math.round(p.b2b*100) + "% das vendas para empresas"]];
+  ident.forEach(([k,v],i)=>{
+    font(9,"normal"); const ls = lines(v, CW-52); const h = Math.max(5.8, ls.length*4.0+1.8);
+    garantir(h);
+    if (i%2===0){ fill(C.papel); doc.rect(M, y-4.2, CW, h, "F"); }
+    font(8.2,"bold"); ink(C.tinta2); doc.text(k.toUpperCase(), M+2.5, y, {charSpace:0.2});
+    font(9.2,"normal"); ink(C.tinta); ls.forEach((l,j)=> doc.text(l, M+52, y + j*4.1));
+    y += h;
+  });
+  y += 3;
+
+  secao("02", "Enquadramento tributário");
+  marcadores(p.enquadramento);
+
+  secao("03", "Conferência com os dados da Receita Federal");
+  const rot = {ok:["CONFERE", C.bom, C.bomF], at:["ATENÇÃO", C.alerta, C.alertaF], di:["DIVERGÊNCIA", C.ruim, C.ruimF]};
+  p.checks.forEach(c=>{
+    const [lab, cor, fundo] = rot[c.tipo];
+    font(9,"normal"); const ls = lines(c.txt, CW-34); const h = ls.length*4.0 + 3.8;
+    garantir(h + 1.5);
+    fill(fundo); doc.roundedRect(M, y-4, CW, h, 2, 2, "F");
+    font(6.8,"bold"); ink(cor); doc.text(lab, M+3, y+0.2, {charSpace:0.3});
+    font(9,"normal"); ink(C.tinta); ls.forEach((l,j)=> doc.text(l, M+30, y + j*4.1));
+    y += h + 1.5;
+  });
+  y += 1;
+
+  secao("04", "Pontos de atenção para 2027");
+  marcadores(p.pontos);
+
+  secao("05", "Oportunidades a verificar");
+  marcadores(p.oportunidades);
+
+  secao("06", "Próximos passos recomendados");
+  marcadores(["Validar os números desta simulação com a escrituração dos últimos 12 meses.",
+    "Confirmar o enquadramento de cada receita por NCM/NBS nos anexos da LC 214/2025.",
+    "Definir o regime de 2027 antes do primeiro recolhimento de janeiro.",
+    "Agendar a revisão gratuita deste parecer com a equipe da MDC."]);
+
+  garantir(33);
+  y += 4;
+  draw(C.tinta); doc.setLineWidth(0.3); doc.line(M, y, M+70, y);
+  y += 5;
+  font(10.5,"bold"); ink(C.tinta); doc.text("Edvaldo Ribeiro de Carvalho", M, y);
+  font(8.5,"normal"); ink(C.tinta2); doc.text("Contador · CRC 1SP346098-O/0", M, y+4.5); doc.text("Responsável técnico — MDC Assessoria Ltda · CNPJ 48.140.121/0001-65", M, y+8.8);
+  font(8.5,"normal"); ink(C.tinta2); doc.text("Bragança Paulista, " + p.data, W-M, y+4.5, {align:"right"});
+  y += 14;
+  font(7,"normal"); ink(C.tinta2);
+  lines("Parecer preliminar gerado a partir de dados informados pelo usuário e de bases públicas da Receita Federal, com CBS de referência de 11,3% calculada pelo TCU em 28/10/2026 (sujeita à resolução do Senado), IBS de 0,1% em 2027 e acréscimo de presunção da LC 224/2025. Estimativa para apoio à decisão; não substitui a análise individual das operações, contratos e benefícios da empresa.", CW).forEach(l=>{ doc.text(l, M, y); y += 3.2; });
+
+  /* ---------------- POR QUE A MDC ---------------- */
+  doc.addPage(); cabecalhoInterno();
+  font(7.5,"bold"); ink(C.ouroE); doc.text("QUEM ASSINA ESTE PARECER", M, y, {charSpace:0.4}); y += 8;
+  font(19,"bold"); ink(C.verde);
+  lines("A MDC trabalha para a sua empresa pagar o imposto certo, e nada a mais.", CW).forEach(l=>{ doc.text(l, M, y); y += 7.6; });
+  y += 1;
+  paragrafo("Somos uma assessoria contábil e tributária de Bragança Paulista que acompanha cada cliente de perto. Antecipamos mudanças como a reforma tributária, revisamos o enquadramento e transformamos impostos pagos a maior em caixa para o negócio.", {size:10, color:C.tinta2, after:5});
+
+  const hN = 30;
+  fill(C.verde); doc.roundedRect(M, y, CW, hN, 3, 3, "F");
+  font(30,"bold"); ink(C.ouro); doc.text("R$ 15 mi", M+8, y+19);
+  font(11.5,"bold"); ink(C.branco); doc.text("em créditos tributários recuperados para clientes", M+68, y+11.5);
+  font(8.6,"normal"); ink(C.vtxt);
+  lines("Diversos casos de sucesso em revisão fiscal, retificação de obrigações e recuperação de tributos pagos indevidamente, com segurança técnica e documentação completa.", CW-76).forEach((l,i)=> doc.text(l, M+68, y+17.5+i*4));
+  y += hN + 7;
+
+  const pil = [["PLANEJAMENTO","Planejamento tributário de perto","Escolha do regime, revisão de preços e processos fiscais e regimes especiais de ICMS, com ações antecipadas para melhorar o resultado."],
+    ["RECUPERAÇÃO","Créditos que viram caixa","Levantamento dos últimos 5 anos, retificação de EFD e DCTF e pedido de compensação ou restituição junto à Receita."],
+    ["EQUIPE","Consultoria no dia a dia","Profissionais treinados e capacitados para o trabalho consultivo, que assessoram a empresa na rotina e respondem rápido."]];
+  const gw = (CW - 8) / 3, hP = 43;
+  pil.forEach((pp,i)=>{
+    const px = M + i*(gw+4);
+    fill(C.branco); draw(C.linha); doc.setLineWidth(0.3); doc.roundedRect(px, y, gw, hP, 2.5, 2.5, "FD");
+    fill(C.ouro); doc.rect(px+5, y+5, 10, 0.9, "F");
+    font(6.8,"bold"); ink(C.ouroE); doc.text(pp[0], px+5, y+10.5, {charSpace:0.3});
+    font(10,"bold"); ink(C.verde); lines(pp[1], gw-10).forEach((l,j)=> doc.text(l, px+5, y+16.5+j*4.4));
+    font(8,"normal"); ink(C.tinta2); lines(pp[2], gw-10).slice(0,5).forEach((l,j)=> doc.text(l, px+5, y+25+j*3.5));
+  });
+  y += hP + 6;
+
+  font(11,"bold"); ink(C.verde); doc.text("Onde costumamos encontrar dinheiro de volta", M, y); y += 5;
+  const chips = ["PIS/COFINS sobre insumos","ICMS e ISS na base do PIS/COFINS","Produtos monofásicos no Simples","INSS sobre verbas indenizatórias","IRPJ/CSLL pagos a maior","Créditos de ICMS acumulados","Anexo e Fator R do Simples"];
+  let cx = M; font(8.2,"normal");
+  chips.forEach(t=>{
+    const w = doc.getTextWidth(t) + 7;
+    if (cx + w > W-M){ cx = M; y += 8; }
+    fill(C.papel); draw(C.linha); doc.roundedRect(cx, y, w, 6, 3, 3, "FD");
+    ink(C.tinta); doc.text(t, cx+3.5, y+4.1);
+    cx += w + 2.5;
+  });
+  y += 12;
+
+  font(11,"bold"); ink(C.verde); doc.text("Como trabalhamos", M, y); y += 5;
+  const etapas = [["1","Diagnóstico","Leitura de SPED, DCTF e cadastro para mapear riscos e créditos."],["2","Plano tributário","Regime, preços e contratos ajustados para 2027."],["3","Implantação","Cadastros fiscais, notas e obrigações acessórias em dia."],["4","Acompanhamento","Revisão mensal dos números e das mudanças da reforma."]];
+  const ew = (CW - 9) / 4, hE = 27;
+  etapas.forEach((e,i)=>{
+    const ex = M + i*(ew+3);
+    fill(i===0 ? C.verde : C.papel); doc.roundedRect(ex, y, ew, hE, 2.5, 2.5, "F");
+    font(13,"bold"); ink(i===0 ? C.ouro : C.ouroE); doc.text(e[0], ex+4, y+7.5);
+    font(9.2,"bold"); ink(i===0 ? C.branco : C.verde); doc.text(e[1], ex+4, y+13);
+    font(7.4,"normal"); ink(i===0 ? C.vtxt : C.tinta2); lines(e[2], ew-8).slice(0,3).forEach((l,j)=> doc.text(l, ex+4, y+17.6+j*3.3));
+  });
+  y += hE + 5;
+
+  const hC = 40;
+  garantir(hC);
+  fill(C.papel); draw(C.ouro); doc.setLineWidth(0.5); doc.roundedRect(M, y, CW, hC, 3, 3, "FD");
+  font(12.5,"bold"); ink(C.verde); doc.text("Revise este parecer com um especialista", M+7, y+9.5);
+  font(8.8,"normal"); ink(C.tinta2);
+  lines("Sem custo e sem compromisso: validamos a simulação com os seus números reais e apontamos os créditos que podem ser recuperados.", 84).forEach((l,i)=> doc.text(l, M+7, y+16+i*4.1));
+  const ct = [["WhatsApp","(11) 98859-8041"],["E-mail","edvaldo@mdcassessoria.com"],["Site","mdcassessoria.com"],["Instagram","@mdcassessoria_"],["LinkedIn","MDC Assessoria"]];
+  ct.forEach(([k,v],i)=>{ font(7,"bold"); ink(C.ouroE); doc.text(k.toUpperCase(), M+100, y+8.5+i*6.3, {charSpace:0.3}); font(9,"bold"); ink(C.tinta); doc.text(v, M+120, y+8.5+i*6.3); });
+  doc.link(M+120, y+5, 60, 5, {url:"https://wa.me/5511988598041"});
+  doc.link(M+120, y+17.6, 60, 5, {url:"https://mdcassessoria.com"});
+  doc.link(M+120, y+23.9, 60, 5, {url:"https://instagram.com/mdcassessoria_"});
+  doc.link(M+120, y+30.2, 60, 5, {url:"https://www.linkedin.com/company/mdc-assessoria-e-consultoria-cont%C3%A1bil"});
+  y += hC + 6;
+  font(8.5,"normal"); ink(C.tinta2); doc.text("Atendimento em Bragança Paulista e região, e para empresas de todo o Brasil de forma digital.", M, y);
+
+  /* ---------------- RODAPÉ ---------------- */
+  const n = doc.getNumberOfPages();
+  for (let i=1;i<=n;i++){
+    doc.setPage(i);
+    draw(C.linha); doc.setLineWidth(0.3); doc.line(M, H-13, W-M, H-13);
+    font(7,"normal"); ink(C.tinta2);
+    doc.text("MDC Assessoria Ltda · CNPJ 48.140.121/0001-65 · Bragança Paulista/SP · mdcassessoria.com · (11) 98859-8041", M, H-8.5);
+    doc.text("Página " + i + " de " + n, W-M, H-8.5, {align:"right"});
+  }
+  return doc;
+}
+/* PDF-FIM */
+
+/* ===================== INTERFACE ===================== */
+if (typeof document !== "undefined") (function(){
+const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+const brl = v => "R$ " + Math.round(v).toLocaleString("pt-BR");
+const pct = (v,c=1) => (v*100).toLocaleString("pt-BR",{minimumFractionDigits:c,maximumFractionDigits:c}) + "%";
+const num = s => Number(String(s||"").replace(/\D/g,"")) || 0;
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const fmtCNAE = c => { c = String(c||"").replace(/\D/g,"").padStart(7,"0"); return c.length===7 ? `${c.slice(0,4)}-${c.slice(4,5)}/${c.slice(5)}` : c; };
+const fmtCNPJ = c => String(c||"").replace(/\D/g,"").replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/,"$1.$2.$3/$4-$5");
+const NOMES_REG = {simples:"Simples Nacional", hibrido:"Simples híbrido", presumido:"Lucro Presumido", real:"Lucro Real", nao_sei:"Não informado"};
+let enviado = false, receita = null, classif = null, ultimo = null;
+
+function moedaFmt(el){ el.addEventListener("input", ()=>{ const n = num(el.value); el.value = n ? n.toLocaleString("pt-BR") : ""; }); }
+["#fat","#folha","#compras"].forEach(s=>moedaFmt($(s)));
+const sliders = {b2b:v=>v+"%", margem:v=>v+"%", icmsiss:v=>Number(v).toLocaleString("pt-BR",{minimumFractionDigits:1})+"%", pctreg:v=>v+"%"};
+Object.entries(sliders).forEach(([id,f])=>{ const el=$("#"+id), o=$("#"+id+"-o"); const up=()=>o.textContent=f(el.value); el.addEventListener("input",up); up(); });
+function setAtividade(v, sugerido){
+  const r = document.querySelector(`input[name=atividade][value="${v}"]`); if (!r) return;
+  r.checked = true; $("#icmsiss").value = ATIV[v].icmsiss*100; $("#icmsiss").dispatchEvent(new Event("input"));
+  if (sugerido) $$(".opc").forEach(o=>o.classList.toggle("sugerido", o.dataset.v===v));
+}
+$$("input[name=atividade]").forEach(r=>r.addEventListener("change",()=>{ $("#icmsiss").value=ATIV[r.value].icmsiss*100; $("#icmsiss").dispatchEvent(new Event("input")); }));
+$("#cnpj").addEventListener("input",e=>{ let v=e.target.value.replace(/\D/g,"").slice(0,14);
+  v=v.replace(/^(\d{2})(\d)/,"$1.$2").replace(/^(\d{2})\.(\d{3})(\d)/,"$1.$2.$3").replace(/\.(\d{3})(\d)/,".$1/$2").replace(/(\d{4})(\d)/,"$1-$2"); e.target.value=v; });
+$("#cnpj").addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); buscarCNPJ(); } });
+$("#cnae").addEventListener("change",()=>{ classif = classificarCNAE($("#cnae").value); if (classif){ setAtividade(classif.atividade, true); $("#cnae-ajuda").textContent = "Atividade sugerida pelo CNAE: " + ATIV[classif.atividade].nome + (classif.notas[0] ? ". " + classif.notas[0] : ""); } });
+
+function cnpjValido(c){
+  c = c.replace(/\D/g,""); if (c.length!==14 || /^(\d)\1+$/.test(c)) return false;
+  const calc = n => { let s=0, p=n-7; for (let i=0;i<n;i++){ s += Number(c[i])*p--; if (p<2) p=9; } const r = s%11; return r<2?0:11-r; };
+  return calc(12)===Number(c[12]) && calc(13)===Number(c[13]);
+}
+async function getJSON(url, ms){ const c = new AbortController(); const t = setTimeout(()=>c.abort(), ms||12000); try{ const r = await fetch(url,{signal:c.signal}); if(!r.ok) throw new Error("http "+r.status); return await r.json(); } finally { clearTimeout(t); } }
+async function consultarReceita(c){
+  try{ const j = await getJSON("https://minhareceita.org/"+c);
+    return {razao:j.razao_social, fantasia:j.nome_fantasia, cnae:j.cnae_fiscal, cnaeDesc:j.cnae_fiscal_descricao, secundarios:(j.cnaes_secundarios||[]).filter(s=>s.codigo).map(s=>({codigo:s.codigo, descricao:s.descricao})),
+      situacao:j.descricao_situacao_cadastral, porte:j.porte, simples:j.opcao_pelo_simples, mei:j.opcao_pelo_mei, municipio:j.municipio, uf:j.uf, abertura:j.data_inicio_atividade,
+      natureza:j.natureza_juridica, regimes:(j.regime_tributario||[]).map(r=>({ano:r.ano, forma:r.forma_de_tributacao})).filter(r=>r.ano)}; }
+  catch(e){}
+  try{ const j = await getJSON("https://publica.cnpj.ws/cnpj/"+c);
+    const e2 = j.estabelecimento||{}; const sim = j.simples||{};
+    return {razao:j.razao_social, fantasia:e2.nome_fantasia, cnae:e2.atividade_principal && e2.atividade_principal.subclasse, cnaeDesc:e2.atividade_principal && e2.atividade_principal.descricao,
+      secundarios:(e2.atividades_secundarias||[]).map(s=>({codigo:s.subclasse, descricao:s.descricao})), situacao:e2.situacao_cadastral, porte:j.porte && j.porte.descricao,
+      simples: sim.simples==="Sim" ? true : (sim.simples==="Não" ? false : null), mei: sim.mei==="Sim", municipio:e2.cidade && e2.cidade.nome, uf:e2.estado && e2.estado.sigla,
+      abertura:e2.data_inicio_atividade, natureza:j.natureza_juridica && j.natureza_juridica.descricao, regimes:[]}; }
+  catch(e){}
+  return null;
+}
+async function buscarCNPJ(){
+  const st = $("#status-busca"), c = $("#cnpj").value.replace(/\D/g,"");
+  st.className = "status-busca";
+  if (!cnpjValido(c)){ st.textContent = "Confira o CNPJ: os dígitos verificadores não conferem."; st.classList.add("erro"); return; }
+  st.textContent = "Consultando a Receita Federal…"; $("#buscar").disabled = true;
+  receita = await consultarReceita(c);
+  $("#buscar").disabled = false;
+  if (!receita){ st.textContent = "Não conseguimos consultar agora. Digite o CNAE abaixo e siga normalmente."; st.classList.add("erro"); return; }
+  st.textContent = "Dados encontrados. Confira abaixo.";
+  if (receita.cnae) $("#cnae").value = fmtCNAE(receita.cnae);
+  classif = classificarCNAE(receita.cnae);
+  if (classif) setAtividade(classif.atividade, true);
+  if (receita.simples === true || receita.mei) $("#regime").value = "simples";
+  else if (receita.regimes && receita.regimes.length){ const ult = receita.regimes.sort((a,b)=>b.ano-a.ano)[0].forma || ""; if (/presumido/i.test(ult)) $("#regime").value="presumido"; else if (/real/i.test(ult)) $("#regime").value="real"; }
+  if (receita.razao && !$("#empresa").value) $("#empresa").value = receita.fantasia || receita.razao;
+  if (receita.municipio && !$("#cidade").value) $("#cidade").value = receita.municipio.toLowerCase().replace(/(^|\s)\S/g, s=>s.toUpperCase()) + (receita.uf ? " / " + receita.uf : "");
+  const f = $("#ficha"); f.hidden = false;
+  f.innerHTML = `<dl class="ficha"><div class="t"></div>
+    <div><dt>CNAE principal</dt><dd id="f-cnae"></dd></div><div><dt>Situação</dt><dd id="f-sit"></dd></div>
+    <div><dt>Porte</dt><dd id="f-porte"></dd></div><div><dt>Simples Nacional</dt><dd id="f-sn"></dd></div>
+    <div><dt>Município</dt><dd id="f-mun"></dd></div><div><dt>Abertura</dt><dd id="f-ab"></dd></div>
+    <div class="aviso-cnae" id="f-nota"></div></dl>`;
+  f.querySelector(".t").textContent = receita.razao || "";
+  $("#f-cnae").textContent = `${fmtCNAE(receita.cnae)} · ${receita.cnaeDesc||""}`;
+  $("#f-sit").textContent = receita.situacao || "—";
+  $("#f-porte").textContent = receita.porte || "—";
+  $("#f-sn").textContent = receita.mei ? "MEI" : (receita.simples===true ? "Optante" : (receita.simples===false ? "Não optante" : "Sem informação"));
+  $("#f-mun").textContent = [receita.municipio, receita.uf].filter(Boolean).join(" / ") || "—";
+  $("#f-ab").textContent = receita.abertura ? receita.abertura.split("-").reverse().join("/") : "—";
+  $("#f-nota").textContent = classif ? "Enquadramento sugerido pelo CNAE: " + ATIV[classif.atividade].nome + (classif.notas[0] ? ". " + classif.notas[0] : "") : "";
+  avisarAltura();
+}
+$("#buscar").addEventListener("click", buscarCNPJ);
+
+function ir(n){
+  if (n===2 && num($("#fat").value) <= 0){ $("#fat").focus(); return; }
+  $$(".etapa").forEach(e=> e.hidden = Number(e.dataset.etapa)!==n);
+  $$(".passos li").forEach(li=>{ const p=Number(li.dataset.p); li.classList.toggle("ativo",p===n); li.classList.toggle("feito",p<n); });
+  $(".cartao").scrollIntoView({behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto":"smooth", block:"start"});
+  avisarAltura();
+}
+$$("[data-ir]").forEach(b=>b.addEventListener("click",()=>ir(Number(b.dataset.ir))));
+
+function dados(){
+  if (!classif && $("#cnae").value) classif = classificarCNAE($("#cnae").value);
+  const atividade = $("input[name=atividade]:checked").value;
+  const usaAjuste = classif && classif.atividade === atividade;
+  return { atividade, regime: $("#regime").value,
+    fat: num($("#fat").value), b2b: $("#b2b").value/100, folha: num($("#folha").value), compras: num($("#compras").value),
+    margem: $("#margem").value/100, icmsiss: $("#icmsiss").value/100, pctReg: $("#pctreg").value/100,
+    pir: usaAjuste ? classif.pir : null, pcs: usaAjuste ? classif.pcs : null, anexo: usaAjuste ? classif.anexo : null,
+    cnae: $("#cnae").value.replace(/\D/g,"") };
+}
+
+function conferencias(d, r){
+  const out = [];
+  const add = (tipo, txt) => out.push({tipo, txt});
+  if (receita){
+    if (receita.situacao && !/ativa/i.test(receita.situacao)) add("di", `Situação cadastral na Receita: ${receita.situacao}. É preciso regularizar antes de qualquer planejamento.`);
+    else if (receita.situacao) add("ok", "CNPJ ativo na Receita Federal.");
+    if (receita.mei) add("at", "A Receita aponta enquadramento como MEI. Com o faturamento informado, verifique o desenquadramento.");
+    if (receita.simples===true && d.regime!=="simples") add("di", `Você informou ${NOMES_REG[d.regime]}, mas a Receita mostra a empresa como optante do Simples Nacional.`);
+    if (receita.simples===false && d.regime==="simples") add("di", "Você informou Simples Nacional, mas a Receita não mostra opção ativa pelo Simples.");
+    if (receita.simples===true && d.regime==="simples") add("ok", "Regime informado confere com a opção pelo Simples na Receita.");
+    const porte = (receita.porte||"").toUpperCase();
+    if (/MICRO/.test(porte) && d.fat > 360000) add("at", `Porte cadastrado como Microempresa, mas o faturamento informado (${brl(d.fat)}) supera R$ 360 mil. O porte precisa ser atualizado.`);
+    if (/PEQUENO PORTE/.test(porte) && d.fat > 4800000) add("at", "Porte cadastrado como EPP, mas o faturamento informado supera R$ 4,8 milhões.");
+    const sec = (receita.secundarios||[]).map(s=>classificarCNAE(s.codigo)).filter(Boolean).map(x=>x.atividade);
+    const outros = [...new Set(sec.filter(a=>a!==d.atividade))];
+    if (outros.length) add("at", `O CNPJ tem CNAEs secundários de outros grupos (${outros.map(a=>ATIV[a].nome).join(", ")}). Receitas de atividades diferentes podem ter tributação diferente.`);
+  } else if (d.cnae) add("at", "CNPJ não consultado: a conferência cadastral não foi feita. O enquadramento usou o CNAE digitado.");
+  else add("at", "Sem CNPJ e sem CNAE: o enquadramento usou apenas a atividade escolhida.");
+  if (classif){
+    if (classif.atividade !== d.atividade) add("di", `A atividade escolhida (${ATIV[d.atividade].nome}) não corresponde ao CNAE ${fmtCNAE(d.cnae)}, que indica ${ATIV[classif.atividade].nome}. Revise o enquadramento.`);
+    else add("ok", `Atividade escolhida confere com o CNAE ${fmtCNAE(d.cnae)}.`);
+  }
+  if (d.fat > P.tetoSN && d.regime==="simples") add("di", "Faturamento acima de R$ 4,8 milhões: a empresa fica impedida de permanecer no Simples Nacional.");
+  else if (d.fat > 3600000 && d.fat <= P.tetoSN && (d.regime==="simples")) add("at", "Faturamento acima do sublimite de R$ 3,6 milhões: ICMS e ISS passam a ser recolhidos fora do DAS.");
+  if (ATIV[d.atividade].anexo==="FR" && !(classif && classif.anexo)){
+    if (Math.abs(r.fatorR - P.fatorR) <= 0.03) add("at", `Fator R de ${pct(r.fatorR)}, perto do limite de 28%. Ajustes no pró-labore podem mudar o anexo (III ou V).`);
+  }
+  return out;
+}
+
+function pontosAtencao(d, conf){
+  const pontos = conf.filter(c=>c.tipo!=="ok").map(c=>c.txt);
+  if (d.regime==="simples" && d.fat<=P.tetoSN) pontos.push("Empresas do Simples podem optar pelo IBS/CBS por fora do DAS a cada semestre (nova janela em março/2027 para o 2º semestre).");
+  if (["servicos","profissional"].includes(d.atividade)) pontos.push("Serviços intensivos em mão de obra têm pouco crédito de CBS: a folha não gera crédito.");
+  if (d.fat > P.lim224 && d.regime==="presumido") pontos.push("Receita acima de R$ 5 milhões: presunção do Lucro Presumido com acréscimo de 10% (LC 224/2025) sobre o excedente.");
+  pontos.push("Split payment facultativo a partir do 2º semestre de 2027 e obrigatório entre empresas em 2028: planejar o capital de giro.");
+  return pontos;
+}
+function oportunidades(d, r){
+  const o = [];
+  if (d.regime==="presumido" || d.regime==="real"){
+    if (["servicos","profissional","saude","obras"].includes(d.atividade)) o.push("Revisão da exclusão do ISS da base do PIS/COFINS dos últimos 5 anos (tese ligada ao Tema 118 do STF).");
+    if (["comercio","industria"].includes(d.atividade)) o.push("Conferência da exclusão do ICMS da base do PIS/COFINS (Tema 69 do STF) e de créditos de ICMS acumulados.");
+    if (d.regime==="real") o.push("Levantamento de créditos de PIS/COFINS sobre insumos ainda não aproveitados até dezembro de 2026, antes da extinção dos tributos.");
+    if (d.folha > 300000) o.push("Revisão do INSS patronal sobre verbas de natureza indenizatória na folha.");
+  }
+  if (d.regime==="simples"){
+    if (d.atividade==="comercio" || d.atividade==="industria") o.push("Segregação de produtos monofásicos e com substituição tributária no DAS, que costuma gerar pagamento a maior.");
+    o.push("Conferência do anexo e do Fator R aplicados nos últimos 5 anos.");
+  }
+  if (d.fat > P.lim224 && d.regime==="presumido") o.push("Avaliação de medida judicial contra o acréscimo de 10% na presunção (LC 224/2025), com liminares já concedidas.");
+  o.push("Revisão de preços e contratos para 2027, com a CBS destacada por fora e o crédito repassado ao cliente.");
+  return o;
+}
+
+function render(r, d, conf){
+  const max = Math.max(...r.regs.map(x=>Math.max(x.c26,x.c27)));
+  $("#tabela").innerHTML = "";
+  r.regs.forEach(x=>{
+    const v = x.c26>0 ? x.c27/x.c26-1 : 0;
+    const row = document.createElement("div");
+    row.className = "reg" + (x===r.melhor ? " melhor":"") + (x.eleg ? "" : " inel");
+    row.innerHTML = `<div class="nome"></div><div class="barras"><div class="bar b26"></div><div class="bar b27"></div></div><div class="pct"></div><div class="val"></div>`;
+    row.querySelector(".nome").innerHTML = `${x.nome}${x===r.melhor?" ★":""}<small>${x.eleg ? x.sub : "Faturamento acima do limite"}</small>`;
+    row.querySelector(".b26").style.width = (x.c26/max*100)+"%";
+    row.querySelector(".b27").style.width = (x.c27/max*100)+"%";
+    row.querySelector(".pct").innerHTML = `${pct(x.p27)}<small>em 2026: ${pct(x.p26)}</small>`;
+    row.querySelector(".val").innerHTML = `${brl(x.c27)}<small class="${v>0.005?"var-up":(v<-0.005?"var-down":"")}">${v>=0?"+":""}${pct(v)} vs. 2026</small>`;
+    $("#tabela").appendChild(row);
+  });
+  const m = r.melhor;
+  $("#v-titulo").textContent = m.nome;
+  $("#v-num").textContent = pct(m.p27);
+  $("#v-sub").textContent = "do faturamento em impostos em 2027";
+  if (r.atual && r.atual.id !== m.id && r.economia > 0){
+    $("#v-eyebrow").textContent = "Regime indicado para 2027";
+    $("#v-lin2").textContent = `Economia estimada de ${brl(r.economia)} por ano frente ao ${r.atual.nome} (${pct(r.atual.p27)}).`;
+  } else if (r.atual && r.atual.id === m.id){
+    $("#v-eyebrow").textContent = "Seu regime atual segue o mais econômico";
+    const seg = r.regs.filter(x=>x.eleg && x!==m).sort((a,b)=>a.c27-b.c27)[0];
+    $("#v-lin2").textContent = seg ? `A próxima alternativa, ${seg.nome}, custaria ${pct(seg.p27)} do faturamento (${brl(seg.c27-m.c27)} a mais por ano).` : "";
+  } else {
+    $("#v-eyebrow").textContent = "Regime indicado para 2027";
+    $("#v-lin2").textContent = `Carga estimada de ${brl(m.c27)} no ano.`;
+  }
+  $("#checks").innerHTML = "";
+  const rot = {ok:"Confere", at:"Atenção", di:"Divergência"};
+  conf.forEach(c=>{ const el=document.createElement("div"); el.className="chk "+c.tipo; el.innerHTML=`<span class="s">${rot[c.tipo]}</span><span></span>`; el.lastChild.textContent=c.txt; $("#checks").appendChild(el); });
+  renderParecer(r, d, conf);
+  const msg = `Olá, MDC! Fiz a simulação de regime 2027${receita&&receita.razao?" da "+receita.razao:""}. CNAE ${d.cnae?fmtCNAE(d.cnae):"não informado"}; faturamento ${brl(d.fat)}; regime indicado: ${m.nome} (${pct(m.p27)} de carga). Quero o parecer completo.`;
+  $("#zap").href = `https://wa.me/${CONFIG.WHATSAPP}?text=${encodeURIComponent(msg)}`;
+}
+
+function renderParecer(r, d, conf){
+  const hoje = new Date().toLocaleDateString("pt-BR");
+  const m = r.melhor, emp = (receita && receita.razao) || $("#empresa").value || "Empresa simulada";
+  const op = oportunidades(d, r);
+  const pontos = pontosAtencao(d, conf);
+  const notasCnae = classif ? classif.notas : [];
+  const tbl = r.regs.map(x=>`<tr><td>${x.nome}${x===m?" (indicado)":""}${x.eleg?"":" — inelegível"}</td><td class="n">${pct(x.p26)}</td><td class="n">${pct(x.p27)}</td><td class="n">${brl(x.c27)}</td></tr>`).join("");
+  const anexoTxt = r.anexo + (ATIV[d.atividade].anexo==="FR" && !(classif&&classif.anexo) ? ` (Fator R de ${pct(r.fatorR)})` : "");
+  $("#parecer").innerHTML = `
+    <div class="cab"><div><div class="mono">MDC<span>.</span></div><div style="font-size:12px;color:var(--tinta-2)">Assessoria Contábil, Tributária e Gestão Financeira</div></div>
+      <div style="text-align:right;font-size:13px;color:var(--tinta-2)">Parecer técnico preliminar<br>${hoje}</div></div>
+    <h4>Parecer técnico — enquadramento tributário 2027</h4>
+    <p style="color:var(--tinta-2);margin:6px 0 0">${esc(emp)}${receita&&receita.razao?" · CNPJ "+fmtCNPJ($("#cnpj").value):""}</p>
+    <h5>1. Identificação</h5>
+    <div class="tab"><table><tbody>
+      <tr><td>CNAE principal</td><td>${d.cnae?esc(fmtCNAE(d.cnae)):"Não informado"}${receita&&receita.cnaeDesc?" — "+esc(receita.cnaeDesc):""}</td></tr>
+      ${receita?`<tr><td>Situação / porte</td><td>${esc(receita.situacao||"—")} · ${esc(receita.porte||"—")}</td></tr>
+      <tr><td>Município</td><td>${esc([receita.municipio,receita.uf].filter(Boolean).join(" / "))}</td></tr>
+      <tr><td>Natureza jurídica</td><td>${esc(receita.natureza||"—")}</td></tr>`:""}
+      <tr><td>Regime informado</td><td>${NOMES_REG[d.regime]}</td></tr>
+      <tr><td>Faturamento anual</td><td>${brl(d.fat)} · ${Math.round(d.b2b*100)}% das vendas para empresas</td></tr>
+    </tbody></table></div>
+    <h5>2. Enquadramento</h5>
+    <ul>
+      <li>Atividade considerada: <b>${ATIV[d.atividade].nome}</b>.</li>
+      <li>Simples Nacional: Anexo ${anexoTxt}, faixa ${r.faixa}, alíquota efetiva de ${pct(r.aef,2)}.</li>
+      <li>Lucro Presumido: presunção de ${pct(r.pir,1)} para IRPJ e ${pct(r.pcs,1)} para CSLL${d.fat>P.lim224?", com acréscimo de 10% sobre a receita acima de R$ 5 milhões (LC 224/2025)":""}.</li>
+      <li>CBS/IBS 2027: ${r.red>0?`redução de ${Math.round(r.red*100)}% da alíquota, resultando em cerca de ${pct((P.cbs)*(1-r.red))}`:"alíquota cheia de 11,3% (11,2% de CBS + 0,1% de IBS)"} sobre a receita, com crédito das compras.</li>
+      ${notasCnae.map(n=>`<li>${esc(n)}</li>`).join("")}
+    </ul>
+    <h5>3. Resultado da simulação</h5>
+    <div class="tab"><table><thead><tr><th>Regime</th><th class="n">Carga 2026</th><th class="n">Carga 2027</th><th class="n">R$ em 2027</th></tr></thead><tbody>${tbl}</tbody></table></div>
+    <p><b>Conclusão preliminar:</b> o regime de menor carga em 2027 é o <b>${m.nome}</b>, com ${pct(m.p27)} do faturamento${r.atual&&r.atual.id!==m.id&&r.economia>0?`, economia estimada de ${brl(r.economia)} por ano frente ao regime atual`:""}.${r.melhorCadeia.id!==m.id&&d.b2b>=0.5?` Considerando o crédito repassado aos clientes empresariais, o ${r.melhorCadeia.nome} tende a ser mais competitivo no preço.`:""}</p>
+    <h5>4. Pontos de atenção</h5>
+    <ul>${pontos.map(p=>`<li>${esc(p)}</li>`).join("")}</ul>
+    <h5>5. Oportunidades a verificar</h5>
+    <ul>${op.map(p=>`<li>${esc(p)}</li>`).join("")}</ul>
+    <h5>6. Próximos passos</h5>
+    <ul><li>Validar os números com a escrituração dos últimos 12 meses.</li><li>Confirmar o enquadramento de cada receita pelo NCM/NBS nos anexos da LC 214/2025.</li><li>Definir o regime de 2027 antes do primeiro recolhimento de janeiro.</li></ul>
+    <div class="ass"><b>Edvaldo Ribeiro de Carvalho</b> · Contador CRC 1SP346098-O/0 · MDC Assessoria Ltda · CNPJ 48.140.121/0001-65<br>
+    WhatsApp (11) 98859-8041 · edvaldo@mdcassessoria.com · mdcassessoria.com · @mdcassessoria_<br>
+    Parecer preliminar gerado a partir de dados informados pelo usuário e de bases públicas da Receita Federal; não substitui a análise individual das operações.</div>`;
+}
+
+async function gravar(lead){
+  if (!CONFIG.HUB_URL || !CONFIG.HUB_CHAVE) return {ok:false, motivo:"sem_config"};
+  /* o CRM guarda os dados da simulação; o texto do consentimento, o parecer e as divergências ficam só no PDF */
+  const {consentimento_texto, parecer, divergencias, resultado, ...p} = lead;
+  p.id = (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2));
+  p.created_at = new Date().toISOString();
+  try{
+    const res = await fetch(CONFIG.HUB_URL.replace(/\/$/,"") + "/rest/v1/rpc/crm_receber_lead", {
+      method:"POST",
+      headers:{ "apikey":CONFIG.HUB_CHAVE, "Content-Type":"application/json" },
+      body: JSON.stringify({p})
+    });
+    return {ok: res.ok, motivo: res.ok ? "" : "http_"+res.status};
+  }catch(e){ return {ok:false, motivo:"rede"}; }
+}
+
+$("#form").addEventListener("submit", async ev=>{
+  ev.preventDefault();
+  const err = $("#erro3"); err.textContent = "";
+  const nome=$("#nome").value.trim(), empresa=$("#empresa").value.trim(), email=$("#email").value.trim(), whats=$("#whats").value.trim();
+  if (nome.length<2) { err.textContent="Informe seu nome."; $("#nome").focus(); return; }
+  if (empresa.length<2) { err.textContent="Informe o nome da empresa."; $("#empresa").focus(); return; }
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { err.textContent="Confira o e-mail, ele parece incompleto."; $("#email").focus(); return; }
+  if (whats.replace(/\D/g,"").length<10) { err.textContent="Informe o WhatsApp com DDD."; $("#whats").focus(); return; }
+  if (!$("#consent").checked) { err.textContent="Para continuar, marque a autorização de contato."; $("#consent").focus(); return; }
+  const d = dados(), r = simular(d), conf = conferencias(d, r);
+  ultimo = {r, d, conf};
+  render(r, d, conf); ir(4);
+  if ($("#site").value || enviado) return;
+  const btn=$("#enviar"); btn.disabled = true;
+  const cid = $("#cidade").value.split("/").map(s=>s.trim());
+  const qs = new URLSearchParams(location.search);
+  const cut = (s,n) => s==null ? null : String(s).slice(0,n);
+  const lead = {
+    nome, empresa, email, whatsapp: whats, cnpj: $("#cnpj").value || null,
+    cidade: cut(cid[0]||null,80), uf: (cid[1]||"").toUpperCase().slice(0,2) || null,
+    atividade: d.atividade, regime_atual: d.regime, faturamento: d.fat, pct_b2b: d.b2b, folha: d.folha, compras: d.compras,
+    margem: d.margem, icms_iss: d.icmsiss, pct_compras_regular: d.pctReg,
+    melhor_regime: r.melhor.id, economia_estimada: Math.round(r.economia), carga_pct_melhor: Math.round(r.melhor.p27*10000)/10000,
+    resultado: r.regs.map(x=>({regime:x.id, carga_2026:Math.round(x.c26), carga_2027:Math.round(x.c27), pct_2027:Math.round(x.p27*10000)/10000, credito_cliente:Math.round(x.cred), elegivel:x.eleg})),
+    razao_social: cut(receita && receita.razao, 200), cnae: d.cnae ? fmtCNAE(d.cnae) : null, cnae_descricao: cut(receita && receita.cnaeDesc, 300),
+    situacao_cadastral: cut(receita && receita.situacao, 40), porte: cut(receita && receita.porte, 60),
+    opcao_simples_receita: receita ? (receita.simples===true || receita.mei===true ? true : (receita.simples===false ? false : null)) : null,
+    data_abertura: receita && /^\d{4}-\d{2}-\d{2}$/.test(receita.abertura||"") ? receita.abertura : null,
+    divergencias: conf.filter(c=>c.tipo!=="ok").map(c=>({tipo:c.tipo, texto:c.txt})),
+    parecer: {anexo:r.anexo, fator_r:Math.round(r.fatorR*1000)/1000, oportunidades:oportunidades(d,r), notas_cnae: classif?classif.notas:[]},
+    origem: cut(qs.get("utm_source") || document.referrer || "direto", 300),
+    utm: {source:qs.get("utm_source"), medium:qs.get("utm_medium"), campaign:qs.get("utm_campaign")},
+    consentimento: true, consentimento_texto: $("#consent-txt").textContent.trim(), consentimento_versao: CONFIG.VERSAO_CONSENTIMENTO
+  };
+  const g = await gravar(lead);
+  btn.disabled = false;
+  if (g.ok){ enviado = true; $("#aviso-envio").textContent = "Recebemos seus dados. Um especialista da MDC pode entrar em contato em até 1 dia útil."; }
+  else if (g.motivo !== "sem_config"){ $("#aviso-envio").textContent = "Não conseguimos registrar seu contato agora. Fale com a gente pelo WhatsApp (11) 98859-8041."; }
+});
+$("#refazer").addEventListener("click",()=>ir(1));
+function pacotePDF(r, d, conf){
+  const m = r.melhor;
+  const anexoTxt = r.anexo + (ATIV[d.atividade].anexo==="FR" && !(classif&&classif.anexo) ? ` (Fator R de ${pct(r.fatorR)})` : "");
+  const enq = [`Atividade considerada: ${ATIV[d.atividade].nome}.`,
+    `Simples Nacional: Anexo ${anexoTxt}, faixa ${r.faixa}, alíquota efetiva de ${pct(r.aef,2)}.`,
+    `Lucro Presumido: presunção de ${pct(r.pir,1)} para IRPJ e ${pct(r.pcs,1)} para CSLL${d.fat>P.lim224?", com acréscimo de 10% sobre a receita acima de R$ 5 milhões (LC 224/2025)":""}.`,
+    `CBS/IBS 2027: ${r.red>0?`redução de ${Math.round(r.red*100)}% da alíquota, resultando em cerca de ${pct(P.cbs*(1-r.red))}`:"alíquota cheia de 11,3% (11,2% de CBS + 0,1% de IBS)"} sobre a receita, com crédito das compras.`].concat(classif ? classif.notas : []);
+  let resumo;
+  if (r.atual && r.atual.id !== m.id && r.economia > 0) resumo = `Economia estimada de ${brl(r.economia)} por ano frente ao ${r.atual.nome} (${pct(r.atual.p27)} do faturamento).`;
+  else if (r.atual && r.atual.id === m.id){ const seg = r.regs.filter(x=>x.eleg && x!==m).sort((a,b)=>a.c27-b.c27)[0]; resumo = "Seu regime atual segue o mais econômico." + (seg ? ` A próxima alternativa, ${seg.nome}, custaria ${brl(seg.c27-m.c27)} a mais por ano.` : ""); }
+  else resumo = `Carga estimada de ${brl(m.c27)} no ano.`;
+  const conclusao = `Conclusão preliminar: o regime de menor carga em 2027 é o ${m.nome}, com ${pct(m.p27)} do faturamento${r.atual&&r.atual.id!==m.id&&r.economia>0?`, economia estimada de ${brl(r.economia)} por ano frente ao regime atual`:""}.` + (r.melhorCadeia.id!==m.id&&d.b2b>=0.5?` Considerando o crédito repassado aos clientes empresariais, o ${r.melhorCadeia.nome} tende a ser mais competitivo no preço.`:"");
+  const hoje = new Date();
+  const prot = "SIM-" + hoje.toISOString().slice(0,10).replace(/-/g,"") + "-" + String(Math.floor(1000 + Math.random()*9000));
+  const nomeEmp = (receita && receita.razao) || $("#empresa").value.trim() || "Empresa simulada";
+  return { data: hoje.toLocaleDateString("pt-BR"), protocolo: prot, empresa: nomeEmp,
+    cnpj: $("#cnpj").value.replace(/\D/g,"").length===14 ? fmtCNPJ($("#cnpj").value) : "",
+    cnae: d.cnae ? fmtCNAE(d.cnae) : "", cnaeDesc: receita && receita.cnaeDesc || "",
+    municipio: receita ? [receita.municipio, receita.uf].filter(Boolean).join(" / ") : $("#cidade").value.trim(),
+    situacao: receita && receita.situacao || "", porte: receita && receita.porte || "", natureza: receita && receita.natureza || "",
+    regimeInformado: NOMES_REG[d.regime], fat: d.fat, b2b: d.b2b,
+    melhorNome: m.nome, melhorPct: m.p27, resumoLinha: resumo,
+    regs: r.regs.map(x=>({nome:x.nome, sub:x.sub, p26:x.p26, p27:x.p27, c27:x.c27, eleg:x.eleg, melhor:x===m})),
+    conclusao, enquadramento: enq, checks: conf, pontos: pontosAtencao(d, conf), oportunidades: oportunidades(d, r) };
+}
+$("#imprimir").addEventListener("click",()=>{
+  if (!ultimo) return;
+  const lib = window.jspdf && window.jspdf.jsPDF;
+  if (!lib){ window.print(); return; }
+  const btn = $("#imprimir"); btn.disabled = true; btn.textContent = "Gerando PDF…";
+  try{
+    const pk = pacotePDF(ultimo.r, ultimo.d, ultimo.conf);
+    const slug = pk.empresa.normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^A-Za-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,40) || "empresa";
+    construirPDF(lib, pk).save(`Parecer-MDC-${slug}-${pk.data.replace(/\//g,"-")}.pdf`);
+  } catch(e){ window.print(); }
+  btn.disabled = false; btn.textContent = "Baixar parecer em PDF";
+});
+
+function avisarAltura(){ try{ parent.postMessage({mdcSimAltura: document.documentElement.scrollHeight}, "*"); }catch(e){} }
+new ResizeObserver(avisarAltura).observe(document.body);
+})();
+</script>
+</body>
+</html>

@@ -190,6 +190,7 @@ export const NAV: Record<Modulo, { titulo: string; links: LinkModulo[]; grupos?:
     links: [
       { href: "/comercial", nome: "Funil", icone: "funil" },
       { href: "/comercial/leads", nome: "Leads", icone: "alvo" },
+      { href: "/comercial/ferramentas", nome: "Ferramentas abertas", icone: "externo" },
       { href: "/comercial/contratos", nome: "Contratos", icone: "documento" },
       { href: "/comercial/modelo", nome: "Modelo de contrato", icone: "arquivo", minimo: "gerir" },
     ],
