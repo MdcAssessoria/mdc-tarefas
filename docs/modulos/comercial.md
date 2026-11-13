@@ -79,6 +79,10 @@ Testes: `supabase/testes/91_base_038.sql` e `92_crm_038.sql` (inclui a corrida p
 - **Simulador de Regime 2027:** saiu do GitHub Pages (`mdcassessoria.github.io/mdc-simulador`, que agora redireciona) e
   do banco separado `mdc-simulador`; o lead não passa mais pelo repasse `supabase/simulador/001_encaminhar_leads_hub.sql`.
   O banco separado fica só como histórico dos leads antigos.
+- **Visual (13/11/2026):** padrão do HUB (Hanken Grotesk e Bodoni Moda servidas de `public/ferramentas/comum/fontes`,
+  logo dourada em `comum/`, sem Google Fonts), botões sempre com ícone e texto, escolhas em cartões no lugar das réguas
+  (a régua fica em "Ajustar o percentual exato"), 4 passos curtos com barra de progresso (empresa, faturamento e regime,
+  custos, contato) e o resultado com o botão do WhatsApp no topo e fixo no celular; o parecer completo abre por clique.
 - **Ferramenta nova:** criar `public/ferramentas/<id>/index.html` (enviando o lead por `crm_receber_lead`) e uma linha
   em `FERRAMENTAS`. Se a origem for nova, incluí-la em `ORIGENS` (`dominios/comercial/crm.ts`) e na função do banco.
 

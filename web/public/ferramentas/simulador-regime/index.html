@@ -10,241 +10,326 @@
 <meta name="description" content="Simule gratuitamente como a reforma tributária muda os impostos da sua empresa em 2027, receba um parecer técnico e descubra o regime mais econômico. MDC Assessoria Contábil.">
 <meta property="og:title" content="Quanto sua empresa vai pagar de imposto em 2027?">
 <meta property="og:description" content="Simulação gratuita com parecer técnico da MDC Assessoria: Simples, Lucro Presumido e Lucro Real com a CBS de 11,3% calculada pelo TCU.">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
 <style>
-/* Layout: faixa verde com a tese + cartão-formulário em 4 etapas sobreposto; resultado com % de carga por regime e parecer técnico imprimível; abaixo, apresentação da MDC e contatos. */
+/* Simulador de Regime 2027 · padrão visual do HUB-MDC (13/11/2026): Hanken Grotesk no texto, Bodoni Moda nos títulos,
+   verde #0B2820 e dourado #E2C17E, todo botão com ícone e texto, escolhas em cartões (sem régua deslizante para o
+   leigo; a régua fica em "Ajustar o valor exato"), um assunto por passo e barra de progresso. Fontes e logo ficam em
+   ../comum (sem Google Fonts: nada sai do navegador antes do consentimento). */
+@font-face{font-family:"Hanken Grotesk";font-style:normal;font-display:swap;font-weight:100 900;src:url(comum/fontes/hanken-grotesk-latin-wght-normal.woff2) format("woff2-variations");unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:"Hanken Grotesk";font-style:normal;font-display:swap;font-weight:100 900;src:url(comum/fontes/hanken-grotesk-latin-ext-wght-normal.woff2) format("woff2-variations");unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
+@font-face{font-family:"Bodoni Moda";font-style:normal;font-display:swap;font-weight:600;src:url(comum/fontes/bodoni-moda-latin-600-normal.woff2) format("woff2")}
+@font-face{font-family:"Bodoni Moda";font-style:normal;font-display:swap;font-weight:700;src:url(comum/fontes/bodoni-moda-latin-700-normal.woff2) format("woff2")}
 :root{
-  --verde:#0B2820; --verde-2:#14392F; --verde-txt:#C6D3CC;
-  --ouro:#E2C17E; --ouro-esc:#8A6A2A;
-  --papel:#F6F4EE; --branco:#FFFFFF; --tinta:#16231E; --tinta-2:#4E5C56; --linha:#DCD8CB;
-  --bom:#2F7A52; --alerta:#B5651D; --ruim:#A3361F;
-  --f-display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
-  --f-texto:"Figtree", "Segoe UI", system-ui, -apple-system, sans-serif;
-  --f-num:"IBM Plex Mono", ui-monospace, "SFMono-Regular", Consolas, monospace;
+  --verde:#0B2820; --verde-2:#12352A; --verde-txt:#C6D3CC;
+  --ouro:#E2C17E; --ouro-esc:#846528; --ouro-claro:#F6EBD3;
+  --papel:#EEF2EF; --branco:#FFFFFF; --tinta:#18211D; --tinta-2:#5D6661; --linha:#DCE3DE;
+  --bom:#067647; --alerta:#B54708; --ruim:#B42318;
+  --f-display:"Bodoni Moda", "Didot", "Bodoni 72", Georgia, serif;
+  --f-texto:"Hanken Grotesk", "Segoe UI", system-ui, -apple-system, sans-serif;
   color-scheme: light;
 }
 *{box-sizing:border-box} [hidden]{display:none!important}
 html,body{margin:0}
 body{background:var(--papel);color:var(--tinta);font:16px/1.55 var(--f-texto);-webkit-font-smoothing:antialiased}
 .gutter{padding-left:max(16px, env(safe-area-inset-left,0px));padding-right:max(16px, env(safe-area-inset-right,0px))}
-.wrap{max-width:980px;margin:0 auto}
+.wrap{max-width:1000px;margin:0 auto}
 a{color:inherit}
+.ic{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.ic.p{width:16px;height:16px}
+.num{font-variant-numeric:tabular-nums}
 
 /* Topo */
-.topo{background:var(--verde);color:var(--verde-txt);padding-block:18px 120px;position:relative;overflow:hidden}
-.topo::after{content:"";position:absolute;right:-120px;top:-160px;width:460px;height:460px;border-radius:50%;border:1px solid rgba(226,193,126,.18);box-shadow:0 0 0 60px rgba(226,193,126,.04),0 0 0 140px rgba(226,193,126,.03);pointer-events:none}
-.barra{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;position:relative;z-index:1}
-.marca{display:flex;align-items:center;gap:12px;text-decoration:none;color:var(--ouro)}
-.marca img{height:40px;width:auto;display:block}
-.marca .mono{font:800 26px/1 var(--f-display);letter-spacing:.04em;color:var(--ouro)}
-.marca small{display:block;font:500 11px/1.2 var(--f-texto);letter-spacing:.14em;text-transform:uppercase;color:var(--verde-txt)}
-.redes{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-.redes a{display:inline-flex;align-items:center;gap:6px;font:600 12.5px/1 var(--f-texto);color:var(--verde-txt);text-decoration:none;border:1px solid rgba(198,211,204,.28);padding:8px 11px;border-radius:999px}
+.topo{background:var(--verde);color:var(--verde-txt);padding-block:16px 116px;position:relative;overflow:hidden}
+.topo::after{content:"";position:absolute;right:-140px;top:-180px;width:480px;height:480px;border-radius:50%;border:1px solid rgba(226,193,126,.16);box-shadow:0 0 0 70px rgba(226,193,126,.035),0 0 0 150px rgba(226,193,126,.025);pointer-events:none}
+.barra{display:flex;align-items:center;justify-content:space-between;gap:14px;position:relative;z-index:1}
+.marca{display:flex;align-items:center;gap:12px;text-decoration:none;color:var(--ouro);min-width:0}
+.marca img{height:42px;width:auto;display:block}
+.marca small{display:block;font:600 11px/1.25 var(--f-texto);letter-spacing:.14em;text-transform:uppercase;color:var(--verde-txt)}
+.redes{display:flex;gap:8px;align-items:center}
+.redes a{display:inline-flex;align-items:center;gap:7px;font:600 13px/1 var(--f-texto);color:var(--verde-txt);text-decoration:none;border:1px solid rgba(198,211,204,.28);padding:9px 12px;border-radius:999px;white-space:nowrap}
 .redes a:hover{border-color:var(--ouro);color:var(--ouro)}
 .redes a.zap{background:var(--ouro);color:var(--verde);border-color:var(--ouro)}
-.redes svg{width:14px;height:14px;flex:none}
-.tese{margin-top:44px;max-width:640px;position:relative;z-index:1}
-.eyebrow{font:600 12px/1 var(--f-texto);letter-spacing:.16em;text-transform:uppercase;color:var(--ouro)}
-.tese h1{font:800 clamp(30px,5.4vw,52px)/1.05 var(--f-display);color:#fff;margin:14px 0 16px;text-wrap:balance;letter-spacing:-.01em}
+.redes .ic{width:16px;height:16px}
+.tese{margin-top:40px;max-width:660px;position:relative;z-index:1}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;font:700 12px/1 var(--f-texto);letter-spacing:.16em;text-transform:uppercase;color:var(--ouro)}
+.tese h1{font:700 clamp(32px,5.6vw,56px)/1.05 var(--f-display);color:#fff;margin:14px 0 14px;text-wrap:balance}
 .tese h1 em{font-style:normal;color:var(--ouro)}
-.tese p{margin:0;max-width:56ch;font-size:17px}
-.fatos{display:flex;flex-wrap:wrap;gap:10px 28px;margin-top:24px;font-size:14px}
-.fatos b{font:600 20px/1 var(--f-num);color:#fff;display:block;margin-bottom:4px}
+.tese p{margin:0;max-width:54ch;font-size:17px}
+.fatos{display:flex;flex-wrap:wrap;gap:10px;margin-top:22px}
+.fatos div{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.06);border:1px solid rgba(198,211,204,.18);border-radius:14px;padding:10px 14px;font-size:13.5px;line-height:1.25}
+.fatos .ic{color:var(--ouro)}
+.fatos b{display:block;font:700 17px/1.1 var(--f-texto);color:#fff}
 
-/* Cartão */
-.cartao{background:var(--branco);border-radius:20px;box-shadow:0 1px 0 var(--linha),0 24px 60px -30px rgba(11,40,32,.45);margin-top:-88px;position:relative;z-index:2;overflow:hidden}
-.passos{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid var(--linha);background:#FBFAF6;margin:0;padding:0}
-.passos li{list-style:none;padding:14px 16px;font-size:13px;color:var(--tinta-2);display:flex;gap:10px;align-items:center;border-right:1px solid var(--linha)}
-.passos li:last-child{border-right:0}
-.passos .n{font:600 12px/1 var(--f-num);width:24px;height:24px;border-radius:50%;display:grid;place-items:center;border:1px solid var(--linha);flex:none}
-.passos li.ativo{color:var(--tinta);font-weight:600}
-.passos li.ativo .n{background:var(--verde);color:var(--ouro);border-color:var(--verde)}
-.passos li.feito .n{background:var(--ouro);color:var(--verde);border-color:var(--ouro)}
-.corpo{padding:28px clamp(18px,4vw,40px) 32px}
-.etapa h2{font:700 24px/1.2 var(--f-display);margin:0 0 6px;text-wrap:balance}
-.etapa .sub{margin:0 0 24px;color:var(--tinta-2)}
+/* Cartão do formulário */
+.cartao{background:var(--branco);border-radius:22px;box-shadow:0 1px 0 var(--linha),0 30px 70px -34px rgba(11,40,32,.5);margin-top:-86px;position:relative;z-index:2;overflow:hidden}
+.progresso{padding:18px clamp(18px,4vw,40px) 0}
+.progresso .linha1{display:flex;justify-content:space-between;align-items:baseline;gap:12px;font-size:13px;color:var(--tinta-2)}
+.progresso .linha1 b{color:var(--tinta);font-size:14px}
+.trilho{height:6px;background:var(--papel);border-radius:999px;margin-top:10px;overflow:hidden}
+.trilho span{display:block;height:100%;width:20%;background:linear-gradient(90deg,var(--verde),#2B5A49);border-radius:999px;transition:width .35s ease}
+.passos{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;margin:14px 0 0;padding:0}
+.passos li{list-style:none;display:flex;gap:8px;align-items:center;font-size:13px;color:var(--tinta-2);padding:8px 10px;border-radius:10px;min-width:0}
+.passos li span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.passos li .ic{width:16px;height:16px}
+.passos li.ativo{background:var(--verde);color:var(--ouro);font-weight:700}
+.passos li.feito{color:var(--bom);font-weight:600}
+.corpo{padding:22px clamp(18px,4vw,40px) 30px}
+.etapa h2{font:700 clamp(24px,3.4vw,30px)/1.15 var(--f-display);margin:0 0 6px;text-wrap:balance}
+.etapa .sub{margin:0 0 22px;color:var(--tinta-2);max-width:62ch}
 .grade{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px 24px}
 .grade .full{grid-column:1/-1}
 .campo{display:flex;flex-direction:column;gap:8px;min-width:0}
-.campo label,.campo .rot{font-weight:600;font-size:14px}
-.campo .ajuda{font-size:13px;color:var(--tinta-2);margin-top:-2px}
-input[type=text],input[type=email],input[type=tel],select{width:100%;font:500 16px/1.3 var(--f-texto);color:var(--tinta);background:#fff;border:1.5px solid var(--linha);border-radius:10px;padding:12px 14px;transition:border-color .15s}
-input:focus-visible,select:focus-visible,button:focus-visible,a:focus-visible,.opc input:focus-visible+span{outline:3px solid rgba(226,193,126,.6);outline-offset:2px;border-color:var(--verde)}
+.campo label,.campo .rot{font-weight:700;font-size:15px}
+.campo .ajuda{font-size:13.5px;color:var(--tinta-2);margin-top:-2px}
+input[type=text],input[type=email],input[type=tel],select{width:100%;font:500 17px/1.3 var(--f-texto);color:var(--tinta);background:#fff;border:1.5px solid var(--linha);border-radius:12px;padding:14px 15px;min-height:52px;transition:border-color .15s}
+input::placeholder{color:#9AA39E}
+input:focus-visible,select:focus-visible,button:focus-visible,a:focus-visible,summary:focus-visible,.opc input:focus-visible+span{outline:3px solid rgba(226,193,126,.7);outline-offset:2px;border-color:var(--verde)}
 .linha-cnpj{display:flex;gap:10px}
-.linha-cnpj input{flex:1;min-width:0;font-family:var(--f-num)}
+.linha-cnpj input{flex:1;min-width:0;letter-spacing:.03em;font-variant-numeric:tabular-nums}
 .moeda{position:relative}
-.moeda::before{content:"R$";position:absolute;left:14px;top:50%;transform:translateY(-50%);font:600 14px var(--f-num);color:var(--tinta-2)}
-.moeda input{padding-left:44px;font-family:var(--f-num);font-variant-numeric:tabular-nums}
-.ficha{border:1px solid var(--linha);border-radius:12px;padding:14px 16px;background:#FBFAF6;font-size:14px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 20px}
-.ficha .t{grid-column:1/-1;font-weight:700;font-size:15px}
+.moeda::before{content:"R$";position:absolute;left:15px;top:50%;transform:translateY(-50%);font:700 15px var(--f-texto);color:var(--tinta-2)}
+.moeda input{padding-left:46px;font-variant-numeric:tabular-nums;font-weight:600}
+.ficha{border:1px solid var(--linha);border-radius:14px;padding:14px 16px;background:#F7FAF8;font-size:14px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 20px}
+.ficha .t{grid-column:1/-1;font-weight:800;font-size:16px;display:flex;align-items:center;gap:8px}
 .ficha dt{font-size:12px;color:var(--tinta-2);text-transform:uppercase;letter-spacing:.06em}
 .ficha dd{margin:0 0 4px;font-weight:600;overflow-wrap:anywhere}
-.ficha .aviso-cnae{grid-column:1/-1;font-size:13px;color:var(--ouro-esc);font-weight:600}
-.status-busca{font-size:13px;color:var(--tinta-2);min-height:1em}
+.ficha .aviso-cnae{grid-column:1/-1;font-size:13.5px;color:var(--ouro-esc);font-weight:700}
+.status-busca{font-size:14px;color:var(--tinta-2);min-height:1em}
 .status-busca.erro{color:var(--ruim)}
+.status-busca.ok{color:var(--bom);font-weight:600}
+.link-btn{background:none;border:0;padding:6px 0;font:700 14px var(--f-texto);color:var(--ouro-esc);cursor:pointer;display:inline-flex;align-items:center;gap:8px;align-self:flex-start;text-decoration:underline;text-underline-offset:3px}
 .opcoes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.opcoes.c4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.opcoes.c3{grid-template-columns:repeat(3,minmax(0,1fr))}
 .opc{position:relative;display:block;cursor:pointer}
-.opc input{position:absolute;opacity:0;inset:0}
-.opc span{display:block;border:1.5px solid var(--linha);border-radius:12px;padding:12px 14px;font-size:14px;line-height:1.3;height:100%;transition:all .15s}
-.opc span b{display:block;font-size:15px;margin-bottom:2px}
-.opc span i{font-style:normal;color:var(--tinta-2);font-size:12.5px}
-.opc input:checked+span{border-color:var(--verde);background:rgba(11,40,32,.05);box-shadow:inset 0 0 0 1px var(--verde)}
-.opc .sug{display:none;font-style:normal;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ouro-esc);margin-top:6px}
+.opc input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer}
+.opc>span{display:flex;gap:12px;align-items:flex-start;border:1.5px solid var(--linha);border-radius:14px;padding:14px;font-size:14px;line-height:1.3;height:100%;transition:border-color .15s,background .15s,box-shadow .15s;background:#fff}
+.opc>span>.ic{width:24px;height:24px;color:var(--ouro-esc);margin-top:1px}
+.opc b{display:block;font-size:15.5px;margin-bottom:3px}
+.opc i{font-style:normal;color:var(--tinta-2);font-size:13px}
+.opc:hover>span{border-color:#B9C6BF}
+.opc input:checked+span{border-color:var(--verde);background:#F2F6F3;box-shadow:inset 0 0 0 1px var(--verde)}
+.opc input:checked+span>.ic{color:var(--verde)}
+.opc>span>span:not(.marca-ok){flex:1;min-width:0}
+.opc .marca-ok{margin-left:auto;width:22px;height:22px;border-radius:50%;border:1.5px solid var(--linha);flex:none;display:grid;place-items:center;color:transparent}
+.opc input:checked+span .marca-ok{background:var(--verde);border-color:var(--verde);color:var(--ouro)}
+.opc .marca-ok .ic{width:14px;height:14px;stroke-width:3}
+.opc .sug{display:none;font-style:normal;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--ouro-esc);margin-top:6px}
 .opc.sugerido .sug{display:block}
+.opc.sugerido>span{border-color:var(--ouro)}
 .faixa{display:flex;align-items:center;gap:14px}
-.faixa input[type=range]{flex:1;accent-color:var(--verde)}
-.faixa output{font:600 15px var(--f-num);min-width:56px;text-align:right}
-details.avanc{border-top:1px dashed var(--linha);padding-top:16px}
-details.avanc summary{cursor:pointer;font-weight:600;color:var(--ouro-esc)}
+.faixa input[type=range]{flex:1;accent-color:var(--verde);min-height:32px}
+.faixa output{font:700 16px var(--f-texto);min-width:58px;text-align:right;font-variant-numeric:tabular-nums}
+details.ajuste{margin-top:2px}
+details.ajuste summary,details.avanc summary{cursor:pointer;font:700 14px var(--f-texto);color:var(--ouro-esc);display:inline-flex;align-items:center;gap:8px;list-style:none;padding:6px 0}
+details summary::-webkit-details-marker{display:none}
+details[open]>summary .ic.giro{transform:rotate(90deg)}
+details.avanc{border-top:1px dashed var(--linha);padding-top:14px}
 .acoes{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:28px;flex-wrap:wrap}
-.btn{font:700 16px/1 var(--f-texto);border:0;border-radius:12px;padding:16px 22px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:10px}
+.btn{font:800 16px/1 var(--f-texto);border:0;border-radius:14px;padding:16px 22px;min-height:54px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:10px}
 .btn-pri{background:var(--verde);color:var(--ouro)}
 .btn-pri:hover{background:var(--verde-2)}
-.btn-sec{background:transparent;color:var(--tinta-2);padding-inline:6px}
-.btn-borda{background:#fff;color:var(--verde);border:1.5px solid var(--verde);padding:14px 18px;font-size:15px}
+.btn-sec{background:#fff;color:var(--tinta);border:1.5px solid var(--linha)}
+.btn-sec:hover{border-color:var(--tinta-2)}
+.btn-borda{background:#fff;color:var(--verde);border:1.5px solid var(--verde);font-size:15px}
 .btn-zap{background:#1F7A4D;color:#fff}
+.btn-zap:hover{background:#18653F}
 .btn[disabled]{opacity:.6;cursor:progress}
-.erro{color:var(--ruim);font-size:13px;min-height:1em}
-.lgpd{display:flex;gap:12px;align-items:flex-start;font-size:13px;color:var(--tinta-2);background:var(--papel);border-radius:12px;padding:14px}
-.lgpd input{margin-top:3px;accent-color:var(--verde);width:18px;height:18px;flex:none}
+.erro{color:var(--ruim);font-size:14px;min-height:1em;font-weight:600}
+.lgpd{display:flex;gap:12px;align-items:flex-start;font-size:13.5px;color:var(--tinta-2);background:#F7FAF8;border:1px solid var(--linha);border-radius:14px;padding:14px;cursor:pointer}
+.lgpd input{margin-top:2px;accent-color:var(--verde);width:20px;height:20px;flex:none}
+.seguro{display:flex;gap:8px;align-items:center;font-size:13px;color:var(--tinta-2)}
+.seguro .ic{color:var(--bom);width:16px;height:16px}
 .hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
 
 /* Resultado */
-.veredito{background:var(--verde);color:var(--verde-txt);border-radius:16px;padding:22px 24px;display:grid;grid-template-columns:1fr auto;gap:14px 24px;align-items:end}
-.veredito h3{font:800 clamp(22px,3.6vw,30px)/1.15 var(--f-display);color:#fff;margin:8px 0 4px;text-wrap:balance}
-.veredito .lin2{font-size:14px}
-.veredito .eco{text-align:right}
-.veredito .eco b{font:600 clamp(30px,5vw,44px)/1 var(--f-num);color:var(--ouro);display:block}
-.veredito .eco small{font-size:13px;display:block;margin-top:4px}
-.tit-sec{font:700 18px/1.25 var(--f-display);margin:28px 0 4px}
-.sub-sec{margin:0 0 14px;color:var(--tinta-2);font-size:14px}
-.tabela-reg{display:flex;flex-direction:column;gap:14px}
-.reg{display:grid;grid-template-columns:190px minmax(0,1fr) 92px 120px;gap:14px;align-items:center}
-.reg .nome{font-weight:600;font-size:15px;line-height:1.25}
-.reg .nome small{display:block;font-weight:500;color:var(--tinta-2);font-size:12px}
+.veredito{background:var(--verde);color:var(--verde-txt);border-radius:18px;padding:24px 26px;display:grid;grid-template-columns:1fr auto;gap:14px 24px;align-items:end;position:relative;overflow:hidden}
+.veredito::after{content:"";position:absolute;right:-60px;bottom:-80px;width:220px;height:220px;border-radius:50%;border:1px solid rgba(226,193,126,.18);pointer-events:none}
+.veredito h3{font:700 clamp(26px,4vw,36px)/1.1 var(--f-display);color:#fff;margin:10px 0 6px;text-wrap:balance}
+.veredito .lin2{font-size:15px;max-width:52ch}
+.veredito .eco{text-align:right;position:relative;z-index:1}
+.veredito .eco b{font:800 clamp(34px,5.4vw,50px)/1 var(--f-texto);color:var(--ouro);display:block;font-variant-numeric:tabular-nums}
+.veredito .eco small{font-size:13px;display:block;margin-top:6px}
+.acoes-res{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+.tit-sec{font:700 22px/1.2 var(--f-display);margin:30px 0 4px;display:flex;align-items:center;gap:10px}
+.tit-sec .ic{color:var(--ouro-esc)}
+.sub-sec{margin:0 0 14px;color:var(--tinta-2);font-size:14.5px}
+.tabela-reg{display:flex;flex-direction:column;gap:12px}
+.reg{display:grid;grid-template-columns:200px minmax(0,1fr) 96px 124px;gap:14px;align-items:center;padding:12px 14px;border:1px solid var(--linha);border-radius:14px}
+.reg.melhor{border-color:var(--verde);background:#F2F6F3}
+.reg .nome{font-weight:800;font-size:15.5px;line-height:1.25}
+.reg .nome small{display:block;font-weight:500;color:var(--tinta-2);font-size:12.5px}
+.reg .selo{display:inline-flex;align-items:center;gap:4px;background:var(--verde);color:var(--ouro);font:800 10.5px/1 var(--f-texto);letter-spacing:.06em;text-transform:uppercase;padding:4px 7px;border-radius:999px;margin-left:6px;vertical-align:2px}
 .barras{display:flex;flex-direction:column;gap:5px;min-width:0}
 .bar{height:12px;border-radius:6px;position:relative}
-.bar.b26{background:#D8D3C2}
+.bar.b26{background:#D6DED9}
 .bar.b27{background:var(--ouro-esc)}
 .reg.melhor .bar.b27{background:var(--verde)}
-.reg.inel{opacity:.45}
-.reg .pct{font:600 22px/1 var(--f-num);text-align:right;font-variant-numeric:tabular-nums}
+.reg.inel{opacity:.5}
+.reg .pct{font:800 24px/1 var(--f-texto);text-align:right;font-variant-numeric:tabular-nums}
 .reg.melhor .pct{color:var(--verde)}
-.reg .pct small{display:block;font:500 11px var(--f-texto);color:var(--tinta-2);margin-top:4px}
-.reg .val{font:600 14px/1.25 var(--f-num);text-align:right;font-variant-numeric:tabular-nums}
+.reg .pct small{display:block;font:500 11.5px var(--f-texto);color:var(--tinta-2);margin-top:5px}
+.reg .val{font:700 14.5px/1.25 var(--f-texto);text-align:right;font-variant-numeric:tabular-nums}
 .reg .val small{display:block;font:500 12px var(--f-texto);color:var(--tinta-2)}
 .var-up{color:var(--alerta)!important} .var-down{color:var(--bom)!important}
-.legenda{display:flex;gap:18px;font-size:12.5px;color:var(--tinta-2);margin-top:8px;flex-wrap:wrap}
+.legenda{display:flex;gap:18px;font-size:13px;color:var(--tinta-2);margin-top:10px;flex-wrap:wrap}
 .legenda span::before{content:"";display:inline-block;width:14px;height:8px;border-radius:4px;margin-right:6px;vertical-align:middle}
-.legenda .l26::before{background:#D8D3C2}.legenda .l27::before{background:var(--ouro-esc)}
+.legenda .l26::before{background:#D6DED9}.legenda .l27::before{background:var(--ouro-esc)}
 .checks{display:flex;flex-direction:column;gap:8px}
-.chk{display:flex;gap:10px;align-items:flex-start;font-size:14px;border:1px solid var(--linha);border-radius:10px;padding:10px 12px}
-.chk .s{flex:none;font:700 11px/1 var(--f-texto);letter-spacing:.06em;text-transform:uppercase;padding:5px 8px;border-radius:999px}
-.chk.ok .s{background:#EDF6F1;color:var(--bom)} .chk.at .s{background:#FBF1E6;color:var(--alerta)} .chk.di .s{background:#FBEDEA;color:var(--ruim)}
-.parecer{border:1px solid var(--linha);border-radius:16px;padding:24px clamp(16px,3vw,28px);margin-top:28px;background:#fff}
+.chk{display:flex;gap:10px;align-items:flex-start;font-size:14.5px;border:1px solid var(--linha);border-radius:12px;padding:11px 13px;background:#fff}
+.chk .s{flex:none;display:inline-flex;align-items:center;gap:5px;font:800 11px/1 var(--f-texto);letter-spacing:.06em;text-transform:uppercase;padding:6px 9px;border-radius:999px}
+.chk .s::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.chk.ok .s{background:#ECFDF3;color:var(--bom)} .chk.at .s{background:#FFFAEB;color:var(--alerta)} .chk.di .s{background:#FEF3F2;color:var(--ruim)}
+details.ver-parecer{margin-top:28px;border:1px solid var(--linha);border-radius:16px;background:#F7FAF8}
+details.ver-parecer>summary{padding:16px 18px;font:800 16px var(--f-texto);color:var(--verde);display:flex;align-items:center;gap:10px;cursor:pointer;list-style:none}
+details.ver-parecer>summary small{font-weight:500;color:var(--tinta-2);font-size:13.5px;margin-left:auto}
+.parecer{border-top:1px solid var(--linha);padding:24px clamp(16px,3vw,28px);background:#fff;border-radius:0 0 16px 16px}
 .parecer .cab{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-start;border-bottom:2px solid var(--verde);padding-bottom:12px;margin-bottom:14px}
-.parecer .cab .mono{font:800 22px/1 var(--f-display);color:var(--verde)}
+.parecer .cab .mono{font:700 24px/1 var(--f-display);color:var(--verde)}
 .parecer .cab .mono span{color:var(--ouro-esc)}
-.parecer h4{font:700 20px/1.2 var(--f-display);margin:0}
-.parecer h5{font:700 14px/1.2 var(--f-texto);text-transform:uppercase;letter-spacing:.08em;color:var(--ouro-esc);margin:18px 0 8px}
+.parecer h4{font:700 22px/1.2 var(--f-display);margin:0}
+.parecer h5{font:800 13.5px/1.2 var(--f-texto);text-transform:uppercase;letter-spacing:.08em;color:var(--ouro-esc);margin:18px 0 8px}
 .parecer p,.parecer li{font-size:14.5px;max-width:72ch}
 .parecer ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
 .parecer table{border-collapse:collapse;width:100%;font-size:14px}
 .parecer td,.parecer th{border-bottom:1px solid var(--linha);padding:7px 8px;text-align:left}
-.parecer td.n,.parecer th.n{text-align:right;font-family:var(--f-num);font-variant-numeric:tabular-nums;white-space:nowrap}
+.parecer td.n,.parecer th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 .parecer .tab{overflow-x:auto}
 .parecer .ass{margin-top:20px;padding-top:12px;border-top:1px solid var(--linha);font-size:13px;color:var(--tinta-2)}
 .parecer .ass b{color:var(--tinta)}
-.cta{margin-top:24px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;border-top:1px solid var(--linha);padding-top:22px}
-.cta p{margin:0;max-width:48ch}
-.cta .bts{display:flex;gap:10px;flex-wrap:wrap}
-.aviso{font-size:12px;color:var(--tinta-2);margin-top:18px}
+.cta{margin-top:26px;display:flex;flex-wrap:wrap;gap:16px;align-items:center;justify-content:space-between;background:var(--ouro-claro);border-radius:16px;padding:18px 20px}
+.cta p{margin:0;max-width:52ch}
+.aviso{font-size:12.5px;color:var(--tinta-2);margin-top:16px}
+.aviso.recebido{font-size:14px;color:var(--bom);font-weight:700;display:flex;gap:8px;align-items:center}
+.fixo-cel{display:none}
 
 /* MDC */
 .sobre{padding-block:64px 24px}
 .sobre .eyebrow{color:var(--ouro-esc)}
-.sobre h2{font:800 clamp(26px,4vw,38px)/1.1 var(--f-display);margin:12px 0 12px;max-width:22ch;text-wrap:balance}
+.sobre h2{font:700 clamp(28px,4.2vw,40px)/1.1 var(--f-display);margin:12px 0 12px;max-width:22ch;text-wrap:balance}
 .sobre .lead{max-width:62ch;color:var(--tinta-2);font-size:17px;margin:0}
 .numero{display:grid;grid-template-columns:auto 1fr;gap:6px 24px;align-items:center;background:var(--verde);color:var(--verde-txt);border-radius:20px;padding:26px 28px;margin-top:32px}
-.numero b{font:600 clamp(40px,7vw,64px)/1 var(--f-num);color:var(--ouro);grid-row:span 2}
+.numero b{font:800 clamp(40px,7vw,64px)/1 var(--f-texto);color:var(--ouro);grid-row:span 2}
 .numero strong{color:#fff;font-size:18px}
 .pilares{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:16px}
-.pilar{background:#fff;border:1px solid var(--linha);border-radius:16px;padding:20px}
-.pilar .k{font:600 12px/1 var(--f-num);color:var(--ouro-esc)}
-.pilar h3{font:700 18px/1.25 var(--f-display);margin:10px 0 8px}
+.pilar{background:#fff;border:1px solid var(--linha);border-radius:18px;padding:20px}
+.pilar .k{display:inline-flex;align-items:center;gap:8px;font:800 12px/1 var(--f-texto);letter-spacing:.08em;text-transform:uppercase;color:var(--ouro-esc)}
+.pilar h3{font:700 20px/1.2 var(--f-display);margin:12px 0 8px}
 .pilar p{margin:0;font-size:14.5px;color:var(--tinta-2)}
 .frentes{margin-top:28px}
-.frentes h3{font:700 18px/1.25 var(--f-display);margin:0 0 12px}
+.frentes h3{font:700 20px/1.25 var(--f-display);margin:0 0 12px}
 .chips{display:flex;flex-wrap:wrap;gap:8px}
-.chips span{border:1px solid var(--linha);background:#fff;border-radius:999px;padding:8px 13px;font-size:13.5px}
+.chips span{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--linha);background:#fff;border-radius:999px;padding:8px 13px;font-size:13.5px}
+.chips .ic{width:14px;height:14px;color:var(--bom)}
 .contato{margin-top:40px;background:#fff;border:1px solid var(--linha);border-radius:20px;padding:24px 28px;display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:24px;align-items:center}
-.contato h3{font:800 24px/1.15 var(--f-display);margin:0 0 6px}
-.contato p{margin:0;color:var(--tinta-2)}
+.contato h3{font:700 26px/1.15 var(--f-display);margin:0 0 6px}
+.contato p{margin:0 0 16px;color:var(--tinta-2)}
 .lista-contato{display:flex;flex-direction:column;gap:10px;font-size:15px}
-.lista-contato a{display:flex;align-items:center;gap:10px;text-decoration:none;font-weight:600}
+.lista-contato a,.lista-contato span{display:flex;align-items:center;gap:10px;text-decoration:none;font-weight:600;overflow-wrap:anywhere}
 .lista-contato a:hover{color:var(--ouro-esc)}
-.lista-contato svg{width:18px;height:18px;flex:none;color:var(--ouro-esc)}
+.lista-contato .ic{width:18px;height:18px;color:var(--ouro-esc)}
 .rodape{padding-block:32px 28px;font-size:13px;color:var(--tinta-2)}
 .rodape .wrap{display:flex;flex-wrap:wrap;gap:8px 24px;justify-content:space-between}
-.rodape a{color:var(--ouro-esc)}
 
+@media (max-width:860px){
+  .passos{display:none}
+  .opcoes.c4{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
 @media (max-width:760px){
-  .grade,.opcoes,.pilares,.contato,.ficha{grid-template-columns:minmax(0,1fr)}
-  .passos li{padding:12px 8px;justify-content:center}
-  .passos li .t{display:none}
+  .grade,.opcoes,.opcoes.c3,.opcoes.c4,.pilares,.contato,.ficha{grid-template-columns:minmax(0,1fr)}
+  .redes a:not(.zap){display:none}
+  .redes a.zap span{display:none}
+  .marca small{display:none}
+  .topo{padding-block:14px 104px}
+  .tese{margin-top:26px}
+  .tese p{font-size:16px}
+  .fatos{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+  .fatos div{flex-direction:column;align-items:flex-start;gap:6px;padding:10px;font-size:12px}
+  .fatos b{font-size:15px}
   .reg{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"n p" "b b" "v v"}
   .reg .nome{grid-area:n}.reg .pct{grid-area:p}.reg .barras{grid-area:b}.reg .val{grid-area:v;text-align:left}
   .veredito{grid-template-columns:1fr}.veredito .eco{text-align:left}
-  .topo{padding-block:16px 110px}
   .numero{grid-template-columns:1fr}.numero b{grid-row:auto}
   .linha-cnpj{flex-direction:column}
+  .acoes{flex-direction:column-reverse;align-items:stretch}
+  .acoes .btn,.acoes-res .btn,.cta .btn{width:100%}
+  .acoes-res{flex-direction:column}
+  details.ver-parecer>summary small{display:none}
+  .fixo-cel{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:20;padding:10px max(12px,env(safe-area-inset-left,0px)) calc(10px + env(safe-area-inset-bottom,0px));background:rgba(255,255,255,.96);border-top:1px solid var(--linha);box-shadow:0 -10px 30px -20px rgba(11,40,32,.5)}
+  .fixo-cel .btn{flex:1}
+  body.com-fixo{padding-bottom:84px}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 @media (prefers-reduced-motion:no-preference){.etapa{animation:entra .35s ease both}@keyframes entra{from{opacity:.4;transform:translateY(6px)}to{opacity:1;transform:none}}}
 @media print{
   @page{margin:14mm}
-  body{background:#fff}
-  .topo,.passos,.veredito,.tit-sec,.sub-sec,.tabela-reg,.legenda,.checks,.cta,.aviso,.acoes,.sobre,.rodape,.no-print{display:none!important}
+  body{background:#fff;padding:0!important}
+  .topo,.progresso,.veredito,.acoes-res,.tit-sec,.sub-sec,.tabela-reg,.legenda,.checks,.cta,.aviso,.acoes,.sobre,.rodape,.fixo-cel,.no-print,details.ver-parecer>summary{display:none!important}
   .cartao{box-shadow:none;margin:0;border-radius:0}
   .corpo{padding:0}
+  details.ver-parecer{border:0;margin:0;background:#fff}
   .parecer{border:0;padding:0;margin:0}
 }
 </style>
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
-  <symbol id="i-zap" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M3 21l1.65-3.8A9 9 0 1 1 7.6 20L3 21zM9 10a.5.5 0 0 0 1 0V9a.5.5 0 0 0-1 0v1a5 5 0 0 0 5 5h1a.5.5 0 0 0 0-1h-1a.5.5 0 0 0 0 1"/></symbol>
-  <symbol id="i-insta" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="17.5" cy="6.5" r="1.2" fill="currentColor"/></symbol>
-  <symbol id="i-in" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 11v5M8 8v.01M12 16v-5M16 16v-3a2 2 0 0 0-4 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
-  <symbol id="i-web" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3.6 9h16.8M3.6 15h16.8M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
-  <symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M3 7l9 6 9-6" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
-  <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="10" r="2.5" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+  <symbol id="i-zap" viewBox="0 0 24 24"><path d="M3 21l1.65-3.8A9 9 0 1 1 7.6 20L3 21z"/><path d="M9 10a.5.5 0 0 0 1 0V9a.5.5 0 0 0-1 0v1a5 5 0 0 0 5 5h1a.5.5 0 0 0 0-1h-1a.5.5 0 0 0 0 1"/></symbol>
+  <symbol id="i-insta" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><path d="M17.5 6.5h.01"/></symbol>
+  <symbol id="i-in" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M8 11v5M8 8v.01M12 16v-5M16 16v-3a2 2 0 0 0-4 0"/></symbol>
+  <symbol id="i-web" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3.6 9h16.8M3.6 15h16.8M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></symbol>
+  <symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></symbol>
+  <symbol id="i-dir" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+  <symbol id="i-esq" viewBox="0 0 24 24"><path d="M19 12H5M11 18l-6-6 6-6"/></symbol>
+  <symbol id="i-busca" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+  <symbol id="i-predio" viewBox="0 0 24 24"><path d="M6 21V4a1 1 0 0 1 1-1h7a1 1 0 0 1 1 1v17M15 9h3a1 1 0 0 1 1 1v11M3 21h18M9 7h3M9 11h3M9 15h3"/></symbol>
+  <symbol id="i-maleta" viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 13h18"/></symbol>
+  <symbol id="i-balanca" viewBox="0 0 24 24"><path d="M12 3v18M7 21h10M5 7h14M5 7l-3 7a4 4 0 0 0 6 0L5 7zM19 7l-3 7a4 4 0 0 0 6 0l-3-7"/></symbol>
+  <symbol id="i-saude" viewBox="0 0 24 24"><path d="M19.5 13.5 12 21l-7.5-7.5A5 5 0 1 1 12 6.5a5 5 0 1 1 7.5 7z"/><path d="M8 12h2l1.5-2.5 2 5 1.5-2.5h1"/></symbol>
+  <symbol id="i-capacete" viewBox="0 0 24 24"><path d="M3 18h18v-2a9 9 0 0 0-18 0v2zM10 7V5h4v2M9 10v-3M15 10v-3"/></symbol>
+  <symbol id="i-sacola" viewBox="0 0 24 24"><path d="M5 8h14l-1 12H6L5 8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></symbol>
+  <symbol id="i-fabrica" viewBox="0 0 24 24"><path d="M3 21V10l6 4V10l6 4V5h4a2 2 0 0 1 2 2v14H3zM7 17h2M12 17h2M17 17h1"/></symbol>
+  <symbol id="i-recibo" viewBox="0 0 24 24"><path d="M5 3h14v18l-3-2-2 2-2-2-2 2-2-2-3 2V3zM9 8h6M9 12h6M9 16h3"/></symbol>
+  <symbol id="i-grafico" viewBox="0 0 24 24"><path d="M4 20V4M4 20h16M8 16v-5M12 16V8M16 16v-3"/></symbol>
+  <symbol id="i-moeda" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15 9.5a3 3 0 0 0-3-1.5c-1.7 0-3 .9-3 2s1.3 1.6 3 2 3 .9 3 2-1.3 2-3 2a3 3 0 0 1-3-1.5M12 6.5v1.5M12 16v1.5"/></symbol>
+  <symbol id="i-pessoas" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M18 14.5a6.5 6.5 0 0 1 3.5 5.5"/></symbol>
+  <symbol id="i-carrinho" viewBox="0 0 24 24"><circle cx="9" cy="20" r="1.3"/><circle cx="18" cy="20" r="1.3"/><path d="M2 3h3l2.5 12h11l2-8H6.2"/></symbol>
+  <symbol id="i-usuario" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></symbol>
+  <symbol id="i-documento" viewBox="0 0 24 24"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8l-5-5z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></symbol>
+  <symbol id="i-baixar" viewBox="0 0 24 24"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></symbol>
+  <symbol id="i-refazer" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></symbol>
+  <symbol id="i-escudo" viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6l8-3z"/><path d="M9 12l2 2 4-4"/></symbol>
+  <symbol id="i-relogio" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+  <symbol id="i-seta" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
+  <symbol id="i-ajuste" viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></symbol>
+  <symbol id="i-lista" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01"/></symbol>
+  <symbol id="i-cifrao" viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8M15 7h6v6"/></symbol>
 </svg>
+<!-- desenho de um ícone: <svg class="ic"><use href="#i-nome"/></svg> -->
 
 <header class="topo gutter">
   <div class="wrap">
     <div class="barra">
       <a class="marca" href="https://mdcassessoria.com" target="_blank" rel="noopener">
-        <img src="https://mdcassessoria.com/wp-content/uploads/2024/07/Logo-MDC5.png" alt="MDC Assessoria" onerror="this.replaceWith(Object.assign(document.createElement('span'),{className:'mono',textContent:'MDC'}))">
+        <img src="comum/logo-mdc-dourado.png" alt="MDC Assessoria" width="68" height="42">
         <span><small>Assessoria Contábil, Tributária<br>e Gestão Financeira</small></span>
       </a>
       <nav class="redes" aria-label="Contatos da MDC">
-        <a href="https://mdcassessoria.com" target="_blank" rel="noopener"><svg><use href="#i-web"/></svg>Site</a>
-        <a href="https://instagram.com/mdcassessoria_" target="_blank" rel="noopener"><svg><use href="#i-insta"/></svg>@mdcassessoria_</a>
-        <a href="https://www.linkedin.com/company/mdc-assessoria-e-consultoria-cont%C3%A1bil" target="_blank" rel="noopener"><svg><use href="#i-in"/></svg>LinkedIn</a>
-        <a class="zap" href="https://wa.me/5511988598041" target="_blank" rel="noopener"><svg><use href="#i-zap"/></svg>(11) 98859-8041</a>
+        <a href="https://mdcassessoria.com" target="_blank" rel="noopener"><svg class="ic"><use href="#i-web"/></svg>Site</a>
+        <a href="https://instagram.com/mdcassessoria_" target="_blank" rel="noopener"><svg class="ic"><use href="#i-insta"/></svg>Instagram</a>
+        <a class="zap" href="https://wa.me/5511988598041" target="_blank" rel="noopener" aria-label="WhatsApp da MDC"><svg class="ic"><use href="#i-zap"/></svg>WhatsApp<span>&nbsp;(11) 98859-8041</span></a>
       </nav>
     </div>
     <div class="tese">
-      <div class="eyebrow">Reforma tributária · janeiro de 2027</div>
+      <div class="eyebrow"><svg class="ic p"><use href="#i-relogio"/></svg>Reforma tributária · janeiro de 2027</div>
       <h1>Quanto sua empresa vai pagar de imposto em <em>2027</em>?</h1>
-      <p>PIS e COFINS acabam e a CBS entra com 11,3% calculados pelo TCU. Informe seu CNPJ, compare Simples, Lucro Presumido e Lucro Real e receba um parecer técnico gratuito da MDC.</p>
+      <p>PIS e COFINS acabam e a CBS entra com 11,3%. Em poucos minutos você compara Simples, Lucro Presumido e Lucro Real e recebe um parecer técnico gratuito da MDC.</p>
       <div class="fatos">
-        <div><b>11,3%</b>CBS de referência 2027</div>
-        <div><b>R$ 15 mi</b>em créditos recuperados para clientes</div>
-        <div><b>3 min</b>para o seu parecer</div>
+        <div><svg class="ic"><use href="#i-relogio"/></svg><span><b>3 minutos</b>para o seu parecer</span></div>
+        <div><svg class="ic"><use href="#i-escudo"/></svg><span><b>Gratuito</b>e sem compromisso</span></div>
+        <div><svg class="ic"><use href="#i-cifrao"/></svg><span><b>R$ 15 mi</b>recuperados para clientes</span></div>
       </div>
     </div>
   </div>
@@ -253,75 +338,102 @@ details.avanc summary{cursor:pointer;font-weight:600;color:var(--ouro-esc)}
 <main class="gutter">
 <div class="wrap">
 <section class="cartao" aria-live="polite">
-  <ol class="passos" aria-label="Etapas">
-    <li data-p="1" class="ativo"><span class="n">1</span><span class="t">Empresa</span></li>
-    <li data-p="2"><span class="n">2</span><span class="t">Custos</span></li>
-    <li data-p="3"><span class="n">3</span><span class="t">Contato</span></li>
-    <li data-p="4"><span class="n">4</span><span class="t">Resultado e parecer</span></li>
-  </ol>
+  <div class="progresso">
+    <div class="linha1"><b id="prog-titulo">Sua empresa</b><span id="prog-n">Passo 1 de 4</span></div>
+    <div class="trilho" aria-hidden="true"><span id="prog-barra"></span></div>
+    <ol class="passos" aria-label="Etapas">
+      <li data-p="1" class="ativo"><svg class="ic"><use href="#i-predio"/></svg><span>Empresa</span></li>
+      <li data-p="2"><svg class="ic"><use href="#i-moeda"/></svg><span>Faturamento</span></li>
+      <li data-p="3"><svg class="ic"><use href="#i-pessoas"/></svg><span>Custos</span></li>
+      <li data-p="4"><svg class="ic"><use href="#i-usuario"/></svg><span>Contato</span></li>
+      <li data-p="5"><svg class="ic"><use href="#i-grafico"/></svg><span>Resultado</span></li>
+    </ol>
+  </div>
   <div class="corpo">
   <form id="form" novalidate>
 
-    <!-- ETAPA 1 -->
+    <!-- PASSO 1 · empresa -->
     <div class="etapa" data-etapa="1">
-      <h2>Sobre a sua empresa</h2>
-      <p class="sub">Comece pelo CNPJ: buscamos na Receita Federal o CNAE, a situação e o enquadramento atual. Valores aproximados dos últimos 12 meses bastam.</p>
+      <h2>Vamos começar pela sua empresa</h2>
+      <p class="sub">Digite o CNPJ e buscamos na Receita Federal a atividade e o enquadramento. Se preferir, escolha a atividade direto abaixo.</p>
       <div class="grade">
         <div class="campo full">
           <label for="cnpj">CNPJ da empresa</label>
           <div class="linha-cnpj">
             <input id="cnpj" name="cnpj" type="text" inputmode="numeric" maxlength="18" placeholder="00.000.000/0000-00" autocomplete="off">
-            <button type="button" class="btn btn-borda" id="buscar">Buscar dados</button>
+            <button type="button" class="btn btn-borda" id="buscar"><svg class="ic"><use href="#i-busca"/></svg><span>Buscar na Receita</span></button>
           </div>
           <span class="status-busca" id="status-busca" role="status"></span>
         </div>
         <div class="full" id="ficha" hidden></div>
-        <div class="campo full" id="campo-cnae">
-          <label for="cnae">CNAE principal <span style="font-weight:400;color:var(--tinta-2)">(preenchido pelo CNPJ ou digite)</span></label>
-          <input id="cnae" name="cnae" type="text" inputmode="numeric" maxlength="12" placeholder="0000-0/00">
-          <span class="ajuda" id="cnae-ajuda">O CNAE define o anexo do Simples, a presunção do Lucro Presumido e a alíquota da CBS/IBS.</span>
-        </div>
         <div class="campo full">
-          <span class="rot" id="rot-ativ">Atividade principal</span>
+          <span class="rot" id="rot-ativ">O que a empresa faz?</span>
           <div class="opcoes" role="radiogroup" aria-labelledby="rot-ativ">
-            <label class="opc" data-v="servicos"><input type="radio" name="atividade" value="servicos" checked><span><b>Serviços em geral</b><i>TI, marketing, consultoria, RH, manutenção</i><em class="sug">Indicado pelo CNAE</em></span></label>
-            <label class="opc" data-v="profissional"><input type="radio" name="atividade" value="profissional"><span><b>Profissão regulamentada</b><i>Contábil, jurídica, engenharia, arquitetura</i><em class="sug">Indicado pelo CNAE</em></span></label>
-            <label class="opc" data-v="saude"><input type="radio" name="atividade" value="saude"><span><b>Saúde ou educação</b><i>Clínicas, terapias, escolas, cursos</i><em class="sug">Indicado pelo CNAE</em></span></label>
-            <label class="opc" data-v="obras"><input type="radio" name="atividade" value="obras"><span><b>Obras, limpeza, vigilância</b><i>Construção, conservação, segurança</i><em class="sug">Indicado pelo CNAE</em></span></label>
-            <label class="opc" data-v="comercio"><input type="radio" name="atividade" value="comercio"><span><b>Comércio</b><i>Revenda, varejo, atacado</i><em class="sug">Indicado pelo CNAE</em></span></label>
-            <label class="opc" data-v="industria"><input type="radio" name="atividade" value="industria"><span><b>Indústria</b><i>Fabricação e transformação</i><em class="sug">Indicado pelo CNAE</em></span></label>
+            <label class="opc" data-v="servicos"><input type="radio" name="atividade" value="servicos" checked><span><svg class="ic"><use href="#i-maleta"/></svg><span><b>Serviços em geral</b><i>TI, marketing, consultoria, RH, manutenção</i><em class="sug">Indicado pelo CNAE</em></span><span class="marca-ok"><svg class="ic"><use href="#i-check"/></svg></span></span></label>
+            <label class="opc" data-v="profissional"><input type="radio" name="atividade" value="profissional"><span><svg class="ic"><use href="#i-balanca"/></svg><span><b>Profissão regulamentada</b><i>Contábil, jurídica, engenharia, arquitetura</i><em class="sug">Indicado pelo CNAE</em></span><span class="marca-ok"><svg class="ic"><use href="#i-check"/></svg></span></span></label>
+            <label class="opc" data-v="saude"><input type="radio" name="atividade" value="saude"><span><svg class="ic"><use href="#i-saude"/></svg><span><b>Saúde ou educação</b><i>Clínicas, terapias, escolas, cursos</i><em class="sug">Indicado pelo CNAE</em></span><span class="marca-ok"><svg class="ic"><use href="#i-check"/></svg></span></span></label>
+            <label class="opc" data-v="obras"><input type="radio" name="atividade" value="obras"><span><svg class="ic"><use href="#i-capacete"/></svg><span><b>Obras, limpeza, vigilância</b><i>Construção, conservação, segurança</i><em class="sug">Indicado pelo CNAE</em></span><span class="marca-ok"><svg class="ic"><use href="#i-check"/></svg></span></span></label>
+            <label class="opc" data-v="comercio"><input type="radio" name="atividade" value="comercio"><span><svg class="ic"><use href="#i-sacola"/></svg><span><b>Comércio</b><i>Revenda, varejo, atacado</i><em class="sug">Indicado pelo CNAE</em></span><span class="marca-ok"><svg class="ic"><use href="#i-check"/></svg></span></span></label>
+            <label class="opc" data-v="industria"><input type="radio" name="atividade" value="industria"><span><svg class="ic"><use href="#i-fabrica"/></svg><span><b>Indústria</b><i>Fabricação e transformação</i><em class="sug">Indicado pelo CNAE</em></span><span class="marca-ok"><svg class="ic"><use href="#i-check"/></svg></span></span></label>
+          </div>
+        </div>
+        <details class="ajuste full" id="det-cnae">
+          <summary><svg class="ic p giro"><use href="#i-seta"/></svg>Sei o código da atividade (CNAE)</summary>
+          <div class="campo" id="campo-cnae" style="margin-top:10px">
+            <label for="cnae">CNAE principal</label>
+            <input id="cnae" name="cnae" type="text" inputmode="numeric" maxlength="12" placeholder="0000-0/00">
+            <span class="ajuda" id="cnae-ajuda">O CNAE define o anexo do Simples, a presunção do Lucro Presumido e a alíquota da CBS/IBS. Ele vem sozinho quando você busca o CNPJ.</span>
+          </div>
+        </details>
+      </div>
+      <div class="acoes"><span></span><button type="button" class="btn btn-pri" data-ir="2"><span>Continuar</span><svg class="ic"><use href="#i-dir"/></svg></button></div>
+    </div>
+
+    <!-- PASSO 2 · faturamento e regime -->
+    <div class="etapa" data-etapa="2" hidden>
+      <h2>Faturamento e regime de hoje</h2>
+      <p class="sub">Valores aproximados dos últimos 12 meses bastam.</p>
+      <div class="grade">
+        <div class="campo full">
+          <span class="rot" id="rot-regime">Em qual regime a empresa está hoje?</span>
+          <input type="hidden" id="regime" name="regime" value="presumido">
+          <div class="opcoes c4" role="radiogroup" aria-labelledby="rot-regime">
+            <label class="opc"><input type="radio" name="regime-escolha" value="simples"><span><span><b>Simples Nacional</b><i>Paga pelo DAS</i></span><span class="marca-ok"><svg class="ic"><use href="#i-check"/></svg></span></span></label>
+            <label class="opc"><input type="radio" name="regime-escolha" value="presumido" checked><span><span><b>Lucro Presumido</b><i>IRPJ e CSLL pela presunção</i></span><span class="marca-ok"><svg class="ic"><use href="#i-check"/></svg></span></span></label>
+            <label class="opc"><input type="radio" name="regime-escolha" value="real"><span><span><b>Lucro Real</b><i>IRPJ e CSLL sobre o lucro</i></span><span class="marca-ok"><svg class="ic"><use href="#i-check"/></svg></span></span></label>
+            <label class="opc"><input type="radio" name="regime-escolha" value="nao_sei"><span><span><b>Não sei</b><i>Ou estou abrindo a empresa</i></span><span class="marca-ok"><svg class="ic"><use href="#i-check"/></svg></span></span></label>
           </div>
         </div>
         <div class="campo">
-          <label for="regime">Regime atual</label>
-          <select id="regime" name="regime">
-            <option value="simples">Simples Nacional</option>
-            <option value="presumido" selected>Lucro Presumido</option>
-            <option value="real">Lucro Real</option>
-            <option value="nao_sei">Não sei / abrindo empresa</option>
-          </select>
-        </div>
-        <div class="campo">
-          <label for="fat">Faturamento anual</label>
+          <label for="fat">Quanto a empresa faturou em 12 meses?</label>
           <div class="moeda"><input id="fat" name="fat" type="text" inputmode="numeric" value="1.800.000"></div>
-          <span class="ajuda">Receita bruta dos últimos 12 meses</span>
+          <span class="ajuda">Receita bruta, antes de descontar os impostos</span>
         </div>
         <div class="campo full">
-          <label for="b2b">Quanto das suas vendas é para outras empresas?</label>
-          <div class="faixa"><input id="b2b" name="b2b" type="range" min="0" max="100" step="5" value="70"><output for="b2b" id="b2b-o">70%</output></div>
-          <span class="ajuda">Empresas compradoras aproveitam crédito da CBS. Isso pesa na escolha do regime.</span>
+          <span class="rot" id="rot-b2b">Para quem você mais vende?</span>
+          <div class="opcoes c3" role="radiogroup" aria-labelledby="rot-b2b" data-alvo="b2b">
+            <label class="opc"><input type="radio" name="b2b-escolha" value="10"><span><svg class="ic"><use href="#i-usuario"/></svg><span><b>Pessoas físicas</b><i>Consumidor final</i></span><span class="marca-ok"><svg class="ic"><use href="#i-check"/></svg></span></span></label>
+            <label class="opc"><input type="radio" name="b2b-escolha" value="50"><span><svg class="ic"><use href="#i-pessoas"/></svg><span><b>Metade a metade</b><i>Pessoas e empresas</i></span><span class="marca-ok"><svg class="ic"><use href="#i-check"/></svg></span></span></label>
+            <label class="opc"><input type="radio" name="b2b-escolha" value="90"><span><svg class="ic"><use href="#i-predio"/></svg><span><b>Outras empresas</b><i>Quem compra aproveita crédito</i></span><span class="marca-ok"><svg class="ic"><use href="#i-check"/></svg></span></span></label>
+          </div>
+          <details class="ajuste">
+            <summary><svg class="ic p giro"><use href="#i-seta"/></svg>Ajustar o percentual exato</summary>
+            <div class="faixa" style="margin-top:8px"><input id="b2b" name="b2b" type="range" min="0" max="100" step="5" value="50" aria-label="Percentual das vendas para empresas"><output for="b2b" id="b2b-o">50%</output></div>
+            <span class="ajuda">Percentual das vendas para outras empresas. Elas aproveitam crédito da CBS, e isso pesa na escolha do regime.</span>
+          </details>
         </div>
       </div>
-      <div class="acoes"><span></span><button type="button" class="btn btn-pri" data-ir="2">Continuar →</button></div>
+      <p class="erro" id="erro2" role="alert"></p>
+      <div class="acoes"><button type="button" class="btn btn-sec" data-ir="1"><svg class="ic"><use href="#i-esq"/></svg><span>Voltar</span></button><button type="button" class="btn btn-pri" data-ir="3"><span>Continuar</span><svg class="ic"><use href="#i-dir"/></svg></button></div>
     </div>
 
-    <!-- ETAPA 2 -->
-    <div class="etapa" data-etapa="2" hidden>
+    <!-- PASSO 3 · custos -->
+    <div class="etapa" data-etapa="3" hidden>
       <h2>Custos da operação</h2>
-      <p class="sub">A folha não gera crédito na reforma; compras de fornecedores do regime normal geram.</p>
+      <p class="sub">Na reforma, a folha não gera crédito; compras com nota de fornecedores do regime normal geram. Se não souber, deixe o valor sugerido.</p>
       <div class="grade">
         <div class="campo">
-          <label for="folha">Folha de pagamento anual</label>
+          <label for="folha">Folha de pagamento em 12 meses</label>
           <div class="moeda"><input id="folha" name="folha" type="text" inputmode="numeric" value="450.000"></div>
           <span class="ajuda">Salários, 13º, férias e pró-labore</span>
         </div>
@@ -331,17 +443,25 @@ details.avanc summary{cursor:pointer;font-weight:600;color:var(--ouro-esc)}
           <span class="ajuda">Mercadorias, insumos, aluguel, energia, serviços contratados</span>
         </div>
         <div class="campo full">
-          <label for="margem">Lucro antes dos impostos sobre o lucro</label>
-          <div class="faixa"><input id="margem" name="margem" type="range" min="0" max="50" step="1" value="15"><output for="margem" id="margem-o">15%</output></div>
-          <span class="ajuda">Percentual aproximado do faturamento que sobra antes de IRPJ e CSLL</span>
+          <span class="rot" id="rot-margem">Quanto sobra de lucro, antes do imposto de renda?</span>
+          <div class="opcoes c3" role="radiogroup" aria-labelledby="rot-margem" data-alvo="margem">
+            <label class="opc"><input type="radio" name="margem-escolha" value="5"><span><span><b>Pouco</b><i>Até 8% do faturamento</i></span><span class="marca-ok"><svg class="ic"><use href="#i-check"/></svg></span></span></label>
+            <label class="opc"><input type="radio" name="margem-escolha" value="15"><span><span><b>Médio</b><i>Entre 8% e 20%</i></span><span class="marca-ok"><svg class="ic"><use href="#i-check"/></svg></span></span></label>
+            <label class="opc"><input type="radio" name="margem-escolha" value="30"><span><span><b>Bastante</b><i>Mais de 20%</i></span><span class="marca-ok"><svg class="ic"><use href="#i-check"/></svg></span></span></label>
+          </div>
+          <details class="ajuste">
+            <summary><svg class="ic p giro"><use href="#i-seta"/></svg>Ajustar o percentual exato</summary>
+            <div class="faixa" style="margin-top:8px"><input id="margem" name="margem" type="range" min="0" max="50" step="1" value="15" aria-label="Lucro antes dos impostos sobre o lucro"><output for="margem" id="margem-o">15%</output></div>
+            <span class="ajuda">Percentual aproximado do faturamento que sobra antes de IRPJ e CSLL.</span>
+          </details>
         </div>
         <details class="avanc full">
-          <summary>Ajustes avançados (opcional)</summary>
+          <summary><svg class="ic p"><use href="#i-ajuste"/></svg>Ajustes para quem conhece os números (opcional)</summary>
           <div class="grade" style="margin-top:16px">
             <div class="campo">
               <label for="icmsiss">ICMS ou ISS médio sobre o faturamento</label>
               <div class="faixa"><input id="icmsiss" name="icmsiss" type="range" min="0" max="12" step="0.5" value="5"><output for="icmsiss" id="icmsiss-o">5,0%</output></div>
-              <span class="ajuda">Ajustado pela atividade; altere se souber o seu</span>
+              <span class="ajuda">Já ajustado pela atividade; altere se souber o seu</span>
             </div>
             <div class="campo">
               <label for="pctreg">Compras de fornecedores fora do Simples</label>
@@ -351,13 +471,13 @@ details.avanc summary{cursor:pointer;font-weight:600;color:var(--ouro-esc)}
           </div>
         </details>
       </div>
-      <div class="acoes"><button type="button" class="btn btn-sec" data-ir="1">← Voltar</button><button type="button" class="btn btn-pri" data-ir="3">Continuar →</button></div>
+      <div class="acoes"><button type="button" class="btn btn-sec" data-ir="2"><svg class="ic"><use href="#i-esq"/></svg><span>Voltar</span></button><button type="button" class="btn btn-pri" data-ir="4"><span>Continuar</span><svg class="ic"><use href="#i-dir"/></svg></button></div>
     </div>
 
-    <!-- ETAPA 3 -->
-    <div class="etapa" data-etapa="3" hidden>
+    <!-- PASSO 4 · contato -->
+    <div class="etapa" data-etapa="4" hidden>
       <h2>Para quem preparamos o parecer?</h2>
-      <p class="sub">O resultado e o parecer técnico aparecem na próxima tela. Um especialista da MDC pode revisar os números com você, sem custo.</p>
+      <p class="sub">O resultado aparece logo em seguida, nesta tela. Um especialista da MDC pode revisar os números com você, sem custo.</p>
       <div class="grade">
         <div class="campo"><label for="nome">Seu nome</label><input id="nome" name="nome" type="text" autocomplete="name" maxlength="120" required></div>
         <div class="campo"><label for="empresa">Empresa</label><input id="empresa" name="empresa" type="text" autocomplete="organization" maxlength="160" required></div>
@@ -369,14 +489,15 @@ details.avanc summary{cursor:pointer;font-weight:600;color:var(--ouro-esc)}
           <input id="consent" name="consent" type="checkbox" required>
           <span id="consent-txt">Autorizo a MDC Assessoria Ltda (CNPJ 48.140.121/0001-65) a armazenar os dados desta simulação, consultar dados públicos do CNPJ informado e entrar em contato por e-mail ou WhatsApp para apresentar o diagnóstico tributário. Posso pedir a exclusão a qualquer momento pelo e-mail edvaldo@mdcassessoria.com (LGPD, Lei 13.709/2018).</span>
         </label>
+        <div class="seguro full"><svg class="ic"><use href="#i-escudo"/></svg>Seus dados ficam só com a MDC e não são compartilhados.</div>
       </div>
       <p class="erro" id="erro3" role="alert"></p>
-      <div class="acoes"><button type="button" class="btn btn-sec" data-ir="2">← Voltar</button><button type="submit" class="btn btn-pri" id="enviar">Ver resultado e parecer →</button></div>
+      <div class="acoes"><button type="button" class="btn btn-sec" data-ir="3"><svg class="ic"><use href="#i-esq"/></svg><span>Voltar</span></button><button type="submit" class="btn btn-pri" id="enviar"><svg class="ic"><use href="#i-grafico"/></svg><span>Ver resultado</span></button></div>
     </div>
   </form>
 
-    <!-- ETAPA 4 -->
-    <div class="etapa" data-etapa="4" hidden id="res">
+    <!-- PASSO 5 · resultado -->
+    <div class="etapa" data-etapa="5" hidden id="res">
       <div class="veredito">
         <div>
           <div class="eyebrow" id="v-eyebrow">Regime indicado para 2027</div>
@@ -385,28 +506,32 @@ details.avanc summary{cursor:pointer;font-weight:600;color:var(--ouro-esc)}
         </div>
         <div class="eco"><b id="v-num">—</b><small id="v-sub">do faturamento em impostos</small></div>
       </div>
+      <div class="acoes-res">
+        <a class="btn btn-zap" id="zap" href="https://wa.me/5511988598041" target="_blank" rel="noopener"><svg class="ic"><use href="#i-zap"/></svg><span>Falar com um especialista</span></a>
+        <button type="button" class="btn btn-borda" id="imprimir"><svg class="ic"><use href="#i-baixar"/></svg><span>Baixar parecer em PDF</span></button>
+      </div>
+      <p class="aviso recebido" id="aviso-envio"></p>
 
-      <h3 class="tit-sec">Carga tributária por regime</h3>
+      <h3 class="tit-sec"><svg class="ic"><use href="#i-grafico"/></svg>Quanto cada regime custaria</h3>
       <p class="sub-sec">Percentual do faturamento que vai para impostos em 2027 (CBS, IBS, ICMS/ISS, IRPJ, CSLL e INSS patronal).</p>
       <div class="tabela-reg" id="tabela"></div>
       <div class="legenda"><span class="l26">2026 (sistema atual)</span><span class="l27">2027 (com CBS)</span></div>
 
-      <h3 class="tit-sec">Conferência com os dados da Receita</h3>
-      <p class="sub-sec">Comparação entre o que você informou, o CNAE e o cadastro público do CNPJ.</p>
+      <h3 class="tit-sec"><svg class="ic"><use href="#i-lista"/></svg>Conferência com a Receita Federal</h3>
+      <p class="sub-sec">O que você informou comparado com o CNAE e o cadastro público do CNPJ.</p>
       <div class="checks" id="checks"></div>
 
-      <article class="parecer" id="parecer"></article>
+      <details class="ver-parecer" id="det-parecer">
+        <summary><svg class="ic giro"><use href="#i-seta"/></svg><svg class="ic"><use href="#i-documento"/></svg>Ver o parecer técnico completo<small>Enquadramento, pontos de atenção e oportunidades</small></summary>
+        <article class="parecer" id="parecer"></article>
+      </details>
 
       <div class="cta">
-        <p><b>Quer validar com um especialista?</b> A MDC revisa a simulação com seus números reais e aponta créditos que podem ser recuperados.</p>
-        <div class="bts">
-          <button type="button" class="btn btn-borda" id="imprimir">Baixar parecer em PDF</button>
-          <a class="btn btn-zap" id="zap" href="https://wa.me/5511988598041" target="_blank" rel="noopener">Falar no WhatsApp</a>
-        </div>
+        <p><b>Quer validar com um especialista?</b> A MDC revisa a simulação com os números reais e aponta créditos que podem ser recuperados.</p>
+        <a class="btn btn-pri" id="zap3" href="https://wa.me/5511988598041" target="_blank" rel="noopener"><svg class="ic"><use href="#i-zap"/></svg><span>Conversar no WhatsApp</span></a>
       </div>
-      <p class="aviso" id="aviso-envio"></p>
       <p class="aviso">Estimativa simplificada com CBS de 11,3% (cálculo do TCU de 28/10/2026, sujeito à resolução do Senado), IBS de 0,1% em 2027, ICMS/ISS e INSS patronal aproximados e acréscimo da LC 224/2025 no Lucro Presumido acima de R$ 5 milhões. Dados cadastrais obtidos de bases públicas da Receita Federal. Não substitui a análise individual das operações.</p>
-      <div class="acoes"><button type="button" class="btn btn-sec" id="refazer">↺ Simular outro cenário</button></div>
+      <div class="acoes"><button type="button" class="btn btn-sec" id="refazer"><svg class="ic"><use href="#i-refazer"/></svg><span>Simular outro cenário</span></button></div>
     </div>
   </div>
 </section>
@@ -423,15 +548,15 @@ details.avanc summary{cursor:pointer;font-weight:600;color:var(--ouro-esc)}
   </div>
 
   <div class="pilares">
-    <div class="pilar"><span class="k">Planejamento</span><h3>Planejamento tributário de perto</h3><p>Escolha do regime, revisão de preços e processos fiscais e regimes especiais de ICMS, com ações antecipadas para melhorar o resultado.</p></div>
-    <div class="pilar"><span class="k">Recuperação</span><h3>Créditos que viram caixa</h3><p>Levantamento dos últimos 5 anos, retificação de EFD e DCTF e pedido de compensação ou restituição junto à Receita.</p></div>
-    <div class="pilar"><span class="k">Equipe</span><h3>Equipe consultiva no dia a dia</h3><p>Profissionais treinados e capacitados para o trabalho consultivo, que assessoram a empresa na rotina e respondem rápido quando surge uma decisão.</p></div>
+    <div class="pilar"><span class="k"><svg class="ic p"><use href="#i-grafico"/></svg>Planejamento</span><h3>Planejamento tributário de perto</h3><p>Escolha do regime, revisão de preços e processos fiscais e regimes especiais de ICMS, com ações antecipadas para melhorar o resultado.</p></div>
+    <div class="pilar"><span class="k"><svg class="ic p"><use href="#i-moeda"/></svg>Recuperação</span><h3>Créditos que viram caixa</h3><p>Levantamento dos últimos 5 anos, retificação de EFD e DCTF e pedido de compensação ou restituição junto à Receita.</p></div>
+    <div class="pilar"><span class="k"><svg class="ic p"><use href="#i-pessoas"/></svg>Equipe</span><h3>Equipe consultiva no dia a dia</h3><p>Profissionais treinados e capacitados para o trabalho consultivo, que assessoram a empresa na rotina e respondem rápido quando surge uma decisão.</p></div>
   </div>
 
   <div class="frentes">
     <h3>Onde costumamos encontrar dinheiro de volta</h3>
     <div class="chips">
-      <span>PIS/COFINS sobre insumos</span><span>ICMS e ISS na base do PIS/COFINS</span><span>Produtos monofásicos no Simples</span><span>INSS sobre verbas indenizatórias</span><span>IRPJ/CSLL pagos a maior</span><span>Créditos de ICMS acumulados</span><span>Revisão de enquadramento e anexo do Simples</span>
+      <span><svg class="ic"><use href="#i-check"/></svg>PIS/COFINS sobre insumos</span><span><svg class="ic"><use href="#i-check"/></svg>ICMS e ISS na base do PIS/COFINS</span><span><svg class="ic"><use href="#i-check"/></svg>Produtos monofásicos no Simples</span><span><svg class="ic"><use href="#i-check"/></svg>INSS sobre verbas indenizatórias</span><span><svg class="ic"><use href="#i-check"/></svg>IRPJ/CSLL pagos a maior</span><span><svg class="ic"><use href="#i-check"/></svg>Créditos de ICMS acumulados</span><span><svg class="ic"><use href="#i-check"/></svg>Revisão de enquadramento e anexo do Simples</span>
     </div>
   </div>
 
@@ -439,19 +564,23 @@ details.avanc summary{cursor:pointer;font-weight:600;color:var(--ouro-esc)}
     <div>
       <h3>Fale com a MDC</h3>
       <p>Atendimento em Bragança Paulista e região, e para empresas de todo o Brasil de forma digital.</p>
+      <a class="btn btn-zap" href="https://wa.me/5511988598041" target="_blank" rel="noopener"><svg class="ic"><use href="#i-zap"/></svg><span>Chamar no WhatsApp</span></a>
     </div>
     <div class="lista-contato">
-      <a href="https://wa.me/5511988598041" target="_blank" rel="noopener"><svg><use href="#i-zap"/></svg>WhatsApp (11) 98859-8041</a>
-      <a href="mailto:edvaldo@mdcassessoria.com"><svg><use href="#i-mail"/></svg>edvaldo@mdcassessoria.com</a>
-      <a href="https://mdcassessoria.com" target="_blank" rel="noopener"><svg><use href="#i-web"/></svg>mdcassessoria.com</a>
-      <a href="https://instagram.com/mdcassessoria_" target="_blank" rel="noopener"><svg><use href="#i-insta"/></svg>Instagram @mdcassessoria_</a>
-      <a href="https://www.linkedin.com/company/mdc-assessoria-e-consultoria-cont%C3%A1bil" target="_blank" rel="noopener"><svg><use href="#i-in"/></svg>LinkedIn MDC Assessoria</a>
-      <span style="display:flex;gap:10px;align-items:center;color:var(--tinta-2)"><svg style="width:18px;height:18px;color:var(--ouro-esc)"><use href="#i-pin"/></svg>Bragança Paulista / SP</span>
+      <a href="mailto:edvaldo@mdcassessoria.com"><svg class="ic"><use href="#i-mail"/></svg>edvaldo@mdcassessoria.com</a>
+      <a href="https://mdcassessoria.com" target="_blank" rel="noopener"><svg class="ic"><use href="#i-web"/></svg>mdcassessoria.com</a>
+      <a href="https://instagram.com/mdcassessoria_" target="_blank" rel="noopener"><svg class="ic"><use href="#i-insta"/></svg>Instagram @mdcassessoria_</a>
+      <a href="https://www.linkedin.com/company/mdc-assessoria-e-consultoria-cont%C3%A1bil" target="_blank" rel="noopener"><svg class="ic"><use href="#i-in"/></svg>LinkedIn MDC Assessoria</a>
+      <span><svg class="ic"><use href="#i-pin"/></svg>Bragança Paulista / SP</span>
     </div>
   </div>
 </section>
 </div>
 </main>
+
+<div class="fixo-cel no-print" id="fixo-cel" hidden>
+  <a class="btn btn-zap" id="zap2" href="https://wa.me/5511988598041" target="_blank" rel="noopener"><svg class="ic"><use href="#i-zap"/></svg><span>Falar com um especialista</span></a>
+</div>
 
 <footer class="rodape gutter">
   <div class="wrap">
@@ -853,6 +982,18 @@ function moedaFmt(el){ el.addEventListener("input", ()=>{ const n = num(el.value
 ["#fat","#folha","#compras"].forEach(s=>moedaFmt($(s)));
 const sliders = {b2b:v=>v+"%", margem:v=>v+"%", icmsiss:v=>Number(v).toLocaleString("pt-BR",{minimumFractionDigits:1})+"%", pctreg:v=>v+"%"};
 Object.entries(sliders).forEach(([id,f])=>{ const el=$("#"+id), o=$("#"+id+"-o"); const up=()=>o.textContent=f(el.value); el.addEventListener("input",up); up(); });
+function marcarRegime(v){
+  $("#regime").value = v;
+  const r = document.querySelector(`input[name="regime-escolha"][value="${v}"]`); if (r) r.checked = true;
+}
+$$('input[name="regime-escolha"]').forEach(r=>r.addEventListener("change",()=>{ $("#regime").value = r.value; }));
+/* cartões de escolha rápida (vendas para empresas, margem): marcam a régua escondida; a régua desmarca o cartão se mudar */
+$$(".opcoes[data-alvo]").forEach(g=>{
+  const alvo = $("#"+g.dataset.alvo), cartoes = [...g.querySelectorAll("input")];
+  const sincronizar = ()=>cartoes.forEach(c=>c.checked = Number(c.value)===Number(alvo.value));
+  cartoes.forEach(c=>c.addEventListener("change",()=>{ alvo.value = c.value; alvo.dispatchEvent(new Event("input")); }));
+  alvo.addEventListener("input", sincronizar); sincronizar();
+});
 function setAtividade(v, sugerido){
   const r = document.querySelector(`input[name=atividade][value="${v}"]`); if (!r) return;
   r.checked = true; $("#icmsiss").value = ATIV[v].icmsiss*100; $("#icmsiss").dispatchEvent(new Event("input"));
@@ -889,16 +1030,17 @@ async function buscarCNPJ(){
   const st = $("#status-busca"), c = $("#cnpj").value.replace(/\D/g,"");
   st.className = "status-busca";
   if (!cnpjValido(c)){ st.textContent = "Confira o CNPJ: os dígitos verificadores não conferem."; st.classList.add("erro"); return; }
-  st.textContent = "Consultando a Receita Federal…"; $("#buscar").disabled = true;
+  st.textContent = "Consultando a Receita Federal…"; $("#buscar").disabled = true; $("#buscar span").textContent = "Buscando…";
   receita = await consultarReceita(c);
-  $("#buscar").disabled = false;
-  if (!receita){ st.textContent = "Não conseguimos consultar agora. Digite o CNAE abaixo e siga normalmente."; st.classList.add("erro"); return; }
-  st.textContent = "Dados encontrados. Confira abaixo.";
+  $("#buscar").disabled = false; $("#buscar span").textContent = "Buscar na Receita";
+  if (!receita){ st.textContent = "Não conseguimos consultar agora. Escolha a atividade abaixo e siga normalmente."; st.classList.add("erro"); return; }
+  st.textContent = "Dados encontrados na Receita. Confira abaixo.";
+  st.classList.add("ok");
   if (receita.cnae) $("#cnae").value = fmtCNAE(receita.cnae);
   classif = classificarCNAE(receita.cnae);
   if (classif) setAtividade(classif.atividade, true);
-  if (receita.simples === true || receita.mei) $("#regime").value = "simples";
-  else if (receita.regimes && receita.regimes.length){ const ult = receita.regimes.sort((a,b)=>b.ano-a.ano)[0].forma || ""; if (/presumido/i.test(ult)) $("#regime").value="presumido"; else if (/real/i.test(ult)) $("#regime").value="real"; }
+  if (receita.simples === true || receita.mei) marcarRegime("simples");
+  else if (receita.regimes && receita.regimes.length){ const ult = receita.regimes.sort((a,b)=>b.ano-a.ano)[0].forma || ""; if (/presumido/i.test(ult)) marcarRegime("presumido"); else if (/real/i.test(ult)) marcarRegime("real"); }
   if (receita.razao && !$("#empresa").value) $("#empresa").value = receita.fantasia || receita.razao;
   if (receita.municipio && !$("#cidade").value) $("#cidade").value = receita.municipio.toLowerCase().replace(/(^|\s)\S/g, s=>s.toUpperCase()) + (receita.uf ? " / " + receita.uf : "");
   const f = $("#ficha"); f.hidden = false;
@@ -908,6 +1050,7 @@ async function buscarCNPJ(){
     <div><dt>Município</dt><dd id="f-mun"></dd></div><div><dt>Abertura</dt><dd id="f-ab"></dd></div>
     <div class="aviso-cnae" id="f-nota"></div></dl>`;
   f.querySelector(".t").textContent = receita.razao || "";
+  f.querySelector(".t").insertAdjacentHTML("afterbegin", '<svg class="ic"><use href="#i-predio"/></svg>');
   $("#f-cnae").textContent = `${fmtCNAE(receita.cnae)} · ${receita.cnaeDesc||""}`;
   $("#f-sit").textContent = receita.situacao || "—";
   $("#f-porte").textContent = receita.porte || "—";
@@ -919,10 +1062,16 @@ async function buscarCNPJ(){
 }
 $("#buscar").addEventListener("click", buscarCNPJ);
 
+const TITULOS = {1:"Sua empresa", 2:"Faturamento e regime", 3:"Custos", 4:"Seus dados", 5:"Resultado"};
 function ir(n){
-  if (n===2 && num($("#fat").value) <= 0){ $("#fat").focus(); return; }
+  if (n===3 && num($("#fat").value) <= 0){ $("#erro2").textContent = "Informe o faturamento dos últimos 12 meses."; $("#fat").focus(); return; }
+  $("#erro2").textContent = "";
   $$(".etapa").forEach(e=> e.hidden = Number(e.dataset.etapa)!==n);
   $$(".passos li").forEach(li=>{ const p=Number(li.dataset.p); li.classList.toggle("ativo",p===n); li.classList.toggle("feito",p<n); });
+  $("#prog-titulo").textContent = TITULOS[n];
+  $("#prog-n").textContent = n<5 ? `Passo ${n} de 4` : "Pronto";
+  $("#prog-barra").style.width = (n/5*100)+"%";
+  $("#fixo-cel").hidden = n!==5; document.body.classList.toggle("com-fixo", n===5);
   $(".cartao").scrollIntoView({behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto":"smooth", block:"start"});
   avisarAltura();
 }
@@ -1002,7 +1151,7 @@ function render(r, d, conf){
     const row = document.createElement("div");
     row.className = "reg" + (x===r.melhor ? " melhor":"") + (x.eleg ? "" : " inel");
     row.innerHTML = `<div class="nome"></div><div class="barras"><div class="bar b26"></div><div class="bar b27"></div></div><div class="pct"></div><div class="val"></div>`;
-    row.querySelector(".nome").innerHTML = `${x.nome}${x===r.melhor?" ★":""}<small>${x.eleg ? x.sub : "Faturamento acima do limite"}</small>`;
+    row.querySelector(".nome").innerHTML = `${x.nome}${x===r.melhor?'<span class="selo">Indicado</span>':""}<small>${x.eleg ? x.sub : "Faturamento acima do limite"}</small>`;
     row.querySelector(".b26").style.width = (x.c26/max*100)+"%";
     row.querySelector(".b27").style.width = (x.c27/max*100)+"%";
     row.querySelector(".pct").innerHTML = `${pct(x.p27)}<small>em 2026: ${pct(x.p26)}</small>`;
@@ -1029,7 +1178,7 @@ function render(r, d, conf){
   conf.forEach(c=>{ const el=document.createElement("div"); el.className="chk "+c.tipo; el.innerHTML=`<span class="s">${rot[c.tipo]}</span><span></span>`; el.lastChild.textContent=c.txt; $("#checks").appendChild(el); });
   renderParecer(r, d, conf);
   const msg = `Olá, MDC! Fiz a simulação de regime 2027${receita&&receita.razao?" da "+receita.razao:""}. CNAE ${d.cnae?fmtCNAE(d.cnae):"não informado"}; faturamento ${brl(d.fat)}; regime indicado: ${m.nome} (${pct(m.p27)} de carga). Quero o parecer completo.`;
-  $("#zap").href = `https://wa.me/${CONFIG.WHATSAPP}?text=${encodeURIComponent(msg)}`;
+  $("#zap").href = $("#zap2").href = $("#zap3").href = `https://wa.me/${CONFIG.WHATSAPP}?text=${encodeURIComponent(msg)}`;
 }
 
 function renderParecer(r, d, conf){
@@ -1103,7 +1252,7 @@ $("#form").addEventListener("submit", async ev=>{
   if (!$("#consent").checked) { err.textContent="Para continuar, marque a autorização de contato."; $("#consent").focus(); return; }
   const d = dados(), r = simular(d), conf = conferencias(d, r);
   ultimo = {r, d, conf};
-  render(r, d, conf); ir(4);
+  render(r, d, conf); ir(5);
   if ($("#site").value || enviado) return;
   const btn=$("#enviar"); btn.disabled = true;
   const cid = $("#cidade").value.split("/").map(s=>s.trim());
@@ -1129,7 +1278,7 @@ $("#form").addEventListener("submit", async ev=>{
   const g = await gravar(lead);
   btn.disabled = false;
   if (g.ok){ enviado = true; $("#aviso-envio").textContent = "Recebemos seus dados. Um especialista da MDC pode entrar em contato em até 1 dia útil."; }
-  else if (g.motivo !== "sem_config"){ $("#aviso-envio").textContent = "Não conseguimos registrar seu contato agora. Fale com a gente pelo WhatsApp (11) 98859-8041."; }
+  else if (g.motivo !== "sem_config"){ $("#aviso-envio").className = "aviso"; $("#aviso-envio").textContent = "Não conseguimos registrar seu contato agora. Fale com a gente pelo WhatsApp (11) 98859-8041."; }
 });
 $("#refazer").addEventListener("click",()=>ir(1));
 function pacotePDF(r, d, conf){
@@ -1160,14 +1309,14 @@ function pacotePDF(r, d, conf){
 $("#imprimir").addEventListener("click",()=>{
   if (!ultimo) return;
   const lib = window.jspdf && window.jspdf.jsPDF;
-  if (!lib){ window.print(); return; }
-  const btn = $("#imprimir"); btn.disabled = true; btn.textContent = "Gerando PDF…";
+  if (!lib){ $("#det-parecer").open = true; window.print(); return; }
+  const btn = $("#imprimir"), rot = btn.querySelector("span"); btn.disabled = true; rot.textContent = "Gerando PDF…";
   try{
     const pk = pacotePDF(ultimo.r, ultimo.d, ultimo.conf);
     const slug = pk.empresa.normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/[^A-Za-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,40) || "empresa";
     construirPDF(lib, pk).save(`Parecer-MDC-${slug}-${pk.data.replace(/\//g,"-")}.pdf`);
-  } catch(e){ window.print(); }
-  btn.disabled = false; btn.textContent = "Baixar parecer em PDF";
+  } catch(e){ $("#det-parecer").open = true; window.print(); }
+  btn.disabled = false; rot.textContent = "Baixar parecer em PDF";
 });
 
 function avisarAltura(){ try{ parent.postMessage({mdcSimAltura: document.documentElement.scrollHeight}, "*"); }catch(e){} }
