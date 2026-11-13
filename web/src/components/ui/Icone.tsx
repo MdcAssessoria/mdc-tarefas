@@ -25,6 +25,24 @@ const P = {
     </>
   ),
   mais: <path d="M12 5v14M5 12h14" />,
+  celular: (
+    <>
+      <rect x="6.5" y="2.5" width="11" height="19" rx="2.5" />
+      <path d="M10.5 18.5h3" />
+    </>
+  ),
+  compartilhar: (
+    <>
+      <path d="M12 3.5v11M8 7.5l4-4 4 4" />
+      <path d="M8.5 10.5H6.5a1.5 1.5 0 0 0-1.5 1.5v7a1.5 1.5 0 0 0 1.5 1.5h11a1.5 1.5 0 0 0 1.5-1.5v-7a1.5 1.5 0 0 0-1.5-1.5h-2" />
+    </>
+  ),
+  adicionarTela: (
+    <>
+      <rect x="4" y="4" width="16" height="16" rx="3" />
+      <path d="M12 8.5v7M8.5 12h7" />
+    </>
+  ),
   check: <path d="M4 12.5l5 5L20 6.5" />,
   pasta: <path d="M3 7.5a2 2 0 0 1 2-2h4l2 2.5h8a2 2 0 0 1 2 2V17a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />,
   grafico: (

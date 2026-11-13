@@ -2,6 +2,7 @@
 // dominios/portal/componentes (Resumo/demonstrativos, Rotinas, Societário, Fale com a MDC, Documentos).
 "use client";
 
+import { BotaoInstalarApp } from "@/components/shell/InstalarApp";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
@@ -126,6 +127,7 @@ export default function Portal() {
               <div className="truncate font-semibold text-[var(--destaque)]">{nomeCliente(emp)}</div>
             )}
           </div>
+          <BotaoInstalarApp variante="portal" />
           <SinoCliente uid={session.user.id} />
           <button
             className="alvo-toque flex shrink-0 items-center gap-1.5 rounded-md border border-white/20 px-2.5 py-1 text-sm hover:text-white"

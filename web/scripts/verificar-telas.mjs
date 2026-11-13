@@ -1252,6 +1252,13 @@ async function verificarTela(navegador, porta, rota, pastaFotos) {
     viewport: celular ? { width: 390, height: 844 } : { width: Number(process.env.LARGURA_TELA ?? 1280), height: 900 },
     isMobile: celular,
     hasTouch: celular,
+    // no celular finge um iPhone com Safari: o botão "Instalar no celular" aparece e mostra o passo a passo da Apple
+    ...(celular
+      ? {
+          userAgent:
+            "Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Mobile/15E148 Safari/604.1",
+        }
+      : {}),
     locale: "pt-BR",
     timezoneId: "America/Sao_Paulo",
   });
@@ -1313,6 +1320,20 @@ async function verificarTela(navegador, porta, rota, pastaFotos) {
         path: join(pastaFotos, (rota.caminho === "/" ? "inicio" : rota.chave.replace(/[^\w-]+/g, "_")) + ".png"),
         fullPage: true,
       });
+    // iPhone: "Instalar no celular" (gaveta do menu) abre o passo a passo do Safari
+    if (celular && rota.caminho === "/") {
+      try {
+        await pagina.getByRole("button", { name: "Abrir menu" }).click();
+        await pagina.getByRole("button", { name: "Instalar no celular" }).click();
+        await pagina.getByText("Adicionar à Tela de Início").waitFor({ timeout: 3000 });
+        if (pastaFotos) await pagina.screenshot({ path: join(pastaFotos, "instalar-iphone.png") });
+        await pagina.getByRole("button", { name: "Entendi" }).click();
+        // fecha a gaveta tocando no escuro à direita do menu (o meio do botão fica embaixo do menu)
+        await pagina.getByRole("button", { name: "Fechar menu" }).click({ position: { x: 370, y: 400 } });
+      } catch (e) {
+        problemas.push(`instalar no iPhone falhou: ${String(e.message ?? e).split("\n")[0]}`);
+      }
+    }
     const interacao = INTERACOES[rota.caminho];
     if (interacao) {
       try {

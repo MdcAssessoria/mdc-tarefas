@@ -1,6 +1,7 @@
 // Menu lateral do HUB: logo, ferramentas liberadas, administração, troca de organização, pessoa logada e sair.
 "use client";
 
+import { BotaoInstalarApp } from "./InstalarApp";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useOrg } from "@/dominios/organizacao/OrgProvider";
@@ -251,6 +252,7 @@ export function MenuLateral({ modulo, recolhido, aoRecolher }: { modulo: Modulo;
       </nav>
 
       <div className="border-t border-white/10 p-3">
+        <BotaoInstalarApp variante="menu" recolhido={recolhido} />
         {!recolhido && orgs.length > 1 && (
           <select
             value={org.id}
