@@ -83,7 +83,7 @@ Testes: `supabase/testes/91_base_038.sql` e `92_crm_038.sql` (inclui a corrida p
   logo dourada em `comum/`, sem Google Fonts), botões sempre com ícone e texto, escolhas em cartões no lugar das réguas
   (a régua fica em "Ajustar o percentual exato"), 4 passos curtos com barra de progresso (empresa, faturamento e regime,
   custos, contato) e o resultado com o botão do WhatsApp no topo e fixo no celular; o parecer completo abre por clique. Cada pergunta
-  tem um quadro azul "Por que perguntamos? / O que é isso?" e as réguas ficam sempre abertas, com a frase em reais
+  tem um quadro azul "Por que perguntamos? / O que é isso?" ; nada fica escondido (ajustes finos e parecer completo em blocos abertos) e as réguas ficam sempre abertas, com a frase em reais
   ("De cada R$ 100 vendidos, R$ 50 são para outras empresas…").
 - **Ferramenta nova:** criar `public/ferramentas/<id>/index.html` (enviando o lead por `crm_receber_lead`) e uma linha
   em `FERRAMENTAS`. Se a origem for nova, incluí-la em `ORIGENS` (`dominios/comercial/crm.ts`) e na função do banco.
