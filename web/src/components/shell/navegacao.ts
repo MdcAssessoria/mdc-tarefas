@@ -60,6 +60,7 @@ export const NAV: Record<Modulo, { titulo: string; links: LinkModulo[]; grupos?:
     links: [
       { href: "/societario", nome: "Processos", icone: "pasta" },
       { href: "/societario/painel", nome: "Painel", icone: "grade" },
+      { href: "/societario/documentos", nome: "Documentos dos clientes", icone: "documento" },
     ],
   },
   demonstrativos: {

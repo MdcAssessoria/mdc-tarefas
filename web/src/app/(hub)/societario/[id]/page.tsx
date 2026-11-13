@@ -1,5 +1,7 @@
 // Societário › Ficha do processo: dados do processo, fases (situação, responsável, prazo), protocolos, exigências,
 // taxas, documentos e a linha do tempo. Concluir pede confirmação; cancelar pede o motivo (vai para o histórico).
+// "Documentos do cliente" mostra o acervo vigente do cliente como base da alteração; cada anexo do processo pode ir
+// para o acervo ("Guardar no acervo"), substituindo o documento anterior (073).
 "use client";
 
 import Link from "next/link";
@@ -23,7 +25,10 @@ import { Icone } from "@/components/ui/Icone";
 import { useAviso } from "@/components/ui/Aviso";
 import { useConfirmar } from "@/components/ui/JanelaConfirmar";
 import { JanelaMotivo } from "@/components/ui/JanelaMotivo";
-import { lerFicha, registrarComHistorico } from "@/dominios/societario/leituras";
+import { lerAcervo, lerFicha, registrarComHistorico } from "@/dominios/societario/leituras";
+import type { DocumentoAcervo } from "@/dominios/societario/acervo";
+import { AcervoDoCliente } from "@/dominios/societario/componentes/AcervoDoCliente";
+import { JanelaGuardarAcervo } from "@/dominios/societario/componentes/JanelasAcervo";
 import { situacaoProcesso } from "@/dominios/societario/processos";
 import type { SocFase, StatusFase } from "@/dominios/societario/processos";
 import { LigarCliente } from "@/dominios/societario/componentes/LigarCliente";
@@ -38,6 +43,15 @@ function Ficha() {
   const { id } = useParams<{ id: string }>();
   const { org, clientePorId, nomeMembro, pode } = useOrg();
   const consulta = useConsulta(useCallback(() => lerFicha(id), [id]));
+  const clienteDoProcesso = consulta.dados?.processo.cliente_id ?? null;
+  const acervo = useConsulta(
+    useCallback(
+      () => (clienteDoProcesso ? lerAcervo(org.id, clienteDoProcesso) : Promise.resolve([] as DocumentoAcervo[])),
+      [org.id, clienteDoProcesso],
+    ),
+  );
+  /** Janela "Guardar no acervo": anexo do processo, ou null = documento novo do cliente. */
+  const [guardar, setGuardar] = useState<{ anexo: Arquivo | null } | null>(null);
   const { aviso, mostrar } = useAviso();
   const [janelaConfirmar, confirmar] = useConfirmar();
   const [cancelando, setCancelando] = useState(false);
@@ -46,7 +60,12 @@ function Ficha() {
   const podeOperar = pode("societario", "operar");
   const podeGerir = pode("societario", "gerir");
   const hoje = hojeISO(org.fuso);
-  const recarregar = consulta.recarregar;
+  const recarregarFicha = consulta.recarregar;
+  const recarregarAcervo = acervo.recarregar;
+  const recarregar = () => {
+    recarregarFicha();
+    recarregarAcervo();
+  };
 
   if (!consulta.dados)
     return consulta.erro ? (
@@ -285,18 +304,23 @@ function Ficha() {
             <Protocolos
               itens={d.protocolos}
               podeRegistrar={podeOperar && aberto}
-              aoRegistrar={(v) =>
-                inserir("soc_protocolos", v, `Protocolado na ${v.orgao} nº ${v.numero} em ${fmtData(v.data)}`, true)
-              }
+              aoRegistrar={(v) => inserir("soc_protocolos", v, `Protocolado na ${v.orgao} nº ${v.numero} em ${fmtData(v.data)}`, true)}
             />
             <Exigencias
               itens={d.exigencias}
               total={p.exigencias}
               podeOperar={podeOperar}
               podeRegistrar={podeOperar && aberto}
-              aoRegistrar={(v) => rpc("soc_registrar_exigencia", { p_proc: p.id, p_orgao: v.orgao, p_texto: v.texto }, "Exigência registrada.")}
+              aoRegistrar={(v) =>
+                rpc("soc_registrar_exigencia", { p_proc: p.id, p_orgao: v.orgao, p_texto: v.texto }, "Exigência registrada.")
+              }
               aoResponder={async (x, resposta, reprotocolo) => {
-                exigir(await supabase().from("soc_exigencias").update({ resposta, reprotocolo_em: reprotocolo || null }).eq("id", x.id));
+                exigir(
+                  await supabase()
+                    .from("soc_exigencias")
+                    .update({ resposta, reprotocolo_em: reprotocolo || null })
+                    .eq("id", x.id),
+                );
                 mostrar("Resposta registrada.");
                 recarregar();
               }}
@@ -328,14 +352,41 @@ function Ficha() {
               aoAnexar={(a) => anexar(a)}
               aoPortal={mudarPortalArquivo}
               aoErro={(e) => setErro(traduzirErro(e))}
+              noAcervo={new Set((acervo.dados ?? []).map((x) => x.arquivo_id))}
+              aoGuardarAcervo={p.cliente_id ? (a) => setGuardar({ anexo: a }) : undefined}
             />
           </div>
         </div>
 
-        <LinhaDoTempo eventos={d.eventos} podeOperar={podeOperar} aoComentar={comentar} />
+        <div className="min-w-0 space-y-5">
+          {p.cliente_id && (
+            <AcervoDoCliente
+              clienteId={p.cliente_id}
+              acervo={acervo.dados ?? []}
+              carregando={acervo.carregando}
+              podeOperar={podeOperar}
+              aoGuardar={() => setGuardar({ anexo: null })}
+              aoErro={(e) => setErro(traduzirErro(e))}
+            />
+          )}
+          <LinhaDoTempo eventos={d.eventos} podeOperar={podeOperar} aoComentar={comentar} />
+        </div>
       </div>
 
       {janelaConfirmar}
+      {guardar && p.cliente_id && (
+        <JanelaGuardarAcervo
+          clienteId={p.cliente_id}
+          anexo={guardar.anexo}
+          processoId={guardar.anexo ? p.id : null}
+          aoFechar={() => setGuardar(null)}
+          aoSalvo={(m) => {
+            setGuardar(null);
+            mostrar(m);
+            recarregar();
+          }}
+        />
+      )}
       {cancelando && (
         <JanelaMotivo
           titulo="Cancelar o processo"

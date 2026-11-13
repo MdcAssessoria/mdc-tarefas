@@ -289,7 +289,12 @@ function JanelaResposta({
       >
         <label className="campo">
           <span>O que foi feito</span>
-          <textarea rows={3} value={resposta} onChange={(e) => setResposta(e.target.value)} placeholder="Ex.: contrato corrigido e reenviado" />
+          <textarea
+            rows={3}
+            value={resposta}
+            onChange={(e) => setResposta(e.target.value)}
+            placeholder="Ex.: contrato corrigido e reenviado"
+          />
         </label>
         <label className="campo">
           <span>Data do reprotocolo</span>
@@ -393,6 +398,8 @@ export function Documentos({
   aoAnexar,
   aoPortal,
   aoErro,
+  noAcervo,
+  aoGuardarAcervo,
 }: {
   itens: Arquivo[];
   podeOperar: boolean;
@@ -401,6 +408,10 @@ export function Documentos({
   aoAnexar: (arquivos: FileList | null) => void;
   aoPortal: (a: Arquivo) => void;
   aoErro: (e: unknown) => void;
+  /** Arquivos que já estão no acervo do cliente (mostram a etiqueta em vez do botão). */
+  noAcervo?: Set<string>;
+  /** Leva o anexo para o acervo do cliente (só com cliente ligado). */
+  aoGuardarAcervo?: (a: Arquivo) => void;
 }) {
   return (
     <Bloco
@@ -419,9 +430,9 @@ export function Documentos({
       }
     >
       {itens.map((a) => (
-        <li key={a.id} className="flex items-center justify-between gap-2 py-2">
+        <li key={a.id} className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 py-2">
           <button
-            className="flex min-w-0 items-center gap-2 text-left hover:underline"
+            className="flex min-w-0 basis-full items-center gap-2 text-left hover:underline"
             onClick={() => abrirArquivo(a.caminho, a.nome).catch(aoErro)}
             title="Abrir o documento"
           >
@@ -429,11 +440,31 @@ export function Documentos({
             <span className="truncate">{a.nome}</span>
             <span className="shrink-0 text-xs text-[var(--texto-suave)]">{fmtTamanho(a.tamanho)}</span>
           </button>
-          {podeOperar && mostrarPortal && (
-            <label className="flex shrink-0 items-center gap-1.5 text-xs text-[var(--texto-suave)]" title="O cliente vê este documento no portal">
-              <input type="checkbox" checked={a.visivel_cliente} onChange={() => aoPortal(a)} /> no portal
-            </label>
-          )}
+          <span className="flex flex-wrap items-center gap-x-3 gap-y-1 pl-6">
+            {noAcervo?.has(a.id) ? (
+              <span className="chip bg-emerald-50 text-emerald-800" title="Já está no acervo do cliente">
+                <Icone nome="check" className="h-3.5 w-3.5" />
+                No acervo
+              </span>
+            ) : (
+              podeOperar &&
+              aoGuardarAcervo && (
+                <button
+                  className="btn !min-h-8 !px-2.5 text-xs"
+                  onClick={() => aoGuardarAcervo(a)}
+                  title="Guardar este documento no acervo do cliente"
+                >
+                  <Icone nome="pasta" className="h-3.5 w-3.5" />
+                  Guardar no acervo
+                </button>
+              )
+            )}
+            {podeOperar && mostrarPortal && (
+              <label className="flex items-center gap-1.5 text-xs text-[var(--texto-suave)]" title="O cliente vê este documento no portal">
+                <input type="checkbox" checked={a.visivel_cliente} onChange={() => aoPortal(a)} /> no portal
+              </label>
+            )}
+          </span>
         </li>
       ))}
     </Bloco>

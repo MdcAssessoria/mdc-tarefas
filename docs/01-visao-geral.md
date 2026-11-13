@@ -32,7 +32,7 @@ flowchart TB
 | Tarefas | Equipe, TV | Tarefas e rotinas mensais por cliente (lista ou quadro, indicadores clicáveis, PDF/Excel do filtro), relatório de concluídas por pessoa no fuso da organização, painel da TV | `/tarefas`, `/tarefas/relatorio`, `/tv` |
 | Configurações | Gestores | Organização, setores, clientes (segmento, grupos), obrigações recorrentes, feriados | `/config` |
 | Clientes | Gestores | Importar a carteira do Domínio | `/clientes/importar` |
-| Societário | Equipe | Alterações, aberturas e baixas, fase a fase, com exigências e taxas | `/societario`, `/societario/[id]` |
+| Societário | Equipe | Alterações, aberturas e baixas, fase a fase, com exigências e taxas ; acervo de documentos de cada cliente (contrato, alterações, cartão CNPJ, sócios) que serve de base para a próxima alteração | `/societario`, `/societario/[id]`, `/societario/documentos` |
 | Demonstrativos | Equipe | Importa o balancete do Domínio, gera BP/DRE/DFC, índices, fragilidades, parecer e PDF assinado | `/demonstrativos/...` |
 | Atendimento | Equipe | Chat com os clientes do Portal | `/atendimento` |
 | Vencimentos | Equipe | Certificados, alvarás, procurações com avisos; renovar (nova data) e encerrar (com motivo) em janelas, PDF/Excel | `/vencimentos` |

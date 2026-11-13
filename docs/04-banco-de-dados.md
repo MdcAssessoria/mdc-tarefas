@@ -14,7 +14,7 @@
 | Infra do HUB | `hub_auditoria`, `hub_notificacoes`, `hub_arquivos`, `hub_certificados` | Registro de ações, sino de avisos, arquivos no Storage, certificado digital (cofre) |
 | Clientes | `clientes`, `cliente_responsaveis` | Carteira de clientes (vinda do Domínio) e responsável por setor |
 | Tarefas | `tarefas`, `comentarios`, `historico`, `modelos_recorrentes` | Tarefas, rotinas mensais geradas automaticamente, histórico |
-| Societário | `soc_tipos`, `soc_processos`, `soc_fases`, `soc_exigencias`, `soc_protocolos`, `soc_taxas`, `soc_eventos` | Alterações contratuais e aberturas, fase a fase |
+| Societário | `soc_tipos`, `soc_processos`, `soc_fases`, `soc_exigencias`, `soc_protocolos`, `soc_taxas`, `soc_eventos`, `soc_documentos` (073) | Alterações contratuais e aberturas, fase a fase; acervo permanente de documentos de cada cliente |
 | Portal e demonstrativos | `portal_usuarios`, `portal_convites`, `portal_conversas`, `portal_mensagens`, `portal_balancetes`, `portal_balancete_linhas`, `portal_mapa_contas`, `portal_mapa_dfc`, `portal_pareceres` | Área do cliente: balancetes, demonstrações, parecer, chat |
 | Marca de ex-cliente (esquema `app`, sem acesso pela API) | `app.ex_clientes` | E-mails que já foram acesso de cliente; nunca entram na equipe (027). Para retirar uma marca feita por engano, o administrador roda no SQL do Supabase: `delete from app.ex_clientes where email = '...'` e registra o motivo |
 | Integrações e importações | `hub_integracoes`, `hub_importacoes` | Pasta do SharePoint lida pelo agente (só administrador) e histórico de tudo o que foi importado (tela, lote, pasta) |
@@ -204,6 +204,9 @@ erDiagram
     soc_processos ||--o{ soc_protocolos : "protocolos"
     soc_processos ||--o{ soc_taxas : "taxas"
     soc_fases ||--o| tarefas : "vira tarefa"
+    clientes ||--o{ soc_documentos : "acervo societário"
+    soc_documentos }o--|| hub_arquivos : "arquivo"
+    soc_processos ||--o{ soc_documentos : "veio do processo"
     clientes ||--o{ venc_itens : "vencimentos"
     crm_oportunidades ||--o{ crm_atividades : "atividades"
     crm_oportunidades ||--o{ crm_contratos : "contratos"
@@ -221,7 +224,7 @@ pode fazer aquilo (normalmente com `app.hub_pode(org, app, nível)` ou `app.port
 | Equipe e acessos | `hub_convidar`, `hub_editar_membro`, `hub_definir_perfil`, `hub_definir_acesso`, `hub_cancelar_convite`, `hub_transferir_trabalho`, `hub_pendencias_membro`, `hub_situacao_contas`, `hub_meus_apps`, `hub_pode_enviar_convite` |
 | Clientes | `importar_clientes`, `inativar_cliente`, `reativar_cliente` |
 | Tarefas | `gerar_competencia`, `prever_rotina` |
-| Societário | `soc_abrir_processo` (cliente do cadastro, ou nome/CNPJ de empresa ainda não cadastrada), `soc_vincular_cliente` (037: liga depois ao cliente cadastrado, com as tarefas das fases), `soc_mudar_fase`, `soc_registrar_exigencia`, `soc_concluir_processo`, `soc_cancelar_processo` |
+| Societário | `soc_abrir_processo` (cliente do cadastro, ou nome/CNPJ de empresa ainda não cadastrada), `soc_vincular_cliente` (037: liga depois ao cliente cadastrado, com as tarefas das fases), `soc_mudar_fase`, `soc_registrar_exigencia`, `soc_concluir_processo`, `soc_cancelar_processo`; acervo (073): `soc_documento_guardar` (operar; anexo do processo ou arquivo novo; marca o anterior como substituído), `soc_documento_editar` (operar), `soc_documento_retirar` (gerir, motivo de 5 letras; nada se apaga). A tabela `soc_documentos` só tem leitura direta (RLS `societario › ver`) |
 | Portal | `portal_convidar` (036: lista fechada de permissões), `portal_minhas_empresas`, `portal_rotinas`, `portal_processos`, `portal_abrir_conversa`, `portal_conversa_para_tarefa`, `portal_publicar_balancete`, `portal_publicar_parecer` |
 | Vencimentos | `venc_renovar`, `venc_encerrar` (036) |
 | Tarefas e configurações (036, nada se apaga) | `tarefa_cancelar`, `feriado_inativar`, `hub_inativar_perfil`, `portal_cancelar_convite` |

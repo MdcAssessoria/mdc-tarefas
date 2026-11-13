@@ -170,3 +170,8 @@ $P -f "$R/testes/137_situacao_070.sql" 2>&1 | grep -v "^SET$"
 $P -c "alter table auth.users add column if not exists raw_app_meta_data jsonb; insert into app.convites (org_id, email) values ('00000000-0000-0000-0000-0000000000a1', 'sem.conta@exemplo.com');" >/dev/null
 $P -v ON_ERROR_STOP=1 -f "$R/migrations/071_senha_provisoria.sql" 2>&1 | grep -v NOTICE || true
 $P -f "$R/testes/138_senha_provisoria_071.sql" 2>&1 | grep -v "^SET$"
+# 073: acervo de documentos societários do cliente (guardar, substituir, editar, retirar)
+for f in testes/139_base_073.sql migrations/073_societario_acervo.sql; do
+  $P -v ON_ERROR_STOP=1 -f "$R/$f" 2>&1 | grep -v NOTICE || true
+done
+$P -f "$R/testes/140_acervo_073.sql" 2>&1 | grep -v "^SET$"

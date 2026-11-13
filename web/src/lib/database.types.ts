@@ -6263,6 +6263,102 @@ export type Database = {
           },
         ];
       };
+      soc_documentos: {
+        Row: {
+          arquivo_id: string;
+          categoria: string;
+          cliente_id: string;
+          criado_em: string;
+          criado_por: string | null;
+          data_documento: string | null;
+          descricao: string | null;
+          id: string;
+          org_id: string;
+          processo_id: string | null;
+          registro: string | null;
+          retirado_em: string | null;
+          retirado_motivo: string | null;
+          retirado_por: string | null;
+          substituido_em: string | null;
+          substituido_por: string | null;
+          vigente: boolean;
+        };
+        Insert: {
+          arquivo_id: string;
+          categoria: string;
+          cliente_id: string;
+          criado_em?: string;
+          criado_por?: string | null;
+          data_documento?: string | null;
+          descricao?: string | null;
+          id?: string;
+          org_id: string;
+          processo_id?: string | null;
+          registro?: string | null;
+          retirado_em?: string | null;
+          retirado_motivo?: string | null;
+          retirado_por?: string | null;
+          substituido_em?: string | null;
+          substituido_por?: string | null;
+          vigente?: boolean;
+        };
+        Update: {
+          arquivo_id?: string;
+          categoria?: string;
+          cliente_id?: string;
+          criado_em?: string;
+          criado_por?: string | null;
+          data_documento?: string | null;
+          descricao?: string | null;
+          id?: string;
+          org_id?: string;
+          processo_id?: string | null;
+          registro?: string | null;
+          retirado_em?: string | null;
+          retirado_motivo?: string | null;
+          retirado_por?: string | null;
+          substituido_em?: string | null;
+          substituido_por?: string | null;
+          vigente?: boolean;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "soc_documentos_arquivo_id_fkey";
+            columns: ["arquivo_id"];
+            isOneToOne: true;
+            referencedRelation: "hub_arquivos";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "soc_documentos_cliente_id_fkey";
+            columns: ["cliente_id"];
+            isOneToOne: false;
+            referencedRelation: "clientes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "soc_documentos_org_id_fkey";
+            columns: ["org_id"];
+            isOneToOne: false;
+            referencedRelation: "organizacoes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "soc_documentos_processo_id_fkey";
+            columns: ["processo_id"];
+            isOneToOne: false;
+            referencedRelation: "soc_processos";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "soc_documentos_substituido_por_fkey";
+            columns: ["substituido_por"];
+            isOneToOne: false;
+            referencedRelation: "soc_documentos";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       soc_eventos: {
         Row: {
           em: string;
@@ -7754,6 +7850,23 @@ export type Database = {
         Args: { p_motivo: string; p_proc: string };
         Returns: undefined;
       };
+      soc_documento_editar: {
+        Args: { p_categoria: string; p_data: string | null; p_descricao: string | null; p_doc: string; p_registro: string | null; p_vigente: boolean };
+        Returns: undefined;
+      };
+      soc_documento_guardar: {
+        Args: {
+          p_arquivo: string;
+          p_categoria: string;
+          p_data?: string | null;
+          p_descricao?: string | null;
+          p_processo?: string | null;
+          p_registro?: string | null;
+          p_substitui?: string | null;
+        };
+        Returns: string;
+      };
+      soc_documento_retirar: { Args: { p_doc: string; p_motivo: string }; Returns: undefined };
       soc_concluir_processo: { Args: { p_proc: string }; Returns: undefined };
       soc_mudar_fase: {
         Args: { p_fase: string; p_status: string };

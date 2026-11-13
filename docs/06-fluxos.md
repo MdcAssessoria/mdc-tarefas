@@ -84,6 +84,18 @@ regra em `dominios/societario/processos.ts`, `passosParaAvancar`). Voltar uma fa
 Na ficha, concluir pede confirmação (`useConfirmar`) e cancelar pede o motivo (`JanelaMotivo`, vai para o histórico).
 Os indicadores da lista (fase atrasada, previsão vencida, com exigência, parados há 5+ dias) filtram a lista ao clicar.
 
+## 6.3.1 Societário: acervo do cliente como base da alteração (073)
+
+- **Guardar:** em Societário › Documentos dos clientes ("Guardar documento") ou na ficha do processo, pelo botão
+  "Guardar no acervo" de cada anexo. A janela pede o tipo (contrato social, alteração, consolidação, cartão CNPJ,
+  documento de sócio, procuração, ata, certidão, inscrição, alvará, outro), data, descrição e registro na Junta.
+- **Substituir:** ao guardar uma alteração ou consolidação, o HUB sugere o documento do contrato que estava vigente;
+  ele passa a "Substituído" (continua guardado) e o novo vira a base. Cartão CNPJ, alvará etc. sugerem o do mesmo tipo.
+- **Usar como base:** a ficha de todo processo ligado a um cliente mostra o cartão "Documentos do cliente" com os
+  vigentes de contrato, CNPJ e sócios (regra `documentosBase` em `dominios/societario/acervo.ts`), com Abrir e o
+  atalho para o acervo completo filtrado pelo cliente.
+- **Retirar:** só quem gerencia o Societário, com motivo; a ficha e o arquivo ficam no histórico e na auditoria.
+
 ## 6.4 Mapa de automações (o que acontece sem ninguém clicar)
 
 | Gatilho ou agenda | Quando | O que faz |

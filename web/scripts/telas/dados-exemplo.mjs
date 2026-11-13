@@ -843,7 +843,23 @@ export const TABELAS = {
     saldo_apos: id === 1 ? 400 : id === 2 ? 320 : 3,
     custo_medio_apos: id === 3 ? 180 : 0.35,
   })),
-  hub_arquivos: [],
+  hub_arquivos: [
+    {
+      id: "5a000000-0000-4000-8000-0000000000a1",
+      org_id: ORG,
+      app: "societario",
+      ref_id: IDS_EXEMPLO["societario/[id]"],
+      cliente_id: C1,
+      nome: "4a-alteracao-registrada.pdf",
+      caminho: `${ORG}/societario/${IDS_EXEMPLO["societario/[id]"]}/4a-alteracao-registrada.pdf`,
+      tamanho: 210_000,
+      tipo: "application/pdf",
+      visivel_cliente: false,
+      enviado_por: EU,
+      enviado_em: momento(-1),
+      retirado_em: null,
+    },
+  ],
   hub_certificados: [],
   portal_usuarios: [
     {
@@ -1032,6 +1048,37 @@ export const TABELAS = {
   soc_exigencias: [],
   soc_taxas: [],
   soc_eventos: [],
+  // acervo societário do cliente (073): o arquivo vem junto, como o select com hub_arquivos devolve
+  soc_documentos: [
+    ["d1", "contrato_social", "Contrato social de constituição", dia(-2900), "NIRE 35234567890", false, "contrato-social-2018.pdf"],
+    ["d2", "alteracao_contratual", "3ª alteração – entrada de sócio", dia(-200), "Arq. 412.556/25-1", true, "3a-alteracao.pdf"],
+    ["d3", "cartao_cnpj", null, dia(-30), null, true, "cartao-cnpj.pdf"],
+    ["d4", "documento_socio", "RG e CPF – Maria Souza", null, null, true, "rg-maria.pdf"],
+    ["d5", "alvara", "Alvará de funcionamento 2026", dia(-90), null, true, "alvara-2026.pdf"],
+  ].map(([id, categoria, descricao, data_documento, registro, vigente, nome]) => ({
+    id: `5d000000-0000-4000-8000-00000000000${id.slice(1)}`,
+    org_id: ORG,
+    cliente_id: C1,
+    arquivo_id: `5a000000-0000-4000-8000-00000000000${id.slice(1)}`,
+    categoria,
+    descricao,
+    data_documento,
+    registro,
+    processo_id: null,
+    vigente,
+    substituido_por: null,
+    substituido_em: null,
+    retirado_em: null,
+    criado_em: momento(-5),
+    arquivo: {
+      id: `5a000000-0000-4000-8000-00000000000${id.slice(1)}`,
+      nome,
+      caminho: `${ORG}/societario/${C1}/${nome}`,
+      tamanho: 120000,
+      tipo: "application/pdf",
+    },
+    processo: null,
+  })),
   venc_itens: [
     {
       id: "v1",

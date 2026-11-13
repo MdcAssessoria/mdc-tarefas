@@ -5,6 +5,8 @@ import { lerTudo } from "@/lib/lerTudo";
 import { exigir } from "@/lib/exigir";
 import { traduzirErro } from "@/lib/erros";
 import type { Arquivo } from "@/lib/arquivos/armazenamento";
+import { ordenarAcervo } from "./acervo";
+import type { DocumentoAcervo } from "./acervo";
 import { passosParaAvancar } from "./processos";
 import type { SocFase, SocProcesso, SocTipo } from "./processos";
 
@@ -128,4 +130,16 @@ export async function lerFicha(id: string): Promise<DadosFicha> {
     eventos: (exigir(ev) as Evento[] | null) ?? [],
     arquivos: (exigir(ar) as Arquivo[] | null) ?? [],
   };
+}
+
+/** Acervo de documentos societários da organização (ou de um cliente), sem os retirados; vigentes primeiro. */
+export async function lerAcervo(orgId: string, clienteId?: string | null): Promise<DocumentoAcervo[]> {
+  let q = supabase()
+    .from("soc_documentos")
+    .select("*, arquivo:hub_arquivos(id, nome, caminho, tamanho, tipo), processo:soc_processos(numero)")
+    .eq("org_id", orgId)
+    .is("retirado_em", null);
+  if (clienteId) q = q.eq("cliente_id", clienteId);
+  const r = exigir(await q.order("criado_em", { ascending: false }).range(0, 4999));
+  return ordenarAcervo((r ?? []) as unknown as DocumentoAcervo[]);
 }
