@@ -140,6 +140,17 @@ details.avanc{border-top:1px dashed var(--linha);padding-top:14px}
 .lgpd input{margin-top:2px;accent-color:var(--verde);width:20px;height:20px;flex:none}
 .seguro{display:flex;gap:8px;align-items:center;font-size:13px;color:var(--tinta-2)}
 .seguro .ic{color:var(--bom);width:16px;height:16px}
+.explica{display:flex;gap:12px;align-items:flex-start;background:#F4F7FB;border:1px solid #D8E3F0;border-radius:14px;padding:12px 14px;font-size:14px;color:#33414F;line-height:1.5}
+.explica>.ic{color:#2E5C8A;margin-top:1px}
+.explica b{color:#1D3A57}
+.explica p{margin:0}
+.explica p+p{margin-top:6px}
+.regua{background:#F7FAF8;border:1px solid var(--linha);border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:8px}
+.regua .rot2{font-weight:700;font-size:14px}
+.regua .frase{font-size:14.5px;color:var(--tinta)}
+.regua .frase b{color:var(--verde)}
+.regua .pontas{display:flex;justify-content:space-between;font-size:12px;color:var(--tinta-2);margin-top:-4px}
+.opcional{font-weight:500;color:var(--tinta-2);font-size:13px}
 .hp{position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden}
 
 /* Resultado */
@@ -155,7 +166,7 @@ details.avanc{border-top:1px dashed var(--linha);padding-top:14px}
 .tit-sec .ic{color:var(--ouro-esc)}
 .sub-sec{margin:0 0 14px;color:var(--tinta-2);font-size:14.5px}
 .tabela-reg{display:flex;flex-direction:column;gap:12px}
-.reg{display:grid;grid-template-columns:200px minmax(0,1fr) 96px 124px;gap:14px;align-items:center;padding:12px 14px;border:1px solid var(--linha);border-radius:14px}
+.reg{display:grid;grid-template-columns:220px minmax(0,1fr) 96px 150px;gap:14px;align-items:center;padding:12px 14px;border:1px solid var(--linha);border-radius:14px}
 .reg.melhor{border-color:var(--verde);background:#F2F6F3}
 .reg .nome{font-weight:800;font-size:15.5px;line-height:1.25}
 .reg .nome small{display:block;font-weight:500;color:var(--tinta-2);font-size:12.5px}
@@ -305,6 +316,7 @@ details.ver-parecer>summary small{font-weight:500;color:var(--tinta-2);font-size
   <symbol id="i-seta" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
   <symbol id="i-ajuste" viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></symbol>
   <symbol id="i-lista" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></symbol>
   <symbol id="i-cifrao" viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8M15 7h6v6"/></symbol>
 </svg>
 <!-- desenho de um ícone: <svg class="ic"><use href="#i-nome"/></svg> -->
@@ -355,19 +367,21 @@ details.ver-parecer>summary small{font-weight:500;color:var(--tinta-2);font-size
     <!-- PASSO 1 · empresa -->
     <div class="etapa" data-etapa="1">
       <h2>Vamos começar pela sua empresa</h2>
-      <p class="sub">Digite o CNPJ e buscamos na Receita Federal a atividade e o enquadramento. Se preferir, escolha a atividade direto abaixo.</p>
+      <p class="sub">Com o CNPJ, buscamos sozinhos na Receita Federal o que a empresa faz e como ela paga imposto hoje. Não tem o CNPJ à mão? Sem problema: escolha a atividade logo abaixo e siga.</p>
       <div class="grade">
         <div class="campo full">
-          <label for="cnpj">CNPJ da empresa</label>
+          <label for="cnpj">CNPJ da empresa <span class="opcional">(opcional)</span></label>
           <div class="linha-cnpj">
             <input id="cnpj" name="cnpj" type="text" inputmode="numeric" maxlength="18" placeholder="00.000.000/0000-00" autocomplete="off">
             <button type="button" class="btn btn-borda" id="buscar"><svg class="ic"><use href="#i-busca"/></svg><span>Buscar na Receita</span></button>
           </div>
+          <span class="ajuda">São os 14 números do cartão CNPJ. Usamos só para consultar os dados públicos da Receita.</span>
           <span class="status-busca" id="status-busca" role="status"></span>
         </div>
         <div class="full" id="ficha" hidden></div>
         <div class="campo full">
           <span class="rot" id="rot-ativ">O que a empresa faz?</span>
+          <div class="explica"><svg class="ic"><use href="#i-info"/></svg><p><b>Por que perguntamos?</b> A lei cobra percentuais diferentes conforme o tipo de negócio. Escolha a opção que mais se parece com a principal fonte de receita da empresa. Se buscou o CNPJ, já marcamos a sugerida.</p></div>
           <div class="opcoes" role="radiogroup" aria-labelledby="rot-ativ">
             <label class="opc" data-v="servicos"><input type="radio" name="atividade" value="servicos" checked><span><svg class="ic"><use href="#i-maleta"/></svg><span><b>Serviços em geral</b><i>TI, marketing, consultoria, RH, manutenção</i><em class="sug">Indicado pelo CNAE</em></span><span class="marca-ok"><svg class="ic"><use href="#i-check"/></svg></span></span></label>
             <label class="opc" data-v="profissional"><input type="radio" name="atividade" value="profissional"><span><svg class="ic"><use href="#i-balanca"/></svg><span><b>Profissão regulamentada</b><i>Contábil, jurídica, engenharia, arquitetura</i><em class="sug">Indicado pelo CNAE</em></span><span class="marca-ok"><svg class="ic"><use href="#i-check"/></svg></span></span></label>
@@ -378,11 +392,11 @@ details.ver-parecer>summary small{font-weight:500;color:var(--tinta-2);font-size
           </div>
         </div>
         <details class="ajuste full" id="det-cnae">
-          <summary><svg class="ic p giro"><use href="#i-seta"/></svg>Sei o código da atividade (CNAE)</summary>
+          <summary><svg class="ic p giro"><use href="#i-seta"/></svg>Sei o código da atividade (CNAE) <span class="opcional">(opcional)</span></summary>
           <div class="campo" id="campo-cnae" style="margin-top:10px">
             <label for="cnae">CNAE principal</label>
             <input id="cnae" name="cnae" type="text" inputmode="numeric" maxlength="12" placeholder="0000-0/00">
-            <span class="ajuda" id="cnae-ajuda">O CNAE define o anexo do Simples, a presunção do Lucro Presumido e a alíquota da CBS/IBS. Ele vem sozinho quando você busca o CNPJ.</span>
+            <span class="ajuda" id="cnae-ajuda">O CNAE é o código oficial da atividade, que aparece no cartão CNPJ. Ele deixa o cálculo mais preciso e vem sozinho quando você busca o CNPJ.</span>
           </div>
         </details>
       </div>
@@ -392,35 +406,38 @@ details.ver-parecer>summary small{font-weight:500;color:var(--tinta-2);font-size
     <!-- PASSO 2 · faturamento e regime -->
     <div class="etapa" data-etapa="2" hidden>
       <h2>Faturamento e regime de hoje</h2>
-      <p class="sub">Valores aproximados dos últimos 12 meses bastam.</p>
+      <p class="sub">Valores aproximados dos últimos 12 meses já bastam. Ninguém precisa ter os números exatos.</p>
       <div class="grade">
         <div class="campo full">
-          <span class="rot" id="rot-regime">Em qual regime a empresa está hoje?</span>
+          <span class="rot" id="rot-regime">Em qual regime de imposto a empresa está hoje?</span>
+          <div class="explica"><svg class="ic"><use href="#i-info"/></svg><p><b>O que é o regime?</b> É a forma que a empresa escolheu para pagar impostos. Se não souber, pergunte ao seu contador ou marque “Não sei”: comparamos todos os regimes do mesmo jeito.</p></div>
           <input type="hidden" id="regime" name="regime" value="presumido">
           <div class="opcoes c4" role="radiogroup" aria-labelledby="rot-regime">
-            <label class="opc"><input type="radio" name="regime-escolha" value="simples"><span><span><b>Simples Nacional</b><i>Paga pelo DAS</i></span><span class="marca-ok"><svg class="ic"><use href="#i-check"/></svg></span></span></label>
-            <label class="opc"><input type="radio" name="regime-escolha" value="presumido" checked><span><span><b>Lucro Presumido</b><i>IRPJ e CSLL pela presunção</i></span><span class="marca-ok"><svg class="ic"><use href="#i-check"/></svg></span></span></label>
-            <label class="opc"><input type="radio" name="regime-escolha" value="real"><span><span><b>Lucro Real</b><i>IRPJ e CSLL sobre o lucro</i></span><span class="marca-ok"><svg class="ic"><use href="#i-check"/></svg></span></span></label>
-            <label class="opc"><input type="radio" name="regime-escolha" value="nao_sei"><span><span><b>Não sei</b><i>Ou estou abrindo a empresa</i></span><span class="marca-ok"><svg class="ic"><use href="#i-check"/></svg></span></span></label>
+            <label class="opc"><input type="radio" name="regime-escolha" value="simples"><span><span><b>Simples Nacional</b><i>Paga uma guia única por mês (DAS)</i></span><span class="marca-ok"><svg class="ic"><use href="#i-check"/></svg></span></span></label>
+            <label class="opc"><input type="radio" name="regime-escolha" value="presumido" checked><span><span><b>Lucro Presumido</b><i>Imposto de renda sobre um lucro estimado pela lei</i></span><span class="marca-ok"><svg class="ic"><use href="#i-check"/></svg></span></span></label>
+            <label class="opc"><input type="radio" name="regime-escolha" value="real"><span><span><b>Lucro Real</b><i>Imposto de renda sobre o lucro de verdade</i></span><span class="marca-ok"><svg class="ic"><use href="#i-check"/></svg></span></span></label>
+            <label class="opc"><input type="radio" name="regime-escolha" value="nao_sei"><span><span><b>Não sei</b><i>Ou a empresa ainda vai ser aberta</i></span><span class="marca-ok"><svg class="ic"><use href="#i-check"/></svg></span></span></label>
           </div>
         </div>
         <div class="campo">
-          <label for="fat">Quanto a empresa faturou em 12 meses?</label>
+          <label for="fat">Quanto a empresa faturou nos últimos 12 meses?</label>
           <div class="moeda"><input id="fat" name="fat" type="text" inputmode="numeric" value="1.800.000"></div>
-          <span class="ajuda">Receita bruta, antes de descontar os impostos</span>
+          <span class="ajuda">Tudo o que a empresa vendeu ou recebeu pelos serviços, antes de descontar impostos e despesas. <b id="fat-mes"></b></span>
         </div>
         <div class="campo full">
-          <span class="rot" id="rot-b2b">Para quem você mais vende?</span>
+          <span class="rot" id="rot-b2b">Para quem a empresa vende?</span>
+          <div class="explica"><svg class="ic"><use href="#i-info"/></svg><div><p><b>Por que isso importa?</b> A partir de 2027, quando outra empresa compra de você, ela pode descontar do imposto dela a CBS que veio na sua nota fiscal. Isso se chama <b>crédito</b>.</p><p>Quem vende muito para outras empresas pode ficar mais competitivo num regime que gera esse crédito. Quem vende para pessoas físicas (o consumidor final) não sente esse efeito.</p></div></div>
           <div class="opcoes c3" role="radiogroup" aria-labelledby="rot-b2b" data-alvo="b2b">
-            <label class="opc"><input type="radio" name="b2b-escolha" value="10"><span><svg class="ic"><use href="#i-usuario"/></svg><span><b>Pessoas físicas</b><i>Consumidor final</i></span><span class="marca-ok"><svg class="ic"><use href="#i-check"/></svg></span></span></label>
-            <label class="opc"><input type="radio" name="b2b-escolha" value="50"><span><svg class="ic"><use href="#i-pessoas"/></svg><span><b>Metade a metade</b><i>Pessoas e empresas</i></span><span class="marca-ok"><svg class="ic"><use href="#i-check"/></svg></span></span></label>
-            <label class="opc"><input type="radio" name="b2b-escolha" value="90"><span><svg class="ic"><use href="#i-predio"/></svg><span><b>Outras empresas</b><i>Quem compra aproveita crédito</i></span><span class="marca-ok"><svg class="ic"><use href="#i-check"/></svg></span></span></label>
+            <label class="opc"><input type="radio" name="b2b-escolha" value="10"><span><svg class="ic"><use href="#i-usuario"/></svg><span><b>Mais para pessoas físicas</b><i>Lojas, clínicas, escolas, consumidor final</i></span><span class="marca-ok"><svg class="ic"><use href="#i-check"/></svg></span></span></label>
+            <label class="opc"><input type="radio" name="b2b-escolha" value="50"><span><svg class="ic"><use href="#i-pessoas"/></svg><span><b>Metade para cada</b><i>Vende para pessoas e para empresas</i></span><span class="marca-ok"><svg class="ic"><use href="#i-check"/></svg></span></span></label>
+            <label class="opc"><input type="radio" name="b2b-escolha" value="90"><span><svg class="ic"><use href="#i-predio"/></svg><span><b>Mais para outras empresas</b><i>Indústrias, prestadores de serviço, atacado</i></span><span class="marca-ok"><svg class="ic"><use href="#i-check"/></svg></span></span></label>
           </div>
-          <details class="ajuste">
-            <summary><svg class="ic p giro"><use href="#i-seta"/></svg>Ajustar o percentual exato</summary>
-            <div class="faixa" style="margin-top:8px"><input id="b2b" name="b2b" type="range" min="0" max="100" step="5" value="50" aria-label="Percentual das vendas para empresas"><output for="b2b" id="b2b-o">50%</output></div>
-            <span class="ajuda">Percentual das vendas para outras empresas. Elas aproveitam crédito da CBS, e isso pesa na escolha do regime.</span>
-          </details>
+          <div class="regua">
+            <label class="rot2" for="b2b">Ou arraste até o percentual mais próximo da sua realidade</label>
+            <div class="faixa"><input id="b2b" name="b2b" type="range" min="0" max="100" step="5" value="50"><output for="b2b" id="b2b-o">50%</output></div>
+            <div class="pontas"><span>Só pessoas físicas</span><span>Só empresas</span></div>
+            <span class="frase" id="b2b-frase"></span>
+          </div>
         </div>
       </div>
       <p class="erro" id="erro2" role="alert"></p>
@@ -430,43 +447,46 @@ details.ver-parecer>summary small{font-weight:500;color:var(--tinta-2);font-size
     <!-- PASSO 3 · custos -->
     <div class="etapa" data-etapa="3" hidden>
       <h2>Custos da operação</h2>
-      <p class="sub">Na reforma, a folha não gera crédito; compras com nota de fornecedores do regime normal geram. Se não souber, deixe o valor sugerido.</p>
+      <p class="sub">Estes números mostram quanto imposto a empresa poderá descontar depois da reforma. Se não souber, deixe o valor sugerido: dá para refazer a simulação quantas vezes quiser.</p>
       <div class="grade">
         <div class="campo">
-          <label for="folha">Folha de pagamento em 12 meses</label>
+          <label for="folha">Quanto a empresa gasta com pessoas em 12 meses?</label>
           <div class="moeda"><input id="folha" name="folha" type="text" inputmode="numeric" value="450.000"></div>
-          <span class="ajuda">Salários, 13º, férias e pró-labore</span>
+          <span class="ajuda">Salários, 13º, férias, encargos e o pró-labore dos sócios. Na reforma, esse gasto não dá desconto de imposto.</span>
         </div>
         <div class="campo">
-          <label for="compras">Compras e despesas com nota</label>
+          <label for="compras">Quanto gasta com compras e serviços com nota fiscal?</label>
           <div class="moeda"><input id="compras" name="compras" type="text" inputmode="numeric" value="300.000"></div>
-          <span class="ajuda">Mercadorias, insumos, aluguel, energia, serviços contratados</span>
+          <span class="ajuda">Mercadorias, matéria-prima, aluguel, energia, internet e serviços de terceiros. Gastos com nota geram desconto (crédito) da CBS.</span>
         </div>
         <div class="campo full">
-          <span class="rot" id="rot-margem">Quanto sobra de lucro, antes do imposto de renda?</span>
+          <span class="rot" id="rot-margem">Quanto sobra de lucro?</span>
+          <div class="explica"><svg class="ic"><use href="#i-info"/></svg><p><b>O que é isso?</b> É o que sobra do faturamento depois de pagar custos, despesas e salários, antes do imposto de renda. No Lucro Real o imposto de renda é calculado sobre esse valor, por isso ele muda o resultado. Um palpite já ajuda.</p></div>
           <div class="opcoes c3" role="radiogroup" aria-labelledby="rot-margem" data-alvo="margem">
-            <label class="opc"><input type="radio" name="margem-escolha" value="5"><span><span><b>Pouco</b><i>Até 8% do faturamento</i></span><span class="marca-ok"><svg class="ic"><use href="#i-check"/></svg></span></span></label>
-            <label class="opc"><input type="radio" name="margem-escolha" value="15"><span><span><b>Médio</b><i>Entre 8% e 20%</i></span><span class="marca-ok"><svg class="ic"><use href="#i-check"/></svg></span></span></label>
-            <label class="opc"><input type="radio" name="margem-escolha" value="30"><span><span><b>Bastante</b><i>Mais de 20%</i></span><span class="marca-ok"><svg class="ic"><use href="#i-check"/></svg></span></span></label>
+            <label class="opc"><input type="radio" name="margem-escolha" value="5"><span><span><b>Pouco</b><i>Sobram até R$ 8 de cada R$ 100</i></span><span class="marca-ok"><svg class="ic"><use href="#i-check"/></svg></span></span></label>
+            <label class="opc"><input type="radio" name="margem-escolha" value="15"><span><span><b>Médio</b><i>Sobram de R$ 8 a R$ 20 de cada R$ 100</i></span><span class="marca-ok"><svg class="ic"><use href="#i-check"/></svg></span></span></label>
+            <label class="opc"><input type="radio" name="margem-escolha" value="30"><span><span><b>Bastante</b><i>Sobram mais de R$ 20 de cada R$ 100</i></span><span class="marca-ok"><svg class="ic"><use href="#i-check"/></svg></span></span></label>
           </div>
-          <details class="ajuste">
-            <summary><svg class="ic p giro"><use href="#i-seta"/></svg>Ajustar o percentual exato</summary>
-            <div class="faixa" style="margin-top:8px"><input id="margem" name="margem" type="range" min="0" max="50" step="1" value="15" aria-label="Lucro antes dos impostos sobre o lucro"><output for="margem" id="margem-o">15%</output></div>
-            <span class="ajuda">Percentual aproximado do faturamento que sobra antes de IRPJ e CSLL.</span>
-          </details>
+          <div class="regua">
+            <label class="rot2" for="margem">Ou arraste até o percentual mais próximo</label>
+            <div class="faixa"><input id="margem" name="margem" type="range" min="0" max="50" step="1" value="15"><output for="margem" id="margem-o">15%</output></div>
+            <div class="pontas"><span>Sem lucro</span><span>50% de lucro</span></div>
+            <span class="frase" id="margem-frase"></span>
+          </div>
         </div>
         <details class="avanc full">
-          <summary><svg class="ic p"><use href="#i-ajuste"/></svg>Ajustes para quem conhece os números (opcional)</summary>
+          <summary><svg class="ic p"><use href="#i-ajuste"/></svg>Ajustes finos <span class="opcional">(opcional, para quem conhece os números)</span></summary>
+          <p class="ajuda" style="margin:8px 0 0">Pode pular esta parte: os valores já foram preenchidos conforme a atividade escolhida.</p>
           <div class="grade" style="margin-top:16px">
             <div class="campo">
-              <label for="icmsiss">ICMS ou ISS médio sobre o faturamento</label>
+              <label for="icmsiss">ICMS ou ISS que a empresa paga hoje</label>
               <div class="faixa"><input id="icmsiss" name="icmsiss" type="range" min="0" max="12" step="0.5" value="5"><output for="icmsiss" id="icmsiss-o">5,0%</output></div>
-              <span class="ajuda">Já ajustado pela atividade; altere se souber o seu</span>
+              <span class="ajuda">Percentual médio sobre o faturamento. ICMS é o imposto de quem vende mercadoria; ISS, de quem presta serviço.</span>
             </div>
             <div class="campo">
-              <label for="pctreg">Compras de fornecedores fora do Simples</label>
+              <label for="pctreg">Quanto das compras vem de fornecedores fora do Simples</label>
               <div class="faixa"><input id="pctreg" name="pctreg" type="range" min="0" max="100" step="5" value="80"><output for="pctreg" id="pctreg-o">80%</output></div>
-              <span class="ajuda">Fornecedores do Simples geram crédito menor</span>
+              <span class="ajuda">Fornecedor do Simples Nacional gera desconto menor de CBS. Se a maioria dos seus fornecedores são empresas maiores, deixe alto.</span>
             </div>
           </div>
         </details>
@@ -477,7 +497,7 @@ details.ver-parecer>summary small{font-weight:500;color:var(--tinta-2);font-size
     <!-- PASSO 4 · contato -->
     <div class="etapa" data-etapa="4" hidden>
       <h2>Para quem preparamos o parecer?</h2>
-      <p class="sub">O resultado aparece logo em seguida, nesta tela. Um especialista da MDC pode revisar os números com você, sem custo.</p>
+      <p class="sub">O resultado aparece logo em seguida, nesta mesma tela. Pedimos o contato para preparar o parecer no nome da empresa e, se você quiser, para um especialista da MDC revisar os números com você, sem custo.</p>
       <div class="grade">
         <div class="campo"><label for="nome">Seu nome</label><input id="nome" name="nome" type="text" autocomplete="name" maxlength="120" required></div>
         <div class="campo"><label for="empresa">Empresa</label><input id="empresa" name="empresa" type="text" autocomplete="organization" maxlength="160" required></div>
@@ -513,12 +533,12 @@ details.ver-parecer>summary small{font-weight:500;color:var(--tinta-2);font-size
       <p class="aviso recebido" id="aviso-envio"></p>
 
       <h3 class="tit-sec"><svg class="ic"><use href="#i-grafico"/></svg>Quanto cada regime custaria</h3>
-      <p class="sub-sec">Percentual do faturamento que vai para impostos em 2027 (CBS, IBS, ICMS/ISS, IRPJ, CSLL e INSS patronal).</p>
+      <div class="explica" style="margin-bottom:14px"><svg class="ic"><use href="#i-info"/></svg><p><b>Como ler:</b> cada linha mostra quanto do faturamento iria para impostos em cada regime. A barra cinza é <b>hoje (2026)</b>; a colorida é <b>2027</b>, já com a reforma. Quanto menor o percentual, menos imposto. Entram CBS, IBS, ICMS/ISS, imposto de renda (IRPJ e CSLL) e INSS da empresa.</p></div>
       <div class="tabela-reg" id="tabela"></div>
-      <div class="legenda"><span class="l26">2026 (sistema atual)</span><span class="l27">2027 (com CBS)</span></div>
+      <div class="legenda"><span class="l26">Hoje (2026)</span><span class="l27">Em 2027, com a reforma</span></div>
 
       <h3 class="tit-sec"><svg class="ic"><use href="#i-lista"/></svg>Conferência com a Receita Federal</h3>
-      <p class="sub-sec">O que você informou comparado com o CNAE e o cadastro público do CNPJ.</p>
+      <p class="sub-sec">Comparamos o que você informou com os dados públicos do CNPJ. <b>Confere</b>: está tudo certo. <b>Atenção</b>: vale uma olhada. <b>Divergência</b>: precisa ser corrigido.</p>
       <div class="checks" id="checks"></div>
 
       <details class="ver-parecer" id="det-parecer">
@@ -530,7 +550,7 @@ details.ver-parecer>summary small{font-weight:500;color:var(--tinta-2);font-size
         <p><b>Quer validar com um especialista?</b> A MDC revisa a simulação com os números reais e aponta créditos que podem ser recuperados.</p>
         <a class="btn btn-pri" id="zap3" href="https://wa.me/5511988598041" target="_blank" rel="noopener"><svg class="ic"><use href="#i-zap"/></svg><span>Conversar no WhatsApp</span></a>
       </div>
-      <p class="aviso">Estimativa simplificada com CBS de 11,3% (cálculo do TCU de 28/10/2026, sujeito à resolução do Senado), IBS de 0,1% em 2027, ICMS/ISS e INSS patronal aproximados e acréscimo da LC 224/2025 no Lucro Presumido acima de R$ 5 milhões. Dados cadastrais obtidos de bases públicas da Receita Federal. Não substitui a análise individual das operações.</p>
+      <p class="aviso"><b>Importante:</b> esta é uma estimativa para orientar a decisão, não um cálculo oficial. Considera CBS de 11,3% (cálculo do TCU de 28/10/2026, sujeito à resolução do Senado), IBS de 0,1% em 2027, ICMS/ISS e INSS patronal aproximados e acréscimo da LC 224/2025 no Lucro Presumido acima de R$ 5 milhões. Dados cadastrais obtidos de bases públicas da Receita Federal. Não substitui a análise individual das operações.</p>
       <div class="acoes"><button type="button" class="btn btn-sec" id="refazer"><svg class="ic"><use href="#i-refazer"/></svg><span>Simular outro cenário</span></button></div>
     </div>
   </div>
@@ -982,6 +1002,14 @@ function moedaFmt(el){ el.addEventListener("input", ()=>{ const n = num(el.value
 ["#fat","#folha","#compras"].forEach(s=>moedaFmt($(s)));
 const sliders = {b2b:v=>v+"%", margem:v=>v+"%", icmsiss:v=>Number(v).toLocaleString("pt-BR",{minimumFractionDigits:1})+"%", pctreg:v=>v+"%"};
 Object.entries(sliders).forEach(([id,f])=>{ const el=$("#"+id), o=$("#"+id+"-o"); const up=()=>o.textContent=f(el.value); el.addEventListener("input",up); up(); });
+/* frases em reais que acompanham as réguas e o faturamento (para o leigo entender o percentual) */
+function frases(){
+  const b = Number($("#b2b").value), m = Number($("#margem").value), f = num($("#fat").value);
+  $("#b2b-frase").innerHTML = `De cada <b>R$ 100</b> vendidos, <b>R$ ${b}</b> são para outras empresas e <b>R$ ${100-b}</b> para pessoas físicas.`;
+  $("#margem-frase").innerHTML = m ? `De cada <b>R$ 100</b> faturados, sobram cerca de <b>R$ ${m}</b> de lucro antes do imposto de renda.` : "A empresa não tem lucro (ou tem prejuízo).";
+  $("#fat-mes").textContent = f ? `Cerca de ${brl(f/12)} por mês.` : "";
+}
+["#b2b","#margem","#fat"].forEach(sel=>$(sel).addEventListener("input", frases)); frases();
 function marcarRegime(v){
   $("#regime").value = v;
   const r = document.querySelector(`input[name="regime-escolha"][value="${v}"]`); if (r) r.checked = true;
@@ -1143,6 +1171,8 @@ function oportunidades(d, r){
   return o;
 }
 
+const SUB_LEIGO = {simples:"Guia única (DAS), como funciona hoje", hibrido:"Simples, mas paga a CBS/IBS fora do DAS para o cliente ter crédito",
+  presumido:"Imposto de renda sobre um lucro estimado pela lei", real:"Imposto de renda sobre o lucro de verdade"};
 function render(r, d, conf){
   const max = Math.max(...r.regs.map(x=>Math.max(x.c26,x.c27)));
   $("#tabela").innerHTML = "";
@@ -1151,27 +1181,27 @@ function render(r, d, conf){
     const row = document.createElement("div");
     row.className = "reg" + (x===r.melhor ? " melhor":"") + (x.eleg ? "" : " inel");
     row.innerHTML = `<div class="nome"></div><div class="barras"><div class="bar b26"></div><div class="bar b27"></div></div><div class="pct"></div><div class="val"></div>`;
-    row.querySelector(".nome").innerHTML = `${x.nome}${x===r.melhor?'<span class="selo">Indicado</span>':""}<small>${x.eleg ? x.sub : "Faturamento acima do limite"}</small>`;
+    row.querySelector(".nome").innerHTML = `${x.nome}${x===r.melhor?'<span class="selo">Indicado</span>':""}<small>${x.eleg ? (SUB_LEIGO[x.id]||x.sub) : "Não pode ser usado com esse faturamento"}</small>`;
     row.querySelector(".b26").style.width = (x.c26/max*100)+"%";
     row.querySelector(".b27").style.width = (x.c27/max*100)+"%";
-    row.querySelector(".pct").innerHTML = `${pct(x.p27)}<small>em 2026: ${pct(x.p26)}</small>`;
-    row.querySelector(".val").innerHTML = `${brl(x.c27)}<small class="${v>0.005?"var-up":(v<-0.005?"var-down":"")}">${v>=0?"+":""}${pct(v)} vs. 2026</small>`;
+    row.querySelector(".pct").innerHTML = `${pct(x.p27)}<small>hoje: ${pct(x.p26)}</small>`;
+    row.querySelector(".val").innerHTML = `${brl(x.c27)}<small>por ano</small><small class="${v>0.005?"var-up":(v<-0.005?"var-down":"")}">${Math.abs(v)<0.005?"igual a hoje":(v>0?"+":"")+(Math.abs(v)<0.005?"":pct(v)+" sobre hoje")}</small>`;
     $("#tabela").appendChild(row);
   });
   const m = r.melhor;
   $("#v-titulo").textContent = m.nome;
   $("#v-num").textContent = pct(m.p27);
-  $("#v-sub").textContent = "do faturamento em impostos em 2027";
+  $("#v-sub").textContent = "do faturamento iria para impostos em 2027";
   if (r.atual && r.atual.id !== m.id && r.economia > 0){
     $("#v-eyebrow").textContent = "Regime indicado para 2027";
-    $("#v-lin2").textContent = `Economia estimada de ${brl(r.economia)} por ano frente ao ${r.atual.nome} (${pct(r.atual.p27)}).`;
+    $("#v-lin2").textContent = `A empresa pode pagar cerca de ${brl(r.economia)} a menos por ano do que no ${r.atual.nome}, o regime de hoje (${pct(r.atual.p27)} do faturamento).`;
   } else if (r.atual && r.atual.id === m.id){
-    $("#v-eyebrow").textContent = "Seu regime atual segue o mais econômico";
+    $("#v-eyebrow").textContent = "Boa notícia: o regime de hoje continua o mais econômico";
     const seg = r.regs.filter(x=>x.eleg && x!==m).sort((a,b)=>a.c27-b.c27)[0];
-    $("#v-lin2").textContent = seg ? `A próxima alternativa, ${seg.nome}, custaria ${pct(seg.p27)} do faturamento (${brl(seg.c27-m.c27)} a mais por ano).` : "";
+    $("#v-lin2").textContent = seg ? `A segunda melhor opção, ${seg.nome}, custaria ${pct(seg.p27)} do faturamento, ou seja, ${brl(seg.c27-m.c27)} a mais por ano.` : "";
   } else {
     $("#v-eyebrow").textContent = "Regime indicado para 2027";
-    $("#v-lin2").textContent = `Carga estimada de ${brl(m.c27)} no ano.`;
+    $("#v-lin2").textContent = `Imposto estimado de ${brl(m.c27)} no ano.`;
   }
   $("#checks").innerHTML = "";
   const rot = {ok:"Confere", at:"Atenção", di:"Divergência"};
