@@ -38,9 +38,12 @@ export function AssistenteContrato({
   planos,
   contratos,
   hoje,
+  valores = true,
   aoFechar,
   aoSalvar,
 }: {
+  /** false = sem a permissão de valores (074): esconde preço e valor; o banco usa a tabela (nova) ou mantém o valor (alteração) */
+  valores?: boolean;
   editar?: Contrato;
   clienteInicial?: string;
   produtos: Produto[];
@@ -114,7 +117,7 @@ export function AssistenteContrato({
         return `O cliente já tem contrato ativo com ${repetidos.map(nomeProd).join(", ")}. Edite aquele contrato ou encerre antes.`;
     }
     if (p === 2) {
-      if (Number.isNaN(valor) || valor < 0) return "Informe o valor mensal (zero para cortesia).";
+      if (valores && (Number.isNaN(valor) || valor < 0)) return "Informe o valor mensal (zero para cortesia).";
       if (!(dia >= 1 && dia <= 31)) return "Dia de vencimento: de 1 a 31.";
       if (!f.inicio) return "Informe a data de início.";
       if (f.temFim && (!f.fim || f.fim < f.inicio)) return "A data de fim precisa ser depois do início.";
@@ -152,7 +155,7 @@ export function AssistenteContrato({
         plano: f.modo === "plano" ? f.plano : null,
         modalidade: f.modo === "full" ? "full" : undefined,
         produtos: escolhidos,
-        valor_mensal: Math.round(valor * 100) / 100,
+        valor_mensal: valores ? Math.round(valor * 100) / 100 : 0,
         dia_vencimento: dia,
         inicio: f.inicio,
         fim: f.temFim ? f.fim : null,
@@ -261,7 +264,7 @@ export function AssistenteContrato({
               </p>
               <p className="mt-1 text-neutral-700">{doLedgra.map((p) => p.nome).join(", ") || "Nenhum módulo do Ledgra ativo."}</p>
               <p className="mt-2 text-xs text-neutral-600">
-                Valor zero = licença gratuita. Depois de salvar, gere a chave em Ações › Chave do Ledgra.
+                Depois de salvar, ligue a empresa no Ledgra: aba Licença › Buscar no HUB (ou gere a chave em Ações › Chave do Ledgra).
               </p>
             </div>
           ) : f.modo === "plano" ? (
@@ -274,7 +277,8 @@ export function AssistenteContrato({
                   >
                     <input type="radio" name="plano" checked={f.plano === p.id} onChange={() => mudar({ plano: p.id })} />
                     <span className="text-sm">
-                      <b>{p.nome}</b> · {brl(p.preco)}/mês
+                      <b>{p.nome}</b>
+                      {valores && <> · {brl(p.preco)}/mês</>}
                       <span className="block text-xs text-neutral-600">{p.produtos.map(nomeProd).join(", ")}</span>
                     </span>
                   </label>
@@ -295,7 +299,8 @@ export function AssistenteContrato({
                     onChange={(e) => mudar({ avulsos: e.target.checked ? [...f.avulsos, p.id] : f.avulsos.filter((x) => x !== p.id) })}
                   />
                   <span>
-                    <b>{p.nome}</b> · {brl(p.preco)}/mês
+                    <b>{p.nome}</b>
+                      {valores && <> · {brl(p.preco)}/mês</>}
                     {jaTem.has(p.id) && <span className="block text-xs text-red-700">O cliente já tem este módulo em outro contrato</span>}
                     {p.descricao && <span className="block text-xs text-neutral-600">{p.descricao}</span>}
                   </span>
@@ -303,23 +308,27 @@ export function AssistenteContrato({
               ))}
             </div>
           )}
-          <p className="text-sm text-neutral-700">
-            Preço de tabela: <b>{brl(tabela)}</b> por mês.
-          </p>
+          {valores && (
+            <p className="text-sm text-neutral-700">
+              Preço de tabela: <b>{brl(tabela)}</b> por mês.
+            </p>
+          )}
         </div>
       )}
 
       {passo === 2 && (
         <div className="space-y-3">
           <div className="grid gap-3 sm:grid-cols-2">
-            <label className="campo">
-              <span>Valor mensal combinado (R$)</span>
-              <input
-                inputMode="decimal"
-                value={f.valorMexido ? f.valor : valorParaCampo(tabela)}
-                onChange={(e) => mudar({ valor: e.target.value, valorMexido: true })}
-              />
-            </label>
+            {valores && (
+              <label className="campo">
+                <span>Valor mensal combinado (R$)</span>
+                <input
+                  inputMode="decimal"
+                  value={f.valorMexido ? f.valor : valorParaCampo(tabela)}
+                  onChange={(e) => mudar({ valor: e.target.value, valorMexido: true })}
+                />
+              </label>
+            )}
             <label className="campo">
               <span>Dia do vencimento</span>
               <input type="number" min={1} max={31} value={f.dia} onChange={(e) => mudar({ dia: e.target.value })} />
@@ -349,12 +358,17 @@ export function AssistenteContrato({
               <span className="block text-xs text-neutral-600">Ex.: começou dia 16 de um mês de 30 dias = metade da mensalidade.</span>
             </span>
           </label>
-          {tabela > 0 && valor < tabela && !Number.isNaN(valor) && (
+          {valores && tabela > 0 && valor < tabela && !Number.isNaN(valor) && (
             <p className="text-sm text-violet-800">
               Desconto de {descontoSobreTabela(tabela, valor).toLocaleString("pt-BR")}% sobre a tabela.
             </p>
           )}
-          {f.inicio && dia >= 1 && dia <= 31 && (
+          {!valores && (
+            <p className="rounded-md bg-[var(--fundo)] p-3 text-sm">
+              O valor da licença é definido por quem tem a permissão de valores. Nova licença entra pelo preço de tabela.
+            </p>
+          )}
+          {valores && f.inicio && dia >= 1 && dia <= 31 && (
             <p className="rounded-md bg-[var(--fundo)] p-3 text-sm">
               Primeira mensalidade: <b>{brl(primeiroMes)}</b> ({mesExtenso(f.inicio)}), vencendo em{" "}
               <b>{fmtData(vencimentoDaCompetencia(f.inicio, dia))}</b>. Ela vai junto com o honorário do mês.
@@ -410,12 +424,16 @@ export function AssistenteContrato({
                 : f.modo === "plano" && plano
                   ? `Plano ${plano.nome} (${escolhidos.map(nomeProd).join(", ")})`
                   : escolhidos.map(nomeProd).join(", ")}
-              {valor === 0 && <span className="block text-xs text-emerald-700">Licença gratuita (sem mensalidade)</span>}
+              {valores && valor === 0 && <span className="block text-xs text-emerald-700">Licença gratuita (sem mensalidade)</span>}
             </dd>
-            <dt className="text-neutral-500">Valor mensal</dt>
-            <dd>
-              {brl(valor)} {tabela > valor && <span className="text-xs text-neutral-500">(tabela {brl(tabela)})</span>}
-            </dd>
+            {valores && (
+              <>
+                <dt className="text-neutral-500">Valor mensal</dt>
+                <dd>
+                  {brl(valor)} {tabela > valor && <span className="text-xs text-neutral-500">(tabela {brl(tabela)})</span>}
+                </dd>
+              </>
+            )}
             <dt className="text-neutral-500">Vencimento</dt>
             <dd>Todo dia {dia} (no último dia, se o mês for mais curto)</dd>
             <dt className="text-neutral-500">Vigência</dt>

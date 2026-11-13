@@ -7,7 +7,6 @@ import Link from "next/link";
 import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { useConsulta } from "@/lib/useConsulta";
 import { hojeISO } from "@/lib/datas";
-import { brl } from "@/lib/formato/moeda";
 import { supabase } from "@/lib/supabase";
 import { exigir } from "@/lib/exigir";
 import { lerProdutos } from "../leituras";
@@ -21,15 +20,17 @@ export function ModulosDoCliente({ cliente }: { cliente: string }) {
     useCallback(async () => {
       if (!ver) return null;
       const [contratos, produtos, bloqueio] = await Promise.all([
-        supabase().from("lic_contratos").select("*, lic_contrato_produtos(produto_id)").eq("cliente_id", cliente).eq("situacao", "ativo"),
+        supabase().from("lic_contratos").select("id,cliente_id,plano_id,modalidade,inicio,fim,situacao,lic_contrato_produtos(produto_id)").eq("cliente_id", cliente).eq("situacao", "ativo"),
         lerProdutos(org.id),
         supabase().from("lic_bloqueios").select("id").eq("cliente_id", cliente).is("desbloqueado_em", null),
       ]);
-      const ks = (exigir(contratos) ?? []) as (Omit<Contrato, "produtos"> & { lic_contrato_produtos?: { produto_id: string }[] })[];
+      // sem valores aqui (074): o valor do contrato só aparece em Licenças Ledgra para quem tem a permissão de valores
+      const ks = (exigir(contratos) ?? []) as (Pick<Contrato, "id" | "cliente_id" | "plano_id" | "modalidade" | "inicio" | "fim" | "situacao"> & {
+        lic_contrato_produtos?: { produto_id: string }[];
+      })[];
       return {
         contratos: ks.map((k) => ({
           ...k,
-          valor_mensal: Number(k.valor_mensal),
           produtos: (k.lic_contrato_produtos ?? []).map((x) => x.produto_id),
         })),
         nomes: new Map(produtos.map((p) => [p.id, p.nome])),
@@ -44,7 +45,7 @@ export function ModulosDoCliente({ cliente }: { cliente: string }) {
   const modulos = vigentes.flatMap((k) => k.produtos.map((id) => d?.nomes.get(id) ?? "")).filter(Boolean);
   return (
     <div className="flex flex-wrap items-center gap-2 border-t border-[var(--borda)] py-2 text-sm">
-      <span className="text-[var(--texto-suave)]">Módulos do HUB contratados:</span>
+      <span className="text-[var(--texto-suave)]">Licença do Ledgra:</span>
       {!d ? (
         <span className="text-[var(--texto-suave)]">{consulta.erro ?? "carregando…"}</span>
       ) : modulos.length ? (
@@ -54,14 +55,13 @@ export function ModulosDoCliente({ cliente }: { cliente: string }) {
               {m}
             </span>
           ))}
-          <span className="tabular-nums">· {brl(vigentes.reduce((s, k) => s + k.valor_mensal, 0))}/mês</span>
           {d.bloqueado && <span className="chip bg-red-50 text-red-800">Bloqueado</span>}
         </>
       ) : (
         <span>nenhum</span>
       )}
       <Link className="btn-link" href={`/licencas/contratos?cliente=${cliente}`}>
-        Ver contratos
+        Ver licença
       </Link>
     </div>
   );

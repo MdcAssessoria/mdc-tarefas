@@ -106,13 +106,10 @@ export const NAV: Record<Modulo, { titulo: string; links: LinkModulo[]; grupos?:
     ],
   },
   licencas: {
-    titulo: "Cobrança Ledgra",
+    // 074: só o cadastro das licenças; a cobrança mensal fica em Gestão › Contratos (decisão de 05/11)
+    titulo: "Licenças Ledgra",
     links: [
-      { href: "/licencas", nome: "Painel", icone: "grade" },
-      { href: "/licencas/cobrancas", nome: "Mensalidades", icone: "moeda" },
-      { href: "/licencas/inadimplentes", nome: "Inadimplentes", icone: "alerta" },
-      { href: "/licencas/contratos", nome: "Contratos", icone: "documento" },
-      { href: "/licencas/faturamento", nome: "Faturamento do mês", icone: "calendario" },
+      { href: "/licencas/contratos", nome: "Licenças", icone: "documento" },
       { href: "/licencas/produtos", nome: "Produtos e planos", icone: "caixa" },
     ],
   },

@@ -7,7 +7,7 @@ import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { nomeCliente } from "@/dominios/clientes/nome";
 import { useConsulta } from "@/lib/useConsulta";
 import { hojeISO } from "@/lib/datas";
-import { lerBaixas, lerBloqueios, lerCobrancas, lerContratos, lerParametros, lerPlanos, lerProdutos } from "../leituras";
+import { comValores, lerBaixas, lerBloqueios, lerCobrancas, lerContratos, lerParametros, lerPlanos, lerProdutos, lerValores } from "../leituras";
 import type { Contrato, Plano, Produto } from "../tipos";
 
 /** "Plano Gestão", "Ledgra full" ou "Financeiro, Estoque" (módulos avulsos); "(gratuita)" quando o valor é zero. */
@@ -33,19 +33,22 @@ export function rotuloContrato(
 export function useDadosLicencas({ baixas = false }: { baixas?: boolean } = {}) {
   const { org, pode, clientePorId } = useOrg();
   const hoje = hojeISO(org.fuso);
+  const valores = pode("licencas", "gerir");
   const consulta = useConsulta(
     useCallback(async () => {
-      const [produtos, planos, contratos, cobrancas, bloqueios, parametros, recebimentos] = await Promise.all([
+      // mensalidades, recebimentos e valores só para quem tem a permissão de valores (o banco também barra)
+      const [produtos, planos, contratos, cobrancas, bloqueios, parametros, recebimentos, v] = await Promise.all([
         lerProdutos(org.id),
         lerPlanos(org.id),
         lerContratos(org.id),
-        lerCobrancas(org.id),
+        valores ? lerCobrancas(org.id) : Promise.resolve([]),
         lerBloqueios(org.id),
         lerParametros(org.id),
-        baixas ? lerBaixas(org.id) : Promise.resolve([]),
+        baixas && valores ? lerBaixas(org.id) : Promise.resolve([]),
+        valores ? lerValores(org.id) : Promise.resolve(null),
       ]);
-      return { produtos, planos, contratos, cobrancas, bloqueios, parametros, recebimentos };
-    }, [org.id, baixas]),
+      return comValores({ produtos, planos, contratos, cobrancas, bloqueios, parametros, recebimentos }, v);
+    }, [org.id, baixas, valores]),
   );
   const d = consulta.dados;
   const mapas = useMemo(() => {
@@ -63,7 +66,8 @@ export function useDadosLicencas({ baixas = false }: { baixas?: boolean } = {}) 
     rotulo: (k: Pick<Contrato, "plano_id" | "produtos"> & Partial<Pick<Contrato, "modalidade">>) =>
       rotuloContrato(k, mapas.produtos, mapas.planos),
     podeOperar: pode("licencas", "operar"),
-    podeGerir: pode("licencas", "gerir"),
+    /** gerir = permissão de valores (preços, valor do contrato, mensalidades) */
+    podeGerir: valores,
   };
 }
 

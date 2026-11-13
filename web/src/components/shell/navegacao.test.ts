@@ -64,16 +64,9 @@ describe("filtrarLinks", () => {
 });
 
 describe("Licenças", () => {
-  it("todas as abas aparecem para quem vê a ferramenta (as ações é que exigem operar/gerir)", () => {
+  it("Licenças Ledgra mostra só o cadastro (074): licenças e produtos; ações e valores exigem operar/gerir", () => {
     const abas = filtrarLinks("licencas", { pode: (_app, minimo = "ver") => minimo === "ver", podeEditarCadastros: false });
-    expect(abas.map((l) => l.href)).toEqual([
-      "/licencas",
-      "/licencas/cobrancas",
-      "/licencas/inadimplentes",
-      "/licencas/contratos",
-      "/licencas/faturamento",
-      "/licencas/produtos",
-    ]);
+    expect(abas.map((l) => l.href)).toEqual(["/licencas/contratos", "/licencas/produtos"]);
   });
 });
 

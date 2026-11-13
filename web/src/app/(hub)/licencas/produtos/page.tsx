@@ -65,7 +65,7 @@ export default function PaginaProdutos() {
                 { titulo: "Produto", valor: (p) => p.nome, peso: 2, largura: 28 },
                 { titulo: "Código", valor: (p) => p.slug, peso: 1.2, largura: 16 },
                 { titulo: "O que inclui", valor: (p) => p.descricao, peso: 3, largura: 50 },
-                { titulo: "Preço mensal", valor: (p) => p.preco, formato: "moeda", peso: 1.2 },
+                ...(podeGerir ? [{ titulo: "Preço mensal", valor: (p: Produto) => p.preco, formato: "moeda" as const, peso: 1.2 }] : []),
                 { titulo: "Contratos ativos", valor: (p) => emUso((k) => k.produtos.includes(p.id)), formato: "numero", peso: 1 },
                 { titulo: "Situação", valor: (p) => (p.ativo ? "À venda" : "Inativo"), peso: 1, largura: 12 },
               ],
@@ -86,8 +86,12 @@ export default function PaginaProdutos() {
               colunas: [
                 { titulo: "Plano", valor: (p) => p.nome, peso: 1.6, largura: 24 },
                 { titulo: "Produtos", valor: (p) => p.produtos.map((id) => dados.produtos.get(id)?.nome).join(", "), peso: 3, largura: 50 },
-                { titulo: "Preço mensal", valor: (p) => p.preco, formato: "moeda", peso: 1.2 },
-                { titulo: "Avulsos somariam", valor: (p) => somaTabela(p), formato: "moeda", peso: 1.2 },
+                ...(podeGerir
+                  ? [
+                      { titulo: "Preço mensal", valor: (p: Plano) => p.preco, formato: "moeda" as const, peso: 1.2 },
+                      { titulo: "Avulsos somariam", valor: (p: Plano) => somaTabela(p), formato: "moeda" as const, peso: 1.2 },
+                    ]
+                  : []),
                 { titulo: "Contratos ativos", valor: (p) => emUso((k) => k.plano_id === p.id), formato: "numero", peso: 1 },
                 { titulo: "Situação", valor: (p) => (p.ativo ? "À venda" : "Inativo"), peso: 1, largura: 12 },
               ],
@@ -120,7 +124,7 @@ export default function PaginaProdutos() {
           <EstadoVazio>Nenhum produto cadastrado. Cadastre os produtos do Ledgra com o preço mensal.</EstadoVazio>
         ) : (
           <>
-            {d.produtos.some((p) => p.ativo && p.preco === 0) && (
+            {podeGerir && d.produtos.some((p) => p.ativo && p.preco === 0) && (
               <p className="rounded-md bg-amber-50 p-3 text-sm text-amber-900">
                 Há produto com preço zero. Defina o preço de tabela antes de cadastrar os contratos (o valor do contrato pode ter desconto).
               </p>
@@ -130,7 +134,7 @@ export default function PaginaProdutos() {
                 <thead>
                   <tr>
                     <th>Produto</th>
-                    <th className="text-right">Preço mensal</th>
+                    {podeGerir && <th className="text-right">Preço mensal</th>}
                     <th>Contratos ativos</th>
                     <th />
                   </tr>
@@ -143,7 +147,7 @@ export default function PaginaProdutos() {
                         {!p.ativo && <span className="chip bg-neutral-100 text-neutral-600">Inativo</span>}
                         <span className="block text-xs text-neutral-500">{p.descricao}</span>
                       </td>
-                      <td className="whitespace-nowrap text-right tabular-nums">{brl(p.preco)}</td>
+                      {podeGerir && <td className="whitespace-nowrap text-right tabular-nums">{brl(p.preco)}</td>}
                       <td>{emUso((k) => k.produtos.includes(p.id))}</td>
                       <td className="text-right">
                         {podeGerir && (
@@ -184,18 +188,25 @@ export default function PaginaProdutos() {
                     </h2>
                     {p.descricao && <p className="text-sm text-neutral-600">{p.descricao}</p>}
                   </div>
-                  <p className="text-right text-lg font-semibold tabular-nums">
-                    {brl(p.preco)}
-                    <span className="block text-xs font-normal text-neutral-500">por mês</span>
-                  </p>
+                  {podeGerir && (
+                    <p className="text-right text-lg font-semibold tabular-nums">
+                      {brl(p.preco)}
+                      <span className="block text-xs font-normal text-neutral-500">por mês</span>
+                    </p>
+                  )}
                 </div>
                 <p className="text-sm">{p.produtos.map((id) => dados.produtos.get(id)?.nome).join(" · ")}</p>
                 <p className="text-xs text-neutral-500">
-                  Avulsos somariam {brl(soma)}
-                  {descontoSobreTabela(soma, p.preco) > 0
-                    ? ` (economia de ${descontoSobreTabela(soma, p.preco).toLocaleString("pt-BR")}%)`
-                    : ""}{" "}
-                  · {emUso((k) => k.plano_id === p.id)} contrato(s) ativo(s)
+                  {podeGerir && (
+                    <>
+                      Avulsos somariam {brl(soma)}
+                      {descontoSobreTabela(soma, p.preco) > 0
+                        ? ` (economia de ${descontoSobreTabela(soma, p.preco).toLocaleString("pt-BR")}%)`
+                        : ""}{" "}
+                      ·{" "}
+                    </>
+                  )}
+                  {emUso((k) => k.plano_id === p.id)} contrato(s) ativo(s)
                 </p>
                 {podeGerir && (
                   <button className="btn !min-h-8" onClick={() => setPlano(p)}>

@@ -1,5 +1,6 @@
-// Licenças › Contratos: quem contratou quais módulos, por quanto, com que vencimento e reajuste. Cadastro pelo
-// assistente; editar, reajustar, encerrar e histórico. Filtros simples, PDF e Excel do que está na tela.
+// Licenças Ledgra › Licenças: quem contratou quais módulos do Ledgra, vigência, reajuste e a chave. Cadastro pelo
+// assistente (operar); valores, reajuste, encerrar e histórico de mensalidades só com a permissão de valores (gerir, 074).
+// Filtros simples, PDF e Excel do que está na tela (sem valores para quem não tem a permissão).
 // Abre já filtrado num cliente com ?cliente=<id> (link do painel e da tela de clientes).
 "use client";
 
@@ -45,7 +46,7 @@ export default function PaginaContratos() {
 function Contratos() {
   const { org } = useOrg();
   const dados = useDadosLicencas();
-  const { hoje, nomeDoCliente, rotulo, podeGerir, bloqueados } = dados;
+  const { hoje, nomeDoCliente, rotulo, podeGerir, podeOperar, bloqueados } = dados;
   const { aviso, mostrar } = useAviso();
   const params = useSearchParams();
   // filtro de cliente: o que a pessoa escolheu na tela; antes disso, o que veio no endereço (?cliente=)
@@ -101,8 +102,12 @@ function Contratos() {
   return (
     <div className="space-y-4">
       <Cabecalho
-        titulo="Assinaturas do Ledgra"
-        descricao="Quem assina o Ledgra, com qual plano ou produto, por quanto e com que vencimento."
+        titulo="Licenças do Ledgra"
+        descricao={
+          podeGerir
+            ? "Quem usa o Ledgra, com quais módulos, por quanto, a vigência e a chave de cada empresa."
+            : "Quem usa o Ledgra, com quais módulos, a vigência e a chave de cada empresa."
+        }
       >
         <BotoesExportar
           vazio={!lista.length}
@@ -117,8 +122,12 @@ function Contratos() {
               { titulo: "Cliente", valor: (k) => nomeDoCliente(k.cliente_id), peso: 2.4, largura: 36 },
               { titulo: "Contratou", valor: (k) => rotulo(k), peso: 2, largura: 28 },
               { titulo: "Plano / produtos", valor: (k) => nomeModulos(k), peso: 2, largura: 32 },
-              { titulo: "Valor mensal", valor: (k) => k.valor_mensal, formato: "moeda", peso: 1.2 },
-              { titulo: "Tabela", valor: (k) => k.valor_tabela, formato: "moeda", peso: 1.1 },
+              ...(podeGerir
+                ? [
+                    { titulo: "Valor mensal", valor: (k: Contrato) => k.valor_mensal, formato: "moeda" as const, peso: 1.2 },
+                    { titulo: "Tabela", valor: (k: Contrato) => k.valor_tabela, formato: "moeda" as const, peso: 1.1 },
+                  ]
+                : []),
               { titulo: "Vence dia", valor: (k) => k.dia_vencimento, formato: "numero", peso: 0.7, largura: 10 },
               { titulo: "Início", valor: (k) => fmtData(k.inicio), peso: 1, largura: 12 },
               { titulo: "Fim", valor: (k) => (k.fim ? fmtData(k.fim) : ""), peso: 1, largura: 12 },
@@ -130,12 +139,13 @@ function Contratos() {
                 largura: 20,
               },
             ],
-            totais: { "Valor mensal": lista.reduce((s, k) => s + (k.situacao === "ativo" ? k.valor_mensal : 0), 0) },
+            totais: podeGerir ? { "Valor mensal": lista.reduce((s, k) => s + (k.situacao === "ativo" ? k.valor_mensal : 0), 0) } : undefined,
           })}
         />
-        {podeGerir && (
+        {podeOperar && (
           <button className="btn-primario" onClick={() => setJanela({ tipo: "novo" })} disabled={!d}>
-            Novo contrato
+            <Icone nome="novo" className="h-4 w-4" />
+            Nova licença
           </button>
         )}
       </Cabecalho>
@@ -199,6 +209,7 @@ function Contratos() {
         <Carregando />
       ) : (
         <>
+          {podeGerir && (
           <div className="grid gap-3 sm:grid-cols-3">
             <Indicador
               icone="documento"
@@ -221,19 +232,20 @@ function Contratos() {
               tom={reajustes ? "ambar" : "neutro"}
             />
           </div>
+          )}
 
           {!lista.length ? (
             <EstadoVazio
               acao={
-                podeGerir &&
+                podeOperar &&
                 !d.contratos.length && (
                   <button className="btn-primario" onClick={() => setJanela({ tipo: "novo" })}>
-                    Cadastrar o primeiro contrato
+                    Cadastrar a primeira licença
                   </button>
                 )
               }
             >
-              {d.contratos.length ? "Nenhum contrato neste filtro." : "Nenhum contrato de licença cadastrado ainda."}
+              {d.contratos.length ? "Nenhuma licença neste filtro." : "Nenhuma licença do Ledgra cadastrada ainda."}
             </EstadoVazio>
           ) : (
             <div className="cartao overflow-x-auto">
@@ -242,7 +254,7 @@ function Contratos() {
                   <tr>
                     <th>Cliente</th>
                     <th>Contratou</th>
-                    <th className="text-right">Valor mensal</th>
+                    {podeGerir && <th className="text-right">Valor mensal</th>}
                     <th>Vence</th>
                     <th>Vigência</th>
                     <th>Reajuste</th>
@@ -261,12 +273,14 @@ function Contratos() {
                         {rotulo(k)}
                         {k.plano_id && <span className="block text-xs text-neutral-500">{nomeModulos(k)}</span>}
                       </td>
-                      <td className="whitespace-nowrap text-right tabular-nums">
-                        {brl(k.valor_mensal)}
-                        {k.valor_tabela > k.valor_mensal && (
-                          <span className="block text-xs text-neutral-500 line-through">{brl(k.valor_tabela)}</span>
-                        )}
-                      </td>
+                      {podeGerir && (
+                        <td className="whitespace-nowrap text-right tabular-nums">
+                          {brl(k.valor_mensal)}
+                          {k.valor_tabela > k.valor_mensal && (
+                            <span className="block text-xs text-neutral-500 line-through">{brl(k.valor_tabela)}</span>
+                          )}
+                        </td>
+                      )}
                       <td className="whitespace-nowrap">dia {k.dia_vencimento}</td>
                       <td className="whitespace-nowrap text-sm">
                         {fmtData(k.inicio)}
@@ -283,42 +297,38 @@ function Contratos() {
                         {reajustePendente(k, hoje) && <span className="chip ml-1 bg-amber-50 text-amber-900">a fazer</span>}
                       </td>
                       <td className="whitespace-nowrap text-right">
-                        <MenuAcoes rotulo="Ações do contrato" largura={176}>
-                          <button
-                            className="block w-full px-3 py-1.5 text-left hover:bg-neutral-50"
-                            onClick={(e) => menu(e, { tipo: "historico", k })}
-                          >
-                            Histórico
-                          </button>
-                          {podeGerir && k.situacao === "ativo" && (
-                            <>
-                              <button
-                                className="block w-full px-3 py-1.5 text-left hover:bg-neutral-50"
-                                onClick={(e) => menu(e, { tipo: "editar", k })}
-                              >
-                                Editar
+                        {(podeGerir || (podeOperar && k.situacao === "ativo")) && (
+                          <MenuAcoes rotulo="Ações da licença" largura={176}>
+                            {podeOperar && k.situacao === "ativo" && (
+                              <>
+                                <button className="block w-full px-3 py-1.5 text-left hover:bg-neutral-50" onClick={(e) => menu(e, { tipo: "editar", k })}>
+                                  Editar
+                                </button>
+                                <button className="block w-full px-3 py-1.5 text-left hover:bg-neutral-50" onClick={(e) => menu(e, { tipo: "chave", k })}>
+                                  Chave do Ledgra
+                                </button>
+                              </>
+                            )}
+                            {podeGerir && (
+                              <button className="block w-full px-3 py-1.5 text-left hover:bg-neutral-50" onClick={(e) => menu(e, { tipo: "historico", k })}>
+                                Histórico
                               </button>
-                              <button
-                                className="block w-full px-3 py-1.5 text-left hover:bg-neutral-50"
-                                onClick={(e) => menu(e, { tipo: "chave", k })}
-                              >
-                                Chave do Ledgra
-                              </button>
-                              <button
-                                className="block w-full px-3 py-1.5 text-left hover:bg-neutral-50"
-                                onClick={(e) => menu(e, { tipo: "reajustar", k })}
-                              >
-                                Reajustar valor
-                              </button>
-                              <button
-                                className="block w-full px-3 py-1.5 text-left text-[var(--perigo)] hover:bg-red-50"
-                                onClick={(e) => menu(e, { tipo: "encerrar", k })}
-                              >
-                                Encerrar contrato
-                              </button>
-                            </>
-                          )}
-                        </MenuAcoes>
+                            )}
+                            {podeGerir && k.situacao === "ativo" && (
+                              <>
+                                <button className="block w-full px-3 py-1.5 text-left hover:bg-neutral-50" onClick={(e) => menu(e, { tipo: "reajustar", k })}>
+                                  Reajustar valor
+                                </button>
+                                <button
+                                  className="block w-full px-3 py-1.5 text-left text-[var(--perigo)] hover:bg-red-50"
+                                  onClick={(e) => menu(e, { tipo: "encerrar", k })}
+                                >
+                                  Encerrar licença
+                                </button>
+                              </>
+                            )}
+                          </MenuAcoes>
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -336,6 +346,7 @@ function Contratos() {
           produtos={d.produtos}
           planos={d.planos}
           contratos={d.contratos}
+          valores={podeGerir}
           hoje={hoje}
           aoFechar={() => fechar()}
           aoSalvar={fechar}
