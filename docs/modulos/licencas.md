@@ -159,7 +159,10 @@ desconhecida, desfazer, tela sem gravar direto) e `web/src/dominios/licencas/led
 ## Licença do ERP Ledgra (migração 067)
 
 - **Módulos do Ledgra** entram em Produtos e planos sozinhos (`lic_produtos.sistema = 'ledgra'`: Financeiro, Compras,
-  Vendas, Estoque, Produção e Ledgra Auditor; preço zero até a MDC definir). Toda organização nova recebe a lista.
+  Vendas, Estoque, Produção, Ledgra Auditor, Ledgra Legislação e Ledgra XML; preço zero até a MDC definir). Toda
+  organização nova recebe a lista. Desde a 072 a **Legislação** (pesquisa, biblioteca, NCM/TIPI, tabelas de ICMS,
+  códigos e consultas) é vendida sozinha (`ledgra-legislacao`); o **Auditor** (SPED, conferência, créditos e agenda)
+  já traz a Legislação junto, então não precisa contratar os dois.
 - **Modalidade do contrato** (`lic_contratos.modalidade`): **gratuita** (valor zero, a MDC escolhe os módulos),
   **pacote** (plano ou módulos com valor) e **full** ("Ledgra full" no assistente: todos os módulos ativos do Ledgra,
   inclusive os criados depois).
