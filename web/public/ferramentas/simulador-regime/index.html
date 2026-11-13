@@ -391,14 +391,12 @@ details.ver-parecer>summary small{font-weight:500;color:var(--tinta-2);font-size
             <label class="opc" data-v="industria"><input type="radio" name="atividade" value="industria"><span><svg class="ic"><use href="#i-fabrica"/></svg><span><b>Indústria</b><i>Fabricação e transformação</i><em class="sug">Indicado pelo CNAE</em></span><span class="marca-ok"><svg class="ic"><use href="#i-check"/></svg></span></span></label>
           </div>
         </div>
-        <details class="ajuste full" id="det-cnae">
-          <summary><svg class="ic p giro"><use href="#i-seta"/></svg>Sei o código da atividade (CNAE) <span class="opcional">(opcional)</span></summary>
-          <div class="campo" id="campo-cnae" style="margin-top:10px">
-            <label for="cnae">CNAE principal</label>
-            <input id="cnae" name="cnae" type="text" inputmode="numeric" maxlength="12" placeholder="0000-0/00">
-            <span class="ajuda" id="cnae-ajuda">O CNAE é o código oficial da atividade, que aparece no cartão CNPJ. Ele deixa o cálculo mais preciso e vem sozinho quando você busca o CNPJ.</span>
-          </div>
-        </details>
+        <div class="campo full" id="campo-cnae">
+          <label for="cnae">Código da atividade (CNAE) <span class="opcional">(opcional)</span></label>
+          <div class="explica"><svg class="ic"><use href="#i-info"/></svg><div><p><b>O que é o CNAE?</b> É o código oficial que a Receita usa para dizer o que a empresa faz. Ele deixa o cálculo mais preciso, porque a lei dá descontos diferentes para cada atividade.</p><p><b>Onde encontro?</b> No cartão CNPJ, no campo “Código e descrição da atividade econômica principal”. Exemplo: <b>6920-6/01</b> é contabilidade. Se você buscou o CNPJ, ele já vem preenchido. Não sabe? Pode deixar em branco.</p></div></div>
+          <input id="cnae" name="cnae" type="text" inputmode="numeric" maxlength="9" placeholder="Ex.: 6920-6/01" autocomplete="off">
+          <span class="ajuda" id="cnae-ajuda">Digite só os números; os traços e a barra entram sozinhos.</span>
+        </div>
       </div>
       <div class="acoes"><span></span><button type="button" class="btn btn-pri" data-ir="2"><span>Continuar</span><svg class="ic"><use href="#i-dir"/></svg></button></div>
     </div>
@@ -1031,7 +1029,11 @@ $$("input[name=atividade]").forEach(r=>r.addEventListener("change",()=>{ $("#icm
 $("#cnpj").addEventListener("input",e=>{ let v=e.target.value.replace(/\D/g,"").slice(0,14);
   v=v.replace(/^(\d{2})(\d)/,"$1.$2").replace(/^(\d{2})\.(\d{3})(\d)/,"$1.$2.$3").replace(/\.(\d{3})(\d)/,".$1/$2").replace(/(\d{4})(\d)/,"$1-$2"); e.target.value=v; });
 $("#cnpj").addEventListener("keydown",e=>{ if(e.key==="Enter"){ e.preventDefault(); buscarCNPJ(); } });
-$("#cnae").addEventListener("change",()=>{ classif = classificarCNAE($("#cnae").value); if (classif){ setAtividade(classif.atividade, true); $("#cnae-ajuda").textContent = "Atividade sugerida pelo CNAE: " + ATIV[classif.atividade].nome + (classif.notas[0] ? ". " + classif.notas[0] : ""); } });
+$("#cnae").addEventListener("input",e=>{ let v=e.target.value.replace(/\D/g,"").slice(0,7);
+  v=v.replace(/^(\d{4})(\d)/,"$1-$2").replace(/^(\d{4})-(\d)(\d)/,"$1-$2/$3"); e.target.value=v; });
+$("#cnae").addEventListener("change",()=>{ classif = classificarCNAE($("#cnae").value); if (classif){ setAtividade(classif.atividade, true); $("#cnae-ajuda").textContent = "Pelo código, a atividade é “" + ATIV[classif.atividade].nome + "” e já marcamos acima." + (classif.notas[0] ? " " + classif.notas[0] : ""); }
+  else if ($("#cnae").value.replace(/\D/g,"").length===7) $("#cnae-ajuda").textContent = "Não reconhecemos esse código. Confira no cartão CNPJ ou deixe em branco e escolha a atividade acima.";
+  else $("#cnae-ajuda").textContent = "Digite só os números; os traços e a barra entram sozinhos."; });
 
 function cnpjValido(c){
   c = c.replace(/\D/g,""); if (c.length!==14 || /^(\d)\1+$/.test(c)) return false;
