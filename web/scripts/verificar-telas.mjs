@@ -1246,6 +1246,17 @@ const INTERACOES = {
     await p.getByText("Mdc-KQXP-4821").waitFor({ timeout: 3000 });
     await p.getByRole("link", { name: "Enviar pelo WhatsApp" }).waitFor({ timeout: 3000 });
     await foto("senha-provisoria", { soTela: true });
+    // liberar de uma vez: marca quem falta, gera as senhas e mostra cada uma com o WhatsApp
+    await p.getByRole("button", { name: /Liberar acesso de quem falta/ }).click();
+    const lote = p.getByRole("dialog", { name: "Liberar acesso de quem falta" });
+    await lote.waitFor({ timeout: 3000 });
+    await foto("liberar-acessos", { soTela: true });
+    await lote.getByRole("button", { name: /Gerar \d+ senha/ }).click();
+    const prontas = p.getByRole("dialog", { name: "Senhas provisórias prontas" });
+    await prontas.waitFor({ timeout: 5000 });
+    await prontas.getByRole("link", { name: "Enviar pelo WhatsApp" }).first().waitFor({ timeout: 3000 });
+    await foto("liberar-acessos-prontas", { soTela: true });
+    await prontas.getByRole("button", { name: "Concluir" }).click();
   },
   "/config": async (p, foto) => {
     for (const aba of await p.getByRole("tab").all()) {

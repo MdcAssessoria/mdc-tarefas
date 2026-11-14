@@ -17,6 +17,8 @@ import { SenhaCopiavel } from "./_componentes/SenhaCopiavel";
 import { JanelaSenhaProvisoria } from "@/dominios/acessos/componentes/JanelaSenhaProvisoria";
 import { LinhaPessoa } from "./_componentes/LinhaPessoa";
 import { ConvitesAguardando, type ConviteAguardando } from "./_componentes/ConvitesAguardando";
+import { LiberarAcessos } from "./_componentes/LiberarAcessos";
+import { candidatosAcesso } from "@/dominios/acessos/liberarAcessos";
 import { Perfis } from "./_componentes/Perfis";
 import { Cadastro } from "./_componentes/Cadastro";
 import { EditarPessoa } from "./_componentes/EditarPessoa";
@@ -49,6 +51,7 @@ function Acessos() {
   const [erro, setErro] = useState<string | null>(null);
   const [aviso, setAviso] = useState<{ texto: string; senha?: SenhaGerada; nome?: string } | null>(null);
   const [convite, setConvite] = useState(false);
+  const [liberar, setLiberar] = useState(false);
   const [editando, setEditando] = useState<Membro | null>(null);
   const [transferir, setTransferir] = useState<{ m: Membro; inativar: boolean } | null>(null);
   const [janela, confirmar] = useConfirmar();
@@ -190,12 +193,26 @@ function Acessos() {
   }
 
   const ativos = membros.filter((m) => m.ativo);
+  const candidatos = candidatosAcesso(membros, contas, aguardando, eu.user_id);
+  const pendentesAcesso = candidatos.filter((c) => c.pendente).length;
   const inativos = membros.filter((m) => !m.ativo && m.papel !== "tv");
   const usoPerfil = (id: string) => ativos.filter((m) => m.perfil_id === id).length;
 
   return (
     <div className="space-y-5">
       {janela}
+      {liberar && (
+        <LiberarAcessos
+          candidatos={candidatos}
+          aoFechar={(gerou) => {
+            setLiberar(false);
+            if (gerou) {
+              avisar("Senhas provisórias geradas. No primeiro acesso cada pessoa cria a própria senha.");
+              void depois();
+            }
+          }}
+        />
+      )}
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-xl font-semibold text-[var(--marca)]">Pessoas e acessos</h1>
@@ -205,10 +222,16 @@ function Acessos() {
             Administradores veem tudo.
           </p>
         </div>
-        <button className="btn-primario" onClick={() => setConvite(true)}>
-          <Icone nome="mais" className="inline h-4 w-4 align-[-3px]" />
-          Cadastrar pessoa
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <button className="btn-primario" onClick={() => setConvite(true)}>
+            <Icone nome="mais" className="inline h-4 w-4 align-[-3px]" />
+            Cadastrar pessoa
+          </button>
+          <button className="btn" onClick={() => setLiberar(true)} title="Gera a senha provisória de quem ainda não tem acesso, para mandar pelo WhatsApp">
+            <Icone nome="escudo" className="inline h-4 w-4 align-[-3px]" />
+            Liberar acesso de quem falta{pendentesAcesso ? ` (${pendentesAcesso})` : ""}
+          </button>
+        </div>
       </div>
 
       <Abas

@@ -85,6 +85,11 @@ configurar, então o acesso passou a ser por **senha provisória** (migração 0
 4. Senha esquecida: "Esqueci a senha" orienta a pedir ao administrador, que usa **Redefinir senha** na linha da pessoa
    (gera outra provisória; a anterior deixa de valer). Na lista, conta com senha provisória aparece como "Aguardando criar
    a senha" (`hub_situacao_contas`).
+5. Vários de uma vez (14/11/2026): **Liberar acesso de quem falta** (ao lado de "Cadastrar pessoa") lista os convites sem
+   conta e quem nunca entrou já marcados, e quem já entrou desmarcado (para quem entrou pelo link e a senha não gravou).
+   O HUB gera uma senha por pessoa, uma de cada vez, pela mesma Função `convite`, e mostra cada uma só nessa hora, com
+   "Enviar pelo WhatsApp" e "Copiar mensagem". Ficam de fora a própria pessoa, o Painel TV e quem não tem e-mail
+   (regra em `dominios/acessos/liberarAcessos.ts`, com teste).
 
 O caminho por e-mail continua no código: com os segredos `GRAPH_*` (aplicativo "HUB-MDC envio de e-mails" já registrado
 no Entra, ID `d0840295-11fd-45b5-8f9c-5a02de661dfa`), a Função `convite` manda o e-mail pela caixa `hub@` (Microsoft Graph,
