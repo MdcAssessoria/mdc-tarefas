@@ -136,6 +136,9 @@ Desenho aprovado pelo Edvaldo no quadro "MDC · Pessoal — desenho do app" (pro
   parcial, juros e desconto ficam na lista completa.
 - Regras puras em `dominios/pessoal/app.ts` (com teste): agrupar por vencimento, resumo do mês, teclado, ícone por tipo
   de gasto e o texto "Atrasada há N dias". Quem grava avisa as telas abertas (`pessoal:mudou`) e mostra o aviso rápido.
+- **Como achar o app:** no Início do HUB, quem também tem família vê o cartão "Suas finanças pessoais · MDC · Pessoal"
+  com "Abrir" (`CartaoMinhaFamilia`); no Início da família, a faixa "Tenha o MDC · Pessoal como app" com "Instalar"
+  (`BotaoInstalarApp variante="faixa"`, some quando já roda instalado). Endereço direto: `/hub-mdc/pessoal`.
 
 ## 5. Arquivos
 

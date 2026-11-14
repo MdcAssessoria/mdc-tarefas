@@ -77,7 +77,7 @@ function useSituacao(): Situacao {
 }
 
 /** `menu`: linha do menu lateral (escuro); `portal`: botão do topo do Portal. */
-export function BotaoInstalarApp({ variante, recolhido = false }: { variante: "menu" | "portal"; recolhido?: boolean }) {
+export function BotaoInstalarApp({ variante, recolhido = false }: { variante: "menu" | "portal" | "faixa"; recolhido?: boolean }) {
   const s = useSituacao();
   const [aberto, setAberto] = useState(false);
   if (!s.mostrar) return null;
@@ -99,7 +99,22 @@ export function BotaoInstalarApp({ variante, recolhido = false }: { variante: "m
   const rotulo = s.plataforma === "computador" ? "Instalar o app" : "Instalar no celular";
   return (
     <>
-      {variante === "menu" ? (
+      {variante === "faixa" ? (
+        // MDC · Pessoal: faixa no Início chamando para instalar (some quando já roda instalado)
+        <div className="flex items-center gap-3 rounded-[18px] border border-[var(--destaque)]/60 bg-[#FCF7EA] p-3.5">
+          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-[var(--marca)] text-[var(--destaque)]">
+            <Icone nome="celular" className="h-6 w-6" />
+          </span>
+          <span className="min-w-0 flex-1 text-[13px] text-neutral-700">
+            <b className="block text-[15px] text-[var(--marca)]">Tenha o MDC · Pessoal como app</b>
+            Um ícone na tela do {s.plataforma === "computador" ? "computador" : "celular"}, abrindo direto aqui.
+          </span>
+          <button onClick={() => void instalar()} className="btn-primario shrink-0 !min-h-10 !px-3 text-sm">
+            <Icone nome="mais" className="h-4 w-4" />
+            Instalar
+          </button>
+        </div>
+      ) : variante === "menu" ? (
         <button
           onClick={() => void instalar()}
           className={`mb-2 flex w-full items-center gap-2 rounded-lg bg-[var(--destaque)]/15 px-2 py-2 text-[13px] font-medium text-[var(--destaque)] hover:bg-[var(--destaque)]/25 ${recolhido ? "justify-center" : ""}`}
@@ -184,7 +199,8 @@ function JanelaInstalar({ situacao, aoFechar }: { situacao: Situacao; aoFechar: 
         {iphone && situacao.navegador === "dentro_de_app" ? (
           <ol className="space-y-3">
             <Passo n={1} icone="externo">
-              Você abriu o {nomeApp} por dentro de outro aplicativo. Toque em <b>•••</b> ou no ícone de bússola e escolha <b>Abrir no Safari</b>.
+              Você abriu o {nomeApp} por dentro de outro aplicativo. Toque em <b>•••</b> ou no ícone de bússola e escolha{" "}
+              <b>Abrir no Safari</b>.
             </Passo>
             <Passo n={2} icone="copiar">
               Se não achar, copie o endereço e cole no Safari.

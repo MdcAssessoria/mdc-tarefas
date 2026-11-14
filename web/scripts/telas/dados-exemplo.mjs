@@ -321,7 +321,10 @@ const licCobranca = (k, contrato_id, cliente_id, n, valor, situacao) => ({
 });
 
 export const TABELAS = {
-  organizacoes: [org],
+  // no HUB a pessoa de exemplo também tem uma família no MDC · Pessoal (cartão "Suas finanças pessoais" no Início)
+  organizacoes: PESSOAL
+    ? [org]
+    : [org, { ...org, id: "f0000000-0000-4000-8000-00000000fa01", tipo: "pessoal", nome: "Família Carvalho", slug: "fam-carvalho" }],
   pessoal_resumo_preferencias: [],
   pessoal_convites: [
     {
@@ -348,6 +351,20 @@ export const TABELAS = {
     },
   ],
   membros: [
+    ...(PESSOAL
+      ? []
+      : [
+          {
+            org_id: "f0000000-0000-4000-8000-00000000fa01",
+            user_id: EU,
+            nome: "Edvaldo Ribeiro de Carvalho",
+            email: "edvaldo@mdcassessoria.com",
+            papel: "admin",
+            setor_id: null,
+            ativo: true,
+            perfil_id: null,
+          },
+        ]),
     {
       org_id: ORG,
       user_id: EU,

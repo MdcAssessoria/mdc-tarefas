@@ -17,12 +17,22 @@ import type { Prioridade, Status } from "@/dominios/tarefas/tipos";
 import { fmtData } from "@/lib/formato/datas";
 import { nomeCliente } from "@/dominios/clientes/nome";
 import { CartoesModulos } from "@/components/shell/CartoesModulos";
+import { BotaoInstalarApp } from "@/components/shell/InstalarApp";
 import { InicioPessoal } from "@/dominios/pessoal/componentes/InicioPessoal";
+import { CartaoMinhaFamilia } from "@/dominios/pessoal/componentes/CartaoMinhaFamilia";
 
 export default function Inicio() {
   // família do MDC · Pessoal (075): início próprio, com o resumo do dia das finanças
   const { pessoal } = useOrg();
-  return pessoal ? <InicioPessoal /> : <Hub />;
+  return pessoal ? (
+    <div className="mx-auto max-w-5xl space-y-4">
+      {/* chama para instalar o ícone do MDC · Pessoal (some quando já roda instalado) */}
+      <BotaoInstalarApp variante="faixa" />
+      <InicioPessoal />
+    </div>
+  ) : (
+    <Hub />
+  );
 }
 
 interface MinhaTarefa {
@@ -237,6 +247,7 @@ function Hub() {
         )}
       </header>
 
+      <CartaoMinhaFamilia />
       <CartoesModulos />
 
       {!temTarefas ? (
