@@ -5627,6 +5627,7 @@ export type Database = {
           cor_destaque: string;
           cor_primaria: string;
           criado_em: string;
+          criado_por: string | null;
           fuso: string;
           gestao_cliente_id: string | null;
           id: string;
@@ -5634,6 +5635,7 @@ export type Database = {
           nome: string;
           plano: string;
           slug: string;
+          tipo: string;
         };
         Insert: {
           ativo?: boolean;
@@ -5641,6 +5643,7 @@ export type Database = {
           cor_destaque?: string;
           cor_primaria?: string;
           criado_em?: string;
+          criado_por?: string | null;
           fuso?: string;
           gestao_cliente_id?: string | null;
           id?: string;
@@ -5648,6 +5651,7 @@ export type Database = {
           nome: string;
           plano?: string;
           slug: string;
+          tipo?: string;
         };
         Update: {
           ativo?: boolean;
@@ -5655,6 +5659,7 @@ export type Database = {
           cor_destaque?: string;
           cor_primaria?: string;
           criado_em?: string;
+          criado_por?: string | null;
           fuso?: string;
           gestao_cliente_id?: string | null;
           id?: string;
@@ -5662,6 +5667,7 @@ export type Database = {
           nome?: string;
           plano?: string;
           slug?: string;
+          tipo?: string;
         };
         Relationships: [
           {
@@ -5669,6 +5675,130 @@ export type Database = {
             columns: ["gestao_cliente_id"];
             isOneToOne: false;
             referencedRelation: "clientes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      pessoal_convites: {
+        Row: {
+          cancelado_em: string | null;
+          codigo_hash: string;
+          criado_em: string;
+          criado_por: string | null;
+          expira_em: string;
+          id: string;
+          nome: string;
+          org_id: string;
+          permissao: string;
+          usado_em: string | null;
+          usado_por: string | null;
+        };
+        Insert: {
+          cancelado_em?: string | null;
+          codigo_hash: string;
+          criado_em?: string;
+          criado_por?: string | null;
+          expira_em?: string;
+          id?: string;
+          nome: string;
+          org_id: string;
+          permissao: string;
+          usado_em?: string | null;
+          usado_por?: string | null;
+        };
+        Update: {
+          cancelado_em?: string | null;
+          codigo_hash?: string;
+          criado_em?: string;
+          criado_por?: string | null;
+          expira_em?: string;
+          id?: string;
+          nome?: string;
+          org_id?: string;
+          permissao?: string;
+          usado_em?: string | null;
+          usado_por?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "pessoal_convites_org_id_fkey";
+            columns: ["org_id"];
+            isOneToOne: false;
+            referencedRelation: "organizacoes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      pessoal_push_inscricoes: {
+        Row: {
+          aparelho: string | null;
+          auth: string;
+          criado_em: string;
+          endpoint: string;
+          falhas: number;
+          id: string;
+          p256dh: string;
+          ultimo_envio: string | null;
+          user_id: string;
+        };
+        Insert: {
+          aparelho?: string | null;
+          auth: string;
+          criado_em?: string;
+          endpoint: string;
+          falhas?: number;
+          id?: string;
+          p256dh: string;
+          ultimo_envio?: string | null;
+          user_id: string;
+        };
+        Update: {
+          aparelho?: string | null;
+          auth?: string;
+          criado_em?: string;
+          endpoint?: string;
+          falhas?: number;
+          id?: string;
+          p256dh?: string;
+          ultimo_envio?: string | null;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
+      pessoal_resumo_preferencias: {
+        Row: {
+          atualizado_em: string;
+          celular: boolean;
+          hora: number;
+          ligado: boolean;
+          org_id: string;
+          ultimo_dia: string | null;
+          user_id: string;
+        };
+        Insert: {
+          atualizado_em?: string;
+          celular?: boolean;
+          hora?: number;
+          ligado?: boolean;
+          org_id: string;
+          ultimo_dia?: string | null;
+          user_id: string;
+        };
+        Update: {
+          atualizado_em?: string;
+          celular?: boolean;
+          hora?: number;
+          ligado?: boolean;
+          org_id?: string;
+          ultimo_dia?: string | null;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "pessoal_resumo_preferencias_org_id_fkey";
+            columns: ["org_id"];
+            isOneToOne: false;
+            referencedRelation: "organizacoes";
             referencedColumns: ["id"];
           },
         ];
@@ -7652,6 +7782,7 @@ export type Database = {
         Args: { p_chave: string; p_cnpj: string };
         Returns: Json;
       };
+      lic_ledgra_vincular_cnpj: { Args: { p_cnpj: string }; Returns: Json };
       lic_reajustar_contrato: {
         Args: { p_contrato: string; p_obs?: string; p_percentual: number };
         Returns: number;
@@ -7659,6 +7790,7 @@ export type Database = {
       lic_salvar_contrato: { Args: { p: Json }; Returns: string };
       lic_salvar_plano: { Args: { p: Json }; Returns: string };
       lic_salvar_produto: { Args: { p: Json }; Returns: string };
+      lic_valores: { Args: { p_org: string }; Returns: Json };
       link_aplicar_evento: {
         Args: { p_dados: Json; p_evento: string; p_tipo: string };
         Returns: string;
@@ -7704,6 +7836,65 @@ export type Database = {
       };
       org_papel_timbrado_salvar: {
         Args: { p: Json; p_org: string };
+        Returns: Json;
+      };
+      pessoal_aceitar_convite: { Args: { p_codigo: string }; Returns: string };
+      pessoal_aviso_token_confere: {
+        Args: { p_token: string };
+        Returns: boolean;
+      };
+      pessoal_cadastro_tentativa: {
+        Args: { p_ip_hash: string };
+        Returns: boolean;
+      };
+      pessoal_cancelar_convite: {
+        Args: { p_convite: string };
+        Returns: undefined;
+      };
+      pessoal_convidar: {
+        Args: { p_nome: string; p_org: string; p_permissao: string };
+        Returns: string;
+      };
+      pessoal_criar_familia: { Args: { p_nome: string }; Returns: string };
+      pessoal_definir_permissao: {
+        Args: { p_org: string; p_permissao: string; p_user: string };
+        Returns: undefined;
+      };
+      pessoal_push_aparelhos: { Args: never; Returns: number };
+      pessoal_push_inscrever: {
+        Args: {
+          p_aparelho?: string;
+          p_auth: string;
+          p_endpoint: string;
+          p_p256dh: string;
+        };
+        Returns: undefined;
+      };
+      pessoal_push_remover: { Args: { p_endpoint: string }; Returns: undefined };
+      pessoal_push_reservar: { Args: never; Returns: Json };
+      pessoal_push_resultado: {
+        Args: { p_id: number; p_mortos?: string[]; p_ok: boolean };
+        Returns: undefined;
+      };
+      pessoal_remover: {
+        Args: { p_org: string; p_user: string };
+        Returns: undefined;
+      };
+      pessoal_renomear: {
+        Args: { p_nome: string; p_org: string };
+        Returns: undefined;
+      };
+      pessoal_resumo_salvar: {
+        Args: {
+          p_celular: boolean;
+          p_hora: number;
+          p_ligado: boolean;
+          p_org: string;
+        };
+        Returns: undefined;
+      };
+      pessoal_vapid: {
+        Args: { p_privada?: string; p_publica?: string };
         Returns: Json;
       };
       portal_abrir_conversa: {
@@ -7850,24 +8041,34 @@ export type Database = {
         Args: { p_motivo: string; p_proc: string };
         Returns: undefined;
       };
+      soc_concluir_processo: { Args: { p_proc: string }; Returns: undefined };
       soc_documento_editar: {
-        Args: { p_categoria: string; p_data: string | null; p_descricao: string | null; p_doc: string; p_registro: string | null; p_vigente: boolean };
+        Args: {
+          p_categoria: string;
+          p_data: string;
+          p_descricao: string;
+          p_doc: string;
+          p_registro: string;
+          p_vigente: boolean;
+        };
         Returns: undefined;
       };
       soc_documento_guardar: {
         Args: {
           p_arquivo: string;
           p_categoria: string;
-          p_data?: string | null;
-          p_descricao?: string | null;
-          p_processo?: string | null;
-          p_registro?: string | null;
-          p_substitui?: string | null;
+          p_data?: string;
+          p_descricao?: string;
+          p_processo?: string;
+          p_registro?: string;
+          p_substitui?: string;
         };
         Returns: string;
       };
-      soc_documento_retirar: { Args: { p_doc: string; p_motivo: string }; Returns: undefined };
-      soc_concluir_processo: { Args: { p_proc: string }; Returns: undefined };
+      soc_documento_retirar: {
+        Args: { p_doc: string; p_motivo: string };
+        Returns: undefined;
+      };
       soc_mudar_fase: {
         Args: { p_fase: string; p_status: string };
         Returns: undefined;
