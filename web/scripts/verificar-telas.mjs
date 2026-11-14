@@ -297,6 +297,8 @@ function criarRespostaSupabase(avisos) {
       // Acessos (071): senha provisória gerada para mandar pelo WhatsApp
       if (p.endsWith("/convite") && req.postDataJSON?.()?.senha_provisoria)
         return json(200, { enviado: false, senha: "Mdc-KQXP-4821", endereco: "https://hub.mdcassessoria.com/hub-mdc/login" });
+      // lançar falando (082): nas fotos a IA fica desligada (o app entende sozinho)
+      if (p.endsWith("/pessoal-voz")) return json(200, { indisponivel: true, lancamentos: [] });
       return json(200, {});
     }
 
@@ -547,6 +549,23 @@ const INTERACOES = {
       const folha = p.getByRole("dialog", { name: "O que você quer lançar?" });
       await folha.waitFor({ timeout: 3000 });
       await foto("folha-lancar", { soTela: true });
+      // lançar falando (082): aviso da 1ª vez, frase escrita (o robô não fala) e o cartão "Entendi assim"
+      await folha.getByRole("button", { name: /^Falar/ }).click();
+      const fala = p.getByRole("dialog", { name: "Lançar falando" });
+      await fala.waitFor({ timeout: 5000 });
+      await foto("falar-aviso", { soTela: true });
+      await fala.getByRole("button", { name: /Entendi, quero falar/ }).click();
+      await fala.getByRole("textbox").fill("paguei a luz 230 ontem e gastei 80 no mercado");
+      await foto("falar", { soTela: true });
+      await fala.getByRole("button", { name: /Montar lançamento/ }).click();
+      const entendi = p.getByRole("dialog", { name: "Entendi assim" });
+      await entendi.waitFor({ timeout: 5000 });
+      await entendi.getByRole("button", { name: /Salvar os 2/ }).waitFor({ timeout: 3000 });
+      await foto("falar-entendi", { soTela: true });
+      await p.keyboard.press("Escape");
+      await entendi.waitFor({ state: "detached", timeout: 3000 });
+      await p.getByRole("button", { name: celular ? "Lançar gasto, entrada ou tarefa" : "Lançar" }).click();
+      await folha.waitFor({ timeout: 3000 });
       await folha.getByRole("button", { name: /Um gasto/ }).click();
       const gasto = p.getByRole("dialog", { name: "Novo gasto" });
       await gasto.waitFor({ timeout: 5000 });
@@ -603,11 +622,12 @@ const INTERACOES = {
     await conta.waitFor({ timeout: 3000 });
     await foto("nova-conta", { soTela: true });
     await conta.getByRole("button", { name: "Nova categoria" }).click();
-    // na família a janela fala "tipo de gasto" e pede "Parecido com" no lugar da conta contábil
+    // na família a janela fala "tipo de gasto" e pede só o nome (081); na empresa, a conta contábil
     const familia = Boolean(process.env.PESSOAL);
     const cat = p.getByRole("dialog", { name: familia ? "Novo tipo de gasto" : "Nova categoria de despesa" });
     await cat.waitFor({ timeout: 3000 });
-    await cat.getByLabel(familia ? "Parecido com" : "Conta contábil").waitFor({ timeout: 3000 });
+    await cat.getByLabel(familia ? "Nome" : "Conta contábil", { exact: familia }).waitFor({ timeout: 3000 });
+    if (familia && (await cat.getByLabel("Parecido com").count())) throw new Error("família: a janela ainda pede 'Parecido com'");
     await foto("nova-categoria");
     await cat.getByRole("button", { name: "Voltar" }).click();
     await cat.waitFor({ state: "detached", timeout: 3000 });

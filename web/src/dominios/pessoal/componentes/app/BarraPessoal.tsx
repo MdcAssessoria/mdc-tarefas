@@ -11,6 +11,7 @@ import { Icone } from "@/components/ui/Icone";
 import type { NomeIcone } from "@/components/ui/Icone";
 import { useFinancasFamilia } from "./dados";
 import { LancamentoRapido } from "./LancamentoRapido";
+import { FalarLancamento } from "./FalarLancamento";
 import { AvisoRapido } from "./avisoRapido";
 
 const ITENS: { href: string; nome: string; icone: NomeIcone; ativo: (r: string) => boolean }[] = [
@@ -24,7 +25,7 @@ export function BarraPessoal() {
   const rota = usePathname() || "/";
   const { pode } = useOrg();
   const [folha, setFolha] = useState(false);
-  const [lancar, setLancar] = useState<"pagar" | "receber" | null>(null);
+  const [lancar, setLancar] = useState<"pagar" | "receber" | "falar" | null>(null);
   const podeLancar = pode("financeiro", "operar");
   const itens = ITENS.filter((i) => (i.href === "/tarefas" ? pode("tarefas") : i.href.startsWith("/financeiro") ? pode("financeiro") : true));
   const item = (i: (typeof ITENS)[number]) => {
@@ -86,13 +87,14 @@ export function BarraPessoal() {
 }
 
 /** Carrega tipos de gasto e contas só quando a pessoa abre o lançamento. */
-function Lancador({ tipo, aoFechar }: { tipo: "pagar" | "receber"; aoFechar: () => void }) {
+function Lancador({ tipo, aoFechar }: { tipo: "pagar" | "receber" | "falar"; aoFechar: () => void }) {
   const { dados, cliente, hoje } = useFinancasFamilia();
   if (!dados || !cliente) return null;
+  if (tipo === "falar") return <FalarLancamento cliente={cliente} categorias={dados.categorias} bancos={dados.bancos} hoje={hoje} aoFechar={aoFechar} />;
   return <LancamentoRapido tipoInicial={tipo} cliente={cliente} categorias={dados.categorias} bancos={dados.bancos} hoje={hoje} aoFechar={aoFechar} />;
 }
 
-function FolhaLancar({ aoFechar, aoEscolher }: { aoFechar: () => void; aoEscolher: (t: "pagar" | "receber") => void }) {
+function FolhaLancar({ aoFechar, aoEscolher }: { aoFechar: () => void; aoEscolher: (t: "pagar" | "receber" | "falar") => void }) {
   const router = useRouter();
   const { pode } = useOrg();
   const opcao = (icone: NomeIcone, titulo: string, dica: string, tom: string, acao: () => void) => (
@@ -121,6 +123,19 @@ function FolhaLancar({ aoFechar, aoEscolher }: { aoFechar: () => void; aoEscolhe
             <Icone nome="fechar" className="h-6 w-6" />
           </button>
         </div>
+        <button
+          type="button"
+          onClick={() => aoEscolher("falar")}
+          className="mb-2.5 flex w-full items-center gap-3 rounded-2xl bg-[var(--marca)] p-4 text-left text-white transition active:scale-[.98]"
+        >
+          <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-white/10 text-[var(--destaque)]">
+            <Icone nome="microfone" className="h-6 w-6" />
+          </span>
+          <span>
+            <b className="block text-base">Falar</b>
+            <span className="text-[13px] text-[#C6D3CC]">&quot;Paguei a luz 230 ontem&quot; · o app monta para você</span>
+          </span>
+        </button>
         <div className="grid grid-cols-2 gap-2.5">
           {opcao("seta-saida", "Um gasto", "Mercado, luz, escola…", "bg-red-50 text-red-700", () => aoEscolher("pagar"))}
           {opcao("seta-entrada", "Uma entrada", "Salário, aluguel, Pix…", "bg-emerald-50 text-emerald-800", () => aoEscolher("receber"))}

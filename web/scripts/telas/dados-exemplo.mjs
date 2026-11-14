@@ -632,6 +632,14 @@ export const TABELAS = {
     ],
     ["f7000000-0000-4000-8000-000000000002", "despesa", "Aluguel", "Despesas administrativas", "f1000000-0000-4000-8000-000000000006"],
     ["f7000000-0000-4000-8000-000000000003", "receita", "Venda de mercadorias", "Receitas", "f1000000-0000-4000-8000-000000000005"],
+    // família (081): tipos do plano simples, para o lançar falando reconhecer
+    ...(PESSOAL
+      ? [
+          ["f7000000-0000-4000-8000-000000000011", "despesa", "Contas da casa", "Gastos", "f1000000-0000-4000-8000-000000000006"],
+          ["f7000000-0000-4000-8000-000000000012", "despesa", "Mercado", "Gastos", "f1000000-0000-4000-8000-000000000006"],
+          ["f7000000-0000-4000-8000-000000000013", "receita", "Salário", "Entradas", "f1000000-0000-4000-8000-000000000005"],
+        ]
+      : []),
   ].map(([id, tipo, nome, grupo, conta_contabil_id]) => ({
     id,
     org_id: ORG,

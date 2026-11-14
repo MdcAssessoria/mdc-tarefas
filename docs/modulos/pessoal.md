@@ -161,6 +161,30 @@ Desenho aprovado pelo Edvaldo no quadro "MDC · Pessoal — desenho do app" (pro
   - Tela Hoje: cartão "Como seu dinheiro evoluiu" com os dois gráficos alternados (`EvolucaoDoDinheiro.tsx`); some enquanto
     não há nada pago ou recebido.
 
+## 4.5 Lançar falando (migração 082 e Função Edge pessoal-voz)
+
+- No **+** (ou "Lançar" no computador), o botão **Falar** abre o microfone. A pessoa fala, por exemplo: "paguei a luz 230
+  ontem e recebi o salário de 5 mil". O app monta um ou mais lançamentos no cartão **Entendi assim**. Ali ela confere,
+  corrige e toca em **Salvar**. **Nada é gravado sem conferir.**
+- **Ouvir:** o reconhecimento de voz do navegador (Chrome no Android e Safari no iPhone), em pt-BR. Onde não existe, o
+  campo "Diga ou escreva" recebe o texto, e o microfone do teclado do celular faz o papel.
+- **Entender, 1º passo (sem custo):** `dominios/pessoal/voz.ts` (com teste) lê:
+  - valor ("1.250,50", "5 mil", por extenso);
+  - data (ontem, dia 10, amanhã);
+  - se já foi pago (verbos no futuro deixam a conta em aberto);
+  - tipo de gasto ou entrada (nome da categoria ou palavras do dia a dia: luz → Contas da casa, posto → Transporte).
+- **Entender, 2º passo (IA):** só quando falta valor ou tipo, o TEXTO vai para a Função `pessoal-voz` (Claude, modelo em
+  `PESSOAL_VOZ_MODELO`, padrão `claude-haiku-5-5`). Antes de chamar a IA, a função pergunta ao banco
+  (`pessoal_voz_pode`):
+  - só quem lança no Financeiro da família pode usar;
+  - limite de 30 por hora e 150 por dia por pessoa.
+
+  A resposta da IA é conferida (tipo, valor, data em até 400 dias, categoria da lista). Sem `ANTHROPIC_API_KEY` nos
+  segredos do Supabase, a função responde `indisponivel` e o app segue só com o 1º passo.
+- **LGPD:** na primeira vez, um aviso explica que a fala vira texto pelo navegador (Google ou Apple) e que só o texto vai
+  para a IA quando preciso. Nem o áudio nem o texto ficam guardados (`app.pessoal_voz_uso` guarda só quem usou e quando,
+  por 2 dias, para o limite).
+
 ## 5. Arquivos
 
 - Banco: `supabase/migrations/075_mdc_pessoal.sql` e `076_pessoal_resumo_diario.sql`; testes
