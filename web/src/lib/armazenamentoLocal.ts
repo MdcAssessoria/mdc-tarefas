@@ -17,6 +17,8 @@ export const CHAVES = {
   menuGestao: "hub-mdc:menu-gestao",
   /** Largura do menu lateral em px, escolhida arrastando a borda (lib/larguraMenu.ts). */
   larguraMenu: "hub-mdc:menu-largura",
+  /** Rascunho automático de um formulário (lib/rascunho.ts), por pessoa e formulário. Some ao salvar ou descartar. */
+  rascunho: (usuario: string, contexto: string) => `hub-mdc:rascunho:${usuario}:${contexto}`,
 } as const;
 
 const memoria = new Map<string, string>();

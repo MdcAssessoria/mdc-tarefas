@@ -87,6 +87,8 @@ const org = {
   id: ORG,
   tipo: PESSOAL ? "pessoal" : "empresa",
   nome: PESSOAL ? "Família Carvalho" : "MDC Assessoria",
+  // PIN_TELAS=1: a organização pede o PIN de 4 números (080) e todas as telas mostram a trava
+  exige_pin: Boolean(process.env.PIN_TELAS),
   slug: "mdc",
   cnpj: "48.140.121/0001-65",
   logo_url: null,
@@ -1620,6 +1622,11 @@ const PORTAL_EMPRESAS = [
 
 /** Resultado de cada RPC (o nome é o que vem depois de /rest/v1/rpc/). RPC não listada devolve null. */
 export const RPCS = {
+  // PIN das áreas pessoais (080): a organização de exemplo não exige PIN; com PIN_TELAS=1 a trava aparece
+  pin_situacao: () => ({ definido: true, liberado_ate: null, bloqueado_ate: null }),
+  pin_conferir: () => ({ ok: false, restantes: 4 }),
+  pin_definir: () => ({ definido: true, liberado_ate: new Date(Date.now() + 30 * 60000).toISOString(), bloqueado_ate: null }),
+  pin_trancar: () => null,
   // Licenças (074): preços e valores só pela função (quem gere Licenças), montados dos mesmos dados de exemplo
   lic_valores: () => ({
     produtos: Object.fromEntries(TABELAS.lic_produtos.map((p) => [p.id, p.preco])),

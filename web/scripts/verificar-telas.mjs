@@ -494,7 +494,36 @@ async function medirNovoContrato(pagina, foto, nome) {
  * A chave é o caminho da rota; a função recebe (página, foto) e lança erro quando algo não se comporta como esperado.
  * foto("sufixo") salva uma captura do momento quando a verificação roda com FOTOS.
  */
+/** Trava do PIN (080): PIN errado avisa quantas tentativas restam; "Esqueci meu PIN" pede a senha do HUB. */
+async function interacaoPin(p, foto) {
+  await p.getByLabel("PIN", { exact: true }).fill("4826");
+  await p.getByRole("button", { name: "Entrar" }).click();
+  await p.getByText("Restam 4 tentativas").waitFor({ timeout: 5000 });
+  await foto("pin-errado", { soTela: true });
+  await p.getByRole("button", { name: "Esqueci meu PIN" }).click();
+  await p.getByText("Senha do HUB").waitFor({ timeout: 3000 });
+}
+
 const INTERACOES = {
+  // rascunho automático (14/11/2026): o que foi digitado numa tarefa nova volta depois de recarregar a página
+  "/tarefas": async (p, foto) => {
+    const abrir = async () => {
+      await p.getByRole("button", { name: "Nova tarefa" }).first().click();
+      return p.getByRole("dialog", { name: "Nova tarefa" });
+    };
+    let janela = await abrir();
+    await janela.getByLabel("Título").fill("Conciliar extrato do Itaú");
+    await p.waitForTimeout(900); // o rascunho é guardado meio segundo depois da última tecla
+    await p.reload();
+    await p.getByRole("button", { name: "Nova tarefa" }).first().waitFor({ timeout: 10000 });
+    janela = await abrir();
+    await janela.getByText("Encontramos dados não salvos").waitFor({ timeout: 5000 });
+    await foto("rascunho", { soTela: true });
+    await janela.getByRole("button", { name: "Recuperar" }).click();
+    const titulo = await janela.getByLabel("Título").inputValue();
+    if (titulo !== "Conciliar extrato do Itaú") throw new Error(`rascunho não voltou (título: "${titulo}")`);
+    await janela.getByRole("button", { name: "Descartar" }).waitFor({ state: "detached", timeout: 3000 });
+  },
   // Início: concluir uma tarefa da fila mostra "Desfazer" (UX-05)
   "/familia": async (p, foto) => {
     if (!process.env.PESSOAL) return; // fora da família a tela só avisa que é do MDC · Pessoal
@@ -1405,7 +1434,8 @@ async function verificarTela(navegador, porta, rota, pastaFotos) {
     }
     // no modo família (PESSOAL=1) as telas do HUB mostram só o aviso da Guarda: não há o que clicar nelas
     const barradaNaFamilia = Boolean(process.env.PESSOAL) && texto.includes("não faz parte do MDC · Pessoal");
-    const interacao = barradaNaFamilia ? undefined : INTERACOES[rota.caminho];
+    // com PIN_TELAS=1 toda tela mostra só a trava do PIN (080): a única interação é a da própria trava
+    const interacao = process.env.PIN_TELAS ? interacaoPin : barradaNaFamilia ? undefined : INTERACOES[rota.caminho];
     if (interacao) {
       try {
         // foto("x") salva uma captura intermediária (<tela>-x.png) quando FOTOS está ligado; { soTela: true } fotografa

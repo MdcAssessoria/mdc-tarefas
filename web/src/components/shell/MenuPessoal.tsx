@@ -6,6 +6,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { supabase } from "@/lib/supabase";
+import { trancarPin } from "@/dominios/acessos/pin";
 import { caminho } from "@/lib/caminho";
 import { Icone } from "@/components/ui/Icone";
 import type { NomeIcone } from "@/components/ui/Icone";
@@ -142,6 +143,7 @@ export function MenuPessoal({ modulo, recolhido, aoRecolher }: { modulo: Modulo;
             onClick={async () => {
               // Desliga o aviso deste aparelho antes de sair: quem entrar depois não recebe o resumo desta família.
               await desligarNoAparelho().catch(() => undefined);
+              await trancarPin(); // o PIN das áreas pessoais não fica liberado para quem entrar depois
               await supabase().auth.signOut();
               window.location.replace(caminho("/pessoal"));
             }}

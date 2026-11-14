@@ -3,6 +3,7 @@ import "@fontsource-variable/hanken-grotesk";
 import "@fontsource/bodoni-moda/500.css";
 import "@fontsource/bodoni-moda/600.css";
 import "./globals.css";
+import { ProtecaoAtualizacao } from "@/components/shell/ProtecaoAtualizacao";
 
 export const metadata: Metadata = {
   title: "HUB-MDC",
@@ -29,7 +30,11 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="pt-BR" className="h-full antialiased">
-      <body className="min-h-full">{children}</body>
+      <body className="min-h-full">
+        {children}
+        {/* aviso de versão nova e recuperação quando o sistema é publicado com a aba aberta (14/11/2026) */}
+        <ProtecaoAtualizacao />
+      </body>
     </html>
   );
 }

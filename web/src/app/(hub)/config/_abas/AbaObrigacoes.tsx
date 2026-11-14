@@ -18,6 +18,8 @@ import { BotoesExportar } from "@/components/ui/BotoesExportar";
 import { nomeArquivo } from "@/lib/arquivos/exportarLista";
 import { hojeISO } from "@/lib/datas";
 import { Icone } from "@/components/ui/Icone";
+import { AvisoRascunho } from "@/components/ui/AvisoRascunho";
+import { useRascunho } from "@/lib/rascunho";
 
 const MESES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
@@ -38,13 +40,17 @@ const MODELO_VAZIO: Omit<Modelo, "id" | "org_id"> = {
 };
 
 export function AbaObrigacoes() {
-  const { org, setores, setorPorId, clientes } = useOrg();
+  const { org, eu, setores, setorPorId, clientes } = useOrg();
   const todosGrupos = useMemo(() => gruposDosClientes(clientes), [clientes]);
   const [alcance, setAlcance] = useState<number | null>(null);
   const [modelos, setModelos] = useState<Modelo[]>([]);
   const [editando, setEditando] = useState<(Partial<Modelo> & typeof MODELO_VAZIO) | null>(null);
   const [comp, setComp] = useState(() => mesAnteriorISO(org.fuso));
   const { mostrar, el } = useMensagem();
+  // rascunho automático da rotina em edição (o original é como ela abriu; volta se a página recarregar)
+  const rascunho = useRascunho(editando ? `rotina:${org.id}:${editando.id ?? "nova"}` : null, eu.user_id, editando, editando, (v) =>
+    setEditando(v),
+  );
 
   const carregar = useCallback(async () => {
     const { data, error } = await supabase().from("modelos_recorrentes").select("*").eq("org_id", org.id).order("titulo");
@@ -64,6 +70,7 @@ export function AbaObrigacoes() {
       ? await sb.from("modelos_recorrentes").update(dados).eq("id", id)
       : await sb.from("modelos_recorrentes").insert({ ...dados, org_id: org.id });
     if (error) return mostrar(traduzirErro(error), true);
+    rascunho.limpar();
     setEditando(null);
     void carregar();
   }
@@ -160,6 +167,11 @@ export function AbaObrigacoes() {
 
       {editando && (
         <form onSubmit={salvar} className="cartao grid gap-4 p-5 md:grid-cols-4">
+          {rascunho.pendente && (
+            <div className="md:col-span-4">
+              <AvisoRascunho pendente={rascunho.pendente} aoRecuperar={rascunho.recuperar} aoDescartar={rascunho.descartar} />
+            </div>
+          )}
           <label className="campo md:col-span-2">
             <span>Título</span>
             <input required value={editando.titulo} onChange={(e) => setEditando({ ...editando, titulo: e.target.value })} />
