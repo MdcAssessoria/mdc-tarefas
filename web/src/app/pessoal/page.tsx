@@ -10,6 +10,7 @@ import { caminho } from "@/lib/caminho";
 import { precisaTrocarSenha } from "@/lib/senhaProvisoria";
 import { Icone } from "@/components/ui/Icone";
 import type { NomeIcone } from "@/components/ui/Icone";
+import { InstalarNoCelular, QrParaCelular } from "./_componentes/LevarProCelular";
 import { NOME_APP_PESSOAL, problemaCadastro, problemaNomeFamilia, sugerirNomeFamilia } from "@/dominios/pessoal/entrada";
 
 type Modo = "entrar" | "criar" | "familia" | "recuperar" | "carregando" | "convite" | "falha";
@@ -178,11 +179,13 @@ export default function EntradaPessoal() {
             </li>
           ))}
         </ul>
+        <QrParaCelular />
         <div className="absolute inset-x-0 bottom-0 h-1 bg-[var(--destaque)]" />
       </div>
 
       {/* formulário */}
-      <div className="order-first grid place-items-center bg-white px-4 py-10 sm:px-6 lg:order-none">
+      <div className="order-first flex flex-col items-center justify-center bg-white px-4 py-10 sm:px-6 lg:order-none">
+        <InstalarNoCelular />
         {modo === "carregando" ? (
           <p className="text-sm text-neutral-500">Carregando…</p>
         ) : modo === "falha" ? (

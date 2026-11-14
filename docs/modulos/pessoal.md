@@ -138,7 +138,10 @@ Desenho aprovado pelo Edvaldo no quadro "MDC · Pessoal — desenho do app" (pro
   de gasto e o texto "Atrasada há N dias". Quem grava avisa as telas abertas (`pessoal:mudou`) e mostra o aviso rápido.
 - **Como achar o app:** no Início do HUB, quem também tem família vê o cartão "Suas finanças pessoais · MDC · Pessoal"
   com "Abrir" (`CartaoMinhaFamilia`); no Início da família, a faixa "Tenha o MDC · Pessoal como app" com "Instalar"
-  (`BotaoInstalarApp variante="faixa"`, some quando já roda instalado). Endereço direto: `/hub-mdc/pessoal`.
+  (`BotaoInstalarApp variante="faixa"`, some quando já roda instalado). Endereço direto: `/hub-mdc/pessoal`
+  (`ENDERECO_PESSOAL` em `entrada.ts`). A entrada sem login mostra a faixa "Instalar" no celular e, no computador, um QR
+  code para abrir no celular (`app/pessoal/_componentes/LevarProCelular.tsx`). `next.config.ts` já leva
+  `pessoal.mdcassessoria.com` para a entrada, quando o domínio for apontado para a Vercel. Fotos sem login: `SEMLOGIN=1`.
 
 ## 5. Arquivos
 

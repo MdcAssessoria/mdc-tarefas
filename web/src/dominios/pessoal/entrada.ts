@@ -4,6 +4,11 @@ import { problemaSenhaProvisoria } from "@/lib/senhaProvisoria";
 
 export const NOME_APP_PESSOAL = "MDC · Pessoal";
 
+/** Endereço público de entrada do MDC · Pessoal (QR code, convite, material de divulgação). */
+export const ENDERECO_PESSOAL = "https://hub.mdcassessoria.com/hub-mdc/pessoal";
+/** O mesmo endereço para digitar, sem "https://". */
+export const ENDERECO_PESSOAL_TEXTO = ENDERECO_PESSOAL.replace(/^https:\/\//, "");
+
 /** Módulos do HUB que existem no app pessoal (o resto fica fora, mesmo para o administrador da família). */
 export const MODULOS_PESSOAL = ["hub", "tarefas", "financeiro", "familia"] as const;
 

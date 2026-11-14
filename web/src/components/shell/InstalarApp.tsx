@@ -160,7 +160,8 @@ function Passo({ n, icone, children }: { n: number; icone?: NomeIcone; children:
 
 function JanelaInstalar({ situacao, aoFechar }: { situacao: Situacao; aoFechar: () => void }) {
   // MDC · Pessoal (075): o app instalado da família tem nome próprio (manifest-pessoal.webmanifest)
-  const nomeApp = useOrgOpcional()?.pessoal ? "MDC · Pessoal" : "HUB-MDC";
+  const naFamilia = useOrgOpcional()?.pessoal || (typeof window !== "undefined" && window.location.pathname.includes("/pessoal"));
+  const nomeApp = naFamilia ? "MDC · Pessoal" : "HUB-MDC";
   const [copiado, setCopiado] = useState(false);
   const endereco = typeof window !== "undefined" ? window.location.origin + caminho("/") : "";
   const iphone = situacao.plataforma === "iphone";

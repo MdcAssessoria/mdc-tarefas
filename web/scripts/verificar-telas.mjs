@@ -1343,16 +1343,18 @@ async function verificarTela(navegador, porta, rota, pastaFotos) {
     locale: "pt-BR",
     timezoneId: "America/Sao_Paulo",
   });
-  await contexto.addInitScript(
-    ([chave, sessao]) => {
-      try {
-        localStorage.setItem(chave, JSON.stringify(sessao));
-      } catch {
-        // sem localStorage (ex.: about:blank): nada a fazer
-      }
-    },
-    [`sb-${PROJETO_SUPABASE}-auth-token`, sessaoFalsa()],
-  );
+  // SEMLOGIN=1 abre as telas como visitante (ex.: a entrada /pessoal com o QR code e o "Instalar")
+  if (!process.env.SEMLOGIN)
+    await contexto.addInitScript(
+      ([chave, sessao]) => {
+        try {
+          localStorage.setItem(chave, JSON.stringify(sessao));
+        } catch {
+          // sem localStorage (ex.: about:blank): nada a fazer
+        }
+      },
+      [`sb-${PROJETO_SUPABASE}-auth-token`, sessaoFalsa()],
+    );
   await contexto.route(`**/${PROJETO_SUPABASE}.supabase.co/**`, criarRespostaSupabase(avisos));
   // tempo real (WebSocket): aceita a conexão e não responde nada
   await contexto.routeWebSocket(/supabase\.co\/realtime/, () => {});

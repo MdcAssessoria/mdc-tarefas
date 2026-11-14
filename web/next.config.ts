@@ -11,6 +11,15 @@ const nextConfig: NextConfig = {
   env: { NEXT_PUBLIC_VERSAO_HUB: versao },
   async redirects() {
     return [
+      // MDC · Pessoal com endereço próprio: pessoal.mdcassessoria.com abre a entrada da família (vale quando o domínio
+      // estiver apontado para a Vercel; até lá não muda nada)
+      {
+        source: "/",
+        has: [{ type: "host", value: "pessoal.mdcassessoria.com" }],
+        destination: "/hub-mdc/pessoal",
+        basePath: false,
+        permanent: false,
+      },
       { source: "/", destination: "/hub-mdc", basePath: false, permanent: false },
       // o estoque saiu do Financeiro e virou módulo próprio (01/11/2026)
       { source: "/financeiro/estoque", destination: "/estoque", permanent: false },
