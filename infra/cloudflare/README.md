@@ -46,3 +46,18 @@ Remetente: caixa **hub@mdcassessoria.com** no Microsoft 365, usada só para envi
 
 Enquanto o SMTP não estiver ativo, o Supabase só entrega para os e-mails da equipe do projeto;
 a tela de cadastro mostra o link do convite para copiar e enviar por WhatsApp quando o e-mail não sai.
+
+## Endereço curto do MDC · Pessoal: mdcassessoria.com/pessoal (escolhido em 14/11/2026)
+
+Só um redirecionamento (302) de `mdcassessoria.com/pessoal` para `https://hub.mdcassessoria.com/hub-mdc/pessoal`,
+mantendo o que vier depois do `?` (o código do convite). Dois jeitos; use **um**:
+
+- **A) No site (Hostinger/WordPress), sem mexer na Cloudflare — recomendado:** hPanel › Sites › Redirecionamentos (ou o
+  plugin *Redirection* no WordPress): de `/pessoal` para `https://hub.mdcassessoria.com/hub-mdc/pessoal`, tipo 302
+  (temporário), com "passar os parâmetros" ligado.
+- **B) Na Cloudflare (só se o registro `mdcassessoria.com` estiver com a nuvem laranja):** Regras › Regras de
+  redirecionamento › Criar: "Caminho do URI" é igual a `/pessoal` → URL estática
+  `https://hub.mdcassessoria.com/hub-mdc/pessoal`, código 302, "Preservar a string de consulta" ligado.
+
+Depois de testar no celular, troque `ENDERECO_PESSOAL_TEXTO` em `web/src/dominios/pessoal/entrada.ts` para
+`mdcassessoria.com/pessoal` (o QR code continua com o endereço completo).
