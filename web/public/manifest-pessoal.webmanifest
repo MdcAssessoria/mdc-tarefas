@@ -1,0 +1,44 @@
+{
+  "id": "/hub-mdc/pessoal",
+  "name": "MDC · Pessoal",
+  "short_name": "MDC Pessoal",
+  "description": "Finanças e tarefas da família, com resumo diário. Da MDC Assessoria.",
+  "lang": "pt-BR",
+  "start_url": "/hub-mdc/pessoal",
+  "scope": "/hub-mdc/",
+  "display": "standalone",
+  "background_color": "#0B2820",
+  "theme_color": "#0B2820",
+  "icons": [
+    {
+      "src": "/hub-mdc/icone-hub-mdc-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/hub-mdc/icone-hub-mdc-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/hub-mdc/icone-hub-mdc-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/hub-mdc/icone-hub-mdc-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/hub-mdc/icone-hub-mdc.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

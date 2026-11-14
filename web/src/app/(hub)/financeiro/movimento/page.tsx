@@ -63,7 +63,7 @@ interface Linha {
 const MOSTRAR = 500;
 
 export default function PaginaEntradasSaidas() {
-  const { org, pode } = useOrg();
+  const { org, pode, pessoal } = useOrg();
   const financeiro = useClienteGestao();
   const cliente = financeiro.cliente;
   const podeOperar = pode("financeiro", "operar");
@@ -281,7 +281,7 @@ export default function PaginaEntradasSaidas() {
     <div className="space-y-4">
       <CabecalhoPagina
         titulo="Entradas e saídas"
-        descricao="O dinheiro que entrou e saiu da MDC, e para onde ele foi."
+        descricao={`O dinheiro que entrou e saiu ${pessoal ? "da família" : "da MDC"}, e para onde ele foi.`}
         acoes={
           <>
             <BotoesExportar
@@ -321,7 +321,7 @@ export default function PaginaEntradasSaidas() {
             {podeOperar && cliente && (
               <>
                 {(cad.dados?.contas.filter((c) => c.ativo).length ?? 0) >= 2 && (
-                  <button className="btn" onClick={() => setTransferindo(true)} title="Transferir entre contas da MDC">
+                  <button className="btn" onClick={() => setTransferindo(true)} title="Transferir entre as contas">
                     <Icone nome="transferir" className="h-4 w-4" />
                     Transferência
                   </button>

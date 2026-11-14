@@ -63,6 +63,7 @@ MDC". A família escolhida vale para a aba (sessionStorage), então HUB e famíl
 
 ## 4. "Você tem empresa?" — contato da MDC (migração 077)
 
+- **Resposta:** desde a 078 é sempre a mesma ("A MDC recebeu o seu pedido").
 - **Onde:** cartão no Início (só para o responsável, sem empresa indicada; "Agora não" esconde por 90 dias) e a seção
   "Contato da MDC sobre a sua empresa" na tela Família ("Indicar outra empresa", até 3 por família, e "Não quero mais
   contato").
@@ -83,11 +84,30 @@ MDC". A família escolhida vale para a aba (sessionStorage), então HUB e famíl
 - Antes de ir ao ar, o texto da autorização deve passar pelo advogado da MDC. Para mudar o texto, crie migração nova que
   troque `app.pessoal_termo_contato` subindo a versão.
 
+## 4.1 Travas de segurança da auditoria de 14/11/2026 (migração 078)
+
+- **Família só tem Tarefas e Finanças no banco**, não só na tela: `app.hub_pode`/`hub_pode_algum` recusam qualquer
+  outro módulo numa organização `pessoal`, `app.eh_gestor` é falso e o Fiscal (`fis_pode`, `fis_pode_certificado`)
+  recusa o cliente da família. Assim o "administrador da família" não chega a Contratos, envio de faturas pelos canais
+  da MDC, Ledgra Link, Societário, Licenças, Atendimento nem Portal.
+- **Conta do cadastro aberto** nasce com `app_metadata.origem = 'pessoal'`: os gatilhos de convite a ignoram e um
+  gatilho em `membros`/`portal_usuarios` impede que ela entre na equipe ou no Portal. O cadastro recusa e-mail com
+  convite pendente ou de ex-cliente (`pessoal_email_livre`), com a mesma resposta de "já existe conta".
+- **Travas da família:** limite de 10 códigos errados por hora (código errado devolve vazio e a tentativa fica
+  gravada); a organização da família não muda pela API (nome só por `pessoal_renomear`); limite de 3 famílias contado
+  pela porta de entrada; membro não troca de conta nem volta sozinho; quem sai deixa as tarefas sem responsável; uma
+  família com problema não para o resumo das outras.
+- **"Você tem empresa?"** responde sempre "recebido" (não revela se a empresa é cliente ou já está no Funil), até 5
+  pedidos por conta em 30 dias, o mesmo CNPJ em 30 dias não cria outro lead, e CNPJ já no Funil vira tarefa de
+  conferência. A MDC dona do Funil é achada pelo CNPJ dela (`app.org_mdc`).
+- **Aviso no celular:** só endereços dos serviços de aviso (Google, Mozilla, Apple, Microsoft) e o aparelho não troca
+  de conta. A família nasce com a conta "Dinheiro (carteira)" para já poder pagar e receber.
+
 ## 5. Arquivos
 
 - Banco: `supabase/migrations/075_mdc_pessoal.sql` e `076_pessoal_resumo_diario.sql`; testes
   `supabase/testes/141_base_075.sql`, `142_pessoal_075.sql` (P1 a P23), `143_base_076.sql` e `144_resumo_076.sql`
-  (R1 a R15); `077_pessoal_contato_empresa.sql` com `145_base_077.sql` e `146_contato_077.sql` (C1 a C17).
+  (R1 a R15); `077_pessoal_contato_empresa.sql` com `145_base_077.sql` e `146_contato_077.sql` (C1 a C17); `078_pessoal_seguranca.sql` com `147_base_078.sql` e `148_seguranca_078.sql` (S1 a S17).
 - Funções Edge: `supabase/functions/pessoal-cadastro/index.ts` (cadastro aberto) e `pessoal-aviso/index.ts`
   (aviso no celular).
 - Site: `web/src/app/pessoal/page.tsx` (entrada), `web/src/app/(hub)/familia/page.tsx`,

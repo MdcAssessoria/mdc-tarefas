@@ -554,9 +554,11 @@ const INTERACOES = {
     await conta.waitFor({ timeout: 3000 });
     await foto("nova-conta", { soTela: true });
     await conta.getByRole("button", { name: "Nova categoria" }).click();
-    const cat = p.getByRole("dialog", { name: "Nova categoria de despesa" });
+    // na família a janela fala "tipo de gasto" e pede "Parecido com" no lugar da conta contábil
+    const familia = Boolean(process.env.PESSOAL);
+    const cat = p.getByRole("dialog", { name: familia ? "Novo tipo de gasto" : "Nova categoria de despesa" });
     await cat.waitFor({ timeout: 3000 });
-    await cat.getByLabel("Conta contábil").waitFor({ timeout: 3000 });
+    await cat.getByLabel(familia ? "Parecido com" : "Conta contábil").waitFor({ timeout: 3000 });
     await foto("nova-categoria");
     await cat.getByRole("button", { name: "Voltar" }).click();
     await cat.waitFor({ state: "detached", timeout: 3000 });
@@ -1327,6 +1329,23 @@ async function verificarTela(navegador, porta, rota, pastaFotos) {
     if (/Application error|This page could not be found|404: This page/.test(texto)) problemas.push("página de erro do Next.js");
     const final = new URL(pagina.url()).pathname.replace(BASE, "") || "/";
     if (final !== rota.caminho && !(rota.caminho === "/" && final === "/")) avisos.add(`redirecionou para ${final}`);
+    // regra 8.3: nenhuma tela rola de lado (no celular, 390 px); aponta os elementos que passam da largura
+    const sobra = await pagina.evaluate(() => {
+      const vw = window.innerWidth;
+      const larg = document.documentElement.scrollWidth - vw;
+      if (larg <= 1) return null;
+      const culpados = [...document.body.querySelectorAll("*")]
+        .filter((el) => {
+          const r = el.getBoundingClientRect();
+          return r.right > vw + 1 && r.width > 0 && getComputedStyle(el).position !== "fixed";
+        })
+        .filter((el, _i, todos) => !todos.some((o) => o !== el && el.contains(o)))
+        .slice(0, 3)
+        .map((el) => `${el.tagName.toLowerCase()}.${String(el.className).split(" ").slice(0, 3).join(".")}`);
+      return `${larg} px (${culpados.join(", ")})`;
+    });
+    // no celular é falha (regra 8.3); no computador fica como aviso até corrigir as telas antigas de Contratos
+    if (sobra) (celular ? problemas.push.bind(problemas) : (t) => avisos.add(t))(`a página rola de lado: ${sobra}`);
     if (process.env.ACESSIBILIDADE) {
       try {
         await medirAcessibilidade(pagina, rota.caminho, celular);
@@ -1353,7 +1372,9 @@ async function verificarTela(navegador, porta, rota, pastaFotos) {
         problemas.push(`instalar no iPhone falhou: ${String(e.message ?? e).split("\n")[0]}`);
       }
     }
-    const interacao = INTERACOES[rota.caminho];
+    // no modo família (PESSOAL=1) as telas do HUB mostram só o aviso da Guarda: não há o que clicar nelas
+    const barradaNaFamilia = Boolean(process.env.PESSOAL) && texto.includes("não faz parte do MDC · Pessoal");
+    const interacao = barradaNaFamilia ? undefined : INTERACOES[rota.caminho];
     if (interacao) {
       try {
         // foto("x") salva uma captura intermediária (<tela>-x.png) quando FOTOS está ligado; { soTela: true } fotografa

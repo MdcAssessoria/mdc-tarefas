@@ -12,7 +12,7 @@ import { Icone } from "@/components/ui/Icone";
 import type { NomeIcone } from "@/components/ui/Icone";
 import { NOME_APP_PESSOAL, problemaCadastro, problemaNomeFamilia, sugerirNomeFamilia } from "@/dominios/pessoal/entrada";
 
-type Modo = "entrar" | "criar" | "familia" | "recuperar" | "carregando";
+type Modo = "entrar" | "criar" | "familia" | "recuperar" | "carregando" | "convite";
 
 const VANTAGENS: { icone: NomeIcone; titulo: string; texto: string }[] = [
   { icone: "carteira", titulo: "Contas da casa em dia", texto: "A pagar, a receber, contas bancárias e extratos num lugar só." },
@@ -51,6 +51,7 @@ export default function EntradaPessoal() {
   const [erro, setErro] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
   const [convite, setConvite] = useState(""); // código do convite do link, se veio
+  const [semConvite, setSemConvite] = useState<{ id: string; nome: string; motivo: string } | null>(null); // convite que não valeu
 
   const continuarLogado = useEffectEvent((id: string, nomePessoa: string, codigo: string) => depoisDeEntrar(id, nomePessoa, codigo));
 
@@ -71,10 +72,22 @@ export default function EntradaPessoal() {
   async function depoisDeEntrar(userId: string, nomePessoa: string, codigo = convite) {
     if (codigo) {
       const { data, error } = await supabase().rpc("pessoal_aceitar_convite", { p_codigo: codigo });
-      if (!error) return abrirApp(String(data));
+      if (!error && data) return abrirApp(String(data));
+      // código errado volta vazio (o banco conta a tentativa); vencido, cancelado ou usado volta com o motivo
       setConvite("");
-      setErro(`${traduzirErro(error)}. Você ainda pode usar a sua própria família.`);
+      setSemConvite({
+        id: userId,
+        nome: nomePessoa,
+        motivo: error ? traduzirErro(error) : "Não encontramos este código de convite. Confira as letras ou peça um novo",
+      });
+      setModo("convite");
+      return;
     }
+    await semConviteSeguir(userId, nomePessoa);
+  }
+
+  /** Sem convite (ou a pessoa preferiu seguir sem ele): abre a família dela ou pede o nome de uma nova. */
+  async function semConviteSeguir(userId: string, nomePessoa: string) {
     const slug = await minhaFamilia(userId);
     if (slug) return abrirApp(slug);
     setFamilia((f) => f || sugerirNomeFamilia(nomePessoa));
@@ -127,7 +140,7 @@ export default function EntradaPessoal() {
   return (
     <div className="grid min-h-screen lg:grid-cols-[1.1fr_1fr]">
       {/* capa */}
-      <div className="relative flex flex-col justify-center overflow-hidden bg-[var(--marca)] px-6 py-10 text-[#C6D3CC] sm:px-10 lg:px-16">
+      <div className="relative order-last flex flex-col justify-center overflow-hidden bg-[var(--marca)] px-6 py-10 lg:order-none text-[#C6D3CC] sm:px-10 lg:px-16">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,rgba(226,193,126,0.16),transparent_60%)]" />
         <div className="relative flex items-center gap-4">
           <img src={caminho("/logo-mdc-dourado.png")} alt="MDC" className="h-12 w-auto sm:h-14" />
@@ -150,18 +163,49 @@ export default function EntradaPessoal() {
       </div>
 
       {/* formulário */}
-      <div className="grid place-items-center bg-white px-4 py-10 sm:px-6">
+      <div className="order-first grid place-items-center bg-white px-4 py-10 sm:px-6 lg:order-none">
         {modo === "carregando" ? (
           <p className="text-sm text-neutral-500">Carregando…</p>
+        ) : modo === "convite" && semConvite ? (
+          <div className="w-full max-w-sm space-y-4" role="alert">
+            <div>
+              <span className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--destaque-escuro)]">{NOME_APP_PESSOAL}</span>
+              <h2 className="mt-1 text-2xl font-semibold text-[var(--marca)]">Este convite não vale mais</h2>
+              <p className="mt-2 text-sm text-neutral-700">
+                {semConvite.motivo}. O convite vale por 7 dias e só uma vez. Peça um novo a quem convidou você: é rapidinho.
+              </p>
+            </div>
+            <a
+              className="btn-primario w-full justify-center"
+              href={`https://wa.me/?text=${encodeURIComponent("Oi! O convite do MDC · Pessoal não funcionou para mim. Pode me mandar um novo?")}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Icone nome="chat" className="h-4 w-4" />
+              Pedir novo convite pelo WhatsApp
+            </a>
+            <button
+              type="button"
+              className="btn w-full justify-center"
+              onClick={() => void semConviteSeguir(semConvite.id, semConvite.nome)}
+            >
+              <Icone nome="seta-direita" className="h-4 w-4" />
+              Seguir sem o convite (criar a minha família)
+            </button>
+          </div>
         ) : (
           <form onSubmit={(e) => void enviar(e)} className="w-full max-w-sm space-y-4" noValidate>
             <div>
               <span className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--destaque-escuro)]">{NOME_APP_PESSOAL}</span>
               <h2 className="mt-1 text-2xl font-semibold text-[var(--marca)]">
                 {
-                  { entrar: "Entrar", criar: "Criar conta grátis", familia: "Dê um nome para a sua família", recuperar: "Esqueci a senha" }[
-                    modo
-                  ]
+                  {
+                    entrar: "Entrar",
+                    criar: "Criar conta grátis",
+                    familia: "Dê um nome para a sua família",
+                    recuperar: "Esqueci a senha",
+                    convite: "Este convite não vale mais",
+                  }[modo]
                 }
               </h2>
               {convite && (modo === "entrar" || modo === "criar") ? (
@@ -280,7 +324,9 @@ export default function EntradaPessoal() {
             {modo !== "recuperar" && (
               <button className="btn-primario w-full" disabled={enviando}>
                 <Icone nome={modo === "familia" ? "check" : modo === "criar" ? "mais" : "seta-direita"} className="h-4 w-4" />
-                {enviando ? "Aguarde…" : { entrar: "Entrar", criar: "Criar minha conta", familia: "Começar a usar" }[modo]}
+                {enviando
+                  ? "Aguarde…"
+                  : { entrar: "Entrar", criar: "Criar minha conta", familia: "Começar a usar", convite: "Continuar" }[modo]}
               </button>
             )}
 

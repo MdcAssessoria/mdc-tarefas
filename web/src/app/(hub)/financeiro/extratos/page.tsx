@@ -323,7 +323,7 @@ export default function PaginaExtratos() {
             >
               {contas.dados?.length
                 ? "Troque o período ou importe o extrato do banco no quadro acima (arquivo OFX ou planilha)."
-                : "Cadastre a conta bancária da MDC em Bancos e depois importe o extrato aqui."}
+                : "Cadastre a conta bancária em Contas bancárias e depois traga o extrato aqui."}
             </EstadoVazio>
           ) : (
             <QuadroTabela

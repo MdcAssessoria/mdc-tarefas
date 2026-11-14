@@ -67,7 +67,7 @@ type Janela =
   | { tipo: "caminho"; t: Titulo };
 
 export function TelaTitulos({ tipo }: { tipo: TipoTitulo }) {
-  const { org, pode } = useOrg();
+  const { org, pode, pessoal } = useOrg();
   const financeiro = useClienteGestao();
   const cliente = financeiro.cliente;
   const podeOperar = pode("financeiro", "operar");
@@ -214,8 +214,8 @@ export function TelaTitulos({ tipo }: { tipo: TipoTitulo }) {
         titulo={T.titulo}
         descricao={
           tipo === "pagar"
-            ? "O que a MDC tem para pagar: vencimentos, pagamentos e atrasos."
-            : "O que a MDC tem para receber: vencimentos, recebimentos e atrasos."
+            ? `O que ${pessoal ? "a família" : "a MDC"} tem para pagar: vencimentos, pagamentos e atrasos.`
+            : `O que ${pessoal ? "a família" : "a MDC"} tem para receber: vencimentos, recebimentos e atrasos.`
         }
         acoes={
           <>

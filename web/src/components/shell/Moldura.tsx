@@ -3,6 +3,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import { caminho } from "@/lib/caminho";
 import { useEffect, useState } from "react";
 import { CHAVES, useEstadoLembrado } from "@/lib/armazenamentoLocal";
 import { lerLarguraMenu } from "@/lib/larguraMenu";
@@ -32,8 +33,12 @@ export function Moldura({ children }: { children: React.ReactNode }) {
   const Menu = pessoal ? MenuPessoal : MenuLateral;
   useEffect(() => {
     document.title = pessoal ? "MDC · Pessoal" : "HUB-MDC";
+    // o app instalado da família leva o nome e a entrada do Pessoal
+    const manifesto = document.querySelector<HTMLLinkElement>('link[rel="manifest"]');
+    if (manifesto) manifesto.href = caminho(pessoal ? "/manifest-pessoal.webmanifest" : "/manifest.webmanifest");
     try {
-      sessionStorage.setItem("mdc-tarefas:entrada", pessoal ? "pessoal" : "hub");
+      // localStorage: vale também quando o app instalado é fechado e aberto de novo (a sessão caiu → volta ao /pessoal)
+      localStorage.setItem("mdc-tarefas:entrada", pessoal ? "pessoal" : "hub");
     } catch {
       /* sem armazenamento */
     }

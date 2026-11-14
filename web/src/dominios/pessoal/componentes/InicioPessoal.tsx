@@ -26,7 +26,7 @@ const ATALHOS: { href: string; nome: string; dica: string; icone: NomeIcone }[] 
 ];
 
 export function InicioPessoal() {
-  const { org, eu, pode } = useOrg();
+  const { org, eu, pode, papel } = useOrg();
   const hoje = hojeISO(org.fuso);
   const cliente = org.gestao_cliente_id ?? null;
 
@@ -96,7 +96,7 @@ export function InicioPessoal() {
       <section>
         <h2 className="mb-3 text-lg font-semibold text-[var(--marca)]">Lançar agora</h2>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          {ATALHOS.filter((a) => (a.href.startsWith("/financeiro") ? pode("financeiro", "operar") : true)).map((a) => (
+          {ATALHOS.filter((a) => (a.href.startsWith("/financeiro") ? pode("financeiro", "operar") : papel === "admin")).map((a) => (
             <Link key={a.href} href={a.href} className="cartao flex items-start gap-3 p-4 transition-shadow hover:shadow-md">
               <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[var(--marca)] text-[var(--destaque)]">
                 <Icone nome={a.icone} className="h-5 w-5" />

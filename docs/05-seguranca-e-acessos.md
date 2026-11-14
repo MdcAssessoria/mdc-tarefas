@@ -196,6 +196,10 @@ além disso. Para que um desconhecido não use esse papel para chegar a outras c
   família da outra;
 - dado de família só chega à MDC com autorização específica (077): caixa desmarcada, texto e versão gravados, retirada
   a qualquer momento (o lead é arquivado); a família nunca lê o Funil da MDC;
+- **desde a 078 (auditoria de 14/11/2026), no banco:** organização `pessoal` só tem Tarefas e Financeiro em
+  `app.hub_pode`/`hub_pode_algum` (o "administrador da família" não é administrador de mais nada), `app.eh_gestor` é
+  falso e o Fiscal recusa o cliente da família; conta com `app_metadata.origem = 'pessoal'` nunca vira equipe nem
+  Portal (gatilho em `membros`/`portal_usuarios`; os gatilhos de convite a ignoram);
 - a criação de conta passa pela Função Edge `pessoal-cadastro` (limite por IP, campo contra robôs); o site nunca usa
   a chave de serviço.
 

@@ -8,6 +8,7 @@ import { useState, useSyncExternalStore } from "react";
 import { Icone, type NomeIcone } from "@/components/ui/Icone";
 import { Modal } from "@/components/ui/Modal";
 import { caminho } from "@/lib/caminho";
+import { useOrgOpcional } from "@/dominios/organizacao/OrgProvider";
 import { abertoComoApp, navegadorIphone, plataforma, type NavegadorIphone, type Plataforma } from "@/lib/instalarApp";
 
 interface PedidoInstalacao extends Event {
@@ -143,6 +144,8 @@ function Passo({ n, icone, children }: { n: number; icone?: NomeIcone; children:
 }
 
 function JanelaInstalar({ situacao, aoFechar }: { situacao: Situacao; aoFechar: () => void }) {
+  // MDC · Pessoal (075): o app instalado da família tem nome próprio (manifest-pessoal.webmanifest)
+  const nomeApp = useOrgOpcional()?.pessoal ? "MDC · Pessoal" : "HUB-MDC";
   const [copiado, setCopiado] = useState(false);
   const endereco = typeof window !== "undefined" ? window.location.origin + caminho("/") : "";
   const iphone = situacao.plataforma === "iphone";
@@ -159,7 +162,7 @@ function JanelaInstalar({ situacao, aoFechar }: { situacao: Situacao; aoFechar: 
   return (
     <Modal
       titulo={iphone ? "Instalar no iPhone" : "Instalar no celular"}
-      descricao="O HUB-MDC fica com ícone na tela, abre em tela cheia e continua com o seu login."
+      descricao={`O ${nomeApp} fica com ícone na tela, abre em tela cheia e continua com o seu login.`}
       aoFechar={aoFechar}
       largura="lg"
       rodape={
@@ -174,14 +177,14 @@ function JanelaInstalar({ situacao, aoFechar }: { situacao: Situacao; aoFechar: 
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={caminho("/icone-hub-mdc-180.png")} alt="" className="h-12 w-12 rounded-xl" />
           <p>
-            Este é o ícone que vai aparecer na tela do celular, com o nome <b>HUB-MDC</b>.
+            Este é o ícone que vai aparecer na tela do celular, com o nome <b>{nomeApp}</b>.
           </p>
         </div>
 
         {iphone && situacao.navegador === "dentro_de_app" ? (
           <ol className="space-y-3">
             <Passo n={1} icone="externo">
-              Você abriu o HUB por dentro de outro aplicativo. Toque em <b>•••</b> ou no ícone de bússola e escolha <b>Abrir no Safari</b>.
+              Você abriu o {nomeApp} por dentro de outro aplicativo. Toque em <b>•••</b> ou no ícone de bússola e escolha <b>Abrir no Safari</b>.
             </Passo>
             <Passo n={2} icone="copiar">
               Se não achar, copie o endereço e cole no Safari.
@@ -210,7 +213,7 @@ function JanelaInstalar({ situacao, aoFechar }: { situacao: Situacao; aoFechar: 
               Deixe ligado <b>Abrir como App Web</b>, se aparecer, e toque em <b>Adicionar</b>, no canto de cima.
             </Passo>
             <Passo n={4} icone="celular">
-              Pronto: abra o HUB pelo ícone novo na tela do iPhone.
+              Pronto: abra o {nomeApp} pelo ícone novo na tela do iPhone.
             </Passo>
           </ol>
         ) : (
@@ -222,7 +225,7 @@ function JanelaInstalar({ situacao, aoFechar }: { situacao: Situacao; aoFechar: 
               Toque em <b>Instalar app</b> ou em <b>Adicionar à tela inicial</b>.
             </Passo>
             <Passo n={3} icone="check">
-              Confirme em <b>Instalar</b> e abra o HUB pelo ícone novo.
+              Confirme em <b>Instalar</b> e abra o {nomeApp} pelo ícone novo.
             </Passo>
           </ol>
         )}

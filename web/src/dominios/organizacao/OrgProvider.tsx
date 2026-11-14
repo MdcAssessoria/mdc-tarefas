@@ -102,7 +102,7 @@ export function OrgProvider({ children }: { children: React.ReactNode }) {
       // quem estava no MDC · Pessoal volta para a entrada dele (075)
       let entrada: string | null = null;
       try {
-        entrada = sessionStorage.getItem("mdc-tarefas:entrada");
+        entrada = localStorage.getItem("mdc-tarefas:entrada");
       } catch {
         /* sem armazenamento */
       }

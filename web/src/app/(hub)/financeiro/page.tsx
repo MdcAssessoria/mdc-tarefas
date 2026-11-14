@@ -249,12 +249,17 @@ export default function PainelFinanceiro() {
 
 /** Atalhos grandes para o que mais se faz no dia a dia. */
 function Atalhos() {
-  const itens = [
+  const { pessoal } = useOrg();
+  const todos = [
     { href: "/financeiro/pagar?nova=1", nome: "Nova conta a pagar", dica: "Boleto, aluguel, fornecedor", icone: "seta-saida" },
     { href: "/financeiro/receber?nova=1", nome: "Nova conta a receber", dica: "Venda, serviço, mensalidade", icone: "seta-entrada" },
     { href: "/financeiro/extratos", nome: "Importar extrato", dica: "Arquivo OFX ou planilha do banco", icone: "importar" },
     { href: "/contratos/faturas", nome: "Emitir nota fiscal", dica: "NFS-e das faturas dos contratos", icone: "documento" },
   ];
+  // MDC · Pessoal: família não emite nota; no lugar, as contas (banco e carteira)
+  const itens = pessoal
+    ? [...todos.slice(0, 3), { href: "/financeiro/bancos", nome: "Contas e carteira", dica: "Onde o dinheiro da família fica", icone: "banco" }]
+    : todos;
   return (
     <nav aria-label="Atalhos" className="grid grid-cols-2 gap-3 lg:grid-cols-4">
       {itens.map((a) => (

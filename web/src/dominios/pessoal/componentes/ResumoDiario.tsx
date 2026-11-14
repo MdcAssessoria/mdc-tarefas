@@ -45,7 +45,7 @@ export function ResumoDiario() {
         <b className="block text-[var(--marca)]">Resumo diário</b>
         <span className="text-sm text-neutral-600">
           {p.ligado
-            ? `Todo dia às ${textoHora(p.hora)}, no sino${p.celular ? " e no celular (onde você ligar)" : ""}, quando houver conta para contar.`
+            ? `Todo dia às ${textoHora(p.hora)}, no sino${p.celular ? " e no celular dos aparelhos em que você ligou o aviso" : ""}, quando houver conta vencendo ou dinheiro entrando.`
             : "Desligado: você não recebe o resumo das finanças."}
         </span>
       </div>
@@ -96,6 +96,16 @@ function JanelaResumo({ inicial, aoFechar }: { inicial: Preferencia; aoFechar: (
         p_celular: f.celular,
       });
       if (error) throw error;
+      // quer aviso no celular e este aparelho ainda não está ligado: já liga agora (o navegador pede licença)
+      if (f.ligado && f.celular && aparelho === "desligado") {
+        try {
+          setAparelho(await ligarNoAparelho());
+        } catch (x) {
+          setErro(`Resumo salvo, mas o aviso neste aparelho não ligou: ${traduzirErro(x)}`);
+          setOcupado(false);
+          return;
+        }
+      }
       aoFechar(true);
     } catch (e) {
       setErro(traduzirErro(e));
@@ -151,7 +161,7 @@ function JanelaResumo({ inicial, aoFechar }: { inicial: Preferencia; aoFechar: (
       }
     >
       <div className="grid gap-2 sm:grid-cols-2">
-        {opcao(f.ligado, "Quero o resumo", "Recebo um aviso por dia quando houver conta para contar.", () => setF({ ...f, ligado: true }))}
+        {opcao(f.ligado, "Quero o resumo", "Recebo um aviso por dia quando houver conta vencendo ou dinheiro entrando.", () => setF({ ...f, ligado: true }))}
         {opcao(!f.ligado, "Não quero", "Não recebo o resumo. O Início continua mostrando tudo.", () => setF({ ...f, ligado: false }))}
       </div>
       {f.ligado && (

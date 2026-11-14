@@ -13,7 +13,6 @@ import { Icone } from "@/components/ui/Icone";
 import { CampoCnpj } from "@/components/ui/CampoCnpj";
 import type { DadosCnpj } from "@/lib/consultaCnpj";
 import { mascaraTelefone, receitaParaContato, telefoneValido, TEXTO_DEPOIS } from "../contatoEmpresa";
-import type { SituacaoContato } from "../contatoEmpresa";
 
 export interface SituacaoEmpresa {
   responsavel: boolean;
@@ -64,7 +63,7 @@ export function CartaoEmpresa({
   const [autorizo, setAutorizo] = useState(false);
   const [erro, setErro] = useState("");
   const [ocupado, setOcupado] = useState(false);
-  const [feito, setFeito] = useState<SituacaoContato | null>(null);
+  const [feito, setFeito] = useState(false);
 
   async function enviar(e: React.FormEvent) {
     e.preventDefault();
@@ -74,7 +73,7 @@ export function CartaoEmpresa({
     if (!autorizo) return setErro("Para a MDC entrar em contato, marque a autorização");
     setOcupado(true);
     try {
-      const { data, error } = await supabase().rpc("pessoal_quero_contato", {
+      const { error } = await supabase().rpc("pessoal_quero_contato", {
         p_org: org.id,
         p: {
           cnpj,
@@ -87,7 +86,7 @@ export function CartaoEmpresa({
         },
       });
       if (error) throw error;
-      setFeito(data as SituacaoContato);
+      setFeito(true);
     } catch (x) {
       setErro(traduzirErro(x));
     } finally {
@@ -107,7 +106,7 @@ export function CartaoEmpresa({
         <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-emerald-50 text-emerald-700">
           <Icone nome="check" className="h-5 w-5" />
         </span>
-        <p className="min-w-0 flex-1 text-sm text-neutral-700">{TEXTO_DEPOIS[feito]}</p>
+        <p className="min-w-0 flex-1 text-sm text-neutral-700">{TEXTO_DEPOIS}</p>
         <button className="btn" onClick={aoTerminar}>
           <Icone nome="check" className="h-4 w-4" />
           Entendi

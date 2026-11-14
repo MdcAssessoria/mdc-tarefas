@@ -85,7 +85,7 @@ export default function PaginaTransferencias() {
     <div className="space-y-4">
       <CabecalhoPagina
         titulo="Transferências"
-        descricao="Dinheiro que passou de uma conta bancária para outra da MDC. Não é receita nem despesa."
+        descricao="Dinheiro que passou de uma conta para outra (por exemplo, do banco para a carteira). Não é receita nem despesa."
         acoes={
           <>
             <BotoesExportar
@@ -189,8 +189,8 @@ export default function PaginaTransferencias() {
               }
             >
               {ativas >= 2
-                ? "Registre aqui quando o dinheiro passar de uma conta da MDC para outra (aplicação, reforço de caixa, troca de banco)."
-                : "Para transferir, a MDC precisa de pelo menos duas contas bancárias ativas (cadastre em Contas bancárias)."}
+                ? "Registre aqui quando o dinheiro passar de uma conta para outra (aplicação, saque, troca de banco)."
+                : "Para transferir, é preciso ter pelo menos duas contas ativas (cadastre em Contas bancárias)."}
             </EstadoVazio>
           ) : (
             <QuadroTabela rotulo="Transferências">

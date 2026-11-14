@@ -22,6 +22,7 @@ import { CabecalhoPagina } from "@/components/ui/CabecalhoPagina";
 import { CartaoFiltros } from "@/components/ui/CartaoFiltros";
 import type { FiltroAtivo } from "@/components/ui/CartaoFiltros";
 import { BotoesExportar } from "@/components/ui/BotoesExportar";
+import { QuadroTabela } from "@/components/ui/QuadroTabela";
 import { Chip } from "@/components/ui/Chip";
 import { EstadoVazio } from "@/components/ui/EstadoVazio";
 import { Esqueleto } from "@/components/ui/Esqueleto";
@@ -232,70 +233,72 @@ function DocumentosClientes() {
       ) : (
         <>
           <p className="text-sm text-[var(--texto-suave)]">{plural(lista.length, "documento")} neste filtro.</p>
-          <div className="overflow-x-auto rounded-xl border border-[var(--borda)] bg-white">
-            <table className="tabela w-full min-w-[820px] text-sm">
-              <thead>
-                <tr>
-                  <th>Cliente</th>
-                  <th>Tipo</th>
-                  <th>Descrição</th>
-                  <th>Data</th>
-                  <th>Situação</th>
-                  <th className="text-right">Ações</th>
-                </tr>
-              </thead>
-              <tbody>
-                {lista.map((d) => (
-                  <tr key={d.id}>
-                    <td className="font-medium whitespace-nowrap">{nomeDe(d.cliente_id)}</td>
-                    <td className="whitespace-nowrap">
-                      {nomeCategoria(d.categoria)}
-                      {d.processo_id && d.processo && (
-                        <Link href={`/societario/${d.processo_id}`} className="btn-link flex items-center gap-1 text-xs">
-                          <Icone nome="expandir" className="h-3 w-3" />
-                          do processo nº {d.processo.numero}
-                        </Link>
-                      )}
-                    </td>
-                    <td className="max-w-[240px]">
-                      <span className="block truncate" title={d.descricao ?? d.arquivo?.nome}>
-                        {d.descricao || d.arquivo?.nome || "—"}
-                      </span>
-                      {d.registro && <span className="block truncate text-xs text-[var(--texto-suave)]">Junta: {d.registro}</span>}
-                    </td>
-                    <td className="num whitespace-nowrap">{fmtData(d.data_documento) || "—"}</td>
-                    <td>{d.vigente ? <Chip tom="verde">Vigente</Chip> : <Chip tom="neutro">Substituído</Chip>}</td>
-                    <td>
-                      <div className="flex justify-end gap-1.5">
-                        <button
-                          className="btn !min-h-8 !px-2 text-xs"
-                          disabled={!d.arquivo}
-                          onClick={() =>
-                            d.arquivo && abrirArquivo(d.arquivo.caminho, d.arquivo.nome).catch((e) => mostrar(traduzirErro(e), "erro"))
-                          }
-                        >
-                          <Icone nome="documento" className="h-3.5 w-3.5" />
-                          Abrir
+          <QuadroTabela rotulo="Documentos dos clientes" acoesFixas>
+            <thead>
+              <tr>
+                <th>Cliente</th>
+                <th>Tipo</th>
+                <th>Descrição</th>
+                <th>Data</th>
+                <th>Situação</th>
+                <th className="text-right">Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              {lista.map((d) => (
+                <tr key={d.id}>
+                  <td className="celula-titulo font-medium whitespace-nowrap" data-rotulo="Cliente">
+                    {nomeDe(d.cliente_id)}
+                  </td>
+                  <td className="whitespace-nowrap" data-rotulo="Tipo">
+                    {nomeCategoria(d.categoria)}
+                    {d.processo_id && d.processo && (
+                      <Link href={`/societario/${d.processo_id}`} className="btn-link flex items-center gap-1 text-xs">
+                        <Icone nome="expandir" className="h-3 w-3" />
+                        do processo nº {d.processo.numero}
+                      </Link>
+                    )}
+                  </td>
+                  <td className="max-w-[240px]" data-rotulo="Descrição">
+                    <span className="block truncate" title={d.descricao ?? d.arquivo?.nome}>
+                      {d.descricao || d.arquivo?.nome || "—"}
+                    </span>
+                    {d.registro && <span className="block truncate text-xs text-[var(--texto-suave)]">Junta: {d.registro}</span>}
+                  </td>
+                  <td className="num whitespace-nowrap" data-rotulo="Data">
+                    {fmtData(d.data_documento) || "—"}
+                  </td>
+                  <td data-rotulo="Situação">{d.vigente ? <Chip tom="verde">Vigente</Chip> : <Chip tom="neutro">Substituído</Chip>}</td>
+                  <td className="celula-acoes">
+                    <div className="flex flex-wrap justify-end gap-1.5">
+                      <button
+                        className="btn !min-h-8 !px-2 text-xs"
+                        disabled={!d.arquivo}
+                        onClick={() =>
+                          d.arquivo && abrirArquivo(d.arquivo.caminho, d.arquivo.nome).catch((e) => mostrar(traduzirErro(e), "erro"))
+                        }
+                      >
+                        <Icone nome="documento" className="h-3.5 w-3.5" />
+                        Abrir
+                      </button>
+                      {podeOperar && (
+                        <button className="btn !min-h-8 !px-2 text-xs" onClick={() => setEditar(d)}>
+                          <Icone nome="editar" className="h-3.5 w-3.5" />
+                          Editar
                         </button>
-                        {podeOperar && (
-                          <button className="btn !min-h-8 !px-2 text-xs" onClick={() => setEditar(d)}>
-                            <Icone nome="editar" className="h-3.5 w-3.5" />
-                            Editar
-                          </button>
-                        )}
-                        {podeGerir && (
-                          <button className="btn !min-h-8 !px-2 text-xs text-[var(--perigo)]" onClick={() => setRetirar(d)}>
-                            <Icone nome="lixeira" className="h-3.5 w-3.5" />
-                            Retirar
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                      )}
+                      {podeGerir && (
+                        <button className="btn !min-h-8 !px-2 text-xs text-[var(--perigo)]" onClick={() => setRetirar(d)}>
+                          <Icone nome="lixeira" className="h-3.5 w-3.5" />
+                          Retirar
+                        </button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </QuadroTabela>
         </>
       )}
 

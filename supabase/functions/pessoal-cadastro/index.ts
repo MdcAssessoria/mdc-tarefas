@@ -2,7 +2,8 @@
 // senha; a família é criada depois, já logada, pela função do banco pessoal_criar_familia. Sem e-mail de confirmação
 // (o HUB não manda e-mail de cadastro); a trava é por endereço de rede: no máximo 5 contas por hora
 // (pessoal_cadastro_tentativa, guarda só o resumo SHA-256 do endereço). Campo escondido "site" pega robôs.
-// A chave de serviço fica só aqui, no servidor; o site nunca a vê.
+// A chave de serviço fica só aqui, no servidor; o site nunca a vê. Desde a 078 a conta nasce com app_metadata.origem =
+// 'pessoal' (nunca vira equipe nem Portal) e o e-mail com convite pendente é recusado (pessoal_email_livre).
 import { createClient } from "@supabase/supabase-js";
 
 const ORIGENS = ["https://hub.mdcassessoria.com", "https://mdcassessoria.com", "https://www.mdcassessoria.com", "https://mdc-tarefas.vercel.app"];
@@ -58,10 +59,27 @@ Deno.serve(async (req) => {
   }
   if (!pode) return json(429, { erro: "Muitas contas criadas a partir desta rede. Tente de novo daqui a uma hora." });
 
-  const { error } = await servico.auth.admin.createUser({ email, password: senha, email_confirm: true, user_metadata: { nome } });
+  // e-mail com convite pendente da equipe ou do Portal (ou de ex-cliente) não vira conta do Pessoal (078, SEG-01);
+  // a resposta é a mesma de "já existe conta", para não revelar quem foi convidado
+  const NAO_DEU = "Não foi possível criar a conta com este e-mail. Se você já tem conta, toque em Já tenho conta. "
+    + "Se recebeu um convite da MDC, entre pelo link do convite.";
+  const { data: livre, error: eLivre } = await servico.rpc("pessoal_email_livre", { p_email: email });
+  if (eLivre) {
+    console.error("conferência do e-mail falhou:", eLivre.message);
+    return json(500, { erro: "Não foi possível criar a conta agora. Tente de novo em instantes." });
+  }
+  if (livre !== true) return json(409, { erro: NAO_DEU });
+
+  // origem = pessoal: os gatilhos de convite ignoram esta conta e ela nunca entra na equipe nem no Portal (078)
+  const { error } = await servico.auth.admin.createUser({
+    email,
+    password: senha,
+    email_confirm: true,
+    user_metadata: { nome },
+    app_metadata: { origem: "pessoal" },
+  });
   if (error) {
-    if (/already|registered|exists/i.test(error.message))
-      return json(409, { erro: "Já existe uma conta com este e-mail. Entre com a sua senha." });
+    if (/already|registered|exists/i.test(error.message)) return json(409, { erro: NAO_DEU });
     console.error("cadastro falhou:", error.status ?? "", error.message);
     return json(500, { erro: "Não foi possível criar a conta agora. Tente de novo em instantes." });
   }

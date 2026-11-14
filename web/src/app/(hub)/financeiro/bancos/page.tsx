@@ -57,7 +57,7 @@ const VAZIO: Form = {
 };
 
 export default function PaginaContasBancarias() {
-  const { org, pode } = useOrg();
+  const { org, pode, pessoal } = useOrg();
   const financeiro = useClienteGestao();
   const cliente = financeiro.cliente;
   const podeOperar = pode("financeiro", "operar");
@@ -238,7 +238,7 @@ export default function PaginaContasBancarias() {
     <div className="space-y-4">
       <CabecalhoPagina
         titulo="Contas bancárias"
-        descricao="Os bancos da MDC, com o saldo pelos extratos importados e as transferências entre contas."
+        descricao={`Os bancos ${pessoal ? "e a carteira da família" : "da MDC"}, com o saldo pelos extratos importados e as transferências entre contas.`}
         acoes={
           <>
             <button className="btn" onClick={pdf} disabled={!lista.length} title="Baixar a lista em PDF">
@@ -457,7 +457,7 @@ export default function PaginaContasBancarias() {
           {form.id && (
             <label className="flex items-center gap-2 text-sm">
               <input type="checkbox" checked={form.ativo} onChange={(e) => setForm({ ...form, ativo: e.target.checked })} />
-              Conta ativa (desmarque quando a MDC encerrar a conta; o histórico continua guardado)
+              Conta ativa (desmarque quando a conta for encerrada; o histórico continua guardado)
             </label>
           )}
           <div className="flex justify-end gap-2 pt-2">

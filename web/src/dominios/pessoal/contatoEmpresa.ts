@@ -34,10 +34,6 @@ export function receitaParaContato(d: DadosCnpj) {
   };
 }
 
-export type SituacaoContato = "lead_novo" | "lead_existente" | "ja_cliente";
-
-export const TEXTO_DEPOIS: Record<SituacaoContato, string> = {
-  lead_novo: "Pronto! A equipe da MDC vai entrar em contato em breve.",
-  lead_existente: "Pronto! A MDC já conhecia a empresa e vai retomar o contato com você.",
-  ja_cliente: "Esta empresa já é cliente da MDC. Para qualquer assunto, fale com a sua equipe de sempre.",
-};
+/** Resposta do pedido: sempre a mesma (078), para não revelar se a empresa já é cliente ou já estava no Funil. */
+export const TEXTO_DEPOIS =
+  "Pronto! A MDC recebeu o seu pedido e vai entrar em contato. Se a empresa já é atendida pela MDC, é só falar com a sua equipe de sempre.";

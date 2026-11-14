@@ -10,6 +10,7 @@ import { caminho } from "@/lib/caminho";
 import { Icone } from "@/components/ui/Icone";
 import type { NomeIcone } from "@/components/ui/Icone";
 import { rotaNoPessoal } from "@/dominios/pessoal/entrada";
+import { desligarNoAparelho } from "@/dominios/pessoal/avisoCelular";
 import { BotaoInstalarApp } from "./InstalarApp";
 import { filtrarLinks, linkAtivo } from "./navegacao";
 import type { Modulo } from "./navegacao";
@@ -138,6 +139,8 @@ export function MenuPessoal({ modulo, recolhido, aoRecolher }: { modulo: Modulo;
             title="Sair"
             aria-label="Sair"
             onClick={async () => {
+              // Desliga o aviso deste aparelho antes de sair: quem entrar depois não recebe o resumo desta família.
+              await desligarNoAparelho().catch(() => undefined);
               await supabase().auth.signOut();
               window.location.replace(caminho("/pessoal"));
             }}

@@ -16,7 +16,6 @@ self.addEventListener("push", (e) => {
     self.registration.showNotification(d.titulo || "MDC · Pessoal", {
       body: d.texto || "Veja o resumo das finanças de hoje.",
       icon: `${BASE}/icone-hub-mdc-192.png`,
-      badge: `${BASE}/icone-hub-mdc-192.png`,
       tag: "resumo-diario",
       data: { link: d.link || "/" },
     }),
