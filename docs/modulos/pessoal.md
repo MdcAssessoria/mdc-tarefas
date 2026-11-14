@@ -142,6 +142,8 @@ Desenho aprovado pelo Edvaldo no quadro "MDC · Pessoal — desenho do app" (pro
   (`ENDERECO_PESSOAL` em `entrada.ts`). A entrada sem login mostra a faixa "Instalar" no celular e, no computador, um QR
   code para abrir no celular (`app/pessoal/_componentes/LevarProCelular.tsx`). `next.config.ts` já leva
   `pessoal.mdcassessoria.com` para a entrada, quando o domínio for apontado para a Vercel. Fotos sem login: `SEMLOGIN=1`.
+- **Ícone do app:** o oval com as três barras "///" do logo da MDC, dourado sobre o verde (`public/icone-pessoal-*.png`,
+  no `manifest-pessoal.webmanifest`, no `app/pessoal/layout.tsx` e trocado pela Moldura dentro da família).
 
 ## 5. Arquivos
 

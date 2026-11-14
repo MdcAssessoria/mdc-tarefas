@@ -37,6 +37,9 @@ export function Moldura({ children }: { children: React.ReactNode }) {
     // o app instalado da família leva o nome e a entrada do Pessoal
     const manifesto = document.querySelector<HTMLLinkElement>('link[rel="manifest"]');
     if (manifesto) manifesto.href = caminho(pessoal ? "/manifest-pessoal.webmanifest" : "/manifest.webmanifest");
+    // ícone na tela do iPhone (Adicionar à Tela de Início) e na aba: o do Pessoal dentro da família
+    const apple = document.querySelector<HTMLLinkElement>('link[rel="apple-touch-icon"]');
+    if (apple) apple.href = caminho(pessoal ? "/icone-pessoal-180.png" : "/icone-hub-mdc-180.png");
     try {
       // localStorage: vale também quando o app instalado é fechado e aberto de novo (a sessão caiu → volta ao /pessoal)
       localStorage.setItem("mdc-tarefas:entrada", pessoal ? "pessoal" : "hub");

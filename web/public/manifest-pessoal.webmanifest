@@ -11,34 +11,28 @@
   "theme_color": "#0B2820",
   "icons": [
     {
-      "src": "/hub-mdc/icone-hub-mdc-192.png",
+      "src": "/hub-mdc/icone-pessoal-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/hub-mdc/icone-hub-mdc-512.png",
+      "src": "/hub-mdc/icone-pessoal-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/hub-mdc/icone-hub-mdc-maskable-192.png",
+      "src": "/hub-mdc/icone-pessoal-maskable-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "maskable"
     },
     {
-      "src": "/hub-mdc/icone-hub-mdc-maskable-512.png",
+      "src": "/hub-mdc/icone-pessoal-maskable-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
-    },
-    {
-      "src": "/hub-mdc/icone-hub-mdc.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any"
     }
   ]
 }
