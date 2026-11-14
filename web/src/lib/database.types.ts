@@ -5628,6 +5628,7 @@ export type Database = {
           cor_primaria: string;
           criado_em: string;
           criado_por: string | null;
+          exige_pin: boolean;
           fuso: string;
           gestao_cliente_id: string | null;
           id: string;
@@ -5644,6 +5645,7 @@ export type Database = {
           cor_primaria?: string;
           criado_em?: string;
           criado_por?: string | null;
+          exige_pin?: boolean;
           fuso?: string;
           gestao_cliente_id?: string | null;
           id?: string;
@@ -5660,6 +5662,7 @@ export type Database = {
           cor_primaria?: string;
           criado_em?: string;
           criado_por?: string | null;
+          exige_pin?: boolean;
           fuso?: string;
           gestao_cliente_id?: string | null;
           id?: string;
@@ -7903,6 +7906,10 @@ export type Database = {
         Args: { p_cliente: string; p_motivo?: string; p_org: string };
         Returns: string;
       };
+      org_definir_exige_pin: {
+        Args: { p_ligado: boolean; p_org: string };
+        Returns: undefined;
+      };
       org_papel_timbrado_salvar: {
         Args: { p: Json; p_org: string };
         Returns: Json;
@@ -7977,6 +7984,13 @@ export type Database = {
         Args: { p_privada?: string; p_publica?: string };
         Returns: Json;
       };
+      pin_conferir: { Args: { p_org: string; p_pin: string }; Returns: Json };
+      pin_definir: {
+        Args: { p_org: string; p_pin_novo: string };
+        Returns: Json;
+      };
+      pin_situacao: { Args: never; Returns: Json };
+      pin_trancar: { Args: never; Returns: undefined };
       portal_abrir_conversa: {
         Args: {
           p_assunto: string;
