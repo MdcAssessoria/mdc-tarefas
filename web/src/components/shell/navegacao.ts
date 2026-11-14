@@ -21,7 +21,8 @@ export type Modulo =
   | "centros_custo"
   | "relatorios"
   | "contratos"
-  | "cadastros";
+  | "cadastros"
+  | "familia";
 
 /**
  * Aba de um módulo. `minimo` exige um nível na ferramenta; `gestor` exige poder editar cadastros (admin ou gestor).
@@ -182,6 +183,12 @@ export const NAV: Record<Modulo, { titulo: string; links: LinkModulo[]; grupos?:
       { href: "/entradas/certificado", nome: "Certificado digital", icone: "escudo" },
     ],
   },
+  // MDC · Pessoal (075): pessoas da família (quem lança e quem só acompanha); só aparece no app pessoal
+  familia: {
+    titulo: "Família",
+    acesso: ["tarefas", "financeiro"],
+    links: [{ href: "/familia", nome: "Pessoas da família", icone: "pessoas" }],
+  },
   comercial: {
     titulo: "CRM Comercial",
     links: [
@@ -219,6 +226,7 @@ export const MODULO_POR_PREFIXO: Record<string, Modulo> = {
   contratos: "contratos",
   cadastros: "cadastros",
   entradas: "entradas",
+  familia: "familia",
 };
 
 /**

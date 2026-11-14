@@ -175,3 +175,8 @@ for f in testes/139_base_073.sql migrations/073_societario_acervo.sql; do
   $P -v ON_ERROR_STOP=1 -f "$R/$f" 2>&1 | grep -v NOTICE || true
 done
 $P -f "$R/testes/140_acervo_073.sql" 2>&1 | grep -v "^SET$"
+# 075: MDC - Pessoal (família como organização tipo pessoal, cadastro aberto com trava)
+for f in testes/141_base_075.sql migrations/075_mdc_pessoal.sql; do
+  $P -v ON_ERROR_STOP=1 -f "$R/$f" 2>&1 | grep -v NOTICE || true
+done
+$P -f "$R/testes/142_pessoal_075.sql" 2>&1 | grep -v "^SET$"

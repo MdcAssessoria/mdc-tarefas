@@ -50,7 +50,7 @@ export function TarefaEditor({
   aoFechar: () => void;
   aoSalvar: () => void;
 }) {
-  const { org, eu, setores, clientes, membros, nomeMembro, podeEditarCadastros, papel } = useOrg();
+  const { org, eu, setores, clientes, membros, nomeMembro, podeEditarCadastros, papel, pessoal } = useOrg();
   const [f, setF] = useState<Form>(() => ({
     titulo: tarefa?.titulo ?? "",
     descricao: tarefa?.descricao ?? "",
@@ -183,32 +183,37 @@ export function TarefaEditor({
             <textarea rows={3} value={f.descricao} onChange={(e) => set("descricao", e.target.value)} />
           </label>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <label className="campo sm:col-span-2">
-              <span>Cliente</span>
-              <select value={f.cliente_id} onChange={(e) => set("cliente_id", e.target.value)}>
-                <option value="">— Interna / sem cliente —</option>
-                {clientes
-                  .filter((c) => c.ativo || c.id === f.cliente_id)
-                  .map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {nomeCliente(c)}
-                    </option>
-                  ))}
-              </select>
-            </label>
-            <label className="campo">
-              <span>Setor</span>
-              <select value={f.setor_id} onChange={(e) => set("setor_id", e.target.value)}>
-                <option value="">—</option>
-                {setores
-                  .filter((s) => s.ativo || s.id === f.setor_id)
-                  .map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.nome}
-                    </option>
-                  ))}
-              </select>
-            </label>
+            {/* MDC · Pessoal (075): família não tem clientes nem setores */}
+            {!pessoal && (
+              <>
+                <label className="campo sm:col-span-2">
+                  <span>Cliente</span>
+                  <select value={f.cliente_id} onChange={(e) => set("cliente_id", e.target.value)}>
+                    <option value="">— Interna / sem cliente —</option>
+                    {clientes
+                      .filter((c) => c.ativo || c.id === f.cliente_id)
+                      .map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {nomeCliente(c)}
+                        </option>
+                      ))}
+                  </select>
+                </label>
+                <label className="campo">
+                  <span>Setor</span>
+                  <select value={f.setor_id} onChange={(e) => set("setor_id", e.target.value)}>
+                    <option value="">—</option>
+                    {setores
+                      .filter((s) => s.ativo || s.id === f.setor_id)
+                      .map((s) => (
+                        <option key={s.id} value={s.id}>
+                          {s.nome}
+                        </option>
+                      ))}
+                  </select>
+                </label>
+              </>
+            )}
             <label className="campo">
               <span>Responsável</span>
               <select value={f.responsavel_id} onChange={(e) => set("responsavel_id", e.target.value)}>

@@ -496,7 +496,17 @@ async function medirNovoContrato(pagina, foto, nome) {
  */
 const INTERACOES = {
   // Início: concluir uma tarefa da fila mostra "Desfazer" (UX-05)
+  "/familia": async (p, foto) => {
+    if (!process.env.PESSOAL) return; // fora da família a tela só avisa que é do MDC · Pessoal
+    await p.getByRole("button", { name: "Convidar alguém" }).first().click();
+    await p.getByLabel("Nome de quem vai entrar").fill("Evelyn");
+    await foto("convidar", { soTela: true });
+    await p.getByRole("button", { name: "Gerar convite" }).click();
+    await p.getByText("AB2C-DE3F").first().waitFor({ timeout: 5000 });
+    await foto("convite-pronto", { soTela: true });
+  },
   "/": async (p, foto) => {
+    if (process.env.PESSOAL) return; // a família tem outro Início (resumo do dia), sem a lista de tarefas do HUB
     await p
       .getByRole("button", { name: /^Concluir / })
       .first()

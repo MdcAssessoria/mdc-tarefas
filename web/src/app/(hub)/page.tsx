@@ -17,9 +17,12 @@ import type { Prioridade, Status } from "@/dominios/tarefas/tipos";
 import { fmtData } from "@/lib/formato/datas";
 import { nomeCliente } from "@/dominios/clientes/nome";
 import { CartoesModulos } from "@/components/shell/CartoesModulos";
+import { InicioPessoal } from "@/dominios/pessoal/componentes/InicioPessoal";
 
 export default function Inicio() {
-  return <Hub />;
+  // família do MDC · Pessoal (075): início próprio, com o resumo do dia das finanças
+  const { pessoal } = useOrg();
+  return pessoal ? <InicioPessoal /> : <Hub />;
 }
 
 interface MinhaTarefa {

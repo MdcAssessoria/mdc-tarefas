@@ -66,7 +66,7 @@ function filtrosLembrados(orgId: string, setoresOk: Set<string>, pessoasOk: Set<
 }
 
 function Tarefas() {
-  const { org, eu, papel, setores, clientes, membros, setorPorId, clientePorId, nomeMembro } = useOrg();
+  const { org, eu, papel, setores, clientes, membros, setorPorId, clientePorId, nomeMembro, pessoal } = useOrg();
   const { tarefas, carregando, erro, online, recarregar, atualizar } = useTarefas(org.id, org.fuso);
   const { aviso, mostrar } = useAviso();
   const hoje = hojeISO(org.fuso);
@@ -210,7 +210,11 @@ function Tarefas() {
             </span>
           </span>
         }
-        descricao="Rotinas e tarefas da equipe por cliente: o que está atrasado, o que vence hoje e o que já foi feito."
+        descricao={
+          pessoal
+            ? "Tarefas da casa: o que está atrasado, o que vence hoje e o que já foi feito, e quem vai fazer."
+            : "Rotinas e tarefas da equipe por cliente: o que está atrasado, o que vence hoje e o que já foi feito."
+        }
         acoes={
           <>
             <div className="flex rounded-lg border border-[var(--borda)] bg-white p-0.5 text-sm" role="group" aria-label="Forma de ver">
@@ -288,22 +292,26 @@ function Tarefas() {
           <MultiSelecao rotulo="Responsável" todos="Todos os responsáveis" valor={respSel} aoMudar={setRespSel} opcoes={opcoesResp} />
         </div>
         <MaisFiltros emUso={(setorSel.length ? 1 : 0) + (cliente ? 1 : 0) + (periodo !== "tudo" ? 1 : 0)}>
-          <div className="campo min-w-48">
-            <span>Setor</span>
-            <MultiSelecao rotulo="Setor" todos="Todos os setores" valor={setorSel} aoMudar={setSetorSel} opcoes={opcoesSetor} />
-          </div>
-          <label className="campo campo-largo">
-            <span>Cliente</span>
-            <select value={cliente} onChange={(e) => setCliente(e.target.value)}>
-              <option value="">Todos os clientes</option>
-              {clientes.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {nomeCliente(c)}
-                  {c.ativo ? "" : " (inativo)"}
-                </option>
-              ))}
-            </select>
-          </label>
+          {!pessoal && (
+            <>
+              <div className="campo min-w-48">
+                <span>Setor</span>
+                <MultiSelecao rotulo="Setor" todos="Todos os setores" valor={setorSel} aoMudar={setSetorSel} opcoes={opcoesSetor} />
+              </div>
+              <label className="campo campo-largo">
+                <span>Cliente</span>
+                <select value={cliente} onChange={(e) => setCliente(e.target.value)}>
+                  <option value="">Todos os clientes</option>
+                  {clientes.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {nomeCliente(c)}
+                      {c.ativo ? "" : " (inativo)"}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </>
+          )}
           <FiltroPeriodo
             rotulo="Prazo"
             periodo={periodo}

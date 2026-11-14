@@ -39,6 +39,7 @@ flowchart TB
 | Certificados digitais | Equipe | Os certificados do cofre do HUB (demonstrativos e notas fiscais) e do Ledgra Link (bancos) numa lista só, com validade, filtros e PDF/Excel | `/vencimentos/certificados` |
 | Comercial (CRM) | Equipe comercial | Funil, leads, contratos com modelo e ferramentas abertas (Simulador de Regime sem login, no domínio do HUB) | `/comercial/...`, `/ferramentas/simulador-regime` |
 | Pessoas e acessos | Administrador | Equipe, perfis, acessos do Portal, transferência de trabalho, histórico | `/hub/acessos` |
+| MDC · Pessoal | Qualquer pessoa (cadastro aberto) e a família dela | App da família dentro do HUB, com entrada e menu próprios: resumo do dia das finanças, tarefas da casa, finanças sem nota fiscal e convites por código. Ver [modulos/pessoal.md](modulos/pessoal.md) | `/pessoal`, `/familia` |
 | Portal do Cliente | Cliente | Demonstrativos publicados, rotinas do mês, processos, documentos, chat | `/portal` |
 
 Os módulos planejados (Pacotes, Financeiro, Entradas, Saídas, Fiscal, Contabilidade) estão desenhados em

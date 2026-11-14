@@ -5,17 +5,17 @@
 import { useState } from "react";
 import { Icone } from "@/components/ui/Icone";
 
-export function mensagemSenha(p: { nome?: string; email: string; senha: string; endereco: string }) {
+export function mensagemSenha(p: { nome?: string; email: string; senha: string; endereco: string; app?: string }) {
   const h = new Date().getHours();
   const saudacao = h < 12 ? "Bom dia" : h < 18 ? "Boa tarde" : "Boa noite";
   return (
-    `${saudacao}${p.nome ? `, ${p.nome.split(" ")[0]}` : ""}! Seu acesso ao HUB da MDC Assessoria está pronto.\n` +
+    `${saudacao}${p.nome ? `, ${p.nome.split(" ")[0]}` : ""}! Seu acesso ao ${p.app ?? "HUB da MDC Assessoria"} está pronto.\n` +
     `Endereço: ${p.endereco}\nE-mail: ${p.email}\nSenha provisória: ${p.senha}\n` +
     `No primeiro acesso o sistema pede para você criar a sua própria senha.`
   );
 }
 
-export function SenhaCopiavel(p: { nome?: string; email: string; senha: string; endereco: string }) {
+export function SenhaCopiavel(p: { nome?: string; email: string; senha: string; endereco: string; app?: string }) {
   const [copiado, setCopiado] = useState<"" | "mensagem" | "senha">("");
   const texto = mensagemSenha(p);
   const whats = `https://wa.me/?text=${encodeURIComponent(texto)}`;

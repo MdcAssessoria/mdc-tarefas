@@ -81,9 +81,12 @@ const HISTORICO = (() => {
 
 export const USUARIO = { id: EU, email: "edvaldo@mdcassessoria.com", aud: "authenticated", role: "authenticated", user_metadata: {} };
 
+// PESSOAL=1 abre as telas como uma família do MDC · Pessoal (075): marca, menu e telas do app da família.
+const PESSOAL = Boolean(process.env.PESSOAL);
 const org = {
   id: ORG,
-  nome: "MDC Assessoria",
+  tipo: PESSOAL ? "pessoal" : "empresa",
+  nome: PESSOAL ? "Família Carvalho" : "MDC Assessoria",
   slug: "mdc",
   cnpj: "48.140.121/0001-65",
   logo_url: null,
@@ -317,6 +320,30 @@ const licCobranca = (k, contrato_id, cliente_id, n, valor, situacao) => ({
 
 export const TABELAS = {
   organizacoes: [org],
+  pessoal_convites: [
+    {
+      id: "c0750000-0000-4000-8000-000000000001",
+      org_id: ORG,
+      nome: "Evelyn",
+      permissao: "lancar",
+      criado_em: momento(-1),
+      expira_em: momento(6),
+      usado_por: null,
+      usado_em: null,
+      cancelado_em: null,
+    },
+    {
+      id: "c0750000-0000-4000-8000-000000000002",
+      org_id: ORG,
+      nome: "Vó Lúcia",
+      permissao: "consultar",
+      criado_em: momento(-9),
+      expira_em: momento(-2),
+      usado_por: null,
+      usado_em: null,
+      cancelado_em: null,
+    },
+  ],
   membros: [
     {
       org_id: ORG,
@@ -1558,6 +1585,8 @@ export const TABELAS = {
 
 /** Resultado de cada RPC (o nome é o que vem depois de /rest/v1/rpc/). RPC não listada devolve null. */
 export const RPCS = {
+  // MDC · Pessoal (075): convite da família devolve o código (aparece uma vez)
+  pessoal_convidar: () => "AB2C-DE3F",
   // Financeiro › Conciliação (051): extrato do Itaú com sugestões (valor igual, pagamento agrupado, boleto do Ledgra Link)
   fin_conciliacao_dados: () => ({
     conta: "f2000000-0000-4000-8000-000000000001",

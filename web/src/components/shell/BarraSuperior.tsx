@@ -10,6 +10,7 @@ import { useEffect, useRef, useState } from "react";
 import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { Icone } from "@/components/ui/Icone";
 import { NAV, agruparLinks, filtrarLinks, linkAtivo, temGrupos } from "./navegacao";
+import { rotaNoPessoal } from "@/dominios/pessoal/entrada";
 import type { LinkModulo, Modulo } from "./navegacao";
 import { Sino } from "./Sino";
 
@@ -146,8 +147,9 @@ function MenuModuloCelular({ modulo, links, ativo }: { modulo: Modulo; links: Li
 
 export function BarraSuperior({ modulo, aoMenu, aoBuscar }: { modulo: Modulo; aoMenu: () => void; aoBuscar: () => void }) {
   const rota = usePathname();
-  const { pode, podeEditarCadastros } = useOrg();
-  const links = filtrarLinks(modulo, { pode, podeEditarCadastros });
+  const { pode, podeEditarCadastros, pessoal } = useOrg();
+  // MDC · Pessoal (075): sem as telas fora do app da família (ex.: certificado digital)
+  const links = filtrarLinks(modulo, { pode, podeEditarCadastros }).filter((l) => !pessoal || rotaNoPessoal(l.href));
   const ativo = (href: string) => linkAtivo(rota, href, modulo);
   const agrupado = temGrupos(modulo);
   const entradas = agruparLinks(links, NAV[modulo].grupos);
@@ -164,7 +166,9 @@ export function BarraSuperior({ modulo, aoMenu, aoBuscar }: { modulo: Modulo; ao
         >
           <Icone nome="menu" />
         </button>
-        <span className="font-semibold text-[var(--marca)] lg:hidden">{NAV[modulo].titulo}</span>
+        <span className="font-semibold text-[var(--marca)] lg:hidden">
+          {pessoal && modulo === "financeiro" ? "Finanças" : NAV[modulo].titulo}
+        </span>
         {links.length > 1 && (
           <nav
             className={`-mb-px hidden h-14 min-w-0 items-stretch gap-1 md:flex ${agrupado ? "" : "overflow-x-auto"}`}

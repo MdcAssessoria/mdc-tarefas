@@ -22,6 +22,8 @@ interface OrgCtx {
   clientes: Cliente[];
   membros: Membro[];
   trocarOrg: (id: string) => void;
+  /** Organização atual é uma família do MDC - Pessoal (075): moldura, menu e telas do app pessoal. */
+  pessoal: boolean;
   recarregar: () => Promise<void>;
   podeEditarCadastros: boolean;
   nomeMembro: (id: string | null) => string;
@@ -48,6 +50,22 @@ export function useOrgOpcional(): OrgCtx | null {
   return useContext(Ctx);
 }
 
+/** Organização desta aba (sessionStorage): HUB e MDC - Pessoal abertos em abas diferentes não se atrapalham. */
+const CHAVE_ABA = "mdc-tarefas:org-aba";
+function lerOrgDaAba(): string | null {
+  try {
+    return sessionStorage.getItem(CHAVE_ABA);
+  } catch {
+    return null;
+  }
+}
+function gravarOrgDaAba(id: string) {
+  try {
+    sessionStorage.setItem(CHAVE_ABA, id);
+  } catch {
+    /* navegador sem armazenamento: vale só nesta visita */
+  }
+}
 function lerOrgSalva(): string | null {
   return lerLocal(CHAVES.organizacao);
 }
@@ -81,8 +99,15 @@ export function OrgProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (session === null) {
+      // quem estava no MDC · Pessoal volta para a entrada dele (075)
+      let entrada: string | null = null;
+      try {
+        entrada = sessionStorage.getItem("mdc-tarefas:entrada");
+      } catch {
+        /* sem armazenamento */
+      }
       const next = encodeURIComponent(window.location.pathname + window.location.search);
-      window.location.replace(caminho(`/login?next=${next}`));
+      window.location.replace(caminho(entrada === "pessoal" ? "/pessoal" : `/login?next=${next}`));
     } else if (precisaTrocarSenha(session)) {
       // entrou com senha provisória: cria a própria senha antes de usar o HUB (071)
       window.location.replace(caminho("/login?trocar=1"));
@@ -113,11 +138,18 @@ export function OrgProvider({ children }: { children: React.ReactNode }) {
     }
     setMinhas(m.data as Membro[]);
     setOrgs(o.data as Organizacao[]);
-    const ids = (o.data as Organizacao[]).map((x) => x.id);
+    const todas = o.data as Organizacao[];
+    const ids = todas.map((x) => x.id);
     const pedida = new URLSearchParams(window.location.search).get("org");
-    const porSlug = (o.data as Organizacao[]).find((x) => x.slug === pedida)?.id;
+    const porSlug = todas.find((x) => x.slug === pedida)?.id;
+    const daAba = lerOrgDaAba();
     const salva = lerOrgSalva();
-    setOrgId(porSlug ?? (salva && ids.includes(salva) ? salva : (ids[0] ?? null)));
+    // sem pedido nem escolha nesta aba: abre a organização do HUB (as famílias abrem pelo /pessoal ou pelo ?org=)
+    const primeiraEmpresa = todas.find((x) => x.tipo !== "pessoal")?.id;
+    const escolhida =
+      porSlug ?? (daAba && ids.includes(daAba) ? daAba : salva && ids.includes(salva) ? salva : (primeiraEmpresa ?? ids[0] ?? null));
+    if (escolhida) gravarOrgDaAba(escolhida);
+    setOrgId(escolhida);
   }, [userId]);
 
   useEffect(() => {
@@ -182,8 +214,11 @@ export function OrgProvider({ children }: { children: React.ReactNode }) {
       clientes,
       membros,
       podeEditarCadastros: eu.papel === "admin" || eu.papel === "gestor",
+      pessoal: org.tipo === "pessoal",
       trocarOrg: (id) => {
-        gravarLocal(CHAVES.organizacao, id);
+        gravarOrgDaAba(id);
+        // a lembrança "entre abas" é só do HUB; família abre pelo /pessoal
+        if (orgs?.find((o) => o.id === id)?.tipo !== "pessoal") gravarLocal(CHAVES.organizacao, id);
         setOrgId(id);
       },
       recarregar,
@@ -223,6 +258,12 @@ function AcessoNaoLiberado({ email }: { email: string }) {
     <Centro titulo="Seu acesso ainda não foi liberado">
       <p>
         Peça ao administrador da MDC para cadastrar <b>{email}</b> em Pessoas e acessos. Assim que for liberado, entre de novo.
+      </p>
+      <p className="mt-3">
+        Quer controlar as finanças da sua família?{" "}
+        <a className="btn-link" href={caminho("/pessoal")}>
+          Abrir o MDC · Pessoal
+        </a>
       </p>
       <button className="btn-link mt-4" onClick={() => void supabase().auth.signOut()}>
         Sair

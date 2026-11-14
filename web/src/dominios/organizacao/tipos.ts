@@ -13,6 +13,8 @@ export interface Organizacao {
   fuso: string;
   /** Cliente que é a própria empresa da organização (na MDC, a MDC Assessoria): a única que a Gestão atende. */
   gestao_cliente_id?: string | null;
+  /** empresa = organização do HUB; pessoal = família do MDC - Pessoal (075). */
+  tipo?: "empresa" | "pessoal";
 }
 
 export interface Membro {

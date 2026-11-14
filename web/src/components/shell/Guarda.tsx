@@ -4,12 +4,17 @@
 "use client";
 
 import Link from "next/link";
+import { Icone } from "@/components/ui/Icone";
 import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { NAV, podeAbrirRota } from "./navegacao";
+import { moduloNoPessoal, rotaNoPessoal } from "@/dominios/pessoal/entrada";
 import type { Modulo } from "./navegacao";
 
 export function Guarda({ modulo, rota, children }: { modulo: Modulo; rota: string; children: React.ReactNode }) {
-  const { pode, appsCarregados, podeEditarCadastros, papel } = useOrg();
+  const { pode, appsCarregados, podeEditarCadastros, papel, pessoal } = useOrg();
+  // MDC · Pessoal (075): só Início, Tarefas, Finanças (sem certificado) e Família; Família só existe no pessoal
+  if (pessoal && (!moduloNoPessoal(modulo) || !rotaNoPessoal(rota))) return <TelaNaoLiberada nome="o MDC · Pessoal" pessoal />;
+  if (!pessoal && modulo === "familia") return <TelaNaoLiberada nome={NAV.familia.titulo} />;
   if (modulo === "hub") return <>{children}</>;
   if (!appsCarregados) return <p className="p-10 text-center text-sm text-neutral-500">Carregando…</p>;
   if (!podeAbrirRota(rota, modulo, { pode, podeEditarCadastros, admin: papel === "admin" }))
@@ -18,14 +23,17 @@ export function Guarda({ modulo, rota, children }: { modulo: Modulo; rota: strin
 }
 
 /** Mensagem padrão de tela bloqueada (a mesma para módulo não liberado e para nível insuficiente). */
-export function TelaNaoLiberada({ nome }: { nome: string }) {
+export function TelaNaoLiberada({ nome, pessoal = false }: { nome: string; pessoal?: boolean }) {
   return (
     <div className="mx-auto max-w-lg p-10 text-center">
       <h1 className="text-lg font-semibold text-[var(--marca)]">Esta tela não está liberada para você</h1>
       <p className="mt-2 text-sm text-neutral-600">
-        Seu acesso em {nome} não inclui esta tela. Peça ao administrador do Hub para liberar em Pessoas e acessos.
+        {pessoal
+          ? "Esta tela é do HUB da MDC e não faz parte do MDC · Pessoal."
+          : `Seu acesso em ${nome} não inclui esta tela. Peça ao administrador do Hub para liberar em Pessoas e acessos.`}
       </p>
       <Link href="/" className="btn-primario mt-5">
+        <Icone nome="casa" className="h-4 w-4" />
         Voltar ao início
       </Link>
     </div>

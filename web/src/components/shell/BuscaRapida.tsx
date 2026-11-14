@@ -8,6 +8,7 @@ import { nomeCliente } from "@/dominios/clientes/nome";
 import { semAcento } from "@/lib/texto";
 import { Icone } from "@/components/ui/Icone";
 import { NAV, filtrarLinks, podeModulo } from "./navegacao";
+import { rotaNoPessoal } from "@/dominios/pessoal/entrada";
 import type { Modulo } from "./navegacao";
 
 interface ItemBusca {
@@ -22,7 +23,7 @@ interface ItemBusca {
 
 /** Busca rápida (Ctrl/⌘ K): ferramentas, páginas e clientes. */
 export function BuscaRapida({ aoFechar }: { aoFechar: () => void }) {
-  const { apps, pode, podeEditarCadastros, papel, clientes } = useOrg();
+  const { apps, pode, podeEditarCadastros, papel, clientes, pessoal } = useOrg();
   const router = useRouter();
   const [q, setQ] = useState("");
   const [i, setI] = useState(0);
@@ -78,8 +79,23 @@ export function BuscaRapida({ aoFechar }: { aoFechar: () => void }) {
           icone: "pasta",
           href: `/tarefas?cliente=${c.id}`,
         });
+    // MDC · Pessoal (075): só as telas do app da família (sem clientes, cadastros nem administração do HUB)
+    if (pessoal) {
+      const daFamilia = itens.filter(
+        (x) =>
+          x.grupo !== "Clientes" &&
+          x.grupo !== "Administração" &&
+          x.id !== "/cadastros/pessoas" &&
+          rotaNoPessoal(x.href) &&
+          (x.href === "/" || x.href.startsWith("/tarefas") || x.href.startsWith("/financeiro")),
+      );
+      return [
+        ...daFamilia.map((x) => ({ ...x, nome: x.nome.replace(/^Financeiro/, "Finanças") })),
+        { id: "/familia", grupo: "Ir para", nome: "Família: pessoas e convites", icone: "pessoas", href: "/familia" },
+      ];
+    }
     return itens;
-  }, [apps, pode, podeEditarCadastros, papel, clientes]);
+  }, [apps, pode, podeEditarCadastros, papel, clientes, pessoal]);
 
   const resultado = useMemo(() => {
     const t = semAcento(q.trim().toLowerCase());

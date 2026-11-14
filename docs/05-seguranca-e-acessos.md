@@ -181,6 +181,22 @@ enviado pelo Portal com referência só entra se a tarefa ou a conversa for do p
 Contas geradas por nota ou pedido nascem pela função interna `app.fin_lancar_titulos` (quem tem Entradas ou Saídas gera as
 contas do documento sem precisar do Financeiro) e só mudam ou cancelam pelo documento de origem.
 
+## 5.8 MDC · Pessoal: cadastro aberto sem abrir o HUB (075)
+
+Quem cria conta no MDC · Pessoal vira administrador da **própria família** (organização `tipo = 'pessoal'`), e nada
+além disso. Para que um desconhecido não use esse papel para chegar a outras contas:
+
+- convite do HUB, do Portal e link gerado não funcionam em família (gatilho `pessoal_sem_convite`); só o convite com
+  código da tela Família, que guarda apenas o resumo do código e tem limite de tentativas erradas;
+- `membros` de família só aceita quem criou a família ou aceitou um convite (`app.pessoal_entradas`);
+- a senha provisória do HUB (5.4) não vale para quem está numa família, nem para conta com Portal em organização que
+  quem pede não administra;
+- o tipo da organização não muda pela tela, e a família não recebe licenças, perfis da equipe nem Ledgra;
+- a tela (`Guarda`) só abre Início, Tarefas, Finanças (sem certificado) e Família; a RLS de sempre separa uma
+  família da outra;
+- a criação de conta passa pela Função Edge `pessoal-cadastro` (limite por IP, campo contra robôs); o site nunca usa
+  a chave de serviço.
+
 Avisos do Supabase que continuam e são esperados: as funções `public.*` chamadas pelas telas (cada uma confere a
 permissão na primeira linha) e `crm_receber_lead`, que recebe os leads do Simulador sem login. Pendente no painel
 (Authentication › Policies): ligar a proteção contra senha vazada.

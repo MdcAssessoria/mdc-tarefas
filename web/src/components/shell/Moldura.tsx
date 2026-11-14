@@ -11,6 +11,8 @@ import { BarraSuperior } from "./BarraSuperior";
 import { BuscaRapida } from "./BuscaRapida";
 import { Guarda } from "./Guarda";
 import { MenuLateral } from "./MenuLateral";
+import { MenuPessoal } from "./MenuPessoal";
+import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { moduloDaRota } from "./navegacao";
 
 /** Estrutura do Hub: menu lateral (recolhível; gaveta no celular), barra superior com as abas do módulo, busca rápida e sino. */
@@ -25,6 +27,17 @@ export function Moldura({ children }: { children: React.ReactNode }) {
   const [busca, setBusca] = useState(false);
   const rota = usePathname();
   const modulo = moduloDaRota(rota);
+  // família do MDC · Pessoal (075): menu e marca próprios no lugar do menu do HUB
+  const { pessoal } = useOrg();
+  const Menu = pessoal ? MenuPessoal : MenuLateral;
+  useEffect(() => {
+    document.title = pessoal ? "MDC · Pessoal" : "HUB-MDC";
+    try {
+      sessionStorage.setItem("mdc-tarefas:entrada", pessoal ? "pessoal" : "hub");
+    } catch {
+      /* sem armazenamento */
+    }
+  }, [pessoal]);
 
   useEffect(() => setGaveta(false), [rota]);
   useEffect(() => {
@@ -49,7 +62,7 @@ export function Moldura({ children }: { children: React.ReactNode }) {
         }`}
         style={{ width: recolhido ? 72 : largura }}
       >
-        <MenuLateral modulo={modulo} recolhido={recolhido} aoRecolher={alternar} />
+        <Menu modulo={modulo} recolhido={recolhido} aoRecolher={alternar} />
         {!recolhido && (
           <AlcaMenu
             largura={largura}
@@ -67,7 +80,7 @@ export function Moldura({ children }: { children: React.ReactNode }) {
         <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true" aria-label="Menu">
           <button className="absolute inset-0 bg-black/40" aria-label="Fechar menu" onClick={() => setGaveta(false)} />
           <aside className="surgir absolute inset-y-0 left-0 flex w-[280px] flex-col bg-[var(--marca)] text-[var(--nevoa)] shadow-2xl">
-            <MenuLateral modulo={modulo} recolhido={false} />
+            <Menu modulo={modulo} recolhido={false} />
           </aside>
         </div>
       )}

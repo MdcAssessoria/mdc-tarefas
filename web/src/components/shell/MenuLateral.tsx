@@ -253,18 +253,23 @@ export function MenuLateral({ modulo, recolhido, aoRecolher }: { modulo: Modulo;
 
       <div className="border-t border-white/10 p-3">
         <BotaoInstalarApp variante="menu" recolhido={recolhido} />
-        {!recolhido && orgs.length > 1 && (
+        {/* famílias do MDC · Pessoal não aparecem no HUB (075): abrem pelo próprio app */}
+        {orgs.some((o) => o.tipo === "pessoal") &&
+          item({ href: caminho("/pessoal"), nome: "MDC · Pessoal", icone: "carteira", ativo: false, externo: true })}
+        {!recolhido && orgs.filter((o) => o.tipo !== "pessoal").length > 1 && (
           <select
             value={org.id}
             onChange={(e) => trocarOrg(e.target.value)}
             className="mb-2 w-full rounded-lg bg-white/[0.07] px-2 py-1.5 text-sm text-white"
             aria-label="Organização"
           >
-            {orgs.map((o) => (
-              <option key={o.id} value={o.id} className="text-black">
-                {o.nome}
-              </option>
-            ))}
+            {orgs
+              .filter((o) => o.tipo !== "pessoal")
+              .map((o) => (
+                <option key={o.id} value={o.id} className="text-black">
+                  {o.nome}
+                </option>
+              ))}
           </select>
         )}
         <div className={`flex items-center gap-2.5 ${recolhido ? "flex-col" : ""}`}>

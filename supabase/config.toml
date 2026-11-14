@@ -69,3 +69,7 @@ import_map = "./functions/fiscal-tabelas/deno.json"
 [functions.fatura-enviar]
 verify_jwt = false
 import_map = "./functions/fatura-enviar/deno.json"
+
+[functions.pessoal-cadastro]
+verify_jwt = false
+import_map = "./functions/pessoal-cadastro/deno.json"
