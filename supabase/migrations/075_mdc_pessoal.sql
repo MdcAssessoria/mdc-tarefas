@@ -12,7 +12,7 @@
 --
 --  Regras (no banco):
 --   - tipo da organização só muda por migração (gatilho barra a chamada direta);
---   - pessoal_criar_familia: qualquer pessoa logada, no máximo 3 famílias criadas por conta; já nasce com as
+--   - pessoal_criar_familia: qualquer pessoa logada, no máximo 3 famílias criadas por conta; já nasce com
 --     o plano de contas e as categorias de casa (moradia, mercado, saúde…), Tarefas e Finanças;
 --   - pessoal_cadastro_tentativa: trava de cadastro aberto (no máximo 5 contas por hora por endereço de rede), só para a
 --     função do servidor (pessoal-cadastro), que cria a conta com a chave de serviço.
