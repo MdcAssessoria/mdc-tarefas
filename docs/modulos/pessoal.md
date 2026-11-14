@@ -45,20 +45,37 @@ MDC". A família escolhida vale para a aba (sessionStorage), então HUB e famíl
 - **Trocar o nome** (`pessoal_renomear`, só o responsável).
 - Tudo vai para a auditoria (`app.registrar`, módulo `pessoal`).
 
-## 3. Arquivos
+## 3. Resumo diário (migração 076)
 
-- Banco: `supabase/migrations/075_mdc_pessoal.sql`; testes `supabase/testes/141_base_075.sql` e
-  `142_pessoal_075.sql` (P1 a P23).
-- Função Edge: `supabase/functions/pessoal-cadastro/index.ts`.
+- **O que diz:** a pagar atrasado, a pagar hoje, a pagar nos próximos 7 dias, a receber até 7 dias e o que foi pago
+  e recebido ontem (`app.pessoal_resumo_texto`, mesma divisão do Início). Sem nada a contar, não avisa.
+- **Quando:** o agendador `pessoal-resumo` roda no minuto 3 de cada hora (`app.pessoal_resumo_rodar`); cada pessoa da
+  família que vê as Finanças recebe **uma vez por dia**, a partir da hora escolhida (padrão 7h, no fuso da família).
+- **Onde:** no sino do app e, para quem ligou "Avisar também no celular" e deixou o navegador avisar, na tela do
+  aparelho (Web Push). Cada pessoa ajusta no Início › **Ajustar o resumo**: quero/não quero, horário (5h a 22h),
+  celular, e liga ou desliga o aviso em cada aparelho (`pessoal_resumo_salvar`, `pessoal_push_inscrever`,
+  `pessoal_push_remover`).
+- **Entrega no celular:** o banco põe o aviso na fila `app.pessoal_push_fila`; o agendador só chama a Função
+  `pessoal-aviso` quando há fila (token do Vault `pessoal_aviso_token`, como a 053). A função entrega com até 3
+  tentativas e esquece aparelho que não existe mais. As chaves do Web Push (VAPID) são **geradas pela própria função
+  na primeira vez e guardadas no Vault** (`pessoal_vapid`): ninguém digita nem cadastra chave.
+- Service worker só de avisos: `web/public/sw-avisos.js` (não guarda cache).
+
+## 4. Arquivos
+
+- Banco: `supabase/migrations/075_mdc_pessoal.sql` e `076_pessoal_resumo_diario.sql`; testes
+  `supabase/testes/141_base_075.sql`, `142_pessoal_075.sql` (P1 a P23), `143_base_076.sql` e `144_resumo_076.sql`
+  (R1 a R15).
+- Funções Edge: `supabase/functions/pessoal-cadastro/index.ts` (cadastro aberto) e `pessoal-aviso/index.ts`
+  (aviso no celular).
 - Site: `web/src/app/pessoal/page.tsx` (entrada), `web/src/app/(hub)/familia/page.tsx`,
   `web/src/dominios/pessoal/` (`entrada.ts`, `resumo.ts`, `familia.ts` com testes; `componentes/InicioPessoal.tsx`,
-  `componentes/JanelaConvidar.tsx`), `components/shell/MenuPessoal.tsx`.
+  `componentes/JanelaConvidar.tsx`, `componentes/ResumoDiario.tsx`; `avisoCelular.ts` com teste), `components/shell/MenuPessoal.tsx`.
 - Fotos de tela da família: `PESSOAL=1 npm run telas` (a organização de exemplo vira "Família Carvalho").
 
-## 4. Limitações e próximos passos
+## 5. Limitações
 
 - Sem confirmação de e-mail no cadastro (o HUB não envia e-mail de cadastro); a trava é por IP e o robô cai no campo
   escondido.
-- **Resumo diário com aviso** (fase 3, em construção): o resumo das finanças vai para o sino e, para quem permitir,
-  para o celular; horário ajustável e opção de desligar. O aviso no celular precisa de uma chave que o Edvaldo
-  cadastra uma vez no painel.
+- Aviso no celular depende do navegador: Chrome no Android e no computador funcionam direto; no iPhone só com o app
+  instalado na tela de início (iOS 16.4 ou mais novo).

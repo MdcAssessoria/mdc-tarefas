@@ -506,7 +506,13 @@ const INTERACOES = {
     await foto("convite-pronto", { soTela: true });
   },
   "/": async (p, foto) => {
-    if (process.env.PESSOAL) return; // a família tem outro Início (resumo do dia), sem a lista de tarefas do HUB
+    if (process.env.PESSOAL) {
+      // a família tem outro Início (resumo do dia): abre a janela do resumo diário
+      await p.getByRole("button", { name: "Ajustar o resumo" }).click();
+      await p.getByText("Este aparelho").waitFor({ timeout: 5000 });
+      await foto("resumo-diario", { soTela: true });
+      return;
+    }
     await p
       .getByRole("button", { name: /^Concluir / })
       .first()

@@ -63,6 +63,15 @@ npx supabase functions deploy convite --project-ref bulqqdgfrrpqquqvjjfa --impor
 
 - **Ordem quando a mudança mexe na tela e na função:** publique a **função primeiro** e confira a versão nova no painel;
   só depois faça o push do site. A função nova aceita o site antigo; o site novo com a função antiga entrega PDF errado.
+- **MDC · Pessoal (075/076):** `pessoal-cadastro` (cadastro aberto) e `pessoal-aviso` (resumo no celular) vão
+  **sem verificação de login** (`--no-verify-jwt`; a primeira tem trava por IP, a segunda confere o token do Vault ou
+  o login por dentro). Não precisam de segredo novo: usam os do próprio Supabase, e as chaves do Web Push são geradas
+  pela função na primeira vez e ficam no Vault.
+
+  ```bash
+  npx supabase functions deploy pessoal-cadastro --project-ref bulqqdgfrrpqquqvjjfa --no-verify-jwt --import-map supabase/functions/pessoal-cadastro/deno.json
+  npx supabase functions deploy pessoal-aviso --project-ref bulqqdgfrrpqquqvjjfa --no-verify-jwt --import-map supabase/functions/pessoal-aviso/deno.json
+  ```
 - `demonstrativo-pdf` usa cópias de `balancete.ts` e `demonstracoes.ts` geradas por `scripts/sync-funcoes.sh` a
   partir de `web/src/dominios/demonstrativos/`. **Rode o script antes de publicar** sempre que mexer nesses cálculos.
   Testes do PDF: `cd supabase/functions/demonstrativo-pdf && deno test --allow-read --config deno.json pdf_test.ts`.

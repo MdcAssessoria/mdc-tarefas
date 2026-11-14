@@ -14,6 +14,7 @@ import { Icone } from "@/components/ui/Icone";
 import type { NomeIcone } from "@/components/ui/Icone";
 import { Esqueleto } from "@/components/ui/Esqueleto";
 import { resumoDoDia, valorEmAberto } from "../resumo";
+import { ResumoDiario } from "./ResumoDiario";
 import type { GrupoResumo, TituloResumo } from "../resumo";
 
 const ATALHOS: { href: string; nome: string; dica: string; icone: NomeIcone }[] = [
@@ -86,6 +87,8 @@ export function InicioPessoal() {
           <Cartao titulo="A receber em 7 dias" icone="seta-entrada" grupo={r!.receber7} tom="ok" vazio="Nada a receber esta semana." />
         </div>
       )}
+
+      {pode("financeiro") && <ResumoDiario />}
 
       <section>
         <h2 className="mb-3 text-lg font-semibold text-[var(--marca)]">Lançar agora</h2>

@@ -320,6 +320,7 @@ const licCobranca = (k, contrato_id, cliente_id, n, valor, situacao) => ({
 
 export const TABELAS = {
   organizacoes: [org],
+  pessoal_resumo_preferencias: [],
   pessoal_convites: [
     {
       id: "c0750000-0000-4000-8000-000000000001",

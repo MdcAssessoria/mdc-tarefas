@@ -180,3 +180,8 @@ for f in testes/141_base_075.sql migrations/075_mdc_pessoal.sql; do
   $P -v ON_ERROR_STOP=1 -f "$R/$f" 2>&1 | grep -v NOTICE || true
 done
 $P -f "$R/testes/142_pessoal_075.sql" 2>&1 | grep -v "^SET$"
+# 076: MDC - Pessoal, resumo diário das finanças (sino e celular)
+for f in testes/143_base_076.sql migrations/076_pessoal_resumo_diario.sql; do
+  $P -v ON_ERROR_STOP=1 -f "$R/$f" 2>&1 | grep -v NOTICE || true
+done
+$P -f "$R/testes/144_resumo_076.sql" 2>&1 | grep -v "^SET$"
