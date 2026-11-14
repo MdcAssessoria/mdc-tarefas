@@ -16,6 +16,11 @@
 | `/comercial/contratos` | ver | Contratos de todas as oportunidades: busca, período de criação, situação (padrão: sem os cancelados); indicadores em ajuste, aguardando assinatura e assinados no mês; PDF de cada contrato; PDF e Excel da lista |
 | `/comercial/modelo` | gerir | Texto-base com as variáveis (`{{honorario_mensal}}`…), logo do cabeçalho do contrato, prévia e PDF de exemplo. Cada gravação gera versão nova; contratos já gerados não mudam |
 
+Leads que chegam pelo **MDC · Pessoal** (077) entram com a origem "MDC · Pessoal" e a anotação da autorização de
+contato; se a pessoa retirar a autorização, o lead é arquivado sozinho. A ficha de todo lead tem os atalhos "Procurar
+no Google / Instagram / LinkedIn" (abre a busca com o nome e a cidade; nada é coletado automaticamente). Ver
+[pessoal.md](pessoal.md#4-você-tem-empresa--contato-da-mdc-migração-077).
+
 ## 2. Regras
 
 - **Nada se apaga** (migração 036): oportunidade sai do funil **arquivando com motivo** (`crm_arquivar`, janela de

@@ -1588,6 +1588,25 @@ export const TABELAS = {
 export const RPCS = {
   // MDC · Pessoal (075): convite da família devolve o código (aparece uma vez)
   pessoal_convidar: () => "AB2C-DE3F",
+  // MDC · Pessoal (077): cartão "Você tem empresa?" com o termo em vigor e uma empresa já indicada
+  pessoal_empresa_situacao: () => ({
+    responsavel: true,
+    mostrar_cartao: true,
+    pode_mais: true,
+    termo: {
+      versao: 1,
+      texto:
+        "Autorizo a MDC Assessoria Contábil a usar o CNPJ, a razão social, meu nome, e-mail e telefone, junto com os dados públicos da empresa na Receita Federal, só para me contatar sobre os serviços dela. Posso retirar a autorização quando quiser, aqui no app.",
+    },
+    empresas: [
+      {
+        id: "c0770000-0000-4000-8000-000000000001",
+        cnpj: "11122233000183",
+        razao_social: "Padaria Souza Ltda",
+        autorizado_em: momento(-3),
+      },
+    ],
+  }),
   // Financeiro › Conciliação (051): extrato do Itaú com sugestões (valor igual, pagamento agrupado, boleto do Ledgra Link)
   fin_conciliacao_dados: () => ({
     conta: "f2000000-0000-4000-8000-000000000001",

@@ -194,6 +194,8 @@ além disso. Para que um desconhecido não use esse papel para chegar a outras c
 - o tipo da organização não muda pela tela, e a família não recebe licenças, perfis da equipe nem Ledgra;
 - a tela (`Guarda`) só abre Início, Tarefas, Finanças (sem certificado) e Família; a RLS de sempre separa uma
   família da outra;
+- dado de família só chega à MDC com autorização específica (077): caixa desmarcada, texto e versão gravados, retirada
+  a qualquer momento (o lead é arquivado); a família nunca lê o Funil da MDC;
 - a criação de conta passa pela Função Edge `pessoal-cadastro` (limite por IP, campo contra robôs); o site nunca usa
   a chave de serviço.
 

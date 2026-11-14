@@ -185,3 +185,8 @@ for f in testes/143_base_076.sql migrations/076_pessoal_resumo_diario.sql; do
   $P -v ON_ERROR_STOP=1 -f "$R/$f" 2>&1 | grep -v NOTICE || true
 done
 $P -f "$R/testes/144_resumo_076.sql" 2>&1 | grep -v "^SET$"
+# 077: MDC - Pessoal, "Você tem empresa?" (autorização de contato e lead no Funil da MDC)
+for f in testes/145_base_077.sql migrations/077_pessoal_contato_empresa.sql; do
+  $P -v ON_ERROR_STOP=1 -f "$R/$f" 2>&1 | grep -v NOTICE || true
+done
+$P -f "$R/testes/146_contato_077.sql" 2>&1 | grep -v "^SET$"

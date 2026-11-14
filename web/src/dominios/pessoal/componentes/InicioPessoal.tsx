@@ -15,6 +15,7 @@ import type { NomeIcone } from "@/components/ui/Icone";
 import { Esqueleto } from "@/components/ui/Esqueleto";
 import { resumoDoDia, valorEmAberto } from "../resumo";
 import { ResumoDiario } from "./ResumoDiario";
+import { CartaoEmpresaInicio } from "./CartaoEmpresa";
 import type { GrupoResumo, TituloResumo } from "../resumo";
 
 const ATALHOS: { href: string; nome: string; dica: string; icone: NomeIcone }[] = [
@@ -89,6 +90,8 @@ export function InicioPessoal() {
       )}
 
       {pode("financeiro") && <ResumoDiario />}
+
+      <CartaoEmpresaInicio />
 
       <section>
         <h2 className="mb-3 text-lg font-semibold text-[var(--marca)]">Lançar agora</h2>

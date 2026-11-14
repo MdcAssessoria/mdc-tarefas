@@ -511,6 +511,9 @@ const INTERACOES = {
       await p.getByRole("button", { name: "Ajustar o resumo" }).click();
       await p.getByText("Este aparelho").waitFor({ timeout: 5000 });
       await foto("resumo-diario", { soTela: true });
+      await p.keyboard.press("Escape");
+      await p.getByText("Você tem empresa?").first().scrollIntoViewIfNeeded();
+      await foto("tem-empresa", { soTela: true });
       return;
     }
     await p

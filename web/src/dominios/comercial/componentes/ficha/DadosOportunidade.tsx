@@ -10,6 +10,7 @@ import { CampoCnpj } from "@/components/ui/CampoCnpj";
 import { REGIMES } from "@/dominios/clientes/tipos";
 import type { Oportunidade } from "../../crm";
 import { atualizarOportunidade } from "../../repositorio";
+import { linksDeBusca } from "../../buscaInternet";
 
 const ROT_SIM: Record<string, string> = {
   melhor_regime: "Melhor regime (simulador)",
@@ -152,6 +153,22 @@ export function DadosOportunidade({
           {campo("faturamento", "Faturamento anual (R$)", "number", { inputMode: "decimal" })}
         </div>
       </fieldset>
+
+      {linksDeBusca(f.empresa || f.razao_social, f.cidade, f.uf).length > 0 && (
+        <div className="space-y-1">
+          <p className="text-xs text-[var(--texto-suave)]">
+            Conheça a empresa antes do contato: abre a busca com o nome e a cidade (nada é guardado sozinho).
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {linksDeBusca(f.empresa || f.razao_social, f.cidade, f.uf).map((l) => (
+              <a key={l.nome} href={l.url} target="_blank" rel="noopener noreferrer" className="btn">
+                <Icone nome={l.icone} className="h-4 w-4" />
+                {l.nome}
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
 
       <fieldset className="space-y-2">
         <legend className="mb-1 text-xs font-semibold uppercase tracking-wide text-[var(--texto-suave)]">Contato</legend>

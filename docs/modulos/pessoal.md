@@ -61,19 +61,41 @@ MDC". A família escolhida vale para a aba (sessionStorage), então HUB e famíl
   na primeira vez e guardadas no Vault** (`pessoal_vapid`): ninguém digita nem cadastra chave.
 - Service worker só de avisos: `web/public/sw-avisos.js` (não guarda cache).
 
-## 4. Arquivos
+## 4. "Você tem empresa?" — contato da MDC (migração 077)
+
+- **Onde:** cartão no Início (só para o responsável, sem empresa indicada; "Agora não" esconde por 90 dias) e a seção
+  "Contato da MDC sobre a sua empresa" na tela Família ("Indicar outra empresa", até 3 por família, e "Não quero mais
+  contato").
+- **O que a pessoa faz:** digita o CNPJ e toca em Buscar dados (a razão social vem da Receita pela BrasilAPI), confere
+  o e-mail (vem o da conta) e o telefone (opcional), e marca a caixa da autorização — que vem **desmarcada** e mostra o
+  texto em vigor (`app.pessoal_termo_contato`, versão 1).
+- **O que vai para a MDC:** CNPJ, razão social, nome, e-mail e telefone da pessoa e os dados públicos da empresa na
+  Receita (nome fantasia, cidade/UF, CNAE, porte, Simples/MEI, abertura, situação, endereço, telefone e e-mail
+  cadastrais). Sem sócios e **nada das finanças da família**.
+- **No Funil** (`pessoal_quero_contato`): CNPJ novo vira lead com origem **MDC · Pessoal**, anotação da autorização e
+  aviso no sino do Comercial; CNPJ já no Funil (aberto) ganha só a anotação; CNPJ que já é cliente ativo da MDC não vira
+  lead. A prova do consentimento (texto, versão e instante) fica em `pessoal_contatos_empresa`.
+- **Retirar** (`pessoal_retirar_contato`): arquiva o lead que nasceu daquela autorização (com motivo) e anota na
+  oportunidade que não se deve mais contatar por esse canal. Lead que já existia antes só ganha a anotação.
+- **Ficha do lead no Comercial:** atalhos "Procurar no Google / Instagram / LinkedIn" com o nome e a cidade. A busca é
+  feita por uma pessoa do Comercial; o HUB não coleta nada das redes sozinho (termos de uso das redes e LGPD: a
+  autorização é para contato, não para montar perfil da pessoa).
+- Antes de ir ao ar, o texto da autorização deve passar pelo advogado da MDC. Para mudar o texto, crie migração nova que
+  troque `app.pessoal_termo_contato` subindo a versão.
+
+## 5. Arquivos
 
 - Banco: `supabase/migrations/075_mdc_pessoal.sql` e `076_pessoal_resumo_diario.sql`; testes
   `supabase/testes/141_base_075.sql`, `142_pessoal_075.sql` (P1 a P23), `143_base_076.sql` e `144_resumo_076.sql`
-  (R1 a R15).
+  (R1 a R15); `077_pessoal_contato_empresa.sql` com `145_base_077.sql` e `146_contato_077.sql` (C1 a C17).
 - Funções Edge: `supabase/functions/pessoal-cadastro/index.ts` (cadastro aberto) e `pessoal-aviso/index.ts`
   (aviso no celular).
 - Site: `web/src/app/pessoal/page.tsx` (entrada), `web/src/app/(hub)/familia/page.tsx`,
   `web/src/dominios/pessoal/` (`entrada.ts`, `resumo.ts`, `familia.ts` com testes; `componentes/InicioPessoal.tsx`,
-  `componentes/JanelaConvidar.tsx`, `componentes/ResumoDiario.tsx`; `avisoCelular.ts` com teste), `components/shell/MenuPessoal.tsx`.
+  `componentes/JanelaConvidar.tsx`, `componentes/ResumoDiario.tsx`, `componentes/CartaoEmpresa.tsx`, `componentes/JanelasFamilia.tsx`; `contatoEmpresa.ts`, `avisoCelular.ts` com teste), `components/shell/MenuPessoal.tsx`.
 - Fotos de tela da família: `PESSOAL=1 npm run telas` (a organização de exemplo vira "Família Carvalho").
 
-## 5. Limitações
+## 6. Limitações
 
 - Sem confirmação de e-mail no cadastro (o HUB não envia e-mail de cadastro); a trava é por IP e o robô cai no campo
   escondido.

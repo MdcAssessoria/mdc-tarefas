@@ -41,7 +41,7 @@ export function ResumoDiario() {
       <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[var(--fundo)] text-[var(--marca)]">
         <Icone nome="sino" className="h-5 w-5" />
       </span>
-      <div className="min-w-0 flex-1">
+      <div className="min-w-0 flex-1 basis-56">
         <b className="block text-[var(--marca)]">Resumo diário</b>
         <span className="text-sm text-neutral-600">
           {p.ligado
@@ -49,7 +49,7 @@ export function ResumoDiario() {
             : "Desligado: você não recebe o resumo das finanças."}
         </span>
       </div>
-      <button className="btn" onClick={() => setAberta(true)}>
+      <button className="btn w-full justify-center sm:w-auto" onClick={() => setAberta(true)}>
         <Icone nome="engrenagem" className="h-4 w-4" />
         Ajustar o resumo
       </button>
@@ -182,7 +182,7 @@ function JanelaResumo({ inicial, aoFechar }: { inicial: Preferencia; aoFechar: (
           </b>
           <p className="mt-1 text-sm text-neutral-600">{aparelho ? TEXTO_SITUACAO[aparelho] : "Conferindo…"}</p>
           {aparelho === "desligado" && (
-            <button type="button" className="btn-azul mt-2" onClick={() => void aparelhoLigar(true)} disabled={mexendo}>
+            <button type="button" className="btn mt-2" onClick={() => void aparelhoLigar(true)} disabled={mexendo}>
               <Icone nome="sino" className="h-4 w-4" />
               {mexendo ? "Ligando…" : "Ligar aviso neste aparelho"}
             </button>

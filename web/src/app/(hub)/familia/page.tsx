@@ -19,10 +19,12 @@ import { Chip } from "@/components/ui/Chip";
 import { Esqueleto } from "@/components/ui/Esqueleto";
 import { EstadoVazio } from "@/components/ui/EstadoVazio";
 import { Icone } from "@/components/ui/Icone";
-import { Modal } from "@/components/ui/Modal";
 import type { Tom } from "@/components/ui/Tons";
 import { JanelaConvidar } from "@/dominios/pessoal/componentes/JanelaConvidar";
-import { NOME_SITUACAO, PERMISSOES, nomePermissao, permissaoDoMembro, situacaoConvite } from "@/dominios/pessoal/familia";
+import { JanelaNome, JanelaPermissao } from "@/dominios/pessoal/componentes/JanelasFamilia";
+import { CartaoEmpresa, useSituacaoEmpresa } from "@/dominios/pessoal/componentes/CartaoEmpresa";
+import { formatarDocumento } from "@/lib/documento";
+import { NOME_SITUACAO, nomePermissao, permissaoDoMembro, situacaoConvite } from "@/dominios/pessoal/familia";
 import type { ConviteFamilia, Permissao, SituacaoConvite } from "@/dominios/pessoal/familia";
 
 interface Pessoa {
@@ -43,6 +45,8 @@ export default function TelaFamilia() {
   const [convidando, setConvidando] = useState(false);
   const [mudando, setMudando] = useState<Pessoa | null>(null);
   const [renomeando, setRenomeando] = useState(false);
+  const [indicando, setIndicando] = useState(false);
+  const empresa = useSituacaoEmpresa();
 
   const consulta = useConsulta(
     useCallback(async () => {
@@ -127,6 +131,24 @@ export default function TelaFamilia() {
     if (!sim) return;
     try {
       await chamar("pessoal_cancelar_convite", { p_convite: c.id }, "Convite cancelado");
+    } catch (e) {
+      mostrar(traduzirErro(e), "erro");
+    }
+  }
+
+  async function retirarContato(id: string, nome: string) {
+    const sim = await confirmar({
+      titulo: `Não quer mais contato sobre ${nome}?`,
+      descricao: "A MDC deixa de entrar em contato por este pedido. Se mudar de ideia, é só indicar de novo.",
+      botao: "Não quero mais contato",
+      perigo: true,
+    });
+    if (!sim) return;
+    try {
+      const { error } = await supabase().rpc("pessoal_retirar_contato", { p_contato: id });
+      if (error) throw error;
+      mostrar("Autorização retirada");
+      empresa.recarregar();
     } catch (e) {
       mostrar(traduzirErro(e), "erro");
     }
@@ -237,7 +259,7 @@ export default function TelaFamilia() {
               icone="pessoas"
               titulo="Por enquanto só você"
               acao={
-                <button className="btn-azul" onClick={() => setConvidando(true)}>
+                <button className="btn" onClick={() => setConvidando(true)}>
                   <Icone nome="mais" className="h-4 w-4" />
                   Convidar alguém
                 </button>
@@ -281,6 +303,51 @@ export default function TelaFamilia() {
         </>
       )}
 
+      {responsavel && empresa.dados && (
+        <section className="space-y-2">
+          <h2 className="flex items-center gap-2 text-base font-semibold text-[var(--marca)]">
+            <Icone nome="pasta" className="h-5 w-5" />
+            Contato da MDC sobre a sua empresa
+          </h2>
+          {empresa.dados.empresas.length > 0 && (
+            <div className="cartao divide-y divide-[var(--borda)] p-0">
+              {empresa.dados.empresas.map((e) => (
+                <div key={e.id} className="flex flex-wrap items-center gap-3 px-4 py-3">
+                  <div className="min-w-0 flex-1">
+                    <b className="block text-[var(--marca)]">{e.razao_social}</b>
+                    <span className="text-sm text-neutral-500">
+                      CNPJ {formatarDocumento(e.cnpj)} · autorizado em {fmtData(e.autorizado_em.slice(0, 10))}
+                    </span>
+                  </div>
+                  <button className="btn" onClick={() => void retirarContato(e.id, e.razao_social)}>
+                    <Icone nome="cancelar" className="h-4 w-4" />
+                    Não quero mais contato
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+          {indicando ? (
+            <CartaoEmpresa
+              situacao={empresa.dados}
+              principal={false}
+              aoVoltar={() => setIndicando(false)}
+              aoTerminar={() => {
+                setIndicando(false);
+                empresa.recarregar();
+              }}
+            />
+          ) : (
+            empresa.dados.pode_mais && (
+              <button className="btn" onClick={() => setIndicando(true)}>
+                <Icone nome="mais" className="h-4 w-4" />
+                {empresa.dados.empresas.length ? "Indicar outra empresa" : "Tenho empresa: quero contato da MDC"}
+              </button>
+            )
+          )}
+        </section>
+      )}
+
       {convidando && (
         <JanelaConvidar
           orgId={org.id}
@@ -318,111 +385,5 @@ export default function TelaFamilia() {
       )}
       {janelaConfirmar}
     </div>
-  );
-}
-
-function JanelaPermissao({
-  pessoa,
-  aoFechar,
-  aoSalvar,
-}: {
-  pessoa: Pessoa;
-  aoFechar: () => void;
-  aoSalvar: (p: Permissao) => Promise<void>;
-}) {
-  const [perm, setPerm] = useState<Permissao>(pessoa.permissao);
-  const [erro, setErro] = useState("");
-  const [ocupado, setOcupado] = useState(false);
-  async function salvar() {
-    setOcupado(true);
-    setErro("");
-    try {
-      await aoSalvar(perm);
-    } catch (e) {
-      setErro(traduzirErro(e));
-      setOcupado(false);
-    }
-  }
-  return (
-    <Modal
-      titulo={`O que ${pessoa.nome} pode fazer`}
-      aoFechar={aoFechar}
-      largura="lg"
-      avisoRodape={erro && <p className="text-sm text-red-700">{erro}</p>}
-      rodape={
-        <>
-          <button className="btn-primario" onClick={() => void salvar()} disabled={ocupado || perm === pessoa.permissao}>
-            <Icone nome="check" className="h-4 w-4" />
-            {ocupado ? "Salvando…" : "Salvar"}
-          </button>
-          <button className="btn" onClick={aoFechar} disabled={ocupado}>
-            <Icone nome="voltar" className="h-4 w-4" />
-            Voltar
-          </button>
-        </>
-      }
-    >
-      <div className="grid gap-2">
-        {PERMISSOES.map((p) => (
-          <button
-            key={p.valor}
-            type="button"
-            aria-pressed={perm === p.valor}
-            onClick={() => setPerm(p.valor)}
-            className={`flex items-start gap-3 rounded-xl border p-3 text-left ${perm === p.valor ? "border-[var(--marca)] bg-[var(--fundo)]" : "border-neutral-200"}`}
-          >
-            <Icone nome={perm === p.valor ? "check" : "escudo"} className="mt-0.5 h-5 w-5 shrink-0 text-[var(--marca)]" />
-            <span>
-              <b className="block text-[var(--marca)]">{p.nome}</b>
-              <span className="text-sm text-neutral-600">{p.explica}</span>
-            </span>
-          </button>
-        ))}
-      </div>
-    </Modal>
-  );
-}
-
-function JanelaNome({ atual, aoFechar, aoSalvar }: { atual: string; aoFechar: () => void; aoSalvar: (nome: string) => Promise<void> }) {
-  const [nome, setNome] = useState(atual);
-  const [erro, setErro] = useState("");
-  const [ocupado, setOcupado] = useState(false);
-  async function salvar(e: React.FormEvent) {
-    e.preventDefault();
-    setOcupado(true);
-    setErro("");
-    try {
-      await aoSalvar(nome.trim());
-    } catch (x) {
-      setErro(traduzirErro(x));
-      setOcupado(false);
-    }
-  }
-  return (
-    <Modal
-      titulo="Nome da família"
-      descricao="É o nome que aparece no app e nos convites."
-      aoFechar={aoFechar}
-      avisoRodape={erro && <p className="text-sm text-red-700">{erro}</p>}
-      rodape={
-        <>
-          <button type="submit" form="form-nome-familia" className="btn-primario" disabled={ocupado}>
-            <Icone nome="check" className="h-4 w-4" />
-            {ocupado ? "Salvando…" : "Salvar"}
-          </button>
-          <button type="button" className="btn" onClick={aoFechar} disabled={ocupado}>
-            <Icone nome="voltar" className="h-4 w-4" />
-            Voltar
-          </button>
-        </>
-      }
-    >
-      <form id="form-nome-familia" onSubmit={(e) => void salvar(e)}>
-        <label className="campo">
-          <span>Nome</span>
-          <input value={nome} onChange={(e) => setNome(e.target.value)} minLength={3} maxLength={80} required />
-        </label>
-      </form>
-    </Modal>
   );
 }

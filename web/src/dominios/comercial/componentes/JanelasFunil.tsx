@@ -113,7 +113,7 @@ export function NovaOportunidade({ aoFechar, aoCriar }: { aoFechar: () => void; 
           <label className="campo">
             <span>Como chegou até nós</span>
             <select value={f.origem} onChange={set("origem")}>
-              {ORIGENS.filter((o) => o.id !== "simulador").map((o) => (
+              {ORIGENS.filter((o) => o.id !== "simulador" && o.id !== "pessoal").map((o) => (
                 <option key={o.id} value={o.id}>
                   {o.nome}
                 </option>

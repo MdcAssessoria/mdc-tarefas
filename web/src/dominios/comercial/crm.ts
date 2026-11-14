@@ -18,6 +18,7 @@ export const ETAPAS: { id: Etapa; nome: string; dica: string }[] = [
 
 export const ORIGENS: { id: string; nome: string }[] = [
   { id: "simulador", nome: "Simulador de Regime" },
+  { id: "pessoal", nome: "MDC · Pessoal" },
   { id: "indicacao", nome: "Indicação" },
   { id: "site", nome: "Site" },
   { id: "whatsapp", nome: "WhatsApp" },
