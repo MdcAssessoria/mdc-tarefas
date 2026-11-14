@@ -117,6 +117,26 @@ MDC". A família escolhida vale para a aba (sessionStorage), então HUB e famíl
   nunca oferece criar uma segunda família por engano. Cliente do Portal que também tem família continua indo ao Portal
   ao abrir o HUB; a família abre pelo `/pessoal`.
 
+## 4.3 O app no celular (desenho de 14/11/2026)
+
+Desenho aprovado pelo Edvaldo no quadro "MDC · Pessoal — desenho do app" (protótipo para tocar). No código:
+
+- **Barra de baixo** (`componentes/app/BarraPessoal.tsx`, só no modo família e só no celular): Hoje, Contas, **+**,
+  Tarefas e Família. No computador vale o menu lateral e o **+** vira o botão flutuante "Lançar".
+- **Botão +**: folha "O que você quer lançar?" com gasto, entrada, tarefa e extrato do banco.
+- **Lançar gasto ou entrada** (`LancamentoRapido.tsx`): teclado de valor grande (os dígitos são centavos), tipo de gasto
+  com ícone, Hoje/Ontem/Outro dia e "Já paguei" com a conta de onde saiu. Grava por `fin_lancar` (a mesma função do
+  Financeiro), já pago quando marcado.
+- **Hoje** (`InicioPessoal.tsx`): sobra prevista no mês, quanto das contas do mês já foi pago, o que está atrasado ou
+  vence hoje (com Pagar) e os próximos 7 dias. Resumo diário e "Você tem empresa?" foram para a tela Família, junto
+  com o cartão "Finanças da família" (contas e cartões, lista completa com PDF/Excel, extrato e painel).
+- **Contas** (`/financeiro/contas`, só na família; fora dela leva a Contas a pagar): abas A pagar / A receber / Pagas no
+  mês, agrupadas em Atrasadas, Hoje, Próximos 7 dias e Mais para frente.
+- **Pagar** (`PagarConta.tsx`): baixa do que falta com um toque por `fin_baixar`, escolhendo a conta e o dia. Pagamento
+  parcial, juros e desconto ficam na lista completa.
+- Regras puras em `dominios/pessoal/app.ts` (com teste): agrupar por vencimento, resumo do mês, teclado, ícone por tipo
+  de gasto e o texto "Atrasada há N dias". Quem grava avisa as telas abertas (`pessoal:mudou`) e mostra o aviso rápido.
+
 ## 5. Arquivos
 
 - Banco: `supabase/migrations/075_mdc_pessoal.sql` e `076_pessoal_resumo_diario.sql`; testes

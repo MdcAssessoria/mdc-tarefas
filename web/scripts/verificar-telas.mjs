@@ -498,6 +498,11 @@ const INTERACOES = {
   // Início: concluir uma tarefa da fila mostra "Desfazer" (UX-05)
   "/familia": async (p, foto) => {
     if (!process.env.PESSOAL) return; // fora da família a tela só avisa que é do MDC · Pessoal
+    // resumo diário (saiu do Início para a Família no desenho do app)
+    await p.getByRole("button", { name: "Ajustar o resumo" }).click();
+    await p.getByText("Este aparelho").waitFor({ timeout: 5000 });
+    await foto("resumo-diario", { soTela: true });
+    await p.keyboard.press("Escape");
     await p.getByRole("button", { name: "Convidar alguém" }).first().click();
     await p.getByLabel("Nome de quem vai entrar").fill("Evelyn");
     await foto("convidar", { soTela: true });
@@ -507,13 +512,28 @@ const INTERACOES = {
   },
   "/": async (p, foto) => {
     if (process.env.PESSOAL) {
-      // a família tem outro Início (resumo do dia): abre a janela do resumo diário
-      await p.getByRole("button", { name: "Ajustar o resumo" }).click();
-      await p.getByText("Este aparelho").waitFor({ timeout: 5000 });
-      await foto("resumo-diario", { soTela: true });
-      await p.keyboard.press("Escape");
-      await p.getByText("Você tem empresa?").first().scrollIntoViewIfNeeded();
-      await foto("tem-empresa", { soTela: true });
+      // app da família (desenho de 14/11/2026): o + abre a folha, o gasto se lança pelo teclado e Pagar abre a baixa
+      const celular = process.env.TELA === "celular";
+      await p.getByRole("button", { name: celular ? "Lançar gasto, entrada ou tarefa" : "Lançar" }).click();
+      const folha = p.getByRole("dialog", { name: "O que você quer lançar?" });
+      await folha.waitFor({ timeout: 3000 });
+      await foto("folha-lancar", { soTela: true });
+      await folha.getByRole("button", { name: /Um gasto/ }).click();
+      const gasto = p.getByRole("dialog", { name: "Novo gasto" });
+      await gasto.waitFor({ timeout: 5000 });
+      for (const t of ["1", "8", "6", "4", "0"]) await gasto.getByRole("button", { name: t, exact: true }).click();
+      await gasto.getByText("R$ 186,40").first().waitFor({ timeout: 3000 });
+      await foto("novo-gasto", { soTela: true });
+      await gasto.getByRole("button", { name: "Voltar" }).click();
+      await gasto.waitFor({ state: "detached", timeout: 3000 });
+      const pagar = p.getByRole("button", { name: "Pagar", exact: true }).first();
+      if (await pagar.count()) {
+        await pagar.click();
+        const janela = p.getByRole("dialog").last();
+        await janela.getByRole("button", { name: /Marcar como paga/ }).waitFor({ timeout: 3000 });
+        await foto("pagar-conta", { soTela: true });
+        await janela.getByRole("button", { name: "Voltar" }).click();
+      }
       return;
     }
     await p

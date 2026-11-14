@@ -23,6 +23,8 @@ import type { Tom } from "@/components/ui/Tons";
 import { JanelaConvidar } from "@/dominios/pessoal/componentes/JanelaConvidar";
 import { JanelaNome, JanelaPermissao } from "@/dominios/pessoal/componentes/JanelasFamilia";
 import { CartaoEmpresa, useSituacaoEmpresa } from "@/dominios/pessoal/componentes/CartaoEmpresa";
+import { ResumoDiario } from "@/dominios/pessoal/componentes/ResumoDiario";
+import { AtalhosFinancas } from "@/dominios/pessoal/componentes/app/AtalhosFinancas";
 import { formatarDocumento } from "@/lib/documento";
 import { NOME_SITUACAO, nomePermissao, permissaoDoMembro, situacaoConvite } from "@/dominios/pessoal/familia";
 import type { ConviteFamilia, Permissao, SituacaoConvite } from "@/dominios/pessoal/familia";
@@ -38,7 +40,7 @@ const TOM_PERMISSAO: Record<Permissao, Tom> = { responsavel: "violeta", lancar: 
 const TOM_SITUACAO: Record<SituacaoConvite, Tom> = { aguardando: "ambar", aceito: "verde", cancelado: "neutro", vencido: "neutro" };
 
 export default function TelaFamilia() {
-  const { org, eu, papel, pessoal } = useOrg();
+  const { org, eu, papel, pessoal, pode } = useOrg();
   const responsavel = papel === "admin";
   const { aviso, mostrar } = useAviso();
   const [janelaConfirmar, confirmar] = useConfirmar();
@@ -205,6 +207,13 @@ export default function TelaFamilia() {
           </>
         }
       />
+
+      {pode("financeiro") && (
+        <div className="grid gap-5 lg:grid-cols-2">
+          <AtalhosFinancas />
+          <ResumoDiario />
+        </div>
+      )}
       {aviso}
 
       {consulta.erro ? (

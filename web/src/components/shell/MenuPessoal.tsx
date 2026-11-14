@@ -53,6 +53,7 @@ export function MenuPessoal({ modulo, recolhido, aoRecolher }: { modulo: Modulo;
 
       <nav className="flex-1 space-y-1 overflow-y-auto px-3" aria-label="MDC · Pessoal">
         {item("/", "Início", "casa", modulo === "hub" && rota === "/")}
+        {pode("financeiro") && item("/financeiro/contas", "Contas", "lista", rota === "/financeiro/contas")}
         {pode("tarefas") && item("/tarefas", "Tarefas", "check", modulo === "tarefas")}
         {pode("financeiro") && (
           <div>

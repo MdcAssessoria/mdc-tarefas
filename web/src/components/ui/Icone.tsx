@@ -117,6 +117,50 @@ const P = {
     </>
   ),
   // Financeiro e telas de lista
+  // MDC · Pessoal: tipos de gasto da família (app no celular, 14/11/2026)
+  carrinho: (
+    <>
+      <path d="M3.5 5h2l2 10.5h10l2-7.5H6.6" />
+      <circle cx="9.5" cy="19.5" r="1.3" />
+      <circle cx="16.5" cy="19.5" r="1.3" />
+    </>
+  ),
+  raio: <path d="M13 3 5.5 13.5H12L11 21l7.5-10.5H12z" />,
+  gota: <path d="M12 3.5s6 6.8 6 10.8a6 6 0 0 1-12 0c0-4 6-10.8 6-10.8z" />,
+  wifi: (
+    <>
+      <path d="M2.5 9a14 14 0 0 1 19 0M5.5 12.5a9.5 9.5 0 0 1 13 0M8.8 16a5 5 0 0 1 6.4 0" />
+      <circle cx="12" cy="19.3" r="0.9" />
+    </>
+  ),
+  escola: (
+    <>
+      <path d="M2.5 9.5 12 5l9.5 4.5L12 14z" />
+      <path d="M6.5 11.5v4.3c3 2.4 8 2.4 11 0v-4.3" />
+    </>
+  ),
+  carro: (
+    <>
+      <path d="M4 16.5v-4.2L6 7.5h12l2 4.8v4.2z" />
+      <path d="M4.5 16.5v2M19.5 16.5v2" />
+      <circle cx="8" cy="13.3" r="1" />
+      <circle cx="16" cy="13.3" r="1" />
+    </>
+  ),
+  coracao: <path d="M12 20s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7.2a4.3 4.3 0 0 1 7.5 2.6C19.5 15.4 12 20 12 20z" />,
+  aviao: <path d="M3 13.5 21 6l-4.5 13-4-5.5zM12.5 13.5 21 6" />,
+  sacola: (
+    <>
+      <path d="M5 8h14l-1 12.5H6z" />
+      <path d="M9 10V7a3 3 0 0 1 6 0v3" />
+    </>
+  ),
+  apagar: (
+    <>
+      <path d="M21 6.5H9.5L3.5 12l6 5.5H21z" />
+      <path d="M12.5 9.5l5 5M17.5 9.5l-5 5" />
+    </>
+  ),
   "seta-entrada": <path d="M17 7 7 17M7 9v8h8" />,
   "seta-saida": <path d="M7 17 17 7M9 7h8v8" />,
   banco: (

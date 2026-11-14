@@ -1,175 +1,155 @@
-// Início do MDC · Pessoal: saudação, resumo do dia das finanças (atrasadas, vence hoje, próximos 7 dias, a receber),
-// tarefas em aberto e atalhos para lançar. Lê só a família da aba (RLS do banco); a regra do resumo é dominios/pessoal/resumo.
+// Início do MDC · Pessoal (desenho do app no celular, 14/11/2026): numa tela só, quanto sobra no mês e quanto já foi
+// pago, o que pede atenção (atrasado ou vencendo hoje, com Pagar à mão), os próximos 7 dias e as tarefas de hoje.
+// Resumo diário e "Você tem empresa?" ficam na tela Família. Regras puras em dominios/pessoal/app.ts.
 "use client";
 
 import Link from "next/link";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { supabase } from "@/lib/supabase";
 import { useConsulta } from "@/lib/useConsulta";
-import { hojeISO, horaNoFuso, saudacao, somarDias } from "@/lib/datas";
+import { horaNoFuso, saudacao } from "@/lib/datas";
 import { brl } from "@/lib/formato/moeda";
 import { fmtData } from "@/lib/formato/datas";
 import { Icone } from "@/components/ui/Icone";
-import type { NomeIcone } from "@/components/ui/Icone";
 import { Esqueleto } from "@/components/ui/Esqueleto";
-import { resumoDoDia, valorEmAberto } from "../resumo";
-import { ResumoDiario } from "./ResumoDiario";
-import { CartaoEmpresaInicio } from "./CartaoEmpresa";
-import type { GrupoResumo, TituloResumo } from "../resumo";
+import { agruparAbertas, resumoDoMes } from "../app";
+import type { ContaApp } from "../app";
+import { useFinancasFamilia } from "./app/dados";
+import { LinhaConta } from "./app/LinhaConta";
+import { PagarConta } from "./app/PagarConta";
 
-const ATALHOS: { href: string; nome: string; dica: string; icone: NomeIcone }[] = [
-  { href: "/financeiro/pagar", nome: "Conta a pagar", dica: "Luz, escola, cartão, aluguel…", icone: "seta-saida" },
-  { href: "/financeiro/receber", nome: "Valor a receber", dica: "Salário, aluguel recebido…", icone: "seta-entrada" },
-  { href: "/financeiro/extratos", nome: "Importar extrato", dica: "Arquivo OFX ou planilha do banco", icone: "importar" },
-  { href: "/familia", nome: "Convidar alguém", dica: "Quem mora com você", icone: "pessoas" },
-];
+const MESES = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
 
 export function InicioPessoal() {
-  const { org, eu, pode, papel } = useOrg();
-  const hoje = hojeISO(org.fuso);
-  const cliente = org.gestao_cliente_id ?? null;
+  const { org, eu, pode } = useOrg();
+  const fin = useFinancasFamilia();
+  const { hoje } = fin;
+  const [aberta, setAberta] = useState<ContaApp | null>(null);
+  const podePagar = pode("financeiro", "operar");
 
-  const consulta = useConsulta(
+  const tarefas = useConsulta(
     useCallback(async () => {
-      const sb = supabase();
-      const [t, k] = await Promise.all([
-        cliente && pode("financeiro")
-          ? sb
-              .from("fin_titulos")
-              .select("id, tipo, descricao, vencimento, valor, valor_pago")
-              .eq("org_id", org.id)
-              .eq("cliente_id", cliente)
-              .eq("situacao", "aberto")
-              .lte("vencimento", somarDias(hoje, 7))
-              .order("vencimento")
-              .range(0, 999)
-          : Promise.resolve({ data: [], error: null }),
-        pode("tarefas")
-          ? sb
-              .from("tarefas")
-              .select("id", { count: "exact", head: true })
-              .eq("org_id", org.id)
-              .in("status", ["a_fazer", "em_andamento", "aguardando"])
-          : Promise.resolve({ count: 0, error: null }),
-      ]);
-      if (t.error) throw t.error;
-      if (k.error) throw k.error;
-      return { resumo: resumoDoDia((t.data ?? []) as TituloResumo[], hoje), tarefas: k.count ?? 0 };
-    }, [org.id, cliente, hoje, pode]),
+      if (!pode("tarefas")) return { total: 0, primeira: null as string | null };
+      const r = await supabase()
+        .from("tarefas")
+        .select("titulo", { count: "exact" })
+        .eq("org_id", org.id)
+        .in("status", ["a_fazer", "em_andamento", "aguardando"])
+        .order("prazo", { ascending: true, nullsFirst: false })
+        .range(0, 0);
+      if (r.error) throw r.error;
+      return { total: r.count ?? 0, primeira: (r.data?.[0] as { titulo: string } | undefined)?.titulo ?? null };
+    }, [org.id, pode]),
   );
 
-  const primeiroNome = eu.nome.split(/\s+/)[0];
-  const r = consulta.dados?.resumo;
+  const contas = fin.dados?.contas ?? [];
+  const resumo = resumoDoMes(contas, hoje);
+  const pagar = agruparAbertas(contas, "pagar", hoje);
+  const receber = agruparAbertas(contas, "receber", hoje);
+  const atencao = pagar.filter((g) => g.quando === "atrasada" || g.quando === "hoje").flatMap((g) => g.contas);
+  const proximos = [
+    ...pagar.filter((g) => g.quando === "semana").flatMap((g) => g.contas),
+    ...receber.filter((g) => g.quando !== "depois").flatMap((g) => g.contas),
+  ]
+    .sort((a, b) => a.vencimento.localeCompare(b.vencimento))
+    .slice(0, 5);
+  const mes = MESES[Number(hoje.slice(5, 7)) - 1];
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto max-w-5xl space-y-5">
       <div>
-        <p className="text-sm text-neutral-500">{fmtData(hoje)}</p>
-        <h1 className="font-display text-3xl text-[var(--marca)] sm:text-4xl">
-          {saudacao(horaNoFuso(org.fuso))}, {primeiroNome}
+        <p className="text-[13px] text-neutral-500">
+          {fmtData(hoje)} · {org.nome}
+        </p>
+        <h1 className="font-display text-[28px] leading-tight text-[var(--marca)] sm:text-4xl">
+          {saudacao(horaNoFuso(org.fuso))}, {eu.nome.split(/\s+/)[0]}
         </h1>
-        <p className="mt-1 text-neutral-600">Este é o resumo das finanças da {org.nome}.</p>
       </div>
 
-      {consulta.erro && (
+      {fin.erro && (
         <p role="alert" className="rounded-md bg-red-50 p-3 text-sm text-red-800">
-          {consulta.erro}
+          {fin.erro}
         </p>
       )}
 
-      {!consulta.dados ? (
-        <Esqueleto />
-      ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <Cartao titulo="Atrasadas" icone="alerta" grupo={r!.atrasadas} tom="erro" vazio="Nenhuma conta atrasada." />
-          <Cartao titulo="Vencem hoje" icone="relogio" grupo={r!.hoje} tom="atencao" vazio="Nada vence hoje." />
-          <Cartao titulo="Próximos 7 dias" icone="calendario" grupo={r!.proximos7} tom="neutro" vazio="Nada vence esta semana." />
-          <Cartao titulo="A receber em 7 dias" icone="seta-entrada" grupo={r!.receber7} tom="ok" vazio="Nada a receber esta semana." />
-        </div>
+      {pode("financeiro") &&
+        (!fin.dados ? (
+          <Esqueleto />
+        ) : (
+          <div className="grid gap-5 lg:grid-cols-2">
+            <section className="rounded-[22px] bg-[var(--marca)] p-5 text-[#C6D3CC] lg:col-span-2">
+              <p className="text-[13px]">Sobra prevista em {mes}</p>
+              <p className={`num mt-1 text-4xl font-semibold tracking-tight ${resumo.sobra < 0 ? "text-red-300" : "text-white"}`}>{brl(resumo.sobra)}</p>
+              <div className="mt-4 flex justify-between text-[13px]">
+                <span>Contas do mês já pagas</span>
+                <b className="text-[var(--destaque)]">{resumo.percentualPago}%</b>
+              </div>
+              <div className="mt-1.5 h-2.5 overflow-hidden rounded-full bg-white/10" aria-hidden="true">
+                <div className="h-full rounded-full bg-[var(--destaque)] transition-[width] duration-700" style={{ width: `${resumo.percentualPago}%` }} />
+              </div>
+              <p className="mt-2 text-[13px]">
+                Pagou {brl(resumo.pago)} de {brl(resumo.totalPagar)}
+              </p>
+            </section>
+
+            <section>
+              <h2 className="mb-2 text-[15px] font-semibold text-[var(--marca)]">Precisa da sua atenção</h2>
+              {atencao.length ? (
+                <ul className="rounded-[18px] border border-[var(--borda)] bg-white px-3.5">
+                  {atencao.map((c) => (
+                    <LinhaConta key={c.id} c={c} hoje={hoje} botao={podePagar} aoAbrir={() => setAberta(c)} aoPagar={() => setAberta(c)} />
+                  ))}
+                </ul>
+              ) : (
+                <div className="flex items-center gap-3 rounded-[18px] bg-emerald-50 p-4">
+                  <span className="grid h-11 w-11 place-items-center rounded-xl bg-emerald-700 text-white">
+                    <Icone nome="check" className="h-6 w-6" />
+                  </span>
+                  <span>
+                    <b className="block text-emerald-900">Tudo em dia!</b>
+                    <span className="text-[13px] text-emerald-800">Nada atrasado nem vencendo hoje.</span>
+                  </span>
+                </div>
+              )}
+            </section>
+
+            <section>
+              <div className="mb-2 flex items-baseline justify-between">
+                <h2 className="text-[15px] font-semibold text-[var(--marca)]">Próximos 7 dias</h2>
+                <Link href="/financeiro/contas" className="text-sm font-semibold text-[#8A6A2A]">
+                  Ver todas
+                </Link>
+              </div>
+              {proximos.length ? (
+                <ul className="rounded-[18px] border border-[var(--borda)] bg-white px-3.5">
+                  {proximos.map((c) => (
+                    <LinhaConta key={c.id} c={c} hoje={hoje} botao={false} aoAbrir={() => setAberta(c)} aoPagar={() => setAberta(c)} />
+                  ))}
+                </ul>
+              ) : (
+                <p className="rounded-[18px] border border-dashed border-[var(--borda)] p-4 text-sm text-neutral-600">
+                  Nada vence nos próximos 7 dias. Toque no <b>+</b> para lançar uma conta.
+                </p>
+              )}
+            </section>
+          </div>
+        ))}
+
+      {pode("tarefas") && tarefas.dados && (
+        <Link href="/tarefas" className="flex items-center gap-3 rounded-[18px] border border-[var(--borda)] bg-white p-4">
+          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-sky-50 text-sky-800">
+            <Icone nome="check" className="h-5 w-5" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <b className="block text-[15px] text-neutral-900">{tarefas.dados.total ? `${tarefas.dados.total} tarefa(s) em aberto` : "Nenhuma tarefa em aberto"}</b>
+            <span className="block truncate text-[13px] text-neutral-600">{tarefas.dados.primeira ?? "Toque para ver ou criar tarefas"}</span>
+          </span>
+          <Icone nome="expandir" className="h-5 w-5 text-neutral-400" />
+        </Link>
       )}
 
-      {pode("financeiro") && <ResumoDiario />}
-
-      <CartaoEmpresaInicio />
-
-      <section>
-        <h2 className="mb-3 text-lg font-semibold text-[var(--marca)]">Lançar agora</h2>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          {ATALHOS.filter((a) => (a.href.startsWith("/financeiro") ? pode("financeiro", "operar") : papel === "admin")).map((a) => (
-            <Link key={a.href} href={a.href} className="cartao flex items-start gap-3 p-4 transition-shadow hover:shadow-md">
-              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[var(--marca)] text-[var(--destaque)]">
-                <Icone nome={a.icone} className="h-5 w-5" />
-              </span>
-              <span>
-                <b className="block text-[var(--marca)]">{a.nome}</b>
-                <span className="text-sm text-neutral-600">{a.dica}</span>
-              </span>
-            </Link>
-          ))}
-        </div>
-      </section>
-
-      <div className="flex flex-wrap gap-3">
-        {pode("financeiro") && (
-          <Link href="/financeiro" className="btn">
-            <Icone nome="grafico" className="h-4 w-4" />
-            Ver o painel das finanças
-          </Link>
-        )}
-        {pode("tarefas") && (
-          <Link href="/tarefas" className="btn">
-            <Icone nome="check" className="h-4 w-4" />
-            Tarefas em aberto{consulta.dados ? `: ${consulta.dados.tarefas}` : ""}
-          </Link>
-        )}
-      </div>
+      {aberta && fin.dados && <PagarConta conta={aberta} bancos={fin.dados.bancos} hoje={hoje} podePagar={podePagar} aoFechar={() => setAberta(null)} />}
     </div>
-  );
-}
-
-const TONS = {
-  erro: "border-red-200 bg-red-50/60 text-red-800",
-  atencao: "border-amber-200 bg-amber-50/60 text-amber-900",
-  neutro: "border-[var(--borda)] bg-white text-[var(--marca)]",
-  ok: "border-emerald-200 bg-emerald-50/60 text-emerald-800",
-} as const;
-
-function Cartao({
-  titulo,
-  icone,
-  grupo,
-  tom,
-  vazio,
-}: {
-  titulo: string;
-  icone: NomeIcone;
-  grupo: GrupoResumo;
-  tom: keyof typeof TONS;
-  vazio: string;
-}) {
-  return (
-    <section className={`min-w-0 rounded-2xl border p-4 ${TONS[tom]}`}>
-      <div className="flex items-center gap-2 text-sm font-semibold">
-        <Icone nome={icone} className="h-4 w-4" />
-        {titulo}
-      </div>
-      <div className="num mt-2 text-2xl font-bold">{brl(grupo.total)}</div>
-      {grupo.itens.length ? (
-        <ul className="mt-3 space-y-1.5 text-sm text-neutral-700">
-          {grupo.itens.slice(0, 4).map((t) => (
-            <li key={t.id} className="flex justify-between gap-3">
-              <span className="truncate">
-                {t.descricao} <span className="text-neutral-500">· {fmtData(t.vencimento)}</span>
-              </span>
-              <span className="num shrink-0">{brl(valorEmAberto(t))}</span>
-            </li>
-          ))}
-          {grupo.itens.length > 4 && <li className="text-neutral-500">e mais {grupo.itens.length - 4}</li>}
-        </ul>
-      ) : (
-        <p className="mt-3 text-sm text-neutral-600">{vazio}</p>
-      )}
-    </section>
   );
 }

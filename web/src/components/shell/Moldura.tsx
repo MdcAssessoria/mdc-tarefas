@@ -13,6 +13,7 @@ import { BuscaRapida } from "./BuscaRapida";
 import { Guarda } from "./Guarda";
 import { MenuLateral } from "./MenuLateral";
 import { MenuPessoal } from "./MenuPessoal";
+import { BarraPessoal } from "@/dominios/pessoal/componentes/app/BarraPessoal";
 import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { moduloDaRota } from "./navegacao";
 
@@ -92,13 +93,14 @@ export function Moldura({ children }: { children: React.ReactNode }) {
 
       <div className="min-w-0 flex-1">
         <BarraSuperior modulo={modulo} aoMenu={() => setGaveta(true)} aoBuscar={() => setBusca(true)} />
-        <main className="mx-auto max-w-[1400px] px-4 py-6 sm:px-6 lg:px-8">
+        <main className={`mx-auto max-w-[1400px] px-4 py-6 sm:px-6 lg:px-8 ${pessoal ? "pb-32 lg:pb-24" : ""}`}>
           <Guarda modulo={modulo} rota={rota}>
             {children}
           </Guarda>
         </main>
       </div>
 
+      {pessoal && <BarraPessoal />}
       {busca && <BuscaRapida aoFechar={() => setBusca(false)} />}
     </div>
   );

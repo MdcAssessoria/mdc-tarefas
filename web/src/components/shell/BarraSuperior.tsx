@@ -208,7 +208,10 @@ export function BarraSuperior({ modulo, aoMenu, aoBuscar }: { modulo: Modulo; ao
         </div>
       </div>
       {/* celular: com mais de 3 telas (ou com grupos), um botão "Telas" com a lista inteira, para nenhuma ficar escondida */}
-      {(agrupado ? links.length > 1 : links.length > 3) && <MenuModuloCelular modulo={modulo} links={links} ativo={ativo} />}
+      {/* no app da família a tela Contas já tem a barra de baixo: sem a faixa de telas do Financeiro */}
+      {!(pessoal && rota === "/financeiro/contas") && (agrupado ? links.length > 1 : links.length > 3) && (
+        <MenuModuloCelular modulo={modulo} links={links} ativo={ativo} />
+      )}
       {links.length > 1 && links.length <= 3 && !agrupado && (
         <nav className="flex gap-1 overflow-x-auto border-t border-[var(--borda)] px-3 md:hidden" aria-label={NAV[modulo].titulo}>
           {links.map((l) => (
