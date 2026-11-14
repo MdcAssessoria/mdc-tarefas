@@ -7929,6 +7929,7 @@ export type Database = {
         Args: { p_org: string; p_permissao: string; p_user: string };
         Returns: undefined;
       };
+      pessoal_email_livre: { Args: { p_email: string }; Returns: boolean };
       pessoal_empresa_adiar: { Args: { p_org: string }; Returns: undefined };
       pessoal_empresa_situacao: { Args: { p_org: string }; Returns: Json };
       pessoal_push_aparelhos: { Args: never; Returns: number };
