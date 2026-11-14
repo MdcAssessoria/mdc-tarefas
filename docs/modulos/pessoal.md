@@ -103,6 +103,20 @@ MDC". A família escolhida vale para a aba (sessionStorage), então HUB e famíl
 - **Aviso no celular:** só endereços dos serviços de aviso (Google, Mozilla, Apple, Microsoft) e o aparelho não troca
   de conta. A família nasce com a conta "Dinheiro (carteira)" para já poder pagar e receber.
 
+## 4.2 Ajustes de 14/11/2026 (migração 079 e telas)
+
+- **Membros só pelas funções:** políticas restritivas em `membros` barram inserir, mudar e apagar membro de família
+  direto pela API (as funções `pessoal_*` continuam valendo). Na equipe da MDC nada muda.
+- **A família nunca fica sem responsável:** o único responsável não sai nem é tirado (`pessoal_remover` pede para dar
+  a permissão de responsável a outra pessoa antes). Qualquer responsável retira a autorização de contato da família.
+- **Aviso no celular abre a família certa:** o título leva o nome da família, o link vai com `?org=<família>` e cada
+  família tem a sua marca de aviso (quem está em duas recebe os dois). Tocar no aviso foca a aba que já está na família
+  ou abre uma janela nova; nunca troca uma aba com trabalho aberto. "Sair" desliga o aviso do aparelho.
+- **Cadastro aberto:** além de 5 contas por hora por endereço de rede, teto geral de 60 contas novas por hora.
+- **Entrada (`/pessoal`):** falha de internet ou de sessão mostra "Não conseguimos abrir agora" com "Tentar de novo";
+  nunca oferece criar uma segunda família por engano. Cliente do Portal que também tem família continua indo ao Portal
+  ao abrir o HUB; a família abre pelo `/pessoal`.
+
 ## 5. Arquivos
 
 - Banco: `supabase/migrations/075_mdc_pessoal.sql` e `076_pessoal_resumo_diario.sql`; testes

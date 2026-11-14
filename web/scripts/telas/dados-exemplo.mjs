@@ -1584,6 +1584,40 @@ export const TABELAS = {
   ],
 };
 
+/** Empresas do Portal da pessoa de exemplo (portal_minhas_empresas). */
+const PORTAL_EMPRESAS = [
+  {
+    org_id: ORG,
+    org_nome: "MDC Assessoria",
+    cliente_id: C1,
+    razao_social: "GREENCORE INDUSTRIA LTDA",
+    nome_fantasia: "Greencore",
+    cnpj: "12.345.678/0001-95",
+    regime: "real",
+    uf: "SP",
+    logo_url: null,
+    cor_primaria: "#0B2820",
+    cor_destaque: "#E2C17E",
+    permissoes: ["tarefas", "demonstrativos", "societario", "atendimento", "vencimentos", "folha", "documentos"],
+  },
+  // segunda empresa com todas as partes do Portal liberadas (Rotinas, Fale com a MDC, Documentos) e sem fechamento
+  // publicado: serve para ver as telas vazias que ensinam (escolha "mdc-portal:empresa" = C2 no navegador)
+  {
+    org_id: ORG,
+    org_nome: "MDC Assessoria",
+    cliente_id: C2,
+    razao_social: "PADARIA EXEMPLO LTDA",
+    nome_fantasia: "Padaria Exemplo",
+    cnpj: "11.222.333/0001-81",
+    regime: "simples",
+    uf: "SP",
+    logo_url: null,
+    cor_primaria: "#0B2820",
+    cor_destaque: "#E2C17E",
+    permissoes: ["demonstrativos", "rotinas", "chat", "societario", "documentos"],
+  },
+];
+
 /** Resultado de cada RPC (o nome é o que vem depois de /rest/v1/rpc/). RPC não listada devolve null. */
 export const RPCS = {
   // Licenças (074): preços e valores só pela função (quem gere Licenças), montados dos mesmos dados de exemplo
@@ -1681,38 +1715,8 @@ export const RPCS = {
   hub_situacao_contas: () => [{ user_id: EU, confirmado: true, ultimo_acesso: momento(0) }],
   convites_pendentes: () => [{ email: "jean@exemplo.com", nome: "Jean Exemplo", papel: "analista", setor_id: null, criado_em: momento(0) }],
   hub_pendencias_membro: () => ({ tarefas: 0, clientes: 0 }),
-  portal_minhas_empresas: () => [
-    {
-      org_id: ORG,
-      org_nome: "MDC Assessoria",
-      cliente_id: C1,
-      razao_social: "GREENCORE INDUSTRIA LTDA",
-      nome_fantasia: "Greencore",
-      cnpj: "12.345.678/0001-95",
-      regime: "real",
-      uf: "SP",
-      logo_url: null,
-      cor_primaria: "#0B2820",
-      cor_destaque: "#E2C17E",
-      permissoes: ["tarefas", "demonstrativos", "societario", "atendimento", "vencimentos", "folha", "documentos"],
-    },
-    // segunda empresa com todas as partes do Portal liberadas (Rotinas, Fale com a MDC, Documentos) e sem fechamento
-    // publicado: serve para ver as telas vazias que ensinam (escolha "mdc-portal:empresa" = C2 no navegador)
-    {
-      org_id: ORG,
-      org_nome: "MDC Assessoria",
-      cliente_id: C2,
-      razao_social: "PADARIA EXEMPLO LTDA",
-      nome_fantasia: "Padaria Exemplo",
-      cnpj: "11.222.333/0001-81",
-      regime: "simples",
-      uf: "SP",
-      logo_url: null,
-      cor_primaria: "#0B2820",
-      cor_destaque: "#E2C17E",
-      permissoes: ["demonstrativos", "rotinas", "chat", "societario", "documentos"],
-    },
-  ],
+  // no modo família (PESSOAL=1) a pessoa de exemplo não é cliente do Portal (senão o HUB a levaria ao Portal)
+  portal_minhas_empresas: () => (process.env.PESSOAL ? [] : PORTAL_EMPRESAS),
   // Portal › Faturas (050): uma a vencer com boleto, uma paga com nota fiscal e uma vencida sem boleto
   portal_faturas_detalhe: () =>
     [

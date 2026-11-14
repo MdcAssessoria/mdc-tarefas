@@ -12,7 +12,7 @@ import { Icone } from "@/components/ui/Icone";
 import type { NomeIcone } from "@/components/ui/Icone";
 import { NOME_APP_PESSOAL, problemaCadastro, problemaNomeFamilia, sugerirNomeFamilia } from "@/dominios/pessoal/entrada";
 
-type Modo = "entrar" | "criar" | "familia" | "recuperar" | "carregando" | "convite";
+type Modo = "entrar" | "criar" | "familia" | "recuperar" | "carregando" | "convite" | "falha";
 
 const VANTAGENS: { icone: NomeIcone; titulo: string; texto: string }[] = [
   { icone: "carteira", titulo: "Contas da casa em dia", texto: "A pagar, a receber, contas bancárias e extratos num lugar só." },
@@ -20,13 +20,18 @@ const VANTAGENS: { icone: NomeIcone; titulo: string; texto: string }[] = [
   { icone: "pessoas", titulo: "Para a família toda", texto: "Convide quem mora com você para lançar ou só acompanhar." },
 ];
 
-/** Família da conta logada (a primeira, se tiver mais de uma), ou null. */
+/**
+ * Família da conta logada (a primeira, se tiver mais de uma), ou null quando ela não tem família.
+ * Falha de leitura (rede, sessão) LANÇA erro: nunca vira "sem família", senão a pessoa criaria uma segunda (COD-12).
+ */
 async function minhaFamilia(userId: string): Promise<string | null> {
   const sb = supabase();
   const m = await sb.from("membros").select("org_id").eq("user_id", userId).eq("ativo", true);
+  if (m.error) throw m.error;
   const ids = (m.data ?? []).map((x: { org_id: string }) => x.org_id);
   if (!ids.length) return null;
   const o = await sb.from("organizacoes").select("slug").in("id", ids).eq("tipo", "pessoal").eq("ativo", true).order("nome").limit(1);
+  if (o.error) throw o.error;
   return (o.data?.[0] as { slug: string } | undefined)?.slug ?? null;
 }
 
@@ -58,13 +63,20 @@ export default function EntradaPessoal() {
   // já logado: vai direto para a família (ou para o passo de criar a família)
   useEffect(() => {
     void (async () => {
-      const codigo = conviteDoLink();
-      setConvite(codigo);
-      const { data } = await supabase().auth.getSession();
-      const s = data.session;
-      if (!s) return setModo(codigo || new URLSearchParams(window.location.search).get("criar") ? "criar" : "entrar");
-      if (precisaTrocarSenha(s)) return window.location.replace(caminho("/login?trocar=1"));
-      await continuarLogado(s.user.id, String(s.user.user_metadata?.nome ?? ""), codigo);
+      try {
+        const codigo = conviteDoLink();
+        setConvite(codigo);
+        const { data, error } = await supabase().auth.getSession();
+        if (error) throw error;
+        const s = data.session;
+        if (!s) return setModo(codigo || new URLSearchParams(window.location.search).get("criar") ? "criar" : "entrar");
+        if (precisaTrocarSenha(s)) return window.location.replace(caminho("/login?trocar=1"));
+        await continuarLogado(s.user.id, String(s.user.user_metadata?.nome ?? ""), codigo);
+      } catch (x) {
+        // sem internet ou sessão com problema: nada de ficar preso em "Carregando…"
+        setErro(traduzirErro(x));
+        setModo("falha");
+      }
     })();
   }, []);
 
@@ -88,7 +100,14 @@ export default function EntradaPessoal() {
 
   /** Sem convite (ou a pessoa preferiu seguir sem ele): abre a família dela ou pede o nome de uma nova. */
   async function semConviteSeguir(userId: string, nomePessoa: string) {
-    const slug = await minhaFamilia(userId);
+    let slug: string | null;
+    try {
+      slug = await minhaFamilia(userId);
+    } catch (x) {
+      setErro(traduzirErro(x));
+      setModo("falha");
+      return;
+    }
     if (slug) return abrirApp(slug);
     setFamilia((f) => f || sugerirNomeFamilia(nomePessoa));
     setModo("familia");
@@ -166,6 +185,20 @@ export default function EntradaPessoal() {
       <div className="order-first grid place-items-center bg-white px-4 py-10 sm:px-6 lg:order-none">
         {modo === "carregando" ? (
           <p className="text-sm text-neutral-500">Carregando…</p>
+        ) : modo === "falha" ? (
+          <div className="w-full max-w-sm space-y-4" role="alert">
+            <div>
+              <span className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--destaque-escuro)]">{NOME_APP_PESSOAL}</span>
+              <h2 className="mt-1 text-2xl font-semibold text-[var(--marca)]">Não conseguimos abrir agora</h2>
+              <p className="mt-2 text-sm text-neutral-700">
+                {erro ?? "A internet pode ter caído."} Confira a conexão e tente de novo. A sua família e os seus dados continuam guardados.
+              </p>
+            </div>
+            <button type="button" className="btn-primario w-full justify-center" onClick={() => window.location.reload()}>
+              <Icone nome="atualizar" className="h-4 w-4" />
+              Tentar de novo
+            </button>
+          </div>
         ) : modo === "convite" && semConvite ? (
           <div className="w-full max-w-sm space-y-4" role="alert">
             <div>
@@ -205,6 +238,7 @@ export default function EntradaPessoal() {
                     familia: "Dê um nome para a sua família",
                     recuperar: "Esqueci a senha",
                     convite: "Este convite não vale mais",
+                    falha: "Não conseguimos abrir agora",
                   }[modo]
                 }
               </h2>

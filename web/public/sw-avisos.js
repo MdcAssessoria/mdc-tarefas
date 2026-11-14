@@ -16,7 +16,8 @@ self.addEventListener("push", (e) => {
     self.registration.showNotification(d.titulo || "MDC · Pessoal", {
       body: d.texto || "Veja o resumo das finanças de hoje.",
       icon: `${BASE}/icone-hub-mdc-192.png`,
-      tag: "resumo-diario",
+      // uma marca por família: quem está em duas famílias recebe os dois resumos (079)
+      tag: "resumo-" + (d.link || "/"),
       data: { link: d.link || "/" },
     }),
   );
@@ -25,9 +26,11 @@ self.addEventListener("push", (e) => {
 self.addEventListener("notificationclick", (e) => {
   e.notification.close();
   const destino = BASE + (e.notification.data && e.notification.data.link ? e.notification.data.link : "/");
+  // a aba que já está nesta família só ganha foco; senão abre uma janela nova (nunca troca uma aba com trabalho aberto)
+  const alvo = new URL(destino, self.location.origin).href;
   e.waitUntil(
     self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((abertas) => {
-      for (const c of abertas) if (c.url.includes(BASE) && "focus" in c) return c.navigate(destino).then((x) => (x || c).focus());
+      for (const c of abertas) if (c.url === alvo && "focus" in c) return c.focus();
       return self.clients.openWindow(destino);
     }),
   );

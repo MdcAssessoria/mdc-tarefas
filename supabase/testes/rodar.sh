@@ -195,3 +195,8 @@ for f in testes/147_base_078.sql migrations/078_pessoal_seguranca.sql; do
   $P -v ON_ERROR_STOP=1 -f "$R/$f" 2>&1 | grep -v NOTICE || true
 done
 $P -f "$R/testes/148_seguranca_078.sql" 2>&1 | grep -v "^SET$"
+# 079: MDC - Pessoal, médios da auditoria (membros só por função, responsável único, aviso com a família, teto do cadastro)
+for f in testes/149_base_079.sql migrations/079_pessoal_ajustes.sql; do
+  $P -v ON_ERROR_STOP=1 -f "$R/$f" 2>&1 | grep -v NOTICE || true
+done
+$P -f "$R/testes/150_ajustes_079.sql" 2>&1 | grep -v "^SET$"

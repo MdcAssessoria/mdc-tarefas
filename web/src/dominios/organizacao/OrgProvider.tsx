@@ -128,8 +128,12 @@ export function OrgProvider({ children }: { children: React.ReactNode }) {
       setErro(traduzirErro(m.error ?? o.error));
       return;
     }
-    // quem não é da equipe mas tem acesso de cliente vai para o Portal
-    if ((m.data as Membro[]).length === 0) {
+    // quem não é da equipe (só família ou nada) mas tem acesso de cliente vai para o Portal, salvo quando pediu a
+    // família pelo endereço (?org=, vindo do /pessoal) ou já está nela nesta aba (COD-13)
+    const tipoDe = new Map((o.data as Organizacao[]).map((x) => [x.id, x.tipo]));
+    const daEquipe = (m.data as Membro[]).some((x) => tipoDe.get(x.org_id) !== "pessoal");
+    const pediuFamilia = Boolean(new URLSearchParams(window.location.search).get("org")) || Boolean(lerOrgDaAba());
+    if (!daEquipe && !pediuFamilia) {
       const p = await sb.rpc("portal_minhas_empresas");
       if (!p.error && (p.data as unknown[])?.length) {
         window.location.replace(caminho("/portal"));
