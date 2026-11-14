@@ -15,6 +15,8 @@ export interface Organizacao {
   gestao_cliente_id?: string | null;
   /** empresa = organização do HUB; pessoal = família do MDC - Pessoal (075). */
   tipo?: "empresa" | "pessoal";
+  /** Pede PIN de 4 números para entrar e para mexer em pessoas e acessos (080): áreas pessoais do Edvaldo. */
+  exige_pin?: boolean;
 }
 
 export interface Membro {

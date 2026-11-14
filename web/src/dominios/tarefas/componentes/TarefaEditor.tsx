@@ -12,6 +12,8 @@ import { fmtData, fmtDataHora } from "@/lib/formato/datas";
 import { nomeCliente } from "@/dominios/clientes/nome";
 import { Icone } from "@/components/ui/Icone";
 import { JanelaMotivo } from "@/components/ui/JanelaMotivo";
+import { AvisoRascunho } from "@/components/ui/AvisoRascunho";
+import { useRascunho } from "@/lib/rascunho";
 
 interface Comentario {
   id: string;
@@ -51,7 +53,8 @@ export function TarefaEditor({
   aoSalvar: () => void;
 }) {
   const { org, eu, setores, clientes, membros, nomeMembro, podeEditarCadastros, papel, pessoal } = useOrg();
-  const [f, setF] = useState<Form>(() => ({
+  // como o formulário abriu (o rascunho automático compara com isto)
+  const [inicial] = useState<Form>(() => ({
     titulo: tarefa?.titulo ?? "",
     descricao: tarefa?.descricao ?? "",
     cliente_id: tarefa?.cliente_id ?? "",
@@ -64,6 +67,9 @@ export function TarefaEditor({
     visivel_cliente: tarefa?.visivel_cliente === true ? "sim" : tarefa?.visivel_cliente === false ? "nao" : "",
     pendencia_cliente: tarefa?.pendencia_cliente ?? "",
   }));
+  const [f, setF] = useState<Form>(inicial);
+  // rascunho automático: se a página recarregar (sistema atualizado, internet caiu), o que foi digitado volta
+  const rascunho = useRascunho(`tarefa:${org.id}:${tarefa?.id ?? "nova"}`, eu.user_id, f, inicial, setF);
   const [arquivos, setArquivos] = useState<Arquivo[]>([]);
   const [erro, setErro] = useState<string | null>(null);
   const [salvando, setSalvando] = useState(false);
@@ -130,6 +136,7 @@ export function TarefaEditor({
     setSalvando(false);
     if (r.error) return setErro(traduzirErro(r.error));
     if (!r.data?.length) return setErro("Você não tem permissão para alterar esta tarefa.");
+    rascunho.limpar();
     aoSalvar();
     aoFechar();
   }
@@ -174,6 +181,7 @@ export function TarefaEditor({
         </div>
 
         <form onSubmit={salvar} className="space-y-4 p-5">
+          <AvisoRascunho pendente={rascunho.pendente} aoRecuperar={rascunho.recuperar} aoDescartar={rascunho.descartar} />
           <label className="campo">
             <span>Título</span>
             <input required maxLength={200} value={f.titulo} onChange={(e) => set("titulo", e.target.value)} autoFocus />

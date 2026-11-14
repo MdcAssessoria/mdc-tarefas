@@ -36,6 +36,29 @@ NEXT_PUBLIC_MDC_SUPABASE_KEY=<chave publicável do outro projeto>
 
 O GitHub roda `verificar` a cada push e pull request (`.github/workflows/web.yml`). Não junte código com a verificação vermelha.
 
+## 7.2.1 Publicar com gente usando o HUB (14/11/2026)
+
+Publicar (push na `main`) com alguém trabalhando não trava mais a tela nem perde o que foi digitado:
+
+| Peça | Arquivo | O que faz |
+| --- | --- | --- |
+| Versão do build | `next.config.ts` (`NEXT_PUBLIC_VERSAO_HUB` = commit da Vercel) e `app/api/versao/route.ts` | Cada aba sabe a própria versão e pergunta a versão no ar |
+| Aviso de versão nova | `components/shell/ProtecaoAtualizacao.tsx` (no layout raiz) | A cada 3 min e ao voltar para a aba: "Nova versão disponível. Salve e clique em Atualizar". Nunca recarrega sozinho com algo digitado; na TV atualiza sozinha |
+| Parte da tela que não carregou | mesmo arquivo + `lib/atualizacao.ts` | Arquivo da versão antiga sumiu: recarrega uma única vez (no máximo 1 por minuto, sem loop) se não há nada digitado; senão mostra o aviso |
+| Tela de erro | `app/error.tsx` e `app/global-error.tsx` | No lugar da tela branca/congelada: mensagem simples e "Recarregar" |
+| Alterações não salvas | `lib/rascunho.ts` + `ProtecaoAtualizacao` | Marca janela/formulário onde a pessoa digitou; ao sair ou recarregar, o navegador pergunta antes |
+| Rascunho automático | `useRascunho` (`lib/rascunho.ts`) e `components/ui/AvisoRascunho.tsx` | Guarda o formulário no navegador enquanto digita (por pessoa e formulário, vale 7 dias). Ao reabrir: "Encontramos dados não salvos — Recuperar / Descartar". Some ao salvar com sucesso |
+
+Rascunho automático ligado hoje em: **Nova/Editar tarefa** e **Obrigações recorrentes** (as telas da operação de
+tarefas). Para ligar em outro formulário: guarde como ele abriu (`inicial`), chame
+`useRascunho("<assunto>:<org>:<id ou nova>", eu.user_id, valor, inicial, setValor)`, ponha
+`<AvisoRascunho …/>` no topo do formulário e `rascunho.limpar()` depois de gravar com sucesso. Nunca use em campo de
+senha, PIN, token ou certificado. Os demais formulários já têm a proteção de "alterações não salvas" (o navegador
+pergunta antes de sair).
+
+`npm run telas` confere o rascunho na tela de Tarefas (digita, recarrega e recupera) e, com `PIN_TELAS=1`, a trava do
+PIN (5.9) em todas as telas.
+
 ## 7.3 Banco de dados (migrações)
 
 1. Crie `supabase/migrations/NNN_assunto.sql` com o próximo número (regras no capítulo 4.5).

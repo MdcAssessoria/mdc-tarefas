@@ -6,6 +6,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { supabase } from "@/lib/supabase";
+import { trancarPin } from "@/dominios/acessos/pin";
 import { PAPEIS } from "@/dominios/organizacao/tipos";
 import { PAPEIS_APP } from "@/dominios/acessos/tipos";
 import type { PapelApp } from "@/dominios/acessos/tipos";
@@ -285,6 +286,7 @@ export function MenuLateral({ modulo, recolhido, aoRecolher }: { modulo: Modulo;
             title="Sair"
             aria-label="Sair"
             onClick={async () => {
+              await trancarPin(); // o PIN das áreas pessoais não fica liberado para quem entrar depois
               await supabase().auth.signOut();
               window.location.replace(caminho("/login"));
             }}

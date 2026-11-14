@@ -2,8 +2,13 @@ import type { NextConfig } from "next";
 
 // Endereço público: https://hub.mdcassessoria.com/hub-mdc (subdomínio na Vercel; a raiz "/" cai em /hub-mdc pelo
 // redirect abaixo). Alternativa: https://mdcassessoria.com/hub-mdc pelo Worker da Cloudflare (infra/cloudflare).
+// Versão deste build: na Vercel, o commit publicado; no computador, a hora do build. Vai para o site
+// (NEXT_PUBLIC_VERSAO_HUB) e para /api/versao, e é o que dispara o aviso "Nova versão disponível" (lib/atualizacao.ts).
+const versao = process.env.VERCEL_GIT_COMMIT_SHA || process.env.VERCEL_DEPLOYMENT_ID || `local-${Date.now()}`;
+
 const nextConfig: NextConfig = {
   basePath: "/hub-mdc",
+  env: { NEXT_PUBLIC_VERSAO_HUB: versao },
   async redirects() {
     return [
       { source: "/", destination: "/hub-mdc", basePath: false, permanent: false },

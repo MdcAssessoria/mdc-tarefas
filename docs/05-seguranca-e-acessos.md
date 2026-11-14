@@ -211,3 +211,28 @@ além disso. Para que um desconhecido não use esse papel para chegar a outras c
 Avisos do Supabase que continuam e são esperados: as funções `public.*` chamadas pelas telas (cada uma confere a
 permissão na primeira linha) e `crm_receber_lead`, que recebe os leads do Simulador sem login. Pendente no painel
 (Authentication › Policies): ligar a proteção contra senha vazada.
+
+## 5.9 PIN das áreas pessoais (080, 14/11/2026)
+
+> **Resumo:** organizações marcadas com `exige_pin` (hoje: **Financeiro pessoal — Edvaldo** e **Família Carvalho**)
+> pedem um PIN de 4 números ao entrar. Digitado, vale 30 minutos para aquela pessoa. O banco também barra mexer em
+> pessoas e acessos dessas organizações sem o PIN liberado.
+
+Atenção: o "Financeiro pessoal — Edvaldo" é do tipo `empresa` (organização do HUB), não `pessoal`. Por isso a trava usa
+a marcação própria `organizacoes.exige_pin`, e não o tipo.
+
+| Peça | Onde | O que faz |
+| --- | --- | --- |
+| Porta (tela) | `dominios/acessos/componentes/TravaPin.tsx`, ligada no `OrgProvider` | Antes de qualquer tela da organização: cria o PIN (1ª vez), pede o PIN, "Esqueci meu PIN" (senha do HUB) e tranca sozinha quando acabam os 30 minutos |
+| PIN de cada pessoa | `app.pin_usuarios` | Só o resumo bcrypt (`extensions.crypt`), erros seguidos, travado até, liberado até. Ninguém lê pela API |
+| Conferir | `pin_conferir(org, pin)` | Certo: libera 30 min. Errado: conta o erro (não lança exceção para o contador ficar gravado). 5 erros: trava 15 min |
+| Criar ou trocar | `pin_definir(org, pin)` | 1ª vez: livre. Troca: só com o PIN liberado ou logo depois de entrar com a senha (5 min). Não aceita "PIN atual" (sem contador, daria para testar os 10 mil números). Recusa 0000, 1234 e afins |
+| Trancar | `pin_trancar()` | Chamado ao sair do HUB (menu lateral e menu do Pessoal) |
+| Trava no banco | gatilho `exige_pin` em `membros`, `hub_acessos`, `app.convites`, `pessoal_convites` (`app.tg_exige_pin`) | Sem PIN liberado, recusa cadastrar, convidar, alterar ou tirar pessoas e mudar acessos dessas organizações. Não barra rotina sem login (cron, Função Edge com chave de serviço) nem a pessoa mexendo no próprio cadastro (aceitar convite) |
+| Ligar/desligar | `org_definir_exige_pin(org, ligado)` | Só administrador; desligar exige o PIN liberado. Gravar `exige_pin` direto na tabela é recusado (gatilho `org_exige_pin_fixo`) |
+
+Toda tentativa vai para `hub_auditoria` (app `acessos`: `pin_criar`, `pin_trocar`, `pin_ok`, `pin_erro`, `pin_travado`,
+`pin_ligar`, `pin_desligar`). Testes: `bash supabase/testes/rodar_pin.sh`.
+
+Limite conhecido: a leitura dos dados da organização continua protegida pelo RLS de sempre (só membros leem); o PIN é
+a porta da tela e a trava das mudanças de pessoas e acessos, não uma segunda trava de leitura.

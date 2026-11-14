@@ -11,6 +11,7 @@ import { traduzirErro } from "@/lib/erros";
 import { precisaTrocarSenha } from "@/lib/senhaProvisoria";
 import { caminho } from "@/lib/caminho";
 import { CHAVES, gravarLocal, lerLocal } from "@/lib/armazenamentoLocal";
+import { TravaPin } from "@/dominios/acessos/componentes/TravaPin";
 
 interface OrgCtx {
   session: Session;
@@ -241,7 +242,8 @@ export function OrgProvider({ children }: { children: React.ReactNode }) {
   if (session === undefined || (session && orgs === null)) return <Centro titulo="Carregando…" />;
   if (session && orgs && orgs.length === 0) return <AcessoNaoLiberado email={session.user.email ?? ""} />;
   if (!valor) return <Centro titulo="Carregando…" />;
-  return <Ctx.Provider value={valor}>{children}</Ctx.Provider>;
+  // áreas pessoais (exige_pin, 080): o PIN de 4 números abre a porta antes de qualquer tela
+  return <Ctx.Provider value={valor}>{valor.org.exige_pin ? <TravaPin>{children}</TravaPin> : children}</Ctx.Provider>;
 }
 
 export function Centro({ titulo, children }: { titulo: string; children?: React.ReactNode }) {

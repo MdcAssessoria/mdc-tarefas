@@ -52,6 +52,14 @@ flowchart LR
 
 É idempotente: rodar de novo para a mesma competência não duplica tarefas.
 
+**Quem cadastra as rotinas (modelos):** só **gestor ou administrador** grava em `modelos_recorrentes` (RLS
+`modelos_write` = `app.eh_gestor`). Analista vê os modelos mas não salva: foi a causa de "o usuário não consegue gravar
+a rotina" em 14/11/2026. Quem vai montar rotinas precisa entrar como gestor.
+
+**Catálogo padrão da MDC (14/11/2026):** `supabase/seed_catalogo_rotinas_mdc.sql` cadastra 38 rotinas (escrituração,
+obrigações acessórias, DP, contábil e atendimento) **desligadas**; cada uma é conferida e ligada em Configurações ›
+Obrigações recorrentes. Pode rodar de novo sem duplicar.
+
 ## 6.3 Societário: uma tarefa concluída avança o processo
 
 ```mermaid
