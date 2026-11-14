@@ -5679,6 +5679,75 @@ export type Database = {
           },
         ];
       };
+      pessoal_contatos_empresa: {
+        Row: {
+          autorizado_em: string;
+          cnpj: string;
+          dados_receita: Json;
+          email: string;
+          id: string;
+          nome: string;
+          oportunidade_id: string | null;
+          org_id: string;
+          razao_social: string;
+          retirado_em: string | null;
+          situacao: string;
+          telefone: string | null;
+          termo_texto: string;
+          termo_versao: number;
+          user_id: string;
+        };
+        Insert: {
+          autorizado_em?: string;
+          cnpj: string;
+          dados_receita?: Json;
+          email: string;
+          id?: string;
+          nome: string;
+          oportunidade_id?: string | null;
+          org_id: string;
+          razao_social: string;
+          retirado_em?: string | null;
+          situacao: string;
+          telefone?: string | null;
+          termo_texto: string;
+          termo_versao: number;
+          user_id: string;
+        };
+        Update: {
+          autorizado_em?: string;
+          cnpj?: string;
+          dados_receita?: Json;
+          email?: string;
+          id?: string;
+          nome?: string;
+          oportunidade_id?: string | null;
+          org_id?: string;
+          razao_social?: string;
+          retirado_em?: string | null;
+          situacao?: string;
+          telefone?: string | null;
+          termo_texto?: string;
+          termo_versao?: number;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "pessoal_contatos_empresa_oportunidade_id_fkey";
+            columns: ["oportunidade_id"];
+            isOneToOne: false;
+            referencedRelation: "crm_oportunidades";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "pessoal_contatos_empresa_org_id_fkey";
+            columns: ["org_id"];
+            isOneToOne: false;
+            referencedRelation: "organizacoes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       pessoal_convites: {
         Row: {
           cancelado_em: string | null;
@@ -7860,6 +7929,8 @@ export type Database = {
         Args: { p_org: string; p_permissao: string; p_user: string };
         Returns: undefined;
       };
+      pessoal_empresa_adiar: { Args: { p_org: string }; Returns: undefined };
+      pessoal_empresa_situacao: { Args: { p_org: string }; Returns: Json };
       pessoal_push_aparelhos: { Args: never; Returns: number };
       pessoal_push_inscrever: {
         Args: {
@@ -7876,6 +7947,10 @@ export type Database = {
         Args: { p_id: number; p_mortos?: string[]; p_ok: boolean };
         Returns: undefined;
       };
+      pessoal_quero_contato: {
+        Args: { p: Json; p_org: string };
+        Returns: string;
+      };
       pessoal_remover: {
         Args: { p_org: string; p_user: string };
         Returns: undefined;
@@ -7891,6 +7966,10 @@ export type Database = {
           p_ligado: boolean;
           p_org: string;
         };
+        Returns: undefined;
+      };
+      pessoal_retirar_contato: {
+        Args: { p_contato: string };
         Returns: undefined;
       };
       pessoal_vapid: {
