@@ -7,12 +7,13 @@
 --
 --  A família reaproveita o que o HUB já tem: a "empresa da Gestão" da organização (gestao_cliente_id) é a própria
 --  família (cliente com regime 'pf'), então o Financeiro funciona igual; quem cria a família é administrador dela e
---  convida as outras pessoas pelo mesmo convite do HUB (hub_convidar + senha provisória).
+--  convida as outras pessoas por um convite com código (pessoal_convidar → pessoal_aceitar_convite), nunca pelos
+--  convites do HUB ou do Portal. O código é do Edvaldo Ribeiro de Carvalho (MDC Assessoria Contábil).
 --
 --  Regras (no banco):
 --   - tipo da organização só muda por migração (gatilho barra a chamada direta);
 --   - pessoal_criar_familia: qualquer pessoa logada, no máximo 3 famílias criadas por conta; já nasce com as
---     plano de contas e as categorias de casa (moradia, mercado, saúde…), Tarefas e Finanças;
+--     o plano de contas e as categorias de casa (moradia, mercado, saúde…), Tarefas e Finanças;
 --   - pessoal_cadastro_tentativa: trava de cadastro aberto (no máximo 5 contas por hora por endereço de rede), só para a
 --     função do servidor (pessoal-cadastro), que cria a conta com a chave de serviço.
 -- =====================================================================================================
