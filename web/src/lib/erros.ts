@@ -13,7 +13,12 @@ const REGRAS: [RegExp, string][] = [
   [/user already registered|already been registered|already exists/i, "Já existe uma conta com este e-mail."],
   [/password should be at least (\d+)/i, "A senha precisa ter pelo menos $1 caracteres."],
   [/password.*(weak|pwned|known to be)/i, "Senha fraca ou já vazada na internet. Escolha outra senha."],
-  [/new password should be different/i, "A nova senha precisa ser diferente da atual."],
+  [/new password should be different|same_password/i, "A nova senha precisa ser diferente da senha provisória."],
+  [
+    /password should contain at least one character|weak_password/i,
+    "A senha precisa misturar letras maiúsculas, minúsculas, números e símbolos. Exemplo: Casa-Azul-2026",
+  ],
+  [/reauthenticat/i, "Por segurança, entre de novo com a senha provisória e crie a senha logo em seguida."],
   [
     /unable to validate email|invalid email|email address .* is invalid|email_address_invalid/i,
     "E-mail inválido. Confira o endereço digitado.",

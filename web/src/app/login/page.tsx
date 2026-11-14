@@ -88,11 +88,26 @@ export default function Login() {
         return;
       }
       if (modo === "trocar") {
+        // a sessão aberta com a provisória precisa existir; se caiu (aba antiga, outro aparelho), a pessoa entra de novo
+        const { data: atual } = await sb.auth.getSession();
+        if (!atual.session) {
+          setModo("entrar");
+          throw new Error("Sua sessão com a senha provisória terminou. Entre de novo com o e-mail e a senha provisória.");
+        }
+        const emailConta = atual.session.user.email ?? email;
         const { error } = await sb.auth.updateUser({ password: senha });
         if (error) throw error;
         const { error: eMarca } = await sb.rpc("hub_senha_trocada");
         if (eMarca) throw eMarca;
-        await sb.auth.refreshSession();
+        // renova a sessão sem a marca trocar_senha; se a renovação falhar, entra de novo com a senha nova
+        const { data: renovada, error: eRenovar } = await sb.auth.refreshSession();
+        if (eRenovar || !renovada.session) {
+          const { error: eEntrar } = await sb.auth.signInWithPassword({ email: emailConta, password: senha });
+          if (eEntrar) {
+            setModo("entrar");
+            throw new Error("Senha criada. Entre de novo com o seu e-mail e a senha nova.");
+          }
+        }
         window.location.replace(destino());
         return;
       }
