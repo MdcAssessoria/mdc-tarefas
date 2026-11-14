@@ -10,7 +10,7 @@ import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { nomeCliente } from "@/dominios/clientes/nome";
 import { SemEmpresaGestao, useClienteGestao } from "@/dominios/organizacao/componentes/EmpresaEmGestao";
 import { Valor } from "@/components/ui/Valor";
-import { BarrasCategorias, GraficoFluxo, GraficoMeses } from "@/dominios/financeiro/componentes/GraficosPainel";
+import { BarrasCategorias, GraficoFluxo, GraficoMeses, GraficoSaldo } from "@/dominios/financeiro/componentes/GraficosPainel";
 import { PrimeirosPassos } from "@/dominios/financeiro/componentes/PrimeirosPassos";
 import {
   contarDoCliente,
@@ -30,8 +30,9 @@ import {
   realizadoPorMes,
   resumirPrazos,
   saldoComTransferencias,
+  saldoPorMes,
 } from "@/dominios/financeiro/painel";
-import type { Soma } from "@/dominios/financeiro/painel";
+import type { MesRealizado, SaldoMes, Soma } from "@/dominios/financeiro/painel";
 
 
 import { useConsulta } from "@/lib/useConsulta";
@@ -48,8 +49,10 @@ const nomeDoMes = (mes: string) =>
   new Intl.DateTimeFormat("pt-BR", { month: "long", timeZone: "UTC" }).format(new Date(`${mes}-15T12:00:00Z`));
 
 export default function PainelFinanceiro() {
-  const { org, eu, pode } = useOrg();
+  const { org, eu, pode, pessoal } = useOrg();
   const { cliente } = useClienteGestao();
+  // a família vê a evolução de um ano inteiro; a empresa, os últimos 6 meses
+  const nMeses = pessoal ? 12 : 6;
   const podeOperar = pode("financeiro", "operar");
   const hoje = hojeISO(org.fuso);
 
@@ -61,7 +64,7 @@ export default function PainelFinanceiro() {
         lerContas(id),
         lerLinhas(id),
         lerTitulosAbertos(id),
-        lerBaixas(id, { de: `${somarMeses(hoje, -5)}-01`, ate: hoje }),
+        lerBaixas(id, { de: `${somarMeses(hoje, -(nMeses - 1))}-01`, ate: hoje }),
         lerCategorias(id),
         contarDoCliente("fin_plano_contas", id),
         contarDoCliente("fin_titulos", id),
@@ -69,7 +72,7 @@ export default function PainelFinanceiro() {
       ]);
       const daBaixa = await lerTitulosPorId(baixas.map((b) => b.titulo_id));
       return { contas, linhas, abertos, baixas, categorias, plano, titulos, daBaixa, transferencias };
-    }, [cliente, hoje]),
+    }, [cliente, hoje, nMeses]),
   );
   const d = consulta.dados;
 
@@ -88,18 +91,20 @@ export default function PainelFinanceiro() {
       const doAnterior = despesasPorCategoria(d.baixas, titulos, cats, anterior);
       if (doAnterior.length) [mesDespesas, despesas] = [anterior, doAnterior];
     }
+    const meses = realizadoPorMes(d.baixas, new Map(d.daBaixa.map((t) => [t.id, t.tipo])), hoje, nMeses);
     return {
       bancos,
       saldo,
+      saldos: saldoPorMes(meses, saldo),
       prazos: resumirPrazos(d.abertos, hoje),
       fluxo,
       pior: menorSaldo(fluxo),
-      meses: realizadoPorMes(d.baixas, new Map(d.daBaixa.map((t) => [t.id, t.tipo])), hoje, 6),
+      meses,
       despesas,
       mesDespesas,
       passos: primeirosPassos({ plano: d.plano, bancos: d.contas.length, categorias: d.categorias.length, titulos: d.titulos }),
     };
-  }, [d, hoje]);
+  }, [d, hoje, nMeses]);
 
   const primeiroNome = eu.nome.split(/\s+/)[0] ?? "";
   const faltaPasso = calc?.passos.some((p) => !p.feito);
@@ -216,7 +221,7 @@ export default function PainelFinanceiro() {
                   <div className="flex items-start gap-2">
                     <div className="mr-auto">
                       <h2 className="font-semibold text-[var(--marca)]">
-                        {calc.mesDespesas === hoje.slice(0, 7) ? "Maiores despesas do mês" : `Maiores despesas de ${nomeDoMes(calc.mesDespesas)}`}
+                        {`Maiores ${pessoal ? "gastos" : "despesas"} ${calc.mesDespesas === hoje.slice(0, 7) ? "do mês" : `de ${nomeDoMes(calc.mesDespesas)}`}`}
                       </h2>
                       <p className="text-sm text-[var(--texto-suave)]">O que já foi pago, por categoria.</p>
                     </div>
@@ -232,17 +237,54 @@ export default function PainelFinanceiro() {
                 </section>
               </div>
 
-              <section className="cartao space-y-3 p-4 sm:p-5">
-                <div>
-                  <h2 className="font-semibold text-[var(--marca)]">Últimos 6 meses</h2>
-                  <p className="text-sm text-[var(--texto-suave)]">O dinheiro que entrou e saiu de verdade (pagamentos e recebimentos registrados).</p>
-                </div>
-                <GraficoMeses meses={calc.meses} />
-              </section>
+              {pessoal ? (
+                <EvolucaoFamilia meses={calc.meses} saldos={calc.saldos} />
+              ) : (
+                <section className="cartao space-y-3 p-4 sm:p-5">
+                  <div>
+                    <h2 className="font-semibold text-[var(--marca)]">Últimos 6 meses</h2>
+                    <p className="text-sm text-[var(--texto-suave)]">O dinheiro que entrou e saiu de verdade (pagamentos e recebimentos registrados).</p>
+                  </div>
+                  <GraficoMeses meses={calc.meses} />
+                </section>
+              )}
             </>
           )}
         </>
       )}
+    </div>
+  );
+}
+
+/** Família: como o dinheiro evoluiu no ano (entrou × saiu mês a mês e o saldo guardado no fim de cada mês). */
+function EvolucaoFamilia({ meses, saldos }: { meses: MesRealizado[]; saldos: SaldoMes[] }) {
+  const entrou = meses.reduce((a, m) => a + m.entrou, 0);
+  const saiu = meses.reduce((a, m) => a + m.saiu, 0);
+  const inicio = saldos[0] ? saldos[0].saldo - (meses[0]?.entrou ?? 0) + (meses[0]?.saiu ?? 0) : 0;
+  const fim = saldos.at(-1)?.saldo ?? 0;
+  return (
+    <div className="grid gap-4 xl:grid-cols-2">
+      <section className="cartao min-w-0 space-y-3 p-4 sm:p-5">
+        <div>
+          <h2 className="font-semibold text-[var(--marca)]">Entrou e saiu, mês a mês</h2>
+          <p className="text-sm text-[var(--texto-suave)]">
+            Nos últimos 12 meses entrou <Valor v={entrou} className="font-medium" /> e saiu <Valor v={saiu} className="font-medium" />
+            {entrou - saiu >= 0 ? ": sobrou " : ": faltou "}
+            <Valor v={Math.abs(entrou - saiu)} className="font-medium" />.
+          </p>
+        </div>
+        <GraficoMeses meses={meses} />
+      </section>
+      <section className="cartao min-w-0 space-y-3 p-4 sm:p-5">
+        <div>
+          <h2 className="font-semibold text-[var(--marca)]">Dinheiro guardado</h2>
+          <p className="text-sm text-[var(--texto-suave)]">
+            O saldo das contas no fim de cada mês. {fim >= inicio ? "Cresceu " : "Diminuiu "}
+            <Valor v={Math.abs(fim - inicio)} className="font-medium" /> em 12 meses.
+          </p>
+        </div>
+        <GraficoSaldo pontos={saldos} />
+      </section>
     </div>
   );
 }

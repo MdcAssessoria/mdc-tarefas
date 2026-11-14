@@ -200,3 +200,6 @@ for f in testes/149_base_079.sql migrations/079_pessoal_ajustes.sql; do
   $P -v ON_ERROR_STOP=1 -f "$R/$f" 2>&1 | grep -v NOTICE || true
 done
 $P -f "$R/testes/150_ajustes_079.sql" 2>&1 | grep -v "^SET$"
+# 081: MDC - Pessoal, plano de contas simples (só Entradas e Gastos) e troca do plano antigo de quem não lançou
+$P -v ON_ERROR_STOP=1 -f "$R/migrations/081_pessoal_plano_simples.sql" 2>&1 | grep -v NOTICE || true
+$P -f "$R/testes/151_plano_simples_081.sql" 2>&1 | grep -v "^SET$"

@@ -87,6 +87,13 @@ describe("iconeDaCategoria", () => {
     expect(iconeDaCategoria("Energia elétrica")).toBe("raio");
     expect(iconeDaCategoria("Escola, faculdade e cursos")).toBe("escola");
     expect(iconeDaCategoria("Salário e pró-labore", "receber")).toBe("carteira");
+    expect(iconeDaCategoria("Mercado")).toBe("carrinho");
+    expect(iconeDaCategoria("Contas da casa")).toBe("raio");
+    expect(iconeDaCategoria("Moradia")).toBe("casa");
+    expect(iconeDaCategoria("Cartão e empréstimos")).toBe("banco");
+    expect(iconeDaCategoria("Compras pessoais")).toBe("sacola");
+    expect(iconeDaCategoria("Renda extra", "receber")).toBe("carteira");
+    expect(iconeDaCategoria("Outros gastos")).toBe("etiqueta");
     expect(iconeDaCategoria("Algo novo")).toBe("etiqueta");
     expect(iconeDaCategoria(null, "receber")).toBe("seta-entrada");
   });

@@ -2,12 +2,12 @@
 // previsto (barras de entrada/saída por dia + linha do saldo), realizado por mês e maiores despesas por categoria.
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { brl } from "@/lib/formato/moeda";
 import { fmtData } from "@/lib/formato/datas";
 import { COR } from "@/dominios/demonstrativos/componentes/paletas";
 import { rotuloMes, valorCurto } from "../painel";
-import type { DiaFluxo, FatiaCategoria, MesRealizado } from "../painel";
+import type { DiaFluxo, FatiaCategoria, MesRealizado, SaldoMes } from "../painel";
 
 const SALDO = "#0b2820";
 
@@ -230,7 +230,7 @@ export function GraficoMeses({ meses }: { meses: MesRealizado[] }) {
                 )}
                 <rect x={cx(i) - bw - 2} y={y(m.entrou)} width={bw} height={Math.max(0, y(0) - y(m.entrou))} rx="3" fill={COR.receita} />
                 <rect x={cx(i) + 2} y={y(m.saiu)} width={bw} height={Math.max(0, y(0) - y(m.saiu))} rx="3" fill={COR.despesa} />
-                {(m.entrou || m.saiu) > 0 && (
+                {(m.entrou || m.saiu) > 0 && passo >= 46 && (
                   <text
                     x={cx(i)}
                     y={y(Math.max(m.entrou, m.saiu)) - 6}
@@ -243,9 +243,11 @@ export function GraficoMeses({ meses }: { meses: MesRealizado[] }) {
                     {valorCurto(res)}
                   </text>
                 )}
-                <text x={cx(i)} y={H - 6} textAnchor="middle" fontSize="11" fill={COR.eixo}>
-                  {rotuloMes(m.mes)}
-                </text>
+                {(passo >= 34 || i % 2 === meses.length % 2) && (
+                  <text x={cx(i)} y={H - 6} textAnchor="middle" fontSize="11" fill={COR.eixo}>
+                    {rotuloMes(m.mes)}
+                  </text>
+                )}
               </g>
             );
           })}
@@ -288,5 +290,79 @@ export function BarrasCategorias({ fatias }: { fatias: FatiaCategoria[] }) {
         </li>
       ))}
     </ul>
+  );
+}
+
+/** Evolução do dinheiro guardado: o saldo de todas as contas no fim de cada mês (linha com área), mês a mês. */
+export function GraficoSaldo({ pontos }: { pontos: SaldoMes[] }) {
+  const [hover, setHover] = useState<number | null>(null);
+  const gradiente = `area-saldo-${useId().replace(/:/g, "")}`;
+  const { ref, largura } = useLargura();
+  const W = largura,
+    H = largura < 520 ? 180 : 210,
+    ml = 46,
+    mr = 14,
+    mt = 16,
+    mb = 26;
+  const { ini, fim, ticks } = escala(Math.min(...pontos.map((p) => p.saldo)), Math.max(...pontos.map((p) => p.saldo)));
+  const y = (v: number) => mt + (1 - (v - ini) / (fim - ini)) * (H - mt - mb);
+  const passo = (W - ml - mr) / Math.max(1, pontos.length - 1);
+  const x = (i: number) => ml + passo * i;
+  const linha = pontos.map((p, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(p.saldo).toFixed(1)}`).join(" ");
+  const area = `${linha} L${x(pontos.length - 1).toFixed(1)},${y(Math.max(ini, 0)).toFixed(1)} L${x(0).toFixed(1)},${y(Math.max(ini, 0)).toFixed(1)} Z`;
+  const h = hover !== null ? pontos[hover] : null;
+  const anterior = hover ? pontos[hover - 1] : null;
+  return (
+    <div className="relative" ref={ref}>
+      <svg
+        viewBox={`0 0 ${W} ${H}`}
+        className="w-full touch-pan-y"
+        role="img"
+        aria-label="Saldo das contas no fim de cada mês"
+        onPointerLeave={() => setHover(null)}
+        onPointerMove={(e) => {
+          const r = e.currentTarget.getBoundingClientRect();
+          const px = ((e.clientX - r.left) / r.width) * W;
+          setHover(Math.max(0, Math.min(pontos.length - 1, Math.round((px - ml) / passo))));
+        }}
+      >
+        <defs>
+          <linearGradient id={gradiente} x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0" stopColor="#e2c17e" stopOpacity="0.45" />
+            <stop offset="1" stopColor="#e2c17e" stopOpacity="0.04" />
+          </linearGradient>
+        </defs>
+        {ticks.map((t) => (
+          <g key={t}>
+            <line x1={ml} x2={W - mr} y1={y(t)} y2={y(t)} stroke={t === 0 ? "#b9c4bd" : COR.grade} />
+            <text x={ml - 8} y={y(t) + 4} textAnchor="end" fontSize="11" fill={COR.eixo}>
+              {valorCurto(t)}
+            </text>
+          </g>
+        ))}
+        <path d={area} fill={`url(#${gradiente})`} />
+        <path d={linha} fill="none" stroke={SALDO} strokeWidth="2.5" strokeLinejoin="round" />
+        {pontos.map((p, i) => (
+          <g key={p.mes}>
+            <circle cx={x(i)} cy={y(p.saldo)} r={hover === i ? 5 : 3} fill={p.saldo < 0 ? COR.negativo : SALDO} />
+            {(passo >= 52 || i % 2 === (pontos.length - 1) % 2) && (
+              <text x={x(i)} y={H - 6} textAnchor={i === pontos.length - 1 ? "end" : "middle"} fontSize="11" fill={COR.eixo}>
+                {rotuloMes(p.mes)}
+              </text>
+            )}
+          </g>
+        ))}
+      </svg>
+      {h && (
+        <Dica
+          esquerda={(x(hover!) / W) * 100}
+          linhas={[
+            { texto: `Fim de ${rotuloMes(h.mes)}`, forte: true },
+            { texto: `Saldo ${brl(h.saldo)}`, cor: SALDO },
+            ...(anterior ? [{ texto: `${h.saldo - anterior.saldo >= 0 ? "Cresceu" : "Diminuiu"} ${brl(Math.abs(h.saldo - anterior.saldo))}` }] : []),
+          ]}
+        />
+      )}
+    </div>
   );
 }

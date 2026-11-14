@@ -17,7 +17,7 @@ import { avisoRapido } from "./avisoRapido";
 
 const TECLAS = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "00", "0", "apagar"];
 // os mais usados primeiro (o resto segue em ordem alfabética)
-const PRIMEIROS = /supermercado|aluguel|energia|água|internet|escola|combust|consultas|restaurante|salário|aluguéis/i;
+const PRIMEIROS = /mercado|contas da casa|moradia|transporte|restaurante|saúde|salário|renda extra/i;
 
 export function LancamentoRapido({
   tipoInicial,

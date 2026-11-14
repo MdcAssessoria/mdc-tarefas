@@ -1,5 +1,5 @@
 // Cadastro rápido de categoria (despesa ou receita) sem sair da tela de lançamento: nome, grupo e a conta do plano onde
-// ela é contabilizada. Usado ao lançar nota de entrada e conta a pagar/receber quando falta a categoria certa.
+// ela é contabilizada (na família, só o nome). Usado ao lançar nota de entrada e conta a pagar/receber quando falta a categoria certa.
 "use client";
 
 import { useCallback, useState } from "react";
@@ -28,8 +28,9 @@ export function NovaCategoriaRapida({
   const plano = useConsulta(useCallback(() => lerPlano(cliente.id), [cliente.id]));
   const { pessoal } = useOrg();
   const analiticas = (plano.dados ?? []).filter((c) => c.analitica && c.ativo);
-  // MDC · Pessoal: a família escolhe só com qual gasto (ou receita) a categoria nova se parece; nada de plano de contas
+  // MDC · Pessoal: a família só dá o nome; por dentro a categoria vai para "Outras entradas" ou "Outros gastos" (081)
   const daFamilia = analiticas.filter((c) => c.classificacao.startsWith(tipo === "receita" ? "1" : "2"));
+  const contaDaFamilia = (daFamilia.find((c) => /^outr/i.test(c.descricao)) ?? daFamilia[daFamilia.length - 1])?.id ?? "";
   const [nome, setNome] = useState("");
   const [grupo, setGrupo] = useState("");
   const [conta, setConta] = useState("");
@@ -39,9 +40,9 @@ export function NovaCategoriaRapida({
   async function salvar(e: React.FormEvent) {
     e.preventDefault();
     setErro(null);
-    if (!nome.trim()) return setErro("Dê um nome (ex.: Sistemas e softwares, Aluguel, Energia).");
-    if (!conta)
-      return setErro(pessoal ? "Escolha com qual tipo de gasto ela se parece." : "Escolha a conta do plano de contas onde ela vai ser contabilizada.");
+    if (!nome.trim()) return setErro(pessoal ? "Dê um nome (ex.: Farmácia, Pet, Academia)." : "Dê um nome (ex.: Sistemas e softwares, Aluguel, Energia).");
+    const contaFinal = pessoal ? contaDaFamilia : conta;
+    if (!contaFinal) return setErro("Escolha a conta do plano de contas onde ela vai ser contabilizada.");
     setSalvando(true);
     const { data, error } = await supabase()
       .from("fin_categorias")
@@ -50,8 +51,8 @@ export function NovaCategoriaRapida({
         cliente_id: cliente.id,
         tipo,
         nome: nome.trim(),
-        grupo: grupo.trim() || null,
-        conta_contabil_id: conta,
+        grupo: pessoal ? (tipo === "receita" ? "Entradas" : "Gastos") : grupo.trim() || null,
+        conta_contabil_id: contaFinal,
       })
       .select("id")
       .single();
@@ -84,22 +85,10 @@ export function NovaCategoriaRapida({
       ) : (
         <form onSubmit={salvar} className="space-y-3">
           <label className="campo">
-            <span>Nome da categoria</span>
+            <span>{pessoal ? "Nome" : "Nome da categoria"}</span>
             <input value={nome} onChange={(e) => setNome(e.target.value)} placeholder={pessoal ? "Ex.: Farmácia" : "Ex.: Sistemas e softwares"} />
           </label>
-          {pessoal ? (
-            <label className="campo">
-              <span>Parecido com</span>
-              <select value={conta} onChange={(e) => setConta(e.target.value)} required>
-                <option value="">Escolha…</option>
-                {daFamilia.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.descricao}
-                  </option>
-                ))}
-              </select>
-            </label>
-          ) : (
+          {pessoal ? null : (
             <>
               <label className="campo">
                 <span>Grupo (opcional)</span>

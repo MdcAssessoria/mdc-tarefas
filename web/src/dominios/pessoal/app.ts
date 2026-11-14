@@ -101,12 +101,15 @@ export const valorDosDigitos = (digitos: string) => Number(digitos || "0") / 100
 export function iconeDaCategoria(nome: string | null | undefined, tipo: "pagar" | "receber" = "pagar"): NomeIcone {
   const n = (nome ?? "").toLowerCase();
   const regras: [RegExp, NomeIcone][] = [
+    [/contas da casa/, "raio"],
+    [/cartão|cartao|emprést|emprest/, "banco"],
+    [/renda extra/, "carteira"],
     [/mercado|supermercado|feira|aliment/, "carrinho"],
     [/restaurante|delivery|lanche/, "sacola"],
     [/aluguel|financiamento|moradia|iptu|casa/, "casa"],
     [/condom/, "casa"],
     [/energia|luz/, "raio"],
-    [/água|agua|gás|gas/, "gota"],
+    [/água|agua|\bgás\b|\bgas\b/, "gota"],
     [/internet|telefone|celular/, "wifi"],
     [/escola|faculdade|curso|educa/, "escola"],
     [/combust|veículo|veiculo|ipva|carro|transporte|seguro/, "carro"],

@@ -145,6 +145,22 @@ Desenho aprovado pelo Edvaldo no quadro "MDC · Pessoal — desenho do app" (pro
 - **Ícone do app:** o oval com as três barras "///" do logo da MDC, dourado sobre o verde (`public/icone-pessoal-*.png`,
   no `manifest-pessoal.webmanifest`, no `app/pessoal/layout.tsx` e trocado pela Moldura dentro da família).
 
+## 4.4 Plano de contas simples e evolução do dinheiro (migração 081)
+
+- **Plano da família = só Entradas e Gastos**, um nível, com nomes do dia a dia. Não segue o plano do Domínio.
+  - Entradas: Salário, Renda extra, Aluguel recebido, Outras entradas.
+  - Gastos: Moradia, Contas da casa, Mercado, Restaurante e delivery, Transporte, Saúde, Educação, Lazer, Compras pessoais,
+    Cartão e empréstimos, Impostos e taxas, Outros gastos.
+  - Os códigos 1.xx e 2.xx existem só por dentro. A família nova nasce com este plano (`app.pessoal_semear_plano`).
+  - A 081 trocou o plano antigo das organizações que ainda não tinham nenhum lançamento. Quem já lançou fica como está.
+- **Novo tipo de gasto/entrada**: a família digita só o nome. Por dentro ele vai para "Outros gastos" ou "Outras entradas"
+  (grupo Gastos ou Entradas).
+- **Gráficos de evolução** (`saldoPorMes` em `dominios/financeiro/painel.ts`, `GraficoSaldo` em `GraficosPainel.tsx`):
+  - Painel de Finanças da família: 12 meses de "Entrou e saiu, mês a mês" e "Dinheiro guardado" (saldo das contas no fim
+    de cada mês, calculado de trás para frente a partir do saldo de hoje).
+  - Tela Hoje: cartão "Como seu dinheiro evoluiu" com os dois gráficos alternados (`EvolucaoDoDinheiro.tsx`); some enquanto
+    não há nada pago ou recebido.
+
 ## 5. Arquivos
 
 - Banco: `supabase/migrations/075_mdc_pessoal.sql` e `076_pessoal_resumo_diario.sql`; testes

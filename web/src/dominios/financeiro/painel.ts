@@ -118,6 +118,25 @@ export function realizadoPorMes(
   return lista;
 }
 
+export interface SaldoMes {
+  mes: string;
+  saldo: number;
+}
+
+/**
+ * Saldo de todas as contas no fim de cada mês, de trás para frente: o saldo de hoje menos o que entrou e mais o que
+ * saiu nos meses seguintes. O último ponto é o saldo de hoje (mês corrente).
+ */
+export function saldoPorMes(meses: MesRealizado[], saldoHoje: number): SaldoMes[] {
+  const saida: SaldoMes[] = [];
+  let saldo = saldoHoje;
+  for (let i = meses.length - 1; i >= 0; i--) {
+    saida.unshift({ mes: meses[i].mes, saldo: r2(saldo) });
+    saldo = saldo - meses[i].entrou + meses[i].saiu;
+  }
+  return saida;
+}
+
 export interface FatiaCategoria {
   id: string;
   nome: string;

@@ -16,6 +16,7 @@ import { Esqueleto } from "@/components/ui/Esqueleto";
 import { agruparAbertas, resumoDoMes } from "../app";
 import type { ContaApp } from "../app";
 import { useFinancasFamilia } from "./app/dados";
+import { EvolucaoDoDinheiro } from "./app/EvolucaoDoDinheiro";
 import { LinhaConta } from "./app/LinhaConta";
 import { PagarConta } from "./app/PagarConta";
 
@@ -133,6 +134,8 @@ export function InicioPessoal() {
                 </p>
               )}
             </section>
+
+            {fin.cliente && <EvolucaoDoDinheiro cliente={fin.cliente} hoje={hoje} />}
           </div>
         ))}
 

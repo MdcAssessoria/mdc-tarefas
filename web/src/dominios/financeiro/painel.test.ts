@@ -1,6 +1,7 @@
 // Testes das contas do painel inicial do Financeiro.
 import { describe, expect, it } from "vitest";
 import {
+  saldoPorMes,
   despesasPorCategoria,
   fluxoPrevisto,
   menorSaldo,
@@ -231,5 +232,23 @@ describe("saldoComTransferencias", () => {
     const ts = [tr("a", "b", "2026-10-01", 10), tr("a", "b", "2026-11-02", 20)];
     expect(saldoComTransferencias(conta("a", "2026-11-01"), [], ts)).toBe(980);
     expect(saldoComTransferencias(conta("a", null), [], ts)).toBe(970);
+  });
+});
+
+describe("saldoPorMes", () => {
+  it("volta do saldo de hoje mês a mês", () => {
+    const meses = [
+      { mes: "2026-09", entrou: 1000, saiu: 400 },
+      { mes: "2026-10", entrou: 500, saiu: 800 },
+      { mes: "2026-11", entrou: 200, saiu: 100 },
+    ];
+    expect(saldoPorMes(meses, 1000)).toEqual([
+      { mes: "2026-09", saldo: 1200 },
+      { mes: "2026-10", saldo: 900 },
+      { mes: "2026-11", saldo: 1000 },
+    ]);
+  });
+  it("sem meses devolve vazio", () => {
+    expect(saldoPorMes([], 50)).toEqual([]);
   });
 });
