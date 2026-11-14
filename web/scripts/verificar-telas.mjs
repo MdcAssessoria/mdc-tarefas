@@ -1162,7 +1162,7 @@ const INTERACOES = {
     await dialogo.waitFor({ state: "detached", timeout: 3000 });
   },
   "/comercial": (p) => abrirEFecharModal(p, "Limpar funil", "Limpar funil"),
-  "/licencas/contratos": (p) => abrirEFecharModal(p, "Novo contrato", "Novo contrato de licença"),
+  "/licencas/contratos": (p) => abrirEFecharModal(p, "Nova licença", "Novo contrato de licença"),
   "/licencas/produtos": async (p) => {
     for (const aba of await p.getByRole("tab").all()) {
       await aba.click();

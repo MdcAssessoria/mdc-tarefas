@@ -1586,6 +1586,12 @@ export const TABELAS = {
 
 /** Resultado de cada RPC (o nome é o que vem depois de /rest/v1/rpc/). RPC não listada devolve null. */
 export const RPCS = {
+  // Licenças (074): preços e valores só pela função (quem gere Licenças), montados dos mesmos dados de exemplo
+  lic_valores: () => ({
+    produtos: Object.fromEntries(TABELAS.lic_produtos.map((p) => [p.id, p.preco])),
+    planos: Object.fromEntries(TABELAS.lic_planos.map((p) => [p.id, p.preco])),
+    contratos: Object.fromEntries(TABELAS.lic_contratos.map((k) => [k.id, { valor_mensal: k.valor_mensal, valor_tabela: k.valor_tabela }])),
+  }),
   // MDC · Pessoal (075): convite da família devolve o código (aparece uma vez)
   pessoal_convidar: () => "AB2C-DE3F",
   // MDC · Pessoal (077): cartão "Você tem empresa?" com o termo em vigor e uma empresa já indicada
