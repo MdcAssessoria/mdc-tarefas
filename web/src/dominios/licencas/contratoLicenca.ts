@@ -41,6 +41,8 @@ export interface DocumentoLicenca {
   assinatura: RegistroAssinatura | null;
   cancelado_em: string | null;
   cancelado_motivo: string | null;
+  /** Arquivo do contrato assinado (escaneado), em hub_arquivos (086). */
+  arquivo_id?: string | null;
 }
 
 /** O que o banco grava quando o contrato é assinado. */

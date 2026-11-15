@@ -16,6 +16,7 @@ import { Chip } from "@/components/ui/Chip";
 import { Icone } from "@/components/ui/Icone";
 import { JanelaMotivo } from "@/components/ui/JanelaMotivo";
 import { ColunaFormulario, ColunasFormulario } from "@/components/ui/ColunasFormulario";
+import { CampoArquivo } from "@/components/ui/CampoArquivo";
 import {
   ROTULO_SITUACAO,
   conferirSignatario,
@@ -26,6 +27,9 @@ import {
   type Signatario,
 } from "../contratoLicenca";
 import {
+  abrirContratoAssinado,
+  anexarAssinado,
+  enviarContratoAssinado,
   baixarContratoLicenca,
   cancelarDocumento,
   emitirDocumento,
@@ -90,6 +94,8 @@ export function JanelaContratoLicenca(p: Props) {
     );
   return atual ? (
     <ContratoEmitido
+      org={org.id}
+      clienteId={p.contrato.cliente_id}
       titulo={titulo}
       descricao={descricao}
       doc={atual}
@@ -305,7 +311,11 @@ function ContratoEmitido({
   titulo,
   descricao,
   historico,
+  org,
+  clienteId,
 }: {
+  org: string;
+  clienteId: string;
   doc: DocumentoLicenca;
   cliente: ClienteDoc;
   hoje: string;
@@ -322,6 +332,7 @@ function ContratoEmitido({
   const [ocupado, setOcupado] = useState(false);
   const [papel, setPapel] = useState(false);
   const [cancelar, setCancelar] = useState(false);
+  const [anexar, setAnexar] = useState(false);
   const rotulo = ROTULO_SITUACAO[doc.situacao];
   const esperando = doc.situacao === "emitido" || doc.situacao === "enviado";
 
@@ -388,6 +399,18 @@ function ContratoEmitido({
               {doc.situacao === "enviado" ? "Gerar link novo" : "Gerar link de assinatura"}
             </button>
           )}
+          {doc.arquivo_id && (
+            <button className="btn" onClick={() => acao(() => abrirContratoAssinado(doc.arquivo_id!))} disabled={ocupado}>
+              <Icone nome="clipe" className="h-4 w-4" />
+              Ver contrato assinado
+            </button>
+          )}
+          {doc.situacao === "assinado" && doc.modo === "impresso" && (
+            <button className="btn" onClick={() => setAnexar(true)} disabled={ocupado}>
+              <Icone nome="importar" className="h-4 w-4" />
+              {doc.arquivo_id ? "Trocar arquivo assinado" : "Anexar contrato assinado"}
+            </button>
+          )}
           <button className="btn-primario" onClick={pdf} disabled={ocupado}>
             <Icone nome="baixar" className="h-4 w-4" />
             {doc.situacao === "assinado" ? "Baixar contrato assinado" : "Baixar PDF"}
@@ -449,7 +472,17 @@ function ContratoEmitido({
 
       {historico}
 
-      {papel && <RegistrarPapel doc={doc} hoje={hoje} aoFechar={() => setPapel(false)} aoSalvar={(m) => (setPapel(false), aoMudar(m))} />}
+      {(papel || anexar) && (
+        <RegistrarPapel
+          doc={doc}
+          hoje={hoje}
+          org={org}
+          clienteId={clienteId}
+          soArquivo={anexar}
+          aoFechar={() => (setPapel(false), setAnexar(false))}
+          aoSalvar={(m) => (setPapel(false), setAnexar(false), aoMudar(m))}
+        />
+      )}
       {cancelar && (
         <JanelaMotivo
           titulo={`Cancelar o contrato ${doc.numero}`}
@@ -471,24 +504,40 @@ function ContratoEmitido({
 function RegistrarPapel({
   doc,
   hoje,
+  org,
+  clienteId,
+  soArquivo,
   aoFechar,
   aoSalvar,
 }: {
   doc: DocumentoLicenca;
   hoje: string;
+  org: string;
+  clienteId: string;
+  /** true = contrato já assinado: só anexa (ou troca) o arquivo. */
+  soArquivo: boolean;
   aoFechar: () => void;
   aoSalvar: (m: string) => void;
 }) {
   const [data, setData] = useState(hoje);
   const [obs, setObs] = useState("");
+  const [arquivo, setArquivo] = useState<File | null>(null);
   const [erro, setErro] = useState("");
   const [ocupado, setOcupado] = useState(false);
   async function salvar() {
-    if (!data) return setErro("Informe a data em que o cliente assinou.");
+    if (!soArquivo && !data) return setErro("Informe a data em que o cliente assinou.");
+    if (soArquivo && !arquivo) return setErro("Escolha o arquivo do contrato assinado (PDF ou foto).");
+    setErro("");
     setOcupado(true);
     try {
-      await registrarAssinatura(doc.id, data, obs.trim() || null);
-      aoSalvar(`Assinatura do contrato ${doc.numero} registrada.`);
+      const id = arquivo ? await enviarContratoAssinado(org, doc.id, clienteId, arquivo) : null;
+      if (soArquivo) {
+        await anexarAssinado(doc.id, id!);
+        aoSalvar(`Contrato assinado ${doc.numero} anexado.`);
+      } else {
+        await registrarAssinatura(doc.id, data, obs.trim() || null, id);
+        aoSalvar(`Assinatura do contrato ${doc.numero} registrada${id ? " com o arquivo assinado" : ""}.`);
+      }
     } catch (e) {
       setErro(traduzirErro(e));
       setOcupado(false);
@@ -496,29 +545,49 @@ function RegistrarPapel({
   }
   return (
     <Modal
-      titulo="Registrar assinatura"
-      descricao={`Contrato ${doc.numero}: informe quando o cliente devolveu assinado.`}
+      titulo={soArquivo ? "Anexar contrato assinado" : "Registrar assinatura"}
+      descricao={
+        soArquivo
+          ? `Contrato ${doc.numero}: guarde aqui o PDF ou a foto do contrato assinado.`
+          : `Contrato ${doc.numero}: informe quando o cliente devolveu assinado e, se tiver, anexe o arquivo.`
+      }
       aoFechar={aoFechar}
+      avisoRodape={erro ? <p className="rounded-md bg-red-50 p-2 text-sm text-red-800">{erro}</p> : null}
+      rodape={
+        <>
+          <button className="btn" onClick={aoFechar}>
+            <Icone nome="voltar" className="h-4 w-4" />
+            Voltar
+          </button>
+          <button className="btn-primario" onClick={salvar} disabled={ocupado}>
+            <Icone nome="check" className="h-4 w-4" />
+            {ocupado ? "Salvando…" : soArquivo ? "Anexar" : "Registrar assinatura"}
+          </button>
+        </>
+      }
     >
-      <label className="campo">
-        <span>Data da assinatura</span>
-        <input required type="date" value={data} max={hoje} onChange={(e) => setData(e.target.value)} />
-      </label>
-      <label className="campo">
-        <span>Observação (opcional)</span>
-        <input value={obs} onChange={(e) => setObs(e.target.value)} placeholder="Ex.: via física no arquivo do cliente" />
-      </label>
-      {erro && <p className="rounded-md bg-red-50 p-2 text-sm text-red-800">{erro}</p>}
-      <div className="flex justify-end gap-2 pt-2">
-        <button className="btn" onClick={aoFechar}>
-          <Icone nome="voltar" className="h-4 w-4" />
-          Voltar
-        </button>
-        <button className="btn-primario" onClick={salvar} disabled={ocupado}>
-          <Icone nome="check" className="h-4 w-4" />
-          {ocupado ? "Salvando…" : "Registrar assinatura"}
-        </button>
-      </div>
+      {!soArquivo && (
+        <>
+          <label className="campo">
+            <span>Data da assinatura</span>
+            <input required type="date" value={data} max={hoje} onChange={(e) => setData(e.target.value)} />
+          </label>
+          <label className="campo">
+            <span>Observação (opcional)</span>
+            <input value={obs} onChange={(e) => setObs(e.target.value)} placeholder="Ex.: via física no arquivo do cliente" />
+          </label>
+        </>
+      )}
+      <CampoArquivo
+        aoEscolher={(a) => setArquivo(a[0] ?? null)}
+        accept=".pdf,.jpg,.jpeg,.png,.webp,.heic"
+        titulo={
+          soArquivo ? "Arraste o contrato assinado aqui ou clique para escolher" : "Contrato assinado (opcional): arraste aqui ou clique"
+        }
+        dica="PDF ou foto, até 15 MB. Só quem vê os valores das licenças consegue abrir."
+        escolhido={arquivo?.name ?? null}
+        compacto
+      />
     </Modal>
   );
 }

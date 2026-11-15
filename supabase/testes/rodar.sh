@@ -214,3 +214,6 @@ for f in testes/155_base_085.sql migrations/085_licenca_contrato_documento.sql; 
   $P -v ON_ERROR_STOP=1 -f "$R/$f" 2>&1 | grep -v NOTICE || true
 done
 $P -f "$R/testes/156_contrato_085.sql" 2>&1 | grep -v "^SET$"
+# 086: arquivo do contrato assinado (só gerir) e aviso no sino quando assinam pelo link
+$P -v ON_ERROR_STOP=1 -f "$R/migrations/086_licenca_contrato_assinado.sql" 2>&1 | grep -v NOTICE || true
+$P -f "$R/testes/157_assinado_086.sql" 2>&1 | grep -v "^SET$"

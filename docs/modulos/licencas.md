@@ -223,6 +223,13 @@ válido; cargo e e-mail opcionais) e escolhe **como assina**:
 SHA-256**. O PDF assinado ganha no fim o "Registro da assinatura" (quem, quando, IP, navegador e o código). A lista de
 licenças mostra a etiqueta do contrato (número e situação: falta assinar, link enviado, assinado).
 
+**Depois de assinado (086).** Quando o cliente assina pelo link, quem emitiu o contrato e os administradores recebem o
+aviso no sino ("Contrato assinado: LIC-…"). No contrato em papel, "Registrar assinatura" aceita o arquivo assinado
+(PDF ou foto, até 15 MB) e, depois, "Anexar contrato assinado" / "Trocar arquivo assinado"; "Ver contrato assinado"
+abre o arquivo. Os arquivos ficam na pasta `licencas-contrato` do Storage, que só quem tem a permissão de valores lê ou
+grava (`app.arquivo_pode`). Ao cadastrar uma licença nova, a lista pergunta "Quer emitir agora o contrato?" (botão
+"Emitir contrato", só para quem tem a permissão de valores).
+
 **Cancelar** com motivo (mínimo 5 letras): o contrato fica guardado como cancelado, o link para de funcionar e a licença
 pode receber um contrato novo. Nada se apaga.
 
@@ -233,6 +240,6 @@ valores** (`licencas` › gerir), a mesma dos valores das licenças (074). Quem 
 licença; o hash do link não sai pela API). Funções: `lic_contrato_modelo_salvar`, `lic_documento_emitir`,
 `lic_documento_link`, `lic_documento_assinatura_registrar`, `lic_documento_cancelar` (equipe) e, sem login,
 `lic_assinatura_abrir` / `lic_assinatura_aceitar` (pelo código do link). Testes: `supabase/testes/155_base_085.sql` e
-`156_contrato_085.sql` (dentro do `rodar.sh`). Código: `dominios/licencas/contratoLicenca.ts` (texto e regras, com
+`156_contrato_085.sql`, e `157_assinado_086.sql` para a 086 (`lic_documento_anexar`, arquivo e aviso), dentro do `rodar.sh`. Código: `dominios/licencas/contratoLicenca.ts` (texto e regras, com
 teste), `documentos.ts` (leituras, gravações e PDF), `componentes/JanelaContratoLicenca.tsx`, `TextoContrato.tsx`,
 `app/(hub)/licencas/modelo` e `app/assinar/[token]`.

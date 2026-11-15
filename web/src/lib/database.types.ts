@@ -4501,6 +4501,7 @@ export type Database = {
       };
       lic_contrato_documentos: {
         Row: {
+          arquivo_id: string | null;
           assinado_em: string | null;
           assinatura: Json | null;
           cancelado_em: string | null;
@@ -4523,6 +4524,7 @@ export type Database = {
           texto: string;
         };
         Insert: {
+          arquivo_id?: string | null;
           assinado_em?: string | null;
           assinatura?: Json | null;
           cancelado_em?: string | null;
@@ -4545,6 +4547,7 @@ export type Database = {
           texto: string;
         };
         Update: {
+          arquivo_id?: string | null;
           assinado_em?: string | null;
           assinatura?: Json | null;
           cancelado_em?: string | null;
@@ -4567,6 +4570,13 @@ export type Database = {
           texto?: string;
         };
         Relationships: [
+          {
+            foreignKeyName: "lic_contrato_documentos_arquivo_id_fkey";
+            columns: ["arquivo_id"];
+            isOneToOne: false;
+            referencedRelation: "hub_arquivos";
+            referencedColumns: ["id"];
+          },
           {
             foreignKeyName: "lic_contrato_documentos_contrato_id_fkey";
             columns: ["contrato_id"];
@@ -7999,8 +8009,17 @@ export type Database = {
         Args: { p_cobranca: string; p_motivo: string };
         Returns: undefined;
       };
+      lic_documento_anexar: {
+        Args: { p_arquivo: string; p_doc: string };
+        Returns: undefined;
+      };
       lic_documento_assinatura_registrar: {
-        Args: { p_data: string; p_doc: string; p_observacao?: string };
+        Args: {
+          p_arquivo?: string;
+          p_data: string;
+          p_doc: string;
+          p_observacao?: string;
+        };
         Returns: undefined;
       };
       lic_documento_cancelar: {

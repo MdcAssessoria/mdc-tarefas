@@ -7,6 +7,7 @@ import { baixarBytes } from "@/lib/arquivos/baixar";
 import { nomeArquivo } from "@/lib/arquivos/exportarLista";
 import { carregarLogo } from "@/lib/marca";
 import { BASE } from "@/lib/caminho";
+import { abrirArquivo, enviarArquivo } from "@/lib/arquivos/armazenamento";
 import { gerarContratoPdf } from "@/dominios/comercial/contratoPdf";
 import { formatarDocumento, soDigitos } from "@/lib/documento";
 import { MODELO_PADRAO, textoRegistroAssinatura, type DocumentoLicenca, type ModoAssinatura, type Signatario } from "./contratoLicenca";
@@ -14,7 +15,7 @@ import { MODELO_PADRAO, textoRegistroAssinatura, type DocumentoLicenca, type Mod
 const rpc = async <T>(nome: string, args: Record<string, unknown>) => exigir(await supabase().rpc(nome, args)) as T;
 
 const COLUNAS =
-  "id,org_id,contrato_id,numero,modelo_versao,texto,hash,signatario,modo,situacao,emitido_em,link_expira_em,assinado_em,assinatura,cancelado_em,cancelado_motivo";
+  "id,org_id,contrato_id,numero,modelo_versao,texto,hash,signatario,modo,situacao,emitido_em,link_expira_em,assinado_em,assinatura,cancelado_em,cancelado_motivo,arquivo_id";
 
 export interface ModeloContrato {
   texto: string;
@@ -80,8 +81,27 @@ export const emitirDocumento = (contrato: string, texto: string, modeloVersao: n
 
 export const gerarLink = (doc: string) => rpc<string>("lic_documento_link", { p_doc: doc });
 
-export const registrarAssinatura = (doc: string, data: string, observacao: string | null) =>
-  rpc<null>("lic_documento_assinatura_registrar", { p_doc: doc, p_data: data, p_observacao: observacao });
+export const registrarAssinatura = (doc: string, data: string, observacao: string | null, arquivo: string | null = null) =>
+  rpc<null>("lic_documento_assinatura_registrar", { p_doc: doc, p_data: data, p_observacao: observacao, p_arquivo: arquivo });
+
+/** Envia o contrato assinado (PDF ou foto) para a pasta protegida do contrato e devolve o id do arquivo. */
+export async function enviarContratoAssinado(org: string, doc: string, cliente: string, arquivo: File): Promise<string> {
+  if (arquivo.size > 15 * 1024 * 1024) throw new Error("O arquivo passou de 15 MB. Escaneie em resolução menor ou envie em PDF.");
+  if (!/^(application\/pdf|image\/(jpeg|png|webp|heic|heif))$/.test(arquivo.type) && !/\.(pdf|jpe?g|png|webp|heic)$/i.test(arquivo.name))
+    throw new Error("Envie o contrato em PDF ou foto (JPG ou PNG).");
+  const a = await enviarArquivo(arquivo, { org, app: "licencas-contrato", ref: doc, cliente });
+  return a.id;
+}
+
+export const anexarAssinado = (doc: string, arquivo: string) => rpc<null>("lic_documento_anexar", { p_doc: doc, p_arquivo: arquivo });
+
+/** Abre o contrato assinado guardado (link temporário). */
+export async function abrirContratoAssinado(arquivo: string) {
+  const { data, error } = await supabase().from("hub_arquivos").select("caminho,nome").eq("id", arquivo).maybeSingle();
+  if (error) throw error;
+  if (!data) throw new Error("Não encontrei o arquivo do contrato assinado.");
+  await abrirArquivo((data as { caminho: string }).caminho, (data as { nome: string }).nome);
+}
 
 export const cancelarDocumento = (doc: string, motivo: string) => rpc<null>("lic_documento_cancelar", { p_doc: doc, p_motivo: motivo });
 

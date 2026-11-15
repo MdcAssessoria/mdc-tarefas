@@ -51,7 +51,8 @@ export function AssistenteContrato({
   contratos: Contrato[];
   hoje: string;
   aoFechar: () => void;
-  aoSalvar: (msg: string) => void;
+  /** `novo` = id da licença recém-cadastrada (para oferecer a emissão do contrato). */
+  aoSalvar: (msg: string, novo?: string) => void;
 }) {
   const { clientes } = useOrg();
   const ativos = useMemo(() => clientes.filter((c) => c.ativo).sort((a, b) => nomeCliente(a).localeCompare(nomeCliente(b))), [clientes]);
@@ -149,7 +150,7 @@ export function AssistenteContrato({
     setSalvando(true);
     setErro("");
     try {
-      await salvarContrato({
+      const id = await salvarContrato({
         id: editar?.id,
         cliente: f.cliente,
         plano: f.modo === "plano" ? f.plano : null,
@@ -164,7 +165,10 @@ export function AssistenteContrato({
         reajuste_mes: f.indice === "nenhum" ? null : Number(f.mesReajuste),
         observacao: f.obs.trim() || null,
       });
-      aoSalvar(editar ? "Contrato atualizado." : "Contrato cadastrado. A mensalidade deste mês já foi gerada, se o contrato já vale.");
+      aoSalvar(
+        editar ? "Contrato atualizado." : "Contrato cadastrado. A mensalidade deste mês já foi gerada, se o contrato já vale.",
+        editar ? undefined : id,
+      );
     } catch (e) {
       setErro(traduzirErro(e));
       setSalvando(false);

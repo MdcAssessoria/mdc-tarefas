@@ -62,6 +62,8 @@ function Contratos() {
   const [modulo, setModulo] = useState("");
   const [busca, setBusca] = useState("");
   const [janela, setJanela] = useState<Janela | null>(null);
+  // licença recém-cadastrada: oferece emitir o contrato na hora (085/086)
+  const [recemCriada, setRecemCriada] = useState<string | null>(null);
   // situação do contrato (documento) de cada licença: só para quem vê os valores (o texto traz o preço)
   const documentos = useConsulta(
     useCallback(async () => (podeGerir ? lerSituacoesDocumentos(org.id) : new Map<string, never>()), [podeGerir, org.id]),
@@ -215,6 +217,32 @@ function Contratos() {
       </div>
 
       {aviso}
+      {recemCriada && (
+        <div className="flex flex-wrap items-center gap-3 rounded-lg border border-[var(--borda)] bg-white p-3">
+          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[var(--fundo)] text-[var(--marca)]">
+            <Icone nome="documento" />
+          </span>
+          <p className="min-w-0 flex-1 text-sm">
+            <b>Licença cadastrada.</b> Quer emitir agora o contrato para o cliente assinar (pelo link ou em papel)?
+          </p>
+          <button className="btn" onClick={() => setRecemCriada(null)}>
+            <Icone nome="fechar" className="h-4 w-4" />
+            Depois
+          </button>
+          <button
+            className="btn"
+            disabled={!d?.contratos.some((k) => k.id === recemCriada)}
+            onClick={() => {
+              const k = d?.contratos.find((x) => x.id === recemCriada);
+              if (k) setJanela({ tipo: "documento", k });
+              setRecemCriada(null);
+            }}
+          >
+            <Icone nome="check" className="h-4 w-4" />
+            Emitir contrato
+          </button>
+        </div>
+      )}
       {dados.erro && <p className="rounded-md bg-red-50 p-3 text-sm text-red-800">{dados.erro}</p>}
 
       {!d ? (
@@ -382,7 +410,10 @@ function Contratos() {
           valores={podeGerir}
           hoje={hoje}
           aoFechar={() => fechar()}
-          aoSalvar={fechar}
+          aoSalvar={(msg, novo) => {
+            fechar(msg);
+            if (novo && podeGerir) setRecemCriada(novo);
+          }}
         />
       )}
       {janela?.tipo === "reajustar" && (

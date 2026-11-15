@@ -244,4 +244,6 @@ A página `/assinar/<código>` é aberta pelo cliente sem conta no HUB. Ela só 
 letras aleatórias (192 bits); o banco guarda só o hash SHA-256, o link vence em 15 dias, gerar outro invalida o
 anterior e 10 tentativas com CPF diferente do indicado travam o link. Código errado não revela nada. A página não entra
 em buscadores e não envia o endereço a outros sites (`referrer: no-referrer`). A equipe só lê os contratos emitidos com
-a permissão de valores das licenças; a tabela não tem gravação direta (só as funções `lic_documento_*`).
+a permissão de valores das licenças; a tabela não tem gravação direta (só as funções `lic_documento_*`). O arquivo do
+contrato assinado em papel (086) fica na pasta `licencas-contrato` do Storage: `app.arquivo_pode` só libera essa pasta
+para quem tem `licencas` › gerir, mesmo para ler.
