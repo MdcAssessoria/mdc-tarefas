@@ -33,6 +33,7 @@ import {
   baixarContratoLicenca,
   cancelarDocumento,
   emitirDocumento,
+  emailAssinatura,
   enderecoAssinatura,
   gerarLink,
   lerDocumentos,
@@ -465,6 +466,21 @@ function ContratoEmitido({
             <a className="btn" href={zap} target="_blank" rel="noopener noreferrer">
               <Icone nome="chat" className="h-4 w-4" />
               Enviar pelo WhatsApp
+            </a>
+            <a
+              className="btn"
+              href={emailAssinatura({
+                para: doc.signatario.email,
+                nome: doc.signatario.nome,
+                numero: doc.numero,
+                cliente: cliente.razao_social,
+                link,
+                validoAte: doc.link_expira_em ? fmtData(doc.link_expira_em) : "daqui a 15 dias",
+                saudacao: saudacao(new Date().getHours()),
+              })}
+            >
+              <Icone nome="enviar" className="h-4 w-4" />
+              Enviar por e-mail
             </a>
           </div>
         </div>

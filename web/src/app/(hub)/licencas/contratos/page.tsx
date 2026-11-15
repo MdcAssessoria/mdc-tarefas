@@ -28,7 +28,13 @@ import { MenuAcoes } from "@/components/ui/MenuAcoes";
 import { Chip } from "@/components/ui/Chip";
 import { JanelaContratoLicenca } from "@/dominios/licencas/componentes/JanelaContratoLicenca";
 import { lerSituacoesDocumentos } from "@/dominios/licencas/documentos";
-import { ROTULO_SITUACAO } from "@/dominios/licencas/contratoLicenca";
+import {
+  FILTROS_CONTRATO,
+  ROTULO_SITUACAO,
+  noFiltroContrato,
+  textoContratoLista,
+  type FiltroContrato,
+} from "@/dominios/licencas/contratoLicenca";
 import { useConsulta } from "@/lib/useConsulta";
 
 type FiltroSituacao = "ativos" | "encerrados" | "todos";
@@ -61,6 +67,7 @@ function Contratos() {
   const [situacao, setSituacao] = useState<FiltroSituacao>("ativos");
   const [modulo, setModulo] = useState("");
   const [busca, setBusca] = useState("");
+  const [filtroContrato, setFiltroContrato] = useState<FiltroContrato>("todos");
   const [janela, setJanela] = useState<Janela | null>(null);
   // licença recém-cadastrada: oferece emitir o contrato na hora (085/086)
   const [recemCriada, setRecemCriada] = useState<string | null>(null);
@@ -78,10 +85,11 @@ function Contratos() {
           (!cliente || k.cliente_id === cliente) &&
           (situacao === "todos" || (situacao === "ativos" ? k.situacao === "ativo" : k.situacao === "encerrado")) &&
           (!modulo || (modulo.startsWith("plano:") ? k.plano_id === modulo.slice(6) : k.produtos.includes(modulo))) &&
+          (!podeGerir || noFiltroContrato(documentos.dados?.get(k.id), filtroContrato)) &&
           (!q || `${nomeDoCliente(k.cliente_id)} ${rotulo(k)}`.toLowerCase().includes(q)),
       )
       .sort((a, b) => nomeDoCliente(a.cliente_id).localeCompare(nomeDoCliente(b.cliente_id)));
-  }, [d, cliente, situacao, modulo, busca, nomeDoCliente, rotulo]);
+  }, [d, cliente, situacao, modulo, busca, nomeDoCliente, rotulo, podeGerir, documentos.dados, filtroContrato]);
 
   const vigentes = lista.filter((k) => contratoVigente(k, hoje));
   const mrr = vigentes.reduce((s, k) => s + k.valor_mensal, 0);
@@ -150,6 +158,9 @@ function Contratos() {
                 peso: 1.2,
                 largura: 20,
               },
+              ...(podeGerir
+                ? [{ titulo: "Contrato", valor: (k: Contrato) => textoContratoLista(documentos.dados?.get(k.id)), peso: 1.6, largura: 30 }]
+                : []),
             ],
             totais: podeGerir
               ? { "Valor mensal": lista.reduce((s, k) => s + (k.situacao === "ativo" ? k.valor_mensal : 0), 0) }
@@ -173,6 +184,18 @@ function Contratos() {
             <option value="todos">Todos</option>
           </select>
         </label>
+        {podeGerir && (
+          <label className="campo">
+            <span>Contrato</span>
+            <select value={filtroContrato} onChange={(e) => setFiltroContrato(e.target.value as FiltroContrato)}>
+              {FILTROS_CONTRATO.map((f) => (
+                <option key={f.id} value={f.id}>
+                  {f.nome}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
         <label className="campo">
           <span>Plano ou produto</span>
           <select value={modulo} onChange={(e) => setModulo(e.target.value)}>
@@ -201,7 +224,7 @@ function Contratos() {
             </button>
           </span>
         )}
-        {(cliente || busca || modulo || situacao !== "ativos") && (
+        {(cliente || busca || modulo || situacao !== "ativos" || filtroContrato !== "todos") && (
           <button
             className="btn-link min-h-10 text-sm"
             onClick={() => {
@@ -209,6 +232,7 @@ function Contratos() {
               setBusca("");
               setModulo("");
               setSituacao("ativos");
+              setFiltroContrato("todos");
             }}
           >
             Limpar filtros

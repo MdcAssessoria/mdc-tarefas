@@ -331,3 +331,25 @@ export function textoRegistroAssinatura(doc: Pick<DocumentoLicenca, "numero" | "
     "Assinatura feita pelo link enviado pela LICENCIANTE, após a leitura do contrato e a marcação de concordância, nos termos da Cláusula 11ª.",
   ].join("\n");
 }
+
+/** Filtro da lista de licenças pela situação do contrato escrito. */
+export type FiltroContrato = "todos" | "sem" | "falta" | "assinado";
+
+export const FILTROS_CONTRATO: { id: FiltroContrato; nome: string }[] = [
+  { id: "todos", nome: "Todos" },
+  { id: "sem", nome: "Sem contrato" },
+  { id: "falta", nome: "Falta assinar" },
+  { id: "assinado", nome: "Assinado" },
+];
+
+/** A licença entra no filtro? `doc` é o contrato ativo da licença (sem cancelado), ou nada. */
+export function noFiltroContrato(doc: Pick<DocumentoLicenca, "situacao"> | undefined, f: FiltroContrato): boolean {
+  if (f === "todos") return true;
+  if (f === "sem") return !doc;
+  if (f === "assinado") return doc?.situacao === "assinado";
+  return doc?.situacao === "emitido" || doc?.situacao === "enviado";
+}
+
+/** Texto do contrato para o Excel/PDF da lista: "LIC-2026/0001 · Assinado" ou "Sem contrato". */
+export const textoContratoLista = (doc: Pick<DocumentoLicenca, "numero" | "situacao"> | undefined) =>
+  doc ? `${doc.numero} · ${ROTULO_SITUACAO[doc.situacao].texto}` : "Sem contrato";

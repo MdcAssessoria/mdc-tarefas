@@ -115,3 +115,41 @@ describe("contrato de licença", () => {
     expect(t).toContain("16/11/2026");
   });
 });
+
+describe("e-mail do link de assinatura", () => {
+  it("monta o mailto com destinatário, assunto e o link no texto", async () => {
+    const { emailAssinatura } = await import("./documentos");
+    const m = emailAssinatura({
+      para: " maria@ex.com ",
+      nome: "Maria da Silva",
+      numero: "LIC-2026/0001",
+      cliente: "Liberato Comércio Ltda",
+      link: "https://hub.mdcassessoria.com/hub-mdc/assinar/abc",
+      validoAte: "30/11/2026",
+      saudacao: "Boa noite",
+    });
+    expect(m.startsWith("mailto:maria%40ex.com?subject=")).toBe(true);
+    const corpo = decodeURIComponent(m.split("&body=")[1]);
+    expect(corpo).toContain("Boa noite, Maria!");
+    expect(corpo).toContain("https://hub.mdcassessoria.com/hub-mdc/assinar/abc");
+    expect(corpo).toContain("30/11/2026");
+    expect(decodeURIComponent(m.split("subject=")[1].split("&")[0])).toBe(
+      "Contrato de licença LIC-2026/0001 para assinatura · MDC Assessoria",
+    );
+  });
+});
+
+describe("filtro pela situação do contrato", () => {
+  it("separa sem contrato, falta assinar e assinado", async () => {
+    const { noFiltroContrato, textoContratoLista } = await import("./contratoLicenca");
+    expect(noFiltroContrato(undefined, "sem")).toBe(true);
+    expect(noFiltroContrato({ situacao: "emitido" }, "sem")).toBe(false);
+    expect(noFiltroContrato({ situacao: "enviado" }, "falta")).toBe(true);
+    expect(noFiltroContrato({ situacao: "emitido" }, "falta")).toBe(true);
+    expect(noFiltroContrato({ situacao: "assinado" }, "falta")).toBe(false);
+    expect(noFiltroContrato({ situacao: "assinado" }, "assinado")).toBe(true);
+    expect(noFiltroContrato(undefined, "todos")).toBe(true);
+    expect(textoContratoLista(undefined)).toBe("Sem contrato");
+    expect(textoContratoLista({ numero: "LIC-2026/0001", situacao: "assinado" })).toBe("LIC-2026/0001 · Assinado");
+  });
+});

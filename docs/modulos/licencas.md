@@ -230,6 +230,13 @@ abre o arquivo. Os arquivos ficam na pasta `licencas-contrato` do Storage, que s
 grava (`app.arquivo_pode`). Ao cadastrar uma licença nova, a lista pergunta "Quer emitir agora o contrato?" (botão
 "Emitir contrato", só para quem tem a permissão de valores).
 
+**Enviar o link e acompanhar.** Junto do link aparecem "Copiar link", "Enviar pelo WhatsApp" e "Enviar por e-mail".
+O e-mail abre no programa de e-mail de quem está no HUB, já com o destinatário (o e-mail de quem assina), o assunto e o
+texto com o link e a validade (`emailAssinatura`), porque o HUB ainda não envia e-mail sozinho: faltam os segredos
+`GRAPH_*` do Microsoft 365 (docs/07, seção 7.7); quando forem cadastrados, dá para trocar pelo envio automático. Na
+lista de licenças, quem tem a permissão de valores filtra por **Contrato** (Sem contrato, Falta assinar, Assinado) e o
+Excel/PDF ganha a coluna Contrato (`noFiltroContrato`, `textoContratoLista`, com teste).
+
 **Cancelar** com motivo (mínimo 5 letras): o contrato fica guardado como cancelado, o link para de funcionar e a licença
 pode receber um contrato novo. Nada se apaga.
 

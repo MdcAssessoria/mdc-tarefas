@@ -114,6 +114,36 @@ export function mensagemAssinatura(nome: string, numero: string, link: string, s
   return `${saudacao}${primeiro ? `, ${primeiro}` : ""}! Segue o contrato de licença nº ${numero} da MDC Assessoria para assinatura. É só abrir o link, ler o contrato e confirmar com o seu CPF:\n${link}\nO link vale por 15 dias. Qualquer dúvida, estou à disposição.`;
 }
 
+/**
+ * E-mail com o link de assinatura, aberto no programa de e-mail de quem está no HUB (mailto). O HUB ainda não manda
+ * e-mail sozinho (faltam os segredos do Microsoft 365, docs/07 seção 7.7); assim sai da caixa da própria pessoa.
+ */
+export function emailAssinatura(p: {
+  para: string;
+  nome: string;
+  numero: string;
+  cliente: string;
+  link: string;
+  validoAte: string;
+  saudacao: string;
+}) {
+  const primeiro = p.nome.trim().split(/\s+/)[0] ?? "";
+  const assunto = `Contrato de licença ${p.numero} para assinatura · MDC Assessoria`;
+  const corpo = [
+    `${p.saudacao}${primeiro ? `, ${primeiro}` : ""}!`,
+    "",
+    `Segue o contrato de licença nº ${p.numero} de ${p.cliente} para assinatura eletrônica.`,
+    "",
+    "É só abrir o link abaixo, ler o contrato e confirmar com o seu nome completo e CPF:",
+    p.link,
+    "",
+    `O link vale até ${p.validoAte}. Depois de assinar, você pode baixar o contrato assinado em PDF na mesma página.`,
+    "",
+    "Qualquer dúvida, estou à disposição.",
+  ].join("\n");
+  return `mailto:${encodeURIComponent(p.para.trim())}?subject=${encodeURIComponent(assunto)}&body=${encodeURIComponent(corpo)}`;
+}
+
 /** PDF do contrato: minuta (antes de emitir), emitido ou assinado (com o registro da assinatura no fim). */
 export async function baixarContratoLicenca(p: {
   texto: string;
