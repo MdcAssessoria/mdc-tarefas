@@ -1234,11 +1234,12 @@ const INTERACOES = {
   },
   "/comercial": (p) => abrirEFecharModal(p, "Limpar funil", "Limpar funil"),
   "/licencas/contratos": (p) => abrirEFecharModal(p, "Nova licença", "Novo contrato de licença"),
-  "/licencas/produtos": async (p) => {
+  "/licencas/produtos": async (p, foto) => {
     for (const aba of await p.getByRole("tab").all()) {
       await aba.click();
       if ((await aba.getAttribute("aria-selected")) !== "true") throw new Error(`a aba "${await aba.innerText()}" não ficou selecionada`);
       await p.waitForTimeout(300);
+      await foto?.(`aba-${(await aba.innerText()).split(" ")[0].toLowerCase()}`);
     }
     await abrirEFecharModal(p, "Novo plano", "Novo plano");
   },

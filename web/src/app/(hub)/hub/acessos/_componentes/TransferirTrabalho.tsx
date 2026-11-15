@@ -90,7 +90,7 @@ export function TransferirTrabalho({
 
   const precisaDestino = total > 0;
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4" onClick={aoFechar}>
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4">
       <div onClick={(e) => e.stopPropagation()} className="cartao w-full max-w-md space-y-4 p-5">
         <div>
           <h2 className="text-lg font-semibold text-[var(--marca)]">

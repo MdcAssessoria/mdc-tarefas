@@ -106,7 +106,7 @@ export function EditorCliente({
   const alternar = (id: string) => setEmpresas((x) => (x.includes(id) ? x.filter((y) => y !== id) : [...x, id]));
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4" onClick={aoFechar}>
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4">
       <form
         onSubmit={salvar}
         onClick={(e) => e.stopPropagation()}

@@ -16,7 +16,7 @@ import { BotoesExportar } from "@/components/ui/BotoesExportar";
 import { nomeArquivo } from "@/lib/arquivos/exportarLista";
 import { numeroBr, valorParaCampo } from "@/dominios/financeiro/regras";
 import { Cabecalho, useDadosLicencas } from "@/dominios/licencas/componentes/Base";
-import { descontoSobreTabela } from "@/dominios/licencas/regras";
+import { QuadroPacotes, TabelaPrecosProdutos } from "@/dominios/licencas/componentes/TabelasPrecos";
 import { salvarPlano, salvarProduto } from "@/dominios/licencas/repositorio";
 import type { Plano, Produto } from "@/dominios/licencas/tipos";
 
@@ -129,38 +129,37 @@ export default function PaginaProdutos() {
                 Há produto com preço zero. Defina o preço de tabela antes de cadastrar os contratos (o valor do contrato pode ter desconto).
               </p>
             )}
-            <div className="cartao overflow-x-auto">
-              <table className="tabela tabela-acoes-fixas">
-                <thead>
-                  <tr>
-                    <th>Produto</th>
-                    {podeGerir && <th className="text-right">Preço mensal</th>}
-                    <th>Contratos ativos</th>
-                    <th />
-                  </tr>
-                </thead>
-                <tbody>
-                  {d.produtos.map((p) => (
-                    <tr key={p.id} className={p.ativo ? "" : "linha-apagada"}>
-                      <td className="min-w-56">
-                        <span className="font-medium">{p.nome}</span>{" "}
-                        {!p.ativo && <span className="chip bg-neutral-100 text-neutral-600">Inativo</span>}
-                        <span className="block text-xs text-neutral-500">{p.descricao}</span>
-                      </td>
-                      {podeGerir && <td className="whitespace-nowrap text-right tabular-nums">{brl(p.preco)}</td>}
-                      <td>{emUso((k) => k.produtos.includes(p.id))}</td>
-                      <td className="text-right">
-                        {podeGerir && (
-                          <button className="btn !min-h-8" onClick={() => setModulo(p)}>
-                            Editar
-                          </button>
-                        )}
-                      </td>
+            {podeGerir ? (
+              <TabelaPrecosProdutos
+                produtos={d.produtos}
+                org={org.id}
+                emUso={(id) => emUso((k) => k.produtos.includes(id))}
+                aoEditar={setModulo}
+                aoSalvar={fechar}
+              />
+            ) : (
+              <div className="cartao overflow-x-auto">
+                <table className="tabela">
+                  <thead>
+                    <tr>
+                      <th>Produto</th>
+                      <th>Contratos ativos</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {d.produtos.map((p) => (
+                      <tr key={p.id} className={p.ativo ? "" : "linha-apagada"}>
+                        <td className="min-w-56">
+                          <span className="font-medium">{p.nome}</span>
+                          <span className="block text-xs text-neutral-500">{p.descricao}</span>
+                        </td>
+                        <td>{emUso((k) => k.produtos.includes(p.id))}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </>
         )
       ) : !d.planos.length ? (
@@ -176,47 +175,25 @@ export default function PaginaProdutos() {
           Nenhum plano ainda. Um plano junta produtos com um preço mais em conta.
         </EstadoVazio>
       ) : (
-        <div className="grid gap-3 md:grid-cols-2">
-          {d.planos.map((p) => {
-            const soma = somaTabela(p);
-            return (
-              <div key={p.id} className={`cartao space-y-2 p-4 ${p.ativo ? "" : "linha-apagada"}`}>
-                <div className="flex items-start gap-2">
-                  <div className="mr-auto">
-                    <h2 className="font-semibold text-[var(--marca)]">
-                      {p.nome} {!p.ativo && <span className="chip bg-neutral-100 text-neutral-600">Inativo</span>}
-                    </h2>
-                    {p.descricao && <p className="text-sm text-neutral-600">{p.descricao}</p>}
-                  </div>
-                  {podeGerir && (
-                    <p className="text-right text-lg font-semibold tabular-nums">
-                      {brl(p.preco)}
-                      <span className="block text-xs font-normal text-neutral-500">por mês</span>
-                    </p>
-                  )}
-                </div>
+        podeGerir ? (
+          <QuadroPacotes
+            produtos={d.produtos}
+            planos={d.planos}
+            org={org.id}
+            emUso={(id) => emUso((k) => k.plano_id === id)}
+            aoEditar={setPlano}
+            aoSalvar={fechar}
+          />
+        ) : (
+          <div className="grid gap-3 md:grid-cols-2">
+            {d.planos.filter((p) => p.ativo).map((p) => (
+              <div key={p.id} className="cartao space-y-1 p-4">
+                <h2 className="font-semibold text-[var(--marca)]">{p.nome}</h2>
                 <p className="text-sm">{p.produtos.map((id) => dados.produtos.get(id)?.nome).join(" · ")}</p>
-                <p className="text-xs text-neutral-500">
-                  {podeGerir && (
-                    <>
-                      Avulsos somariam {brl(soma)}
-                      {descontoSobreTabela(soma, p.preco) > 0
-                        ? ` (economia de ${descontoSobreTabela(soma, p.preco).toLocaleString("pt-BR")}%)`
-                        : ""}{" "}
-                      ·{" "}
-                    </>
-                  )}
-                  {emUso((k) => k.plano_id === p.id)} contrato(s) ativo(s)
-                </p>
-                {podeGerir && (
-                  <button className="btn !min-h-8" onClick={() => setPlano(p)}>
-                    Editar
-                  </button>
-                )}
               </div>
-            );
-          })}
-        </div>
+            ))}
+          </div>
+        )
       )}
 
       {modulo && <EditarModulo modulo={modulo === "novo" ? null : modulo} org={org.id} aoFechar={() => fechar()} aoSalvar={fechar} />}

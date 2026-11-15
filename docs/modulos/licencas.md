@@ -27,6 +27,14 @@
   `saidas`, `estoque`, `centros_custo`, `plano_contas`, `relatorios`, e o plano **Gestão completa** com todos. Começam
   com preço zero: a MDC define em Produtos e planos.
 
+> **Tabelas de preço (15/11/2026, pedido do Edvaldo).** Em Produtos e planos, quem tem o nível gerir digita direto
+> na tela: aba **Produtos** = o preço mensal de cada produto na própria linha ("Salvar preços" grava só o que mudou);
+> aba **Planos (pacotes)** = quadro produto × pacote (marcar com X), "Avulsos somariam", preço do pacote, desconto e o
+> atalho "calcular o preço com X% de desconto" ("Salvar pacotes"). Ledgra e HUB em separado. Peças em
+> `dominios/licencas/componentes/TabelasPrecos.tsx`, regras com teste em `dominios/licencas/precos.ts`; grava pelas
+> mesmas `lic_salvar_produto` / `lic_salvar_plano`. Nome, descrição e "à venda" continuam na janela (Novo/Editar).
+> No Novo contrato, a busca que deixa um cliente só já o escolhe (antes ele aparecia marcado e a tela dizia "Escolha o cliente").
+
 ## 2. Telas (ferramenta `licencas`, só equipe)
 
 | Endereço | Nível | O que faz |

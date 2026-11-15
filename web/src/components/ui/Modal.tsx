@@ -1,6 +1,8 @@
 "use client";
 // Janela de diálogo sobre a tela (formulários de cadastro, confirmações com escolhas). Acessível: role="dialog",
-// aria-modal, fecha com Esc ou clique fora, põe o foco no primeiro campo, mantém o Tab dentro e devolve o foco ao sair.
+// aria-modal, fecha com Esc, põe o foco no primeiro campo, mantém o Tab dentro e devolve o foco ao sair. Clique fora só
+// fecha janela SEM campos de digitar e só se o clique começou e terminou fora (dois cliques sem querer na borda ou
+// arrastar de dentro para fora fechavam o formulário e perdiam o que foi digitado — relato do Edvaldo, 15/11/2026).
 // A janela nunca passa da altura da tela: o título fica fixo em cima, só o corpo rola e, com `rodape`, os botões
 // ficam fixos embaixo (o botão principal sempre à vista). Formulário longo: largura "5xl"/"6xl"/"7xl"/"tela" e as colunas de
 // `ColunasFormulario` (duas no computador, uma no celular). Regra em docs/08-convencoes.md, seção 8.3.1.
@@ -53,6 +55,14 @@ export function Modal({
   const idTitulo = useId();
   const caixa = useRef<HTMLDivElement>(null);
   const fechar = useEffectEvent(aoFechar);
+  const comecouFora = useRef(false);
+  const cliqueFora = (e: React.MouseEvent<HTMLDivElement>) => {
+    const fora = e.target === e.currentTarget && comecouFora.current;
+    comecouFora.current = false;
+    if (!fora || e.detail > 1) return;
+    if (caixa.current?.querySelector("input:not([type=hidden]), select, textarea")) return;
+    aoFechar();
+  };
 
   useEffect(() => {
     const anterior = document.activeElement instanceof HTMLElement ? document.activeElement : null;
@@ -84,7 +94,13 @@ export function Modal({
   }, []);
 
   return (
-    <div className={`fixed inset-0 z-50 grid place-items-center bg-black/40 ${celularCheio ? "p-0 sm:p-4" : "p-4"}`} onClick={aoFechar}>
+    <div
+      className={`fixed inset-0 z-50 grid place-items-center bg-black/40 ${celularCheio ? "p-0 sm:p-4" : "p-4"}`}
+      onMouseDown={(e) => {
+        comecouFora.current = e.target === e.currentTarget;
+      }}
+      onClick={cliqueFora}
+    >
       <div
         ref={caixa}
         role="dialog"

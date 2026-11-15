@@ -171,10 +171,18 @@ export function AssistenteContrato({
     }
   }
 
-  const listaClientes = ativos.filter((c) => {
-    const q = f.busca.trim().toLowerCase();
-    return !q || `${c.razao_social} ${c.nome_fantasia ?? ""} ${c.cnpj ?? ""} ${c.codigo_dominio ?? ""}`.toLowerCase().includes(q);
-  });
+  const filtrarClientes = (busca: string) =>
+    ativos.filter((c) => {
+      const q = busca.trim().toLowerCase();
+      return !q || `${c.razao_social} ${c.nome_fantasia ?? ""} ${c.cnpj ?? ""} ${c.codigo_dominio ?? ""}`.toLowerCase().includes(q);
+    });
+  const listaClientes = filtrarClientes(f.busca);
+  // A busca que deixa um cliente só já o escolhe (antes ele aparecia marcado, mas o valor ficava vazio: "Escolha o cliente").
+  const buscar = (busca: string) => {
+    const achados = filtrarClientes(busca);
+    const continua = achados.some((c) => c.id === f.cliente);
+    mudar({ busca, cliente: achados.length === 1 ? achados[0]!.id : continua ? f.cliente : "" });
+  };
 
   return (
     <Modal
@@ -218,7 +226,7 @@ export function AssistenteContrato({
             <span>Procurar cliente</span>
             <input
               value={f.busca}
-              onChange={(e) => mudar({ busca: e.target.value })}
+              onChange={(e) => buscar(e.target.value)}
               placeholder="Nome, CNPJ ou código do Domínio"
               autoFocus
             />
@@ -238,6 +246,13 @@ export function AssistenteContrato({
               ))}
             </select>
           </label>
+          {clienteSel ? (
+            <p className="text-sm text-[var(--marca)]">
+              Escolhido: <b>{nomeCliente(clienteSel)}</b>
+            </p>
+          ) : (
+            <p className="text-sm text-neutral-600">Toque no nome do cliente na lista para escolher.</p>
+          )}
         </div>
       )}
 
