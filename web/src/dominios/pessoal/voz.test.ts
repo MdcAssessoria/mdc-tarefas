@@ -1,6 +1,6 @@
 // Testes da leitura da fala do MDC · Pessoal (frase vira lançamento).
 import { describe, expect, it } from "vitest";
-import { descricaoDaFrase, faltaNoFalado, interpretarFala, lerData, lerValor, quebrarFrases } from "./voz";
+import { aprender, descricaoDaFrase, faltaNoFalado, lembrar, palavrasChave, interpretarFala, lerData, lerValor, quebrarFrases } from "./voz";
 import type { CategoriaFala } from "./voz";
 
 const HOJE = "2026-11-14";
@@ -95,5 +95,41 @@ describe("descricaoDaFrase", () => {
     expect(descricaoDaFrase("paguei a luz 230 ontem")).toBe("Luz");
     expect(descricaoDaFrase("gastei R$ 45,90 na farmácia")).toBe("Farmácia");
     expect(descricaoDaFrase("recebi o salário de 5 mil")).toBe("Salário");
+  });
+});
+
+describe("frases mais soltas, sem IA", () => {
+  it("jeitos comuns de falar", () => {
+    expect(interpretarFala("passei no posto e coloquei uns 130", CATS, HOJE)[0]).toMatchObject({ tipo: "pagar", valor: 130, categoria: "Transporte" });
+    expect(interpretarFala("abasteci 200", CATS, HOJE)[0]).toMatchObject({ tipo: "pagar", valor: 200, categoria: "Transporte" });
+    expect(interpretarFala("dei 150 pro encanador", CATS, HOJE)[0]).toMatchObject({ tipo: "pagar", valor: 150, categoria: "Moradia" });
+    expect(interpretarFala("a Mari me passou 300", CATS, HOJE)[0]).toMatchObject({ tipo: "receber", valor: 300 });
+    expect(interpretarFala("torrei 90 na drogaria", CATS, HOJE)[0]).toMatchObject({ tipo: "pagar", categoria: "Saúde" });
+  });
+});
+
+describe("aprende com a família", () => {
+  it("palavras-chave sem artigo nem número", () => {
+    expect(palavrasChave("Mercadinho do Zé")).toBe("mercadinho ze");
+    expect(palavrasChave("uns 130 de ração")).toBe("racao");
+  });
+  it("o que foi corrigido vale na próxima fala", () => {
+    expect(interpretarFala("gastei 35 no mercadinho do zé", CATS, HOJE)[0].categoria).toBe("Mercado");
+    expect(interpretarFala("gastei 60 na ração", CATS, HOJE)[0].categoria).toBeNull();
+    const mapa = aprender({}, { tipo: "pagar", descricao: "Ração", categoria: "Pet" });
+    expect(interpretarFala("gastei 60 na ração do Thor", CATS, HOJE, mapa)[0].categoria).toBe("Pet");
+    // entrada e gasto não se misturam
+    expect(lembrar(mapa, "recebi 60 da ração", "receber")).toBeNull();
+  });
+  it("o ensinado vence a pista e a mais específica vence", () => {
+    let mapa = aprender({}, { tipo: "pagar", descricao: "Posto", categoria: "Transporte" });
+    mapa = aprender(mapa, { tipo: "pagar", descricao: "Posto conveniência", categoria: "Mercado" });
+    expect(lembrar(mapa, "gastei 20 na conveniência do posto", "pagar")).toBe("Mercado");
+    expect(lembrar(mapa, "abasteci no posto", "pagar")).toBe("Transporte");
+  });
+  it("guarda no máximo 300", () => {
+    let mapa = {};
+    for (let i = 0; i < 310; i++) mapa = aprender(mapa, { tipo: "pagar", descricao: `loja${"x".repeat(i % 26)} n${String.fromCharCode(97 + (i % 26))}${String.fromCharCode(97 + Math.floor(i / 26))}`, categoria: "Lazer" });
+    expect(Object.keys(mapa).length).toBe(300);
   });
 });

@@ -173,16 +173,18 @@ Desenho aprovado pelo Edvaldo no quadro "MDC · Pessoal — desenho do app" (pro
   - data (ontem, dia 10, amanhã);
   - se já foi pago (verbos no futuro deixam a conta em aberto);
   - tipo de gasto ou entrada (nome da categoria ou palavras do dia a dia: luz → Contas da casa, posto → Transporte).
-- **Entender, 2º passo (IA):** só quando falta valor ou tipo, o TEXTO vai para a Função `pessoal-voz` (Claude, modelo em
-  `PESSOAL_VOZ_MODELO`, padrão `claude-haiku-5-5`). Antes de chamar a IA, a função pergunta ao banco
-  (`pessoal_voz_pode`):
-  - só quem lança no Financeiro da família pode usar;
-  - limite de 30 por hora e 150 por dia por pessoa.
-
-  A resposta da IA é conferida (tipo, valor, data em até 400 dias, categoria da lista). Sem `ANTHROPIC_API_KEY` nos
-  segredos do Supabase, a função responde `indisponivel` e o app segue só com o 1º passo.
-- **LGPD:** na primeira vez, um aviso explica que a fala vira texto pelo navegador (Google ou Apple) e que só o texto vai
-  para a IA quando preciso. Nem o áudio nem o texto ficam guardados (`app.pessoal_voz_uso` guarda só quem usou e quando,
+- **Aprende com a família:** ao salvar, cada descrição conferida vira uma ligação palavras-chave → tipo de gasto
+  (`palavrasChave`/`aprender`/`lembrar`). A ligação fica guardada neste aparelho (`localStorage`
+  `pessoal:voz-aprendeu:<família>`, até 300) e vale antes das pistas na próxima fala. Exemplo: "Ração" → Pet.
+- **IA desligada (o app é gratuito, decisão do Edvaldo em 14/11/2026).** A Função `pessoal-voz` e a trava
+  `pessoal_voz_pode` (082) estão publicadas, mas o app não as chama. Para ligar no futuro:
+  - `NEXT_PUBLIC_PESSOAL_VOZ_IA=1` na Vercel e `ANTHROPIC_API_KEY` nos segredos do Supabase;
+  - quando ligada, a IA só é chamada se faltar valor ou tipo (Claude, modelo em `PESSOAL_VOZ_MODELO`), com limite de 30
+    por hora e 150 por dia por pessoa;
+  - a resposta da IA é conferida (tipo, valor, data em até 400 dias, categoria da lista);
+  - o aviso da primeira vez passa a falar da IA.
+- **LGPD:** na primeira vez, um aviso explica que a fala vira texto pelo navegador (Google ou Apple) e que o app entende
+  a frase sem mandar para nenhuma IA. Nem o áudio nem o texto ficam guardados (`app.pessoal_voz_uso` guarda só quem usou e quando,
   por 2 dias, para o limite).
 
 ## 5. Arquivos

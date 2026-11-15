@@ -1,7 +1,9 @@
 // MDC · Pessoal: lançar falando. A pessoa fala (ou escreve) "paguei a luz 230 ontem e recebi o salário de 5 mil"; o app
-// entende sozinho (dominios/pessoal/voz.ts) e, se faltar algo, pede ajuda à IA (Função Edge pessoal-voz). Os
+// entende sozinho (dominios/pessoal/voz.ts) e aprende com o que a família corrige (guardado neste aparelho). Os
 // lançamentos aparecem no cartão "Entendi assim" para conferir e corrigir; só "Salvar" grava (fin_lancar, como o
 // lançamento pelo teclado). Na primeira vez explica o que acontece com a fala (LGPD).
+// A ajuda da IA (Função Edge pessoal-voz, paga por uso) fica DESLIGADA: o app é gratuito (decisão do Edvaldo,
+// 14/11/2026). Para ligar: NEXT_PUBLIC_PESSOAL_VOZ_IA=1 na Vercel e ANTHROPIC_API_KEY nos segredos do Supabase.
 "use client";
 
 import { useEffect, useRef, useState } from "react";
@@ -12,13 +14,32 @@ import { traduzirErro } from "@/lib/erros";
 import { chamarFuncao } from "@/lib/funcoesEdge";
 import { lancar } from "@/dominios/financeiro/repositorio";
 import { useOrg } from "@/dominios/organizacao/OrgProvider";
-import { faltaNoFalado, interpretarFala, lerValor } from "../../voz";
-import type { LancamentoFalado } from "../../voz";
+import { aprender, faltaNoFalado, interpretarFala, lerValor } from "../../voz";
+import type { Aprendido, LancamentoFalado } from "../../voz";
 import type { Categoria, ContaBanco } from "./dados";
 import { avisarMudanca } from "./dados";
 import { avisoRapido } from "./avisoRapido";
 
 const CHAVE_AVISO = "pessoal:voz-aviso-v1";
+const IA_LIGADA = process.env.NEXT_PUBLIC_PESSOAL_VOZ_IA === "1";
+const chaveAprendido = (org: string) => `pessoal:voz-aprendeu:${org}`;
+
+function lerAprendido(org: string): Aprendido {
+  try {
+    const v = JSON.parse(localStorage.getItem(chaveAprendido(org)) ?? "{}");
+    return v && typeof v === "object" && !Array.isArray(v) ? (v as Aprendido) : {};
+  } catch {
+    return {};
+  }
+}
+
+function guardarAprendido(org: string, mapa: Aprendido) {
+  try {
+    localStorage.setItem(chaveAprendido(org), JSON.stringify(mapa));
+  } catch {
+    /* sem armazenamento: só não aprende neste aparelho */
+  }
+}
 
 interface Reconhecimento {
   lang: string;
@@ -130,9 +151,9 @@ export function FalarLancamento({
     if (frase.length < 3) return setErro("Fale ou escreva o que você gastou ou recebeu.");
     setErro(null);
     setDica(null);
-    let itens = interpretarFala(frase, categorias, hoje);
-    // o app não entendeu tudo sozinho: pede ajuda à IA (se estiver ligada)
-    if (!itens.length || itens.some((l) => faltaNoFalado(l))) {
+    let itens = interpretarFala(frase, categorias, hoje, lerAprendido(org.id));
+    // o app não entendeu tudo sozinho: pede ajuda à IA (só se estiver ligada; hoje fica desligada, o app é gratuito)
+    if (IA_LIGADA && (!itens.length || itens.some((l) => faltaNoFalado(l)))) {
       setEntendendo(true);
       try {
         const r = await chamarFuncao<{ indisponivel?: boolean; lancamentos?: (Omit<LancamentoFalado, "categoria"> & { categoria: string | null })[] }>(
@@ -190,6 +211,8 @@ export function FalarLancamento({
         });
         feitos++;
       }
+      // aprende com o que a pessoa conferiu (e corrigiu): na próxima fala o app já acerta
+      guardarAprendido(org.id, lista.reduce((m, c) => aprender(m, c), lerAprendido(org.id)));
       avisarMudanca();
       avisoRapido(feitos === 1 ? "Lançamento salvo" : `${feitos} lançamentos salvos`);
       aoFechar();
@@ -232,12 +255,18 @@ export function FalarLancamento({
               <Icone nome="microfone" className="mt-0.5 h-4 w-4 shrink-0 text-[var(--marca)]" />
               A fala vira texto pelo próprio celular ou navegador (no Chrome, pelo serviço de voz do Google; no iPhone, pela Apple).
             </li>
+            {IA_LIGADA ? (
+              <li className="flex gap-2">
+                <Icone nome="escudo" className="mt-0.5 h-4 w-4 shrink-0 text-[var(--marca)]" />
+                Quando o app não entende sozinho, só o texto vai para a IA da MDC (Claude, da Anthropic) montar o lançamento.
+              </li>
+            ) : (
+              <li className="flex gap-2">
+                <Icone nome="escudo" className="mt-0.5 h-4 w-4 shrink-0 text-[var(--marca)]" />O app entende a frase aqui mesmo, sem mandar para nenhuma IA, e aprende com o que você corrige.
+              </li>
+            )}
             <li className="flex gap-2">
-              <Icone nome="escudo" className="mt-0.5 h-4 w-4 shrink-0 text-[var(--marca)]" />
-              Quando o app não entende sozinho, só o texto vai para a IA da MDC (Claude, da Anthropic) montar o lançamento.
-            </li>
-            <li className="flex gap-2">
-              <Icone nome="check" className="mt-0.5 h-4 w-4 shrink-0 text-[var(--marca)]" />O áudio e o texto não ficam guardados. Fica só o lançamento que você salvar.
+              <Icone nome="check" className="mt-0.5 h-4 w-4 shrink-0 text-[var(--marca)]" />O áudio e a frase não ficam guardados. Fica o lançamento que você salvar e, neste aparelho, o que o app aprendeu.
             </li>
           </ul>
         </div>
@@ -376,7 +405,12 @@ export function FalarLancamento({
                   {gasto ? "Já paguei" : "Já recebi"}
                   {!c.pago && <span className="text-[13px] font-normal text-neutral-500">(fica em Contas, para {gasto ? "pagar" : "receber"})</span>}
                 </label>
-                {falta && <p className="text-[13px] font-medium text-amber-800">{falta}</p>}
+                {falta && (
+                  <p className="text-[13px] font-medium text-amber-800">
+                    {falta}
+                    {!c.categoria && c.valor > 0 && <span className="font-normal"> · escolha uma vez e o app aprende</span>}
+                  </p>
+                )}
               </section>
             );
           })}

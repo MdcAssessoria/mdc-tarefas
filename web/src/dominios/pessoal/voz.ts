@@ -1,7 +1,7 @@
 // MDC · Pessoal: entende uma frase falada (ou escrita) e monta os lançamentos. Ex.: "paguei a luz 230 ontem e recebi
 // o salário de 5 mil" vira um gasto de R$ 230,00 em Contas da casa (pago ontem) e uma entrada de R$ 5.000,00 em
-// Salário. Regra pura, sem IA e sem custo: o que ela não entender (sem valor ou sem tipo) vai para a IA, se ligada,
-// ou a pessoa completa no cartão "Entendi assim". Nada é gravado sem a pessoa conferir.
+// Salário. Regra pura, sem IA e sem custo, que aprende com a família (o que ela corrige no cartão "Entendi assim" fica
+// guardado e vale na próxima fala). O que não entender a pessoa completa no cartão. Nada é gravado sem conferir.
 import { somarDias } from "@/lib/datas";
 
 export interface CategoriaFala {
@@ -30,18 +30,18 @@ export function semAcento(t: string): string {
     .toLowerCase();
 }
 
-const VERBOS_ENTRADA = /\b(recebi|receber|recebo|ganhei|ganho|entrou|entrar|entra|caiu|cai|vendi|me pagaram|me pagou|pingou)\b/;
-const VERBOS_SAIDA = /\b(gastei|gasto|paguei|pagar|pago|comprei|compra|saiu|sair|tenho que pagar|vou pagar|debitou|transferi)\b/;
+const VERBOS_ENTRADA = /\b(recebi|receber|recebo|ganhei|ganho|entrou|entrar|entra|caiu|cai|vendi|me pagaram|me pagou|pingou|me passou|me passaram|me deu|me deram|me mandou|me mandaram|me transferiu|me devolveu)\b/;
+const VERBOS_SAIDA = /\b(gastei|gasto|paguei|pagar|pago|comprei|compra|saiu|sair|tenho que pagar|vou pagar|debitou|transferi|coloquei|botei|abasteci|dei|torrei|passei|fiz|mandei)\b/;
 const FUTURO = /\b(vou pagar|vou receber|tenho que pagar|preciso pagar|vai vencer|vence|vencer|a pagar|a receber|amanha|semana que vem|mes que vem|proximo mes|vai entrar|vai cair)\b/;
 
 /** Palavras do dia a dia que apontam para cada tipo do plano simples (nome da categoria sem acento). */
 const PISTAS: { categoria: string; tipo: "receita" | "despesa"; palavras: RegExp }[] = [
   { categoria: "contas da casa", tipo: "despesa", palavras: /\b(luz|energia|enel|cpfl|elektro|agua|sabesp|gas|internet|wi-?fi|telefone|celular|conta de)\b/ },
-  { categoria: "mercado", tipo: "despesa", palavras: /\b(mercado|supermercado|feira|padaria|acougue|hortifruti|sacolao|atacadao|assai)\b/ },
+  { categoria: "mercado", tipo: "despesa", palavras: /\b(mercado|supermercado|mercadinho|feira|padaria|acougue|hortifruti|sacolao|atacadao|assai)\b/ },
   { categoria: "restaurante e delivery", tipo: "despesa", palavras: /\b(restaurante|lanche|lanchonete|ifood|delivery|pizza|almoco|jantar|hamburguer|sorvete|cafe)\b/ },
-  { categoria: "moradia", tipo: "despesa", palavras: /\b(aluguel|condominio|iptu|financiamento da casa|prestacao da casa|reforma|pedreiro|encanador|diarista|faxina)\b/ },
-  { categoria: "transporte", tipo: "despesa", palavras: /\b(gasolina|combustivel|etanol|alcool|diesel|posto|uber|99|onibus|metro|estacionamento|pedagio|mecanico|oficina|ipva|seguro do carro|carro|moto)\b/ },
-  { categoria: "saude", tipo: "despesa", palavras: /\b(farmacia|remedio|medico|consulta|dentista|exame|plano de saude|hospital|psicologo|terapia)\b/ },
+  { categoria: "moradia", tipo: "despesa", palavras: /\b(aluguel|condominio|iptu|financiamento da casa|prestacao da casa|reforma|pedreiro|encanador|eletricista|diarista|faxina|material de construcao)\b/ },
+  { categoria: "transporte", tipo: "despesa", palavras: /\b(gasolina|combustivel|etanol|alcool|diesel|posto|abasteci|abastecer|uber|99|onibus|metro|estacionamento|pedagio|mecanico|oficina|ipva|seguro do carro|carro|moto)\b/ },
+  { categoria: "saude", tipo: "despesa", palavras: /\b(farmacia|drogaria|remedio|medico|consulta|dentista|exame|plano de saude|hospital|psicologo|terapia)\b/ },
   { categoria: "educacao", tipo: "despesa", palavras: /\b(escola|faculdade|curso|mensalidade|livro|material escolar|apostila|ingles)\b/ },
   { categoria: "lazer", tipo: "despesa", palavras: /\b(cinema|viagem|passeio|show|bar|netflix|spotify|streaming|parque|hotel|praia|festa)\b/ },
   { categoria: "compras pessoais", tipo: "despesa", palavras: /\b(roupa|sapato|tenis|salao|cabelo|barbeiro|manicure|perfume|presente|maquiagem|loja)\b/ },
@@ -130,9 +130,50 @@ export function quebrarFrases(texto: string): string[] {
     .filter((f) => f.length > 1);
 }
 
-function acharCategoria(frase: string, tipo: "pagar" | "receber", categorias: CategoriaFala[]): CategoriaFala | null {
+/** O que a família já ensinou: "pagar|mercadinho ze" → id da categoria. Guardado no aparelho (vozAprendizado.ts). */
+export type Aprendido = Record<string, string>;
+
+const PALAVRAS_VAZIAS = new Set(["o", "a", "os", "as", "de", "do", "da", "dos", "das", "no", "na", "nos", "nas", "em", "um", "uma", "com", "pro", "pra", "para", "por", "pelo", "pela", "e", "uns", "umas", "meu", "minha"]);
+
+/** Palavras que identificam um lançamento (até 3, sem acento, sem artigos e números). "Mercadinho do Zé" → "mercadinho ze". */
+export function palavrasChave(texto: string): string {
+  return semAcento(texto)
+    .split(/[^a-z]+/)
+    .filter((p) => p.length > 1 && !PALAVRAS_VAZIAS.has(p) && !(p in UNIDADES) && p !== "mil" && p !== "reais")
+    .slice(0, 3)
+    .join(" ");
+}
+
+/** Guarda (ou reforça) a ligação descrição → categoria. Fica no máximo com as 300 mais recentes. */
+export function aprender(mapa: Aprendido, l: Pick<LancamentoFalado, "tipo" | "descricao" | "categoria">): Aprendido {
+  const chave = palavrasChave(l.descricao);
+  if (!chave || !l.categoria) return mapa;
+  const { [`${l.tipo}|${chave}`]: _antigo, ...resto } = mapa;
+  const novo = { ...resto, [`${l.tipo}|${chave}`]: l.categoria };
+  const chaves = Object.keys(novo);
+  return chaves.length > 300 ? Object.fromEntries(chaves.slice(-300).map((k) => [k, novo[k]])) : novo;
+}
+
+/** Categoria que a família já ensinou para esta frase (todas as palavras-chave aparecem nela; a mais específica vence). */
+export function lembrar(mapa: Aprendido, frase: string, tipo: "pagar" | "receber"): string | null {
+  const palavras = new Set(semAcento(frase).split(/[^a-z]+/));
+  let melhor: { id: string; n: number } | null = null;
+  for (const [k, id] of Object.entries(mapa)) {
+    const [t, chave] = k.split("|");
+    if (t !== tipo || !chave) continue;
+    const ps = chave.split(" ");
+    if (ps.every((p) => palavras.has(p)) && (!melhor || ps.length > melhor.n)) melhor = { id, n: ps.length };
+  }
+  return melhor?.id ?? null;
+}
+
+function acharCategoria(frase: string, tipo: "pagar" | "receber", categorias: CategoriaFala[], aprendido: Aprendido = {}): CategoriaFala | null {
   const t = semAcento(frase);
   const doTipo = categorias.filter((c) => c.tipo === (tipo === "pagar" ? "despesa" : "receita"));
+  // 0º o que a família já ensinou
+  const lembrado = lembrar(aprendido, frase, tipo);
+  const ensinada = lembrado ? doTipo.find((c) => c.id === lembrado) : null;
+  if (ensinada) return ensinada;
   // 1º o nome da própria categoria dito na frase (inclui as que a família criou: "Pet", "Academia")
   const pelonome = doTipo
     .filter((c) => !/^outr/i.test(c.nome))
@@ -154,7 +195,7 @@ export function descricaoDaFrase(frase: string): string {
     .replace(/(?:r\$\s*)?\d[\d.,]*\s*(?:mil\b)?(?:\s*e\s+\d{1,3}\b)?/gi, " ")
     .replace(/\b(reais|real|conto|contos|pila)\b/gi, " ")
     .replace(/\b(hoje|ontem|anteontem|amanhã|amanha|depois de amanhã|semana que vem|mês que vem|mes que vem|próximo mês|dia\s*\d*)\b/gi, " ")
-    .replace(/^\s*(eu\s+)?(também\s+|tambem\s+)?(gastei|paguei|comprei|recebi|ganhei|entrou|caiu|vendi|vou pagar|tenho que pagar|preciso pagar|vou receber|me pagaram|me pagou)\b/i, " ")
+    .replace(/^\s*(eu\s+)?(também\s+|tambem\s+)?(gastei|paguei|comprei|recebi|ganhei|entrou|caiu|vendi|vou pagar|tenho que pagar|preciso pagar|vou receber|me pagaram|me pagou|coloquei|botei|abasteci|dei|torrei|passei|fiz|mandei)\b/i, " ")
     .replace(/^\s*(com|no|na|nos|nas|de|do|da|dos|das|o|a|os|as|um|uma|em|pelo|pela|pra|para)\s+/i, " ")
     .replace(/^\s*(com|no|na|nos|nas|de|do|da|dos|das|o|a|os|as|um|uma|em|pelo|pela|pra|para)\s+/i, " ")
     .replace(/\s+(de|do|da|no|na|em|e|com|por|pra|para)\s*$/i, " ")
@@ -165,9 +206,10 @@ export function descricaoDaFrase(frase: string): string {
 }
 
 /** Uma frase vira um lançamento (tipo, valor, tipo de gasto, data e se já foi pago). */
-export function interpretarFrase(frase: string, categorias: CategoriaFala[], hoje: string): LancamentoFalado {
+export function interpretarFrase(frase: string, categorias: CategoriaFala[], hoje: string, aprendido: Aprendido = {}): LancamentoFalado {
   const t = semAcento(frase);
-  const entrada = VERBOS_ENTRADA.test(t) && !VERBOS_SAIDA.test(t.replace(/\bme pag(aram|ou)\b/, ""));
+  const semEntrada = t.replace(/\bme (pag(aram|ou)|passou|passaram|deu|deram|mandou|mandaram|transferiu|devolveu)\b/g, "");
+  const entrada = VERBOS_ENTRADA.test(t) && !VERBOS_SAIDA.test(semEntrada);
   let tipo: "pagar" | "receber" = entrada ? "receber" : "pagar";
   // sem verbo: o tipo vem da pista ("salário 5 mil" é entrada)
   if (!VERBOS_ENTRADA.test(t) && !VERBOS_SAIDA.test(t)) {
@@ -176,7 +218,7 @@ export function interpretarFrase(frase: string, categorias: CategoriaFala[], hoj
   }
   const futuro = FUTURO.test(t);
   const data = lerData(frase, hoje, futuro);
-  const cat = acharCategoria(frase, tipo, categorias);
+  const cat = acharCategoria(frase, tipo, categorias, aprendido);
   return {
     tipo,
     valor: lerValor(frase),
@@ -188,9 +230,9 @@ export function interpretarFrase(frase: string, categorias: CategoriaFala[], hoj
 }
 
 /** A fala inteira vira um ou mais lançamentos (no máximo 10). */
-export function interpretarFala(texto: string, categorias: CategoriaFala[], hoje: string): LancamentoFalado[] {
+export function interpretarFala(texto: string, categorias: CategoriaFala[], hoje: string, aprendido: Aprendido = {}): LancamentoFalado[] {
   return quebrarFrases(texto.slice(0, 600))
-    .map((f) => interpretarFrase(f, categorias, hoje))
+    .map((f) => interpretarFrase(f, categorias, hoje, aprendido))
     .filter((l) => l.valor > 0 || l.categoria)
     .slice(0, 10);
 }
