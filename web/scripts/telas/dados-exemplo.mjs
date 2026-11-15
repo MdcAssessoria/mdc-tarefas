@@ -19,6 +19,8 @@ export const IDS_EXEMPLO = {
   "comercial/[id]": "55555555-5555-4555-8555-555555555551",
   "demonstrativos/[id]": "66666666-6666-4666-8666-666666666661",
   "societario/[id]": "77777777-7777-4777-8777-777777777771",
+  // assinatura do contrato de licença pelo link (085): código de 48 letras
+  "assinar/[token]": "ab".repeat(24),
 };
 
 const agora = new Date();
@@ -1299,6 +1301,29 @@ export const TABELAS = {
       motivo_desbloqueio: null,
     },
   ],
+  // contrato de licença (085): o da licença do cliente 1 já emitido e com o link enviado
+  lic_contrato_documentos: [
+    {
+      id: "85858585-8585-4585-8585-858585858581",
+      org_id: ORG,
+      contrato_id: LIC_K1,
+      numero: "LIC-2026/0001",
+      modelo_versao: 0,
+      texto: "# Contrato de licença de uso de software · Ledgra\n\nContrato nº LIC-2026/0001",
+      hash: "9f2c".repeat(16),
+      signatario: { nome: "Maria da Silva", cpf: "52998224725", cargo: "sócia-administradora", email: "" },
+      modo: "eletronico",
+      situacao: "enviado",
+      emitido_em: momento(-2),
+      link_expira_em: momento(13),
+      assinado_em: null,
+      assinatura: null,
+      cancelado_em: null,
+      cancelado_motivo: null,
+    },
+  ],
+  lic_contrato_modelo: [],
+  lic_contrato_modelo_versoes: [],
   lic_parametros: [{ org_id: ORG, dias_sugerir_bloqueio: 30, ultimo_aviso: null, atualizado_em: momento(-1) }],
   vw_painel_kpis: [
     {
@@ -1647,6 +1672,30 @@ const PORTAL_EMPRESAS = [
 
 /** Resultado de cada RPC (o nome é o que vem depois de /rest/v1/rpc/). RPC não listada devolve null. */
 export const RPCS = {
+  // página pública de assinatura (085): contrato esperando a assinatura
+  lic_assinatura_abrir: () => ({
+    situacao: "enviado",
+    numero: "LIC-2026/0001",
+    cliente: "Liberato Comércio Ltda",
+    texto: [
+      "# Contrato de licença de uso de software · Ledgra",
+      "Contrato nº LIC-2026/0001",
+      "Pelo presente instrumento particular, de um lado **MDC ASSESSORIA LTDA**, doravante **LICENCIANTE**, e de outro **LIBERATO COMÉRCIO LTDA**, doravante **LICENCIADA**, têm entre si justo e contratado o que segue.",
+      "## Cláusula 1ª · Objeto",
+      "A LICENCIANTE concede à LICENCIADA licença de uso, não exclusiva e intransferível, do sistema **Ledgra**, com os módulos abaixo:",
+      "- **Ledgra · Financeiro**: contas a pagar e a receber, bancos e conciliação.",
+      "- **Ledgra · Estoque**: depósitos, lotes e posição do estoque.",
+      "## Cláusula 3ª · Valor e pagamento",
+      "Pela licença, a LICENCIADA pagará à LICENCIANTE **R$ 390,00** por mês.",
+      "E, por estarem de acordo, as partes assinam este contrato.",
+      "Bragança Paulista/SP, 15 de novembro de 2026.",
+    ].join("\n"),
+    hash: "9f2c".repeat(16),
+    signatario: "Maria da Silva",
+    cpf_final: "25",
+    assinado_em: null,
+    assinatura: null,
+  }),
   // PIN das áreas pessoais (080): a organização de exemplo não exige PIN; com PIN_TELAS=1 a trava aparece
   pin_situacao: () => ({ definido: true, liberado_ate: null, bloqueado_ate: null }),
   pin_conferir: () => ({ ok: false, restantes: 4 }),

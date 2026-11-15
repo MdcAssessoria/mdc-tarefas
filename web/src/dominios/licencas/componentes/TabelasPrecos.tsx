@@ -10,7 +10,14 @@ import { traduzirErro } from "@/lib/erros";
 import { Icone } from "@/components/ui/Icone";
 import { valorParaCampo } from "@/dominios/financeiro/regras";
 import { descontoSobreTabela } from "@/dominios/licencas/regras";
-import { lerPreco, pacotesAlterados, precoComDesconto, precosAlterados, somaDoPacote, type PacoteEditado } from "@/dominios/licencas/precos";
+import {
+  lerPreco,
+  pacotesAlterados,
+  precoComDesconto,
+  precosAlterados,
+  somaDoPacote,
+  type PacoteEditado,
+} from "@/dominios/licencas/precos";
 import { salvarPlano, salvarProduto } from "@/dominios/licencas/repositorio";
 import type { Plano, Produto } from "@/dominios/licencas/tipos";
 
@@ -63,7 +70,11 @@ export function TabelaPrecosProdutos({
   const lista = produtos.filter((p) => sis(p) === sistema);
   const mudou = precosAlterados(produtos, digitado);
   const invalido = Object.entries(digitado).some(([, t]) => lerPreco(t) === null);
-  const total = somaDoPacote(lista.filter((p) => p.ativo).map((p) => p.id), new Map(lista.map((p) => [p.id, p])), digitado);
+  const total = somaDoPacote(
+    lista.filter((p) => p.ativo).map((p) => p.id),
+    new Map(lista.map((p) => [p.id, p])),
+    digitado,
+  );
 
   async function salvar() {
     if (!mudou.length || invalido) return;
@@ -218,7 +229,9 @@ export function QuadroPacotes({
     return (
       <div className="space-y-3">
         <EscolhaSistema valor={sistema} aoMudar={setSistema} tem={tem} />
-        <p className="cartao p-4 text-sm text-neutral-600">Nenhum pacote deste sistema. Use &ldquo;Novo plano&rdquo; para criar o primeiro.</p>
+        <p className="cartao p-4 text-sm text-neutral-600">
+          Nenhum pacote deste sistema. Use &ldquo;Novo plano&rdquo; para criar o primeiro.
+        </p>
       </div>
     );
   }
@@ -237,7 +250,11 @@ export function QuadroPacotes({
               <th className="text-right">Preço avulso</th>
               {colunas.map((pl) => (
                 <th key={pl.id} className="min-w-36 text-center">
-                  <button className="font-semibold underline-offset-2 hover:underline" onClick={() => aoEditar(pl)} title="Nome e descrição">
+                  <button
+                    className="font-semibold underline-offset-2 hover:underline"
+                    onClick={() => aoEditar(pl)}
+                    title="Nome e descrição"
+                  >
                     {pl.nome.replace(/^Ledgra\s+/, "")}
                   </button>
                   <span className="block text-xs font-normal text-neutral-500">{emUso(pl.id)} contrato(s)</span>
@@ -272,13 +289,19 @@ export function QuadroPacotes({
           </tbody>
           <tfoot>
             <tr>
-              <td colSpan={2} className="font-medium">Avulsos somariam</td>
+              <td colSpan={2} className="font-medium">
+                Avulsos somariam
+              </td>
               {colunas.map((pl) => (
-                <td key={pl.id} className="text-center tabular-nums">{brl(somaDoPacote(atual(pl).produtos, porId))}</td>
+                <td key={pl.id} className="text-center tabular-nums">
+                  {brl(somaDoPacote(atual(pl).produtos, porId))}
+                </td>
               ))}
             </tr>
             <tr>
-              <td colSpan={2} className="font-semibold text-[var(--marca)]">Preço do pacote por mês (R$)</td>
+              <td colSpan={2} className="font-semibold text-[var(--marca)]">
+                Preço do pacote por mês (R$)
+              </td>
               {colunas.map((pl) => {
                 const e = atual(pl);
                 const ruim = lerPreco(e.preco) === null;
@@ -308,7 +331,9 @@ export function QuadroPacotes({
               })}
             </tr>
             <tr>
-              <td colSpan={2} className="text-sm text-neutral-600">Calcular o preço com desconto de</td>
+              <td colSpan={2} className="text-sm text-neutral-600">
+                Calcular o preço com desconto de
+              </td>
               {colunas.map((pl) => (
                 <td key={pl.id} className="text-center">
                   <span className="inline-flex items-center gap-1">
@@ -321,7 +346,11 @@ export function QuadroPacotes({
                       placeholder="10"
                     />
                     %
-                    <button className="btn !min-h-8 !px-2" onClick={() => aplicarDesconto(pl)} aria-label={`Aplicar desconto no pacote ${pl.nome}`}>
+                    <button
+                      className="btn !min-h-8 !px-2"
+                      onClick={() => aplicarDesconto(pl)}
+                      aria-label={`Aplicar desconto no pacote ${pl.nome}`}
+                    >
                       <Icone nome="check" className="h-4 w-4" />
                     </button>
                   </span>
@@ -344,7 +373,14 @@ export function QuadroPacotes({
           <Icone nome="check" className="h-4 w-4" /> {salvando ? "Salvando…" : "Salvar pacotes"}
         </button>
         {Object.keys(editado).length > 0 && (
-          <button className="btn" onClick={() => { setEditado({}); setDescontos({}); }} disabled={salvando}>
+          <button
+            className="btn"
+            onClick={() => {
+              setEditado({});
+              setDescontos({});
+            }}
+            disabled={salvando}
+          >
             <Icone nome="cancelar" className="h-4 w-4" /> Desfazer
           </button>
         )}

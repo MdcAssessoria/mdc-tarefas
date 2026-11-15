@@ -7,7 +7,17 @@ import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { nomeCliente } from "@/dominios/clientes/nome";
 import { useConsulta } from "@/lib/useConsulta";
 import { hojeISO } from "@/lib/datas";
-import { comValores, lerBaixas, lerBloqueios, lerCobrancas, lerContratos, lerParametros, lerPlanos, lerProdutos, lerValores } from "../leituras";
+import {
+  comValores,
+  lerBaixas,
+  lerBloqueios,
+  lerCobrancas,
+  lerContratos,
+  lerParametros,
+  lerPlanos,
+  lerProdutos,
+  lerValores,
+} from "../leituras";
 import type { Contrato, Plano, Produto } from "../tipos";
 
 /** "Plano Gestão", "Ledgra full" ou "Financeiro, Estoque" (módulos avulsos); "(gratuita)" quando o valor é zero. */

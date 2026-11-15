@@ -4,7 +4,7 @@
 // Abre já filtrado num cliente com ?cliente=<id> (link do painel e da tela de clientes).
 "use client";
 
-import { Suspense, useMemo, useState } from "react";
+import { Suspense, useCallback, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { brl } from "@/lib/formato/moeda";
@@ -25,6 +25,11 @@ import type { Contrato } from "@/dominios/licencas/tipos";
 import { plural } from "@/lib/formato/numero";
 import { Icone } from "@/components/ui/Icone";
 import { MenuAcoes } from "@/components/ui/MenuAcoes";
+import { Chip } from "@/components/ui/Chip";
+import { JanelaContratoLicenca } from "@/dominios/licencas/componentes/JanelaContratoLicenca";
+import { lerSituacoesDocumentos } from "@/dominios/licencas/documentos";
+import { ROTULO_SITUACAO } from "@/dominios/licencas/contratoLicenca";
+import { useConsulta } from "@/lib/useConsulta";
 
 type FiltroSituacao = "ativos" | "encerrados" | "todos";
 type Janela =
@@ -33,7 +38,8 @@ type Janela =
   | { tipo: "reajustar"; k: Contrato }
   | { tipo: "encerrar"; k: Contrato }
   | { tipo: "historico"; k: Contrato }
-  | { tipo: "chave"; k: Contrato };
+  | { tipo: "chave"; k: Contrato }
+  | { tipo: "documento"; k: Contrato };
 
 export default function PaginaContratos() {
   return (
@@ -56,6 +62,10 @@ function Contratos() {
   const [modulo, setModulo] = useState("");
   const [busca, setBusca] = useState("");
   const [janela, setJanela] = useState<Janela | null>(null);
+  // situação do contrato (documento) de cada licença: só para quem vê os valores (o texto traz o preço)
+  const documentos = useConsulta(
+    useCallback(async () => (podeGerir ? lerSituacoesDocumentos(org.id) : new Map<string, never>()), [podeGerir, org.id]),
+  );
 
   const d = dados.dados;
   const lista = useMemo(() => {
@@ -139,7 +149,9 @@ function Contratos() {
                 largura: 20,
               },
             ],
-            totais: podeGerir ? { "Valor mensal": lista.reduce((s, k) => s + (k.situacao === "ativo" ? k.valor_mensal : 0), 0) } : undefined,
+            totais: podeGerir
+              ? { "Valor mensal": lista.reduce((s, k) => s + (k.situacao === "ativo" ? k.valor_mensal : 0), 0) }
+              : undefined,
           })}
         />
         {podeOperar && (
@@ -210,28 +222,28 @@ function Contratos() {
       ) : (
         <>
           {podeGerir && (
-          <div className="grid gap-3 sm:grid-cols-3">
-            <Indicador
-              icone="documento"
-              titulo="Valendo hoje (neste filtro)"
-              valor={brl(mrr)}
-              detalhe={`${vigentes.length} contrato(s) por mês`}
-              tom="verde"
-            />
-            <Indicador
-              icone="etiqueta"
-              titulo="Preço de tabela desses contratos"
-              valor={brl(tabela)}
-              detalhe={tabela > mrr ? `${brl(tabela - mrr)} em descontos` : "sem descontos"}
-            />
-            <Indicador
-              icone="tendencia"
-              titulo="Reajustes a fazer"
-              valor={String(reajustes)}
-              detalhe="mês do reajuste já chegou"
-              tom={reajustes ? "ambar" : "neutro"}
-            />
-          </div>
+            <div className="grid gap-3 sm:grid-cols-3">
+              <Indicador
+                icone="documento"
+                titulo="Valendo hoje (neste filtro)"
+                valor={brl(mrr)}
+                detalhe={`${vigentes.length} contrato(s) por mês`}
+                tom="verde"
+              />
+              <Indicador
+                icone="etiqueta"
+                titulo="Preço de tabela desses contratos"
+                valor={brl(tabela)}
+                detalhe={tabela > mrr ? `${brl(tabela - mrr)} em descontos` : "sem descontos"}
+              />
+              <Indicador
+                icone="tendencia"
+                titulo="Reajustes a fazer"
+                valor={String(reajustes)}
+                detalhe="mês do reajuste já chegou"
+                tom={reajustes ? "ambar" : "neutro"}
+              />
+            </div>
           )}
 
           {!lista.length ? (
@@ -268,6 +280,7 @@ function Contratos() {
                         <span className="font-medium">{nomeDoCliente(k.cliente_id)}</span>{" "}
                         {bloqueados.has(k.cliente_id) && <EtiquetaBloqueado />}
                         <span className="block text-xs text-neutral-500">{situacaoTexto(k)}</span>
+                        <SituacaoDocumento doc={podeGerir ? documentos.dados?.get(k.id) : undefined} />
                       </td>
                       <td className="min-w-44">
                         {rotulo(k)}
@@ -301,22 +314,42 @@ function Contratos() {
                           <MenuAcoes rotulo="Ações da licença" largura={176}>
                             {podeOperar && k.situacao === "ativo" && (
                               <>
-                                <button className="block w-full px-3 py-1.5 text-left hover:bg-neutral-50" onClick={(e) => menu(e, { tipo: "editar", k })}>
+                                <button
+                                  className="block w-full px-3 py-1.5 text-left hover:bg-neutral-50"
+                                  onClick={(e) => menu(e, { tipo: "editar", k })}
+                                >
                                   Editar
                                 </button>
-                                <button className="block w-full px-3 py-1.5 text-left hover:bg-neutral-50" onClick={(e) => menu(e, { tipo: "chave", k })}>
+                                <button
+                                  className="block w-full px-3 py-1.5 text-left hover:bg-neutral-50"
+                                  onClick={(e) => menu(e, { tipo: "chave", k })}
+                                >
                                   Chave do Ledgra
                                 </button>
                               </>
                             )}
+                            {podeGerir && (k.situacao === "ativo" || documentos.dados?.get(k.id)) && (
+                              <button
+                                className="block w-full px-3 py-1.5 text-left hover:bg-neutral-50"
+                                onClick={(e) => menu(e, { tipo: "documento", k })}
+                              >
+                                Contrato (PDF e assinatura)
+                              </button>
+                            )}
                             {podeGerir && (
-                              <button className="block w-full px-3 py-1.5 text-left hover:bg-neutral-50" onClick={(e) => menu(e, { tipo: "historico", k })}>
+                              <button
+                                className="block w-full px-3 py-1.5 text-left hover:bg-neutral-50"
+                                onClick={(e) => menu(e, { tipo: "historico", k })}
+                              >
                                 Histórico
                               </button>
                             )}
                             {podeGerir && k.situacao === "ativo" && (
                               <>
-                                <button className="block w-full px-3 py-1.5 text-left hover:bg-neutral-50" onClick={(e) => menu(e, { tipo: "reajustar", k })}>
+                                <button
+                                  className="block w-full px-3 py-1.5 text-left hover:bg-neutral-50"
+                                  onClick={(e) => menu(e, { tipo: "reajustar", k })}
+                                >
                                   Reajustar valor
                                 </button>
                                 <button
@@ -367,6 +400,20 @@ function Contratos() {
       {janela?.tipo === "chave" && (
         <JanelaChaveLedgra contrato={janela.k} cliente={nomeDoCliente(janela.k.cliente_id)} aoFechar={() => fechar()} />
       )}
+      {janela?.tipo === "documento" && d && (
+        <JanelaContratoLicenca
+          contrato={janela.k}
+          produtos={dados.produtos}
+          planos={dados.planos}
+          diasBloqueio={d.parametros.dias_sugerir_bloqueio}
+          hoje={hoje}
+          aoFechar={() => setJanela(null)}
+          aoMudar={(m) => {
+            mostrar(m);
+            documentos.recarregar();
+          }}
+        />
+      )}
       {janela?.tipo === "historico" && d && (
         <HistoricoContrato
           contrato={janela.k}
@@ -377,5 +424,18 @@ function Contratos() {
         />
       )}
     </div>
+  );
+}
+
+/** Etiqueta do contrato (documento) da licença: número e situação. */
+function SituacaoDocumento({ doc }: { doc?: { numero: string; situacao: keyof typeof ROTULO_SITUACAO } }) {
+  if (!doc) return null;
+  const r = ROTULO_SITUACAO[doc.situacao];
+  return (
+    <span className="mt-1 block">
+      <Chip tom={r.tom}>
+        {doc.numero} · {r.texto}
+      </Chip>
+    </span>
   );
 }

@@ -224,12 +224,7 @@ export function AssistenteContrato({
         <div className="space-y-2">
           <label className="campo">
             <span>Procurar cliente</span>
-            <input
-              value={f.busca}
-              onChange={(e) => buscar(e.target.value)}
-              placeholder="Nome, CNPJ ou código do Domínio"
-              autoFocus
-            />
+            <input value={f.busca} onChange={(e) => buscar(e.target.value)} placeholder="Nome, CNPJ ou código do Domínio" autoFocus />
           </label>
           <label className="campo">
             <span>Cliente</span>
@@ -315,7 +310,7 @@ export function AssistenteContrato({
                   />
                   <span>
                     <b>{p.nome}</b>
-                      {valores && <> · {brl(p.preco)}/mês</>}
+                    {valores && <> · {brl(p.preco)}/mês</>}
                     {jaTem.has(p.id) && <span className="block text-xs text-red-700">O cliente já tem este módulo em outro contrato</span>}
                     {p.descricao && <span className="block text-xs text-neutral-600">{p.descricao}</span>}
                   </span>

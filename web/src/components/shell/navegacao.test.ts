@@ -68,6 +68,10 @@ describe("Licenças", () => {
     const abas = filtrarLinks("licencas", { pode: (_app, minimo = "ver") => minimo === "ver", podeEditarCadastros: false });
     expect(abas.map((l) => l.href)).toEqual(["/licencas/contratos", "/licencas/produtos"]);
   });
+  it("o Modelo do contrato de licença (085) aparece só para quem tem a permissão de valores (gerir)", () => {
+    const abas = filtrarLinks("licencas", { pode: () => true, podeEditarCadastros: false });
+    expect(abas.map((l) => l.href)).toContain("/licencas/modelo");
+  });
 });
 
 describe("linkAtivo", () => {

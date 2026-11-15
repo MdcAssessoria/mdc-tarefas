@@ -193,3 +193,46 @@ desconhecida, desfazer, tela sem gravar direto) e `web/src/dominios/licencas/led
   Quem opera sem gerir cadastra pelo preço de tabela; na alteração o valor atual é mantido.
 - Ligação com o Ledgra pelo CNPJ: o servidor do Ledgra chama `lic_ledgra_vincular_cnpj(cnpj)` (só chave de serviço) e
   recebe uma chave nova da licença ativa daquele CNPJ (botão "Buscar no HUB" na aba Licença da empresa no Ledgra).
+
+## Contrato de licença do Ledgra e do HUB (migração 085, 15/11/2026)
+
+**Para quê.** Cada licença vendida tem o seu contrato escrito, no papel timbrado da MDC, gerado pelo HUB com os dados
+da licença. Um contrato por licença (decisão do Edvaldo): quem compra Ledgra e Portal do HUB em licenças separadas
+recebe um contrato de cada.
+
+**Modelo das cláusulas** (Licenças › Modelo do contrato, `/licencas/modelo`, só com a permissão de valores). Texto em
+markdown simples (`#` título, `##` cláusula, `-` item, `**negrito**`) com variáveis `{{assim}}` (lista na própria tela e
+em `dominios/licencas/contratoLicenca.ts`, `VARIAVEIS`). Sem modelo gravado vale o **modelo-padrão do HUB**
+(`MODELO_PADRAO`), feito sobre: Lei 9.609/1998 (uso de software por contrato de licença, art. 9º; validade técnica,
+arts. 7º e 8º), LGPD (MDC como operadora, art. 39; segurança, art. 46; o cliente, controlador, comunica o incidente,
+art. 48) e MP 2.200-2/2001, art. 10, § 2º (assinatura eletrônica aceita pelas partes). **Recomenda-se a revisão do
+advogado da MDC antes do primeiro uso.** Cada gravação vira versão nova (`lic_contrato_modelo_versoes`, com "Usar este
+texto"); contratos já emitidos não mudam. "Ver exemplo (PDF)" mostra o modelo preenchido com dados fictícios.
+
+**Emitir** (Licenças › Ações › Contrato (PDF e assinatura)). Informa quem assina pelo cliente (nome completo e CPF
+válido; cargo e e-mail opcionais) e escolhe **como assina**:
+- **Pelo link (eletrônica)**: "Gerar link de assinatura" (vale 15 dias; aparece uma vez, com Copiar e "Enviar pelo
+  WhatsApp" com saudação pela hora). O cliente abre `/assinar/<código>` sem login, lê o contrato, informa nome e CPF
+  (precisa ser o CPF indicado; 10 tentativas erradas travam o link) e marca "Li e concordo". O banco grava nome, CPF,
+  data e hora, IP e navegador. Gerar de novo invalida o link anterior.
+- **Em papel (ou outro meio)**: baixa o PDF, colhe a assinatura e depois "Registrar assinatura" com a data (não pode ser
+  futura nem antes da emissão) e uma observação.
+
+"Ver minuta (PDF)" sai com a marca d'água MINUTA. Ao emitir, o banco numera (**LIC-AAAA/NNNN**, sem repetir), troca o
+`{{numero}}`, recusa texto com variável sobrando e guarda a fotografia do texto com o **código de integridade
+SHA-256**. O PDF assinado ganha no fim o "Registro da assinatura" (quem, quando, IP, navegador e o código). A lista de
+licenças mostra a etiqueta do contrato (número e situação: falta assinar, link enviado, assinado).
+
+**Cancelar** com motivo (mínimo 5 letras): o contrato fica guardado como cancelado, o link para de funcionar e a licença
+pode receber um contrato novo. Nada se apaga.
+
+**Quem pode.** O texto traz o preço, então ver, emitir, gerar link, registrar e cancelar exigem a **permissão de
+valores** (`licencas` › gerir), a mesma dos valores das licenças (074). Quem só opera não vê os contratos emitidos.
+
+**Banco (085).** Tabelas `lic_contrato_modelo`, `lic_contrato_modelo_versoes` e `lic_contrato_documentos` (um ativo por
+licença; o hash do link não sai pela API). Funções: `lic_contrato_modelo_salvar`, `lic_documento_emitir`,
+`lic_documento_link`, `lic_documento_assinatura_registrar`, `lic_documento_cancelar` (equipe) e, sem login,
+`lic_assinatura_abrir` / `lic_assinatura_aceitar` (pelo código do link). Testes: `supabase/testes/155_base_085.sql` e
+`156_contrato_085.sql` (dentro do `rodar.sh`). Código: `dominios/licencas/contratoLicenca.ts` (texto e regras, com
+teste), `documentos.ts` (leituras, gravações e PDF), `componentes/JanelaContratoLicenca.tsx`, `TextoContrato.tsx`,
+`app/(hub)/licencas/modelo` e `app/assinar/[token]`.

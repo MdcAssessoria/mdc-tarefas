@@ -4499,6 +4499,154 @@ export type Database = {
           },
         ];
       };
+      lic_contrato_documentos: {
+        Row: {
+          assinado_em: string | null;
+          assinatura: Json | null;
+          cancelado_em: string | null;
+          cancelado_motivo: string | null;
+          cancelado_por: string | null;
+          contrato_id: string;
+          emitido_em: string;
+          emitido_por: string | null;
+          hash: string;
+          id: string;
+          link_expira_em: string | null;
+          link_hash: string | null;
+          link_tentativas: number;
+          modelo_versao: number;
+          modo: string;
+          numero: string;
+          org_id: string;
+          signatario: Json;
+          situacao: string;
+          texto: string;
+        };
+        Insert: {
+          assinado_em?: string | null;
+          assinatura?: Json | null;
+          cancelado_em?: string | null;
+          cancelado_motivo?: string | null;
+          cancelado_por?: string | null;
+          contrato_id: string;
+          emitido_em?: string;
+          emitido_por?: string | null;
+          hash: string;
+          id?: string;
+          link_expira_em?: string | null;
+          link_hash?: string | null;
+          link_tentativas?: number;
+          modelo_versao?: number;
+          modo: string;
+          numero: string;
+          org_id: string;
+          signatario: Json;
+          situacao?: string;
+          texto: string;
+        };
+        Update: {
+          assinado_em?: string | null;
+          assinatura?: Json | null;
+          cancelado_em?: string | null;
+          cancelado_motivo?: string | null;
+          cancelado_por?: string | null;
+          contrato_id?: string;
+          emitido_em?: string;
+          emitido_por?: string | null;
+          hash?: string;
+          id?: string;
+          link_expira_em?: string | null;
+          link_hash?: string | null;
+          link_tentativas?: number;
+          modelo_versao?: number;
+          modo?: string;
+          numero?: string;
+          org_id?: string;
+          signatario?: Json;
+          situacao?: string;
+          texto?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "lic_contrato_documentos_contrato_id_fkey";
+            columns: ["contrato_id"];
+            isOneToOne: false;
+            referencedRelation: "lic_contratos";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "lic_contrato_documentos_org_id_fkey";
+            columns: ["org_id"];
+            isOneToOne: false;
+            referencedRelation: "organizacoes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      lic_contrato_modelo: {
+        Row: {
+          atualizado_em: string;
+          atualizado_por: string | null;
+          org_id: string;
+          texto: string;
+          versao: number;
+        };
+        Insert: {
+          atualizado_em?: string;
+          atualizado_por?: string | null;
+          org_id: string;
+          texto: string;
+          versao?: number;
+        };
+        Update: {
+          atualizado_em?: string;
+          atualizado_por?: string | null;
+          org_id?: string;
+          texto?: string;
+          versao?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "lic_contrato_modelo_org_id_fkey";
+            columns: ["org_id"];
+            isOneToOne: true;
+            referencedRelation: "organizacoes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      lic_contrato_modelo_versoes: {
+        Row: {
+          em: string;
+          org_id: string;
+          por: string | null;
+          texto: string;
+          versao: number;
+        };
+        Insert: {
+          em?: string;
+          org_id: string;
+          por?: string | null;
+          texto: string;
+          versao: number;
+        };
+        Update: {
+          em?: string;
+          org_id?: string;
+          por?: string | null;
+          texto?: string;
+          versao?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "lic_contrato_modelo_versoes_org_id_fkey";
+            columns: ["org_id"];
+            isOneToOne: false;
+            referencedRelation: "organizacoes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       lic_contrato_produtos: {
         Row: {
           contrato_id: string;
@@ -7806,6 +7954,16 @@ export type Database = {
         Args: { p_cliente: string; p_data: string; p_motivo?: string };
         Returns: Json;
       };
+      lic_assinatura_abrir: { Args: { p_token: string }; Returns: Json };
+      lic_assinatura_aceitar: {
+        Args: {
+          p_concordo: boolean;
+          p_cpf: string;
+          p_nome: string;
+          p_token: string;
+        };
+        Returns: Json;
+      };
       lic_baixar_cobranca: {
         Args: {
           p_cobranca: string;
@@ -7825,6 +7983,10 @@ export type Database = {
         Args: { p_cobranca: string; p_motivo: string };
         Returns: undefined;
       };
+      lic_contrato_modelo_salvar: {
+        Args: { p_org: string; p_texto: string };
+        Returns: number;
+      };
       lic_definir_parametros: {
         Args: { p_dias_sugerir_bloqueio: number; p_org: string };
         Returns: undefined;
@@ -7837,6 +7999,25 @@ export type Database = {
         Args: { p_cobranca: string; p_motivo: string };
         Returns: undefined;
       };
+      lic_documento_assinatura_registrar: {
+        Args: { p_data: string; p_doc: string; p_observacao?: string };
+        Returns: undefined;
+      };
+      lic_documento_cancelar: {
+        Args: { p_doc: string; p_motivo: string };
+        Returns: undefined;
+      };
+      lic_documento_emitir: {
+        Args: {
+          p_contrato: string;
+          p_modelo_versao: number;
+          p_modo: string;
+          p_signatario: Json;
+          p_texto: string;
+        };
+        Returns: Json;
+      };
+      lic_documento_link: { Args: { p_doc: string }; Returns: string };
       lic_encerrar_contrato: {
         Args: { p_contrato: string; p_data: string; p_motivo: string };
         Returns: number;
@@ -7939,6 +8120,10 @@ export type Database = {
       pessoal_email_livre: { Args: { p_email: string }; Returns: boolean };
       pessoal_empresa_adiar: { Args: { p_org: string }; Returns: undefined };
       pessoal_empresa_situacao: { Args: { p_org: string }; Returns: Json };
+      pessoal_excluir_conta_preparar: {
+        Args: { p_confirmacao: string };
+        Returns: Json;
+      };
       pessoal_push_aparelhos: { Args: never; Returns: number };
       pessoal_push_inscrever: {
         Args: {
@@ -7984,6 +8169,7 @@ export type Database = {
         Args: { p_privada?: string; p_publica?: string };
         Returns: Json;
       };
+      pessoal_voz_pode: { Args: { p_org: string }; Returns: string };
       pin_conferir: { Args: { p_org: string; p_pin: string }; Returns: Json };
       pin_definir: {
         Args: { p_org: string; p_pin_novo: string };

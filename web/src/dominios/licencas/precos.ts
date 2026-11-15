@@ -22,15 +22,17 @@ export function precosAlterados(produtos: Produto[], digitado: Record<string, st
 
 /** Soma dos preços de tabela dos produtos do pacote (preços já digitados valem antes do gravado). */
 export function somaDoPacote(ids: string[], produtos: Map<string, Produto>, digitado: Record<string, string> = {}): number {
-  return Math.round(
-    ids.reduce((s, id) => {
-      const p = produtos.get(id);
-      if (!p) return s;
-      const t = digitado[id];
-      const v = t === undefined ? p.preco : (lerPreco(t) ?? p.preco);
-      return s + v;
-    }, 0) * 100,
-  ) / 100;
+  return (
+    Math.round(
+      ids.reduce((s, id) => {
+        const p = produtos.get(id);
+        if (!p) return s;
+        const t = digitado[id];
+        const v = t === undefined ? p.preco : (lerPreco(t) ?? p.preco);
+        return s + v;
+      }, 0) * 100,
+    ) / 100
+  );
 }
 
 /** Preço do pacote com X% de desconto sobre a soma, arredondado para baixo nos centavos. */
@@ -45,7 +47,10 @@ export interface PacoteEditado {
 }
 
 /** Pacotes cuja composição ou preço digitado mudou (o preço precisa ser válido). */
-export function pacotesAlterados(planos: Plano[], editado: Record<string, PacoteEditado>): { plano: Plano; produtos: string[]; preco: number }[] {
+export function pacotesAlterados(
+  planos: Plano[],
+  editado: Record<string, PacoteEditado>,
+): { plano: Plano; produtos: string[]; preco: number }[] {
   return planos.flatMap((pl) => {
     const e = editado[pl.id];
     if (!e) return [];

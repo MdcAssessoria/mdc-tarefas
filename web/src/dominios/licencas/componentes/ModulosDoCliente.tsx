@@ -20,12 +20,19 @@ export function ModulosDoCliente({ cliente }: { cliente: string }) {
     useCallback(async () => {
       if (!ver) return null;
       const [contratos, produtos, bloqueio] = await Promise.all([
-        supabase().from("lic_contratos").select("id,cliente_id,plano_id,modalidade,inicio,fim,situacao,lic_contrato_produtos(produto_id)").eq("cliente_id", cliente).eq("situacao", "ativo"),
+        supabase()
+          .from("lic_contratos")
+          .select("id,cliente_id,plano_id,modalidade,inicio,fim,situacao,lic_contrato_produtos(produto_id)")
+          .eq("cliente_id", cliente)
+          .eq("situacao", "ativo"),
         lerProdutos(org.id),
         supabase().from("lic_bloqueios").select("id").eq("cliente_id", cliente).is("desbloqueado_em", null),
       ]);
       // sem valores aqui (074): o valor do contrato só aparece em Licenças Ledgra para quem tem a permissão de valores
-      const ks = (exigir(contratos) ?? []) as (Pick<Contrato, "id" | "cliente_id" | "plano_id" | "modalidade" | "inicio" | "fim" | "situacao"> & {
+      const ks = (exigir(contratos) ?? []) as (Pick<
+        Contrato,
+        "id" | "cliente_id" | "plano_id" | "modalidade" | "inicio" | "fim" | "situacao"
+      > & {
         lic_contrato_produtos?: { produto_id: string }[];
       })[];
       return {

@@ -209,3 +209,8 @@ $P -f "$R/testes/152_voz_082.sql" 2>&1 | grep -v "^SET$"
 # 083: MDC - Pessoal, "Excluir minha conta" (passo do banco)
 $P -v ON_ERROR_STOP=1 -f "$R/migrations/083_pessoal_excluir_conta.sql" 2>&1 | grep -v NOTICE || true
 $P -f "$R/testes/153_excluir_conta_083.sql" 2>&1 | grep -v "^SET$"
+# 085: contrato de licença (modelo, emissão numerada, assinatura em papel ou pelo link)
+for f in testes/155_base_085.sql migrations/085_licenca_contrato_documento.sql; do
+  $P -v ON_ERROR_STOP=1 -f "$R/$f" 2>&1 | grep -v NOTICE || true
+done
+$P -f "$R/testes/156_contrato_085.sql" 2>&1 | grep -v "^SET$"

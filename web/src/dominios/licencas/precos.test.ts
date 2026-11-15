@@ -3,10 +3,28 @@ import { describe, expect, it } from "vitest";
 import { lerPreco, pacotesAlterados, precoComDesconto, precosAlterados, somaDoPacote } from "./precos";
 import type { Plano, Produto } from "./tipos";
 
-const prod = (id: string, preco: number): Produto => ({ id, org_id: "o", slug: id, nome: id, descricao: "", preco, ativo: true, ordem: 1, sistema: "ledgra" });
+const prod = (id: string, preco: number): Produto => ({
+  id,
+  org_id: "o",
+  slug: id,
+  nome: id,
+  descricao: "",
+  preco,
+  ativo: true,
+  ordem: 1,
+  sistema: "ledgra",
+});
 const P = [prod("fin", 100), prod("xml", 50), prod("link", 0)];
 const mapa = new Map(P.map((p) => [p.id, p]));
-const plano = (id: string, produtos: string[], preco: number): Plano => ({ id, org_id: "o", nome: id, descricao: "", preco, ativo: true, produtos });
+const plano = (id: string, produtos: string[], preco: number): Plano => ({
+  id,
+  org_id: "o",
+  nome: id,
+  descricao: "",
+  preco,
+  ativo: true,
+  produtos,
+});
 
 describe("precos", () => {
   it("lê o preço digitado em reais", () => {
@@ -29,8 +47,8 @@ describe("precos", () => {
   });
   it("só os pacotes que mudaram", () => {
     const pls = [plano("a", ["fin"], 90), plano("b", ["fin", "xml"], 120)];
-    expect(pacotesAlterados(pls, { a: { produtos: ["fin"], preco: "90" }, b: { produtos: ["xml", "fin", "link"], preco: "120" } })).toEqual([
-      { plano: pls[1], produtos: ["xml", "fin", "link"], preco: 120 },
-    ]);
+    expect(pacotesAlterados(pls, { a: { produtos: ["fin"], preco: "90" }, b: { produtos: ["xml", "fin", "link"], preco: "120" } })).toEqual(
+      [{ plano: pls[1], produtos: ["xml", "fin", "link"], preco: 120 }],
+    );
   });
 });

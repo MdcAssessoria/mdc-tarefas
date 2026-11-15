@@ -236,3 +236,12 @@ Toda tentativa vai para `hub_auditoria` (app `acessos`: `pin_criar`, `pin_trocar
 
 Limite conhecido: a leitura dos dados da organização continua protegida pelo RLS de sempre (só membros leem); o PIN é
 a porta da tela e a trava das mudanças de pessoas e acessos, não uma segunda trava de leitura.
+
+## 5.10 Assinatura de contrato de licença sem login (085, 15/11/2026)
+
+A página `/assinar/<código>` é aberta pelo cliente sem conta no HUB. Ela só chama duas funções liberadas para `anon`:
+`lic_assinatura_abrir` (devolve o texto do contrato daquele link) e `lic_assinatura_aceitar` (assina). O código tem 48
+letras aleatórias (192 bits); o banco guarda só o hash SHA-256, o link vence em 15 dias, gerar outro invalida o
+anterior e 10 tentativas com CPF diferente do indicado travam o link. Código errado não revela nada. A página não entra
+em buscadores e não envia o endereço a outros sites (`referrer: no-referrer`). A equipe só lê os contratos emitidos com
+a permissão de valores das licenças; a tabela não tem gravação direta (só as funções `lic_documento_*`).

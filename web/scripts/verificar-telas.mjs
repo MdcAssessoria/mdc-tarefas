@@ -1233,7 +1233,33 @@ const INTERACOES = {
     await dialogo.waitFor({ state: "detached", timeout: 3000 });
   },
   "/comercial": (p) => abrirEFecharModal(p, "Limpar funil", "Limpar funil"),
-  "/licencas/contratos": (p) => abrirEFecharModal(p, "Nova licença", "Novo contrato de licença"),
+  "/licencas/contratos": async (p, foto) => {
+    await abrirEFecharModal(p, "Nova licença", "Novo contrato de licença");
+    // contrato da licença (085): a licença do cliente 1 já tem o contrato emitido e o link enviado
+    await p.getByLabel("Ações da licença").first().click();
+    await p.getByRole("button", { name: "Contrato (PDF e assinatura)" }).click();
+    const janela = p.getByRole("dialog", { name: "Contrato da licença" });
+    await janela.waitFor({ timeout: 3000 });
+    await janela.getByText("LIC-2026/0001").waitFor({ timeout: 3000 });
+    await foto?.("contrato-emitido");
+    await p.keyboard.press("Escape");
+    await janela.waitFor({ state: "detached", timeout: 3000 });
+    // a licença do cliente 2 ainda não tem contrato: a janela pede quem assina e como (papel ou link)
+    await p.getByLabel("Ações da licença").nth(1).click();
+    await p.getByRole("button", { name: "Contrato (PDF e assinatura)" }).click();
+    await janela.getByRole("button", { name: "Emitir contrato" }).waitFor({ timeout: 3000 });
+    await janela.getByRole("button", { name: /Pelo link/ }).waitFor({ timeout: 3000 });
+    await foto?.("emitir");
+    await p.keyboard.press("Escape");
+    await janela.waitFor({ state: "detached", timeout: 3000 });
+  },
+  // assinatura pelo link (085): o texto aparece e o formulário pede nome, CPF e o "Li e concordo"
+  [`/assinar/${"ab".repeat(24)}`]: async (p, foto) => {
+    await p.getByText("Cláusula 1ª · Objeto").waitFor({ timeout: 3000 });
+    await p.getByRole("checkbox").waitFor({ timeout: 3000 });
+    await p.getByRole("button", { name: "Assinar contrato" }).waitFor({ timeout: 3000 });
+    await foto?.("formulario");
+  },
   "/licencas/produtos": async (p, foto) => {
     for (const aba of await p.getByRole("tab").all()) {
       await aba.click();
