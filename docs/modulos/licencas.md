@@ -162,7 +162,9 @@ desconhecida, desfazer, tela sem gravar direto) e `web/src/dominios/licencas/led
   Vendas, Estoque, Produção, Ledgra Auditor, Ledgra Legislação e Ledgra XML; preço zero até a MDC definir). Toda
   organização nova recebe a lista. Desde a 072 a **Legislação** (pesquisa, biblioteca, NCM/TIPI, tabelas de ICMS,
   códigos e consultas) é vendida sozinha (`ledgra-legislacao`); o **Auditor** (SPED, conferência, créditos e agenda)
-  já traz a Legislação junto, então não precisa contratar os dois.
+  já traz a Legislação junto, então não precisa contratar os dois. Desde a 083 o **Ledgra Ponto** (`ledgra-ponto`:
+  registro de ponto REP-P da Portaria 671 — celular, navegador ou quiosque, comprovante e arquivo AFD) também é vendido
+  sozinho, sem o Departamento Pessoal do Ledgra; o contrato full já o recebe.
 - **Modalidade do contrato** (`lic_contratos.modalidade`): **gratuita** (valor zero, a MDC escolhe os módulos),
   **pacote** (plano ou módulos com valor) e **full** ("Ledgra full" no assistente: todos os módulos ativos do Ledgra,
   inclusive os criados depois).
