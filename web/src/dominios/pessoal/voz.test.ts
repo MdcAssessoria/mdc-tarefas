@@ -1,14 +1,37 @@
 // Testes da leitura da fala do MDC · Pessoal (frase vira lançamento).
 import { describe, expect, it } from "vitest";
-import { aprender, descricaoDaFrase, faltaNoFalado, lembrar, palavrasChave, interpretarFala, lerData, lerValor, quebrarFrases } from "./voz";
+import {
+  aprender,
+  descricaoDaFrase,
+  faltaNoFalado,
+  lembrar,
+  palavrasChave,
+  interpretarFala,
+  lerData,
+  lerValor,
+  quebrarFrases,
+} from "./voz";
 import type { CategoriaFala } from "./voz";
 
 const HOJE = "2026-11-14";
 const nomes: [string, "receita" | "despesa"][] = [
-  ["Salário", "receita"], ["Renda extra", "receita"], ["Aluguel recebido", "receita"], ["Outras entradas", "receita"],
-  ["Moradia", "despesa"], ["Contas da casa", "despesa"], ["Mercado", "despesa"], ["Restaurante e delivery", "despesa"],
-  ["Transporte", "despesa"], ["Saúde", "despesa"], ["Educação", "despesa"], ["Lazer", "despesa"], ["Compras pessoais", "despesa"],
-  ["Cartão e empréstimos", "despesa"], ["Impostos e taxas", "despesa"], ["Outros gastos", "despesa"], ["Pet", "despesa"],
+  ["Salário", "receita"],
+  ["Renda extra", "receita"],
+  ["Aluguel recebido", "receita"],
+  ["Outras entradas", "receita"],
+  ["Moradia", "despesa"],
+  ["Contas da casa", "despesa"],
+  ["Mercado", "despesa"],
+  ["Restaurante e delivery", "despesa"],
+  ["Transporte", "despesa"],
+  ["Saúde", "despesa"],
+  ["Educação", "despesa"],
+  ["Lazer", "despesa"],
+  ["Compras pessoais", "despesa"],
+  ["Cartão e empréstimos", "despesa"],
+  ["Impostos e taxas", "despesa"],
+  ["Outros gastos", "despesa"],
+  ["Pet", "despesa"],
 ];
 const CATS: CategoriaFala[] = nomes.map(([nome, tipo]) => ({ id: nome, nome, tipo }));
 
@@ -51,7 +74,10 @@ describe("lerData", () => {
 
 describe("quebrarFrases", () => {
   it("um lançamento por verbo", () => {
-    expect(quebrarFrases("paguei a luz 230 ontem e recebi o salário de 5 mil")).toEqual(["paguei a luz 230 ontem", "recebi o salário de 5 mil"]);
+    expect(quebrarFrases("paguei a luz 230 ontem e recebi o salário de 5 mil")).toEqual([
+      "paguei a luz 230 ontem",
+      "recebi o salário de 5 mil",
+    ]);
     expect(quebrarFrases("gastei 50 com pão e leite")).toEqual(["gastei 50 com pão e leite"]);
   });
 });
@@ -69,7 +95,11 @@ describe("interpretarFala", () => {
   });
   it("conta futura fica em aberto", () => {
     expect(interpretarFala("tenho que pagar a escola dia 20, 900 reais", CATS, HOJE)[0]).toMatchObject({
-      tipo: "pagar", valor: 900, categoria: "Educação", data: "2026-11-20", pago: false,
+      tipo: "pagar",
+      valor: 900,
+      categoria: "Educação",
+      data: "2026-11-20",
+      pago: false,
     });
   });
   it("categoria criada pela família pelo nome", () => {
@@ -100,7 +130,11 @@ describe("descricaoDaFrase", () => {
 
 describe("frases mais soltas, sem IA", () => {
   it("jeitos comuns de falar", () => {
-    expect(interpretarFala("passei no posto e coloquei uns 130", CATS, HOJE)[0]).toMatchObject({ tipo: "pagar", valor: 130, categoria: "Transporte" });
+    expect(interpretarFala("passei no posto e coloquei uns 130", CATS, HOJE)[0]).toMatchObject({
+      tipo: "pagar",
+      valor: 130,
+      categoria: "Transporte",
+    });
     expect(interpretarFala("abasteci 200", CATS, HOJE)[0]).toMatchObject({ tipo: "pagar", valor: 200, categoria: "Transporte" });
     expect(interpretarFala("dei 150 pro encanador", CATS, HOJE)[0]).toMatchObject({ tipo: "pagar", valor: 150, categoria: "Moradia" });
     expect(interpretarFala("a Mari me passou 300", CATS, HOJE)[0]).toMatchObject({ tipo: "receber", valor: 300 });
@@ -129,7 +163,12 @@ describe("aprende com a família", () => {
   });
   it("guarda no máximo 300", () => {
     let mapa = {};
-    for (let i = 0; i < 310; i++) mapa = aprender(mapa, { tipo: "pagar", descricao: `loja${"x".repeat(i % 26)} n${String.fromCharCode(97 + (i % 26))}${String.fromCharCode(97 + Math.floor(i / 26))}`, categoria: "Lazer" });
+    for (let i = 0; i < 310; i++)
+      mapa = aprender(mapa, {
+        tipo: "pagar",
+        descricao: `loja${"x".repeat(i % 26)} n${String.fromCharCode(97 + (i % 26))}${String.fromCharCode(97 + Math.floor(i / 26))}`,
+        categoria: "Lazer",
+      });
     expect(Object.keys(mapa).length).toBe(300);
   });
 });

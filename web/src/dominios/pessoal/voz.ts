@@ -24,40 +24,118 @@ export interface LancamentoFalado {
 
 /** Tira acento e põe em minúsculas, para comparar palavras. */
 export function semAcento(t: string): string {
-  return t
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .toLowerCase();
+  return t.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 }
 
-const VERBOS_ENTRADA = /\b(recebi|receber|recebo|ganhei|ganho|entrou|entrar|entra|caiu|cai|vendi|me pagaram|me pagou|pingou|me passou|me passaram|me deu|me deram|me mandou|me mandaram|me transferiu|me devolveu)\b/;
-const VERBOS_SAIDA = /\b(gastei|gasto|paguei|pagar|pago|comprei|compra|saiu|sair|tenho que pagar|vou pagar|debitou|transferi|coloquei|botei|abasteci|dei|torrei|passei|fiz|mandei)\b/;
-const FUTURO = /\b(vou pagar|vou receber|tenho que pagar|preciso pagar|vai vencer|vence|vencer|a pagar|a receber|amanha|semana que vem|mes que vem|proximo mes|vai entrar|vai cair)\b/;
+const VERBOS_ENTRADA =
+  /\b(recebi|receber|recebo|ganhei|ganho|entrou|entrar|entra|caiu|cai|vendi|me pagaram|me pagou|pingou|me passou|me passaram|me deu|me deram|me mandou|me mandaram|me transferiu|me devolveu)\b/;
+const VERBOS_SAIDA =
+  /\b(gastei|gasto|paguei|pagar|pago|comprei|compra|saiu|sair|tenho que pagar|vou pagar|debitou|transferi|coloquei|botei|abasteci|dei|torrei|passei|fiz|mandei)\b/;
+const FUTURO =
+  /\b(vou pagar|vou receber|tenho que pagar|preciso pagar|vai vencer|vence|vencer|a pagar|a receber|amanha|semana que vem|mes que vem|proximo mes|vai entrar|vai cair)\b/;
 
 /** Palavras do dia a dia que apontam para cada tipo do plano simples (nome da categoria sem acento). */
 const PISTAS: { categoria: string; tipo: "receita" | "despesa"; palavras: RegExp }[] = [
-  { categoria: "contas da casa", tipo: "despesa", palavras: /\b(luz|energia|enel|cpfl|elektro|agua|sabesp|gas|internet|wi-?fi|telefone|celular|conta de)\b/ },
-  { categoria: "mercado", tipo: "despesa", palavras: /\b(mercado|supermercado|mercadinho|feira|padaria|acougue|hortifruti|sacolao|atacadao|assai)\b/ },
-  { categoria: "restaurante e delivery", tipo: "despesa", palavras: /\b(restaurante|lanche|lanchonete|ifood|delivery|pizza|almoco|jantar|hamburguer|sorvete|cafe)\b/ },
-  { categoria: "moradia", tipo: "despesa", palavras: /\b(aluguel|condominio|iptu|financiamento da casa|prestacao da casa|reforma|pedreiro|encanador|eletricista|diarista|faxina|material de construcao)\b/ },
-  { categoria: "transporte", tipo: "despesa", palavras: /\b(gasolina|combustivel|etanol|alcool|diesel|posto|abasteci|abastecer|uber|99|onibus|metro|estacionamento|pedagio|mecanico|oficina|ipva|seguro do carro|carro|moto)\b/ },
-  { categoria: "saude", tipo: "despesa", palavras: /\b(farmacia|drogaria|remedio|medico|consulta|dentista|exame|plano de saude|hospital|psicologo|terapia)\b/ },
+  {
+    categoria: "contas da casa",
+    tipo: "despesa",
+    palavras: /\b(luz|energia|enel|cpfl|elektro|agua|sabesp|gas|internet|wi-?fi|telefone|celular|conta de)\b/,
+  },
+  {
+    categoria: "mercado",
+    tipo: "despesa",
+    palavras: /\b(mercado|supermercado|mercadinho|feira|padaria|acougue|hortifruti|sacolao|atacadao|assai)\b/,
+  },
+  {
+    categoria: "restaurante e delivery",
+    tipo: "despesa",
+    palavras: /\b(restaurante|lanche|lanchonete|ifood|delivery|pizza|almoco|jantar|hamburguer|sorvete|cafe)\b/,
+  },
+  {
+    categoria: "moradia",
+    tipo: "despesa",
+    palavras:
+      /\b(aluguel|condominio|iptu|financiamento da casa|prestacao da casa|reforma|pedreiro|encanador|eletricista|diarista|faxina|material de construcao)\b/,
+  },
+  {
+    categoria: "transporte",
+    tipo: "despesa",
+    palavras:
+      /\b(gasolina|combustivel|etanol|alcool|diesel|posto|abasteci|abastecer|uber|99|onibus|metro|estacionamento|pedagio|mecanico|oficina|ipva|seguro do carro|carro|moto)\b/,
+  },
+  {
+    categoria: "saude",
+    tipo: "despesa",
+    palavras: /\b(farmacia|drogaria|remedio|medico|consulta|dentista|exame|plano de saude|hospital|psicologo|terapia)\b/,
+  },
   { categoria: "educacao", tipo: "despesa", palavras: /\b(escola|faculdade|curso|mensalidade|livro|material escolar|apostila|ingles)\b/ },
-  { categoria: "lazer", tipo: "despesa", palavras: /\b(cinema|viagem|passeio|show|bar|netflix|spotify|streaming|parque|hotel|praia|festa)\b/ },
-  { categoria: "compras pessoais", tipo: "despesa", palavras: /\b(roupa|sapato|tenis|salao|cabelo|barbeiro|manicure|perfume|presente|maquiagem|loja)\b/ },
-  { categoria: "cartao e emprestimos", tipo: "despesa", palavras: /\b(cartao|fatura|emprestimo|juros|parcela do banco|consignado|cheque especial)\b/ },
+  {
+    categoria: "lazer",
+    tipo: "despesa",
+    palavras: /\b(cinema|viagem|passeio|show|bar|netflix|spotify|streaming|parque|hotel|praia|festa)\b/,
+  },
+  {
+    categoria: "compras pessoais",
+    tipo: "despesa",
+    palavras: /\b(roupa|sapato|tenis|salao|cabelo|barbeiro|manicure|perfume|presente|maquiagem|loja)\b/,
+  },
+  {
+    categoria: "cartao e emprestimos",
+    tipo: "despesa",
+    palavras: /\b(cartao|fatura|emprestimo|juros|parcela do banco|consignado|cheque especial)\b/,
+  },
   { categoria: "impostos e taxas", tipo: "despesa", palavras: /\b(imposto|irpf|imposto de renda|taxa|multa|darf|licenciamento)\b/ },
-  { categoria: "salario", tipo: "receita", palavras: /\b(salario|pagamento do trabalho|holerite|pro-?labore|adiantamento|decimo terceiro|ferias)\b/ },
+  {
+    categoria: "salario",
+    tipo: "receita",
+    palavras: /\b(salario|pagamento do trabalho|holerite|pro-?labore|adiantamento|decimo terceiro|ferias)\b/,
+  },
   { categoria: "aluguel recebido", tipo: "receita", palavras: /\b(aluguel|inquilino)\b/ },
   { categoria: "renda extra", tipo: "receita", palavras: /\b(extra|bico|freela|venda|vendi|comissao|servico|trabalho)\b/ },
 ];
 
 const UNIDADES: Record<string, number> = {
-  um: 1, uma: 1, dois: 2, duas: 2, tres: 3, quatro: 4, cinco: 5, seis: 6, sete: 7, oito: 8, nove: 9, dez: 10,
-  onze: 11, doze: 12, treze: 13, quatorze: 14, catorze: 14, quinze: 15, dezesseis: 16, dezessete: 17, dezoito: 18,
-  dezenove: 19, vinte: 20, trinta: 30, quarenta: 40, cinquenta: 50, sessenta: 60, setenta: 70, oitenta: 80, noventa: 90,
-  cem: 100, cento: 100, duzentos: 200, duzentas: 200, trezentos: 300, quatrocentos: 400, quinhentos: 500,
-  seiscentos: 600, setecentos: 700, oitocentos: 800, novecentos: 900,
+  um: 1,
+  uma: 1,
+  dois: 2,
+  duas: 2,
+  tres: 3,
+  quatro: 4,
+  cinco: 5,
+  seis: 6,
+  sete: 7,
+  oito: 8,
+  nove: 9,
+  dez: 10,
+  onze: 11,
+  doze: 12,
+  treze: 13,
+  quatorze: 14,
+  catorze: 14,
+  quinze: 15,
+  dezesseis: 16,
+  dezessete: 17,
+  dezoito: 18,
+  dezenove: 19,
+  vinte: 20,
+  trinta: 30,
+  quarenta: 40,
+  cinquenta: 50,
+  sessenta: 60,
+  setenta: 70,
+  oitenta: 80,
+  noventa: 90,
+  cem: 100,
+  cento: 100,
+  duzentos: 200,
+  duzentas: 200,
+  trezentos: 300,
+  quatrocentos: 400,
+  quinhentos: 500,
+  seiscentos: 600,
+  setecentos: 700,
+  oitocentos: 800,
+  novecentos: 900,
 };
 
 /** Valor em reais escrito com números ("1.250,50", "230", "R$ 5000", "5 mil", "2,5 mil") ou por extenso ("cinquenta"). */
@@ -125,7 +203,9 @@ export function lerData(frase: string, hoje: string, futuro: boolean): string {
 /** Quebra a fala em frases, uma por lançamento: "paguei a luz 230 e recebi o salário" vira duas. */
 export function quebrarFrases(texto: string): string[] {
   return texto
-    .split(/[.;\n]+|,?\s+e\s+(?=(?:tambem\s+)?(?:gastei|paguei|comprei|recebi|ganhei|entrou|caiu|vendi|vou pagar|tenho que pagar|vou receber)\b)/i)
+    .split(
+      /[.;\n]+|,?\s+e\s+(?=(?:tambem\s+)?(?:gastei|paguei|comprei|recebi|ganhei|entrou|caiu|vendi|vou pagar|tenho que pagar|vou receber)\b)/i,
+    )
     .map((f) => f.trim())
     .filter((f) => f.length > 1);
 }
@@ -133,7 +213,36 @@ export function quebrarFrases(texto: string): string[] {
 /** O que a família já ensinou: "pagar|mercadinho ze" → id da categoria. Guardado no aparelho (vozAprendizado.ts). */
 export type Aprendido = Record<string, string>;
 
-const PALAVRAS_VAZIAS = new Set(["o", "a", "os", "as", "de", "do", "da", "dos", "das", "no", "na", "nos", "nas", "em", "um", "uma", "com", "pro", "pra", "para", "por", "pelo", "pela", "e", "uns", "umas", "meu", "minha"]);
+const PALAVRAS_VAZIAS = new Set([
+  "o",
+  "a",
+  "os",
+  "as",
+  "de",
+  "do",
+  "da",
+  "dos",
+  "das",
+  "no",
+  "na",
+  "nos",
+  "nas",
+  "em",
+  "um",
+  "uma",
+  "com",
+  "pro",
+  "pra",
+  "para",
+  "por",
+  "pelo",
+  "pela",
+  "e",
+  "uns",
+  "umas",
+  "meu",
+  "minha",
+]);
 
 /** Palavras que identificam um lançamento (até 3, sem acento, sem artigos e números). "Mercadinho do Zé" → "mercadinho ze". */
 export function palavrasChave(texto: string): string {
@@ -167,7 +276,12 @@ export function lembrar(mapa: Aprendido, frase: string, tipo: "pagar" | "receber
   return melhor?.id ?? null;
 }
 
-function acharCategoria(frase: string, tipo: "pagar" | "receber", categorias: CategoriaFala[], aprendido: Aprendido = {}): CategoriaFala | null {
+function acharCategoria(
+  frase: string,
+  tipo: "pagar" | "receber",
+  categorias: CategoriaFala[],
+  aprendido: Aprendido = {},
+): CategoriaFala | null {
   const t = semAcento(frase);
   const doTipo = categorias.filter((c) => c.tipo === (tipo === "pagar" ? "despesa" : "receita"));
   // 0º o que a família já ensinou
@@ -194,8 +308,14 @@ export function descricaoDaFrase(frase: string): string {
   const limpa = frase
     .replace(/(?:r\$\s*)?\d[\d.,]*\s*(?:mil\b)?(?:\s*e\s+\d{1,3}\b)?/gi, " ")
     .replace(/\b(reais|real|conto|contos|pila)\b/gi, " ")
-    .replace(/\b(hoje|ontem|anteontem|amanhã|amanha|depois de amanhã|semana que vem|mês que vem|mes que vem|próximo mês|dia\s*\d*)\b/gi, " ")
-    .replace(/^\s*(eu\s+)?(também\s+|tambem\s+)?(gastei|paguei|comprei|recebi|ganhei|entrou|caiu|vendi|vou pagar|tenho que pagar|preciso pagar|vou receber|me pagaram|me pagou|coloquei|botei|abasteci|dei|torrei|passei|fiz|mandei)\b/i, " ")
+    .replace(
+      /\b(hoje|ontem|anteontem|amanhã|amanha|depois de amanhã|semana que vem|mês que vem|mes que vem|próximo mês|dia\s*\d*)\b/gi,
+      " ",
+    )
+    .replace(
+      /^\s*(eu\s+)?(também\s+|tambem\s+)?(gastei|paguei|comprei|recebi|ganhei|entrou|caiu|vendi|vou pagar|tenho que pagar|preciso pagar|vou receber|me pagaram|me pagou|coloquei|botei|abasteci|dei|torrei|passei|fiz|mandei)\b/i,
+      " ",
+    )
     .replace(/^\s*(com|no|na|nos|nas|de|do|da|dos|das|o|a|os|as|um|uma|em|pelo|pela|pra|para)\s+/i, " ")
     .replace(/^\s*(com|no|na|nos|nas|de|do|da|dos|das|o|a|os|as|um|uma|em|pelo|pela|pra|para)\s+/i, " ")
     .replace(/\s+(de|do|da|no|na|em|e|com|por|pra|para)\s*$/i, " ")
@@ -213,7 +333,9 @@ export function interpretarFrase(frase: string, categorias: CategoriaFala[], hoj
   let tipo: "pagar" | "receber" = entrada ? "receber" : "pagar";
   // sem verbo: o tipo vem da pista ("salário 5 mil" é entrada)
   if (!VERBOS_ENTRADA.test(t) && !VERBOS_SAIDA.test(t)) {
-    const soEntrada = PISTAS.some((p) => p.tipo === "receita" && p.categoria !== "renda extra" && p.categoria !== "aluguel recebido" && p.palavras.test(t));
+    const soEntrada = PISTAS.some(
+      (p) => p.tipo === "receita" && p.categoria !== "renda extra" && p.categoria !== "aluguel recebido" && p.palavras.test(t),
+    );
     if (soEntrada) tipo = "receber";
   }
   const futuro = FUTURO.test(t);

@@ -156,14 +156,17 @@ export function FalarLancamento({
     if (IA_LIGADA && (!itens.length || itens.some((l) => faltaNoFalado(l)))) {
       setEntendendo(true);
       try {
-        const r = await chamarFuncao<{ indisponivel?: boolean; lancamentos?: (Omit<LancamentoFalado, "categoria"> & { categoria: string | null })[] }>(
-          "pessoal-voz",
-          { corpo: { org: org.id, texto: frase, hoje, categorias: categorias.map((c) => ({ nome: c.nome, tipo: c.tipo })) } },
-        );
+        const r = await chamarFuncao<{
+          indisponivel?: boolean;
+          lancamentos?: (Omit<LancamentoFalado, "categoria"> & { categoria: string | null })[];
+        }>("pessoal-voz", {
+          corpo: { org: org.id, texto: frase, hoje, categorias: categorias.map((c) => ({ nome: c.nome, tipo: c.tipo })) },
+        });
         if (r.lancamentos?.length) {
           itens = r.lancamentos.map((l) => ({
             ...l,
-            categoria: categorias.find((c) => c.nome === l.categoria && c.tipo === (l.tipo === "pagar" ? "despesa" : "receita"))?.id ?? null,
+            categoria:
+              categorias.find((c) => c.nome === l.categoria && c.tipo === (l.tipo === "pagar" ? "despesa" : "receita"))?.id ?? null,
           }));
         }
       } catch (e) {
@@ -212,7 +215,10 @@ export function FalarLancamento({
         feitos++;
       }
       // aprende com o que a pessoa conferiu (e corrigiu): na próxima fala o app já acerta
-      guardarAprendido(org.id, lista.reduce((m, c) => aprender(m, c), lerAprendido(org.id)));
+      guardarAprendido(
+        org.id,
+        lista.reduce((m, c) => aprender(m, c), lerAprendido(org.id)),
+      );
       avisarMudanca();
       avisoRapido(feitos === 1 ? "Lançamento salvo" : `${feitos} lançamentos salvos`);
       aoFechar();
@@ -247,13 +253,13 @@ export function FalarLancamento({
       >
         <div className="space-y-3 text-[15px] text-neutral-700">
           <p>
-            Fale como numa conversa: <b>&quot;paguei a luz 230 ontem&quot;</b> ou <b>&quot;recebi o salário de 5 mil&quot;</b>. O app monta o lançamento e
-            você confere antes de salvar. Nada é gravado sozinho.
+            Fale como numa conversa: <b>&quot;paguei a luz 230 ontem&quot;</b> ou <b>&quot;recebi o salário de 5 mil&quot;</b>. O app monta
+            o lançamento e você confere antes de salvar. Nada é gravado sozinho.
           </p>
           <ul className="space-y-2 rounded-xl bg-[#F1EEE5] p-3 text-[14px]">
             <li className="flex gap-2">
-              <Icone nome="microfone" className="mt-0.5 h-4 w-4 shrink-0 text-[var(--marca)]" />
-              A fala vira texto pelo próprio celular ou navegador (no Chrome, pelo serviço de voz do Google; no iPhone, pela Apple).
+              <Icone nome="microfone" className="mt-0.5 h-4 w-4 shrink-0 text-[var(--marca)]" />A fala vira texto pelo próprio celular ou
+              navegador (no Chrome, pelo serviço de voz do Google; no iPhone, pela Apple).
             </li>
             {IA_LIGADA ? (
               <li className="flex gap-2">
@@ -262,11 +268,13 @@ export function FalarLancamento({
               </li>
             ) : (
               <li className="flex gap-2">
-                <Icone nome="escudo" className="mt-0.5 h-4 w-4 shrink-0 text-[var(--marca)]" />O app entende a frase aqui mesmo, sem mandar para nenhuma IA, e aprende com o que você corrige.
+                <Icone nome="escudo" className="mt-0.5 h-4 w-4 shrink-0 text-[var(--marca)]" />O app entende a frase aqui mesmo, sem mandar
+                para nenhuma IA, e aprende com o que você corrige.
               </li>
             )}
             <li className="flex gap-2">
-              <Icone nome="check" className="mt-0.5 h-4 w-4 shrink-0 text-[var(--marca)]" />O áudio e a frase não ficam guardados. Fica o lançamento que você salvar e, neste aparelho, o que o app aprendeu.
+              <Icone nome="check" className="mt-0.5 h-4 w-4 shrink-0 text-[var(--marca)]" />O áudio e a frase não ficam guardados. Fica o
+              lançamento que você salvar e, neste aparelho, o que o app aprendeu.
             </li>
           </ul>
         </div>
@@ -284,7 +292,12 @@ export function FalarLancamento({
       rodape={
         cartoes ? (
           <>
-            <button type="button" className="btn-primario min-h-12 flex-1 text-base sm:flex-none" disabled={!!pendencia || salvando || !lista.length} onClick={() => void salvar()}>
+            <button
+              type="button"
+              className="btn-primario min-h-12 flex-1 text-base sm:flex-none"
+              disabled={!!pendencia || salvando || !lista.length}
+              onClick={() => void salvar()}
+            >
               <Icone nome="check" className="h-5 w-5" />
               {salvando ? "Gravando…" : (pendencia ?? (lista.length === 1 ? "Salvar" : `Salvar os ${lista.length}`))}
             </button>
@@ -295,7 +308,12 @@ export function FalarLancamento({
           </>
         ) : (
           <>
-            <button type="button" className="btn-primario min-h-12 flex-1 text-base sm:flex-none" disabled={entendendo || ouvindo || texto.trim().length < 3} onClick={() => void entender()}>
+            <button
+              type="button"
+              className="btn-primario min-h-12 flex-1 text-base sm:flex-none"
+              disabled={entendendo || ouvindo || texto.trim().length < 3}
+              onClick={() => void entender()}
+            >
               <Icone nome="check" className="h-5 w-5" />
               {entendendo ? "Entendendo…" : "Montar lançamento"}
             </button>
@@ -330,7 +348,7 @@ export function FalarLancamento({
               maxLength={600}
               value={texto}
               onChange={(e) => setTexto(e.target.value)}
-              placeholder='Ex.: paguei a luz 230 ontem e recebi o salário de 5 mil'
+              placeholder="Ex.: paguei a luz 230 ontem e recebi o salário de 5 mil"
             />
           </label>
           {!temVoz && (
@@ -348,7 +366,10 @@ export function FalarLancamento({
             const opcoes = categorias.filter((x) => x.tipo === (gasto ? "despesa" : "receita"));
             const falta = faltaNoFalado(c);
             return (
-              <section key={c.chave} className={`space-y-3 rounded-2xl border bg-white p-3.5 ${falta ? "border-amber-400" : "border-[var(--borda)]"}`}>
+              <section
+                key={c.chave}
+                className={`space-y-3 rounded-2xl border bg-white p-3.5 ${falta ? "border-amber-400" : "border-[var(--borda)]"}`}
+              >
                 <div className="flex items-center gap-2">
                   <div className="grid flex-1 grid-cols-2 gap-1 rounded-xl bg-[#E9E5D9] p-1" role="group" aria-label="Gasto ou entrada">
                     {(["pagar", "receber"] as const).map((t) => (
@@ -358,7 +379,11 @@ export function FalarLancamento({
                         aria-pressed={c.tipo === t}
                         onClick={() => mudar(c.chave, { tipo: t })}
                         className={`flex min-h-9 items-center justify-center gap-1.5 rounded-lg text-sm font-semibold ${
-                          c.tipo === t ? (t === "pagar" ? "bg-white text-red-700 shadow-sm" : "bg-white text-emerald-800 shadow-sm") : "text-neutral-600"
+                          c.tipo === t
+                            ? t === "pagar"
+                              ? "bg-white text-red-700 shadow-sm"
+                              : "bg-white text-emerald-800 shadow-sm"
+                            : "text-neutral-600"
                         }`}
                       >
                         <Icone nome={t === "pagar" ? "seta-saida" : "seta-entrada"} className="h-4 w-4" />
@@ -378,7 +403,12 @@ export function FalarLancamento({
                 <div className="grid grid-cols-2 gap-3">
                   <label className="campo">
                     <span>Valor (R$)</span>
-                    <input inputMode="decimal" value={c.valorTexto} onChange={(e) => mudar(c.chave, { valorTexto: e.target.value })} placeholder="0,00" />
+                    <input
+                      inputMode="decimal"
+                      value={c.valorTexto}
+                      onChange={(e) => mudar(c.chave, { valorTexto: e.target.value })}
+                      placeholder="0,00"
+                    />
                   </label>
                   <label className="campo">
                     <span>Data</span>
@@ -401,9 +431,16 @@ export function FalarLancamento({
                   </label>
                 </div>
                 <label className="flex min-h-10 items-center gap-2 text-sm font-medium text-neutral-800">
-                  <input type="checkbox" className="h-5 w-5" checked={c.pago} onChange={(e) => mudar(c.chave, { pago: e.target.checked })} />
+                  <input
+                    type="checkbox"
+                    className="h-5 w-5"
+                    checked={c.pago}
+                    onChange={(e) => mudar(c.chave, { pago: e.target.checked })}
+                  />
                   {gasto ? "Já paguei" : "Já recebi"}
-                  {!c.pago && <span className="text-[13px] font-normal text-neutral-500">(fica em Contas, para {gasto ? "pagar" : "receber"})</span>}
+                  {!c.pago && (
+                    <span className="text-[13px] font-normal text-neutral-500">(fica em Contas, para {gasto ? "pagar" : "receber"})</span>
+                  )}
                 </label>
                 {falta && (
                   <p className="text-[13px] font-medium text-amber-800">

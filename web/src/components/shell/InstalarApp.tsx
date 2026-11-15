@@ -190,8 +190,11 @@ function JanelaInstalar({ situacao, aoFechar }: { situacao: Situacao; aoFechar: 
     >
       <div className="space-y-4 text-sm text-[var(--texto)]">
         <div className="flex items-center gap-3 rounded-xl bg-[var(--fundo)] p-3">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={caminho("/icone-hub-mdc-180.png")} alt="" className="h-12 w-12 rounded-xl" />
+          <img
+            src={caminho(/Pessoal/.test(nomeApp) ? "/icone-pessoal-180.png" : "/icone-hub-mdc-180.png")}
+            alt=""
+            className="h-12 w-12 rounded-xl"
+          />
           <p>
             Este é o ícone que vai aparecer na tela do celular, com o nome <b>{nomeApp}</b>.
           </p>
@@ -227,7 +230,8 @@ function JanelaInstalar({ situacao, aoFechar }: { situacao: Situacao; aoFechar: 
               Role a lista para cima e toque em <b>Adicionar à Tela de Início</b>.
             </Passo>
             <Passo n={3} icone="check">
-              Deixe ligado <b>Abrir como App Web</b>, se aparecer, e toque em <b>Adicionar</b>, no canto de cima.
+              Confira se <b>Abrir como App Web</b> está <b>ligado</b> (verde) e toque em <b>Adicionar</b>, no canto de cima. Se ficar
+              desligado, o ícone abre no navegador, com a barra de endereço.
             </Passo>
             <Passo n={4} icone="celular">
               Pronto: abra o {nomeApp} pelo ícone novo na tela do iPhone.
