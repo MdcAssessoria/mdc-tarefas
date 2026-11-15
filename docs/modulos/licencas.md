@@ -164,7 +164,8 @@ desconhecida, desfazer, tela sem gravar direto) e `web/src/dominios/licencas/led
   códigos e consultas) é vendida sozinha (`ledgra-legislacao`); o **Auditor** (SPED, conferência, créditos e agenda)
   já traz a Legislação junto, então não precisa contratar os dois. Desde a 083 o **Ledgra Ponto** (`ledgra-ponto`:
   registro de ponto REP-P da Portaria 671 — celular, navegador ou quiosque, comprovante e arquivo AFD) também é vendido
-  sozinho, sem o Departamento Pessoal do Ledgra; o contrato full já o recebe.
+  sozinho, sem o Departamento Pessoal do Ledgra; o contrato full já o recebe. Desde a 084 o **Ledgra DP** (`ledgra-dp`)
+  libera o Departamento Pessoal operado pela própria empresa (sem a MDC).
 - **Modalidade do contrato** (`lic_contratos.modalidade`): **gratuita** (valor zero, a MDC escolhe os módulos),
   **pacote** (plano ou módulos com valor) e **full** ("Ledgra full" no assistente: todos os módulos ativos do Ledgra,
   inclusive os criados depois).
