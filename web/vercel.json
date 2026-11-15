@@ -1,0 +1,4 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "rewrites": [{ "source": "/.well-known/assetlinks.json", "destination": "/hub-mdc/api/android/assetlinks" }]
+}

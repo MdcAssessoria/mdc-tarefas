@@ -398,7 +398,10 @@ export default function EntradaPessoal() {
             {modo === "criar" && (
               <p className="text-xs text-neutral-500">
                 Ao criar a conta, você concorda que a MDC Assessoria guarde estes dados para o funcionamento do app (LGPD, Lei 13.709/2018).
-                Seus lançamentos são só seus e de quem você convidar.
+                Seus lançamentos são só seus e de quem você convidar.{" "}
+                <a href={caminho("/pessoal/privacidade")} className="font-semibold text-[#8A6A2A] underline">
+                  Política de privacidade
+                </a>
               </p>
             )}
           </form>

@@ -187,6 +187,28 @@ Desenho aprovado pelo Edvaldo no quadro "MDC · Pessoal — desenho do app" (pro
   a frase sem mandar para nenhuma IA. Nem o áudio nem o texto ficam guardados (`app.pessoal_voz_uso` guarda só quem usou e quando,
   por 2 dias, para o limite).
 
+## 4.6 Privacidade, excluir a conta e Google Play (migração 083)
+
+- **Política de privacidade** pública em `/pessoal/privacidade`. O link fica no cadastro e em Família › Sua conta.
+- **Excluir minha conta** em `/pessoal/excluir-conta` (pública; com login, pede a palavra EXCLUIR). O link fica em
+  Família › Sua conta. A exclusão é feita em dois passos:
+  1. `pessoal_excluir_conta_preparar` (083):
+     - família em que a pessoa está sozinha: é apagada inteira (on delete cascade; o banco marca `app.pode_apagar`);
+     - família com mais gente: a pessoa sai, e se era a única responsável a mais antiga vira responsável;
+     - a autorização de contato da MDC é retirada;
+     - conta que também é do HUB ou do Portal é barrada.
+  2. Função `pessoal-excluir-conta` apaga o login (chave de serviço só na função).
+
+  O apagar da família inteira foi conferido em produção numa simulação desfeita no fim.
+- **App Android (Google Play):** o mesmo site em tela cheia (TWA), pacote `com.mdcassessoria.pessoal`.
+  - O `/.well-known/assetlinks.json` sai de `api/android/assetlinks` (rewrite em `web/vercel.json`, porque o Next não
+    reescreve fora do `/hub-mdc`).
+  - A impressão digital fica em `ANDROID_SHA256` na Vercel.
+  - Passo a passo, textos da ficha e respostas de segurança em `docs/modulos/pessoal-play-store.md`; imagens em
+    `docs/loja-pessoal/`.
+- **Microfone:** o cabeçalho `Permissions-Policy` libera `microphone=(self)`. Antes estava bloqueado, e o "lançar falando"
+  não abria o microfone.
+
 ## 5. Arquivos
 
 - Banco: `supabase/migrations/075_mdc_pessoal.sql` e `076_pessoal_resumo_diario.sql`; testes

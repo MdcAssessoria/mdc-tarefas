@@ -38,6 +38,7 @@ const nextConfig: NextConfig = {
   // Ferramentas abertas (sem login, ex.: Simulador de Regime): páginas estáticas em public/ferramentas/<nome>/index.html,
   // servidas no endereço limpo /hub-mdc/ferramentas/<nome>. Catálogo em dominios/comercial/ferramentas.ts.
   async rewrites() {
+    // (o /.well-known/assetlinks.json do app Android fica na raiz do domínio, fora do /hub-mdc: rewrite no vercel.json)
     return [{ source: "/ferramentas/:nome([a-z0-9-]+)", destination: "/ferramentas/:nome/index.html" }];
   },
   async headers() {
@@ -48,7 +49,8 @@ const nextConfig: NextConfig = {
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
           { key: "X-Frame-Options", value: "SAMEORIGIN" },
-          { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+          // microfone só para o próprio site: o "lançar falando" do MDC · Pessoal (082) precisa dele
+          { key: "Permissions-Policy", value: "camera=(), microphone=(self), geolocation=()" },
         ],
       },
       // ferramentas abertas podem ser embutidas no site da MDC (WordPress); o navegador segue o frame-ancestors

@@ -206,3 +206,6 @@ $P -f "$R/testes/151_plano_simples_081.sql" 2>&1 | grep -v "^SET$"
 # 082: MDC - Pessoal, lançar falando (quem pode mandar a fala para a IA e limite de uso)
 $P -v ON_ERROR_STOP=1 -f "$R/migrations/082_pessoal_voz.sql" 2>&1 | grep -v NOTICE || true
 $P -f "$R/testes/152_voz_082.sql" 2>&1 | grep -v "^SET$"
+# 083: MDC - Pessoal, "Excluir minha conta" (passo do banco)
+$P -v ON_ERROR_STOP=1 -f "$R/migrations/083_pessoal_excluir_conta.sql" 2>&1 | grep -v NOTICE || true
+$P -f "$R/testes/153_excluir_conta_083.sql" 2>&1 | grep -v "^SET$"

@@ -392,6 +392,23 @@ export default function TelaFamilia() {
           }}
         />
       )}
+      {/* Sua conta: privacidade e exclusão (exigência da Google Play e LGPD, 083) */}
+      <section className="cartao flex flex-wrap items-center justify-between gap-3 p-4">
+        <div>
+          <h2 className="font-semibold text-[var(--marca)]">Sua conta</h2>
+          <p className="text-sm text-[var(--texto-suave)]">Como cuidamos dos seus dados e como apagar a sua conta.</p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <a className="btn" href={caminho("/pessoal/privacidade")}>
+            <Icone nome="escudo" className="h-4 w-4" />
+            Política de privacidade
+          </a>
+          <a className="btn-perigo" href={caminho("/pessoal/excluir-conta")}>
+            <Icone nome="lixeira" className="h-4 w-4" />
+            Excluir minha conta
+          </a>
+        </div>
+      </section>
       {janelaConfirmar}
     </div>
   );
