@@ -8,7 +8,17 @@ export function caminho(p: string): string {
   return BASE + p;
 }
 
-/** Endereço completo do Hub no navegador atual (para links em e-mails e convites). */
+/** Endereço oficial do HUB. Todo link que vai para outra pessoa (convite, senha provisória, assinatura, TV, QR do
+ *  app) sai com ele, mesmo quando quem gera abriu o HUB por outro endereço (ex.: mdc-tarefas.vercel.app). */
+export const ENDERECO_OFICIAL = "https://hub.mdcassessoria.com";
+
+/** Origem dos links enviados: a oficial; no computador de desenvolvimento (localhost), a do próprio navegador. */
+export function origemPublica(origemAtual?: string): string {
+  const o = origemAtual ?? (typeof window === "undefined" ? "" : window.location.origin);
+  return /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/.test(o) ? o : ENDERECO_OFICIAL;
+}
+
+/** Endereço completo do Hub para links em e-mails, convites e mensagens (sempre o oficial). */
 export function enderecoHub(p = "/"): string {
-  return typeof window === "undefined" ? caminho(p) : window.location.origin + caminho(p);
+  return origemPublica() + caminho(p);
 }

@@ -9,7 +9,7 @@ import { AcessosClientes } from "@/dominios/portal/componentes/AcessosClientes";
 import { Aviso } from "@/components/ui/Aviso";
 import { CabecalhoPagina } from "@/components/ui/CabecalhoPagina";
 import { SenhaCopiavel } from "@/app/(hub)/hub/acessos/_componentes/SenhaCopiavel";
-import { caminho } from "@/lib/caminho";
+import { enderecoHub } from "@/lib/caminho";
 import type { SenhaGerada } from "@/dominios/acessos/convite";
 
 export default function PaginaAcessosPortal() {
@@ -28,7 +28,7 @@ export default function PaginaAcessosPortal() {
           {aviso.senha && (
             <SenhaCopiavel
               {...aviso.senha}
-              endereco={aviso.senha.endereco || `${window.location.origin}${caminho("/login")}`}
+              endereco={aviso.senha.endereco || enderecoHub("/login")}
               nome={aviso.nome}
             />
           )}

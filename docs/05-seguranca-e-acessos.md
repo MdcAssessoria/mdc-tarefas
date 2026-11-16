@@ -69,6 +69,12 @@ permissão na primeira linha.
 
 ## 5.4 Acesso novo: senha provisória (desde 12/11/2026)
 
+> **Endereço do link (16/11/2026):** todo link que vai para outra pessoa (senha provisória, convite, assinatura de
+> contrato, convite da família, TV, QR do app) sai no endereço oficial **https://hub.mdcassessoria.com/hub-mdc/…**,
+> mesmo quando quem gera abriu o HUB por `mdc-tarefas.vercel.app`. Na tela: `origemPublica()` / `enderecoHub()`
+> (`web/src/lib/caminho.ts`); na Edge Function `convite`: segredo opcional `HUB_ENDERECO`, senão o oficial. Só o
+> computador de desenvolvimento (localhost) mantém o endereço local.
+
 Ninguém cria conta sozinho: o cadastro público está desligado. O e-mail de convite pela Microsoft ficou complexo de
 configurar, então o acesso passou a ser por **senha provisória** (migração 071, decisão do Edvaldo):
 

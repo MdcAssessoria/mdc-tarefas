@@ -1,6 +1,6 @@
 // Testes de caracterização de lib/caminho.ts (prefixo /hub-mdc nos endereços montados à mão).
 import { describe, expect, it } from "vitest";
-import { BASE, caminho, enderecoHub } from "./caminho";
+import { BASE, ENDERECO_OFICIAL, caminho, enderecoHub, origemPublica } from "./caminho";
 
 describe("caminho", () => {
   it("prefixa rotas internas uma única vez", () => {
@@ -17,8 +17,19 @@ describe("caminho", () => {
     expect(caminho("#topo")).toBe("#topo");
     expect(caminho("relativo")).toBe("relativo");
   });
-  it("enderecoHub sem window (servidor) devolve só o caminho", () => {
-    expect(enderecoHub()).toBe("/hub-mdc/");
-    expect(enderecoHub("/portal")).toBe("/hub-mdc/portal");
+  it("enderecoHub sem window (servidor) devolve o endereço oficial completo", () => {
+    expect(enderecoHub()).toBe("https://hub.mdcassessoria.com/hub-mdc/");
+    expect(enderecoHub("/portal")).toBe("https://hub.mdcassessoria.com/hub-mdc/portal");
+  });
+});
+
+describe("origemPublica (links enviados a outras pessoas)", () => {
+  it("usa o endereço oficial mesmo quando o HUB foi aberto pela Vercel", () => {
+    expect(origemPublica("https://mdc-tarefas.vercel.app")).toBe(ENDERECO_OFICIAL);
+    expect(origemPublica("https://hub.mdcassessoria.com")).toBe("https://hub.mdcassessoria.com");
+  });
+  it("no computador de desenvolvimento fica o endereço local", () => {
+    expect(origemPublica("http://localhost:3000")).toBe("http://localhost:3000");
+    expect(origemPublica("http://127.0.0.1:3100")).toBe("http://127.0.0.1:3100");
   });
 });

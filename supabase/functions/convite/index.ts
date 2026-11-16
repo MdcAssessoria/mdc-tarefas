@@ -14,6 +14,7 @@ import { ASSUNTO_CONVITE, ASSUNTO_SENHA, htmlConvite, htmlSenha } from "../_emai
 // endereços onde o Hub roda; o link do convite só pode voltar para um deles
 const ORIGENS = ["https://mdcassessoria.com", "https://www.mdcassessoria.com", "https://hub.mdcassessoria.com", "https://mdc-tarefas.vercel.app"];
 const BASE = "/hub-mdc";
+const ENDERECO_OFICIAL = "https://hub.mdcassessoria.com";
 
 // Senha provisória: "Mdc-" + 4 letras + "-" + 4 números (sem letras que confundem: I, L, O). Aleatória a cada vez.
 function senhaProvisoria(): string {
@@ -53,7 +54,10 @@ Deno.serve(async (req) => {
   }
   const email = String(corpo.email ?? "").trim().toLowerCase();
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return json(400, { erro: "E-mail inválido." });
-  const origem = ORIGENS.includes(String(corpo.origem)) ? String(corpo.origem) : ORIGENS[0];
+  // O link enviado à pessoa sai SEMPRE no endereço oficial (HUB_ENDERECO ou hub.mdcassessoria.com), mesmo quando quem
+  // convida abriu o HUB por outro endereço (ex.: mdc-tarefas.vercel.app). O "origem" da tela só vale no desenvolvimento.
+  const local = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(String(corpo.origem ?? ""));
+  const origem = local ? String(corpo.origem) : (Deno.env.get("HUB_ENDERECO") || ENDERECO_OFICIAL);
   const redirectTo = `${origem}${BASE}/login?convite=1`;
 
   const url = Deno.env.get("SUPABASE_URL")!;

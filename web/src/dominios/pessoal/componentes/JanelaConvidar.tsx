@@ -5,7 +5,7 @@
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { traduzirErro } from "@/lib/erros";
-import { BASE } from "@/lib/caminho";
+import { BASE, origemPublica } from "@/lib/caminho";
 import { Modal } from "@/components/ui/Modal";
 import { Icone } from "@/components/ui/Icone";
 import { PERMISSOES, linkConvite, mensagemConvite, whatsappDe } from "../familia";
@@ -37,7 +37,7 @@ export function JanelaConvidar({ orgId, familia, aoFechar }: { orgId: string; fa
   }
 
   if (codigo) {
-    const link = linkConvite(window.location.origin, BASE, codigo);
+    const link = linkConvite(origemPublica(), BASE, codigo);
     const mensagem = mensagemConvite(familia, link, codigo);
     const copiar = async () => {
       try {

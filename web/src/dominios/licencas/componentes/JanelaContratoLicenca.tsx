@@ -4,6 +4,7 @@
 // porque o texto traz o preço. Regras do texto em ../contratoLicenca.ts; banco na migração 085.
 "use client";
 
+import { origemPublica } from "@/lib/caminho";
 import { useCallback, useState } from "react";
 import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { useConsulta } from "@/lib/useConsulta";
@@ -354,7 +355,7 @@ function ContratoEmitido({
   const novoLink = () =>
     acao(async () => {
       const token = await gerarLink(doc.id);
-      setLink(enderecoAssinatura(window.location.origin, token));
+      setLink(enderecoAssinatura(origemPublica(), token));
       aoMudar("Link de assinatura gerado. Ele vale 15 dias; um link novo invalida o anterior.");
     });
 

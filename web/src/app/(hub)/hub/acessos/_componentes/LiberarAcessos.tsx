@@ -6,7 +6,7 @@
 import { useState } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { Icone } from "@/components/ui/Icone";
-import { caminho } from "@/lib/caminho";
+import { enderecoHub } from "@/lib/caminho";
 import { gerarSenhaProvisoria } from "@/dominios/acessos/convite";
 import type { CandidatoAcesso } from "@/dominios/acessos/liberarAcessos";
 import { mensagemSenha } from "./SenhaCopiavel";
@@ -49,7 +49,7 @@ export function LiberarAcessos({
       const r = await gerarSenhaProvisoria(c.email, c.nome);
       feitos.push(
         r.senha
-          ? { email: c.email, nome: c.nome, senha: r.senha, endereco: r.endereco ?? `${window.location.origin}${caminho("/login")}` }
+          ? { email: c.email, nome: c.nome, senha: r.senha, endereco: r.endereco ?? enderecoHub("/login") }
           : { email: c.email, nome: c.nome, erro: r.erro ?? "Não foi possível gerar a senha agora." },
       );
       setAndamento({ feitos: feitos.length, total: escolhidos.length });

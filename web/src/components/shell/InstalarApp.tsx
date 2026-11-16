@@ -7,7 +7,7 @@
 import { useState, useSyncExternalStore } from "react";
 import { Icone, type NomeIcone } from "@/components/ui/Icone";
 import { Modal } from "@/components/ui/Modal";
-import { caminho } from "@/lib/caminho";
+import { caminho, enderecoHub } from "@/lib/caminho";
 import { useOrgOpcional } from "@/dominios/organizacao/OrgProvider";
 import { abertoComoApp, navegadorIphone, plataforma, type NavegadorIphone, type Plataforma } from "@/lib/instalarApp";
 
@@ -163,7 +163,7 @@ function JanelaInstalar({ situacao, aoFechar }: { situacao: Situacao; aoFechar: 
   const naFamilia = useOrgOpcional()?.pessoal || (typeof window !== "undefined" && window.location.pathname.includes("/pessoal"));
   const nomeApp = naFamilia ? "MDC · Pessoal" : "HUB-MDC";
   const [copiado, setCopiado] = useState(false);
-  const endereco = typeof window !== "undefined" ? window.location.origin + caminho("/") : "";
+  const endereco = typeof window !== "undefined" ? enderecoHub("/") : "";
   const iphone = situacao.plataforma === "iphone";
 
   async function copiar() {

@@ -17,7 +17,8 @@ export interface Ferramenta {
 }
 
 /** Endereço oficial do HUB: o link divulgado é sempre este, mesmo quando a tela é aberta por outro endereço. */
-export const ENDERECO_OFICIAL = "https://hub.mdcassessoria.com";
+export { ENDERECO_OFICIAL } from "@/lib/caminho";
+import { ENDERECO_OFICIAL } from "@/lib/caminho";
 
 export const FERRAMENTAS: Ferramenta[] = [
   {

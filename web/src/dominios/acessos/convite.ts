@@ -1,4 +1,5 @@
 // Convite por e-mail (ou link para WhatsApp) para a pessoa criar a própria senha, pela Função Edge "convite".
+import { origemPublica } from "@/lib/caminho";
 import { chamarFuncao } from "@/lib/funcoesEdge";
 import { traduzirErro } from "@/lib/erros";
 
@@ -53,7 +54,7 @@ async function chamar(pedido: {
   senha?: string;
 }): Promise<RespostaConvite> {
   try {
-    return await chamarFuncao<RespostaConvite>("convite", { corpo: { ...pedido, origem: window.location.origin } });
+    return await chamarFuncao<RespostaConvite>("convite", { corpo: { ...pedido, origem: origemPublica() } });
   } catch (e) {
     // quem chama mostra o erro ao lado do link/aviso; aqui nunca lança
     return { enviado: false, erro: traduzirErro(e) };

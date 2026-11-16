@@ -5,7 +5,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { supabase } from "@/lib/supabase";
-import { caminho } from "@/lib/caminho";
+import { enderecoHub } from "@/lib/caminho";
 import { traduzirErro } from "@/lib/erros";
 import { gerarSenhaProvisoria, type SenhaGerada } from "@/dominios/acessos/convite";
 import type { Membro, Papel } from "@/dominios/organizacao/tipos";
@@ -171,7 +171,7 @@ function Acessos() {
     setJanelaSenha(null);
     avisar(
       `Senha provisória de ${alvo.nome} pronta. Mande pelo WhatsApp; no primeiro acesso o HUB pede para criar a própria senha.`,
-      { senha: r.senha, email: alvo.email, endereco: r.endereco ?? `${window.location.origin}${caminho("/login")}` },
+      { senha: r.senha, email: alvo.email, endereco: r.endereco ?? enderecoHub("/login") },
       alvo.nome,
     );
     await depois(); // convite vira conta: a pessoa passa para a lista da equipe
@@ -256,7 +256,7 @@ function Acessos() {
             {aviso.senha && (
               <SenhaCopiavel
                 {...aviso.senha}
-                endereco={aviso.senha.endereco || `${window.location.origin}${caminho("/login")}`}
+                endereco={aviso.senha.endereco || enderecoHub("/login")}
                 nome={aviso.nome}
               />
             )}
