@@ -253,6 +253,8 @@ export function MenuLateral({ modulo, recolhido, aoRecolher }: { modulo: Modulo;
       </nav>
 
       <div className="border-t border-white/10 p-3">
+        {/* Manual do HUB: aberto a todos os usuários da equipe (18/11/2026) */}
+        {item({ href: "/manual", nome: "Manual", icone: "documento", ativo: rota.startsWith("/manual") })}
         <BotaoInstalarApp variante="menu" recolhido={recolhido} />
         {/* famílias do MDC · Pessoal não aparecem no HUB (075): abrem pelo próprio app */}
         {orgs.some((o) => o.tipo === "pessoal") &&

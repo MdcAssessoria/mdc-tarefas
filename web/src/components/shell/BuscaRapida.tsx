@@ -65,6 +65,7 @@ export function BuscaRapida({ aoFechar }: { aoFechar: () => void }) {
         icone: "pessoas",
         href: "/cadastros/pessoas",
       });
+    itens.push({ id: "manual", grupo: "Ajuda", nome: "Manual do HUB", icone: "documento", href: "/manual" });
     if (papel === "admin")
       itens.push({ id: "acessos", grupo: "Administração", nome: "Pessoas e acessos", icone: "pessoas", href: "/hub/acessos" });
     if (podeEditarCadastros)

@@ -40,6 +40,7 @@ flowchart TB
 | Comercial (CRM) | Equipe comercial | Funil, leads, contratos com modelo e ferramentas abertas (Simulador de Regime sem login, no domínio do HUB) | `/comercial/...`, `/ferramentas/simulador-regime` |
 | Pessoas e acessos | Administrador | Equipe, perfis, acessos do Portal, transferência de trabalho, histórico | `/hub/acessos` |
 | MDC · Pessoal | Qualquer pessoa (cadastro aberto) e a família dela | App da família dentro do HUB, com entrada e menu próprios: resumo do dia das finanças, tarefas da casa, finanças sem nota fiscal e convites por código. Ver [modulos/pessoal.md](modulos/pessoal.md) | `/pessoal`, `/familia` |
+| Manual do HUB | Toda a equipe (aberto a todos) | Passo a passo das telas com pesquisa por dúvida ("mesma tarefa para vários clientes", "esqueci a senha"), dúvidas comuns, "Ir para a tela" e PDF (inteiro ou da área). Texto em `web/src/dominios/manual/conteudo.ts`: **mudou uma tela ou regra, atualize o trecho do manual no mesmo commit** | `/manual` |
 | Portal do Cliente | Cliente | Demonstrativos publicados, rotinas do mês, processos, documentos, chat | `/portal` |
 
 Os módulos planejados (Pacotes, Financeiro, Entradas, Saídas, Fiscal, Contabilidade) estão desenhados em

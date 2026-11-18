@@ -536,6 +536,14 @@ const INTERACOES = {
     if (lateral > 1) throw new Error(`Nova tarefa para vários clientes tem rolagem lateral de ${lateral} px`);
     await foto("varios-clientes", { soTela: true });
   },
+  // Manual do HUB (18/11/2026): aberto a todos; pesquisar a dúvida acha a tela certa
+  "/manual": async (p, foto) => {
+    await p.getByLabel("Pesquisar no manual").fill("mesma tarefa para vários clientes");
+    await p.getByText(/lugares? encontrados? no manual/).waitFor({ timeout: 3000 });
+    await foto("pesquisa", { soTela: true });
+    await p.getByRole("button", { name: /Tarefas › Criar a mesma tarefa/ }).first().click();
+    await p.locator("#tarefas--criar-a-mesma-tarefa-para-varios-clientes-de-uma-vez").waitFor({ timeout: 3000 });
+  },
   // Início: concluir uma tarefa da fila mostra "Desfazer" (UX-05)
   "/familia": async (p, foto) => {
     if (!process.env.PESSOAL) return; // fora da família a tela só avisa que é do MDC · Pessoal

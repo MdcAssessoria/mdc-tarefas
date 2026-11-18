@@ -10,7 +10,9 @@ Projeto da MDC Assessoria Contábil (dono: Edvaldo Ribeiro de Carvalho). Leia `d
 4. **Verificar antes de publicar:** `cd web && npm run verificar && npm run telas`. Push na `main` publica o site.
 5. **Banco:** migração nova numerada em `supabase/migrations/`, nunca editar migração aplicada; regenerar
    `web/src/lib/database.types.ts`; rodar os avisos de segurança do Supabase.
-6. **Documentação junto com o código:** atualize o capítulo de `docs/` afetado no mesmo commit.
+6. **Documentação junto com o código:** atualize o capítulo de `docs/` afetado no mesmo commit. Mudou uma tela ou
+   regra que o usuário vê? Atualize também o **Manual do HUB** (`web/src/dominios/manual/conteudo.ts`, tela `/manual`,
+   aberta a todos) e a linha em "Controle de versões".
 7. **Auditoria sob pedido (decisão do Edvaldo, 01/11/2026):** a auditoria independente (skill `auditoria-hub`,
    agente `auditor-hub`, parecer em `docs/auditoria/`) roda **só quando o Edvaldo pedir**, para o projeto andar mais
    rápido. Continuam valendo sempre: `npm run verificar`, `npm run telas`, testes SQL e os avisos de segurança do

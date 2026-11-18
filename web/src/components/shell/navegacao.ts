@@ -209,6 +209,8 @@ export const NAV: Record<Modulo, { titulo: string; links: LinkModulo[]; grupos?:
 export const MODULO_POR_PREFIXO: Record<string, Modulo> = {
   "": "hub",
   hub: "hub",
+  // Manual do HUB (18/11/2026): aberto a todo usuário da equipe, como o Início
+  manual: "hub",
   tarefas: "tarefas",
   config: "tarefas",
   clientes: "tarefas",
