@@ -14,6 +14,16 @@ import { Icone } from "@/components/ui/Icone";
 import { JanelaMotivo } from "@/components/ui/JanelaMotivo";
 import { AvisoRascunho } from "@/components/ui/AvisoRascunho";
 import { useRascunho } from "@/lib/rascunho";
+import { SeletorClientes } from "@/dominios/tarefas/componentes/SeletorClientes";
+import {
+  LIMITE_LOTE,
+  RESPONSAVEL_DA_CARTEIRA,
+  jaTem as clientesQueJaTem,
+  linhasDoLote,
+  nomesCurtos,
+  responsavelDoCliente,
+  resumoLote,
+} from "@/dominios/tarefas/lote";
 
 interface Comentario {
   id: string;
@@ -50,7 +60,7 @@ export function TarefaEditor({
 }: {
   tarefa: Tarefa | null; // null = nova
   aoFechar: () => void;
-  aoSalvar: () => void;
+  aoSalvar: (mensagem?: string) => void;
 }) {
   const { org, eu, setores, clientes, membros, nomeMembro, podeEditarCadastros, papel, pessoal } = useOrg();
   // como o formulário abriu (o rascunho automático compara com isto)
@@ -78,8 +88,54 @@ export function TarefaEditor({
   const [comentarios, setComentarios] = useState<Comentario[]>([]);
   const [historico, setHistorico] = useState<Historico[]>([]);
   const [novoComentario, setNovoComentario] = useState("");
+  // Nova tarefa para vários clientes de uma vez (18/11/2026): uma tarefa igual para cada cliente marcado
+  const [lote, setLote] = useState(false);
+  const [marcados, setMarcados] = useState<Set<string>>(new Set());
+  const [carteira, setCarteira] = useState<{ cliente_id: string; setor_id: string; user_id: string }[]>([]);
+  const [existentes, setExistentes] = useState<{ cliente_id: string | null; titulo: string; competencia: string | null }[]>([]);
 
   const set = <K extends keyof Form>(k: K, v: Form[K]) => setF((x) => ({ ...x, [k]: v }));
+  const competenciaISO = f.competencia ? f.competencia + "-01" : null;
+
+  // responsáveis da carteira (cliente × setor), para "o responsável de cada cliente"
+  useEffect(() => {
+    if (!lote || carteira.length) return;
+    supabase()
+      .from("cliente_responsaveis")
+      .select("cliente_id,setor_id,user_id")
+      .eq("org_id", org.id)
+      .then(({ data }) => setCarteira((data as typeof carteira) ?? []));
+  }, [lote, org.id, carteira.length]);
+
+  // quem já tem a mesma tarefa (título e competência) fica marcado "já tem" e é pulado na gravação
+  useEffect(() => {
+    if (!lote || !f.titulo.trim()) {
+      setExistentes([]);
+      return;
+    }
+    const t = setTimeout(() => {
+      let q = supabase()
+        .from("tarefas")
+        .select("cliente_id,titulo,competencia")
+        .eq("org_id", org.id)
+        .neq("status", "cancelada")
+        .not("cliente_id", "is", null)
+        .ilike(
+          "titulo",
+          f.titulo.trim().replace(/[%_\\]/g, (x) => "\\" + x),
+        );
+      q = competenciaISO ? q.eq("competencia", competenciaISO) : q.is("competencia", null);
+      q.limit(1000).then(({ data }) => setExistentes((data as typeof existentes) ?? []));
+    }, 400);
+    return () => clearTimeout(t);
+  }, [lote, f.titulo, competenciaISO, org.id]);
+
+  const repetidos = lote ? clientesQueJaTem(existentes, f.titulo, competenciaISO) : new Set<string>();
+  const aCriar = [...marcados].filter((id) => !repetidos.has(id));
+  const semResponsavel =
+    lote && f.responsavel_id === RESPONSAVEL_DA_CARTEIRA
+      ? aCriar.filter((id) => !responsavelDoCliente(id, f.responsavel_id, f.setor_id, carteira))
+      : [];
 
   useEffect(() => {
     if (!tarefa) return;
@@ -113,6 +169,7 @@ export function TarefaEditor({
     e.preventDefault();
     setSalvando(true);
     setErro(null);
+    if (lote) return salvarLote();
     const dados = {
       titulo: f.titulo.trim(),
       descricao: f.descricao.trim() || null,
@@ -138,6 +195,46 @@ export function TarefaEditor({
     if (!r.data?.length) return setErro("Você não tem permissão para alterar esta tarefa.");
     rascunho.limpar();
     aoSalvar();
+    aoFechar();
+  }
+
+  // uma tarefa por cliente marcado, numa única gravação (entram todas ou nenhuma)
+  async function salvarLote() {
+    if (!marcados.size) {
+      setSalvando(false);
+      return setErro("Marque pelo menos um cliente.");
+    }
+    if (!aCriar.length) {
+      setSalvando(false);
+      return setErro("Todos os clientes marcados já têm esta tarefa nesta competência.");
+    }
+    if (aCriar.length > LIMITE_LOTE) {
+      setSalvando(false);
+      return setErro(`Escolha no máximo ${LIMITE_LOTE} clientes por vez.`);
+    }
+    if (f.responsavel_id === RESPONSAVEL_DA_CARTEIRA && !f.setor_id) {
+      setSalvando(false);
+      return setErro("Escolha o setor para usar o responsável da carteira de cada cliente.");
+    }
+    const base = {
+      org_id: org.id,
+      titulo: f.titulo.trim(),
+      descricao: f.descricao.trim() || null,
+      setor_id: f.setor_id || null,
+      prazo: f.prazo || null,
+      competencia: competenciaISO,
+      prioridade: f.prioridade,
+      status: f.status,
+      visivel_cliente: f.visivel_cliente === "" ? null : f.visivel_cliente === "sim",
+      pendencia_cliente: f.pendencia_cliente.trim() || null,
+    };
+    const linhas = linhasDoLote(base, aCriar, (id) => responsavelDoCliente(id, f.responsavel_id, f.setor_id, carteira));
+    const r = await supabase().from("tarefas").insert(linhas).select("id");
+    setSalvando(false);
+    if (r.error) return setErro(traduzirErro(r.error));
+    if ((r.data?.length ?? 0) !== linhas.length) return setErro("Você não tem permissão para criar estas tarefas.");
+    rascunho.limpar();
+    aoSalvar(resumoLote(linhas.length, marcados.size - aCriar.length));
     aoFechar();
   }
 
@@ -168,7 +265,7 @@ export function TarefaEditor({
   return (
     <div className="fixed inset-0 z-40 flex justify-end bg-black/30" onClick={aoFechar}>
       <aside
-        className="h-full w-full max-w-xl overflow-y-auto bg-[var(--fundo)] shadow-xl"
+        className={`h-full w-full ${lote ? "max-w-4xl" : "max-w-xl"} overflow-y-auto bg-[var(--fundo)] shadow-xl`}
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-label={tarefa ? "Editar tarefa" : "Nova tarefa"}
@@ -194,19 +291,53 @@ export function TarefaEditor({
             {/* MDC · Pessoal (075): família não tem clientes nem setores */}
             {!pessoal && (
               <>
-                <label className="campo sm:col-span-2">
-                  <span>Cliente</span>
-                  <select value={f.cliente_id} onChange={(e) => set("cliente_id", e.target.value)}>
-                    <option value="">— Interna / sem cliente —</option>
-                    {clientes
-                      .filter((c) => c.ativo || c.id === f.cliente_id)
-                      .map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {nomeCliente(c)}
-                        </option>
+                {!tarefa && (
+                  <div className="sm:col-span-2" role="radiogroup" aria-label="Para quem é a tarefa">
+                    <div className="inline-flex rounded-lg border border-[var(--borda)] p-1">
+                      {(
+                        [
+                          [false, "Um cliente"],
+                          [true, "Vários clientes"],
+                        ] as const
+                      ).map(([v, nome]) => (
+                        <button
+                          key={nome}
+                          type="button"
+                          role="radio"
+                          aria-checked={lote === v}
+                          onClick={() => {
+                            setLote(v);
+                            if (v && (!f.responsavel_id || f.responsavel_id === eu.user_id)) set("responsavel_id", RESPONSAVEL_DA_CARTEIRA);
+                            if (!v && f.responsavel_id === RESPONSAVEL_DA_CARTEIRA) set("responsavel_id", eu.user_id);
+                          }}
+                          className={`flex items-center gap-1 rounded-md px-3 py-1.5 text-sm ${lote === v ? "bg-[var(--marca)] text-white" : "text-[var(--texto-suave)]"}`}
+                        >
+                          <Icone nome={v ? "pessoas" : "documento"} className="h-4 w-4" />
+                          {nome}
+                        </button>
                       ))}
-                  </select>
-                </label>
+                    </div>
+                  </div>
+                )}
+                {lote ? (
+                  <div className="sm:col-span-2">
+                    <SeletorClientes clientes={clientes} marcados={marcados} aoMudar={setMarcados} jaTem={repetidos} />
+                  </div>
+                ) : (
+                  <label className="campo sm:col-span-2">
+                    <span>Cliente</span>
+                    <select value={f.cliente_id} onChange={(e) => set("cliente_id", e.target.value)}>
+                      <option value="">— Interna / sem cliente —</option>
+                      {clientes
+                        .filter((c) => c.ativo || c.id === f.cliente_id)
+                        .map((c) => (
+                          <option key={c.id} value={c.id}>
+                            {nomeCliente(c)}
+                          </option>
+                        ))}
+                    </select>
+                  </label>
+                )}
                 <label className="campo">
                   <span>Setor</span>
                   <select value={f.setor_id} onChange={(e) => set("setor_id", e.target.value)}>
@@ -226,6 +357,7 @@ export function TarefaEditor({
               <span>Responsável</span>
               <select value={f.responsavel_id} onChange={(e) => set("responsavel_id", e.target.value)}>
                 <option value="">— Sem responsável —</option>
+                {lote && <option value={RESPONSAVEL_DA_CARTEIRA}>O responsável de cada cliente neste setor</option>}
                 {pessoas.map((m) => (
                   <option key={m.user_id} value={m.user_id}>
                     {m.nome}
@@ -263,7 +395,14 @@ export function TarefaEditor({
               </select>
             </label>
           </div>
-          {f.cliente_id && (
+          {semResponsavel.length > 0 && (
+            <p className="text-sm text-[var(--alerta)]">
+              {f.setor_id
+                ? `Sem responsável cadastrado neste setor (a tarefa nasce sem responsável): ${nomesCurtos(clientes, semResponsavel)}.`
+                : "Escolha o setor: o responsável de cada cliente vem do cadastro do cliente naquele setor."}
+            </p>
+          )}
+          {(f.cliente_id || (lote && marcados.size > 0)) && (
             <fieldset className="space-y-3 rounded-lg border border-[var(--borda)] p-3">
               <legend className="px-1 text-xs text-[var(--texto-suave)]">Portal do Cliente</legend>
               <label className="campo">
@@ -288,7 +427,7 @@ export function TarefaEditor({
           <div className="flex items-center gap-2">
             <button className="btn-primario" disabled={salvando}>
               <Icone nome="check" className="h-4 w-4" />
-              {salvando ? "Salvando…" : "Salvar"}
+              {salvando ? "Salvando…" : lote ? `Criar para ${aCriar.length} ${aCriar.length === 1 ? "cliente" : "clientes"}` : "Salvar"}
             </button>
             <button type="button" className="btn" onClick={aoFechar}>
               <Icone nome="voltar" className="h-4 w-4" />

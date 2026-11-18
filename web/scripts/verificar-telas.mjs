@@ -525,6 +525,16 @@ const INTERACOES = {
     const titulo = await janela.getByLabel("Título").inputValue();
     if (titulo !== "Conciliar extrato do Itaú") throw new Error(`rascunho não voltou (título: "${titulo}")`);
     await janela.getByRole("button", { name: "Descartar" }).waitFor({ state: "detached", timeout: 3000 });
+    // a mesma tarefa para vários clientes de uma vez (18/11/2026)
+    await janela.getByRole("radio", { name: "Vários clientes" }).click();
+    await janela.getByRole("button", { name: /Marcar os \d+ mostrados/ }).click();
+    const botao = janela.getByRole("button", { name: /Criar para \d+ clientes?/ });
+    await botao.waitFor({ timeout: 3000 }).catch(() => {
+      throw new Error('o botão "Criar para N clientes" não apareceu depois de marcar os clientes');
+    });
+    const lateral = await p.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+    if (lateral > 1) throw new Error(`Nova tarefa para vários clientes tem rolagem lateral de ${lateral} px`);
+    await foto("varios-clientes", { soTela: true });
   },
   // Início: concluir uma tarefa da fila mostra "Desfazer" (UX-05)
   "/familia": async (p, foto) => {

@@ -410,7 +410,16 @@ function Tarefas() {
         </>
       )}
 
-      {editando !== undefined && <TarefaEditor tarefa={editando} aoFechar={() => setEditando(undefined)} aoSalvar={recarregar} />}
+      {editando !== undefined && (
+        <TarefaEditor
+          tarefa={editando}
+          aoFechar={() => setEditando(undefined)}
+          aoSalvar={(m) => {
+            recarregar();
+            if (m) mostrar(m);
+          }}
+        />
+      )}
     </div>
   );
 }

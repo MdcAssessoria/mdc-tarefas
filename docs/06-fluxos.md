@@ -60,6 +60,17 @@ a rotina" em 14/11/2026. Quem vai montar rotinas precisa entrar como gestor.
 obrigações acessórias, DP, contábil e atendimento) **desligadas**; cada uma é conferida e ligada em Configurações ›
 Obrigações recorrentes. Pode rodar de novo sem duplicar.
 
+### 6.2.1 Tarefa avulsa para vários clientes de uma vez (18/11/2026, pedido do Edvaldo)
+
+Na janela **Nova tarefa**, a escolha "Um cliente | Vários clientes" abre a lista de clientes ativos com busca (nome,
+CNPJ ou código do Domínio), filtros por regime e grupo, "Marcar os N mostrados" e "Desmarcar todos". O botão vira
+"Criar para N clientes" e grava uma tarefa por cliente numa única chamada à tabela `tarefas` (uma transação: entram
+todas ou nenhuma; a mesma política `tarefas_insert`, sem migração). Responsável: uma pessoa para todas ou "O
+responsável de cada cliente neste setor" (`cliente_responsaveis`; sem cadastro, a tarefa nasce sem responsável e a
+janela lista quem ficou assim). Cliente que já tem tarefa com o mesmo título e competência (não cancelada) aparece
+com "já tem" e fica de fora. Limite de 500 por vez. Regras em `web/src/dominios/tarefas/lote.ts` (com teste); peça
+`SeletorClientes.tsx`.
+
 ## 6.3 Societário: uma tarefa concluída avança o processo
 
 ```mermaid
