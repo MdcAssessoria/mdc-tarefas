@@ -85,3 +85,9 @@ import_map = "./functions/pessoal-voz/deno.json"
 [functions.pessoal-aviso]
 verify_jwt = false
 import_map = "./functions/pessoal-aviso/deno.json"
+
+# Integração com outros sistemas (092, auditoria 19/11/2026 SEG-01): o servidor do Ledgra chama com o código próprio
+# do sistema (cabeçalhos x-hub-sistema e x-hub-integracao), sem login e sem a chave de serviço do HUB.
+[functions.hub-integracao]
+verify_jwt = false
+import_map = "./functions/hub-integracao/deno.json"

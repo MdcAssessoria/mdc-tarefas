@@ -198,8 +198,10 @@ desconhecida, desfazer, tela sem gravar direto) e `web/src/dominios/licencas/led
 - Proteção no banco: as colunas de preço/valor de `lic_produtos`, `lic_planos` e `lic_contratos` não são legíveis pelo
   navegador; voltam só pela `lic_valores(org)` (gerir). `lic_cobrancas`, `lic_baixas` e `lic_reajustes` só com gerir.
   Quem opera sem gerir cadastra pelo preço de tabela; na alteração o valor atual é mantido.
-- Ligação com o Ledgra pelo CNPJ: o servidor do Ledgra chama `lic_ledgra_vincular_cnpj(cnpj)` (só chave de serviço) e
-  recebe uma chave nova da licença ativa daquele CNPJ (botão "Buscar no HUB" na aba Licença da empresa no Ledgra).
+- Ligação com o Ledgra pelo CNPJ: o servidor do Ledgra chama a Função `hub-integracao` (ação `vincular_cnpj`, com o
+  código do Ledgra; migração 092) e ela chama `lic_ledgra_vincular_cnpj(cnpj)`, que devolve uma chave nova da licença
+  ativa daquele CNPJ (botão "Buscar no HUB" na aba Licença da empresa no Ledgra). Até a 092 o Ledgra fazia essa chamada
+  com a chave de serviço do HUB (auditoria 19/11/2026, SEG-01).
 
 ## Contrato de licença do Ledgra e do HUB (migração 085, 15/11/2026)
 

@@ -215,6 +215,20 @@ npx supabase functions deploy convite --project-ref bulqqdgfrrpqquqvjjfa --impor
   - `demonstrativo-pdf` (republicar: lê telefone, site, e-mail, Instagram e responsável técnico de `org_papel_timbrado`).
   Sem segredo novo no painel. Testes: `cd supabase/functions/_fiscal && deno test --allow-read --config deno.json automatica_test.ts`.
   O agendador `nfse-automatica` (06h45) já nasce com a 052, mas só chama a função se algum parâmetro estiver em automático.
+- **Integração com outros sistemas (092, auditoria 19/11/2026 SEG-01): `hub-integracao`.** Porta única do Ledgra
+  (e, depois, do EXato) para o HUB, no lugar da chave de serviço do HUB guardada na Vercel deles. **Sem checagem de
+  login** (`verify_jwt = false`): o servidor do sistema manda `x-hub-sistema` e `x-hub-integracao` (código gerado pelo
+  banco no Vault, `integracao_token_<sistema>`). Ações: `vincular_cnpj`, `buscar_clientes` e `raiox_conferir`; cada
+  chamada fica em `app.integracao_chamadas`. Sem segredo novo no painel do HUB. Ordem da troca:
+  1. testes (`bash supabase/testes/rodar.sh`, blocos 162 e 163) → aplicar a 092 → regenerar `database.types.ts` e rodar
+     os Advisors;
+  2. publicar a função: `npx supabase functions deploy hub-integracao --project-ref bulqqdgfrrpqquqvjjfa --no-verify-jwt --import-map supabase/functions/hub-integracao/deno.json`;
+  3. **Edvaldo:** no SQL Editor, `select decrypted_secret from vault.decrypted_secrets where name = 'integracao_token_ledgra';`
+     e colar o valor na Vercel do Ledgra como `HUB_INTEGRACAO_TOKEN` (Production e Preview);
+  4. publicar o Ledgra que chama a `hub-integracao` e conferir "Buscar no HUB", "Nova empresa › HUB" e o Raio-X;
+  5. **Edvaldo:** no painel do Supabase do HUB › Project Settings › API Keys, gerar uma nova chave de serviço
+     (secret key) e desativar a antiga; na Vercel do Ledgra, apagar `HUB_SUPABASE_SERVICE_ROLE_KEY`;
+  6. código vazado ou troca de rotina: `select integracao_token_girar('ledgra');` no SQL Editor e repetir o passo 3.
 - Segredos das funções (chave de serviço etc.) ficam no painel: Edge Functions › Secrets. Nunca no código.
 - Ledgra Link (043): `LEDGRA_LINK_URL` (endereço do Ledgra Link, ex.: `https://link.ledgra.com.br`), `LEDGRA_LINK_CHAVE`
   (chave do HUB no Ledgra Link, começa com `llk_`) e `LEDGRA_LINK_SEGREDO_WEBHOOK` (segredo mostrado uma vez pelo Ledgra
