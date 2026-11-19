@@ -39,6 +39,7 @@ interface MinhaTarefa {
   id: string;
   titulo: string;
   prazo: string | null;
+  hora?: string | null;
   status: Status;
   prioridade: Prioridade;
   cliente_id: string | null;
@@ -73,7 +74,7 @@ function Hub() {
   const carregar = useCallback(async () => {
     if (!temTarefas) return setAbertas([]);
     const sb = supabase();
-    const campos = "id,titulo,prazo,status,prioridade,cliente_id,concluida_em";
+    const campos = "id,titulo,prazo,hora,status,prioridade,cliente_id,concluida_em";
     let a: MinhaTarefa[], f: MinhaTarefa[];
     try {
       [a, f] = await Promise.all([
@@ -435,7 +436,7 @@ function Hub() {
                               ` · concluída em ${fmtData(diaLocal(t.concluida_em))}${noPrazo(t) ? "" : " (com atraso)"}`}
                           </div>
                         </Link>
-                        {!feita && <PrazoBadge prazo={t.prazo} status={t.status} fuso={org.fuso} />}
+                        {!feita && <PrazoBadge prazo={t.prazo} hora={t.hora} status={t.status} fuso={org.fuso} />}
                       </li>
                     );
                   })}

@@ -4,7 +4,7 @@
 // (components/shell/navegacao.ts): com ele a tela do manual ganha o botão "Ir para a tela".
 // Mudou uma tela ou regra? Atualize o trecho dela aqui no mesmo commit e acrescente uma linha em "Controle de versões".
 
-export const VERSAO_MANUAL = { numero: "1.1", data: "18/11/2026" };
+export const VERSAO_MANUAL = { numero: "1.2", data: "19/11/2026" };
 
 export const MANUAL_MD = `
 ## Como usar este manual
@@ -100,6 +100,24 @@ Use quando a mesma rotina vale para muitos clientes (ex.: "Enviar informe de ren
 - No máximo **500 clientes** por vez.
 - A gravação é única: ou todas as tarefas são criadas, ou nenhuma (se faltar acesso, nada fica pela metade).
 - Depois de criadas, cada tarefa é independente: mudar uma não muda as outras.
+
+### Reunião ou compromisso com horário e lembrete
+
+Para reunião, ligação marcada ou tarefa com hora certa, o HUB avisa o responsável **10 minutos antes** e **na hora**.
+
+1. Na tarefa, escolha o **Prazo** (o dia) e preencha o **Horário (opcional)**, por exemplo 15:00.
+2. Toque em **Salvar**. Na lista, a tarefa mostra o relógio e a hora ao lado do prazo, e no mesmo dia os compromissos vêm primeiro, na ordem da hora.
+3. Às 14:50 chega o aviso **Em 10 minutos: título da tarefa** e às 15:00 o aviso **Agora: título da tarefa**. Tocar no aviso abre a tarefa.
+
+**Para receber no celular ou no computador com o HUB fechado:** abra o **sino** (canto de cima), toque em **Ativar avisos neste aparelho** e aceite quando o navegador perguntar. Faça isso em cada aparelho (computador do escritório, celular). No iPhone, instale o HUB antes (Compartilhar → Adicionar à Tela de Início) e ative por ele.
+
+**Atenção:**
+
+- O aviso vai para o **Responsável** da tarefa; sem responsável, para quem criou.
+- Sem **Prazo** não dá para marcar horário.
+- Tarefa concluída ou cancelada não avisa. Mudou o dia ou a hora? O HUB avisa no novo horário.
+- O aviso aparece sempre no **sino**. No celular ou no computador, só se o aparelho estiver ativado; aviso que não chega em 15 minutos (aparelho desligado) é descartado.
+- Ao **Sair** do HUB, os avisos daquele aparelho são desligados.
 
 ### Concluir, mudar ou cancelar uma tarefa
 
@@ -289,4 +307,5 @@ Os sistemas que a MDC licencia aos clientes (Ledgra ERP, EXato e os próximos): 
 |---|---|---|
 | 1.0 | 18/11/2026 | Primeira versão do manual dentro do HUB, aberta a todos os usuários. Inclui a criação da mesma tarefa para vários clientes de uma vez. |
 | 1.1 | 18/11/2026 | Licenças Ledgra virou **Sistemas**: licença por sistema (Ledgra ERP, EXato…), usuários incluídos e a mais, cobrança pela fatura da Gestão, chave por sistema e Receita por sistema no mesmo menu. |
+| 1.2 | 19/11/2026 | Tarefas com **Horário**: lembrete 10 min antes e na hora, no sino e no celular/computador (**Ativar avisos neste aparelho**, no sino). |
 `;

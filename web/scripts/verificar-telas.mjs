@@ -535,6 +535,21 @@ const INTERACOES = {
     const lateral = await p.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
     if (lateral > 1) throw new Error(`Nova tarefa para vários clientes tem rolagem lateral de ${lateral} px`);
     await foto("varios-clientes", { soTela: true });
+    // horário do compromisso com lembrete (089): só com prazo; a dica muda quando a hora é preenchida
+    await janela.getByRole("radio", { name: "Um cliente" }).click();
+    const hora = janela.getByLabel("Horário (opcional)");
+    if (!(await hora.isDisabled())) throw new Error("o Horário deveria ficar travado sem prazo");
+    await janela.getByLabel("Prazo", { exact: true }).fill("2026-11-20");
+    await hora.fill("15:00");
+    await janela.getByText("Aviso 10 min antes e na hora, para o responsável.").waitFor({ timeout: 3000 });
+    await hora.scrollIntoViewIfNeeded();
+    await foto("horario", { soTela: true });
+    await p.keyboard.press("Escape");
+    // sino: ativar avisos neste aparelho
+    await p.getByRole("button", { name: /^Notificações/ }).click();
+    await p.getByText(/Ative para receber|bloqueados|não mostra avisos|instale o HUB|recebe os lembretes/).first().waitFor({ timeout: 3000 });
+    await p.waitForTimeout(300); // fim da animação do painel
+    await foto("sino-avisos", { soTela: true });
   },
   // Manual do HUB (18/11/2026): aberto a todos; pesquisar a dúvida acha a tela certa
   "/manual": async (p, foto) => {

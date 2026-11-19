@@ -92,6 +92,13 @@ function Tarefas() {
   const [de, setDe] = useState("");
   const [ate, setAte] = useState("");
   const [editando, setEditando] = useState<Tarefa | null | undefined>(params.get("nova") ? null : undefined);
+  // ?tarefa=<id> (lembrete do compromisso no sino ou no celular, 089): abre a tarefa assim que a lista chegar
+  const [abrirId, setAbrirId] = useState<string | null>(params.get("tarefa"));
+  if (abrirId && !carregando) {
+    const alvo = tarefas.find((t) => t.id === abrirId);
+    setAbrirId(null);
+    if (alvo) setEditando(alvo);
+  }
 
   // atalhos da busca rápida com a tela já aberta (?cliente=<id> filtra, ?nova=1 abre o editor): ajuste durante a
   // renderização, o jeito recomendado pelo React para estado que depende de uma mudança de entrada
@@ -110,6 +117,8 @@ function Tarefas() {
       setSetorSel([]);
     }
     if (p.get("nova")) setEditando(null);
+    const tid = p.get("tarefa");
+    if (tid) setAbrirId(tid);
   }
 
   useEffect(() => {
@@ -246,7 +255,12 @@ function Tarefas() {
                 logoUrl: org.logo_url,
                 linhas: visiveis,
                 colunas: [
-                  { titulo: "Prazo", valor: (t) => (t.prazo ? fmtData(t.prazo) : ""), peso: 0.9, largura: 12 },
+                  {
+                    titulo: "Prazo",
+                    valor: (t) => (t.prazo ? fmtData(t.prazo) + (t.hora ? " " + t.hora.slice(0, 5) : "") : ""),
+                    peso: 0.9,
+                    largura: 12,
+                  },
                   { titulo: "Tarefa", valor: (t) => t.titulo, peso: 3, largura: 44 },
                   { titulo: "Cliente", valor: (t) => nomeCliente(clientePorId(t.cliente_id), "Interna"), peso: 2.2, largura: 34 },
                   { titulo: "Competência", valor: (t) => (t.competencia ? fmtCompetencia(t.competencia) : ""), peso: 0.9, largura: 12 },

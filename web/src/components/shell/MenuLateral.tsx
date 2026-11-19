@@ -14,6 +14,7 @@ import { caminho } from "@/lib/caminho";
 import { Icone } from "@/components/ui/Icone";
 import { CHAVES, useEstadoLembrado } from "@/lib/armazenamentoLocal";
 import { useState } from "react";
+import { desligarNoAparelho } from "@/dominios/pessoal/avisoCelular";
 import { ehModuloGestao, filtrarLinks, linkAtivo, podeModulo } from "./navegacao";
 import type { Modulo } from "./navegacao";
 
@@ -288,6 +289,8 @@ export function MenuLateral({ modulo, recolhido, aoRecolher }: { modulo: Modulo;
             title="Sair"
             aria-label="Sair"
             onClick={async () => {
+              // desliga os avisos deste aparelho: quem entrar depois não recebe os lembretes de quem saiu (089)
+              await desligarNoAparelho().catch(() => undefined);
               await trancarPin(); // o PIN das áreas pessoais não fica liberado para quem entrar depois
               await supabase().auth.signOut();
               window.location.replace(caminho("/login"));

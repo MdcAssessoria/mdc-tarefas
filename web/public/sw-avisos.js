@@ -1,4 +1,5 @@
-// Service worker do MDC · Pessoal (076): só recebe o aviso do resumo diário (Web Push) e abre o app ao tocar.
+// Service worker dos avisos do HUB (Web Push): resumo diário do MDC · Pessoal (076) e lembretes de compromisso das
+// Tarefas (089, 10 min antes e na hora). Só mostra o aviso e abre o HUB ao tocar.
 // Não guarda nada em cache. Escopo: /hub-mdc/. O código é do Edvaldo Ribeiro de Carvalho (MDC Assessoria Contábil).
 const BASE = "/hub-mdc";
 
@@ -16,8 +17,10 @@ self.addEventListener("push", (e) => {
     self.registration.showNotification(d.titulo || "MDC · Pessoal", {
       body: d.texto || "Veja o resumo das finanças de hoje.",
       icon: `${BASE}/icone-hub-mdc-192.png`,
-      // uma marca por família: quem está em duas famílias recebe os dois resumos (079)
+      // uma marca por destino: quem está em duas famílias recebe os dois resumos (079); o "Agora" de uma tarefa
+      // substitui o "Em 10 minutos" dela e toca de novo (renotify)
       tag: "resumo-" + (d.link || "/"),
+      renotify: true,
       data: { link: d.link || "/" },
     }),
   );

@@ -1,4 +1,5 @@
-// Sino de notificações do HUB: lista as últimas 30, atualiza em tempo real e marca como lidas ao abrir.
+// Sino de notificações do HUB: lista as últimas 30, atualiza em tempo real e marca como lidas ao abrir. No rodapé,
+// liga os avisos neste aparelho (lembrete de compromisso das tarefas, 089).
 "use client";
 
 import { useEffect, useRef, useState } from "react";
@@ -9,6 +10,7 @@ import { caminho } from "@/lib/caminho";
 import { traduzirErro } from "@/lib/erros";
 import { fmtDataHora } from "@/lib/formato/datas";
 import { Icone } from "@/components/ui/Icone";
+import { AvisosAparelho } from "./AvisosAparelho";
 
 /** Fecha o painel ao clicar fora dele. */
 function useFora(aberto: boolean, fechar: () => void) {
@@ -129,6 +131,7 @@ export function Sino() {
               </a>
             ))}
           </div>
+          <AvisosAparelho />
         </div>
       )}
     </div>

@@ -71,6 +71,22 @@ janela lista quem ficou assim). Cliente que já tem tarefa com o mesmo título e
 com "já tem" e fica de fora. Limite de 500 por vez. Regras em `web/src/dominios/tarefas/lote.ts` (com teste); peça
 `SeletorClientes.tsx`.
 
+### 6.2.2 Compromisso com horário e lembrete (089, 19/11/2026, pedido do Edvaldo)
+
+- `tarefas.hora` (opcional, exige prazo — CHECK `tarefas_hora_com_prazo`): o compromisso é `prazo + hora` no fuso da
+  organização. Campo **Horário (opcional)** no `TarefaEditor` (também na criação para vários clientes); a lista mostra o
+  relógio e a hora no `PrazoBadge` e `ordenarTarefas` põe os compromissos do dia primeiro, pela hora.
+- pg_cron `tarefas-lembretes` (a cada minuto) → `app.tarefa_lembretes_rodar()`: tarefa aberta, de 10 min antes até a
+  hora → **"Em N minutos: título"**; da hora até 30 min depois → **"Agora: título"**. Vai para o responsável (sem
+  responsável, quem criou; só membro ativo), no sino (`hub_notificacoes`, link `/tarefas?tarefa=<id>`, que abre a tarefa)
+  e, se a pessoa ativou o aparelho, na fila `app.pessoal_push_fila` com `validade_seg = 900` (não chega atrasado). A Função
+  `pessoal-aviso` é chamada no mesmo minuto quando há lembrete na fila e manda com o TTL que `pessoal_push_reservar`
+  devolve.
+- `app.tarefa_lembretes (tarefa_id, tipo, momento)` registra o que já avisou: mudar dia ou hora gera momento novo (avisa
+  de novo) e a tarefa não é tocada (nada de "atualizado em" nem histórico por causa do lembrete).
+- Ativar o aparelho: rodapé do sino (`components/shell/AvisosAparelho.tsx`, mesmas peças do MDC · Pessoal em
+  `dominios/pessoal/avisoCelular.ts`). Sair do HUB desliga os avisos daquele aparelho.
+
 ## 6.3 Societário: uma tarefa concluída avança o processo
 
 ```mermaid
@@ -124,6 +140,7 @@ Os indicadores da lista (fase atrasada, previsão vencida, com exigência, parad
 | pg_cron `licencas-diaria` → `app.lic_rotina_diaria` | Todo dia 06h25 | Encerra contratos de licença com prazo vencido, gera as mensalidades do mês (sem duplicar) e, uma vez por dia, avisa no sino (administradores e quem tem Licenças) das mensalidades que venceram ontem e dos clientes que chegaram aos dias de atraso em que o HUB sugere bloquear. Bloquear é manual |
 | pg_cron `fin-indices-buscar` → `app.fin_indices_pedir` | Todo dia 06h20 | Pede ao Banco Central (API SGS, por `pg_net`) os últimos 24 meses de IPCA, INPC e IGP-M; a resposta é lida depois e grava `fin_indices` |
 | pg_cron `financeiro-recorrentes` → `app.fin_recorrentes_rotina` | Todo dia 06h30 | Lê os índices que chegaram; renova vigências com renovação automática; lança no Financeiro a conta do mês de cada contrato ativo da empresa da gestão cujo dia de gerar chegou — a receber, com a fatura e a fila de envio (043, [6.6](#66-fatura-dos-contratos-a-receber)) — e recupera o mês anterior, sem duplicar; erro num contrato vai para a auditoria e a rotina segue; encerra contratos cujo fim passou; avisa no sino (administradores e Contratos gerir) reajustes do mês e fins de vigência chegando ([módulo](modulos/contratos.md)) |
+| pg_cron `tarefas-lembretes` → `app.tarefa_lembretes_rodar` e Função `pessoal-aviso` | A cada minuto; a função só quando há lembrete na fila | Tarefas (089): lembrete do compromisso com horário 10 min antes e na hora, no sino e no aparelho ativado ([6.2.2](#622-compromisso-com-horário-e-lembrete-089-19112026-pedido-do-edvaldo)) |
 | pg_cron `pessoal-resumo` → `app.pessoal_resumo_rodar` e Função `pessoal-aviso` | A cada hora (minuto 3); a função só quando há aviso na fila | MDC · Pessoal (076): uma vez por dia, depois da hora escolhida por cada pessoa, o resumo das finanças da família no sino e, para quem ligou, no celular (Web Push). Sem nada a contar, não avisa ([módulo](modulos/pessoal.md#3-resumo-diário-migração-076)) |
 | `organizacoes_semear_licencas` | Organização criada | Cadastra os módulos vendáveis e o plano Gestão completa (preço zero) |
 | `tarefas_historico` | Toda mudança de tarefa | Grava o histórico |

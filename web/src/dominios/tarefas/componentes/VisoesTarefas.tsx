@@ -87,7 +87,7 @@ export function ListaTarefas({ tarefas, abrir, mudarStatus, fuso, setorPorId, cl
                 {nomeMembro(t.responsavel_id)}
               </td>
               <td data-rotulo="Prazo">
-                <PrazoBadge prazo={t.prazo} status={t.status} fuso={fuso} />
+                <PrazoBadge prazo={t.prazo} hora={t.hora} status={t.status} fuso={fuso} />
               </td>
               <td data-rotulo="Situação">
                 <select
@@ -191,7 +191,7 @@ export function QuadroTarefas({ tarefas, abrir, mudarStatus, fuso, setorPorId, c
                       </span>
                       {c && <span className="block truncate text-xs text-[var(--texto-suave)]">{nomeCliente(c)}</span>}
                       <span className="flex flex-wrap items-center gap-1.5">
-                        <PrazoBadge prazo={t.prazo} status={t.status} fuso={fuso} />
+                        <PrazoBadge prazo={t.prazo} hora={t.hora} status={t.status} fuso={fuso} />
                         <SetorChip setor={setorPorId(t.setor_id)} />
                       </span>
                       <span className="block text-xs text-[var(--texto-suave)]">{nomeMembro(t.responsavel_id)}</span>

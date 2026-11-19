@@ -1,9 +1,11 @@
-// Edge Function pessoal-aviso: entrega no celular (Web Push) o resumo diário do MDC · Pessoal (migração 076).
+// Edge Function pessoal-aviso: entrega no celular/computador (Web Push) os avisos da fila app.pessoal_push_fila — o
+// resumo diário do MDC · Pessoal (076) e os lembretes de compromisso das Tarefas (089, 10 min antes e na hora).
 //
 // Quem chama:
-//   - o agendador do banco (pg_cron, minuto 3 de cada hora, só com aviso na fila) com o cabeçalho x-agente-token
+//   - o agendador do banco (pg_cron: minuto 3 de cada hora para o resumo; a cada minuto quando há lembrete de tarefa
+//     na fila) com o cabeçalho x-agente-token
 //                                                                                  → { acao: "rodar" }
-//   - a tela do Início da família, logada, para ligar o aviso no aparelho        → { acao: "chave" } (chave pública)
+//   - a tela do Início da família ou o sino do HUB, logados, para ligar o aviso   → { acao: "chave" } (chave pública)
 // As chaves do Web Push (VAPID) são geradas aqui na primeira vez e guardadas no Vault (pessoal_vapid): ninguém digita
 // chave. A chave privada nunca sai do servidor. Aparelho que não existe mais (410/404) é esquecido.
 // O código é do Edvaldo Ribeiro de Carvalho (MDC Assessoria Contábil).
@@ -45,6 +47,8 @@ interface Aviso {
   titulo: string;
   texto: string;
   link: string;
+  /** segundos que o aviso ainda vale (lembrete: até 15 min; resumo: 6 h) */
+  ttl?: number;
   aparelhos: { endpoint: string; p256dh: string; auth: string }[];
 }
 
@@ -61,7 +65,12 @@ async function rodar(sb: Banco) {
     const carga = JSON.stringify({ titulo: a.titulo, texto: a.texto, link: a.link });
     for (const ap of a.aparelhos) {
       try {
-        await webpush.sendNotification({ endpoint: ap.endpoint, keys: { p256dh: ap.p256dh, auth: ap.auth } }, carga, { TTL: 6 * 3600 });
+        const ttl = a.ttl ?? 6 * 3600;
+        // lembrete de compromisso (vale menos de 1 h) sai com urgência alta: o celular entrega mesmo economizando bateria
+        await webpush.sendNotification({ endpoint: ap.endpoint, keys: { p256dh: ap.p256dh, auth: ap.auth } }, carga, {
+          TTL: ttl,
+          urgency: ttl < 3600 ? "high" : "normal",
+        });
         algum = true;
       } catch (e) {
         const status = (e as { statusCode?: number }).statusCode;

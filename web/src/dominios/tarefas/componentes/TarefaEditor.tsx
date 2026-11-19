@@ -46,6 +46,7 @@ type Form = {
   setor_id: string;
   responsavel_id: string;
   prazo: string;
+  hora: string;
   competencia: string;
   prioridade: Prioridade;
   status: Status;
@@ -71,6 +72,7 @@ export function TarefaEditor({
     setor_id: tarefa?.setor_id ?? eu.setor_id ?? "",
     responsavel_id: tarefa?.responsavel_id ?? (tarefa ? "" : eu.user_id),
     prazo: tarefa?.prazo ?? "",
+    hora: tarefa?.hora?.slice(0, 5) ?? "",
     competencia: tarefa?.competencia?.slice(0, 7) ?? "",
     prioridade: tarefa?.prioridade ?? "media",
     status: tarefa?.status ?? "a_fazer",
@@ -177,6 +179,7 @@ export function TarefaEditor({
       setor_id: f.setor_id || null,
       responsavel_id: f.responsavel_id || null,
       prazo: f.prazo || null,
+      hora: f.prazo && f.hora ? f.hora : null,
       competencia: f.competencia ? f.competencia + "-01" : null,
       prioridade: f.prioridade,
       status: f.status,
@@ -222,6 +225,7 @@ export function TarefaEditor({
       descricao: f.descricao.trim() || null,
       setor_id: f.setor_id || null,
       prazo: f.prazo || null,
+      hora: f.prazo && f.hora ? f.hora : null,
       competencia: competenciaISO,
       prioridade: f.prioridade,
       status: f.status,
@@ -368,6 +372,24 @@ export function TarefaEditor({
             <label className="campo">
               <span>Prazo</span>
               <input type="date" value={f.prazo} onChange={(e) => set("prazo", e.target.value)} />
+            </label>
+            {/* Horário (089): reunião ou tarefa agendada; o responsável recebe aviso 10 min antes e na hora */}
+            <label className="campo">
+              <span>Horário (opcional)</span>
+              <input
+                type="time"
+                value={f.prazo ? f.hora : ""}
+                disabled={!f.prazo}
+                onChange={(e) => set("hora", e.target.value)}
+                aria-describedby="dica-horario"
+              />
+              <small id="dica-horario" className="text-xs text-[var(--texto-suave)]">
+                {!f.prazo
+                  ? "Escolha o prazo para marcar um horário."
+                  : f.hora
+                    ? "Aviso 10 min antes e na hora, para o responsável."
+                    : "Para reunião ou compromisso: avisa 10 min antes e na hora."}
+              </small>
             </label>
             <label className="campo">
               <span>Competência</span>

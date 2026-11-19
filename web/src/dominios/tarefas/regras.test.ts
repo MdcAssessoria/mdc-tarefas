@@ -83,4 +83,13 @@ describe("ordenarTarefas", () => {
     expect(ordenarTarefas(lista).map((x) => x.id)).toEqual(["d", "c", "b", "a"]);
     expect(lista[0].id).toBe("a");
   });
+
+  it("no mesmo dia, compromisso com horário vem antes, na ordem da hora (089)", () => {
+    const lista = [
+      { id: "sem", prazo: "2026-11-05", prioridade: "urgente" as const },
+      { id: "16h", prazo: "2026-11-05", prioridade: "baixa" as const, hora: "16:00:00" },
+      { id: "9h", prazo: "2026-11-05", prioridade: "baixa" as const, hora: "09:30:00" },
+    ];
+    expect(ordenarTarefas(lista).map((x) => x.id)).toEqual(["9h", "16h", "sem"]);
+  });
 });

@@ -15,6 +15,8 @@ export interface Tarefa {
   status: Status;
   prioridade: Prioridade;
   prazo: string | null;
+  /** Horário do compromisso no dia do prazo ("HH:MM:SS"), com lembrete 10 min antes e na hora (089). */
+  hora?: string | null;
   competencia: string | null;
   modelo_id: string | null;
   concluida_em: string | null;

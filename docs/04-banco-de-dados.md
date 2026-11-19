@@ -13,7 +13,7 @@
 | Organização e acesso | `organizacoes`, `membros`, `setores`, `feriados`, `hub_apps`, `hub_acessos`, `hub_perfis`, `app.convites`, `app.convite_envios` | Quem é a empresa (MDC), quem trabalha nela, que ferramentas cada um vê |
 | Infra do HUB | `hub_auditoria`, `hub_notificacoes`, `hub_arquivos`, `hub_certificados` | Registro de ações, sino de avisos, arquivos no Storage, certificado digital (cofre) |
 | Clientes | `clientes`, `cliente_responsaveis` | Carteira de clientes (vinda do Domínio) e responsável por setor |
-| Tarefas | `tarefas`, `comentarios`, `historico`, `modelos_recorrentes` | Tarefas, rotinas mensais geradas automaticamente, histórico |
+| Tarefas | `tarefas` (com `hora`, 089), `comentarios`, `historico`, `modelos_recorrentes`, `app.tarefa_lembretes` (089) | Tarefas, rotinas mensais geradas automaticamente, histórico, lembretes de compromisso já dados |
 | Societário | `soc_tipos`, `soc_processos`, `soc_fases`, `soc_exigencias`, `soc_protocolos`, `soc_taxas`, `soc_eventos`, `soc_documentos` (073) | Alterações contratuais e aberturas, fase a fase; acervo permanente de documentos de cada cliente |
 | Portal e demonstrativos | `portal_usuarios`, `portal_convites`, `portal_conversas`, `portal_mensagens`, `portal_balancetes`, `portal_balancete_linhas`, `portal_mapa_contas`, `portal_mapa_dfc`, `portal_pareceres` | Área do cliente: balancetes, demonstrações, parecer, chat |
 | Marca de ex-cliente (esquema `app`, sem acesso pela API) | `app.ex_clientes` | E-mails que já foram acesso de cliente; nunca entram na equipe (027). Para retirar uma marca feita por engano, o administrador roda no SQL do Supabase: `delete from app.ex_clientes where email = '...'` e registra o motivo |
@@ -245,6 +245,8 @@ pode fazer aquilo (normalmente com `app.hub_pode(org, app, nível)` ou `app.port
 
 ## 4.4 Funções internas e gatilhos (`app.*`)
 
+- **Lembretes de compromisso (089):** `tarefa_lembretes_rodar(agora)` (pg_cron `tarefas-lembretes`, a cada minuto; ver
+  [6.2.2](06-fluxos.md)). A fila do aparelho (`app.pessoal_push_fila`) ganhou `validade_seg` e `pessoal_push_reservar` devolve o `ttl`.
 - **Permissão:** `hub_pode` (só a ferramenta pedida), `hub_pode_algum` (alguma das ferramentas), `papel`, `eh_gestor`,
   `portal_pode`, `minhas_orgs`, `meu_setor`, `hub_peso`; módulos pagos do Portal: `cliente_tem_modulo(cliente, módulo)`
   (módulo ativo, contrato vigente, sem bloqueio) e `cliente_bloqueado(cliente)` (031); dados de gestão:

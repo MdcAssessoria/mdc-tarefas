@@ -7290,6 +7290,7 @@ export type Database = {
           criado_em: string;
           criado_por: string | null;
           descricao: string | null;
+          hora: string | null;
           id: string;
           modelo_id: string | null;
           org_id: string;
@@ -7314,6 +7315,7 @@ export type Database = {
           criado_em?: string;
           criado_por?: string | null;
           descricao?: string | null;
+          hora?: string | null;
           id?: string;
           modelo_id?: string | null;
           org_id: string;
@@ -7338,6 +7340,7 @@ export type Database = {
           criado_em?: string;
           criado_por?: string | null;
           descricao?: string | null;
+          hora?: string | null;
           id?: string;
           modelo_id?: string | null;
           org_id?: string;

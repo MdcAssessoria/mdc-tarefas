@@ -99,12 +99,19 @@ export const TOM_STATUS: Record<Status, Tom> = {
 
 const PESO_PRIORIDADE: Record<Prioridade, number> = { urgente: 0, alta: 1, media: 2, baixa: 3 };
 
-/** Ordem da lista: prazo mais próximo primeiro (sem prazo no fim) e, no mesmo prazo, a mais urgente primeiro. */
-export function ordenarTarefas<T extends Pick<Tarefa, "prazo" | "prioridade">>(lista: T[]): T[] {
+/**
+ * Ordem da lista: prazo mais próximo primeiro (sem prazo no fim); no mesmo prazo, compromisso com horário primeiro (pela
+ * hora) e depois a mais urgente.
+ */
+export function ordenarTarefas<T extends Pick<Tarefa, "prazo" | "prioridade"> & { hora?: string | null }>(lista: T[]): T[] {
   return [...lista].sort((a, b) => {
     const pa = a.prazo ?? "9999";
     const pb = b.prazo ?? "9999";
     if (pa !== pb) return pa < pb ? -1 : 1;
+    // no mesmo dia, compromisso com horário vem primeiro, na ordem da hora (089)
+    const ha = a.hora ?? "99";
+    const hb = b.hora ?? "99";
+    if (ha !== hb) return ha < hb ? -1 : 1;
     return PESO_PRIORIDADE[a.prioridade] - PESO_PRIORIDADE[b.prioridade];
   });
 }
