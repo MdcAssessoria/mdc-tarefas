@@ -1314,7 +1314,29 @@ const INTERACOES = {
       await p.waitForTimeout(300);
       await foto?.(`aba-${(await aba.innerText()).split(" ")[0].toLowerCase()}`);
     }
-    await abrirEFecharModal(p, "Novo plano", "Novo plano");
+  },
+  // pacotes de licença (091): cartões, montagem (sistema → módulos → usuários → preço com o exemplo) e a grade
+  "/licencas/pacotes": async (p, foto) => {
+    await p.getByText("EXato R&S").waitFor({ timeout: 5000 });
+    await p.getByText("Até 3 usuários").waitFor({ timeout: 3000 });
+    await p.getByRole("button", { name: "Montar pacote" }).click();
+    const janela = p.getByRole("dialog", { name: "Montar pacote de licença" });
+    await janela.waitFor({ timeout: 3000 });
+    await janela.getByLabel("Nome do pacote").fill("EXato Comercial");
+    await janela.getByRole("button", { name: /EXato/ }).click();
+    await janela.getByRole("button", { name: "Marcar todos" }).click();
+    await janela.getByLabel("Usuários incluídos no preço").fill("2");
+    await janela.getByLabel("Valor de cada usuário a mais, por mês (R$)").fill("35");
+    await janela.getByLabel("Preço do pacote por mês (R$)").fill("220");
+    await janela.getByLabel("Usuários do exemplo").fill("4");
+    await janela.getByText("R$ 290,00").waitFor({ timeout: 3000 });
+    await foto?.("montar");
+    await p.keyboard.press("Escape");
+    await janela.waitFor({ state: "detached", timeout: 3000 });
+    await p.getByRole("button", { name: /Grade módulo/ }).click();
+    await p.getByRole("radiogroup", { name: "Sistema" }).getByRole("radio", { name: "EXato" }).click();
+    await p.getByRole("button", { name: "Salvar pacotes" }).waitFor({ timeout: 3000 });
+    await foto?.("grade");
   },
   [`/demonstrativos/${IDS_EXEMPLO["demonstrativos/[id]"]}`]: trocarPeriodo,
   "/portal": interacoesPortal,

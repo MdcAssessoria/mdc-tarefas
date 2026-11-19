@@ -1,11 +1,10 @@
-// Sistemas › Produtos e planos: os sistemas que a MDC licencia (Ledgra ERP, EXato…; 088), os módulos de cada um (preço
-// de tabela mensal) e os planos (pacotes de módulos com preço próprio). Cadastrar e editar exige o nível gerir; nada se
-// apaga (inativar tira das vendas novas; sistema "Fora de venda" não aceita licença nova).
+// Sistemas › Sistemas e produtos: os sistemas que a MDC licencia (Ledgra ERP, EXato…; 088) e os módulos de cada um
+// (preço de tabela mensal). Os pacotes têm tela própria desde a 091 (Sistemas › Pacotes de licença). Cadastrar e editar
+// exige o nível gerir; nada se apaga (inativar tira das vendas novas; sistema "Fora de venda" não aceita licença nova).
 "use client";
 
 import { useState } from "react";
 import { useOrg } from "@/dominios/organizacao/OrgProvider";
-import { brl } from "@/lib/formato/moeda";
 import { fmtData } from "@/lib/formato/datas";
 import { traduzirErro } from "@/lib/erros";
 import { Abas } from "@/components/ui/Abas";
@@ -17,14 +16,14 @@ import { BotoesExportar } from "@/components/ui/BotoesExportar";
 import { nomeArquivo } from "@/lib/arquivos/exportarLista";
 import { numeroBr, valorParaCampo } from "@/dominios/financeiro/regras";
 import { Cabecalho, useDadosLicencas } from "@/dominios/licencas/componentes/Base";
-import { QuadroPacotes, TabelaPrecosProdutos } from "@/dominios/licencas/componentes/TabelasPrecos";
-import { salvarPlano, salvarProduto } from "@/dominios/licencas/repositorio";
+import { TabelaPrecosProdutos } from "@/dominios/licencas/componentes/TabelasPrecos";
+import { salvarProduto } from "@/dominios/licencas/repositorio";
 import { JanelaSistema } from "@/dominios/licencas/componentes/JanelaSistema";
 import { Icone } from "@/components/ui/Icone";
 import { Chip } from "@/components/ui/Chip";
-import { SITUACOES_SISTEMA, type Plano, type Produto, type Sistema } from "@/dominios/licencas/tipos";
+import { SITUACOES_SISTEMA, type Produto, type Sistema } from "@/dominios/licencas/tipos";
 
-type Aba = "sistemas" | "modulos" | "planos";
+type Aba = "sistemas" | "modulos";
 
 export default function PaginaProdutos() {
   const { org } = useOrg();
@@ -33,16 +32,13 @@ export default function PaginaProdutos() {
   const { aviso, mostrar } = useAviso();
   const [aba, setAba] = useState<Aba>("modulos");
   const [modulo, setModulo] = useState<Produto | "novo" | null>(null);
-  const [plano, setPlano] = useState<Plano | "novo" | null>(null);
   const [sistema, setSistema] = useState<Sistema | "novo" | null>(null);
   const d = dados.dados;
   const emUso = (pred: (k: { plano_id: string | null; produtos: string[]; situacao: string; sistema: string }) => boolean) =>
     (d?.contratos ?? []).filter((k) => k.situacao === "ativo" && pred(k)).length;
-  const somaTabela = (p: Plano) => p.produtos.reduce((s, id) => s + (dados.produtos.get(id)?.preco ?? 0), 0);
 
   function fechar(msg?: string) {
     setModulo(null);
-    setPlano(null);
     setSistema(null);
     if (msg) {
       mostrar(msg);
@@ -54,7 +50,7 @@ export default function PaginaProdutos() {
     <div className="space-y-4">
       <Cabecalho
         titulo="Sistemas e produtos"
-        descricao="Os sistemas que a MDC licencia, os módulos de cada um com o preço de tabela mensal e os pacotes (planos)."
+        descricao="Os sistemas que a MDC licencia e os módulos de cada um com o preço de tabela mensal. Os pacotes ficam em Pacotes de licença."
       >
         {d && aba === "modulos" && (
           <BotoesExportar
@@ -74,32 +70,6 @@ export default function PaginaProdutos() {
                 { titulo: "O que inclui", valor: (p) => p.descricao, peso: 3, largura: 50 },
                 ...(podeGerir ? [{ titulo: "Preço mensal", valor: (p: Produto) => p.preco, formato: "moeda" as const, peso: 1.2 }] : []),
                 { titulo: "Contratos ativos", valor: (p) => emUso((k) => k.produtos.includes(p.id)), formato: "numero", peso: 1 },
-                { titulo: "Situação", valor: (p) => (p.ativo ? "À venda" : "Inativo"), peso: 1, largura: 12 },
-              ],
-            })}
-          />
-        )}
-        {d && aba === "planos" && (
-          <BotoesExportar
-            vazio={!d.planos.length}
-            avisar={mostrar}
-            montar={() => ({
-              titulo: "Planos de licença",
-              subtitulo: `${org.nome} · ${fmtData(hoje)}`,
-              arquivo: nomeArquivo("Planos-licenca", hoje),
-              logoUrl: org.logo_url,
-              paisagem: false,
-              linhas: d.planos,
-              colunas: [
-                { titulo: "Plano", valor: (p) => p.nome, peso: 1.6, largura: 24 },
-                { titulo: "Produtos", valor: (p) => p.produtos.map((id) => dados.produtos.get(id)?.nome).join(", "), peso: 3, largura: 50 },
-                ...(podeGerir
-                  ? [
-                      { titulo: "Preço mensal", valor: (p: Plano) => p.preco, formato: "moeda" as const, peso: 1.2 },
-                      { titulo: "Avulsos somariam", valor: (p: Plano) => somaTabela(p), formato: "moeda" as const, peso: 1.2 },
-                    ]
-                  : []),
-                { titulo: "Contratos ativos", valor: (p) => emUso((k) => k.plano_id === p.id), formato: "numero", peso: 1 },
                 { titulo: "Situação", valor: (p) => (p.ativo ? "À venda" : "Inativo"), peso: 1, largura: 12 },
               ],
             })}
@@ -130,22 +100,21 @@ export default function PaginaProdutos() {
         {podeGerir && d && (
           <button
             className="btn-primario"
-            onClick={() => (aba === "sistemas" ? setSistema("novo") : aba === "modulos" ? setModulo("novo") : setPlano("novo"))}
+            onClick={() => (aba === "sistemas" ? setSistema("novo") : setModulo("novo"))}
           >
             <Icone nome="novo" className="h-4 w-4" />
-            {aba === "sistemas" ? "Novo sistema" : aba === "modulos" ? "Novo produto" : "Novo plano"}
+            {aba === "sistemas" ? "Novo sistema" : "Novo produto"}
           </button>
         )}
       </Cabecalho>
 
       <Abas<Aba>
-        rotulo="Produtos e planos"
+        rotulo="Sistemas e produtos"
         valor={aba}
         aoMudar={setAba}
         itens={[
           { id: "sistemas", nome: "Sistemas" },
           { id: "modulos", nome: "Produtos" },
-          { id: "planos", nome: "Planos (pacotes)" },
         ]}
       />
       {aviso}
@@ -183,7 +152,7 @@ export default function PaginaProdutos() {
             );
           })}
         </div>
-      ) : aba === "modulos" ? (
+      ) : (
         !d.produtos.length ? (
           <EstadoVazio>Nenhum produto cadastrado. Cadastre os módulos de cada sistema com o preço mensal.</EstadoVazio>
         ) : (
@@ -227,39 +196,6 @@ export default function PaginaProdutos() {
             )}
           </>
         )
-      ) : !d.planos.length ? (
-        <EstadoVazio
-          acao={
-            podeGerir && (
-              <button className="btn-primario" onClick={() => setPlano("novo")}>
-                Criar o primeiro plano
-              </button>
-            )
-          }
-        >
-          Nenhum plano ainda. Um plano junta produtos com um preço mais em conta.
-        </EstadoVazio>
-      ) : (
-        podeGerir ? (
-          <QuadroPacotes
-            produtos={d.produtos}
-            planos={d.planos}
-            org={org.id}
-            emUso={(id) => emUso((k) => k.plano_id === id)}
-            aoEditar={setPlano}
-            aoSalvar={fechar}
-            nomeSistema={nomeSistema}
-          />
-        ) : (
-          <div className="grid gap-3 md:grid-cols-2">
-            {d.planos.filter((p) => p.ativo).map((p) => (
-              <div key={p.id} className="cartao space-y-1 p-4">
-                <h2 className="font-semibold text-[var(--marca)]">{p.nome}</h2>
-                <p className="text-sm">{p.produtos.map((id) => dados.produtos.get(id)?.nome).join(" · ")}</p>
-              </div>
-            ))}
-          </div>
-        )
       )}
 
       {modulo && d && (
@@ -272,15 +208,6 @@ export default function PaginaProdutos() {
         />
       )}
       {sistema && <JanelaSistema sistema={sistema === "novo" ? null : sistema} org={org.id} aoFechar={() => fechar()} aoSalvar={fechar} />}
-      {plano && d && (
-        <EditarPlano
-          plano={plano === "novo" ? null : plano}
-          produtos={d.produtos}
-          org={org.id}
-          aoFechar={() => fechar()}
-          aoSalvar={fechar}
-        />
-      )}
     </div>
   );
 }
@@ -375,94 +302,6 @@ function EditarModulo({
       <label className="flex items-center gap-2 text-sm">
         <input type="checkbox" checked={f.ativo} onChange={(e) => mudar({ ativo: e.target.checked })} /> À venda (desmarque para não
         oferecer em contratos novos)
-      </label>
-      {erro && <p className="rounded-md bg-red-50 p-2 text-sm text-red-800">{erro}</p>}
-      <div className="flex justify-end gap-2 pt-2">
-        <button className="btn" onClick={aoFechar}>
-          Voltar
-        </button>
-        <button className="btn-primario" onClick={salvar} disabled={salvando}>
-          {salvando ? "Salvando…" : "Salvar"}
-        </button>
-      </div>
-    </Modal>
-  );
-}
-
-function EditarPlano({
-  plano,
-  produtos,
-  org,
-  aoFechar,
-  aoSalvar,
-}: {
-  plano: Plano | null;
-  produtos: Produto[];
-  org: string;
-  aoFechar: () => void;
-  aoSalvar: (m: string) => void;
-}) {
-  const [f, setF] = useState({
-    nome: plano?.nome ?? "",
-    descricao: plano?.descricao ?? "",
-    preco: plano ? valorParaCampo(plano.preco) : "",
-    ativo: plano?.ativo ?? true,
-    produtos: plano?.produtos ?? ([] as string[]),
-  });
-  const [erro, setErro] = useState("");
-  const [salvando, setSalvando] = useState(false);
-  const mudar = (p: Partial<typeof f>) => setF((x) => ({ ...x, ...p }));
-  const soma = produtos.filter((p) => f.produtos.includes(p.id)).reduce((s, p) => s + p.preco, 0);
-
-  async function salvar() {
-    const preco = numeroBr(f.preco);
-    if (!f.nome.trim()) return setErro("Informe o nome do plano.");
-    if (!f.produtos.length) return setErro("Marque ao menos um produto.");
-    if (Number.isNaN(preco) || preco < 0) return setErro("Informe o preço mensal do plano.");
-    setSalvando(true);
-    try {
-      await salvarPlano({ id: plano?.id, org, nome: f.nome, descricao: f.descricao, preco, ativo: f.ativo, produtos: f.produtos });
-      aoSalvar(plano ? "Plano atualizado. Assinaturas já fechadas continuam com os produtos e o valor combinados." : "Plano criado.");
-    } catch (e) {
-      setErro(traduzirErro(e));
-      setSalvando(false);
-    }
-  }
-
-  return (
-    <Modal titulo={plano ? "Editar plano" : "Novo plano"} aoFechar={aoFechar} largura="lg">
-      <label className="campo">
-        <span>Nome</span>
-        <input value={f.nome} onChange={(e) => mudar({ nome: e.target.value })} autoFocus />
-      </label>
-      <label className="campo">
-        <span>Descrição</span>
-        <input value={f.descricao} onChange={(e) => mudar({ descricao: e.target.value })} />
-      </label>
-      <fieldset className="space-y-1">
-        <legend className="text-sm text-neutral-600">Produtos do plano</legend>
-        <div className="grid gap-1 sm:grid-cols-2">
-          {produtos
-            .filter((p) => p.ativo || f.produtos.includes(p.id))
-            .map((p) => (
-              <label key={p.id} className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={f.produtos.includes(p.id)}
-                  onChange={(e) => mudar({ produtos: e.target.checked ? [...f.produtos, p.id] : f.produtos.filter((x) => x !== p.id) })}
-                />
-                {p.nome} <span className="text-xs text-neutral-500">({brl(p.preco)})</span>
-              </label>
-            ))}
-        </div>
-      </fieldset>
-      <label className="campo">
-        <span>Preço do plano por mês (R$)</span>
-        <input inputMode="decimal" value={f.preco} onChange={(e) => mudar({ preco: e.target.value })} placeholder={valorParaCampo(soma)} />
-      </label>
-      <p className="text-xs text-neutral-600">Os produtos avulsos somariam {brl(soma)} por mês.</p>
-      <label className="flex items-center gap-2 text-sm">
-        <input type="checkbox" checked={f.ativo} onChange={(e) => mudar({ ativo: e.target.checked })} /> À venda
       </label>
       {erro && <p className="rounded-md bg-red-50 p-2 text-sm text-red-800">{erro}</p>}
       <div className="flex justify-end gap-2 pt-2">

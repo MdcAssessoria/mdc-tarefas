@@ -4969,8 +4969,12 @@ export type Database = {
           descricao: string;
           id: string;
           nome: string;
+          excedente: string;
           org_id: string;
           preco: number;
+          sistema: string;
+          usuarios_incluidos: number | null;
+          valor_usuario_adicional: number;
         };
         Insert: {
           ativo?: boolean;
@@ -4978,8 +4982,12 @@ export type Database = {
           descricao?: string;
           id?: string;
           nome: string;
+          excedente?: string;
           org_id: string;
           preco?: number;
+          sistema: string;
+          usuarios_incluidos?: number | null;
+          valor_usuario_adicional?: number;
         };
         Update: {
           ativo?: boolean;
@@ -4987,10 +4995,21 @@ export type Database = {
           descricao?: string;
           id?: string;
           nome?: string;
+          excedente?: string;
           org_id?: string;
           preco?: number;
+          sistema?: string;
+          usuarios_incluidos?: number | null;
+          valor_usuario_adicional?: number;
         };
         Relationships: [
+          {
+            foreignKeyName: "lic_planos_sistema_fk";
+            columns: ["org_id", "sistema"];
+            isOneToOne: false;
+            referencedRelation: "lic_sistemas";
+            referencedColumns: ["org_id", "slug"];
+          },
           {
             foreignKeyName: "lic_planos_org_id_fkey";
             columns: ["org_id"];

@@ -113,6 +113,7 @@ export const NAV: Record<Modulo, { titulo: string; links: LinkModulo[]; grupos?:
     links: [
       { href: "/licencas/contratos", nome: "Licenças", icone: "documento" },
       { href: "/licencas/produtos", nome: "Sistemas e produtos", icone: "caixa" },
+      { href: "/licencas/pacotes", nome: "Pacotes de licença", icone: "etiqueta" },
       { href: "/licencas/receita", nome: "Receita por sistema", icone: "tendencia", minimo: "gerir" },
       { href: "/licencas/modelo", nome: "Modelo do contrato", icone: "editar", minimo: "gerir" },
     ],

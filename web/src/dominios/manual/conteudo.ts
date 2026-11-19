@@ -4,7 +4,7 @@
 // (components/shell/navegacao.ts): com ele a tela do manual ganha o botão "Ir para a tela".
 // Mudou uma tela ou regra? Atualize o trecho dela aqui no mesmo commit e acrescente uma linha em "Controle de versões".
 
-export const VERSAO_MANUAL = { numero: "1.2", data: "19/11/2026" };
+export const VERSAO_MANUAL = { numero: "1.3", data: "19/11/2026" };
 
 export const MANUAL_MD = `
 ## Como usar este manual
@@ -254,7 +254,7 @@ Os sistemas que a MDC licencia aos clientes (Ledgra ERP, EXato e os próximos): 
 
 **Como usar:**
 1. Clique em **Nova licença**, escolha o cliente e o **sistema** (só aparecem os que estão à venda).
-2. Escolha um plano, módulos avulsos ou o sistema **full** (todos os módulos, inclusive os que forem criados depois).
+2. Escolha um **pacote**, módulos avulsos ou o sistema **full** (todos os módulos, inclusive os que forem criados depois). Ao escolher o pacote, os usuários incluídos, o valor do usuário a mais e o que fazer ao passar do limite já vêm preenchidos; dá para mudar só nesta licença.
 3. Em **Valor e usuários**, informe o valor mensal, quantos **usuários** estão incluídos e o valor por usuário a mais. Em **Quando passar do limite**, escolha **Liberar e cobrar** (o usuário a mais entra na cobrança do mês seguinte) ou **Não deixar passar** (o sistema não cadastra pessoa além do limite).
 4. Em **Como cobrar**, deixe **Mensalidade da licença** (vai junto com o honorário) ou escolha um **contrato a receber** de Contratos: aí a fatura dele leva a licença e o usuário a mais.
 5. Depois de salvar, em **Ações › Chave do sistema**, gere a chave e cole no sistema do cliente. A chave começa com o prefixo do sistema (LDG-… no Ledgra, EXA-… no EXato).
@@ -263,9 +263,22 @@ Os sistemas que a MDC licencia aos clientes (Ledgra ERP, EXato e os próximos): 
 
 ### Sistemas e produtos (Sistemas → Sistemas e produtos)
 
-**Para que serve:** cadastrar os sistemas (aba **Sistemas**: nome, código, prefixo da chave e situação — Vendendo, Em breve ou Fora de venda), os módulos de cada sistema com o preço de tabela (aba **Produtos**) e os pacotes (aba **Planos**).
+**Para que serve:** cadastrar os sistemas (aba **Sistemas**: nome, código, prefixo da chave e situação — Vendendo, Em breve ou Fora de venda) e os módulos de cada sistema com o preço de tabela (aba **Produtos**). Os pacotes ficam na tela **Pacotes de licença**.
 
 **Dicas:** o módulo novo começa com o código do sistema (ex.: exato-rs). Sistema "Em breve" fica cadastrado, mas não aceita licença.
+
+### Pacotes de licença (Sistemas → Pacotes de licença)
+
+**Para que serve:** montar o que cada sistema vende. Um pacote junta módulos de **um** sistema com um preço mensal, quantos **usuários** entram (qualquer número, a partir de 1, ou **sem limite**), o valor de cada **usuário a mais** e o que acontece quando passa do limite.
+
+**Como usar:**
+1. Clique em **Montar pacote**, dê um nome (ex.: "EXato Diárias") e escolha o **sistema**.
+2. Marque os **módulos** (ou **Marcar todos**). Ao lado de cada um aparece o preço avulso.
+3. Em **Usuários**, digite quantos entram no preço ou marque **Sem limite de usuários**. Com limite, informe o valor do usuário a mais e escolha **Libera e cobra no mês seguinte** ou **Bloqueia**.
+4. Digite o **preço do pacote**. O quadro mostra quanto os módulos somariam avulsos, o desconto e um **exemplo de mensalidade** (mude o número de usuários do exemplo para simular).
+5. Clique em **Salvar pacote**. Pacote **À venda** aparece ao cadastrar uma licença.
+
+**Dicas:** a vista **Grade módulo × pacote** marca os módulos de vários pacotes de uma vez. Mudar um pacote não muda as licenças já fechadas (cada licença guarda a própria cópia). Pacote já usado numa licença não troca de sistema: monte outro. Preço e usuário a mais só aparecem para quem gere Sistemas.
 
 ### Receita por sistema (Sistemas → Receita por sistema)
 
@@ -308,4 +321,5 @@ Os sistemas que a MDC licencia aos clientes (Ledgra ERP, EXato e os próximos): 
 | 1.0 | 18/11/2026 | Primeira versão do manual dentro do HUB, aberta a todos os usuários. Inclui a criação da mesma tarefa para vários clientes de uma vez. |
 | 1.1 | 18/11/2026 | Licenças Ledgra virou **Sistemas**: licença por sistema (Ledgra ERP, EXato…), usuários incluídos e a mais, cobrança pela fatura da Gestão, chave por sistema e Receita por sistema no mesmo menu. |
 | 1.2 | 19/11/2026 | Tarefas com **Horário**: lembrete 10 min antes e na hora, no sino e no celular/computador (**Ativar avisos neste aparelho**, no sino). |
+| 1.3 | 19/11/2026 | **Pacotes de licença** (Sistemas): a MDC monta os pacotes de cada sistema com módulos, preço, usuários incluídos (qualquer número ou sem limite), valor do usuário a mais e o que fazer ao passar do limite; a licença puxa esses dados do pacote. |
 `;

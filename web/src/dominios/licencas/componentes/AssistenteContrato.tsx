@@ -15,6 +15,7 @@ import { Icone } from "@/components/ui/Icone";
 import { numeroBr, valorParaCampo } from "@/dominios/financeiro/regras";
 import { descontoSobreTabela, valorDoMes, vencimentoDaCompetencia } from "../regras";
 import { salvarContrato } from "../repositorio";
+import { herancaDoPacote, pacotesDoSistema, textoUsuariosPacote } from "../pacotes";
 import { INDICES } from "../tipos";
 import type { Contrato, Excedente, IndiceReajuste, Plano, Produto, Sistema } from "../tipos";
 import { supabase } from "@/lib/supabase";
@@ -100,14 +101,25 @@ export function AssistenteContrato({
   const [erro, setErro] = useState("");
   const [salvando, setSalvando] = useState(false);
   const mudar = (p: Partial<typeof f>) => setF((x) => ({ ...x, ...p }));
+  // escolher o pacote traz os usuários, o excedente e (com a permissão de valores) o valor do usuário a mais; tudo
+  // continua editável no passo dos usuários
+  const escolherPacote = (pl: Plano) => {
+    const h = herancaDoPacote(pl);
+    mudar({
+      plano: pl.id,
+      temLimite: h.temLimite,
+      usuarios: h.usuarios || f.usuarios,
+      excedente: h.excedente,
+      ...(valores ? { adicional: valorParaCampo(h.adicional) } : {}),
+    });
+  };
 
   const sistemaSel = sistemas.find((x) => x.slug === f.sistema);
   const nomeSistema = sistemaSel?.nome ?? f.sistema;
   const doSistema = (p: Produto) => p.sistema === f.sistema;
   const ativosProd = produtos.filter((p) => doSistema(p) && (p.ativo || (editar?.produtos.includes(p.id) ?? false)));
-  // plano do sistema = todos os módulos do plano são deste sistema
-  const planoDoSistema = (pl: Plano) => pl.produtos.length > 0 && pl.produtos.every((id) => produtos.find((p) => p.id === id)?.sistema === f.sistema);
-  const planosVisiveis = planos.filter((p) => planoDoSistema(p) && (p.ativo || p.id === editar?.plano_id));
+  // pacotes do sistema (091: o pacote sabe o próprio sistema)
+  const planosVisiveis = pacotesDoSistema(planos, f.sistema, editar?.plano_id);
   const plano = planos.find((p) => p.id === f.plano);
   // full: todos os módulos ativos do sistema (o banco confere a lista na hora de salvar)
   const todosDoSistema = produtos.filter((p) => doSistema(p) && p.ativo);
@@ -152,7 +164,7 @@ export function AssistenteContrato({
       if (jaTemSistema) return `O cliente já tem licença ativa do ${nomeSistema}. Edite aquela licença ou encerre antes.`;
       if (!escolhidos.length)
         return f.modo === "plano"
-          ? "Escolha o plano."
+          ? "Escolha o pacote."
           : f.modo === "full"
             ? `Não há módulo ativo do ${nomeSistema}.`
             : "Marque ao menos um módulo.";
@@ -352,7 +364,7 @@ export function AssistenteContrato({
                 className={`btn flex-1 ${f.modo === m ? "!border-[var(--marca)] !bg-[var(--marca)] !text-white" : ""}`}
                 onClick={() => mudar({ modo: m })}
               >
-                {m === "plano" ? "Um plano (pacote)" : m === "avulso" ? "Módulos avulsos" : `${nomeSistema} full`}
+                {m === "plano" ? "Um pacote" : m === "avulso" ? "Módulos avulsos" : `${nomeSistema} full`}
               </button>
             ))}
           </div>
@@ -374,18 +386,19 @@ export function AssistenteContrato({
                     key={p.id}
                     className={`cartao flex cursor-pointer gap-2 p-3 ${f.plano === p.id ? "ring-2 ring-[var(--marca)]" : ""}`}
                   >
-                    <input type="radio" name="plano" checked={f.plano === p.id} onChange={() => mudar({ plano: p.id })} />
+                    <input type="radio" name="plano" checked={f.plano === p.id} onChange={() => escolherPacote(p)} />
                     <span className="text-sm">
                       <b>{p.nome}</b>
                       {valores && <> · {brl(p.preco)}/mês</>}
                       <span className="block text-xs text-neutral-600">{p.produtos.map(nomeProd).join(", ")}</span>
+                      <span className="block text-xs text-neutral-600">{textoUsuariosPacote(p.usuarios_incluidos)}</span>
                     </span>
                   </label>
                 ))}
               </div>
             ) : (
               <p className="rounded-md bg-amber-50 p-3 text-sm text-amber-900">
-                Nenhum plano ativo. Escolha módulos avulsos ou cadastre um plano.
+                Nenhum pacote à venda deste sistema. Escolha módulos avulsos ou monte um pacote em Sistemas › Pacotes de licença.
               </p>
             )
           ) : (
@@ -602,7 +615,7 @@ export function AssistenteContrato({
               {f.modo === "full"
                 ? `${nomeSistema} full (${escolhidos.map(nomeProd).join(", ")})`
                 : f.modo === "plano" && plano
-                  ? `Plano ${plano.nome} (${escolhidos.map(nomeProd).join(", ")})`
+                  ? `Pacote ${plano.nome} (${escolhidos.map(nomeProd).join(", ")})`
                   : escolhidos.map(nomeProd).join(", ")}
               {valores && valor === 0 && <span className="block text-xs text-emerald-700">Licença gratuita (sem mensalidade)</span>}
             </dd>

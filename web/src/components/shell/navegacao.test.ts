@@ -64,9 +64,9 @@ describe("filtrarLinks", () => {
 });
 
 describe("Licenças", () => {
-  it("Sistemas mostra só o cadastro a quem vê (074/088): licenças e produtos; receita e modelo exigem gerir", () => {
+  it("Sistemas mostra só o cadastro a quem vê (074/088/091): licenças, produtos e pacotes; receita e modelo exigem gerir", () => {
     const abas = filtrarLinks("licencas", { pode: (_app, minimo = "ver") => minimo === "ver", podeEditarCadastros: false });
-    expect(abas.map((l) => l.href)).toEqual(["/licencas/contratos", "/licencas/produtos"]);
+    expect(abas.map((l) => l.href)).toEqual(["/licencas/contratos", "/licencas/produtos", "/licencas/pacotes"]);
   });
   it("a Receita por sistema fica em Sistemas para quem gere (088)", () => {
     const abas = filtrarLinks("licencas", { pode: () => true, podeEditarCadastros: false });

@@ -1269,9 +1269,30 @@ export const TABELAS = {
       preco: 390,
       ativo: true,
       criado_em: momento(-100),
+      sistema: "hub",
+      usuarios_incluidos: null,
+      valor_usuario_adicional: 0,
+      excedente: "cobrar",
+    },
+    // 091: pacote do EXato com 3 usuários e usuário a mais cobrado
+    {
+      id: "99999999-9999-4999-8999-0000000000a2",
+      org_id: ORG,
+      nome: "EXato R&S",
+      descricao: "Recrutamento e seleção com o CRM",
+      preco: 230,
+      ativo: true,
+      criado_em: momento(-5),
+      sistema: "exato",
+      usuarios_incluidos: 3,
+      valor_usuario_adicional: 40,
+      excedente: "cobrar",
     },
   ],
-  lic_plano_produtos: LIC_PRODUTOS.map((p) => ({ plano_id: LIC_PLANO, produto_id: p.id, org_id: ORG })),
+  lic_plano_produtos: [
+    ...LIC_PRODUTOS.map((p) => ({ plano_id: LIC_PLANO, produto_id: p.id, org_id: ORG })),
+    ...LIC_EXATO.map((p) => ({ plano_id: "99999999-9999-4999-8999-0000000000a2", produto_id: p.id, org_id: ORG })),
+  ],
   lic_contratos: [
     licContrato(LIC_K1, C1, LIC_PLANO, 390, 350, mesRel(-14)),
     licContrato(LIC_K2, C2, null, 120, 120, mesRel(-5)),
@@ -1750,6 +1771,7 @@ export const RPCS = {
   lic_valores: () => ({
     produtos: Object.fromEntries(TABELAS.lic_produtos.map((p) => [p.id, p.preco])),
     planos: Object.fromEntries(TABELAS.lic_planos.map((p) => [p.id, p.preco])),
+    planos_adicional: Object.fromEntries(TABELAS.lic_planos.map((p) => [p.id, p.valor_usuario_adicional ?? 0])),
     contratos: Object.fromEntries(
       TABELAS.lic_contratos.map((k) => [k.id, { valor_mensal: k.valor_mensal, valor_tabela: k.valor_tabela, valor_usuario_adicional: 25 }]),
     ),

@@ -23,7 +23,7 @@ import {
 import { somarMeses } from "@/lib/datas";
 import type { Contrato, Plano, Produto, Sistema } from "../tipos";
 
-/** "Plano Gestão", "EXato full" ou "Financeiro, Estoque" (módulos avulsos); "(gratuita)" quando o valor é zero. */
+/** "Pacote Gestão", "EXato full" ou "Financeiro, Estoque" (módulos avulsos); "(gratuita)" quando o valor é zero. */
 export function rotuloContrato(
   k: Pick<Contrato, "plano_id" | "produtos"> & Partial<Pick<Contrato, "modalidade" | "sistema">>,
   produtos: Map<string, Produto>,
@@ -32,7 +32,7 @@ export function rotuloContrato(
 ): string {
   if (k.modalidade === "full") return `${(k.sistema && sistemas.get(k.sistema)?.nome) || "Ledgra"} full`;
   if (k.modalidade === "gratuita") return `${rotuloContrato({ ...k, modalidade: undefined }, produtos, planos, sistemas)} (gratuita)`;
-  if (k.plano_id && planos.get(k.plano_id)) return `Plano ${planos.get(k.plano_id)!.nome}`;
+  if (k.plano_id && planos.get(k.plano_id)) return `Pacote ${planos.get(k.plano_id)!.nome}`;
   return (
     k.produtos
       .map((id) => produtos.get(id))

@@ -49,7 +49,8 @@
 | `/licencas/inadimplentes` | ver (bloquear e regra de dias: gerir) | Clientes com mensalidade vencida, do maior atraso para o menor; "Copiar mensagem de cobrança" (WhatsApp, começa com bom dia/boa tarde/boa noite pela hora da organização); bloquear/desbloquear com motivo; "Sugerido bloquear" a partir de N dias; bloqueados sem atraso; histórico de bloqueios; PDF e Excel |
 | `/licencas/contratos` | ver (cadastrar, editar, reajustar, encerrar: gerir) | Contratos com módulos de cada cliente, valor, vencimento, vigência e reajuste; assistente em 5 passos; histórico (reajustes, encerramento, mensalidades); `?cliente=<id>` abre filtrado; PDF e Excel |
 | `/licencas/faturamento` | ver | Faturamento do mês: por cliente, mensalidade do mês em aberto + atrasados de meses anteriores = o que acrescentar ao honorário; PDF (timbrado) e Excel com código do Domínio e CNPJ |
-| `/licencas/produtos` | ver (cadastrar: gerir) | Abas Módulos (código fixo, preço de tabela, à venda) e Planos (módulos, preço, economia sobre os avulsos); PDF e Excel |
+| `/licencas/produtos` | ver (cadastrar: gerir) | Abas Sistemas e Módulos (código fixo, preço de tabela, à venda); PDF e Excel |
+| `/licencas/pacotes` | ver (montar: gerir) | Pacotes de licença: sistema, módulos, preço, usuários incluídos, usuário a mais e excedente; cartões ou grade; PDF e Excel |
 
 Integrações: o cadastro do cliente (Configurações › Clientes, ao abrir os responsáveis) mostra os módulos contratados,
 o valor mensal e se está bloqueado (`ModulosDoCliente`); o Portal do Cliente mostra um aviso amigável quando o cliente
@@ -291,3 +292,19 @@ define qual sistema ele usa e emite a chave; a cobrança vem para a gestão MDC.
   licença do Ledgra 067 a 087).
 - **Próximo**: o EXato (e depois o Ledgra) cria a conta do cliente ligada à chave, chama `lic_validar` e informa os
   usuários por `lic_uso_informar`.
+
+## Pacotes de licença (091, 19/11/2026, pedido do Edvaldo)
+
+- O plano virou o **pacote** completo: `lic_planos` ganha `sistema` (FK para `lic_sistemas`; todos os módulos do pacote
+  são dele), `usuarios_incluidos` (vazio = sem limite; qualquer número a partir de 1), `valor_usuario_adicional` (só gerir;
+  volta pela `lic_valores` em `planos_adicional`) e `excedente` (`cobrar` | `bloquear`). Pacotes antigos receberam o
+  sistema dos módulos.
+- `lic_salvar_plano` (gerir) grava tudo; recusa módulo de outro sistema e troca de sistema de pacote já usado em licença.
+- A licença **não** depende do pacote depois de fechada: ao escolher o pacote no assistente, usuários, adicional (com
+  gerir) e excedente vêm preenchidos (`herancaDoPacote`) e a licença guarda a própria cópia.
+- Tela própria **Sistemas › Pacotes de licença** (`/licencas/pacotes`): cartões por pacote (sistema, módulos, usuários,
+  excedente, preço e desconto sobre os avulsos, licenças ativas), filtros (sistema, situação, busca), PDF/Excel e a vista
+  **Grade módulo × pacote** (`QuadroPacotes`). Montagem na `JanelaPacote` (sistema → módulos → usuários → preço →
+  exemplo de mensalidade). A aba Planos saiu de Sistemas e produtos. Regras puras em `pacotes.ts` (com teste).
+- Testes: `supabase/testes/161_pacotes_091.sql`.
+

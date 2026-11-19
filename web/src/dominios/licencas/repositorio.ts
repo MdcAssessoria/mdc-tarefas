@@ -28,6 +28,11 @@ export const salvarPlano = (p: {
   preco: number;
   ativo: boolean;
   produtos: string[];
+  /** 091: o pacote completo (sistema, usuários incluídos ou null = sem limite, adicional e excedente). */
+  sistema: string;
+  usuarios_incluidos: number | null;
+  valor_usuario_adicional: number;
+  excedente: Excedente;
 }) => rpc<string>("lic_salvar_plano", { p: p as unknown as Json });
 
 export interface DadosContrato {

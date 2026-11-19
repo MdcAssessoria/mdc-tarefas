@@ -208,7 +208,7 @@ export function QuadroPacotes({
   const [salvando, setSalvando] = useState(false);
   const porId = useMemo(() => new Map(produtos.map((p) => [p.id, p])), [produtos]);
   const linhas = produtos.filter((p) => sis(p) === sistema && p.ativo);
-  const doSistema = (pl: Plano) => pl.produtos.every((id) => sis(porId.get(id)) === sistema);
+  const doSistema = (pl: Plano) => pl.sistema === sistema;
   const colunas = planos.filter((pl) => doSistema(pl) && (pl.ativo || editado[pl.id]));
   const atual = (pl: Plano): PacoteEditado => editado[pl.id] ?? { produtos: pl.produtos, preco: valorParaCampo(pl.preco) };
   const mudou = pacotesAlterados(planos, editado);
@@ -233,7 +233,19 @@ export function QuadroPacotes({
     setErro("");
     try {
       for (const { plano: pl, produtos: ids, preco } of mudou) {
-        await salvarPlano({ id: pl.id, org, nome: pl.nome, descricao: pl.descricao, preco, ativo: pl.ativo, produtos: ids });
+        await salvarPlano({
+          id: pl.id,
+          org,
+          nome: pl.nome,
+          descricao: pl.descricao,
+          preco,
+          ativo: pl.ativo,
+          produtos: ids,
+          sistema: pl.sistema,
+          usuarios_incluidos: pl.usuarios_incluidos,
+          valor_usuario_adicional: pl.valor_usuario_adicional,
+          excedente: pl.excedente,
+        });
       }
       setEditado({});
       setDescontos({});
@@ -250,7 +262,7 @@ export function QuadroPacotes({
       <div className="space-y-3">
         <EscolhaSistema valor={sistema} aoMudar={setSistema} tem={tem} nome={nomeSistema ?? nomePadrao} />
         <p className="cartao p-4 text-sm text-neutral-600">
-          Nenhum pacote deste sistema. Use &ldquo;Novo plano&rdquo; para criar o primeiro.
+          Nenhum pacote deste sistema. Use &ldquo;Montar pacote&rdquo; para criar o primeiro.
         </p>
       </div>
     );

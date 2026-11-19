@@ -146,7 +146,7 @@ function Contratos() {
               { titulo: "Sistema", valor: (k) => nomeSistema(k.sistema), peso: 1.1, largura: 14 },
               { titulo: "Usuários", valor: (k) => textoUsuarios(usuariosNoMes.get(k.id), k.usuarios_incluidos), peso: 1.6, largura: 26 },
               { titulo: "Contratou", valor: (k) => rotulo(k), peso: 2, largura: 28 },
-              { titulo: "Plano / produtos", valor: (k) => nomeModulos(k), peso: 2, largura: 32 },
+              { titulo: "Pacote / módulos", valor: (k) => nomeModulos(k), peso: 2, largura: 32 },
               ...(podeGerir
                 ? [
                     { titulo: "Valor mensal", valor: (k: Contrato) => k.valor_mensal, formato: "moeda" as const, peso: 1.2 },
@@ -213,12 +213,12 @@ function Contratos() {
           </label>
         )}
         <label className="campo">
-          <span>Plano ou produto</span>
+          <span>Pacote ou módulo</span>
           <select value={modulo} onChange={(e) => setModulo(e.target.value)}>
             <option value="">Todos</option>
             {(d?.planos ?? []).map((p) => (
               <option key={p.id} value={`plano:${p.id}`}>
-                Plano {p.nome}
+                Pacote {p.nome}
               </option>
             ))}
             {(d?.produtos ?? []).map((p) => (
@@ -230,7 +230,7 @@ function Contratos() {
         </label>
         <label className="campo min-w-48 flex-1">
           <span>Buscar</span>
-          <input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Cliente, plano ou módulo" />
+          <input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Cliente, pacote ou módulo" />
         </label>
         {cliente && (
           <span className="chip bg-[var(--fundo)] text-neutral-800">

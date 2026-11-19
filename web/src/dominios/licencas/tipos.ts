@@ -55,6 +55,13 @@ export interface Plano {
   ativo: boolean;
   /** Ids dos módulos do plano (de lic_plano_produtos). */
   produtos: string[];
+  /** 091: sistema do pacote (todos os módulos são dele). */
+  sistema: string;
+  /** Usuários que entram no preço do pacote (null = sem limite). */
+  usuarios_incluidos: number | null;
+  /** Valor de cada usuário a mais (só com a permissão de valores; senão 0). */
+  valor_usuario_adicional: number;
+  excedente: Excedente;
 }
 
 export type IndiceReajuste = "IPCA" | "IGP-M" | "INPC" | "fixo" | "nenhum";

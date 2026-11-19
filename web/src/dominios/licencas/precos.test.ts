@@ -24,6 +24,10 @@ const plano = (id: string, produtos: string[], preco: number): Plano => ({
   preco,
   ativo: true,
   produtos,
+  sistema: "ledgra",
+  usuarios_incluidos: null,
+  valor_usuario_adicional: 0,
+  excedente: "cobrar",
 });
 
 describe("precos", () => {

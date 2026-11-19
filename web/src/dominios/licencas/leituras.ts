@@ -12,20 +12,27 @@ const num = <T>(l: T, campos: (keyof T)[]): T => {
 
 // Colunas que o navegador lê (074): preço e valores ficam de fora e só voltam pela lic_valores (permissão de valores).
 const COLS_PRODUTO = "id,org_id,slug,nome,descricao,ativo,ordem,criado_em,sistema";
-const COLS_PLANO = "id,org_id,nome,descricao,ativo,criado_em";
+const COLS_PLANO = "id,org_id,nome,descricao,ativo,criado_em,sistema,usuarios_incluidos,excedente";
 const COLS_CONTRATO =
   "id,org_id,cliente_id,plano_id,dia_vencimento,inicio,fim,proporcional,reajuste_indice,reajuste_mes,ultimo_reajuste,situacao,encerrado_em,encerrado_motivo,observacao,por,criado_em,modalidade,sistema,usuarios_incluidos,excedente,recorrente_id";
 
 export interface ValoresLicencas {
   produtos: Record<string, number>;
   planos: Record<string, number>;
+  /** 091: valor do usuário a mais de cada pacote. */
+  planos_adicional: Record<string, number>;
   contratos: Record<string, { valor_mensal: number; valor_tabela: number; valor_usuario_adicional?: number }>;
 }
 
 /** Preços e valores (só quem tem "gerir" em Licenças = permissão de valores). */
 export async function lerValores(org: string): Promise<ValoresLicencas> {
   const d = exigir(await supabase().rpc("lic_valores", { p_org: org })) as unknown as ValoresLicencas;
-  return { produtos: d?.produtos ?? {}, planos: d?.planos ?? {}, contratos: d?.contratos ?? {} };
+  return {
+    produtos: d?.produtos ?? {},
+    planos: d?.planos ?? {},
+    planos_adicional: d?.planos_adicional ?? {},
+    contratos: d?.contratos ?? {},
+  };
 }
 
 /** Põe os valores nas listas (sem a permissão, tudo fica zero e as telas escondem as colunas de dinheiro). */
@@ -34,7 +41,11 @@ export function comValores<T extends { produtos: Produto[]; planos: Plano[]; con
   return {
     ...d,
     produtos: d.produtos.map((p) => ({ ...p, preco: Number(v.produtos[p.id] ?? 0) })),
-    planos: d.planos.map((p) => ({ ...p, preco: Number(v.planos[p.id] ?? 0) })),
+    planos: d.planos.map((p) => ({
+      ...p,
+      preco: Number(v.planos[p.id] ?? 0),
+      valor_usuario_adicional: Number(v.planos_adicional[p.id] ?? 0),
+    })),
     contratos: d.contratos.map((k) => ({
       ...k,
       valor_mensal: Number(v.contratos[k.id]?.valor_mensal ?? 0),
@@ -53,7 +64,7 @@ export async function lerProdutos(org: string): Promise<Produto[]> {
 
 export async function lerPlanos(org: string): Promise<Plano[]> {
   const [planos, itens] = await Promise.all([
-    lerTudo<Omit<Plano, "produtos">>((de, ate) =>
+    lerTudo<Omit<Plano, "produtos" | "preco" | "valor_usuario_adicional">>((de, ate) =>
       supabase().from("lic_planos").select(COLS_PLANO).eq("org_id", org).order("nome").order("id").range(de, ate),
     ),
     lerTudo<{ plano_id: string; produto_id: string }>((de, ate) =>
@@ -66,7 +77,7 @@ export async function lerPlanos(org: string): Promise<Plano[]> {
         .range(de, ate),
     ),
   ]);
-  return planos.map((p) => ({ ...p, preco: 0, produtos: itens.filter((i) => i.plano_id === p.id).map((i) => i.produto_id) }));
+  return planos.map((p) => ({ ...p, preco: 0, valor_usuario_adicional: 0, produtos: itens.filter((i) => i.plano_id === p.id).map((i) => i.produto_id) }));
 }
 
 export async function lerContratos(org: string): Promise<Contrato[]> {
