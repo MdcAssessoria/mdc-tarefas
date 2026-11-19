@@ -1,5 +1,6 @@
-// Licenças Ledgra › Licenças: quem contratou quais módulos do Ledgra, vigência, reajuste e a chave. Cadastro pelo
-// assistente (operar); valores, reajuste, encerrar e histórico de mensalidades só com a permissão de valores (gerir, 074).
+// Sistemas › Licenças: quem usa cada sistema da MDC (Ledgra ERP, EXato…), com quais módulos, quantos usuários, vigência,
+// reajuste e a chave (088). Cadastro pelo assistente (operar); valores, reajuste, encerrar e histórico de mensalidades só
+// com a permissão de valores (gerir, 074).
 // Filtros simples, PDF e Excel do que está na tela (sem valores para quem não tem a permissão).
 // Abre já filtrado num cliente com ?cliente=<id> (link do painel e da tela de clientes).
 "use client";
@@ -18,8 +19,8 @@ import { nomeArquivo } from "@/lib/arquivos/exportarLista";
 import { Cabecalho, EtiquetaBloqueado, useDadosLicencas } from "@/dominios/licencas/componentes/Base";
 import { AssistenteContrato, MESES } from "@/dominios/licencas/componentes/AssistenteContrato";
 import { EncerrarContrato, HistoricoContrato, ReajustarContrato } from "@/dominios/licencas/componentes/JanelasContrato";
-import { JanelaChaveLedgra } from "@/dominios/licencas/componentes/JanelaChaveLedgra";
-import { contratoVigente, reajustePendente } from "@/dominios/licencas/regras";
+import { JanelaChave } from "@/dominios/licencas/componentes/JanelaChave";
+import { contratoVigente, reajustePendente, textoUsuarios, usuariosAdicionais } from "@/dominios/licencas/regras";
 import { INDICES } from "@/dominios/licencas/tipos";
 import type { Contrato } from "@/dominios/licencas/tipos";
 import { plural } from "@/lib/formato/numero";
@@ -58,7 +59,7 @@ export default function PaginaContratos() {
 function Contratos() {
   const { org } = useOrg();
   const dados = useDadosLicencas();
-  const { hoje, nomeDoCliente, rotulo, podeGerir, podeOperar, bloqueados } = dados;
+  const { hoje, nomeDoCliente, rotulo, podeGerir, podeOperar, bloqueados, nomeSistema, usuariosNoMes } = dados;
   const { aviso, mostrar } = useAviso();
   const params = useSearchParams();
   // filtro de cliente: o que a pessoa escolheu na tela; antes disso, o que veio no endereço (?cliente=)
@@ -66,6 +67,7 @@ function Contratos() {
   const cliente = clienteEscolhido ?? params.get("cliente") ?? "";
   const [situacao, setSituacao] = useState<FiltroSituacao>("ativos");
   const [modulo, setModulo] = useState("");
+  const [sistema, setSistema] = useState("");
   const [busca, setBusca] = useState("");
   const [filtroContrato, setFiltroContrato] = useState<FiltroContrato>("todos");
   const [janela, setJanela] = useState<Janela | null>(null);
@@ -83,13 +85,14 @@ function Contratos() {
       .filter(
         (k) =>
           (!cliente || k.cliente_id === cliente) &&
+          (!sistema || k.sistema === sistema) &&
           (situacao === "todos" || (situacao === "ativos" ? k.situacao === "ativo" : k.situacao === "encerrado")) &&
           (!modulo || (modulo.startsWith("plano:") ? k.plano_id === modulo.slice(6) : k.produtos.includes(modulo))) &&
           (!podeGerir || noFiltroContrato(documentos.dados?.get(k.id), filtroContrato)) &&
           (!q || `${nomeDoCliente(k.cliente_id)} ${rotulo(k)}`.toLowerCase().includes(q)),
       )
       .sort((a, b) => nomeDoCliente(a.cliente_id).localeCompare(nomeDoCliente(b.cliente_id)));
-  }, [d, cliente, situacao, modulo, busca, nomeDoCliente, rotulo, podeGerir, documentos.dados, filtroContrato]);
+  }, [d, cliente, sistema, situacao, modulo, busca, nomeDoCliente, rotulo, podeGerir, documentos.dados, filtroContrato]);
 
   const vigentes = lista.filter((k) => contratoVigente(k, hoje));
   const mrr = vigentes.reduce((s, k) => s + k.valor_mensal, 0);
@@ -122,11 +125,11 @@ function Contratos() {
   return (
     <div className="space-y-4">
       <Cabecalho
-        titulo="Licenças do Ledgra"
+        titulo="Licenças"
         descricao={
           podeGerir
-            ? "Quem usa o Ledgra, com quais módulos, por quanto, a vigência e a chave de cada empresa."
-            : "Quem usa o Ledgra, com quais módulos, a vigência e a chave de cada empresa."
+            ? "Quem usa cada sistema da MDC, com quais módulos, quantos usuários, por quanto, a vigência e a chave."
+            : "Quem usa cada sistema da MDC, com quais módulos, quantos usuários, a vigência e a chave."
         }
       >
         <BotoesExportar
@@ -140,6 +143,8 @@ function Contratos() {
             linhas: lista,
             colunas: [
               { titulo: "Cliente", valor: (k) => nomeDoCliente(k.cliente_id), peso: 2.4, largura: 36 },
+              { titulo: "Sistema", valor: (k) => nomeSistema(k.sistema), peso: 1.1, largura: 14 },
+              { titulo: "Usuários", valor: (k) => textoUsuarios(usuariosNoMes.get(k.id), k.usuarios_incluidos), peso: 1.6, largura: 26 },
               { titulo: "Contratou", valor: (k) => rotulo(k), peso: 2, largura: 28 },
               { titulo: "Plano / produtos", valor: (k) => nomeModulos(k), peso: 2, largura: 32 },
               ...(podeGerir
@@ -176,6 +181,17 @@ function Contratos() {
       </Cabecalho>
 
       <div className="cartao flex flex-wrap items-end gap-3 p-4">
+        <label className="campo">
+          <span>Sistema</span>
+          <select value={sistema} onChange={(e) => setSistema(e.target.value)}>
+            <option value="">Todos</option>
+            {(d?.sistemas ?? []).map((x) => (
+              <option key={x.slug} value={x.slug}>
+                {x.nome}
+              </option>
+            ))}
+          </select>
+        </label>
         <label className="campo">
           <span>Situação</span>
           <select value={situacao} onChange={(e) => setSituacao(e.target.value as FiltroSituacao)}>
@@ -224,11 +240,12 @@ function Contratos() {
             </button>
           </span>
         )}
-        {(cliente || busca || modulo || situacao !== "ativos" || filtroContrato !== "todos") && (
+        {(cliente || sistema || busca || modulo || situacao !== "ativos" || filtroContrato !== "todos") && (
           <button
             className="btn-link min-h-10 text-sm"
             onClick={() => {
               setCliente("");
+              setSistema("");
               setBusca("");
               setModulo("");
               setSituacao("ativos");
@@ -309,7 +326,7 @@ function Contratos() {
                 )
               }
             >
-              {d.contratos.length ? "Nenhuma licença neste filtro." : "Nenhuma licença do Ledgra cadastrada ainda."}
+              {d.contratos.length ? "Nenhuma licença neste filtro." : "Nenhuma licença cadastrada ainda. Comece por Nova licença."}
             </EstadoVazio>
           ) : (
             <div className="cartao overflow-x-auto">
@@ -318,6 +335,7 @@ function Contratos() {
                   <tr>
                     <th>Cliente</th>
                     <th>Contratou</th>
+                    <th>Usuários</th>
                     {podeGerir && <th className="text-right">Valor mensal</th>}
                     <th>Vence</th>
                     <th>Vigência</th>
@@ -335,8 +353,17 @@ function Contratos() {
                         <SituacaoDocumento doc={podeGerir ? documentos.dados?.get(k.id) : undefined} />
                       </td>
                       <td className="min-w-44">
-                        {rotulo(k)}
+                        <Chip tom="azul">{nomeSistema(k.sistema)}</Chip> {rotulo(k)}
                         {k.plano_id && <span className="block text-xs text-neutral-500">{nomeModulos(k)}</span>}
+                        {k.recorrente_id && <span className="block text-xs text-neutral-500">Cobrada na fatura da Gestão</span>}
+                      </td>
+                      <td className="min-w-32 text-sm">
+                        {textoUsuarios(usuariosNoMes.get(k.id), k.usuarios_incluidos)}
+                        {usuariosAdicionais(usuariosNoMes.get(k.id) ?? 0, k.usuarios_incluidos) > 0 && (
+                          <span className="block text-xs text-amber-800">
+                            {k.excedente === "cobrar" ? "a mais entra na próxima cobrança" : "o sistema bloqueia novos"}
+                          </span>
+                        )}
                       </td>
                       {podeGerir && (
                         <td className="whitespace-nowrap text-right tabular-nums">
@@ -376,7 +403,7 @@ function Contratos() {
                                   className="block w-full px-3 py-1.5 text-left hover:bg-neutral-50"
                                   onClick={(e) => menu(e, { tipo: "chave", k })}
                                 >
-                                  Chave do Ledgra
+                                  Chave do {nomeSistema(k.sistema)}
                                 </button>
                               </>
                             )}
@@ -431,6 +458,7 @@ function Contratos() {
           produtos={d.produtos}
           planos={d.planos}
           contratos={d.contratos}
+          sistemas={d.sistemas}
           valores={podeGerir}
           hoje={hoje}
           aoFechar={() => fechar()}
@@ -453,7 +481,12 @@ function Contratos() {
         />
       )}
       {janela?.tipo === "chave" && (
-        <JanelaChaveLedgra contrato={janela.k} cliente={nomeDoCliente(janela.k.cliente_id)} aoFechar={() => fechar()} />
+        <JanelaChave
+          contrato={janela.k}
+          cliente={nomeDoCliente(janela.k.cliente_id)}
+          nomeSistema={nomeSistema(janela.k.sistema)}
+          aoFechar={() => fechar()}
+        />
       )}
       {janela?.tipo === "documento" && d && (
         <JanelaContratoLicenca

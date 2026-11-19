@@ -217,3 +217,8 @@ $P -f "$R/testes/156_contrato_085.sql" 2>&1 | grep -v "^SET$"
 # 086: arquivo do contrato assinado (só gerir) e aviso no sino quando assinam pelo link
 $P -v ON_ERROR_STOP=1 -f "$R/migrations/086_licenca_contrato_assinado.sql" 2>&1 | grep -v NOTICE || true
 $P -f "$R/testes/157_assinado_086.sql" 2>&1 | grep -v "^SET$"
+# 088: Sistemas (licença por sistema, EXato, usuários, chave e uso por sistema); antes, a licença do Ledgra (067 a 087)
+for f in migrations/067_licenca_ledgra.sql migrations/068_licenca_ledgra_grants.sql migrations/072_licenca_ledgra_legislacao.sql migrations/074_licencas_ledgra_valores.sql migrations/083_licenca_ledgra_ponto.sql migrations/084_licenca_ledgra_dp.sql migrations/087_licenca_ledgra_juridico.sql testes/159_base_088.sql migrations/088_sistemas.sql; do
+  $P -v ON_ERROR_STOP=1 -f "$R/$f" 2>&1 | grep -v NOTICE || true
+done
+$P -f "$R/testes/160_sistemas_088.sql" 2>&1 | grep -v "^SET$"

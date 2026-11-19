@@ -2,7 +2,7 @@
 import { supabase } from "@/lib/supabase";
 import { lerTudo } from "@/lib/lerTudo";
 import { exigir } from "@/lib/exigir";
-import type { BaixaLicenca, Bloqueio, Cobranca, Contrato, Parametros, Plano, Produto, Reajuste, SituacaoPortal } from "./tipos";
+import type { BaixaLicenca, Bloqueio, Cobranca, Contrato, Parametros, Plano, Produto, Reajuste, Sistema, SituacaoPortal, Uso } from "./tipos";
 
 const num = <T>(l: T, campos: (keyof T)[]): T => {
   const x = { ...l };
@@ -14,12 +14,12 @@ const num = <T>(l: T, campos: (keyof T)[]): T => {
 const COLS_PRODUTO = "id,org_id,slug,nome,descricao,ativo,ordem,criado_em,sistema";
 const COLS_PLANO = "id,org_id,nome,descricao,ativo,criado_em";
 const COLS_CONTRATO =
-  "id,org_id,cliente_id,plano_id,dia_vencimento,inicio,fim,proporcional,reajuste_indice,reajuste_mes,ultimo_reajuste,situacao,encerrado_em,encerrado_motivo,observacao,por,criado_em,modalidade";
+  "id,org_id,cliente_id,plano_id,dia_vencimento,inicio,fim,proporcional,reajuste_indice,reajuste_mes,ultimo_reajuste,situacao,encerrado_em,encerrado_motivo,observacao,por,criado_em,modalidade,sistema,usuarios_incluidos,excedente,recorrente_id";
 
 export interface ValoresLicencas {
   produtos: Record<string, number>;
   planos: Record<string, number>;
-  contratos: Record<string, { valor_mensal: number; valor_tabela: number }>;
+  contratos: Record<string, { valor_mensal: number; valor_tabela: number; valor_usuario_adicional?: number }>;
 }
 
 /** Preços e valores (só quem tem "gerir" em Licenças = permissão de valores). */
@@ -39,6 +39,7 @@ export function comValores<T extends { produtos: Produto[]; planos: Plano[]; con
       ...k,
       valor_mensal: Number(v.contratos[k.id]?.valor_mensal ?? 0),
       valor_tabela: Number(v.contratos[k.id]?.valor_tabela ?? 0),
+      valor_usuario_adicional: Number(v.contratos[k.id]?.valor_usuario_adicional ?? 0),
     })),
   };
 }
@@ -85,8 +86,33 @@ export async function lerContratos(org: string): Promise<Contrato[]> {
   ]);
   const por = new Map<string, string[]>();
   for (const i of itens) por.set(i.contrato_id, [...(por.get(i.contrato_id) ?? []), i.produto_id]);
-  return contratos.map((k) => ({ ...k, valor_mensal: 0, valor_tabela: 0, produtos: por.get(k.id) ?? [] }));
+  return contratos.map((k) => ({ ...k, valor_mensal: 0, valor_tabela: 0, valor_usuario_adicional: 0, produtos: por.get(k.id) ?? [] }));
 }
+
+/** Sistemas que a MDC licencia (088), na ordem do cadastro. */
+export const lerSistemas = (org: string) =>
+  lerTudo<Sistema>((de, ate) =>
+    supabase()
+      .from("lic_sistemas")
+      .select("id,org_id,slug,nome,descricao,prefixo,situacao,ordem")
+      .eq("org_id", org)
+      .order("ordem")
+      .order("id")
+      .range(de, ate),
+  );
+
+/** Usuários informados pelos sistemas a partir de uma competência (AAAA-MM-01). */
+export const lerUsos = (org: string, desde: string) =>
+  lerTudo<Uso>((de, ate) =>
+    supabase()
+      .from("lic_usos")
+      .select("contrato_id,competencia,usuarios,informado_em")
+      .eq("org_id", org)
+      .gte("competencia", desde)
+      .order("competencia")
+      .order("id")
+      .range(de, ate),
+  );
 
 /** Mensalidades da organização; com período, pela competência (inclusive). */
 export async function lerCobrancas(org: string, filtro: { de?: string; ate?: string } = {}): Promise<Cobranca[]> {

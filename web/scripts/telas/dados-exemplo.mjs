@@ -112,7 +112,7 @@ const APPS = [
   ["saidas", "Saídas", "Pedidos de venda", "enviar", "/saidas", false, 37],
   ["entradas", "Entradas", "Notas recebidas e compras", "importar", "/entradas", false, 36],
   ["comercial", "CRM Comercial", "Leads, proposta e contrato", "alvo", "/comercial", false, 80],
-  ["licencas", "Cobrança Ledgra", "Mensalidades dos assinantes do Ledgra", "documento", "/licencas", false, 85],
+  ["licencas", "Sistemas", "Licenças dos sistemas da MDC (Ledgra ERP, EXato…)", "documento", "/licencas", false, 85],
   ["centros_custo", "Centros de custo", "Centros de custo da MDC", "etiqueta", "/centros-custo", false, 39],
   ["plano_contas", "Plano de contas", "Plano do Domínio e categorias", "lista", "/plano-contas", false, 40],
   ["relatorios", "Relatórios", "Relatórios gerenciais", "grafico", "/relatorios", false, 41],
@@ -278,6 +278,39 @@ const LIC_PRODUTOS = [
   ativo: true,
   ordem: (i + 1) * 10,
   criado_em: momento(-100),
+  sistema: "ledgra",
+}));
+// sistemas licenciados (088) e dois módulos do EXato
+const LIC_SISTEMAS = [
+  ["hub", "HUB-MDC", "Portal do cliente e ferramentas do HUB", "HUB", "vendendo"],
+  ["ledgra", "Ledgra ERP", "ERP contábil, fiscal e de DP da família Ledgra", "LDG", "vendendo"],
+  ["exato", "EXato", "Solução em RH: diárias, operação, R&S, CRM e contratos", "EXA", "vendendo"],
+  ["hub-team", "Hub-Team", "CRM, contratos e RH para empresas de mão de obra", "HTM", "em_breve"],
+  ["acesso-remoto", "Acesso remoto", "Acesso remoto às estações", "ARM", "em_breve"],
+].map(([slug, nome, descricao, prefixo, situacao], i) => ({
+  id: `99999999-9999-4999-8999-0000000005${i}0`,
+  org_id: ORG,
+  slug,
+  nome,
+  descricao,
+  prefixo,
+  situacao,
+  ordem: (i + 1) * 10,
+}));
+const LIC_EXATO = [
+  ["exato-rs", "EXato · Recrutamento e seleção", 150],
+  ["exato-crm", "EXato · CRM", 120],
+].map(([slug, nome, preco], i) => ({
+  id: `99999999-9999-4999-8999-0000000006${i}0`,
+  org_id: ORG,
+  slug,
+  nome,
+  descricao: nome,
+  preco,
+  ativo: true,
+  ordem: 400 + i * 10,
+  criado_em: momento(-10),
+  sistema: "exato",
 }));
 const LIC_PLANO = "99999999-9999-4999-8999-0000000000a1";
 const LIC_K1 = "99999999-9999-4999-8999-0000000000b1";
@@ -302,6 +335,10 @@ const licContrato = (id, cliente_id, plano_id, valor_tabela, valor_mensal, inici
   observacao: null,
   por: EU,
   criado_em: momento(-400),
+  sistema: "ledgra",
+  usuarios_incluidos: null,
+  excedente: "cobrar",
+  recorrente_id: null,
 });
 const licCobranca = (k, contrato_id, cliente_id, n, valor, situacao) => ({
   id: `99999999-9999-4999-8999-0000000000c${k}`,
@@ -1220,7 +1257,9 @@ export const TABELAS = {
       atualizado_por: EU,
     },
   ],
-  lic_produtos: LIC_PRODUTOS,
+  lic_produtos: [...LIC_PRODUTOS, ...LIC_EXATO],
+  lic_sistemas: LIC_SISTEMAS,
+  lic_usos: [{ id: 1, org_id: ORG, contrato_id: "99999999-9999-4999-8999-0000000000b3", competencia: mesRel(0), usuarios: 12, informado_em: momento(-1) }],
   lic_planos: [
     {
       id: LIC_PLANO,
@@ -1233,10 +1272,16 @@ export const TABELAS = {
     },
   ],
   lic_plano_produtos: LIC_PRODUTOS.map((p) => ({ plano_id: LIC_PLANO, produto_id: p.id, org_id: ORG })),
-  lic_contratos: [licContrato(LIC_K1, C1, LIC_PLANO, 390, 350, mesRel(-14)), licContrato(LIC_K2, C2, null, 120, 120, mesRel(-5))],
+  lic_contratos: [
+    licContrato(LIC_K1, C1, LIC_PLANO, 390, 350, mesRel(-14)),
+    licContrato(LIC_K2, C2, null, 120, 120, mesRel(-5)),
+    { ...licContrato("99999999-9999-4999-8999-0000000000b3", C2, null, 270, 250, mesRel(-2)), sistema: "exato", usuarios_incluidos: 10 },
+  ],
   lic_contrato_produtos: [
     ...LIC_PRODUTOS.map((p) => ({ contrato_id: LIC_K1, produto_id: p.id, org_id: ORG })),
     { contrato_id: LIC_K2, produto_id: LIC_PRODUTOS[0].id, org_id: ORG },
+    { contrato_id: "99999999-9999-4999-8999-0000000000b3", produto_id: "99999999-9999-4999-8999-000000000600", org_id: ORG },
+    { contrato_id: "99999999-9999-4999-8999-0000000000b3", produto_id: "99999999-9999-4999-8999-000000000610", org_id: ORG },
   ],
   lic_cobrancas: [
     licCobranca(1, LIC_K1, C1, -1, 350, "paga"),
@@ -1705,7 +1750,9 @@ export const RPCS = {
   lic_valores: () => ({
     produtos: Object.fromEntries(TABELAS.lic_produtos.map((p) => [p.id, p.preco])),
     planos: Object.fromEntries(TABELAS.lic_planos.map((p) => [p.id, p.preco])),
-    contratos: Object.fromEntries(TABELAS.lic_contratos.map((k) => [k.id, { valor_mensal: k.valor_mensal, valor_tabela: k.valor_tabela }])),
+    contratos: Object.fromEntries(
+      TABELAS.lic_contratos.map((k) => [k.id, { valor_mensal: k.valor_mensal, valor_tabela: k.valor_tabela, valor_usuario_adicional: 25 }]),
+    ),
   }),
   // MDC · Pessoal (075): convite da família devolve o código (aparece uma vez)
   pessoal_convidar: () => "AB2C-DE3F",

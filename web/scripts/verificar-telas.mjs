@@ -1252,7 +1252,21 @@ const INTERACOES = {
   },
   "/comercial": (p) => abrirEFecharModal(p, "Limpar funil", "Limpar funil"),
   "/licencas/contratos": async (p, foto) => {
-    await abrirEFecharModal(p, "Nova licença", "Novo contrato de licença");
+    await abrirEFecharModal(p, "Nova licença", "Nova licença");
+    // assistente da licença (088): sistema e módulos, depois valor e usuários
+    await p.getByRole("button", { name: "Nova licença" }).click();
+    const assist = p.getByRole("dialog", { name: "Nova licença" });
+    await assist.getByLabel("Procurar cliente").fill("Greencore");
+    await assist.getByRole("button", { name: "Continuar" }).click();
+    await assist.getByRole("radio", { name: /EXato/ }).click();
+    await assist.getByRole("radio", { name: "Módulos avulsos" }).click();
+    await assist.getByRole("checkbox").first().check();
+    await foto?.("assistente-sistema");
+    await assist.getByRole("button", { name: "Continuar" }).click();
+    await assist.getByText("Quando passar do limite").waitFor({ timeout: 3000 });
+    await foto?.("assistente-usuarios");
+    await p.keyboard.press("Escape");
+    await assist.waitFor({ state: "detached", timeout: 3000 });
     // contrato da licença (085): a licença do cliente 1 já tem o contrato emitido e o link enviado
     await p.getByLabel("Ações da licença").first().click();
     await p.getByRole("button", { name: "Contrato (PDF e assinatura)" }).click();

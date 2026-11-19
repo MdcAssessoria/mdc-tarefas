@@ -240,3 +240,35 @@ export function faturamentoDoMes(cobrancas: Cobranca[], competencia: string, inc
   }
   return [...por.values()].map((l) => ({ ...l, total: r2(l.doMes + l.atrasado) }));
 }
+
+// ------------------------------------------------------------------ sistemas e usuários (088)
+
+/** Onde colar a chave em cada sistema (texto da janela da chave). */
+export function ondeColarChave(sistema: string, nomeSistema: string): string {
+  if (sistema === "ledgra") return "No Ledgra: Empresas › ficha da empresa › aba Licença › cole a chave e clique em Salvar e conferir.";
+  if (sistema === "exato") return "No EXato: Administração › Licença do EXato › cole a chave e clique em Salvar e conferir.";
+  return `No ${nomeSistema}: tela de licença do sistema › cole a chave e confira.`;
+}
+
+/** Usuários além dos incluídos (sem limite = 0). */
+export function usuariosAdicionais(usuarios: number, incluidos: number | null): number {
+  if (incluidos == null || !(usuarios > incluidos)) return 0;
+  return usuarios - incluidos;
+}
+
+/** "12 de 10 usuários (2 a mais)", "8 de 10 usuários", "8 usuários (sem limite)" ou "sem informação do sistema". */
+export function textoUsuarios(usuarios: number | null | undefined, incluidos: number | null): string {
+  if (usuarios == null) return incluidos == null ? "Sem limite de usuários" : `Até ${incluidos} usuário(s); sem informação do sistema`;
+  if (incluidos == null) return `${usuarios} usuário(s) (sem limite)`;
+  const a = usuariosAdicionais(usuarios, incluidos);
+  return `${usuarios} de ${incluidos} usuário(s)${a ? ` (${a} a mais)` : ""}`;
+}
+
+/** Valor dos usuários adicionais de um mês (só quando o excedente é cobrado). */
+export function valorAdicional(
+  k: Pick<Contrato, "usuarios_incluidos" | "valor_usuario_adicional" | "excedente">,
+  usuarios: number | null | undefined,
+): number {
+  if (k.excedente !== "cobrar" || usuarios == null) return 0;
+  return r2(usuariosAdicionais(usuarios, k.usuarios_incluidos) * (k.valor_usuario_adicional || 0));
+}

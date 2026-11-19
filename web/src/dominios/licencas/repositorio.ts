@@ -3,7 +3,7 @@
 import { supabase } from "@/lib/supabase";
 import { exigir } from "@/lib/exigir";
 import type { Json } from "@/lib/database.types";
-import type { IndiceReajuste } from "./tipos";
+import type { Excedente, IndiceReajuste, SituacaoSistema } from "./tipos";
 
 const rpc = async <T>(nome: string, args: Record<string, unknown>) => exigir(await supabase().rpc(nome, args)) as T;
 
@@ -11,6 +11,8 @@ export const salvarProduto = (p: {
   id?: string;
   org: string;
   slug?: string;
+  /** sistema do módulo (só ao criar) */
+  sistema?: string;
   nome: string;
   descricao: string;
   preco: number;
@@ -41,9 +43,29 @@ export interface DadosContrato {
   reajuste_indice: IndiceReajuste;
   reajuste_mes: number | null;
   observacao: string | null;
-  /** "full" = todos os módulos ativos do Ledgra; sem ele o banco decide entre gratuita (valor zero) e pacote. */
+  /** "full" = todos os módulos ativos do sistema; sem ele o banco decide entre gratuita (valor zero) e pacote. */
   modalidade?: "full";
+  /** Sistema da licença (só ao cadastrar; não muda depois). */
+  sistema: string;
+  /** Usuários incluídos no valor; null = sem limite. */
+  usuarios_incluidos: number | null;
+  /** Valor por usuário adicional (o banco só aceita de quem tem a permissão de valores). */
+  valor_usuario_adicional: number;
+  excedente: Excedente;
+  /** Contrato a receber da Gestão que fatura a licença (só com a permissão de valores); null = mensalidade da licença. */
+  recorrente?: string | null;
 }
+
+export const salvarSistema = (p: {
+  id?: string;
+  org: string;
+  slug?: string;
+  nome: string;
+  descricao: string;
+  prefixo: string;
+  situacao: SituacaoSistema;
+  ordem?: number;
+}) => rpc<string>("lic_sistema_salvar", { p: p as unknown as Json });
 
 export const salvarContrato = (p: DadosContrato) => rpc<string>("lic_salvar_contrato", { p: p as unknown as Json });
 
@@ -88,8 +110,8 @@ export const desbloquearCliente = (cliente: string, motivo: string) =>
 export const definirParametros = (org: string, dias: number) =>
   rpc<null>("lic_definir_parametros", { p_org: org, p_dias_sugerir_bloqueio: dias });
 
-/** Chave do Ledgra do cliente (migração 067): gera uma nova (a anterior deixa de valer) e devolve o texto UMA vez. */
-export const gerarChaveLedgra = (cliente: string) => rpc<string>("lic_ledgra_chave_gerar", { p_cliente: cliente });
+/** Chave do cliente num sistema (088): gera uma nova (a anterior do mesmo sistema deixa de valer) e devolve o texto UMA vez. */
+export const gerarChave = (cliente: string, sistema: string) => rpc<string>("lic_chave_gerar", { p_cliente: cliente, p_sistema: sistema });
 
-/** Revoga a chave do Ledgra: na próxima conferência o Ledgra fecha os módulos pagos daquela empresa. */
-export const revogarChaveLedgra = (id: string, motivo: string) => rpc<null>("lic_ledgra_chave_revogar", { p_id: id, p_motivo: motivo });
+/** Revoga a chave: na próxima conferência o sistema fecha os módulos pagos daquela empresa. */
+export const revogarChave = (id: string, motivo: string) => rpc<null>("lic_ledgra_chave_revogar", { p_id: id, p_motivo: motivo });

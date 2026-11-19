@@ -1,5 +1,6 @@
-// Licenças › Produtos e planos: os módulos do HUB que a MDC vende (preço de tabela mensal) e os planos (pacotes de
-// módulos com preço próprio). Cadastrar e editar exige o nível gerir; nada se apaga (inativar tira das vendas novas).
+// Sistemas › Produtos e planos: os sistemas que a MDC licencia (Ledgra ERP, EXato…; 088), os módulos de cada um (preço
+// de tabela mensal) e os planos (pacotes de módulos com preço próprio). Cadastrar e editar exige o nível gerir; nada se
+// apaga (inativar tira das vendas novas; sistema "Fora de venda" não aceita licença nova).
 "use client";
 
 import { useState } from "react";
@@ -18,26 +19,31 @@ import { numeroBr, valorParaCampo } from "@/dominios/financeiro/regras";
 import { Cabecalho, useDadosLicencas } from "@/dominios/licencas/componentes/Base";
 import { QuadroPacotes, TabelaPrecosProdutos } from "@/dominios/licencas/componentes/TabelasPrecos";
 import { salvarPlano, salvarProduto } from "@/dominios/licencas/repositorio";
-import type { Plano, Produto } from "@/dominios/licencas/tipos";
+import { JanelaSistema } from "@/dominios/licencas/componentes/JanelaSistema";
+import { Icone } from "@/components/ui/Icone";
+import { Chip } from "@/components/ui/Chip";
+import { SITUACOES_SISTEMA, type Plano, type Produto, type Sistema } from "@/dominios/licencas/tipos";
 
-type Aba = "modulos" | "planos";
+type Aba = "sistemas" | "modulos" | "planos";
 
 export default function PaginaProdutos() {
   const { org } = useOrg();
   const dados = useDadosLicencas();
-  const { hoje, podeGerir } = dados;
+  const { hoje, podeGerir, nomeSistema } = dados;
   const { aviso, mostrar } = useAviso();
   const [aba, setAba] = useState<Aba>("modulos");
   const [modulo, setModulo] = useState<Produto | "novo" | null>(null);
   const [plano, setPlano] = useState<Plano | "novo" | null>(null);
+  const [sistema, setSistema] = useState<Sistema | "novo" | null>(null);
   const d = dados.dados;
-  const emUso = (pred: (k: { plano_id: string | null; produtos: string[]; situacao: string }) => boolean) =>
+  const emUso = (pred: (k: { plano_id: string | null; produtos: string[]; situacao: string; sistema: string }) => boolean) =>
     (d?.contratos ?? []).filter((k) => k.situacao === "ativo" && pred(k)).length;
   const somaTabela = (p: Plano) => p.produtos.reduce((s, id) => s + (dados.produtos.get(id)?.preco ?? 0), 0);
 
   function fechar(msg?: string) {
     setModulo(null);
     setPlano(null);
+    setSistema(null);
     if (msg) {
       mostrar(msg);
       dados.recarregar();
@@ -47,21 +53,22 @@ export default function PaginaProdutos() {
   return (
     <div className="space-y-4">
       <Cabecalho
-        titulo="Produtos e planos"
-        descricao="Os produtos do Ledgra que a MDC cobra, com o preço de tabela mensal, e os pacotes (planos)."
+        titulo="Sistemas e produtos"
+        descricao="Os sistemas que a MDC licencia, os módulos de cada um com o preço de tabela mensal e os pacotes (planos)."
       >
         {d && aba === "modulos" && (
           <BotoesExportar
             vazio={!d.produtos.length}
             avisar={mostrar}
             montar={() => ({
-              titulo: "Produtos do Ledgra",
+              titulo: "Módulos dos sistemas",
               subtitulo: `${org.nome} · ${fmtData(hoje)}`,
               arquivo: nomeArquivo("Modulos-licenca", hoje),
               logoUrl: org.logo_url,
               paisagem: false,
               linhas: d.produtos,
               colunas: [
+                { titulo: "Sistema", valor: (p) => nomeSistema(p.sistema), peso: 1, largura: 14 },
                 { titulo: "Produto", valor: (p) => p.nome, peso: 2, largura: 28 },
                 { titulo: "Código", valor: (p) => p.slug, peso: 1.2, largura: 16 },
                 { titulo: "O que inclui", valor: (p) => p.descricao, peso: 3, largura: 50 },
@@ -98,9 +105,35 @@ export default function PaginaProdutos() {
             })}
           />
         )}
+        {d && aba === "sistemas" && (
+          <BotoesExportar
+            vazio={!d.sistemas.length}
+            avisar={mostrar}
+            montar={() => ({
+              titulo: "Sistemas licenciados",
+              subtitulo: `${org.nome} · ${fmtData(hoje)}`,
+              arquivo: nomeArquivo("Sistemas", hoje),
+              logoUrl: org.logo_url,
+              paisagem: false,
+              linhas: d.sistemas,
+              colunas: [
+                { titulo: "Sistema", valor: (x) => x.nome, peso: 1.4, largura: 20 },
+                { titulo: "Código", valor: (x) => x.slug, peso: 1, largura: 14 },
+                { titulo: "Prefixo da chave", valor: (x) => x.prefixo, peso: 0.8, largura: 10 },
+                { titulo: "Situação", valor: (x) => SITUACOES_SISTEMA.find((s) => s.id === x.situacao)?.nome ?? x.situacao, peso: 1, largura: 14 },
+                { titulo: "Módulos", valor: (x) => d.produtos.filter((p) => p.sistema === x.slug && p.ativo).length, formato: "numero", peso: 0.8 },
+                { titulo: "Licenças ativas", valor: (x) => emUso((k) => k.sistema === x.slug), formato: "numero", peso: 1 },
+              ],
+            })}
+          />
+        )}
         {podeGerir && d && (
-          <button className="btn-primario" onClick={() => (aba === "modulos" ? setModulo("novo") : setPlano("novo"))}>
-            {aba === "modulos" ? "Novo produto" : "Novo plano"}
+          <button
+            className="btn-primario"
+            onClick={() => (aba === "sistemas" ? setSistema("novo") : aba === "modulos" ? setModulo("novo") : setPlano("novo"))}
+          >
+            <Icone nome="novo" className="h-4 w-4" />
+            {aba === "sistemas" ? "Novo sistema" : aba === "modulos" ? "Novo produto" : "Novo plano"}
           </button>
         )}
       </Cabecalho>
@@ -110,6 +143,7 @@ export default function PaginaProdutos() {
         valor={aba}
         aoMudar={setAba}
         itens={[
+          { id: "sistemas", nome: "Sistemas" },
           { id: "modulos", nome: "Produtos" },
           { id: "planos", nome: "Planos (pacotes)" },
         ]}
@@ -119,9 +153,39 @@ export default function PaginaProdutos() {
 
       {!d ? (
         <Carregando />
+      ) : aba === "sistemas" ? (
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          {d.sistemas.map((x) => {
+            const sit = SITUACOES_SISTEMA.find((s) => s.id === x.situacao);
+            return (
+              <div key={x.id} className="cartao flex flex-col gap-2 p-4">
+                <div className="flex items-start gap-2">
+                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-[var(--fundo)] text-[var(--marca)]">
+                    <Icone nome="caixa" />
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <h2 className="font-semibold text-[var(--marca)]">{x.nome}</h2>
+                    <p className="text-xs text-neutral-600">{x.descricao}</p>
+                  </div>
+                  <Chip tom={x.situacao === "vendendo" ? "verde" : x.situacao === "em_breve" ? "ambar" : "neutro"}>{sit?.nome}</Chip>
+                </div>
+                <p className="text-sm text-neutral-700">
+                  {d.produtos.filter((p) => p.sistema === x.slug && p.ativo).length} módulo(s) ·{" "}
+                  {emUso((k) => k.sistema === x.slug)} licença(s) ativa(s) · chave {x.prefixo}-…
+                </p>
+                {podeGerir && (
+                  <button className="btn self-start" onClick={() => setSistema(x)}>
+                    <Icone nome="editar" className="h-4 w-4" />
+                    Editar
+                  </button>
+                )}
+              </div>
+            );
+          })}
+        </div>
       ) : aba === "modulos" ? (
         !d.produtos.length ? (
-          <EstadoVazio>Nenhum produto cadastrado. Cadastre os produtos do Ledgra com o preço mensal.</EstadoVazio>
+          <EstadoVazio>Nenhum produto cadastrado. Cadastre os módulos de cada sistema com o preço mensal.</EstadoVazio>
         ) : (
           <>
             {podeGerir && d.produtos.some((p) => p.ativo && p.preco === 0) && (
@@ -136,6 +200,7 @@ export default function PaginaProdutos() {
                 emUso={(id) => emUso((k) => k.produtos.includes(id))}
                 aoEditar={setModulo}
                 aoSalvar={fechar}
+                nomeSistema={nomeSistema}
               />
             ) : (
               <div className="cartao overflow-x-auto">
@@ -183,6 +248,7 @@ export default function PaginaProdutos() {
             emUso={(id) => emUso((k) => k.plano_id === id)}
             aoEditar={setPlano}
             aoSalvar={fechar}
+            nomeSistema={nomeSistema}
           />
         ) : (
           <div className="grid gap-3 md:grid-cols-2">
@@ -196,7 +262,16 @@ export default function PaginaProdutos() {
         )
       )}
 
-      {modulo && <EditarModulo modulo={modulo === "novo" ? null : modulo} org={org.id} aoFechar={() => fechar()} aoSalvar={fechar} />}
+      {modulo && d && (
+        <EditarModulo
+          modulo={modulo === "novo" ? null : modulo}
+          sistemas={d.sistemas}
+          org={org.id}
+          aoFechar={() => fechar()}
+          aoSalvar={fechar}
+        />
+      )}
+      {sistema && <JanelaSistema sistema={sistema === "novo" ? null : sistema} org={org.id} aoFechar={() => fechar()} aoSalvar={fechar} />}
       {plano && d && (
         <EditarPlano
           plano={plano === "novo" ? null : plano}
@@ -212,17 +287,20 @@ export default function PaginaProdutos() {
 
 function EditarModulo({
   modulo,
+  sistemas,
   org,
   aoFechar,
   aoSalvar,
 }: {
   modulo: Produto | null;
+  sistemas: Sistema[];
   org: string;
   aoFechar: () => void;
   aoSalvar: (m: string) => void;
 }) {
   const [f, setF] = useState({
     nome: modulo?.nome ?? "",
+    sistema: modulo?.sistema ?? "ledgra",
     slug: modulo?.slug ?? "",
     descricao: modulo?.descricao ?? "",
     preco: modulo ? valorParaCampo(modulo.preco) : "",
@@ -244,6 +322,7 @@ function EditarModulo({
         id: modulo?.id,
         org,
         slug: modulo ? undefined : f.slug,
+        sistema: modulo ? undefined : f.sistema,
         nome: f.nome,
         descricao: f.descricao,
         preco,
@@ -259,6 +338,20 @@ function EditarModulo({
   return (
     <Modal titulo={modulo ? "Editar produto" : "Novo produto"} aoFechar={aoFechar}>
       <label className="campo">
+        <span>Sistema (não muda depois)</span>
+        <select
+          value={f.sistema}
+          disabled={!!modulo}
+          onChange={(e) => mudar({ sistema: e.target.value, slug: f.slug || `${e.target.value}-` })}
+        >
+          {sistemas.map((x) => (
+            <option key={x.slug} value={x.slug}>
+              {x.nome}
+            </option>
+          ))}
+        </select>
+      </label>
+      <label className="campo">
         <span>Nome</span>
         <input value={f.nome} onChange={(e) => mudar({ nome: e.target.value })} autoFocus />
       </label>
@@ -268,7 +361,7 @@ function EditarModulo({
           value={f.slug}
           disabled={!!modulo}
           onChange={(e) => mudar({ slug: e.target.value.toLowerCase() })}
-          placeholder="ex.: financeiro"
+          placeholder={`ex.: ${f.sistema}-financeiro`}
         />
       </label>
       <label className="campo">

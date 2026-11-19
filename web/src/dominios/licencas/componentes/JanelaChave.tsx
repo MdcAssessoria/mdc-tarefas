@@ -1,6 +1,6 @@
-// Janela "Chave do Ledgra" do contrato (migração 067): mostra a chave em uso do cliente (só o começo dela), quando foi
-// usada pela última vez e o que o Ledgra recebeu; gera uma chave nova (a anterior para de valer) e revoga com motivo.
-// O texto completo da chave aparece UMA vez, logo depois de gerar, para copiar e colar na ficha da empresa no Ledgra.
+// Janela "Chave" da licença (067; por sistema desde a 088): mostra a chave em uso do cliente NAQUELE sistema (só o
+// começo dela), quando o sistema conferiu pela última vez e o que recebeu; gera uma chave nova (a anterior do mesmo
+// sistema para de valer) e revoga com motivo. O texto completo aparece UMA vez, logo depois de gerar, para colar no sistema.
 "use client";
 
 import { useCallback, useState } from "react";
@@ -10,10 +10,11 @@ import { supabase } from "@/lib/supabase";
 import { Modal } from "@/components/ui/Modal";
 import { Carregando } from "@/components/ui/Carregando";
 import { Icone } from "@/components/ui/Icone";
-import { gerarChaveLedgra, revogarChaveLedgra } from "../repositorio";
+import { gerarChave, revogarChave } from "../repositorio";
+import { ondeColarChave } from "../regras";
 import type { Contrato } from "../tipos";
 
-interface ChaveLedgra {
+interface ChaveAtual {
   id: string;
   prefixo: string;
   criada_em: string;
@@ -24,23 +25,35 @@ interface ChaveLedgra {
 const SITUACAO: Record<string, string> = {
   ativa: "Licença ativa",
   bloqueada: "Cliente bloqueado",
-  sem_contrato: "Sem contrato com módulos do Ledgra",
-  cnpj_diferente: "CNPJ da empresa no Ledgra é diferente do cliente",
+  sem_contrato: "Sem licença com módulos deste sistema",
+  cnpj_diferente: "CNPJ da empresa no sistema é diferente do cliente",
 };
 const quando = (s: string | null) => (s ? new Date(s).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" }) : "nunca");
 
-export function JanelaChaveLedgra({ contrato, cliente, aoFechar }: { contrato: Contrato; cliente: string; aoFechar: () => void }) {
+export function JanelaChave({
+  contrato,
+  cliente,
+  nomeSistema,
+  aoFechar,
+}: {
+  contrato: Contrato;
+  cliente: string;
+  /** nome do sistema da licença ("Ledgra ERP", "EXato") */
+  nomeSistema: string;
+  aoFechar: () => void;
+}) {
   const q = useConsulta(
     useCallback(async () => {
       const { data, error } = await supabase()
         .from("lic_ledgra_chaves")
         .select("id,prefixo,criada_em,ultimo_uso_em,ultimo_uso_situacao")
         .eq("cliente_id", contrato.cliente_id)
+        .eq("sistema", contrato.sistema)
         .is("revogada_em", null)
         .maybeSingle();
       if (error) throw error;
-      return data as ChaveLedgra | null;
-    }, [contrato.cliente_id]),
+      return data as ChaveAtual | null;
+    }, [contrato.cliente_id, contrato.sistema]),
   );
   const [nova, setNova] = useState<string | null>(null);
   const [confirmarNova, setConfirmarNova] = useState(false);
@@ -50,13 +63,13 @@ export function JanelaChaveLedgra({ contrato, cliente, aoFechar }: { contrato: C
   const [erro, setErro] = useState("");
   const [copiada, setCopiada] = useState(false);
   const atual = q.dados ?? null;
-  const temLedgra = contrato.modalidade === "full" || contrato.produtos.length > 0;
+  const temModulo = contrato.modalidade === "full" || contrato.produtos.length > 0;
 
   async function gerar() {
     setOcupado(true);
     setErro("");
     try {
-      setNova(await gerarChaveLedgra(contrato.cliente_id));
+      setNova(await gerarChave(contrato.cliente_id, contrato.sistema));
       setConfirmarNova(false);
       q.recarregar();
     } catch (e) {
@@ -70,7 +83,7 @@ export function JanelaChaveLedgra({ contrato, cliente, aoFechar }: { contrato: C
     setOcupado(true);
     setErro("");
     try {
-      await revogarChaveLedgra(atual.id, motivo.trim());
+      await revogarChave(atual.id, motivo.trim());
       setRevogando(false);
       setMotivo("");
       setNova(null);
@@ -92,8 +105,8 @@ export function JanelaChaveLedgra({ contrato, cliente, aoFechar }: { contrato: C
 
   return (
     <Modal
-      titulo="Chave do Ledgra"
-      descricao={`${cliente} · a chave liga a empresa no ERP Ledgra a este contrato e libera os módulos contratados.`}
+      titulo={`Chave do ${nomeSistema}`}
+      descricao={`${cliente} · a chave liga a empresa no ${nomeSistema} a esta licença e libera os módulos e os usuários contratados.`}
       aoFechar={aoFechar}
       largura="xl"
       avisoRodape={erro && <p className="rounded-md bg-red-50 p-2 text-sm text-red-800">{erro}</p>}
@@ -136,14 +149,12 @@ export function JanelaChaveLedgra({ contrato, cliente, aoFechar }: { contrato: C
                 <Icone nome={copiada ? "check" : "copiar"} />
                 {copiada ? "Copiada" : "Copiar chave"}
               </button>
-              <p className="mt-2 text-xs text-emerald-900">
-                No Ledgra: Empresas › ficha da empresa › aba Licença › cole a chave e clique em Salvar e conferir.
-              </p>
+              <p className="mt-2 text-xs text-emerald-900">{ondeColarChave(contrato.sistema, nomeSistema)}</p>
             </div>
           )}
-          {!temLedgra && (
+          {!temModulo && (
             <p className="rounded-md bg-amber-50 p-3 text-sm text-amber-900">
-              Este contrato não tem módulo do Ledgra. A chave funciona, mas o Ledgra vai mostrar &quot;Sem contrato&quot;.
+              Esta licença não tem módulo. A chave funciona, mas o {nomeSistema} vai mostrar &quot;Sem licença&quot;.
             </p>
           )}
           {atual ? (
@@ -157,18 +168,19 @@ export function JanelaChaveLedgra({ contrato, cliente, aoFechar }: { contrato: C
                 <dd>{quando(atual.criada_em)}</dd>
               </div>
               <div>
-                <dt className="text-neutral-500">Última conferência do Ledgra</dt>
+                <dt className="text-neutral-500">Última conferência do {nomeSistema}</dt>
                 <dd>{quando(atual.ultimo_uso_em)}</dd>
               </div>
               <div>
-                <dt className="text-neutral-500">O Ledgra recebeu</dt>
+                <dt className="text-neutral-500">O {nomeSistema} recebeu</dt>
                 <dd>{atual.ultimo_uso_situacao ? (SITUACAO[atual.ultimo_uso_situacao] ?? atual.ultimo_uso_situacao) : "—"}</dd>
               </div>
             </dl>
           ) : (
             !nova && (
               <p className="text-sm text-neutral-700">
-                Este cliente ainda não tem chave. Gere uma e cole no Ledgra; o CNPJ da empresa lá precisa ser o mesmo do cliente aqui.
+                Este cliente ainda não tem chave do {nomeSistema}. Gere uma e cole lá; o CNPJ da empresa no sistema precisa ser o mesmo do
+                cliente aqui.
               </p>
             )
           )}
@@ -186,8 +198,8 @@ export function JanelaChaveLedgra({ contrato, cliente, aoFechar }: { contrato: C
           )}
           {confirmarNova && (
             <p className="rounded-md bg-amber-50 p-3 text-sm text-amber-900">
-              A chave atual ({atual?.prefixo}…) deixa de valer na hora. Cole a nova no Ledgra logo em seguida para não fechar os módulos do
-              cliente na próxima conferência.
+              A chave atual ({atual?.prefixo}…) deixa de valer na hora. Cole a nova no {nomeSistema} logo em seguida para não fechar os
+              módulos do cliente na próxima conferência.
             </p>
           )}
           {revogando && (
@@ -200,7 +212,7 @@ export function JanelaChaveLedgra({ contrato, cliente, aoFechar }: { contrato: C
                 autoFocus
                 required
               />
-              <span className="text-xs text-neutral-600">Na próxima conferência o Ledgra fecha os módulos pagos desta empresa.</span>
+              <span className="text-xs text-neutral-600">Na próxima conferência o {nomeSistema} fecha os módulos pagos desta empresa.</span>
             </label>
           )}
         </>

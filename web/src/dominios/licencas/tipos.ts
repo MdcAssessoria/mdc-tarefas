@@ -10,8 +10,40 @@ export interface Produto {
   preco: number;
   ativo: boolean;
   ordem: number;
-  /** De que sistema é o módulo: o próprio HUB ou o ERP Ledgra (migração 067). */
-  sistema: "hub" | "ledgra";
+  /** Sistema do módulo (lic_sistemas.slug: hub, ledgra, exato…; 088). */
+  sistema: string;
+}
+
+/** Sistema que a MDC licencia (088): Ledgra ERP, EXato, HUB-MDC e os próximos. */
+export interface Sistema {
+  id: string;
+  org_id: string;
+  slug: string;
+  nome: string;
+  descricao: string;
+  /** 3 letras no começo da chave (LDG, EXA…) */
+  prefixo: string;
+  situacao: SituacaoSistema;
+  ordem: number;
+}
+
+export type SituacaoSistema = "vendendo" | "em_breve" | "desligado";
+
+export const SITUACOES_SISTEMA: { id: SituacaoSistema; nome: string; dica: string }[] = [
+  { id: "vendendo", nome: "Vendendo", dica: "Aceita licença nova." },
+  { id: "em_breve", nome: "Em breve", dica: "Cadastrado, ainda sem venda." },
+  { id: "desligado", nome: "Fora de venda", dica: "Não aceita licença nova; as antigas continuam." },
+];
+
+/** Quando o cliente passa dos usuários incluídos (088). */
+export type Excedente = "cobrar" | "bloquear";
+
+/** Maior número de usuários informado pelo sistema no mês (lic_usos, 088). */
+export interface Uso {
+  contrato_id: string;
+  competencia: string;
+  usuarios: number;
+  informado_em: string;
 }
 
 export interface Plano {
@@ -50,8 +82,17 @@ export interface Contrato {
   reajuste_mes: number | null;
   ultimo_reajuste: string | null;
   situacao: "ativo" | "encerrado";
-  /** gratuita (valor zero), pacote (plano ou módulos com valor) ou full (todos os módulos do Ledgra). */
+  /** gratuita (valor zero), pacote (plano ou módulos com valor) ou full (todos os módulos do sistema). */
   modalidade: "gratuita" | "pacote" | "full";
+  /** Sistema da licença (088): um contrato ativo por cliente e sistema. */
+  sistema: string;
+  /** Usuários incluídos no valor; null = sem limite. */
+  usuarios_incluidos: number | null;
+  /** Valor por usuário além dos incluídos (só com a permissão de valores; senão 0). */
+  valor_usuario_adicional: number;
+  excedente: Excedente;
+  /** Contrato a receber da Gestão que fatura esta licença (a mensalidade da licença não é gerada). */
+  recorrente_id: string | null;
   encerrado_em: string | null;
   encerrado_motivo: string | null;
   observacao: string | null;
@@ -78,6 +119,9 @@ export interface Cobranca {
   cancelado_motivo: string | null;
   observacao: string | null;
   criado_em: string;
+  /** Usuários além dos incluídos no mês anterior, cobrados nesta mensalidade (088). */
+  usuarios_adicionais?: number;
+  valor_adicionais?: number;
 }
 
 export interface BaixaLicenca {

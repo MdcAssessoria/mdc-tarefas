@@ -1,9 +1,6 @@
-// Contratos › Receita por sistema: licenças vendidas de cada sistema e a receita prevista (tela em
-// dominios/contratos/componentes/TelaSistemas).
-"use client";
+// Endereço antigo da Receita por sistema (059): a tela mudou para Sistemas › Receita por sistema (088).
+import { redirect } from "next/navigation";
 
-import { TelaSistemas } from "@/dominios/contratos/componentes/TelaSistemas";
-
-export default function PaginaReceitaPorSistema() {
-  return <TelaSistemas />;
+export default function PaginaReceitaAntiga() {
+  redirect("/licencas/receita");
 }

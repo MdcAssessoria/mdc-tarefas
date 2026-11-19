@@ -4,7 +4,7 @@
 // (components/shell/navegacao.ts): com ele a tela do manual ganha o botão "Ir para a tela".
 // Mudou uma tela ou regra? Atualize o trecho dela aqui no mesmo commit e acrescente uma linha em "Controle de versões".
 
-export const VERSAO_MANUAL = { numero: "1.0", data: "18/11/2026" };
+export const VERSAO_MANUAL = { numero: "1.1", data: "18/11/2026" };
 
 export const MANUAL_MD = `
 ## Como usar este manual
@@ -226,21 +226,38 @@ Contratos de prestação de serviço com os clientes, faturas, notas fiscais, re
 
 **Para que serve:** reajuste anual dos contratos pelo índice combinado.
 
-## Licenças Ledgra
+## Sistemas
 
-Licenças dos sistemas Ledgra e HUB vendidas aos clientes: contratos, mensalidades, chave de ativação e contrato de licença.
+Os sistemas que a MDC licencia aos clientes (Ledgra ERP, EXato e os próximos): quem usa cada um, com quais módulos, quantos usuários, a chave e a receita. Cada cliente tem no máximo uma licença ativa por sistema.
 
-### Licenças (Licenças Ledgra → Licenças)
+### Licenças (Sistemas → Licenças)
 
-**Para que serve:** contratos de licença (gratuita, pacote ou full), mensalidades, chave do Ledgra e o contrato de licença em PDF com assinatura.
+**Para que serve:** cadastrar e acompanhar a licença de cada cliente em cada sistema.
 
-### Produtos e planos (Licenças Ledgra → Produtos e planos)
+**Como usar:**
+1. Clique em **Nova licença**, escolha o cliente e o **sistema** (só aparecem os que estão à venda).
+2. Escolha um plano, módulos avulsos ou o sistema **full** (todos os módulos, inclusive os que forem criados depois).
+3. Em **Valor e usuários**, informe o valor mensal, quantos **usuários** estão incluídos e o valor por usuário a mais. Em **Quando passar do limite**, escolha **Liberar e cobrar** (o usuário a mais entra na cobrança do mês seguinte) ou **Não deixar passar** (o sistema não cadastra pessoa além do limite).
+4. Em **Como cobrar**, deixe **Mensalidade da licença** (vai junto com o honorário) ou escolha um **contrato a receber** de Contratos: aí a fatura dele leva a licença e o usuário a mais.
+5. Depois de salvar, em **Ações › Chave do sistema**, gere a chave e cole no sistema do cliente. A chave começa com o prefixo do sistema (LDG-… no Ledgra, EXA-… no EXato).
 
-**Para que serve:** módulos vendidos, tabelas de preço e pacotes.
+**Dicas:** a coluna **Usuários** mostra quantas pessoas o sistema informou neste mês (ex.: "12 de 10 usuário(s) (2 a mais)"). O filtro **Sistema** mostra só as licenças de um sistema.
 
-### Modelo do contrato (Licenças Ledgra → Modelo do contrato)
+### Sistemas e produtos (Sistemas → Sistemas e produtos)
 
-**Quem usa:** quem gere Licenças.
+**Para que serve:** cadastrar os sistemas (aba **Sistemas**: nome, código, prefixo da chave e situação — Vendendo, Em breve ou Fora de venda), os módulos de cada sistema com o preço de tabela (aba **Produtos**) e os pacotes (aba **Planos**).
+
+**Dicas:** o módulo novo começa com o código do sistema (ex.: exato-rs). Sistema "Em breve" fica cadastrado, mas não aceita licença.
+
+### Receita por sistema (Sistemas → Receita por sistema)
+
+**Quem usa:** quem gere Sistemas e vê Contratos.
+
+**Para que serve:** quanto cada sistema rende: contratos ativos, clientes, receita mensal, faturado, recebido e a previsão dos próximos 12 meses. Licença ligada a um contrato a receber entra aqui sozinha.
+
+### Modelo do contrato (Sistemas → Modelo do contrato)
+
+**Quem usa:** quem gere Sistemas.
 
 **Para que serve:** texto-padrão do contrato de licença, com as variáveis preenchidas na emissão.
 
@@ -271,4 +288,5 @@ Licenças dos sistemas Ledgra e HUB vendidas aos clientes: contratos, mensalidad
 | Versão | Data | O que mudou |
 |---|---|---|
 | 1.0 | 18/11/2026 | Primeira versão do manual dentro do HUB, aberta a todos os usuários. Inclui a criação da mesma tarefa para vários clientes de uma vez. |
+| 1.1 | 18/11/2026 | Licenças Ledgra virou **Sistemas**: licença por sistema (Ledgra ERP, EXato…), usuários incluídos e a mais, cobrança pela fatura da Gestão, chave por sistema e Receita por sistema no mesmo menu. |
 `;

@@ -107,11 +107,13 @@ export const NAV: Record<Modulo, { titulo: string; links: LinkModulo[]; grupos?:
     ],
   },
   licencas: {
-    // 074: só o cadastro das licenças; a cobrança mensal fica em Gestão › Contratos (decisão de 05/11)
-    titulo: "Licenças Ledgra",
+    // 088: "Sistemas" — licenças de cada sistema da MDC (Ledgra ERP, EXato…), produtos e a receita por sistema; a
+    // cobrança sai pela mensalidade da licença ou pela fatura do contrato a receber da Gestão (Contratos)
+    titulo: "Sistemas",
     links: [
       { href: "/licencas/contratos", nome: "Licenças", icone: "documento" },
-      { href: "/licencas/produtos", nome: "Produtos e planos", icone: "caixa" },
+      { href: "/licencas/produtos", nome: "Sistemas e produtos", icone: "caixa" },
+      { href: "/licencas/receita", nome: "Receita por sistema", icone: "tendencia", minimo: "gerir" },
       { href: "/licencas/modelo", nome: "Modelo do contrato", icone: "editar", minimo: "gerir" },
     ],
   },
@@ -152,7 +154,6 @@ export const NAV: Record<Modulo, { titulo: string; links: LinkModulo[]; grupos?:
       { href: "/contratos", nome: "Contratos", icone: "documento" },
       { href: "/contratos/faturas", nome: "Faturas e notas fiscais", icone: "arquivo" },
       { href: "/contratos/reajustes", nome: "Reajustes", icone: "seta-cima" },
-      { href: "/contratos/sistemas", nome: "Receita por sistema", icone: "tendencia" },
       { href: "/contratos/ledgra-link", nome: "Ledgra Link (bancos)", icone: "banco", minimo: "gerir", grupo: "Bancos" },
       { href: "/contratos/boleto", nome: "Boleto", icone: "carteira", minimo: "gerir", grupo: "Bancos" },
       { href: "/contratos/nota-fiscal", nome: "Regras fiscais", icone: "escudo", minimo: "gerir", grupo: "Configurações" },

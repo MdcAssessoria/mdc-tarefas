@@ -4433,7 +4433,9 @@ export type Database = {
           pago_em: string | null;
           por: string | null;
           situacao: string;
+          usuarios_adicionais: number;
           valor: number;
+          valor_adicionais: number;
           valor_pago: number | null;
           vencimento: string;
         };
@@ -4452,7 +4454,9 @@ export type Database = {
           pago_em?: string | null;
           por?: string | null;
           situacao?: string;
+          usuarios_adicionais?: number;
           valor: number;
+          valor_adicionais?: number;
           valor_pago?: number | null;
           vencimento: string;
         };
@@ -4471,7 +4475,9 @@ export type Database = {
           pago_em?: string | null;
           por?: string | null;
           situacao?: string;
+          usuarios_adicionais?: number;
           valor?: number;
+          valor_adicionais?: number;
           valor_pago?: number | null;
           vencimento?: string;
         };
@@ -4704,6 +4710,7 @@ export type Database = {
           dia_vencimento: number;
           encerrado_em: string | null;
           encerrado_motivo: string | null;
+          excedente: string;
           fim: string | null;
           id: string;
           inicio: string;
@@ -4715,10 +4722,14 @@ export type Database = {
           proporcional: boolean;
           reajuste_indice: string;
           reajuste_mes: number | null;
+          recorrente_id: string | null;
+          sistema: string;
           situacao: string;
           ultimo_reajuste: string | null;
+          usuarios_incluidos: number | null;
           valor_mensal: number;
           valor_tabela: number;
+          valor_usuario_adicional: number;
         };
         Insert: {
           cliente_id: string;
@@ -4726,6 +4737,7 @@ export type Database = {
           dia_vencimento: number;
           encerrado_em?: string | null;
           encerrado_motivo?: string | null;
+          excedente?: string;
           fim?: string | null;
           id?: string;
           inicio: string;
@@ -4737,10 +4749,14 @@ export type Database = {
           proporcional?: boolean;
           reajuste_indice?: string;
           reajuste_mes?: number | null;
+          recorrente_id?: string | null;
+          sistema: string;
           situacao?: string;
           ultimo_reajuste?: string | null;
+          usuarios_incluidos?: number | null;
           valor_mensal: number;
           valor_tabela?: number;
+          valor_usuario_adicional?: number;
         };
         Update: {
           cliente_id?: string;
@@ -4748,6 +4764,7 @@ export type Database = {
           dia_vencimento?: number;
           encerrado_em?: string | null;
           encerrado_motivo?: string | null;
+          excedente?: string;
           fim?: string | null;
           id?: string;
           inicio?: string;
@@ -4759,10 +4776,14 @@ export type Database = {
           proporcional?: boolean;
           reajuste_indice?: string;
           reajuste_mes?: number | null;
+          recorrente_id?: string | null;
+          sistema?: string;
           situacao?: string;
           ultimo_reajuste?: string | null;
+          usuarios_incluidos?: number | null;
           valor_mensal?: number;
           valor_tabela?: number;
+          valor_usuario_adicional?: number;
         };
         Relationships: [
           {
@@ -4786,6 +4807,20 @@ export type Database = {
             referencedRelation: "lic_planos";
             referencedColumns: ["id"];
           },
+          {
+            foreignKeyName: "lic_contratos_recorrente_id_fkey";
+            columns: ["recorrente_id"];
+            isOneToOne: false;
+            referencedRelation: "fin_recorrentes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "lic_contratos_sistema_fk";
+            columns: ["org_id", "sistema"];
+            isOneToOne: false;
+            referencedRelation: "lic_sistemas";
+            referencedColumns: ["org_id", "slug"];
+          },
         ];
       };
       lic_ledgra_chaves: {
@@ -4800,6 +4835,7 @@ export type Database = {
           revogada_em: string | null;
           revogada_motivo: string | null;
           revogada_por: string | null;
+          sistema: string;
           ultimo_uso_em: string | null;
           ultimo_uso_situacao: string | null;
         };
@@ -4814,6 +4850,7 @@ export type Database = {
           revogada_em?: string | null;
           revogada_motivo?: string | null;
           revogada_por?: string | null;
+          sistema?: string;
           ultimo_uso_em?: string | null;
           ultimo_uso_situacao?: string | null;
         };
@@ -4828,6 +4865,7 @@ export type Database = {
           revogada_em?: string | null;
           revogada_motivo?: string | null;
           revogada_por?: string | null;
+          sistema?: string;
           ultimo_uso_em?: string | null;
           ultimo_uso_situacao?: string | null;
         };
@@ -4845,6 +4883,13 @@ export type Database = {
             isOneToOne: false;
             referencedRelation: "organizacoes";
             referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "lic_ledgra_chaves_sistema_fk";
+            columns: ["org_id", "sistema"];
+            isOneToOne: false;
+            referencedRelation: "lic_sistemas";
+            referencedColumns: ["org_id", "slug"];
           },
         ];
       };
@@ -5000,6 +5045,13 @@ export type Database = {
             referencedRelation: "organizacoes";
             referencedColumns: ["id"];
           },
+          {
+            foreignKeyName: "lic_produtos_sistema_fk";
+            columns: ["org_id", "sistema"];
+            isOneToOne: false;
+            referencedRelation: "lic_sistemas";
+            referencedColumns: ["org_id", "slug"];
+          },
         ];
       };
       lic_reajustes: {
@@ -5062,6 +5114,105 @@ export type Database = {
           },
           {
             foreignKeyName: "lic_reajustes_org_id_fkey";
+            columns: ["org_id"];
+            isOneToOne: false;
+            referencedRelation: "organizacoes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      lic_sistemas: {
+        Row: {
+          criado_em: string;
+          descricao: string;
+          id: string;
+          nome: string;
+          ordem: number;
+          org_id: string;
+          prefixo: string;
+          situacao: string;
+          slug: string;
+        };
+        Insert: {
+          criado_em?: string;
+          descricao?: string;
+          id?: string;
+          nome: string;
+          ordem?: number;
+          org_id: string;
+          prefixo: string;
+          situacao?: string;
+          slug: string;
+        };
+        Update: {
+          criado_em?: string;
+          descricao?: string;
+          id?: string;
+          nome?: string;
+          ordem?: number;
+          org_id?: string;
+          prefixo?: string;
+          situacao?: string;
+          slug?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "lic_sistemas_org_id_fkey";
+            columns: ["org_id"];
+            isOneToOne: false;
+            referencedRelation: "organizacoes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      lic_usos: {
+        Row: {
+          cliente_id: string;
+          competencia: string;
+          contrato_id: string;
+          id: number;
+          informado_em: string;
+          org_id: string;
+          sistema: string;
+          usuarios: number;
+        };
+        Insert: {
+          cliente_id: string;
+          competencia: string;
+          contrato_id: string;
+          id?: number;
+          informado_em?: string;
+          org_id: string;
+          sistema: string;
+          usuarios: number;
+        };
+        Update: {
+          cliente_id?: string;
+          competencia?: string;
+          contrato_id?: string;
+          id?: number;
+          informado_em?: string;
+          org_id?: string;
+          sistema?: string;
+          usuarios?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "lic_usos_cliente_id_fkey";
+            columns: ["cliente_id"];
+            isOneToOne: false;
+            referencedRelation: "clientes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "lic_usos_contrato_id_fkey";
+            columns: ["contrato_id"];
+            isOneToOne: false;
+            referencedRelation: "lic_contratos";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "lic_usos_org_id_fkey";
             columns: ["org_id"];
             isOneToOne: false;
             referencedRelation: "organizacoes";
@@ -7993,6 +8144,10 @@ export type Database = {
         Args: { p_cobranca: string; p_motivo: string };
         Returns: undefined;
       };
+      lic_chave_gerar: {
+        Args: { p_cliente: string; p_sistema: string };
+        Returns: string;
+      };
       lic_contrato_modelo_salvar: {
         Args: { p_org: string; p_texto: string };
         Returns: number;
@@ -8062,7 +8217,25 @@ export type Database = {
       lic_salvar_contrato: { Args: { p: Json }; Returns: string };
       lic_salvar_plano: { Args: { p: Json }; Returns: string };
       lic_salvar_produto: { Args: { p: Json }; Returns: string };
+      lic_sistema_salvar: { Args: { p: Json }; Returns: string };
+      lic_uso_informar: {
+        Args: {
+          p_chave: string;
+          p_cnpj: string;
+          p_sistema: string;
+          p_usuarios: number;
+        };
+        Returns: Json;
+      };
+      lic_validar: {
+        Args: { p_chave: string; p_cnpj: string; p_sistema: string };
+        Returns: Json;
+      };
       lic_valores: { Args: { p_org: string }; Returns: Json };
+      lic_vincular_cnpj: {
+        Args: { p_cnpj: string; p_sistema: string };
+        Returns: Json;
+      };
       link_aplicar_evento: {
         Args: { p_dados: Json; p_evento: string; p_tipo: string };
         Returns: string;

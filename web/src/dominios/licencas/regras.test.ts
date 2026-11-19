@@ -2,6 +2,10 @@
 // recorrente, gráfico e faturamento do mês; e a mensagem de cobrança do WhatsApp.
 import { describe, expect, it } from "vitest";
 import {
+  ondeColarChave,
+  textoUsuarios,
+  usuariosAdicionais,
+  valorAdicional,
   aplicarReajuste,
   contratoVigente,
   descontoSobreTabela,
@@ -62,6 +66,11 @@ const contrato = (p: Partial<Contrato>): Contrato => ({
   observacao: null,
   criado_em: "2025-03-15T00:00:00Z",
   produtos: ["p1"],
+  sistema: "ledgra",
+  usuarios_incluidos: null,
+  valor_usuario_adicional: 0,
+  excedente: "cobrar",
+  recorrente_id: null,
   ...p,
 });
 
@@ -232,5 +241,30 @@ describe("mensagem de cobrança", () => {
     expect(t).toContain("• 09/2026: R$");
     expect(t.indexOf("09/2026")).toBeLessThan(t.indexOf("10/2026"));
     expect(t).toContain("Total: R$");
+  });
+});
+
+describe("sistemas e usuários (088)", () => {
+  const k = { usuarios_incluidos: 10, valor_usuario_adicional: 25, excedente: "cobrar" as const };
+  it("conta os usuários a mais só acima do incluído", () => {
+    expect(usuariosAdicionais(12, 10)).toBe(2);
+    expect(usuariosAdicionais(8, 10)).toBe(0);
+    expect(usuariosAdicionais(50, null)).toBe(0);
+  });
+  it("monta o texto dos usuários", () => {
+    expect(textoUsuarios(12, 10)).toBe("12 de 10 usuário(s) (2 a mais)");
+    expect(textoUsuarios(8, 10)).toBe("8 de 10 usuário(s)");
+    expect(textoUsuarios(8, null)).toBe("8 usuário(s) (sem limite)");
+    expect(textoUsuarios(null, 10)).toBe("Até 10 usuário(s); sem informação do sistema");
+  });
+  it("cobra o adicional só quando o excedente é cobrado", () => {
+    expect(valorAdicional(k, 13)).toBe(75);
+    expect(valorAdicional({ ...k, excedente: "bloquear" }, 13)).toBe(0);
+    expect(valorAdicional(k, null)).toBe(0);
+  });
+  it("diz onde colar a chave em cada sistema", () => {
+    expect(ondeColarChave("exato", "EXato")).toContain("Administração › Licença do EXato");
+    expect(ondeColarChave("ledgra", "Ledgra ERP")).toContain("aba Licença");
+    expect(ondeColarChave("hub-team", "Hub-Team")).toContain("No Hub-Team");
   });
 });

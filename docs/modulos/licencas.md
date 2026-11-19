@@ -1,4 +1,9 @@
-# Módulo Cobrança Ledgra (antigo Licenças)
+# Módulo Sistemas (antigo Licenças / Cobrança Ledgra)
+
+> **Desde 18/11/2026 (migração 088) o módulo `licencas` aparece como "Sistemas":** licença por sistema da MDC (Ledgra ERP,
+> EXato e os próximos), usuários incluídos e a mais, chave por sistema, cobrança pela mensalidade da licença ou pela
+> fatura de um contrato a receber da Gestão, e a Receita por sistema no mesmo menu. Detalhes na seção "Sistemas (088)"
+> no fim. Os avisos abaixo contam a história do módulo.
 
 > **Desligado desde 05/11/2026 (migração 060):** o Ledgra cuida dos clientes dele e tem a própria cobrança. No HUB fica
 > só o controle das licenças vendidas, em **Contratos › Receita por sistema** (059). A ferramenta `licencas` está com
@@ -251,3 +256,38 @@ licença; o hash do link não sai pela API). Funções: `lic_contrato_modelo_sal
 `156_contrato_085.sql`, e `157_assinado_086.sql` para a 086 (`lic_documento_anexar`, arquivo e aviso), dentro do `rodar.sh`. Código: `dominios/licencas/contratoLicenca.ts` (texto e regras, com
 teste), `documentos.ts` (leituras, gravações e PDF), `componentes/JanelaContratoLicenca.tsx`, `TextoContrato.tsx`,
 `app/(hub)/licencas/modelo` e `app/assinar/[token]`.
+
+## Sistemas (migração 088, 18/11/2026)
+
+Decisão do Edvaldo: a EXRH, a TEAM Brasil e as próximas são **clientes** dos sistemas da MDC. O HUB cadastra o cliente,
+define qual sistema ele usa e emite a chave; a cobrança vem para a gestão MDC. Preço: valor base com usuários incluídos
++ valor por usuário a mais (a mesma estrutura aceita só fixo ou só por usuário).
+
+- **`lic_sistemas`** (slug, nome, prefixo da chave de 3 letras, situação `vendendo` / `em_breve` / `desligado`). Semeados:
+  HUB-MDC, Ledgra ERP, EXato (vendendo), Hub-Team e Acesso remoto (em breve). Grava só `lic_sistema_salvar` (gerir).
+  Tela: Sistemas › Sistemas e produtos › aba Sistemas.
+- **Módulos por sistema**: `lic_produtos.sistema` aponta para `lic_sistemas`; o código do módulo começa com o do sistema
+  (`exato-rs`) e na chave vai sem o prefixo (`rs`). EXato semeado com 12 módulos (diaristas, operacao, transporte,
+  auditoria, rs, crm, contratos, faturamento, financeiro, compras, estoque, juridico).
+- **Licença**: `lic_contratos.sistema` (um contrato ativo por cliente e sistema; não muda), `usuarios_incluidos` (vazio =
+  sem limite), `valor_usuario_adicional` (só com gerir, volta pela `lic_valores`), `excedente` (`cobrar` | `bloquear`) e
+  `recorrente_id` (contrato a receber da empresa da gestão que fatura a licença; ao ligar, o contrato ganha o
+  `sistema_id` da Gestão com o mesmo nome — Receita por sistema). Full = todos os módulos ativos do sistema.
+- **Chave por sistema**: `lic_ledgra_chaves.sistema` (nome antigo mantido; uma ativa por cliente e sistema), prefixo do
+  sistema (`LDG-…`, `EXA-…`). `lic_chave_gerar(cliente, sistema)` (operar), `lic_validar(sistema, chave, cnpj)` (anon; a
+  chave é o segredo) devolve situação, módulos, `usuarios_incluidos` e `excedente`; `lic_vincular_cnpj(sistema, cnpj)`
+  só service_role. As funções do Ledgra (`lic_ledgra_validar`, `lic_ledgra_chave_gerar`, `lic_ledgra_vincular_cnpj`)
+  continuam e chamam as novas.
+- **Uso**: `lic_uso_informar(sistema, chave, cnpj, usuarios)` (anon, com a chave) guarda em `lic_usos` o MAIOR número
+  do mês. `app.lic_adicional(contrato, mês)` = (usuários − incluídos) × valor, só com excedente `cobrar`.
+- **Cobrança do mês seguinte**: sem contrato a receber → `app.lic_gerar` soma o adicional na mensalidade
+  (`lic_cobrancas.usuarios_adicionais/valor_adicionais`, texto "+ N usuário(s) adicional(is) de MM/AAAA"); com contrato a
+  receber → a mensalidade da licença não é gerada e `app.fin_recorrente_lancar_mes` soma o adicional na conta e na fatura.
+- **Telas**: menu Sistemas (Licenças, Sistemas e produtos, Receita por sistema — saiu de Contratos; `/contratos/sistemas`
+  redireciona —, Modelo do contrato). Assistente da licença: sistema → módulos → valor e usuários ("Quando passar do
+  limite": Liberar e cobrar / Não deixar passar) e "Como cobrar". Janela da chave genérica (`JanelaChave`). Regras puras
+  em `regras.ts` (`textoUsuarios`, `usuariosAdicionais`, `valorAdicional`, `ondeColarChave`).
+- **Testes**: `supabase/testes/159_base_088.sql` + `160_sistemas_088.sql` (no fim do `rodar.sh`, depois de aplicar a
+  licença do Ledgra 067 a 087).
+- **Próximo**: o EXato (e depois o Ledgra) cria a conta do cliente ligada à chave, chama `lic_validar` e informa os
+  usuários por `lic_uso_informar`.

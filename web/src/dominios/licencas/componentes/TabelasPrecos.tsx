@@ -21,10 +21,22 @@ import {
 import { salvarPlano, salvarProduto } from "@/dominios/licencas/repositorio";
 import type { Plano, Produto } from "@/dominios/licencas/tipos";
 
-type Sistema = "ledgra" | "hub";
-const NOME_SISTEMA: Record<Sistema, string> = { ledgra: "Ledgra", hub: "HUB" };
+/** Código do sistema (lic_sistemas.slug: ledgra, exato, hub…; 088). */
+type Sistema = string;
+const NOME_PADRAO: Record<string, string> = { ledgra: "Ledgra", hub: "HUB", exato: "EXato" };
+const nomePadrao = (s: string) => NOME_PADRAO[s] ?? s;
 
-function EscolhaSistema({ valor, aoMudar, tem }: { valor: Sistema; aoMudar: (s: Sistema) => void; tem: Sistema[] }) {
+function EscolhaSistema({
+  valor,
+  aoMudar,
+  tem,
+  nome,
+}: {
+  valor: Sistema;
+  aoMudar: (s: Sistema) => void;
+  tem: Sistema[];
+  nome: (s: Sistema) => string;
+}) {
   if (tem.length < 2) return null;
   return (
     <div className="flex gap-2" role="radiogroup" aria-label="Sistema">
@@ -37,7 +49,7 @@ function EscolhaSistema({ valor, aoMudar, tem }: { valor: Sistema; aoMudar: (s: 
           className={`btn !min-h-9 ${valor === s ? "!border-[var(--marca)] !bg-[var(--marca)] !text-white" : ""}`}
           onClick={() => aoMudar(s)}
         >
-          {valor === s && <Icone nome="check" className="h-4 w-4" />} {NOME_SISTEMA[s]}
+          {valor === s && <Icone nome="check" className="h-4 w-4" />} {nome(s)}
         </button>
       ))}
     </div>
@@ -45,8 +57,12 @@ function EscolhaSistema({ valor, aoMudar, tem }: { valor: Sistema; aoMudar: (s: 
 }
 
 /** Produto sem a marca de sistema (dado antigo) conta como do HUB. */
-const sis = (p: Produto | undefined): Sistema => (p?.sistema === "ledgra" ? "ledgra" : "hub");
-const sistemasDe = (produtos: Produto[]) => (["ledgra", "hub"] as Sistema[]).filter((s) => produtos.some((p) => sis(p) === s));
+const sis = (p: Produto | undefined): Sistema => p?.sistema || "hub";
+/** Sistemas que têm produto, na ordem em que aparecem (o Ledgra primeiro, se houver). */
+const sistemasDe = (produtos: Produto[]) => {
+  const l = [...new Set(produtos.map((p) => sis(p)))];
+  return l.includes("ledgra") ? ["ledgra", ...l.filter((s) => s !== "ledgra")] : l;
+};
 
 /** Tabela 1: valor mensal de cada produto, digitado na linha. */
 export function TabelaPrecosProdutos({
@@ -55,12 +71,14 @@ export function TabelaPrecosProdutos({
   emUso,
   aoEditar,
   aoSalvar,
+  nomeSistema,
 }: {
   produtos: Produto[];
   org: string;
   emUso: (produto: string) => number;
   aoEditar: (p: Produto) => void;
   aoSalvar: (msg: string) => void;
+  nomeSistema?: (s: string) => string;
 }) {
   const tem = sistemasDe(produtos);
   const [sistema, setSistema] = useState<Sistema>(tem[0] ?? "ledgra");
@@ -96,7 +114,7 @@ export function TabelaPrecosProdutos({
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <EscolhaSistema valor={sistema} aoMudar={setSistema} tem={tem} />
+        <EscolhaSistema valor={sistema} aoMudar={setSistema} tem={tem} nome={nomeSistema ?? nomePadrao} />
         <p className="text-sm text-neutral-600">
           Todos os produtos à venda somam <b className="tabular-nums">{brl(total)}</b> por mês.
         </p>
@@ -172,6 +190,7 @@ export function QuadroPacotes({
   emUso,
   aoEditar,
   aoSalvar,
+  nomeSistema,
 }: {
   produtos: Produto[];
   planos: Plano[];
@@ -179,6 +198,7 @@ export function QuadroPacotes({
   emUso: (plano: string) => number;
   aoEditar: (p: Plano) => void;
   aoSalvar: (msg: string) => void;
+  nomeSistema?: (s: string) => string;
 }) {
   const tem = sistemasDe(produtos);
   const [sistema, setSistema] = useState<Sistema>(tem[0] ?? "ledgra");
@@ -228,7 +248,7 @@ export function QuadroPacotes({
   if (!colunas.length) {
     return (
       <div className="space-y-3">
-        <EscolhaSistema valor={sistema} aoMudar={setSistema} tem={tem} />
+        <EscolhaSistema valor={sistema} aoMudar={setSistema} tem={tem} nome={nomeSistema ?? nomePadrao} />
         <p className="cartao p-4 text-sm text-neutral-600">
           Nenhum pacote deste sistema. Use &ldquo;Novo plano&rdquo; para criar o primeiro.
         </p>
@@ -239,7 +259,7 @@ export function QuadroPacotes({
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <EscolhaSistema valor={sistema} aoMudar={setSistema} tem={tem} />
+        <EscolhaSistema valor={sistema} aoMudar={setSistema} tem={tem} nome={nomeSistema ?? nomePadrao} />
         <p className="text-sm text-neutral-600">Marque com X os produtos de cada pacote e digite o preço do pacote embaixo.</p>
       </div>
       <div className="cartao overflow-x-auto">

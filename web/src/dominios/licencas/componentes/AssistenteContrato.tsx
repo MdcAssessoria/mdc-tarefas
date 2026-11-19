@@ -1,21 +1,26 @@
-// Assistente de contrato de licença em 5 passos: cliente → o que foi vendido (plano, módulos avulsos ou Ledgra full) → valor e
-// vencimento → reajuste → conferir e salvar. Também edita um contrato ativo (mesmos passos, cliente fixo).
+// Assistente de licença em 5 passos: cliente → sistema e o que foi vendido (plano, módulos avulsos ou o sistema full) →
+// valor, usuários e vencimento → reajuste → conferir e salvar. Também edita uma licença ativa (cliente e sistema fixos).
+// Usuários (088): incluídos no valor, valor por usuário a mais e o que fazer quando passar (cobrar ou bloquear); com a
+// permissão de valores, a licença pode ser faturada por um contrato a receber da Gestão (Contratos).
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { nomeCliente } from "@/dominios/clientes/nome";
 import { traduzirErro } from "@/lib/erros";
 import { brl } from "@/lib/formato/moeda";
 import { fmtData, mesExtenso } from "@/lib/formato/datas";
 import { Modal } from "@/components/ui/Modal";
+import { Icone } from "@/components/ui/Icone";
 import { numeroBr, valorParaCampo } from "@/dominios/financeiro/regras";
 import { descontoSobreTabela, valorDoMes, vencimentoDaCompetencia } from "../regras";
 import { salvarContrato } from "../repositorio";
 import { INDICES } from "../tipos";
-import type { Contrato, IndiceReajuste, Plano, Produto } from "../tipos";
+import type { Contrato, Excedente, IndiceReajuste, Plano, Produto, Sistema } from "../tipos";
+import { supabase } from "@/lib/supabase";
+import { useConsulta } from "@/lib/useConsulta";
 
-const PASSOS = ["Cliente", "O que foi vendido", "Valor e vencimento", "Reajuste", "Conferir"];
+const PASSOS = ["Cliente", "Sistema e módulos", "Valor e usuários", "Reajuste", "Conferir"];
 export const MESES = [
   "Janeiro",
   "Fevereiro",
@@ -37,6 +42,7 @@ export function AssistenteContrato({
   produtos,
   planos,
   contratos,
+  sistemas,
   hoje,
   valores = true,
   aoFechar,
@@ -49,16 +55,25 @@ export function AssistenteContrato({
   produtos: Produto[];
   planos: Plano[];
   contratos: Contrato[];
+  /** sistemas licenciados (088); licença nova só nos que estão "vendendo" */
+  sistemas: Sistema[];
   hoje: string;
   aoFechar: () => void;
   /** `novo` = id da licença recém-cadastrada (para oferecer a emissão do contrato). */
   aoSalvar: (msg: string, novo?: string) => void;
 }) {
-  const { clientes } = useOrg();
+  const { clientes, org } = useOrg();
+  const vendendo = sistemas.filter((x) => x.situacao === "vendendo");
   const ativos = useMemo(() => clientes.filter((c) => c.ativo).sort((a, b) => nomeCliente(a).localeCompare(nomeCliente(b))), [clientes]);
   const [passo, setPasso] = useState(editar ? 1 : clienteInicial ? 1 : 0);
   const [f, setF] = useState({
     cliente: editar?.cliente_id ?? clienteInicial ?? "",
+    sistema: editar?.sistema ?? (vendendo.find((x) => x.slug === "ledgra") ?? vendendo[0])?.slug ?? "ledgra",
+    temLimite: editar ? editar.usuarios_incluidos != null : true,
+    usuarios: String(editar?.usuarios_incluidos ?? 5),
+    adicional: editar ? valorParaCampo(editar.valor_usuario_adicional) : "",
+    excedente: (editar?.excedente ?? "cobrar") as Excedente,
+    recorrente: editar?.recorrente_id ?? "",
     busca: "",
     modo: (editar
       ? editar.modalidade === "full"
@@ -86,12 +101,35 @@ export function AssistenteContrato({
   const [salvando, setSalvando] = useState(false);
   const mudar = (p: Partial<typeof f>) => setF((x) => ({ ...x, ...p }));
 
-  const ativosProd = produtos.filter((p) => p.ativo || (editar?.produtos.includes(p.id) ?? false));
-  const planosVisiveis = planos.filter((p) => p.ativo || p.id === editar?.plano_id);
+  const sistemaSel = sistemas.find((x) => x.slug === f.sistema);
+  const nomeSistema = sistemaSel?.nome ?? f.sistema;
+  const doSistema = (p: Produto) => p.sistema === f.sistema;
+  const ativosProd = produtos.filter((p) => doSistema(p) && (p.ativo || (editar?.produtos.includes(p.id) ?? false)));
+  // plano do sistema = todos os módulos do plano são deste sistema
+  const planoDoSistema = (pl: Plano) => pl.produtos.length > 0 && pl.produtos.every((id) => produtos.find((p) => p.id === id)?.sistema === f.sistema);
+  const planosVisiveis = planos.filter((p) => planoDoSistema(p) && (p.ativo || p.id === editar?.plano_id));
   const plano = planos.find((p) => p.id === f.plano);
-  // Ledgra full: todos os módulos ativos do ERP Ledgra (o banco confere a lista na hora de salvar)
-  const doLedgra = produtos.filter((p) => p.sistema === "ledgra" && p.ativo);
-  const escolhidos = f.modo === "plano" ? (plano?.produtos ?? []) : f.modo === "full" ? doLedgra.map((p) => p.id) : f.avulsos;
+  // full: todos os módulos ativos do sistema (o banco confere a lista na hora de salvar)
+  const todosDoSistema = produtos.filter((p) => doSistema(p) && p.ativo);
+  const escolhidos = f.modo === "plano" ? (plano?.produtos ?? []) : f.modo === "full" ? todosDoSistema.map((p) => p.id) : f.avulsos;
+  const usuarios = Number(f.usuarios);
+  const adicional = f.adicional.trim() ? numeroBr(f.adicional) : 0;
+  // contratos a receber da Gestão (só com a permissão de valores; o banco confere de novo)
+  const recorrentes = useConsulta(
+    useCallback(async () => {
+      if (!valores) return [] as { id: string; descricao: string; valor: number }[];
+      const { data } = await supabase()
+        .from("fin_recorrentes")
+        .select("id,descricao,valor")
+        .eq("org_id", org.id)
+        .eq("tipo", "receber")
+        .eq("situacao", "ativo")
+        .order("descricao");
+      return ((data ?? []) as { id: string; descricao: string; valor: number }[]).filter(
+        (r) => r.id === editar?.recorrente_id || !contratos.some((k) => k.recorrente_id === r.id && k.situacao === "ativo"),
+      );
+    }, [valores, org.id, editar?.recorrente_id, contratos]),
+  );
   const tabela =
     f.modo === "plano" ? (plano?.preco ?? 0) : produtos.filter((p) => escolhidos.includes(p.id)).reduce((s, p) => s + p.preco, 0);
   const valor = f.valorMexido ? numeroBr(f.valor) : tabela;
@@ -101,6 +139,8 @@ export function AssistenteContrato({
   const jaTem = new Set(
     contratos.filter((k) => k.cliente_id === f.cliente && k.situacao === "ativo" && k.id !== editar?.id).flatMap((k) => k.produtos),
   );
+  // o cliente já tem licença ativa deste sistema (uma por cliente e sistema)
+  const jaTemSistema = !editar && contratos.some((k) => k.cliente_id === f.cliente && k.situacao === "ativo" && k.sistema === f.sistema);
   const repetidos = escolhidos.filter((id) => jaTem.has(id));
   const primeiroMes = f.inicio ? valorDoMes(valor, f.inicio, f.temFim ? f.fim || null : null, f.proporcional, f.inicio) : 0;
   const clienteSel = clientes.find((c) => c.id === f.cliente);
@@ -108,11 +148,13 @@ export function AssistenteContrato({
   function validar(p: number): string {
     if (p === 0 && !f.cliente) return "Escolha o cliente.";
     if (p === 1) {
+      if (!sistemaSel) return "Escolha o sistema.";
+      if (jaTemSistema) return `O cliente já tem licença ativa do ${nomeSistema}. Edite aquela licença ou encerre antes.`;
       if (!escolhidos.length)
         return f.modo === "plano"
           ? "Escolha o plano."
           : f.modo === "full"
-            ? "Não há módulo ativo do Ledgra."
+            ? `Não há módulo ativo do ${nomeSistema}.`
             : "Marque ao menos um módulo.";
       if (repetidos.length)
         return `O cliente já tem contrato ativo com ${repetidos.map(nomeProd).join(", ")}. Edite aquele contrato ou encerre antes.`;
@@ -122,6 +164,8 @@ export function AssistenteContrato({
       if (!(dia >= 1 && dia <= 31)) return "Dia de vencimento: de 1 a 31.";
       if (!f.inicio) return "Informe a data de início.";
       if (f.temFim && (!f.fim || f.fim < f.inicio)) return "A data de fim precisa ser depois do início.";
+      if (f.temLimite && !(Number.isInteger(usuarios) && usuarios >= 1)) return "Usuários incluídos: 1 ou mais.";
+      if (valores && f.temLimite && (Number.isNaN(adicional) || adicional < 0)) return "Valor por usuário a mais: zero ou mais.";
     }
     return "";
   }
@@ -155,6 +199,11 @@ export function AssistenteContrato({
         cliente: f.cliente,
         plano: f.modo === "plano" ? f.plano : null,
         modalidade: f.modo === "full" ? "full" : undefined,
+        sistema: f.sistema,
+        usuarios_incluidos: f.temLimite ? usuarios : null,
+        valor_usuario_adicional: valores && f.temLimite ? Math.round(adicional * 100) / 100 : 0,
+        excedente: f.excedente,
+        ...(valores ? { recorrente: f.recorrente || null } : {}),
         produtos: escolhidos,
         valor_mensal: valores ? Math.round(valor * 100) / 100 : 0,
         dia_vencimento: dia,
@@ -166,7 +215,11 @@ export function AssistenteContrato({
         observacao: f.obs.trim() || null,
       });
       aoSalvar(
-        editar ? "Contrato atualizado." : "Contrato cadastrado. A mensalidade deste mês já foi gerada, se o contrato já vale.",
+        editar
+          ? "Licença atualizada."
+          : f.recorrente
+            ? "Licença cadastrada. A cobrança sai na fatura do contrato a receber escolhido."
+            : "Licença cadastrada. A mensalidade deste mês já foi gerada, se a licença já vale.",
         editar ? undefined : id,
       );
     } catch (e) {
@@ -190,7 +243,7 @@ export function AssistenteContrato({
 
   return (
     <Modal
-      titulo={editar ? "Editar contrato de licença" : "Novo contrato de licença"}
+      titulo={editar ? `Editar licença do ${nomeSistema}` : "Nova licença"}
       descricao={clienteSel ? nomeCliente(clienteSel) : "Siga os passos; dá para voltar e mudar antes de salvar."}
       aoFechar={aoFechar}
       largura="2xl"
@@ -257,6 +310,38 @@ export function AssistenteContrato({
 
       {passo === 1 && (
         <div className="space-y-3">
+          <div>
+            <p className="mb-1 text-sm font-medium">Sistema</p>
+            {editar ? (
+              <p className="text-sm">
+                <b>{nomeSistema}</b> <span className="text-neutral-500">(a licença não muda de sistema)</span>
+              </p>
+            ) : (
+              <div className="grid gap-2 sm:grid-cols-3" role="radiogroup" aria-label="Sistema">
+                {vendendo.map((x) => (
+                  <button
+                    key={x.slug}
+                    type="button"
+                    role="radio"
+                    aria-checked={f.sistema === x.slug}
+                    className={`cartao flex items-start gap-2 p-3 text-left text-sm ${f.sistema === x.slug ? "ring-2 ring-[var(--marca)]" : ""}`}
+                    onClick={() => mudar({ sistema: x.slug, plano: "", avulsos: [] })}
+                  >
+                    <Icone nome={f.sistema === x.slug ? "check" : "caixa"} className="mt-0.5 h-4 w-4 shrink-0 text-[var(--marca)]" />
+                    <span>
+                      <b>{x.nome}</b>
+                      <span className="block text-xs text-neutral-600">{x.descricao}</span>
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+            {jaTemSistema && (
+              <p className="mt-2 rounded-md bg-red-50 p-2 text-sm text-red-800">
+                O cliente já tem licença ativa do {nomeSistema}. Edite aquela licença ou encerre antes.
+              </p>
+            )}
+          </div>
           <div className="flex gap-2" role="radiogroup" aria-label="Forma de contratação">
             {(["plano", "avulso", "full"] as const).map((m) => (
               <button
@@ -267,18 +352,18 @@ export function AssistenteContrato({
                 className={`btn flex-1 ${f.modo === m ? "!border-[var(--marca)] !bg-[var(--marca)] !text-white" : ""}`}
                 onClick={() => mudar({ modo: m })}
               >
-                {m === "plano" ? "Um plano (pacote)" : m === "avulso" ? "Módulos avulsos" : "Ledgra full"}
+                {m === "plano" ? "Um plano (pacote)" : m === "avulso" ? "Módulos avulsos" : `${nomeSistema} full`}
               </button>
             ))}
           </div>
           {f.modo === "full" ? (
             <div className="rounded-md border border-[var(--borda)] p-3 text-sm">
               <p>
-                <b>Todos os módulos do ERP Ledgra</b>, inclusive os que forem criados depois.
+                <b>Todos os módulos do {nomeSistema}</b>, inclusive os que forem criados depois.
               </p>
-              <p className="mt-1 text-neutral-700">{doLedgra.map((p) => p.nome).join(", ") || "Nenhum módulo do Ledgra ativo."}</p>
+              <p className="mt-1 text-neutral-700">{todosDoSistema.map((p) => p.nome).join(", ") || `Nenhum módulo do ${nomeSistema} ativo.`}</p>
               <p className="mt-2 text-xs text-neutral-600">
-                Depois de salvar, ligue a empresa no Ledgra: aba Licença › Buscar no HUB (ou gere a chave em Ações › Chave do Ledgra).
+                Depois de salvar, gere a chave em Ações › Chave e cole no {nomeSistema}.
               </p>
             </div>
           ) : f.modo === "plano" ? (
@@ -377,12 +462,75 @@ export function AssistenteContrato({
               Desconto de {descontoSobreTabela(tabela, valor).toLocaleString("pt-BR")}% sobre a tabela.
             </p>
           )}
+          <fieldset className="space-y-2 rounded-md border border-[var(--borda)] p-3">
+            <legend className="px-1 text-sm font-medium">Usuários</legend>
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" checked={!f.temLimite} onChange={(e) => mudar({ temLimite: !e.target.checked })} /> Sem limite de
+              usuários
+            </label>
+            {f.temLimite && (
+              <div className="grid gap-3 sm:grid-cols-2">
+                <label className="campo">
+                  <span>Usuários incluídos no valor</span>
+                  <input inputMode="numeric" value={f.usuarios} onChange={(e) => mudar({ usuarios: e.target.value.replace(/\D/g, "") })} />
+                </label>
+                {valores && (
+                  <label className="campo">
+                    <span>Valor por usuário a mais (R$/mês)</span>
+                    <input inputMode="decimal" value={f.adicional} onChange={(e) => mudar({ adicional: e.target.value })} placeholder="0,00" />
+                  </label>
+                )}
+                <div className="sm:col-span-2">
+                  <p className="text-sm">Quando passar do limite</p>
+                  <div className="mt-1 grid gap-2 sm:grid-cols-2" role="radiogroup" aria-label="Quando passar do limite">
+                    {(
+                      [
+                        ["cobrar", "Liberar e cobrar", "O usuário a mais entra na cobrança do mês seguinte."],
+                        ["bloquear", "Não deixar passar", `O ${nomeSistema} não cadastra pessoa além do limite.`],
+                      ] as const
+                    ).map(([id, titulo, dica]) => (
+                      <button
+                        key={id}
+                        type="button"
+                        role="radio"
+                        aria-checked={f.excedente === id}
+                        className={`cartao flex items-start gap-2 p-2 text-left text-sm ${f.excedente === id ? "ring-2 ring-[var(--marca)]" : ""}`}
+                        onClick={() => mudar({ excedente: id })}
+                      >
+                        <Icone nome={f.excedente === id ? "check" : "pessoas"} className="mt-0.5 h-4 w-4 shrink-0 text-[var(--marca)]" />
+                        <span>
+                          <b>{titulo}</b>
+                          <span className="block text-xs text-neutral-600">{dica}</span>
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </fieldset>
+          {valores && (
+            <label className="campo">
+              <span>Como cobrar</span>
+              <select value={f.recorrente} onChange={(e) => mudar({ recorrente: e.target.value })}>
+                <option value="">Mensalidade da licença (junto com o honorário)</option>
+                {(recorrentes.dados ?? []).map((r) => (
+                  <option key={r.id} value={r.id}>
+                    Fatura do contrato a receber: {r.descricao} ({brl(Number(r.valor))})
+                  </option>
+                ))}
+              </select>
+              <span className="text-xs text-neutral-600">
+                Com um contrato a receber da Gestão, a fatura dele leva a licença e o usuário a mais; a mensalidade da licença não é gerada.
+              </span>
+            </label>
+          )}
           {!valores && (
             <p className="rounded-md bg-[var(--fundo)] p-3 text-sm">
               O valor da licença é definido por quem tem a permissão de valores. Nova licença entra pelo preço de tabela.
             </p>
           )}
-          {valores && f.inicio && dia >= 1 && dia <= 31 && (
+          {valores && !f.recorrente && f.inicio && dia >= 1 && dia <= 31 && (
             <p className="rounded-md bg-[var(--fundo)] p-3 text-sm">
               Primeira mensalidade: <b>{brl(primeiroMes)}</b> ({mesExtenso(f.inicio)}), vencendo em{" "}
               <b>{fmtData(vencimentoDaCompetencia(f.inicio, dia))}</b>. Ela vai junto com o honorário do mês.
@@ -431,10 +579,28 @@ export function AssistenteContrato({
           <dl className="grid gap-x-4 gap-y-1 text-sm sm:grid-cols-[auto_1fr]">
             <dt className="text-neutral-500">Cliente</dt>
             <dd className="font-medium">{clienteSel ? nomeCliente(clienteSel) : "—"}</dd>
+            <dt className="text-neutral-500">Sistema</dt>
+            <dd>{nomeSistema}</dd>
+            <dt className="text-neutral-500">Usuários</dt>
+            <dd>
+              {f.temLimite
+                ? `${usuarios} incluído(s); ${f.excedente === "cobrar" ? `a mais é cobrado${valores ? ` (${brl(adicional)} cada)` : ""}` : "não deixa passar do limite"}`
+                : "Sem limite"}
+            </dd>
+            {valores && (
+              <>
+                <dt className="text-neutral-500">Cobrança</dt>
+                <dd>
+                  {f.recorrente
+                    ? `Fatura do contrato a receber: ${recorrentes.dados?.find((r) => r.id === f.recorrente)?.descricao ?? ""}`
+                    : "Mensalidade da licença"}
+                </dd>
+              </>
+            )}
             <dt className="text-neutral-500">Contratou</dt>
             <dd>
               {f.modo === "full"
-                ? `Ledgra full (${escolhidos.map(nomeProd).join(", ")})`
+                ? `${nomeSistema} full (${escolhidos.map(nomeProd).join(", ")})`
                 : f.modo === "plano" && plano
                   ? `Plano ${plano.nome} (${escolhidos.map(nomeProd).join(", ")})`
                   : escolhidos.map(nomeProd).join(", ")}

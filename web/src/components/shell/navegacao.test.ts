@@ -64,9 +64,13 @@ describe("filtrarLinks", () => {
 });
 
 describe("Licenças", () => {
-  it("Licenças Ledgra mostra só o cadastro (074): licenças e produtos; ações e valores exigem operar/gerir", () => {
+  it("Sistemas mostra só o cadastro a quem vê (074/088): licenças e produtos; receita e modelo exigem gerir", () => {
     const abas = filtrarLinks("licencas", { pode: (_app, minimo = "ver") => minimo === "ver", podeEditarCadastros: false });
     expect(abas.map((l) => l.href)).toEqual(["/licencas/contratos", "/licencas/produtos"]);
+  });
+  it("a Receita por sistema fica em Sistemas para quem gere (088)", () => {
+    const abas = filtrarLinks("licencas", { pode: () => true, podeEditarCadastros: false });
+    expect(abas.map((l) => l.href)).toContain("/licencas/receita");
   });
   it("o Modelo do contrato de licença (085) aparece só para quem tem a permissão de valores (gerir)", () => {
     const abas = filtrarLinks("licencas", { pode: () => true, podeEditarCadastros: false });

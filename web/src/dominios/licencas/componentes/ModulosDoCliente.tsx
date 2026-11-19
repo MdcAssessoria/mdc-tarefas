@@ -28,7 +28,7 @@ export function ModulosDoCliente({ cliente }: { cliente: string }) {
         lerProdutos(org.id),
         supabase().from("lic_bloqueios").select("id").eq("cliente_id", cliente).is("desbloqueado_em", null),
       ]);
-      // sem valores aqui (074): o valor do contrato só aparece em Licenças Ledgra para quem tem a permissão de valores
+      // sem valores aqui (074): o valor do contrato só aparece em Sistemas › Licenças para quem tem a permissão de valores
       const ks = (exigir(contratos) ?? []) as (Pick<
         Contrato,
         "id" | "cliente_id" | "plano_id" | "modalidade" | "inicio" | "fim" | "situacao"
