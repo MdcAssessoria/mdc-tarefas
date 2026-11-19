@@ -219,7 +219,8 @@ npx supabase functions deploy convite --project-ref bulqqdgfrrpqquqvjjfa --impor
   (e, depois, do EXato) para o HUB, no lugar da chave de serviço do HUB guardada na Vercel deles. **Sem checagem de
   login** (`verify_jwt = false`): o servidor do sistema manda `x-hub-sistema` e `x-hub-integracao` (código gerado pelo
   banco no Vault, `integracao_token_<sistema>`). Ações: `vincular_cnpj`, `buscar_clientes` e `raiox_conferir`; cada
-  chamada fica em `app.integracao_chamadas`. Sem segredo novo no painel do HUB. Ordem da troca:
+  chamada fica em `app.integracao_chamadas`. Sem segredo novo no painel do HUB. A busca de clientes aceita texto ou
+  parte do CNPJ a partir de 3 caracteres e, só com números de 1 ou 2 dígitos, o código do Domínio exato (093). Ordem da troca:
   1. testes (`bash supabase/testes/rodar.sh`, blocos 162 e 163) → aplicar a 092 → regenerar `database.types.ts` e rodar
      os Advisors;
   2. publicar a função: `npx supabase functions deploy hub-integracao --project-ref bulqqdgfrrpqquqvjjfa --no-verify-jwt --import-map supabase/functions/hub-integracao/deno.json`;
