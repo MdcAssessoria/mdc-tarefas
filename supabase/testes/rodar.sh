@@ -248,3 +248,6 @@ $P -f "$R/testes/167_modulos_096.sql" 2>&1 | grep -v "^SET$"
 $P -v ON_ERROR_STOP=1 -f "$R/migrations/098_exato_pagamento_planilha.sql" 2>&1 | grep -v NOTICE || true
 $P -f "$R/testes/169_pagamento_planilha_098.sql" 2>&1 | grep -v "^SET$"
 # 099: Omie/BI sem gravação direta — teste roda na produção em begin…rollback: testes/170_omie_bi_099_producao.sql
+# 102: Hub-Team à venda (módulos hub-team-* e sistema vendendo)
+$P -v ON_ERROR_STOP=1 -f "$R/migrations/102_hub_team_a_venda.sql" 2>&1 | grep -v NOTICE || true
+$P -f "$R/testes/171_hub_team_102.sql" 2>&1 | grep -v "^SET$"

@@ -267,7 +267,7 @@ define qual sistema ele usa e emite a chave; a cobrança vem para a gestão MDC.
 + valor por usuário a mais (a mesma estrutura aceita só fixo ou só por usuário).
 
 - **`lic_sistemas`** (slug, nome, prefixo da chave de 3 letras, situação `vendendo` / `em_breve` / `desligado`). Semeados:
-  HUB-MDC, Ledgra ERP, EXato (vendendo), Hub-Team e Acesso remoto (em breve). Grava só `lic_sistema_salvar` (gerir).
+  HUB-MDC, Ledgra ERP, EXato e Hub-Team (vendendo; os módulos `hub-team-*` vêm da 102) e Acesso remoto (em breve). Grava só `lic_sistema_salvar` (gerir).
   Tela: Sistemas › Sistemas e produtos › aba Sistemas.
 - **Módulos por sistema**: `lic_produtos.sistema` aponta para `lic_sistemas`; o código do módulo começa com o do sistema
   (`exato-rs`) e na chave vai sem o prefixo (`rs`). EXato semeado com 12 módulos (diaristas, operacao, transporte,
