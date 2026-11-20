@@ -16,10 +16,10 @@ do $$ begin perform app.bi_fatos('dre', array['128cce4c-cb86-414c-8096-c786c320c
   insert into _r values ('t3_fatos', 'CHAMOU'); exception when others then insert into _r values ('t3_fatos', sqlerrm); end $$;
 -- T4 relatórios do grupo em 2026 — DRE fecha: resultado líquido = soma das analíticas
 insert into _r select 't4_resultado_liquido', sum(valor)::text from public.bi_relatorio('dre',
-  array['128cce4c-cb86-414c-8096-c786c320cff0','2bfba338-901a-46ce-8b0d-fdc5163169da','5db45b1b-bc87-44c1-bf5a-5a115f6dec34']::uuid[],
+  array['128cce4c-cb86-414c-8096-c786c320cff0','2bfba338-901a-46ce-8b0d-fdc5163169da','5db45b1b-bc87-44c1-bf5a-5a115f6dec30']::uuid[],
   '2026-01-01', '2026-11-30', true) where codigo = 'resultado_liquido';
 insert into _r select 't4_nao_classificado_dre', sum(valor)::text from public.bi_relatorio('dre',
-  array['128cce4c-cb86-414c-8096-c786c320cff0','2bfba338-901a-46ce-8b0d-fdc5163169da','5db45b1b-bc87-44c1-bf5a-5a115f6dec34']::uuid[],
+  array['128cce4c-cb86-414c-8096-c786c320cff0','2bfba338-901a-46ce-8b0d-fdc5163169da','5db45b1b-bc87-44c1-bf5a-5a115f6dec30']::uuid[],
   '2026-01-01', '2026-11-30', true) where codigo = 'nao_classificado';
 insert into _r select 't4_contas_fecha', (abs(
   (select sum(valor) from public.bi_relatorio_contas('dre', array['128cce4c-cb86-414c-8096-c786c320cff0']::uuid[], '2026-01-01', '2026-11-30', true))
