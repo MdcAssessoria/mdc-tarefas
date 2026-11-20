@@ -79,6 +79,11 @@ Componentes em `web/src/dominios/bi/componentes/`.
 - As migrações do BI e do Omie, aplicadas direto em produção, estão no repositório desde 20/11/2026 (`090_bi_gestao_omie`
   a `090e_omie_restaura_agendamento`; ALT-02, ver `docs/04` §4.5.1). Continua existindo um segundo modelo do Omie
   (`omie_contas`/`gestao_*`, na `090d`) sem uso (NOV-02). A tela usa o modelo `bi_*`, o único com dados (Grupo Clara).
+- **Mapa de categorias do Grupo Clara é PROVISÓRIO (20/11/2026):** 254 regras por empresa carregadas a partir da
+  sugestão da planilha `Classificacao_categorias_Omie_Grupo_Clara.xlsx` (código do plano gerencial do Omie), autorizadas
+  pelo Edvaldo como ponto de partida. Ficaram de fora, em "Não classificado", 5 categorias para ele decidir: "Contas a
+  classificar" (Clara Company 1.04.91 e 2.13.99) e "Cartão de crédito a pagar" (2.04.84 nas três). A classificação final
+  é julgamento do Edvaldo; ao receber a planilha revisada, substituir as regras (por `cliente_id` + `prefixo`).
 - A MDC ainda não tem tela para manter grupos e o mapa de categorias; hoje isso é feito pela equipe técnica.
   Desde a 099 não há gravação direta nessas tabelas pelo site (NOV-01): a tela futura deve gravar por função
   `security definer` com `hub_pode(org, 'bi_gestao', 'gerir')` e recusar organização pessoal.
