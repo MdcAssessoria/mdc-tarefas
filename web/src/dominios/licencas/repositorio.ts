@@ -120,3 +120,7 @@ export const gerarChave = (cliente: string, sistema: string) => rpc<string>("lic
 
 /** Revoga a chave: na próxima conferência o sistema fecha os módulos pagos daquela empresa. */
 export const revogarChave = (id: string, motivo: string) => rpc<null>("lic_ledgra_chave_revogar", { p_id: id, p_motivo: motivo });
+
+/** 095: empresas que usam o sistema da licença além do cliente dela (troca a lista inteira). Devolve quantas ficaram. */
+export const definirEmpresasDaLicenca = (contrato: string, clientes: string[]) =>
+  rpc<number>("lic_contrato_empresas_definir", { p_contrato: contrato, p_clientes: clientes });

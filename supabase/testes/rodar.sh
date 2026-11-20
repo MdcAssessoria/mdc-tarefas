@@ -236,3 +236,7 @@ for f in testes/164_base_093.sql migrations/093_busca_codigo_curto.sql; do
   $P -v ON_ERROR_STOP=1 -f "$R/$f" 2>&1 | grep -v NOTICE || true
 done
 $P -f "$R/testes/165_busca_093.sql" 2>&1 | grep -v "^SET$"
+
+# 095: empresas que usam o sistema em cada licença (EXato traz do HUB só estas)
+$P -v ON_ERROR_STOP=1 -f "$R/migrations/095_empresas_da_licenca.sql" 2>&1 | grep -v NOTICE || true
+$P -f "$R/testes/166_empresas_095.sql" 2>&1 | grep -v "^SET$"

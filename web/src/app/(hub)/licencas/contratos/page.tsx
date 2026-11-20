@@ -20,6 +20,7 @@ import { Cabecalho, EtiquetaBloqueado, useDadosLicencas } from "@/dominios/licen
 import { AssistenteContrato, MESES } from "@/dominios/licencas/componentes/AssistenteContrato";
 import { EncerrarContrato, HistoricoContrato, ReajustarContrato } from "@/dominios/licencas/componentes/JanelasContrato";
 import { JanelaChave } from "@/dominios/licencas/componentes/JanelaChave";
+import { JanelaEmpresasLicenca } from "@/dominios/licencas/componentes/JanelaEmpresasLicenca";
 import { contratoVigente, reajustePendente, textoUsuarios, usuariosAdicionais } from "@/dominios/licencas/regras";
 import { INDICES } from "@/dominios/licencas/tipos";
 import type { Contrato } from "@/dominios/licencas/tipos";
@@ -46,6 +47,7 @@ type Janela =
   | { tipo: "encerrar"; k: Contrato }
   | { tipo: "historico"; k: Contrato }
   | { tipo: "chave"; k: Contrato }
+  | { tipo: "empresas"; k: Contrato }
   | { tipo: "documento"; k: Contrato };
 
 export default function PaginaContratos() {
@@ -405,6 +407,12 @@ function Contratos() {
                                 >
                                   Chave do {nomeSistema(k.sistema)}
                                 </button>
+                                <button
+                                  className="block w-full px-3 py-1.5 text-left hover:bg-neutral-50"
+                                  onClick={(e) => menu(e, { tipo: "empresas", k })}
+                                >
+                                  Empresas no {nomeSistema(k.sistema)}
+                                </button>
                               </>
                             )}
                             {podeGerir && (k.situacao === "ativo" || documentos.dados?.get(k.id)) && (
@@ -486,6 +494,15 @@ function Contratos() {
           cliente={nomeDoCliente(janela.k.cliente_id)}
           nomeSistema={nomeSistema(janela.k.sistema)}
           aoFechar={() => fechar()}
+        />
+      )}
+      {janela?.tipo === "empresas" && (
+        <JanelaEmpresasLicenca
+          contrato={janela.k}
+          cliente={nomeDoCliente(janela.k.cliente_id)}
+          nomeSistema={nomeSistema(janela.k.sistema)}
+          aoFechar={() => fechar()}
+          aoSalvar={fechar}
         />
       )}
       {janela?.tipo === "documento" && d && (

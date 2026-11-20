@@ -5210,6 +5210,52 @@ export type Database = {
           },
         ];
       };
+      lic_contrato_empresas: {
+        Row: {
+          cliente_id: string;
+          contrato_id: string;
+          criado_em: string;
+          org_id: string;
+          por: string | null;
+        };
+        Insert: {
+          cliente_id: string;
+          contrato_id: string;
+          criado_em?: string;
+          org_id: string;
+          por?: string | null;
+        };
+        Update: {
+          cliente_id?: string;
+          contrato_id?: string;
+          criado_em?: string;
+          org_id?: string;
+          por?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "lic_contrato_empresas_cliente_id_fkey";
+            columns: ["cliente_id"];
+            isOneToOne: false;
+            referencedRelation: "clientes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "lic_contrato_empresas_contrato_id_fkey";
+            columns: ["contrato_id"];
+            isOneToOne: false;
+            referencedRelation: "lic_contratos";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "lic_contrato_empresas_org_id_fkey";
+            columns: ["org_id"];
+            isOneToOne: false;
+            referencedRelation: "organizacoes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       lic_contrato_produtos: {
         Row: {
           contrato_id: string;
@@ -9349,6 +9395,10 @@ export type Database = {
         Args: { p_cliente: string; p_sistema: string };
         Returns: string;
       };
+      lic_contrato_empresas_definir: {
+        Args: { p_clientes: string[]; p_contrato: string };
+        Returns: number;
+      };
       lic_contrato_modelo_salvar: {
         Args: { p_org: string; p_texto: string };
         Returns: number;
@@ -9393,6 +9443,10 @@ export type Database = {
         Returns: Json;
       };
       lic_documento_link: { Args: { p_doc: string }; Returns: string };
+      lic_empresas: {
+        Args: { p_chave: string; p_cnpj: string; p_sistema: string };
+        Returns: Json;
+      };
       lic_encerrar_contrato: {
         Args: { p_contrato: string; p_data: string; p_motivo: string };
         Returns: number;

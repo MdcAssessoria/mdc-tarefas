@@ -310,3 +310,19 @@ define qual sistema ele usa e emite a chave; a cobrança vem para a gestão MDC.
   exemplo de mensalidade). A aba Planos saiu de Sistemas e produtos. Regras puras em `pacotes.ts` (com teste).
 - Testes: `supabase/testes/161_pacotes_091.sql`.
 
+
+## Empresas que usam o sistema (migração 095, 19/11/2026)
+
+A licença é de um cliente (o CNPJ que confere a chave), mas um sistema como o EXato atende o grupo inteiro (EXRH, TEAM
+Leasing, ACB…). Em **Sistemas › Licenças › Ações › Empresas no &lt;sistema&gt;** a MDC marca, entre os clientes ativos, as
+empresas do grupo que usam aquele sistema (`JanelaEmpresasLicenca`, atalho "Marcar as filiais do mesmo CNPJ").
+
+- **`lic_contrato_empresas`** (contrato, cliente, org): só leitura pela API (`licencas › ver`); grava só
+  **`lic_contrato_empresas_definir(contrato, clientes[])`** (`licencas › operar`, licença ativa, clientes ativos da mesma
+  organização; troca a lista inteira; o cliente da licença não entra porque já vale sempre).
+- **`lic_empresas(sistema, chave, cnpj)`** (anon, como `lic_validar`): o servidor do sistema manda a chave da licença e o
+  CNPJ; chave e CNPJ conferidos, cliente não bloqueado e licença ativa → `{situacao: 'ativa', empresas: [...]}` com o
+  cliente da licença primeiro e as marcadas, só razão, fantasia, CNPJ (só números), regime, cidade, UF e código do
+  Domínio. Sem chave válida: `invalida`, `cnpj_diferente`, `bloqueada` ou `sem_contrato`, sem empresas.
+- Uso: EXato › Administração › Empresas e marcas › Nova empresa › **Trazer do HUB** (preenche o CNPJ da matriz e consulta
+  a Receita). Testes: `supabase/testes/166_empresas_095.sql`.
