@@ -34,7 +34,8 @@ export function JanelaSistema({
   async function salvar(e: React.FormEvent) {
     e.preventDefault();
     if (f.nome.trim().length < 2) return setErro("Informe o nome do sistema.");
-    if (!sistema && !/^[a-z][a-z0-9-]{1,29}$/.test(f.slug)) return setErro("Código: letras minúsculas sem acento, números ou hífen (ex.: exato).");
+    if (!sistema && !/^[a-z][a-z0-9-]{1,29}$/.test(f.slug))
+      return setErro("Código: letras minúsculas sem acento, números ou hífen (ex.: exato).");
     if (!/^[A-Z]{3}$/.test(f.prefixo)) return setErro("Prefixo da chave: 3 letras (ex.: EXA).");
     setSalvando(true);
     setErro("");
@@ -93,7 +94,12 @@ export function JanelaSistema({
           </label>
           <label className="campo">
             <span>Prefixo da chave</span>
-            <input value={f.prefixo} maxLength={3} onChange={(e) => mudar({ prefixo: e.target.value.toUpperCase().replace(/[^A-Z]/g, "") })} required />
+            <input
+              value={f.prefixo}
+              maxLength={3}
+              onChange={(e) => mudar({ prefixo: e.target.value.toUpperCase().replace(/[^A-Z]/g, "") })}
+              required
+            />
           </label>
         </div>
         <label className="campo">

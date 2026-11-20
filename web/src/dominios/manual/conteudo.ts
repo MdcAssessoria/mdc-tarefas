@@ -4,7 +4,7 @@
 // (components/shell/navegacao.ts): com ele a tela do manual ganha o botão "Ir para a tela".
 // Mudou uma tela ou regra? Atualize o trecho dela aqui no mesmo commit e acrescente uma linha em "Controle de versões".
 
-export const VERSAO_MANUAL = { numero: "2.0", data: "20/11/2026" };
+export const VERSAO_MANUAL = { numero: "2.1", data: "20/11/2026" };
 
 export const MANUAL_MD = `
 ## Como usar este manual
@@ -295,7 +295,7 @@ Os sistemas que a MDC licencia aos clientes (Ledgra ERP, EXato e os próximos): 
 **Para que serve:** cadastrar e acompanhar a licença de cada cliente em cada sistema.
 
 **Como usar:**
-1. Clique em **Nova licença**, escolha o cliente e o **sistema** (só aparecem os que estão à venda).
+1. Clique em **Nova licença**, escolha o cliente e o **sistema** (só aparecem os que estão à venda). A empresa ainda não está na lista? Toque em **Cadastrar empresa nova**, digite o CNPJ, toque em **Buscar dados** e em **Cadastrar e escolher**: ela entra nos clientes com o grupo "Só licença" e já fica escolhida (só para gestor e administrador).
 2. Escolha um **pacote**, módulos avulsos ou o sistema **full** (todos os módulos, inclusive os que forem criados depois). Ao escolher o pacote, os usuários incluídos, o valor do usuário a mais e o que fazer ao passar do limite já vêm preenchidos; dá para mudar só nesta licença.
 3. Em **Valor e usuários**, informe o valor mensal, quantos **usuários** estão incluídos e o valor por usuário a mais. Em **Quando passar do limite**, escolha **Liberar e cobrar** (o usuário a mais entra na cobrança do mês seguinte) ou **Não deixar passar** (o sistema não cadastra pessoa além do limite).
 4. Em **Como cobrar**, deixe **Mensalidade da licença** (vai junto com o honorário) ou escolha um **contrato a receber** de Contratos: aí a fatura dele leva a licença e o usuário a mais.
@@ -374,4 +374,5 @@ Os sistemas que a MDC licencia aos clientes (Ledgra ERP, EXato e os próximos): 
 | 1.8 | 20/11/2026 | Novo módulo do EXato para vender na licença: **Pagamento de diárias por planilha** (precisa do Financeiro). |
 | 2.0 | 20/11/2026 | Segurança: a senha nova precisa ser diferente da provisória; licença com **usuários a conferir** quando o sistema informa muito mais pessoas do que o contratado; o link de assinatura mostra o CPF mascarado depois de assinado. |
 | 1.9 | 20/11/2026 | **BI de Gestão**: gráficos novos, legíveis também no celular: resultado acumulado no gráfico resultado × caixa, cascata da DRE da receita ao resultado, participação de cada empresa na receita e no resultado do grupo (aba Empresas) e balão com os valores do mês. |
+| 2.1 | 20/11/2026 | **Licenças → Nova licença**: botão **Cadastrar empresa nova** no passo 1, para cadastrar pelo CNPJ uma empresa que ainda não é cliente (grupo "Só licença") sem sair da janela. |
 `;
