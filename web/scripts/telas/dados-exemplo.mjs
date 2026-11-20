@@ -3279,10 +3279,149 @@ RPCS.fis_nbs_do_servico = ({ p_servico }) => {
     ["fluxo_operacional", "Caixa das operações", 70, true, null, [40000, 62000]],
     ["variacao_caixa", "Variação do caixa no período", 110, true, null, [40000, 62000]],
   ];
-  RPCS.bi_relatorio = ({ p_relatorio, p_inicio }) => {
-    const ano = String(p_inicio ?? "2026-01-01").slice(0, 4);
-    return (p_relatorio === "dfc" ? DFC : DRE).flatMap(([codigo, nome, ordem, subtotal, natureza, valores]) =>
-      valores.map((valor, i) => ({ codigo, nome, ordem, subtotal, natureza, competencia: `${ano}-0${i + 1}-01`, valor })),
+  const montar = (base, ano, fator = 1) =>
+    base.flatMap(([codigo, nome, ordem, subtotal, natureza, valores]) =>
+      valores.map((valor, i) => ({
+        codigo,
+        nome,
+        ordem,
+        subtotal,
+        natureza,
+        competencia: `${ano}-0${i + 1}-01`,
+        valor: Math.round(valor * fator),
+      })),
     );
+  // relatório: o ano passado sai 10% menor, para a comparação ter diferença; uma empresa sozinha sai com 60%
+  RPCS.bi_relatorio = ({ p_relatorio, p_inicio, p_clientes }) => {
+    const ano = String(p_inicio ?? "2026-01-01").slice(0, 4);
+    const fator =
+      (ano < "2026" ? 0.9 : 1) * (Array.isArray(p_clientes) && p_clientes.length === 1 ? (p_clientes[0] === C1 ? 0.6 : 0.45) : 1);
+    return montar(p_relatorio === "dfc" ? DFC : DRE, ano, fator);
   };
+  RPCS.bi_orcado = ({ p_relatorio, p_inicio }) => montar(p_relatorio === "dfc" ? DFC : DRE, String(p_inicio ?? "2026").slice(0, 4), 1.05);
+  // v2 (097): cartões das empresas, pedidos de acesso, registro, indicadores e orçamento
+  RPCS.bi_empresas = () => [
+    {
+      grupo_id: GRUPO,
+      grupo: "Grupo Greencore",
+      eliminar_intragrupo: true,
+      cliente_id: C1,
+      nome: "Greencore",
+      cnpj: "12345678000195",
+      codigo_dominio: "41",
+      ultima_sync: "2026-11-20T06:20:00Z",
+      liberado: true,
+      pode_aprovar: true,
+      pedido_situacao: null,
+      valido_ate: null,
+    },
+    {
+      grupo_id: GRUPO,
+      grupo: "Grupo Greencore",
+      eliminar_intragrupo: true,
+      cliente_id: C2,
+      nome: "Nexus",
+      cnpj: "44537381000118",
+      codigo_dominio: "7",
+      ultima_sync: "2026-11-20T06:15:00Z",
+      liberado: true,
+      pode_aprovar: true,
+      pedido_situacao: null,
+      valido_ate: null,
+    },
+    {
+      grupo_id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb2",
+      grupo: "Grupo Liberato",
+      eliminar_intragrupo: true,
+      cliente_id: CM,
+      nome: "MDC Assessoria",
+      cnpj: "48140121000165",
+      codigo_dominio: "1",
+      ultima_sync: null,
+      liberado: false,
+      pode_aprovar: false,
+      pedido_situacao: "pedido",
+      valido_ate: null,
+    },
+  ];
+  RPCS.bi_acessos_listar = () => [
+    {
+      id: "acc00000-0000-4000-8000-000000000001",
+      cliente_id: C1,
+      empresa: "Greencore",
+      pessoa: "Carla Bueno",
+      eu: false,
+      situacao: "pedido",
+      motivo: "Fechamento de outubro",
+      pedido_em: "2026-11-20T08:00:00Z",
+      decidido_em: null,
+      resposta: null,
+      valido_ate: null,
+      posso_decidir: true,
+    },
+    {
+      id: "acc00000-0000-4000-8000-000000000002",
+      cliente_id: CM,
+      empresa: "MDC Assessoria",
+      pessoa: "Você",
+      eu: true,
+      situacao: "pedido",
+      motivo: "Análise do mês",
+      pedido_em: "2026-11-19T10:00:00Z",
+      decidido_em: null,
+      resposta: null,
+      valido_ate: null,
+      posso_decidir: false,
+    },
+  ];
+  RPCS.bi_registro_acessos = () => [
+    { em: "2026-11-20T07:10:00Z", pessoa: "EDVALDO", empresas: "Greencore, Nexus", consulta: "dre", de: "2026-01-01", ate: "2026-12-31" },
+  ];
+  RPCS.bi_indicadores = () => ({
+    corte: "2026-11-20",
+    pmr: 27.5,
+    pmp: 21,
+    receber: { aberto: 868864.58, vencido: 228949.28, a30: 13974.14, a60: 30000, a90: 6065.23, mais90: 178909.91 },
+    pagar: { aberto: 592003.61, vencido: 127424, a30: 49210.54, a60: 32872.04, a90: 16956.39, mais90: 28385.03 },
+    clientes_total: 3970000,
+    clientes: [
+      { doc: "61372058000150", nome: "A CARNEVALLI CIA LTDA", valor: 2116167.19 },
+      { doc: "70940994005251", nome: "PANDURATA ALIMENTOS LTDA", valor: 683436.17 },
+    ],
+    fornecedores_total: 2100000,
+    fornecedores: [
+      { doc: "04891850000188", nome: null, valor: 1031015.33 },
+      { doc: "28086343820", nome: null, valor: 94153.85 },
+    ],
+    liquidez: [],
+  });
+  TABELAS.bi_linhas = [...DRE, ...DFC]
+    .filter((x) => !x[3])
+    .map(([codigo, nome, ordem, , natureza]) => ({
+      relatorio: DFC.some((d) => d[0] === codigo) ? "dfc" : "dre",
+      codigo,
+      nome,
+      ordem,
+      natureza,
+      soma: null,
+      org_id: null,
+      ativo: true,
+    }));
+  TABELAS.bi_complementares = [
+    {
+      id: 1,
+      org_id: ORG,
+      cliente_id: C1,
+      competencia: "2026-02-01",
+      data_caixa: "2026-02-10",
+      linha_dre: "despesas_pessoal",
+      linha_dfc: null,
+      historico: "Provisão de férias de fevereiro",
+      valor: 3200,
+      criado_em: "2026-03-01T10:00:00Z",
+      cancelado_em: null,
+      motivo_cancelamento: null,
+    },
+  ];
+  TABELAS.bi_orcamento = [{ cliente_id: C1, relatorio: "dre", linha: "receita_bruta", competencia: "2026-01-01", valor: 125000 }];
 })();

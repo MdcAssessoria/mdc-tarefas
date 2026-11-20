@@ -4,7 +4,7 @@
 // (components/shell/navegacao.ts): com ele a tela do manual ganha o botão "Ir para a tela".
 // Mudou uma tela ou regra? Atualize o trecho dela aqui no mesmo commit e acrescente uma linha em "Controle de versões".
 
-export const VERSAO_MANUAL = { numero: "1.6", data: "20/11/2026" };
+export const VERSAO_MANUAL = { numero: "1.7", data: "20/11/2026" };
 
 export const MANUAL_MD = `
 ## Como usar este manual
@@ -188,21 +188,43 @@ Balancetes do Domínio transformados em Balanço, DRE, DFC, índices, fragilidad
 
 ## BI de Gestão
 
-DRE e fluxo de caixa (DFC) gerenciais de um grupo de empresas, mês a mês, a partir do sistema do cliente (Omie) e dos lançamentos complementares da MDC.
+DRE e fluxo de caixa (DFC) gerenciais de um grupo de empresas, mês a mês, a partir do sistema do cliente (Omie) e dos lançamentos complementares da MDC, com comparações, indicadores e orçamento.
 
-**Quem usa:** equipe com a ferramenta BI de Gestão.
+**Quem usa:** equipe com a ferramenta BI de Gestão. Os números de cada empresa só abrem com acesso liberado.
 
-### DRE e fluxo de caixa (BI de Gestão → DRE e fluxo de caixa)
+### Escolher a empresa e pedir acesso (BI de Gestão → DRE e fluxo de caixa)
 
-**Para que serve:** ver o resultado e o caixa do grupo no período escolhido, mês a mês, e mandar ao cliente em PDF ou Excel.
+**Para que serve:** abrir só a empresa que você vai analisar. A tela começa sem números, com um cartão por empresa.
 
-1. Escolha o **Período** (padrão: **Este ano**). O período pode ter até 3 anos.
-2. Em **Empresas**, toque para tirar ou pôr cada empresa do grupo (ao menos uma fica marcada).
-3. Com mais de uma empresa, **Tirar vendas e pagamentos entre as empresas do grupo** vem marcado: as operações de uma empresa do grupo com outra não entram no resultado.
-4. Toque em **DRE gerencial** (pela data do fato) ou **Fluxo de caixa (DFC)** (pela data do pagamento).
-5. Use **PDF** ou **Excel** para baixar o relatório com os meses e o total.
+1. Procure a empresa por nome, CNPJ ou código do Domínio.
+2. **Acesso liberado:** toque em **Abrir**. Para ver o grupo todo junto, toque em **Abrir o grupo**.
+3. Sem acesso, toque em **Pedir acesso** e escreva o motivo. O administrador ou o responsável pela empresa recebe um aviso.
+4. Quem aprova toca em **Aprovar** e escolhe por quantos dias (padrão 30) ou em **Recusar**. Ninguém aprova o próprio pedido.
+5. Em **Pedidos e acessos** você vê seus pedidos, pode **Desistir** de um pendente ou encerrar um acesso.
 
-**Atenção:** o aviso **Não classificado** mostra valores de categorias do Omie que ainda não têm conta no relatório. Peça à equipe MDC para classificar; até lá eles entram na linha "Não classificado". No celular aparece só o total do período; os meses aparecem na tela maior e nos arquivos.
+**Atenção:** o administrador vê em **Quem abriu os números** cada vez que alguém abriu o relatório.
+
+### Ver os números (BI de Gestão → DRE e fluxo de caixa)
+
+**Para que serve:** ver resultado, caixa e indicadores do período e mandar ao cliente em PDF ou Excel.
+
+1. Escolha o **Período** (padrão: **Este ano**) e as **Empresas** (ao menos uma).
+2. Com mais de uma empresa, **Tirar vendas e pagamentos entre as empresas do grupo** vem marcado.
+3. Use as abas: **Visão geral** (resumo e gráficos), **DRE**, **Fluxo de caixa** (com **% da receita**), **Comparar**, **Empresas** (uma coluna por empresa e o consolidado) e **Indicadores**.
+4. Em **Comparar**, escolha **Período anterior**, **Mesmo período do ano passado** ou **Orçamento** (realizado × orçado). Diferença verde é melhor para o resultado; vermelha, pior.
+5. **Indicadores** mostra prazos médios de recebimento e pagamento, ciclo financeiro, inadimplência, contas em aberto por atraso, maiores clientes e fornecedores e liquidez.
+6. Use **PDF** ou **Excel** para baixar.
+
+**Atenção:** o aviso **Não classificado** mostra valores de categorias do Omie que ainda não têm conta no relatório. A liquidez corrente, seca e geral vem do balancete do Domínio publicado em Demonstrativos; sem ele aparece só uma estimativa pelos títulos do Omie. Fornecedores aparecem pelo CNPJ/CPF.
+
+### Lançamentos e orçamento (BI de Gestão → aba Lançamentos)
+
+**Para que serve:** completar o que não está no Omie e gravar a meta mensal para comparar realizado × orçado.
+
+1. **Lançamentos complementares:** toque em **Novo lançamento**, escolha empresa, mês, linha da DRE e/ou do DFC, valor positivo e histórico, e grave. Para vários de uma vez, **Baixar modelo**, preencha e **Importar Excel**.
+2. Para desfazer um lançamento, toque em **Cancelar** e escreva o motivo.
+3. **Orçamento:** escolha empresa, ano e **DRE** ou **Fluxo de caixa**, digite a meta de cada mês (valor positivo; despesa e pagamento saem negativos no relatório) e toque em **Gravar**. Célula em branco = sem meta.
+4. Para o ano todo de uma vez, **Baixar planilha**, preencha e **Importar Excel**. A importação grava tudo ou nada.
 
 ## Atendimento
 
@@ -344,4 +366,5 @@ Os sistemas que a MDC licencia aos clientes (Ledgra ERP, EXato e os próximos): 
 | 1.4 | 19/11/2026 | **BI de Gestão**: DRE e fluxo de caixa do grupo de empresas, mês a mês, a partir do Omie, com escolha das empresas, opção de tirar as operações entre elas e PDF/Excel. |
 | 1.5 | 19/11/2026 | **Empresas no sistema** (Sistemas › Licenças › Ações): a MDC marca as empresas do grupo que usam o sistema com aquela licença; o EXato traz do HUB só essas na tela Nova empresa. |
 | 1.6 | 20/11/2026 | **Módulos por empresa** na licença (Empresas no sistema): sem escolha, todo o pacote; o EXato aplica ao receber as empresas. |
+| 1.7 | 20/11/2026 | **BI de Gestão**: abre em cartões das empresas sem números; acesso por pedido aprovado pelo administrador ou responsável (padrão 30 dias) e registro de quem abriu; novas abas Visão geral, Comparar (período anterior, ano passado e orçamento), Empresas, Indicadores (prazos, inadimplência, aberto por atraso, maiores clientes e fornecedores, liquidez) e Lançamentos (complementares e orçamento, com importação por Excel). |
 `;

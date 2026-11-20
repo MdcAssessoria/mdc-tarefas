@@ -547,7 +547,10 @@ const INTERACOES = {
     await p.keyboard.press("Escape");
     // sino: ativar avisos neste aparelho
     await p.getByRole("button", { name: /^Notificações/ }).click();
-    await p.getByText(/Ative para receber|bloqueados|não mostra avisos|instale o HUB|recebe os lembretes/).first().waitFor({ timeout: 3000 });
+    await p
+      .getByText(/Ative para receber|bloqueados|não mostra avisos|instale o HUB|recebe os lembretes/)
+      .first()
+      .waitFor({ timeout: 3000 });
     await p.waitForTimeout(300); // fim da animação do painel
     await foto("sino-avisos", { soTela: true });
   },
@@ -556,7 +559,10 @@ const INTERACOES = {
     await p.getByLabel("Pesquisar no manual").fill("mesma tarefa para vários clientes");
     await p.getByText(/lugares? encontrados? no manual/).waitFor({ timeout: 3000 });
     await foto("pesquisa", { soTela: true });
-    await p.getByRole("button", { name: /Tarefas › Criar a mesma tarefa/ }).first().click();
+    await p
+      .getByRole("button", { name: /Tarefas › Criar a mesma tarefa/ })
+      .first()
+      .click();
     await p.locator("#tarefas--criar-a-mesma-tarefa-para-varios-clientes-de-uma-vez").waitFor({ timeout: 3000 });
   },
   // Início: concluir uma tarefa da fila mostra "Desfazer" (UX-05)
@@ -1340,6 +1346,41 @@ const INTERACOES = {
   },
   [`/demonstrativos/${IDS_EXEMPLO["demonstrativos/[id]"]}`]: trocarPeriodo,
   "/portal": interacoesPortal,
+  // BI de Gestão v2 (097): abre nos cartões sem números; abre o grupo e passa por todas as abas, a comparação com o
+  // orçamento, a grade do orçamento e o novo lançamento complementar
+  "/bi-gestao": async (p, foto) => {
+    await p.getByRole("region", { name: "Pedidos para aprovar" }).getByText("Carla Bueno").waitFor({ timeout: 8000 });
+    await foto?.("cartoes");
+    await p.getByRole("button", { name: /Abrir o grupo/ }).click();
+    const abas = p.getByRole("tablist", { name: "Partes do BI" });
+    await p.getByText("Resultado (DRE) × geração de caixa").waitFor({ timeout: 8000 });
+    await foto?.("visao-geral");
+    for (const [aba, espera] of [
+      ["DRE", "DRE gerencial"],
+      ["Fluxo de caixa", "Fluxo de caixa (DFC)"],
+      ["Comparar", "Comparar com"],
+      ["Empresas", "Eliminações"],
+      ["Indicadores", "Prazo médio de recebimento"],
+    ]) {
+      await abas.getByRole("tab", { name: aba, exact: true }).click();
+      await p.getByText(espera).first().waitFor({ timeout: 8000 });
+      await foto?.(aba.toLowerCase().replace(/ /g, "-"));
+    }
+    await abas.getByRole("tab", { name: "Comparar" }).click();
+    await p.getByLabel("Comparar com").selectOption("orcado");
+    await p.getByText("realizado × orçado").waitFor({ timeout: 8000 });
+    await foto?.("orcado-realizado");
+    await abas.getByRole("tab", { name: "Lançamentos" }).click();
+    await p.getByText("Provisão de férias de fevereiro").waitFor({ timeout: 8000 });
+    await foto?.("lancamentos");
+    await p.getByRole("button", { name: "Novo lançamento" }).click();
+    await p.getByRole("dialog", { name: "Novo lançamento complementar" }).waitFor({ timeout: 5000 });
+    await foto?.("novo-lancamento", { soTela: true });
+    await p.keyboard.press("Escape");
+    await p.getByRole("tab", { name: "Orçamento" }).click();
+    await p.getByLabel(/Receita bruta de vendas e serviços, jan/).waitFor({ timeout: 8000 });
+    await foto?.("orcamento");
+  },
   "/demonstrativos/importar": importarEmLote,
   // Novo processo de empresa fora do cadastro: "Buscar dados" do CNPJ (Receita simulada) preenche razão social e UF
   "/societario": async (p, foto) => {
