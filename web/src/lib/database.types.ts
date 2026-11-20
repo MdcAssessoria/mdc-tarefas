@@ -5210,6 +5210,33 @@ export type Database = {
           },
         ];
       };
+      lic_contrato_empresa_modulos: {
+        Row: {
+          alterado_em: string;
+          cliente_id: string;
+          contrato_id: string;
+          modulos: string[];
+          org_id: string;
+          por: string | null;
+        };
+        Insert: {
+          alterado_em?: string;
+          cliente_id: string;
+          contrato_id: string;
+          modulos: string[];
+          org_id: string;
+          por?: string | null;
+        };
+        Update: {
+          alterado_em?: string;
+          cliente_id?: string;
+          contrato_id?: string;
+          modulos?: string[];
+          org_id?: string;
+          por?: string | null;
+        };
+        Relationships: [];
+      };
       lic_contrato_empresas: {
         Row: {
           cliente_id: string;
@@ -9395,10 +9422,15 @@ export type Database = {
         Args: { p_cliente: string; p_sistema: string };
         Returns: string;
       };
+      lic_contrato_empresa_modulos_definir: {
+        Args: { p_cliente: string; p_contrato: string; p_modulos: string[] };
+        Returns: number;
+      };
       lic_contrato_empresas_definir: {
         Args: { p_clientes: string[]; p_contrato: string };
         Returns: number;
       };
+      lic_contrato_modulos: { Args: { p_contrato: string }; Returns: Json };
       lic_contrato_modelo_salvar: {
         Args: { p_org: string; p_texto: string };
         Returns: number;

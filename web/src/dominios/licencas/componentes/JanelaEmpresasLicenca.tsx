@@ -1,6 +1,7 @@
 // Janela "Empresas que usam o <sistema>" da licença (095): a MDC marca, entre os clientes ativos, as empresas do grupo
 // que vão usar o sistema além do próprio cliente da licença (ex.: no EXato, EXRH + TEAM Leasing + ACB). O sistema, na
 // tela "Nova empresa", traz do HUB só estas empresas (lic_empresas, com a chave). Grava por lic_contrato_empresas_definir.
+// 096: em cada empresa (inclusive o cliente da licença) a MDC pode escolher os módulos; sem escolha = todo o pacote.
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
@@ -14,7 +15,7 @@ import { exigir } from "@/lib/exigir";
 import { supabase } from "@/lib/supabase";
 import { useConsulta } from "@/lib/useConsulta";
 import { semAcento } from "@/lib/texto";
-import { definirEmpresasDaLicenca } from "../repositorio";
+import { definirEmpresasDaLicenca, definirModulosDaEmpresa } from "../repositorio";
 import type { Contrato } from "../tipos";
 
 const cnpjMascara = (c: string | null) => {
@@ -38,10 +39,16 @@ export function JanelaEmpresasLicenca({
   const { clientes } = useOrg();
   const atuais = useConsulta(
     useCallback(async () => {
-      const r = exigir(await supabase().from("lic_contrato_empresas").select("cliente_id").eq("contrato_id", contrato.id)) as {
-        cliente_id: string;
-      }[];
-      return r.map((x) => x.cliente_id);
+      const sb = supabase();
+      const [emp, mods, pacote] = await Promise.all([
+        sb.from("lic_contrato_empresas").select("cliente_id").eq("contrato_id", contrato.id),
+        sb.from("lic_contrato_empresa_modulos").select("cliente_id, modulos").eq("contrato_id", contrato.id),
+        sb.rpc("lic_contrato_modulos", { p_contrato: contrato.id }),
+      ]);
+      const empresas = (exigir(emp) as { cliente_id: string }[]).map((x) => x.cliente_id);
+      const modulos: Record<string, string[]> = {};
+      for (const m of exigir(mods) as { cliente_id: string; modulos: string[] }[]) modulos[m.cliente_id] = m.modulos;
+      return { empresas, modulos, pacote: (exigir(pacote) ?? []) as ModuloPacote[] };
     }, [contrato.id]),
   );
   return atuais.carregando || !atuais.dados ? (
@@ -53,7 +60,9 @@ export function JanelaEmpresasLicenca({
       contrato={contrato}
       cliente={cliente}
       nomeSistema={nomeSistema}
-      inicial={atuais.dados}
+      inicial={atuais.dados.empresas}
+      modulosIniciais={atuais.dados.modulos}
+      pacote={atuais.dados.pacote}
       clientes={clientes.filter((c) => c.ativo && c.id !== contrato.cliente_id)}
       daLicenca={clientes.find((c) => c.id === contrato.cliente_id)}
       aoFechar={aoFechar}
@@ -62,11 +71,18 @@ export function JanelaEmpresasLicenca({
   );
 }
 
+interface ModuloPacote {
+  modulo: string;
+  nome: string;
+}
+
 function Escolha({
   contrato,
   cliente,
   nomeSistema,
   inicial,
+  modulosIniciais,
+  pacote,
   clientes,
   daLicenca,
   aoFechar,
@@ -76,12 +92,17 @@ function Escolha({
   cliente: string;
   nomeSistema: string;
   inicial: string[];
+  modulosIniciais: Record<string, string[]>;
+  pacote: ModuloPacote[];
   clientes: { id: string; razao_social: string; nome_fantasia: string | null; cnpj: string | null; cidade?: string | null; uf?: string | null }[];
   daLicenca?: { razao_social: string; nome_fantasia: string | null; cnpj: string | null };
   aoFechar: () => void;
   aoSalvar: (msg: string) => void;
 }) {
   const [marcadas, setMarcadas] = useState<Set<string>>(() => new Set(inicial));
+  // módulos escolhidos por empresa (sem chave = todo o pacote) e qual empresa está com a escolha aberta
+  const [mods, setMods] = useState<Record<string, string[]>>(modulosIniciais);
+  const [abertaMods, setAbertaMods] = useState<string | null>(null);
   const [busca, setBusca] = useState("");
   const [soMarcadas, setSoMarcadas] = useState(false);
   const [ocupado, setOcupado] = useState(false);
@@ -120,6 +141,12 @@ function Escolha({
     setErro("");
     try {
       const n = await definirEmpresasDaLicenca(contrato.id, [...marcadas]);
+      // módulos: só das empresas que ficaram na licença e cuja escolha mudou
+      for (const id of [contrato.cliente_id, ...marcadas]) {
+        const antes = (modulosIniciais[id] ?? []).join(",");
+        const agora = (mods[id] ?? []).join(",");
+        if (antes !== agora) await definirModulosDaEmpresa(contrato.id, id, mods[id] ?? []);
+      }
       aoSalvar(`Empresas do ${nomeSistema} salvas: ${cliente} e mais ${n}.`);
     } catch (e) {
       setErro(traduzirErro(e));
@@ -127,10 +154,54 @@ function Escolha({
     }
   }
 
+  const textoMods = (id: string) =>
+    mods[id]?.length ? `${mods[id].length} de ${pacote.length} módulos` : "Todos os módulos";
+  const alternarModulo = (id: string, m: string) =>
+    setMods((x) => {
+      const atual = new Set(x[id]?.length ? x[id] : pacote.map((p) => p.modulo));
+      if (atual.has(m)) atual.delete(m);
+      else atual.add(m);
+      const lista = [...atual].sort();
+      const copia = { ...x };
+      if (!lista.length || lista.length === pacote.length) delete copia[id];
+      else copia[id] = lista;
+      return copia;
+    });
+  const escolhaModulos = (id: string) =>
+    pacote.length > 0 && (
+      <span className="mt-1 block">
+        <button
+          type="button"
+          className="btn-acao"
+          aria-expanded={abertaMods === id}
+          onClick={(e) => {
+            e.preventDefault();
+            setAbertaMods((a) => (a === id ? null : id));
+          }}
+        >
+          <Icone nome={abertaMods === id ? "recolher" : "expandir"} />
+          {textoMods(id)}
+        </button>
+        {abertaMods === id && (
+          <span className="mt-2 flex flex-wrap gap-2">
+            {pacote.map((p) => {
+              const ligado = !mods[id]?.length || mods[id].includes(p.modulo);
+              return (
+                <label key={p.modulo} className={`chip cursor-pointer ${ligado ? "chip-ok" : "chip-rascunho"}`}>
+                  <input type="checkbox" className="sr-only" checked={ligado} onChange={() => alternarModulo(id, p.modulo)} />
+                  {p.nome}
+                </label>
+              );
+            })}
+          </span>
+        )}
+      </span>
+    );
+
   return (
     <Modal
       titulo={`Empresas que usam o ${nomeSistema}`}
-      descricao={`${cliente} · marque as empresas do grupo que vão usar o ${nomeSistema} com esta licença. No ${nomeSistema}, a tela "Nova empresa" traz do HUB só estas.`}
+      descricao={`${cliente} · marque as empresas do grupo que vão usar o ${nomeSistema} com esta licença e, se quiser, os módulos de cada uma. Elas chegam sozinhas no ${nomeSistema} para o administrador concluir o cadastro.`}
       aoFechar={aoFechar}
       largura="2xl"
       avisoRodape={erro && <p className="rounded-md bg-red-50 p-2 text-sm text-red-800">{erro}</p>}
@@ -152,6 +223,7 @@ function Escolha({
           <strong>{nomeCliente(daLicenca, cliente)}</strong> ({cnpjMascara(daLicenca?.cnpj ?? null)}) já vale sempre: é o cliente da
           licença.
         </p>
+        {escolhaModulos(contrato.cliente_id)}
         {filiaisSoltas.length > 0 && (
           <button className="btn" onClick={() => setMarcadas((s) => new Set([...s, ...filiaisSoltas.map((c) => c.id)]))}>
             <Icone nome="check" />
@@ -182,6 +254,7 @@ function Escolha({
                   </span>
                 </span>
               </label>
+              {marcadas.has(c.id) && <div className="pb-2 pl-10 pr-3">{escolhaModulos(c.id)}</div>}
             </li>
           ))}
         </ul>
