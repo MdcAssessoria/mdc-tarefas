@@ -178,7 +178,8 @@ Desenho aprovado pelo Edvaldo no quadro "MDC · Pessoal — desenho do app" (pro
   `pessoal:voz-aprendeu:<família>`, até 300) e vale antes das pistas na próxima fala. Exemplo: "Ração" → Pet.
 - **IA desligada (o app é gratuito, decisão do Edvaldo em 14/11/2026).** A Função `pessoal-voz` e a trava
   `pessoal_voz_pode` (082) estão publicadas, mas o app não as chama. Para ligar no futuro:
-  - `NEXT_PUBLIC_PESSOAL_VOZ_IA=1` na Vercel e `ANTHROPIC_API_KEY` nos segredos do Supabase;
+  - `NEXT_PUBLIC_PESSOAL_VOZ_IA=1` na Vercel, `ANTHROPIC_API_KEY` e `PESSOAL_VOZ_LIGADA=sim` nos segredos do Supabase
+    (este último desde 20/11/2026, SEG-03: sem ele a Função não chama a IA mesmo que alguém a chame direto);
   - quando ligada, a IA só é chamada se faltar valor ou tipo (Claude, modelo em `PESSOAL_VOZ_MODELO`), com limite de 30
     por hora e 150 por dia por pessoa;
   - a resposta da IA é conferida (tipo, valor, data em até 400 dias, categoria da lista);
