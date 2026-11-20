@@ -24,18 +24,21 @@ mês e no total do período. Os dados vêm do sistema do cliente (Omie) e dos la
   pagamentos entre as empresas do grupo** (padrão do grupo, `bi_grupos.eliminar_intragrupo`).
 - **Abas:**
   - **Visão geral:** receita líquida, lucro bruto, resultado líquido (com margem), caixa das operações e variação do
-    caixa; gráfico resultado × caixa e receita mês a mês.
+    caixa; gráfico resultado × caixa com o resultado acumulado, cascata da DRE (receita → resultado) e receita mês a mês.
   - **DRE** e **Fluxo de caixa:** matriz linha × mês com total, coluna **% da receita** (análise vertical) e PDF/Excel.
   - **Comparar:** período × período anterior, × mesmo período do ano passado (análise horizontal) ou **× orçamento**
     (realizado × orçado), com diferença em R$ e variação em %. Verde = melhor para o resultado.
-  - **Empresas** (só com mais de uma): uma coluna por empresa, soma, eliminações entre elas e consolidado.
+  - **Empresas** (só com mais de uma): participação de cada empresa na receita líquida e no resultado (ou no caixa),
+    uma coluna por empresa, soma, eliminações entre elas e consolidado.
   - **Indicadores:** prazo médio de recebimento e de pagamento (com o período anterior), ciclo financeiro,
     inadimplência, contas a receber e a pagar por faixa de atraso (a vencer, 1–30, 31–60, 61–90, +90), 10 maiores
     clientes (notas autorizadas) e fornecedores (títulos), e liquidez.
   - **Lançamentos:** lançamentos complementares (fora do Omie: novo, importar Excel, modelo, cancelar com motivo) e
     **Orçamento** (grade linha × 12 meses por empresa e ano, gravar, desfazer, importar e baixar planilha).
 - **Aviso "Não classificado":** categorias do Omie sem conta em `bi_mapa_categorias`.
-- **Celular:** tabelas em cartões; gráficos encolhem com a tela.
+- **Gráficos** (`componentes/GraficoBarras.tsx`, contas em `graficos.ts`): SVG desenhado na largura real da tela (texto
+  com tamanho de verdade no celular), escala com números redondos, balão com os valores do mês.
+- **Celular:** tabelas em cartões; na cascata o nome vai acima da barra.
 
 ### Premissas dos indicadores
 

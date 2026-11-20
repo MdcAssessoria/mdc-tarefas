@@ -11,7 +11,8 @@ import { Indicador } from "@/components/ui/Indicador";
 import { fmtVariacao, serie } from "../comparar";
 import { lerRelatorio } from "../dados";
 import { margem, temMovimento, totalDe } from "../relatorio";
-import { GraficoBarras } from "./GraficoBarras";
+import { GraficoBarras, GraficoCascata } from "./GraficoBarras";
+import { acumulado, cascata } from "../graficos";
 import { textoEliminacao } from "./contexto";
 import type { ContextoBi } from "./contexto";
 
@@ -89,7 +90,9 @@ export function AbaVisaoGeral({ c }: { c: ContextoBi }) {
           { nome: "Resultado líquido", cor: "#0B2820", valores: serie(dre, "resultado_liquido", meses) },
           { nome: "Caixa das operações", cor: "#C9A24D", valores: serie(dfc, "fluxo_operacional", meses) },
         ]}
+        linhas={[{ nome: "Resultado acumulado", cor: "#8A6A2A", valores: acumulado(serie(dre, "resultado_liquido", meses)) }]}
       />
+      <GraficoCascata titulo="Da receita ao resultado (DRE do período)" degraus={cascata(dre)} />
       <GraficoBarras
         titulo="Receita líquida mês a mês"
         meses={meses}
