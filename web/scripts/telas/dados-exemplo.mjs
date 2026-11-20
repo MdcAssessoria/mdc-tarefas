@@ -1259,7 +1259,16 @@ export const TABELAS = {
   ],
   lic_produtos: [...LIC_PRODUTOS, ...LIC_EXATO],
   lic_sistemas: LIC_SISTEMAS,
-  lic_usos: [{ id: 1, org_id: ORG, contrato_id: "99999999-9999-4999-8999-0000000000b3", competencia: mesRel(0), usuarios: 12, informado_em: momento(-1) }],
+  lic_usos: [
+    {
+      id: 1,
+      org_id: ORG,
+      contrato_id: "99999999-9999-4999-8999-0000000000b3",
+      competencia: mesRel(0),
+      usuarios: 12,
+      informado_em: momento(-1),
+    },
+  ],
   lic_planos: [
     {
       id: LIC_PLANO,
@@ -3232,3 +3241,48 @@ RPCS.fis_nbs_do_servico = ({ p_servico }) => {
     };
   return { ...base, item: d.length >= 4 ? `${d.slice(0, 2)}.${d.slice(2, 4)}` : null, item_descricao: null, nbs: [] };
 };
+
+// ---------------------------------------------------------------- BI de Gestão (/bi-gestao, 19/11/2026)
+// Um grupo com duas empresas e um DRE/DFC curto de dois meses, com "Não classificado" para o aviso aparecer.
+(() => {
+  APPS.push({
+    slug: "bi_gestao",
+    nome: "BI de Gestão",
+    descricao: "DRE e DFC gerenciais a partir do ERP do cliente (Omie)",
+    icone: "grafico",
+    rota: "/bi-gestao",
+    status: "ativo",
+    externo: false,
+    ordem: 31,
+    papel: "gerir",
+  });
+  APPS.sort((a, b) => a.ordem - b.ordem);
+  const GRUPO = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb1";
+  TABELAS.bi_grupos = [{ id: GRUPO, org_id: ORG, nome: "Grupo Greencore", eliminar_intragrupo: true, ativo: true }];
+  TABELAS.bi_grupo_empresas = [
+    { grupo_id: GRUPO, cliente_id: C1, org_id: ORG },
+    { grupo_id: GRUPO, cliente_id: C2, org_id: ORG },
+  ];
+  const DRE = [
+    ["receita_bruta", "Receita bruta de vendas e serviços", 10, false, "R", [120000, 135000]],
+    ["deducoes", "(−) Impostos sobre o faturamento", 30, false, "P", [-14000, -15800]],
+    ["receita_liquida", "Receita líquida", 40, true, null, [106000, 119200]],
+    ["custos", "(−) Custo dos produtos e serviços", 50, false, "P", [-62000, -70500]],
+    ["lucro_bruto", "Lucro bruto", 60, true, null, [44000, 48700]],
+    ["despesas_pessoal", "(−) Despesas com pessoal", 70, false, "P", [-21000, -21500]],
+    ["nao_classificado", "Não classificado (conferir categoria)", 105, false, null, [-1200, 0]],
+    ["resultado_liquido", "Resultado líquido", 160, true, null, [21800, 27200]],
+  ];
+  const DFC = [
+    ["rec_clientes", "Recebimentos de clientes", 10, false, "R", [110000, 128000]],
+    ["pag_fornecedores", "(−) Pagamentos a fornecedores", 30, false, "P", [-70000, -66000]],
+    ["fluxo_operacional", "Caixa das operações", 70, true, null, [40000, 62000]],
+    ["variacao_caixa", "Variação do caixa no período", 110, true, null, [40000, 62000]],
+  ];
+  RPCS.bi_relatorio = ({ p_relatorio, p_inicio }) => {
+    const ano = String(p_inicio ?? "2026-01-01").slice(0, 4);
+    return (p_relatorio === "dfc" ? DFC : DRE).flatMap(([codigo, nome, ordem, subtotal, natureza, valores]) =>
+      valores.map((valor, i) => ({ codigo, nome, ordem, subtotal, natureza, competencia: `${ano}-0${i + 1}-01`, valor })),
+    );
+  };
+})();

@@ -15,6 +15,7 @@ import type { LinkModulo } from "./navegacao";
 
 describe("moduloDaRota", () => {
   it("usa o primeiro trecho da rota", () => {
+    expect(moduloDaRota("/bi-gestao")).toBe("bi_gestao");
     expect(moduloDaRota("/")).toBe("hub");
     expect(moduloDaRota("/hub/acessos")).toBe("hub");
     expect(moduloDaRota("/tarefas/relatorio")).toBe("tarefas");
@@ -46,12 +47,12 @@ describe("moduloDaRota", () => {
 });
 
 describe("filtrarLinks", () => {
-  it("ferramenta que o site não conhece (bi_gestao) não derruba a tela inicial", () => {
-    const desconhecido = "bi_gestao" as Parameters<typeof filtrarLinks>[0];
+  it("ferramenta que o site não conhece não derruba a tela inicial", () => {
+    const desconhecido = "app_novo_do_banco" as Parameters<typeof filtrarLinks>[0];
     expect(filtrarLinks(desconhecido, { pode: () => true, podeEditarCadastros: true })).toEqual([]);
     expect(podeModulo(desconhecido, () => true)).toBe(true);
     expect(temGrupos(desconhecido)).toBe(false);
-    expect(exigenciaDaRota("/bi-gestao", desconhecido)).toBeNull();
+    expect(exigenciaDaRota("/app-novo", desconhecido)).toBeNull();
   });
 
   it("esconde abas de gestor e as que exigem nível maior", () => {

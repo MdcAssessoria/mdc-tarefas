@@ -34,6 +34,7 @@ flowchart TB
 | Clientes | Gestores | Importar a carteira do Domínio | `/clientes/importar` |
 | Societário | Equipe | Alterações, aberturas e baixas, fase a fase, com exigências e taxas ; acervo de documentos de cada cliente (contrato, alterações, cartão CNPJ, sócios) que serve de base para a próxima alteração | `/societario`, `/societario/[id]`, `/societario/documentos` |
 | Demonstrativos | Equipe | Importa o balancete do Domínio, gera BP/DRE/DFC, índices, fragilidades, parecer e PDF assinado | `/demonstrativos/...` |
+| BI de Gestão | Equipe com a ferramenta | DRE e DFC gerenciais do grupo de empresas, mês a mês, a partir do Omie e dos lançamentos complementares; escolha das empresas, sem operações intragrupo, PDF/Excel. Ver [modulos/bi-gestao.md](modulos/bi-gestao.md) | `/bi-gestao` |
 | Atendimento | Equipe | Chat com os clientes do Portal | `/atendimento` |
 | Vencimentos | Equipe | Certificados, alvarás, procurações com avisos; renovar (nova data) e encerrar (com motivo) em janelas, PDF/Excel | `/vencimentos` |
 | Certificados digitais | Equipe | Os certificados do cofre do HUB (demonstrativos e notas fiscais) e do Ledgra Link (bancos) numa lista só, com validade, filtros e PDF/Excel | `/vencimentos/certificados` |
