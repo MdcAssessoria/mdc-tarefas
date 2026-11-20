@@ -268,8 +268,15 @@ export function moduloDaRota(rota: string): Modulo {
   return MODULO_POR_PREFIXO[primeiro] ?? "tarefas";
 }
 
+/**
+ * Entrada do módulo no NAV, ou nada quando o banco devolve uma ferramenta que este site ainda não conhece (ex.:
+ * `bi_gestao`, criada direto em produção em 19/11/2026). Sem isto, um app novo no hub_apps derrubava a tela inicial
+ * inteira ("Esta tela teve um problema"). Quem chama trata a ferramenta desconhecida como módulo sem abas.
+ */
+const navDe = (modulo: string) => (NAV as Partial<typeof NAV>)[modulo as Modulo];
+
 /** Ferramentas (slugs) que liberam o módulo: as de `acesso` ou a de mesmo nome. */
-export const ferramentasDoModulo = (modulo: Modulo): string[] => NAV[modulo].acesso ?? [modulo];
+export const ferramentasDoModulo = (modulo: Modulo): string[] => navDe(modulo)?.acesso ?? [modulo];
 
 /** A pessoa pode abrir o módulo? Basta ter uma das ferramentas que o liberam, no nível pedido. */
 export function podeModulo(modulo: Modulo, pode: (app: string, minimo?: PapelApp) => boolean, minimo?: PapelApp): boolean {
@@ -281,7 +288,7 @@ export function filtrarLinks(
   modulo: Modulo,
   permissoes: { pode: (app: string, minimo?: PapelApp) => boolean; podeEditarCadastros: boolean },
 ): LinkModulo[] {
-  return NAV[modulo].links.filter((l) =>
+  return (navDe(modulo)?.links ?? []).filter((l) =>
     l.gestor ? permissoes.podeEditarCadastros : l.minimo ? podeModulo(modulo, permissoes.pode, l.minimo) : true,
   );
 }
@@ -312,7 +319,7 @@ export function exigenciaDaRota(rota: string, modulo: Modulo): ExigenciaTela | n
     .filter(dentro)
     .sort((a, b) => b.length - a.length)[0];
   if (extra) return TELAS_RESTRITAS[extra];
-  const aba = NAV[modulo].links.filter((l) => linkAtivo(rota, l.href, modulo)).sort((a, b) => b.href.length - a.href.length)[0];
+  const aba = (navDe(modulo)?.links ?? []).filter((l) => linkAtivo(rota, l.href, modulo)).sort((a, b) => b.href.length - a.href.length)[0];
   if (!aba || (!aba.minimo && !aba.gestor)) return null;
   return { minimo: aba.minimo, gestor: aba.gestor };
 }
@@ -376,4 +383,4 @@ export function agruparLinks(links: LinkModulo[], grupos: string[] = []): Entrad
 }
 
 /** O módulo tem menus agrupados (barra com menus suspensos e, no celular, a lista em gaveta)? */
-export const temGrupos = (modulo: Modulo) => NAV[modulo].links.some((l) => l.grupo);
+export const temGrupos = (modulo: Modulo) => (navDe(modulo)?.links ?? []).some((l) => l.grupo);
