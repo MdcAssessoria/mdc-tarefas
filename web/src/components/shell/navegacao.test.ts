@@ -46,6 +46,14 @@ describe("moduloDaRota", () => {
 });
 
 describe("filtrarLinks", () => {
+  it("ferramenta que o site não conhece (bi_gestao) não derruba a tela inicial", () => {
+    const desconhecido = "bi_gestao" as Parameters<typeof filtrarLinks>[0];
+    expect(filtrarLinks(desconhecido, { pode: () => true, podeEditarCadastros: true })).toEqual([]);
+    expect(podeModulo(desconhecido, () => true)).toBe(true);
+    expect(temGrupos(desconhecido)).toBe(false);
+    expect(exigenciaDaRota("/bi-gestao", desconhecido)).toBeNull();
+  });
+
   it("esconde abas de gestor e as que exigem nível maior", () => {
     const semGestao = filtrarLinks("tarefas", { pode: () => true, podeEditarCadastros: false });
     expect(semGestao.map((l) => l.href)).not.toContain("/config");
