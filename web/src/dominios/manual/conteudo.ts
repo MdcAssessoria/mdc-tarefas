@@ -4,7 +4,7 @@
 // (components/shell/navegacao.ts): com ele a tela do manual ganha o botão "Ir para a tela".
 // Mudou uma tela ou regra? Atualize o trecho dela aqui no mesmo commit e acrescente uma linha em "Controle de versões".
 
-export const VERSAO_MANUAL = { numero: "1.3", data: "19/11/2026" };
+export const VERSAO_MANUAL = { numero: "1.4", data: "19/11/2026" };
 
 export const MANUAL_MD = `
 ## Como usar este manual
@@ -186,6 +186,24 @@ Balancetes do Domínio transformados em Balanço, DRE, DFC, índices, fragilidad
 
 **Para que serve:** clientes com sinais de fragilidade nos números, para a equipe agir antes.
 
+## BI de Gestão
+
+DRE e fluxo de caixa (DFC) gerenciais de um grupo de empresas, mês a mês, a partir do sistema do cliente (Omie) e dos lançamentos complementares da MDC.
+
+**Quem usa:** equipe com a ferramenta BI de Gestão.
+
+### DRE e fluxo de caixa (BI de Gestão → DRE e fluxo de caixa)
+
+**Para que serve:** ver o resultado e o caixa do grupo no período escolhido, mês a mês, e mandar ao cliente em PDF ou Excel.
+
+1. Escolha o **Período** (padrão: **Este ano**). O período pode ter até 3 anos.
+2. Em **Empresas**, toque para tirar ou pôr cada empresa do grupo (ao menos uma fica marcada).
+3. Com mais de uma empresa, **Tirar vendas e pagamentos entre as empresas do grupo** vem marcado: as operações de uma empresa do grupo com outra não entram no resultado.
+4. Toque em **DRE gerencial** (pela data do fato) ou **Fluxo de caixa (DFC)** (pela data do pagamento).
+5. Use **PDF** ou **Excel** para baixar o relatório com os meses e o total.
+
+**Atenção:** o aviso **Não classificado** mostra valores de categorias do Omie que ainda não têm conta no relatório. Peça à equipe MDC para classificar; até lá eles entram na linha "Não classificado". No celular aparece só o total do período; os meses aparecem na tela maior e nos arquivos.
+
 ## Atendimento
 
 Conversas com os clientes pelo Portal do Cliente.
@@ -322,4 +340,5 @@ Os sistemas que a MDC licencia aos clientes (Ledgra ERP, EXato e os próximos): 
 | 1.1 | 18/11/2026 | Licenças Ledgra virou **Sistemas**: licença por sistema (Ledgra ERP, EXato…), usuários incluídos e a mais, cobrança pela fatura da Gestão, chave por sistema e Receita por sistema no mesmo menu. |
 | 1.2 | 19/11/2026 | Tarefas com **Horário**: lembrete 10 min antes e na hora, no sino e no celular/computador (**Ativar avisos neste aparelho**, no sino). |
 | 1.3 | 19/11/2026 | **Pacotes de licença** (Sistemas): a MDC monta os pacotes de cada sistema com módulos, preço, usuários incluídos (qualquer número ou sem limite), valor do usuário a mais e o que fazer ao passar do limite; a licença puxa esses dados do pacote. |
+| 1.4 | 19/11/2026 | **BI de Gestão**: DRE e fluxo de caixa do grupo de empresas, mês a mês, a partir do Omie, com escolha das empresas, opção de tirar as operações entre elas e PDF/Excel. |
 `;

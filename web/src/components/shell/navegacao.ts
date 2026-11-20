@@ -9,6 +9,7 @@ export type Modulo =
   | "tarefas"
   | "societario"
   | "demonstrativos"
+  | "bi_gestao"
   | "atendimento"
   | "vencimentos"
   | "comercial"
@@ -73,6 +74,8 @@ export const NAV: Record<Modulo, { titulo: string; links: LinkModulo[]; grupos?:
       { href: "/demonstrativos/riscos", nome: "Riscos da carteira", icone: "alerta" },
     ],
   },
+  // BI de Gestão (19/11/2026): DRE e DFC gerenciais do grupo de empresas a partir do Omie (bi_relatorio)
+  bi_gestao: { titulo: "BI de Gestão", links: [{ href: "/bi-gestao", nome: "DRE e fluxo de caixa", icone: "grafico" }] },
   atendimento: {
     titulo: "Atendimento",
     links: [
@@ -218,6 +221,7 @@ export const MODULO_POR_PREFIXO: Record<string, Modulo> = {
   clientes: "tarefas",
   societario: "societario",
   demonstrativos: "demonstrativos",
+  "bi-gestao": "bi_gestao",
   atendimento: "atendimento",
   vencimentos: "vencimentos",
   comercial: "comercial",
@@ -270,7 +274,7 @@ export function moduloDaRota(rota: string): Modulo {
 
 /**
  * Entrada do módulo no NAV, ou nada quando o banco devolve uma ferramenta que este site ainda não conhece (ex.:
- * `bi_gestao`, criada direto em produção em 19/11/2026). Sem isto, um app novo no hub_apps derrubava a tela inicial
+ * `bi_gestao` em 19/11/2026, criada direto em produção antes de ter tela). Sem isto, um app novo no hub_apps derrubava a tela inicial
  * inteira ("Esta tela teve um problema"). Quem chama trata a ferramenta desconhecida como módulo sem abas.
  */
 const navDe = (modulo: string) => (NAV as Partial<typeof NAV>)[modulo as Modulo];
