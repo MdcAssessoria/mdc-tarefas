@@ -4,7 +4,7 @@
 // (components/shell/navegacao.ts): com ele a tela do manual ganha o botão "Ir para a tela".
 // Mudou uma tela ou regra? Atualize o trecho dela aqui no mesmo commit e acrescente uma linha em "Controle de versões".
 
-export const VERSAO_MANUAL = { numero: "2.2", data: "20/11/2026" };
+export const VERSAO_MANUAL = { numero: "2.3", data: "20/11/2026" };
 
 export const MANUAL_MD = `
 ## Como usar este manual
@@ -214,10 +214,12 @@ DRE e fluxo de caixa (DFC) gerenciais de um grupo de empresas, mês a mês, a pa
 2. Com mais de uma empresa, **Tirar vendas e pagamentos entre as empresas do grupo** vem marcado.
 3. Use as abas: **Visão geral** (resumo, resultado × caixa com o acumulado, cascata da receita ao resultado e receita mês a mês), **DRE**, **Fluxo de caixa** (com **% da receita**), **Comparar**, **Empresas** (quanto cada empresa pesa na receita e no resultado, uma coluna por empresa e o consolidado) e **Indicadores**. Nos gráficos, passe o mouse ou toque num mês para ver os valores.
 4. Em **Comparar**, escolha **Período anterior**, **Mesmo período do ano passado** ou **Orçamento** (realizado × orçado). Diferença verde é melhor para o resultado; vermelha, pior.
-5. **Indicadores** mostra prazos médios de recebimento e pagamento, ciclo financeiro, inadimplência, contas em aberto por atraso, maiores clientes e fornecedores e liquidez.
-6. Use **PDF** ou **Excel** para baixar.
+5. Na **DRE**, os cartões de **margem bruta, operacional e líquida** mostram o percentual, a faixa (vermelho = abaixo do esperado, amarelo = atenção, verde = saudável) e o que ela quer dizer em reais ("de cada R$ 100 de receita, sobraram…"). Faixas: bruta 20% e 35%; operacional 5% e 12%; líquida 0% e 8%.
+6. Na DRE e no Fluxo de caixa, clique na **seta** ao lado de uma linha para abri-la nas contas do plano (ou em **Abrir todas as contas**). Clique num **valor sublinhado** para ver as notas, os impostos das notas, as contas a pagar/receber e os pagamentos que formam aquele número, com busca e PDF/Excel.
+7. **Indicadores** mostra prazos médios de recebimento e pagamento, ciclo financeiro, inadimplência, contas em aberto por atraso, maiores clientes e fornecedores e liquidez.
+8. Use **PDF** ou **Excel** para baixar (com as contas que estiverem abertas).
 
-**Atenção:** o aviso **Não classificado** mostra valores de categorias do Omie que ainda não têm conta no relatório. A liquidez corrente, seca e geral vem do balancete do Domínio publicado em Demonstrativos; sem ele aparece só uma estimativa pelos títulos do Omie. Fornecedores aparecem pelo CNPJ/CPF.
+**Atenção:** o aviso **Não classificado** mostra valores de categorias do Omie sem conta do plano ou lançadas no Omie como "Contas a classificar"; clique no valor da linha para ver quais são. A liquidez corrente, seca e geral vem do balancete do Domínio publicado em Demonstrativos; sem ele aparece só uma estimativa pelos títulos do Omie. Fornecedores aparecem pelo CNPJ/CPF.
 
 ### Lançamentos e orçamento (BI de Gestão → aba Lançamentos)
 
@@ -376,4 +378,5 @@ Os sistemas que a MDC licencia aos clientes (Ledgra ERP, EXato e os próximos): 
 | 1.9 | 20/11/2026 | **BI de Gestão**: gráficos novos, legíveis também no celular: resultado acumulado no gráfico resultado × caixa, cascata da DRE da receita ao resultado, participação de cada empresa na receita e no resultado do grupo (aba Empresas) e balão com os valores do mês. |
 | 2.1 | 20/11/2026 | **Licenças → Nova licença**: botão **Cadastrar empresa nova** no passo 1, para cadastrar pelo CNPJ uma empresa que ainda não é cliente (grupo "Só licença") sem sair da janela. |
 | 2.2 | 20/11/2026 | **BI de Gestão**: o orçamento aceita mais anos (dois para trás e cinco para a frente). |
+| 2.3 | 20/11/2026 | **BI de Gestão**: plano de contas gerencial padrão da MDC (classificação pelo código da categoria do Omie); DRE com margens por faixa e explicação, linhas que abrem nas contas do plano e clique no valor mostrando as notas e os títulos. |
 `;

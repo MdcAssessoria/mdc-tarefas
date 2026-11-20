@@ -418,6 +418,107 @@ export type Database = {
           },
         ];
       };
+      bi_plano: {
+        Row: {
+          ativo: boolean;
+          codigo: string;
+          dre_por_titulo: boolean;
+          id: string;
+          linha_dfc: string | null;
+          linha_dre: string | null;
+          nome: string;
+          ordem: number;
+          org_id: string | null;
+          tipo: string;
+        };
+        Insert: {
+          ativo?: boolean;
+          codigo: string;
+          dre_por_titulo?: boolean;
+          id?: string;
+          linha_dfc?: string | null;
+          linha_dre?: string | null;
+          nome: string;
+          ordem: number;
+          org_id?: string | null;
+          tipo: string;
+        };
+        Update: {
+          ativo?: boolean;
+          codigo?: string;
+          dre_por_titulo?: boolean;
+          id?: string;
+          linha_dfc?: string | null;
+          linha_dre?: string | null;
+          nome?: string;
+          ordem?: number;
+          org_id?: string | null;
+          tipo?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "bi_plano_org_id_fkey";
+            columns: ["org_id"];
+            isOneToOne: false;
+            referencedRelation: "organizacoes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      bi_plano_excecoes: {
+        Row: {
+          a_conferir: boolean;
+          alterado_em: string;
+          alterado_por: string | null;
+          categoria_codigo: string;
+          cliente_id: string | null;
+          id: string;
+          observacao: string | null;
+          org_id: string;
+          origem: string;
+          plano_codigo: string;
+        };
+        Insert: {
+          a_conferir?: boolean;
+          alterado_em?: string;
+          alterado_por?: string | null;
+          categoria_codigo: string;
+          cliente_id?: string | null;
+          id?: string;
+          observacao?: string | null;
+          org_id: string;
+          origem?: string;
+          plano_codigo: string;
+        };
+        Update: {
+          a_conferir?: boolean;
+          alterado_em?: string;
+          alterado_por?: string | null;
+          categoria_codigo?: string;
+          cliente_id?: string | null;
+          id?: string;
+          observacao?: string | null;
+          org_id?: string;
+          origem?: string;
+          plano_codigo?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "bi_plano_excecoes_cliente_id_fkey";
+            columns: ["cliente_id"];
+            isOneToOne: false;
+            referencedRelation: "clientes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "bi_plano_excecoes_org_id_fkey";
+            columns: ["org_id"];
+            isOneToOne: false;
+            referencedRelation: "organizacoes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       cliente_responsaveis: {
         Row: {
           cliente_id: string;
@@ -8625,6 +8726,29 @@ export type Database = {
         Args: { p_arquivo?: string; p_linhas: Json };
         Returns: Json;
       };
+      bi_origem: {
+        Args: {
+          p_clientes: string[];
+          p_conta?: string;
+          p_eliminar: boolean;
+          p_fim: string;
+          p_inicio: string;
+          p_linha: string;
+          p_mes?: string;
+          p_relatorio: string;
+        };
+        Returns: {
+          categoria: string;
+          conta: string;
+          data: string;
+          doc: string;
+          documento: string;
+          empresa: string;
+          origem: string;
+          pessoa: string;
+          valor: number;
+        }[];
+      };
       bi_registro_acessos: {
         Args: { p_dias?: number };
         Returns: {
@@ -8651,6 +8775,23 @@ export type Database = {
           nome: string;
           ordem: number;
           subtotal: boolean;
+          valor: number;
+        }[];
+      };
+      bi_relatorio_contas: {
+        Args: {
+          p_clientes: string[];
+          p_eliminar?: boolean;
+          p_fim: string;
+          p_inicio: string;
+          p_relatorio: string;
+        };
+        Returns: {
+          competencia: string;
+          conta: string;
+          linha: string;
+          nome: string;
+          ordem: number;
           valor: number;
         }[];
       };

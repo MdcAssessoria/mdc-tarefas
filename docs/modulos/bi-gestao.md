@@ -26,6 +26,11 @@ mês e no total do período. Os dados vêm do sistema do cliente (Omie) e dos la
   - **Visão geral:** receita líquida, lucro bruto, resultado líquido (com margem), caixa das operações e variação do
     caixa; gráfico resultado × caixa com o resultado acumulado, cascata da DRE (receita → resultado) e receita mês a mês.
   - **DRE** e **Fluxo de caixa:** matriz linha × mês com total, coluna **% da receita** (análise vertical) e PDF/Excel.
+    Desde a 104: cada linha abre nas contas do plano (`bi_relatorio_contas`, `dominios/bi/detalhe.ts`) e o clique num
+    valor abre a janela "De onde vem este valor" (`bi_origem`: notas, impostos das notas, títulos, baixas e
+    complementares; até 5.000 linhas, com busca e PDF/Excel). Na DRE, cartões de margem por faixa
+    (`dominios/bi/margens.ts`, decisão do Edvaldo 20/11/2026): bruta < 20% / 20–35% / > 35%; operacional < 5% / 5–12% /
+    > 12%; líquida < 0% / 0–8% / > 8% (vermelho / amarelo / verde), com a frase "de cada R$ 100…".
   - **Comparar:** período × período anterior, × mesmo período do ano passado (análise horizontal) ou **× orçamento**
     (realizado × orçado), com diferença em R$ e variação em %. Verde = melhor para o resultado.
   - **Empresas** (só com mais de uma): participação de cada empresa na receita líquida e no resultado (ou no caixa),

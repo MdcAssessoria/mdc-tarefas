@@ -1371,6 +1371,20 @@ const INTERACOES = {
       await p.getByText(espera).first().waitFor({ timeout: 8000 });
       await foto?.(aba.toLowerCase().replace(/ /g, "-"));
     }
+    // DRE (104): margens por faixa, contas do plano abertas e a janela de origem do valor
+    await abas.getByRole("tab", { name: "DRE", exact: true }).click();
+    await p.getByText("Margem bruta").waitFor({ timeout: 8000 });
+    await p.getByRole("button", { name: "Abrir todas as contas" }).click();
+    await p.getByText("6.1.01 · Salários e Ordenados").waitFor({ timeout: 5000 });
+    await foto?.("dre-contas");
+    await p
+      .getByRole("button", { name: /^Ver de onde vem: 6\.1\.01/ })
+      .first()
+      .click();
+    const origem = p.getByRole("dialog", { name: "De onde vem este valor" });
+    await origem.getByText("Folha de pagamento janeiro").first().waitFor({ timeout: 5000 });
+    await foto?.("dre-origem", { soTela: true });
+    await p.keyboard.press("Escape");
     await abas.getByRole("tab", { name: "Comparar" }).click();
     await p.getByLabel("Comparar com").selectOption("orcado");
     await p.getByText("realizado × orçado").waitFor({ timeout: 8000 });
