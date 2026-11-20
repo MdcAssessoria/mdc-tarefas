@@ -312,3 +312,23 @@ Regras para migração nova:
 3. Tabela nova: `org_id` + RLS ligado + políticas por `app.hub_pode` (equipe) ou `app.portal_pode` (cliente).
 4. Função `security definer`: sempre `set search_path = public, app` e checagem de permissão na primeira linha.
 5. Depois de aplicar, rode os avisos de segurança do Supabase (Advisors) e corrija o que aparecer.
+
+### 4.5.1 Produção × repositório (conferido em 20/11/2026)
+
+Nove migrações tinham sido aplicadas direto em produção. O texto delas foi copiado de
+`supabase_migrations.schema_migrations` (md5 conferido) com um cabeçalho dizendo de onde veio; o nome do arquivo ganhou
+letra para manter a ordem em que rodaram em produção:
+
+| Nome em produção | Arquivo no repositório |
+| --- | --- |
+| `crm_raiox_conferir`, `crm_origem_raiox` | `050a_crm_raiox_conferir.sql`, `050b_crm_origem_raiox.sql` |
+| `svc_usa_extensions` | `063a_svc_usa_extensions.sql` (precisa do papel `api_bancaria_svc`) |
+| `lic_semear_ledgra_ia_link` | `072a_lic_semear_ledgra_ia_link.sql` |
+| `090_bi_gestao_omie`, `090b_bi_relatorio_digitos`, `090c_omie_agendamento` | mesmos nomes |
+| `090_omie_gestao`, `091_omie_restaura_agendamento` | `090d_omie_gestao.sql`, `090e_omie_restaura_agendamento.sql` |
+
+Outras diferenças, só de nome: `043_contratos_faturamento` em produção é o `045_contratos_faturamento.sql`; as três
+partes `036_seguranca_auditoria_parte1..3` são o `036_seguranca_auditoria_2026_11.sql`; `083_licenca_ledgra_ponto` e
+`083_pessoal_excluir_conta` repetem o número nos dois lados. As `api_bancaria_001` a `008` (esquemas `banco` e `cofre`)
+são do Ledgra Link e ficam no repositório dele; o banco do HUB não se recria sozinho sem elas, e continua em aberto a
+decisão do Edvaldo de levar a API bancária para um projeto próprio.

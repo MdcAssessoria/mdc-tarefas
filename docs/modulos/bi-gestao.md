@@ -73,11 +73,11 @@ Componentes em `web/src/dominios/bi/componentes/`.
   Omie usadas pelo Grupo Clara; quase toda despesa cai em "Não classificado" (R$ 3,24 mi em 2026) e custos/despesas
   aparecem zerados. A classificação é decisão contábil do Edvaldo.
 
-- As migrações do BI e do Omie foram aplicadas direto em produção e **não estão no repositório** (reauditoria de
-  19/11/2026, ALT-02). Também existe um segundo modelo do Omie (`omie_contas`/`gestao_*`) sem uso (NOV-02). A tela usa
-  o modelo `bi_*`, o único com dados (Grupo Clara).
+- As migrações do BI e do Omie, aplicadas direto em produção, estão no repositório desde 20/11/2026 (`090_bi_gestao_omie`
+  a `090e_omie_restaura_agendamento`; ALT-02, ver `docs/04` §4.5.1). Continua existindo um segundo modelo do Omie
+  (`omie_contas`/`gestao_*`, na `090d`) sem uso (NOV-02). A tela usa o modelo `bi_*`, o único com dados (Grupo Clara).
 - A MDC ainda não tem tela para manter grupos e o mapa de categorias; hoje isso é feito pela equipe técnica.
   Desde a 099 não há gravação direta nessas tabelas pelo site (NOV-01): a tela futura deve gravar por função
   `security definer` com `hub_pode(org, 'bi_gestao', 'gerir')` e recusar organização pessoal.
   Lançamentos complementares e orçamento têm tela desde a v2.
-- Nome do fornecedor: incluir na sincronização do Omie (junto com ALT-02).
+- Nome do fornecedor: incluir na sincronização do Omie.
