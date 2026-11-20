@@ -3271,6 +3271,7 @@ RPCS.fis_nbs_do_servico = ({ p_servico }) => {
     ["lucro_bruto", "Lucro bruto", 60, true, null, [44000, 48700]],
     ["despesas_pessoal", "(−) Despesas com pessoal", 70, false, "P", [-21000, -21500]],
     ["nao_classificado", "Não classificado (conferir categoria)", 105, false, null, [-1200, 0]],
+    ["resultado_operacional", "Resultado operacional", 110, true, null, [21800, 27200]],
     ["resultado_liquido", "Resultado líquido", 160, true, null, [21800, 27200]],
   ];
   const DFC = [
@@ -3298,6 +3299,44 @@ RPCS.fis_nbs_do_servico = ({ p_servico }) => {
       (ano < "2026" ? 0.9 : 1) * (Array.isArray(p_clientes) && p_clientes.length === 1 ? (p_clientes[0] === C1 ? 0.6 : 0.45) : 1);
     return montar(p_relatorio === "dfc" ? DFC : DRE, ano, fator);
   };
+  // 104: contas do plano por linha e origem do valor (notas e títulos)
+  RPCS.bi_relatorio_contas = ({ p_relatorio, p_inicio }) => {
+    const ano = String(p_inicio ?? "2026-01-01").slice(0, 4);
+    if (p_relatorio === "dfc") return [];
+    const contas = [
+      ["despesas_pessoal", "6.1.01", "Salários e Ordenados", 290, [-16000, -16300]],
+      ["despesas_pessoal", "6.1.03", "Pró-Labore", 310, [-5000, -5200]],
+      ["custos", "5.1.01", "Matéria-Prima", 140, [-62000, -70500]],
+      ["nao_classificado", null, "Sem conta do plano", 99999, [-1200, 0]],
+    ];
+    return contas.flatMap(([linha, conta, nome, ordem, vs]) =>
+      vs.map((valor, i) => ({ linha, conta, nome, ordem, competencia: `${ano}-0${i + 1}-01`, valor })),
+    );
+  };
+  RPCS.bi_origem = ({ p_linha }) => [
+    {
+      empresa: "Greencore Matriz",
+      origem: "titulo",
+      data: "2026-01-05",
+      documento: "1520",
+      pessoa: "Folha de pagamento janeiro",
+      doc: null,
+      categoria: "6.1.01 - Salários",
+      conta: "6.1.01",
+      valor: -16000,
+    },
+    {
+      empresa: "Greencore Matriz",
+      origem: "nota",
+      data: "2026-01-12",
+      documento: "4471/1",
+      pessoa: "Metalúrgica Bragança Ltda",
+      doc: "11222333000181",
+      categoria: "CFOP 5101",
+      conta: p_linha === "receita_bruta" ? "3.1.01" : null,
+      valor: 12000,
+    },
+  ];
   RPCS.bi_orcado = ({ p_relatorio, p_inicio }) => montar(p_relatorio === "dfc" ? DFC : DRE, String(p_inicio ?? "2026").slice(0, 4), 1.05);
   // v2 (097): cartões das empresas, pedidos de acesso, registro, indicadores e orçamento
   RPCS.bi_empresas = () => [

@@ -1,7 +1,8 @@
-// BI de Gestão: leitura e gravação no banco (funções bi_* da migração 097). A permissão é conferida no banco em cada
+// BI de Gestão: leitura e gravação no banco (funções bi_* das migrações 097 e 104). A permissão é conferida no banco em cada
 // chamada (app.bi_pode_ver / app.bi_pode_lancar); a tela só mostra o que o banco devolve.
 import { supabase } from "@/lib/supabase";
 import { traduzirErro } from "@/lib/erros";
+import type { ContaBanco, OrigemBanco } from "./detalhe";
 import { montarMatriz } from "./relatorio";
 import type { LinhaBanco, Matriz, TipoRelatorio } from "./relatorio";
 import type { Indicadores } from "./indicadores";
@@ -101,6 +102,32 @@ export async function lerRelatorio(rel: TipoRelatorio, clientes: string[], de: s
   });
   return montarMatriz(linhas ?? []);
 }
+
+/** Contas do plano por linha do relatório (bi_relatorio_contas, 104); agrupe com montarContas. */
+export const lerContas = (rel: TipoRelatorio, clientes: string[], de: string, ate: string, eliminar: boolean) =>
+  rpc<ContaBanco[]>("bi_relatorio_contas", { p_relatorio: rel, p_clientes: clientes, p_inicio: de, p_fim: ate, p_eliminar: eliminar });
+
+/** De onde vem um valor (bi_origem, 104): notas, impostos, títulos, baixas e complementares. No máximo 5.000 linhas. */
+export const lerOrigem = (
+  rel: TipoRelatorio,
+  clientes: string[],
+  de: string,
+  ate: string,
+  eliminar: boolean,
+  linha: string,
+  conta: string | null,
+  mes: string | null,
+) =>
+  rpc<OrigemBanco[]>("bi_origem", {
+    p_relatorio: rel,
+    p_clientes: clientes,
+    p_inicio: de,
+    p_fim: ate,
+    p_eliminar: eliminar,
+    p_linha: linha,
+    p_conta: conta,
+    p_mes: mes ? `${mes}-01` : null,
+  });
 
 export async function lerOrcado(rel: TipoRelatorio, clientes: string[], de: string, ate: string): Promise<Matriz> {
   const linhas = await rpc<LinhaBanco[]>("bi_orcado", { p_relatorio: rel, p_clientes: clientes, p_inicio: de, p_fim: ate });

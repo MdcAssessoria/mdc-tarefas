@@ -14,7 +14,8 @@ import { Esqueleto } from "@/components/ui/Esqueleto";
 import { EstadoVazio } from "@/components/ui/EstadoVazio";
 import { FiltroPeriodo } from "@/components/ui/FiltroPeriodo";
 import { Icone } from "@/components/ui/Icone";
-import { lerRelatorio } from "../dados";
+import { lerContas, lerRelatorio } from "../dados";
+import { montarContas } from "../detalhe";
 import type { EmpresaBi } from "../dados";
 import { periodoDoBi, periodoLongo, temMovimento, totalDe } from "../relatorio";
 import type { TipoRelatorio } from "../relatorio";
@@ -23,6 +24,9 @@ import { AbaEmpresas } from "./AbaEmpresas";
 import { AbaIndicadores } from "./AbaIndicadores";
 import { AbaLancamentos } from "./AbaLancamentos";
 import { AbaVisaoGeral } from "./AbaVisaoGeral";
+import { CartoesMargem } from "./CartoesMargem";
+import { JanelaOrigem } from "./JanelaOrigem";
+import type { PedidoOrigem } from "./JanelaOrigem";
 import { TabelaMatriz } from "./TabelaMatriz";
 import type { ContextoBi } from "./contexto";
 
@@ -30,7 +34,16 @@ type AbaBi = "geral" | "dre" | "dfc" | "comparar" | "empresas" | "indicadores" |
 const PERIODO_PADRAO: Periodo = "ano";
 
 function AbaRelatorio({ rel, c }: { rel: TipoRelatorio; c: ContextoBi }) {
-  const m = useConsulta(useCallback(() => lerRelatorio(rel, c.ids, c.de, c.ate, c.elimina), [rel, c.ids, c.de, c.ate, c.elimina]));
+  const [origem, setOrigem] = useState<PedidoOrigem | null>(null);
+  const m = useConsulta(
+    useCallback(async () => {
+      const [matriz, contas] = await Promise.all([
+        lerRelatorio(rel, c.ids, c.de, c.ate, c.elimina),
+        lerContas(rel, c.ids, c.de, c.ate, c.elimina),
+      ]);
+      return { matriz, contas: montarContas(contas ?? [], matriz.meses) };
+    }, [rel, c.ids, c.de, c.ate, c.elimina]),
+  );
   if (m.erro)
     return (
       <p role="alert" className="rounded-md bg-red-50 p-3 text-sm text-red-800">
@@ -38,23 +51,33 @@ function AbaRelatorio({ rel, c }: { rel: TipoRelatorio; c: ContextoBi }) {
       </p>
     );
   if (!m.dados) return <Esqueleto />;
-  if (!temMovimento(m.dados))
+  if (!temMovimento(m.dados.matriz))
     return (
       <EstadoVazio icone="grafico" titulo="Nada lançado neste período">
         Não há notas, contas ou lançamentos das empresas escolhidas entre {c.rotuloPeriodo}. Troque o período.
       </EstadoVazio>
     );
-  const nc = totalDe(m.dados, "nao_classificado");
+  const nc = totalDe(m.dados.matriz, "nao_classificado");
   return (
     <div className="space-y-3">
       {nc !== 0 && (
         <p className="flex items-start gap-2 rounded-md bg-amber-50 p-3 text-sm text-amber-900">
           <Icone nome="alerta" className="mt-0.5 h-4 w-4 shrink-0" />
           {Math.abs(nc).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} estão em &quot;Não classificado&quot;: categorias
-          do Omie ainda sem conta no relatório. Peça à equipe MDC para classificar.
+          do Omie sem conta do plano ou lançadas no Omie como &quot;Contas a classificar&quot;. Clique no valor da linha para ver quais são
+          e peça à equipe MDC para classificar.
         </p>
       )}
-      <TabelaMatriz m={m.dados} rel={rel} titulo={rel === "dre" ? "DRE gerencial" : "Fluxo de caixa (DFC)"} c={c} />
+      {rel === "dre" && <CartoesMargem m={m.dados.matriz} />}
+      <TabelaMatriz
+        m={m.dados.matriz}
+        rel={rel}
+        titulo={rel === "dre" ? "DRE gerencial" : "Fluxo de caixa (DFC)"}
+        c={c}
+        contas={m.dados.contas}
+        aoAbrir={setOrigem}
+      />
+      {origem && <JanelaOrigem rel={rel} p={origem} c={c} aoFechar={() => setOrigem(null)} />}
     </div>
   );
 }
