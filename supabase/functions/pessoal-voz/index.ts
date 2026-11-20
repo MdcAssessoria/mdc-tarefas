@@ -6,6 +6,7 @@
 // Supabase; sem ela, ou sem o segredo PESSOAL_VOZ_LIGADA = "sim" (SEG-03), a função responde { indisponivel: true } e o
 // app segue só com o que ele mesmo entende.
 import { createClient } from "@supabase/supabase-js";
+import { chavePublica } from "../_compartilhado/chaves.ts";
 
 const ORIGENS = ["https://hub.mdcassessoria.com", "https://mdc-tarefas.vercel.app"];
 const CORS = {
@@ -87,7 +88,7 @@ Deno.serve(async (req) => {
   const chave = Deno.env.get("ANTHROPIC_API_KEY");
   if (!chave || Deno.env.get("PESSOAL_VOZ_LIGADA") !== "sim") return json(200, { indisponivel: true, lancamentos: [] });
 
-  const usuario = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!, {
+  const usuario = createClient(Deno.env.get("SUPABASE_URL")!, chavePublica(), {
     global: { headers: { Authorization: auth } },
     auth: { persistSession: false },
   });

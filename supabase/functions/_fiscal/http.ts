@@ -5,6 +5,7 @@
 // 01/11/2026, docs/futuro/hub-gestao-desenho.md). A SEFAZ exige HTTP/1.1 (com HTTP/2 responde "endpoint requires HTTP/1.1").
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { RequisicaoSoap } from "./nucleo/sefaz.ts";
+import { chaveSecreta, chavePublica } from "../_compartilhado/chaves.ts";
 
 export const ORIGENS = [
   "https://mdcassessoria.com",
@@ -40,7 +41,7 @@ export type Banco = SupabaseClient<any>;
 export const bancoServico = (): Banco =>
   createClient(
     Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    chaveSecreta(),
     { auth: { persistSession: false } },
   );
 
@@ -48,7 +49,7 @@ export const bancoServico = (): Banco =>
 export const bancoUsuario = (auth: string): Banco =>
   createClient(
     Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_ANON_KEY")!,
+    chavePublica(),
     {
       global: { headers: { Authorization: auth } },
       auth: { persistSession: false },

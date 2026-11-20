@@ -107,6 +107,7 @@ no Entra, ID `d0840295-11fd-45b5-8f9c-5a02de661dfa`), a Função `convite` manda
 ## 5.5 Cuidados que valem para qualquer mudança
 
 - **Nunca** use a chave `service_role` no navegador. O app usa só a chave publicável (pública por natureza).
+- Funções Edge pegam as chaves só por `_compartilhado/chaves.ts` (`chaveSecreta`/`chavePublica`): chave nova `sb_secret_`/`sb_publishable_` com volta à antiga até a desativação (SEG-01, 20/11/2026; capítulo 7.4). Nunca registre o valor de uma chave em log ou resposta.
 - Toda tabela nova: `org_id`, RLS ligado, políticas com `app.hub_pode` ou `app.portal_pode`.
 - Toda função `security definer`: `set search_path` fixo e checagem de permissão logo no início.
 - Edge Functions conferem o token do usuário e a origem (lista `ORIGENS` em `supabase/functions/convite`, `_fiscal/http.ts`, `_ledgra_link/http.ts` e `balancete-agente/agente.ts`; desde 04/11/2026 inclui `https://hub.mdcassessoria.com`).

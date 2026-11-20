@@ -13,6 +13,7 @@
 // Segredos (painel do Supabase › Edge Functions › Secrets, colocados pelo TI/Edvaldo, nunca no código):
 //   MS_TENANT_ID, MS_CLIENT_ID, MS_CLIENT_SECRET  → aplicativo do Entra ID com Sites.Selected (infra/microsoft-365).
 import { createClient } from "@supabase/supabase-js";
+import { chaveSecreta, chavePublica } from "../_compartilhado/chaves.ts";
 import {
   abrirPasta,
   arquivosDaPasta,
@@ -52,7 +53,7 @@ Deno.serve(async (req) => {
   const url = Deno.env.get("SUPABASE_URL")!;
   const servico = createClient(
     url,
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    chaveSecreta(),
     { auth: { persistSession: false } },
   );
   let corpo: { acao?: string; org_id?: string } = {};
@@ -98,7 +99,7 @@ Deno.serve(async (req) => {
   const auth = req.headers.get("Authorization") ?? "";
   if (!auth.startsWith("Bearer "))
     return json(401, { erro: "Faça login de novo." });
-  const usuario = createClient(url, Deno.env.get("SUPABASE_ANON_KEY")!, {
+  const usuario = createClient(url, chavePublica(), {
     global: { headers: { Authorization: auth } },
     auth: { persistSession: false },
   });
