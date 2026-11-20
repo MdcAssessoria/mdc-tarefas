@@ -3,7 +3,8 @@
 // lançamentos montados pela IA (Claude). Nada é gravado aqui: a pessoa confere no cartão "Entendi assim" e salva.
 // Antes de chamar a IA o banco confere a pessoa e o limite de uso (pessoal_voz_pode). O áudio nunca chega aqui (o
 // celular transforma a fala em texto); o texto não é guardado. A chave ANTHROPIC_API_KEY fica nos segredos do
-// Supabase; sem ela a função responde { indisponivel: true } e o app segue só com o que ele mesmo entende.
+// Supabase; sem ela, ou sem o segredo PESSOAL_VOZ_LIGADA = "sim" (SEG-03), a função responde { indisponivel: true } e o
+// app segue só com o que ele mesmo entende.
 import { createClient } from "@supabase/supabase-js";
 
 const ORIGENS = ["https://hub.mdcassessoria.com", "https://mdc-tarefas.vercel.app"];
@@ -81,8 +82,10 @@ Deno.serve(async (req) => {
   if (!/^[0-9a-f-]{36}$/i.test(org)) return json(400, { erro: "Família não encontrada." });
   if (texto.length < 3) return json(400, { erro: "Não deu para ouvir. Fale de novo." });
 
+  // SEG-03 (20/11/2026): a IA paga fica desligada até alguém pôr o segredo PESSOAL_VOZ_LIGADA = "sim" no Supabase.
+  // Sem isso a função responde como sem chave e o app segue só com o que ele mesmo entende (nenhuma chamada paga).
   const chave = Deno.env.get("ANTHROPIC_API_KEY");
-  if (!chave) return json(200, { indisponivel: true, lancamentos: [] });
+  if (!chave || Deno.env.get("PESSOAL_VOZ_LIGADA") !== "sim") return json(200, { indisponivel: true, lancamentos: [] });
 
   const usuario = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!, {
     global: { headers: { Authorization: auth } },
