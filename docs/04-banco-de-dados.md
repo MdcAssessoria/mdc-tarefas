@@ -325,7 +325,7 @@ letra para manter a ordem em que rodaram em produção:
 | `svc_usa_extensions` | `063a_svc_usa_extensions.sql` (precisa do papel `api_bancaria_svc`) |
 | `lic_semear_ledgra_ia_link` | `072a_lic_semear_ledgra_ia_link.sql` |
 | `090_bi_gestao_omie`, `090b_bi_relatorio_digitos`, `090c_omie_agendamento` | mesmos nomes |
-| `090_omie_gestao`, `091_omie_restaura_agendamento` | `090d_omie_gestao.sql`, `090e_omie_restaura_agendamento.sql` (o modelo da 090d é removido na `101_omie_remove_modelo_b`) |
+| `090_omie_gestao`, `091_omie_restaura_agendamento` | `090d_omie_gestao.sql`, `090e_omie_restaura_agendamento.sql` (o modelo da 090d é removido na `101_omie_remove_modelo_b`; o plano de contas e o de-para que estavam nela voltam na `104_bi_plano_padrao` como `bi_plano`/`bi_plano_excecoes`) |
 
 Outras diferenças, só de nome: `043_contratos_faturamento` em produção é o `045_contratos_faturamento.sql`; as três
 partes `036_seguranca_auditoria_parte1..3` são o `036_seguranca_auditoria_2026_11.sql`; `083_licenca_ledgra_ponto` e

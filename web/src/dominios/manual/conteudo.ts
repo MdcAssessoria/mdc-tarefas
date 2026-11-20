@@ -4,7 +4,7 @@
 // (components/shell/navegacao.ts): com ele a tela do manual ganha o botão "Ir para a tela".
 // Mudou uma tela ou regra? Atualize o trecho dela aqui no mesmo commit e acrescente uma linha em "Controle de versões".
 
-export const VERSAO_MANUAL = { numero: "2.1", data: "20/11/2026" };
+export const VERSAO_MANUAL = { numero: "2.2", data: "20/11/2026" };
 
 export const MANUAL_MD = `
 ## Como usar este manual
@@ -225,7 +225,7 @@ DRE e fluxo de caixa (DFC) gerenciais de um grupo de empresas, mês a mês, a pa
 
 1. **Lançamentos complementares:** toque em **Novo lançamento**, escolha empresa, mês, linha da DRE e/ou do DFC, valor positivo e histórico, e grave. Para vários de uma vez, **Baixar modelo**, preencha e **Importar Excel**.
 2. Para desfazer um lançamento, toque em **Cancelar** e escreva o motivo.
-3. **Orçamento:** escolha empresa, ano e **DRE** ou **Fluxo de caixa**, digite a meta de cada mês (valor positivo; despesa e pagamento saem negativos no relatório) e toque em **Gravar**. Célula em branco = sem meta.
+3. **Orçamento:** escolha empresa, ano (de dois anos atrás até cinco à frente) e **DRE** ou **Fluxo de caixa**, digite a meta de cada mês (valor positivo; despesa e pagamento saem negativos no relatório) e toque em **Gravar**. Célula em branco = sem meta.
 4. Para o ano todo de uma vez, **Baixar planilha**, preencha e **Importar Excel**. A importação grava tudo ou nada.
 
 ## Atendimento
@@ -375,4 +375,5 @@ Os sistemas que a MDC licencia aos clientes (Ledgra ERP, EXato e os próximos): 
 | 2.0 | 20/11/2026 | Segurança: a senha nova precisa ser diferente da provisória; licença com **usuários a conferir** quando o sistema informa muito mais pessoas do que o contratado; o link de assinatura mostra o CPF mascarado depois de assinado. |
 | 1.9 | 20/11/2026 | **BI de Gestão**: gráficos novos, legíveis também no celular: resultado acumulado no gráfico resultado × caixa, cascata da DRE da receita ao resultado, participação de cada empresa na receita e no resultado do grupo (aba Empresas) e balão com os valores do mês. |
 | 2.1 | 20/11/2026 | **Licenças → Nova licença**: botão **Cadastrar empresa nova** no passo 1, para cadastrar pelo CNPJ uma empresa que ainda não é cliente (grupo "Só licença") sem sair da janela. |
+| 2.2 | 20/11/2026 | **BI de Gestão**: o orçamento aceita mais anos (dois para trás e cinco para a frente). |
 `;

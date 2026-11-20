@@ -35,7 +35,8 @@ mês e no total do período. Os dados vêm do sistema do cliente (Omie) e dos la
     clientes (notas autorizadas) e fornecedores (títulos), e liquidez.
   - **Lançamentos:** lançamentos complementares (fora do Omie: novo, importar Excel, modelo, cancelar com motivo) e
     **Orçamento** (grade linha × 12 meses por empresa e ano, gravar, desfazer, importar e baixar planilha).
-- **Aviso "Não classificado":** categorias do Omie sem conta em `bi_mapa_categorias`.
+- **Aviso "Não classificado":** categorias do Omie sem conta do plano (código na descrição ou exceção) nem regra antiga.
+- **Orçamento:** anos de 2 para trás até 5 para a frente (o ano escolhido sempre aparece).
 - **Gráficos** (`componentes/GraficoBarras.tsx`, contas em `graficos.ts`): SVG desenhado na largura real da tela (texto
   com tamanho de verdade no celular), escala com números redondos, balão com os valores do mês.
 - **Celular:** tabelas em cartões; na cascata o nome vai acima da barra.
@@ -58,6 +59,10 @@ mês e no total do período. Os dados vêm do sistema do cliente (Omie) e dos la
 | `bi_grupos`, `bi_grupo_empresas` | Grupos de empresas e suas empresas |
 | `bi_linhas` | Contas do DRE e do DFC (padrão e por organização), com subtotais em `soma` |
 | `bi_mapa_categorias`, `bi_cfop_regras` | Categoria do Omie → conta; CFOP → linha da DRE |
+| `bi_plano` (104) | Plano de contas gerencial: padrão MDC (org nula) = plano unificado do Edvaldo (95 contas, 3.1.01 a 8.1.02) + contas fora da DRE (9.x, transferências 0.0.01). Cada conta diz a linha da DRE e do fluxo; `dre_por_titulo = false` nas contas que a DRE pega das notas (venda, impostos sobre a venda, devoluções) |
+| `bi_plano_excecoes` (104) | Categoria sem código no nome (ou com outra conta) → conta do plano, por empresa ou organização; `a_conferir` para as 21 recuperadas do de-para antigo (090d) |
+| `app.bi_conta`, `app.bi_fatos` (104) | Classificação (exceção → transferência 0.01.* → código "x.y.zz - " na descrição → regra antiga → não classificado) e cada fato do relatório com a origem (nota, imposto, título, baixa, complementar) |
+| `bi_relatorio_contas(...)`, `bi_origem(..., linha, conta, mês)` (104) | Relatório até a conta do plano e as notas/títulos que formam um valor (até 5.000, com registro de acesso) |
 | `omie_notas`, `omie_nota_cfops`, `omie_movimentos` | Dados copiados do Omie pela função `omie-sincronizar` (código em `supabase/functions/omie-sincronizar`, no repositório desde 20/11/2026; agendador a cada 5 min com `x-agente-token`) |
 | `bi_complementares` | Lançamentos complementares (fora do Omie) |
 | `bi_acessos`, `app.bi_acessos_log` (097) | Pedidos de acesso (pedido, aprovado, negado, encerrado; validade) e registro de quem abriu os números |
@@ -80,6 +85,7 @@ Componentes em `web/src/dominios/bi/componentes/`.
   a `090e_omie_restaura_agendamento`; ALT-02, ver `docs/04` §4.5.1). O segundo modelo do Omie
   (`omie_contas`/`gestao_*`, na `090d`), que nunca teve uso, sai na `101_omie_remove_modelo_b` (NOV-02, decisão do
   Edvaldo em 20/11/2026: fica o modelo `bi_*`).
+- **Desde a 104 (20/11/2026) o plano do Edvaldo é o padrão** e a classificação sai do código na descrição da categoria; as regras abaixo só valem para categoria sem código e sem exceção.
 - **Mapa de categorias do Grupo Clara é PROVISÓRIO (20/11/2026):** 254 regras por empresa carregadas a partir da
   sugestão da planilha `Classificacao_categorias_Omie_Grupo_Clara.xlsx` (código do plano gerencial do Omie), autorizadas
   pelo Edvaldo como ponto de partida. Ficaram de fora, em "Não classificado", 5 categorias para ele decidir: "Contas a
