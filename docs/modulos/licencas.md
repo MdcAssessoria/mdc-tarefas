@@ -326,18 +326,3 @@ empresas do grupo que usam aquele sistema (`JanelaEmpresasLicenca`, atalho "Marc
   Domínio. Sem chave válida: `invalida`, `cnpj_diferente`, `bloqueada` ou `sem_contrato`, sem empresas.
 - Uso: EXato › Administração › Empresas e marcas › Nova empresa › **Trazer do HUB** (preenche o CNPJ da matriz e consulta
   a Receita). Testes: `supabase/testes/166_empresas_095.sql`.
-
-### Módulos de cada empresa (migração 096, 20/11/2026)
-
-Fluxo do Edvaldo: o HUB é a origem. Cadastra a empresa (CNPJ + Receita), a licença diz o sistema, o pacote e os usuários
-(um total para o grupo), a 095 diz as empresas e aqui, se quiser, os módulos de cada uma (na mesma janela, "Todos os
-módulos" / "N de M módulos").
-
-- `lic_contrato_empresa_modulos` (contrato, cliente, modulos[]): sem linha = todo o pacote; grava só
-  `lic_contrato_empresa_modulos_definir(contrato, cliente, modulos[])` (operar; empresa da licença; módulos dentro do
-  pacote; vazio ou pacote inteiro apaga a linha). Tirar a empresa da licença (095) apaga a escolha dela.
-- `app.lic_modulos_do_contrato(contrato)` = mesma regra do `lic_validar`; `lic_contrato_modulos(contrato)` dá o pacote com
-  o nome para a tela.
-- `lic_empresas` passa a devolver `modulos` (pacote), `usuarios_incluidos` e, em cada empresa, `modulos` (null = todos).
-- O EXato (082) busca isso uma vez por dia e pelo botão "Buscar no HUB agora": cria a empresa "A concluir" com a matriz e
-  as filiais e aplica os módulos em "Módulos por empresa". Testes: `supabase/testes/167_modulos_096.sql`.

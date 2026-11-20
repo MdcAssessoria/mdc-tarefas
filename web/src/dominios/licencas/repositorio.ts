@@ -124,7 +124,3 @@ export const revogarChave = (id: string, motivo: string) => rpc<null>("lic_ledgr
 /** 095: empresas que usam o sistema da licença além do cliente dela (troca a lista inteira). Devolve quantas ficaram. */
 export const definirEmpresasDaLicenca = (contrato: string, clientes: string[]) =>
   rpc<number>("lic_contrato_empresas_definir", { p_contrato: contrato, p_clientes: clientes });
-
-/** 096: módulos de uma empresa da licença (vazio = todo o pacote). */
-export const definirModulosDaEmpresa = (contrato: string, cliente: string, modulos: string[]) =>
-  rpc<number>("lic_contrato_empresa_modulos_definir", { p_contrato: contrato, p_cliente: cliente, p_modulos: modulos });

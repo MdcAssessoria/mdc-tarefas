@@ -4,7 +4,7 @@
 // (components/shell/navegacao.ts): com ele a tela do manual ganha o botão "Ir para a tela".
 // Mudou uma tela ou regra? Atualize o trecho dela aqui no mesmo commit e acrescente uma linha em "Controle de versões".
 
-export const VERSAO_MANUAL = { numero: "1.6", data: "20/11/2026" };
+export const VERSAO_MANUAL = { numero: "1.5", data: "19/11/2026" };
 
 export const MANUAL_MD = `
 ## Como usar este manual
@@ -276,7 +276,7 @@ Os sistemas que a MDC licencia aos clientes (Ledgra ERP, EXato e os próximos): 
 3. Em **Valor e usuários**, informe o valor mensal, quantos **usuários** estão incluídos e o valor por usuário a mais. Em **Quando passar do limite**, escolha **Liberar e cobrar** (o usuário a mais entra na cobrança do mês seguinte) ou **Não deixar passar** (o sistema não cadastra pessoa além do limite).
 4. Em **Como cobrar**, deixe **Mensalidade da licença** (vai junto com o honorário) ou escolha um **contrato a receber** de Contratos: aí a fatura dele leva a licença e o usuário a mais.
 5. Depois de salvar, em **Ações › Chave do sistema**, gere a chave e cole no sistema do cliente. A chave começa com o prefixo do sistema (LDG-… no Ledgra, EXA-… no EXato).
-6. Se o grupo do cliente tem várias empresas usando o mesmo sistema (ex.: no EXato, EXRH, TEAM Leasing e ACB), abra **Ações › Empresas no sistema** e marque as empresas do grupo (há o atalho "Marcar as filiais do mesmo CNPJ"). Em cada empresa marcada (e no próprio cliente da licença) dá para escolher os **módulos**: sem escolha, a empresa usa todo o pacote. No sistema, essas empresas chegam sozinhas como "A concluir" para o administrador terminar o cadastro — nunca aparece a carteira da MDC.
+6. Se o grupo do cliente tem várias empresas usando o mesmo sistema (ex.: no EXato, EXRH, TEAM Leasing e ACB), abra **Ações › Empresas no sistema** e marque as empresas do grupo (há o atalho "Marcar as filiais do mesmo CNPJ"). No sistema, a tela **Nova empresa › Trazer do HUB** mostra só o cliente da licença e estas empresas — nunca a carteira da MDC.
 
 **Dicas:** a coluna **Usuários** mostra quantas pessoas o sistema informou neste mês (ex.: "12 de 10 usuário(s) (2 a mais)"). O filtro **Sistema** mostra só as licenças de um sistema.
 
@@ -343,5 +343,4 @@ Os sistemas que a MDC licencia aos clientes (Ledgra ERP, EXato e os próximos): 
 | 1.3 | 19/11/2026 | **Pacotes de licença** (Sistemas): a MDC monta os pacotes de cada sistema com módulos, preço, usuários incluídos (qualquer número ou sem limite), valor do usuário a mais e o que fazer ao passar do limite; a licença puxa esses dados do pacote. |
 | 1.4 | 19/11/2026 | **BI de Gestão**: DRE e fluxo de caixa do grupo de empresas, mês a mês, a partir do Omie, com escolha das empresas, opção de tirar as operações entre elas e PDF/Excel. |
 | 1.5 | 19/11/2026 | **Empresas no sistema** (Sistemas › Licenças › Ações): a MDC marca as empresas do grupo que usam o sistema com aquela licença; o EXato traz do HUB só essas na tela Nova empresa. |
-| 1.6 | 20/11/2026 | **Módulos por empresa** na licença (Empresas no sistema): sem escolha, todo o pacote; o EXato aplica ao receber as empresas. |
 `;
