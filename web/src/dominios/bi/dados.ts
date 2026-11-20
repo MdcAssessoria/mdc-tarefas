@@ -1,8 +1,9 @@
-// BI de Gestão: leitura e gravação no banco (funções bi_* das migrações 097 e 104). A permissão é conferida no banco em cada
+// BI de Gestão: leitura e gravação no banco (funções bi_* das migrações 097, 104 e 105). A permissão é conferida no banco em cada
 // chamada (app.bi_pode_ver / app.bi_pode_lancar); a tela só mostra o que o banco devolve.
 import { supabase } from "@/lib/supabase";
 import { traduzirErro } from "@/lib/erros";
 import type { ContaBanco, OrigemBanco } from "./detalhe";
+import type { SaldoBanco } from "./saldos";
 import { montarMatriz } from "./relatorio";
 import type { LinhaBanco, Matriz, TipoRelatorio } from "./relatorio";
 import type { Indicadores } from "./indicadores";
@@ -191,3 +192,79 @@ export async function lerOrcamento(cliente: string, rel: TipoRelatorio, ano: num
 
 export const gravarOrcamento = (linhas: OrcamentoBanco[], arquivo: string | null) =>
   rpc<ResultadoGravacao>("bi_orcamento_gravar", { p_linhas: linhas, p_arquivo: arquivo });
+
+// ---------------------------------------------------------------- 105: classificação, plano e saldos dos bancos
+
+export interface CategoriaClassificacao {
+  cliente_id: string;
+  empresa: string;
+  categoria_codigo: string;
+  descricao: string | null;
+  conta: string | null;
+  conta_nome: string | null;
+  /** codigo = pelo código na descrição; excecao = escolhida pela equipe; transferencia = entre contas; sem = sem conta. */
+  origem: "codigo" | "excecao" | "transferencia" | "sem";
+  excecao_id: string | null;
+  a_conferir: boolean;
+  observacao: string | null;
+  alterado_em: string | null;
+  valor: number;
+  lancamentos: number;
+}
+
+export interface ContaPlano {
+  codigo: string;
+  nome: string;
+  tipo: string;
+  ordem: number;
+  linha_dre: string | null;
+  linha_dfc: string | null;
+  /** Linha do fluxo para o que entra, quando difere da do que sai (105, ex.: 9.1.01). */
+  linha_dfc_entrada: string | null;
+}
+
+/** Plano de contas do BI (padrão MDC + contas próprias da organização, que ganham do padrão). */
+export async function lerPlano(): Promise<ContaPlano[]> {
+  const { data, error } = await supabase()
+    .from("bi_plano")
+    .select("codigo, nome, tipo, ordem, linha_dre, linha_dfc, linha_dfc_entrada, org_id")
+    .eq("ativo", true)
+    .order("ordem");
+  if (error) throw new Error(traduzirErro(error));
+  const porCodigo = new Map<string, ContaPlano>();
+  for (const p of ((data ?? []) as (ContaPlano & { org_id: string | null })[]).sort(
+    (a, b) => Number(a.org_id !== null) - Number(b.org_id !== null),
+  )) {
+    const { org_id: _org, ...conta } = p;
+    porCodigo.set(conta.codigo, conta);
+  }
+  return [...porCodigo.values()].sort((a, b) => a.ordem - b.ordem);
+}
+
+export const lerClassificacao = (clientes: string[], de: string, ate: string) =>
+  rpc<CategoriaClassificacao[]>("bi_classificacao_listar", { p_clientes: clientes, p_inicio: de, p_fim: ate });
+
+export const salvarClassificacao = (
+  clientes: string[],
+  cliente: string,
+  categoria: string,
+  plano: string,
+  mesmoNome: boolean,
+  observacao: string | null,
+) =>
+  rpc<number>("bi_excecao_salvar", {
+    p_clientes: clientes,
+    p_cliente: cliente,
+    p_categoria: categoria,
+    p_plano: plano,
+    p_mesmo_nome: mesmoNome,
+    p_observacao: observacao,
+  });
+
+export const conferirClassificacao = (clientes: string[], id: string) =>
+  rpc<void>("bi_excecao_conferir", { p_clientes: clientes, p_id: id });
+export const excluirClassificacao = (clientes: string[], id: string, motivo: string) =>
+  rpc<void>("bi_excecao_excluir", { p_clientes: clientes, p_id: id, p_motivo: motivo });
+
+export const lerSaldos = (clientes: string[], de: string, ate: string) =>
+  rpc<SaldoBanco[]>("bi_saldos", { p_clientes: clientes, p_inicio: de, p_fim: ate });

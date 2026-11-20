@@ -68,6 +68,9 @@ mês e no total do período. Os dados vêm do sistema do cliente (Omie) e dos la
 | `bi_plano_excecoes` (104) | Categoria sem código no nome (ou com outra conta) → conta do plano, por empresa ou organização; `a_conferir` para as 21 recuperadas do de-para antigo (090d) |
 | `app.bi_conta`, `app.bi_fatos` (104) | Classificação (exceção → transferência 0.01.* → código "x.y.zz - " na descrição → regra antiga → não classificado) e cada fato do relatório com a origem (nota, imposto, título, baixa, complementar) |
 | `bi_relatorio_contas(...)`, `bi_origem(..., linha, conta, mês)` (104) | Relatório até a conta do plano e as notas/títulos que formam um valor (até 5.000, com registro de acesso) |
+| `bi_plano.linha_dfc_entrada` (105) | Linha do fluxo para o que ENTRA na conta quando difere da do que sai: 9.1.01 (adiantamentos, cartão, duplicidades) recebida vai para "Outros recebimentos"; paga continua em despesas |
+| `bi_classificacao_listar`, `bi_excecao_salvar/conferir/excluir`, `bi_plano_excecoes_hist` (105) | Aba **Classificação** (só a equipe MDC: `hub_pode(org, 'bi_gestao', 'gerir')`, decisão do Edvaldo 20/11/2026): categorias usadas com a conta, de onde veio (código, equipe, transferência, sem) e o valor no período; classificar (opção de aplicar às outras empresas escolhidas com a mesma categoria e nome), conferir e desfazer (motivo ≥ 5 letras). Tudo vai para o histórico |
+| `omie_saldos`, `bi_saldos(...)` (105) | Saldo de cada conta corrente no começo e no fim do mês, trazido pela `omie-sincronizar` (`ListarContasCorrentes` + `ListarExtrato`: os 2 últimos meses a cada rodada e até 4 meses que faltam desde `sincronizar_desde`; falha nesta parte não derruba a rodada e fica no resumo). Leitura com a mesma permissão dos relatórios |
 | `omie_notas`, `omie_nota_cfops`, `omie_movimentos` | Dados copiados do Omie pela função `omie-sincronizar` (código em `supabase/functions/omie-sincronizar`, no repositório desde 20/11/2026; agendador a cada 5 min com `x-agente-token`) |
 | `bi_complementares` | Lançamentos complementares (fora do Omie) |
 | `bi_acessos`, `app.bi_acessos_log` (097) | Pedidos de acesso (pedido, aprovado, negado, encerrado; validade) e registro de quem abriu os números |
@@ -76,7 +79,16 @@ mês e no total do período. Os dados vêm do sistema do cliente (Omie) e dos la
 | `bi_indicadores(clientes, inicio, fim, eliminar)` (097) | PMR, PMP, aberto por faixa, maiores clientes e fornecedores, liquidez do balancete |
 | `bi_orcamento`, `bi_orcamento_gravar(jsonb, arquivo)`, `bi_orcado(...)` (097) | Orçamento por empresa, linha e mês (valor positivo; branco apaga; tudo ou nada); `bi_orcado` devolve no formato do relatório com o sinal pela natureza da linha |
 
-Regras puras da tela em `web/src/dominios/bi/`: `relatorio.ts` (matriz, período, margens), `comparar.ts` (períodos de
+Aba **Resultado × caixa** (105, `conciliacao.ts`): a DRE (competência) e o fluxo (pagamento) somados por grupo de contas do
+plano (vendas, outras receitas, impostos, pessoal com a mão de obra da produção, custos, despesas, financeiras, sem conta),
+com a diferença e o alerta — atenção a partir de 10%, alerta a partir de 25% da diferença sobre o maior lado, só acima de
+R$ 5 mil (decisão do Edvaldo, 20/11/2026) — e a ponte resultado + diferenças + "só caixa" (empréstimos, parcelamentos,
+adiantamentos, investimentos, sócios) = variação do caixa (CPC 03 (R2), item 20A). Abaixo, os saldos dos bancos
+(`saldos.ts`): início, fim e a diferença para a variação do fluxo (o que passou pelo banco sem conta a pagar/receber). Os
+saldos aparecem também na aba Fluxo de caixa.
+
+Regras puras da tela em `web/src/dominios/bi/`: `relatorio.ts` (matriz, período, margens), `classificacao.ts`,
+`conciliacao.ts`, `saldos.ts`, `detalhe.ts`, `margens.ts`, `comparar.ts` (períodos de
 comparação, horizontal, vertical, por empresa), `indicadores.ts` e `lancamentos.ts` (leitura das planilhas), com testes.
 Componentes em `web/src/dominios/bi/componentes/`.
 
@@ -96,8 +108,9 @@ Componentes em `web/src/dominios/bi/componentes/`.
   pelo Edvaldo como ponto de partida. Ficaram de fora, em "Não classificado", 5 categorias para ele decidir: "Contas a
   classificar" (Clara Company 1.04.91 e 2.13.99) e "Cartão de crédito a pagar" (2.04.84 nas três). A classificação final
   é julgamento do Edvaldo; ao receber a planilha revisada, substituir as regras (por `cliente_id` + `prefixo`).
-- A MDC ainda não tem tela para manter grupos e o mapa de categorias; hoje isso é feito pela equipe técnica.
-  Desde a 099 não há gravação direta nessas tabelas pelo site (NOV-01): a tela futura deve gravar por função
-  `security definer` com `hub_pode(org, 'bi_gestao', 'gerir')` e recusar organização pessoal.
+- Desde a 105 a classificação das categorias tem tela (aba Classificação). Ainda sem tela: manter os grupos de empresas
+  (feito pela equipe técnica). Desde a 099 não há gravação direta nessas tabelas pelo site (NOV-01).
+- Os nomes dos métodos de saldo do Omie (`ListarContasCorrentes`, `ListarExtrato`, `nSaldoAnterior`/`nSaldoAtual`) foram
+  conferidos na primeira rodada em produção; se o Omie mudar, o resumo da rodada mostra "Saldos dos bancos: …".
   Lançamentos complementares e orçamento têm tela desde a v2.
 - Nome do fornecedor: incluir na sincronização do Omie.

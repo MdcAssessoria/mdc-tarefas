@@ -17,6 +17,8 @@ export interface ContextoBi {
   logoUrl: string | null;
   /** Nível operar na ferramenta BI (lançamentos e orçamento). */
   podeLancar: boolean;
+  /** Nível gerir na ferramenta BI: a equipe MDC classifica as categorias do Omie (aba Classificação). */
+  podeClassificar: boolean;
   avisar: (texto: string, tom?: "erro" | "sucesso" | "atencao") => void;
 }
 

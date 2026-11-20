@@ -1385,6 +1385,19 @@ const INTERACOES = {
     await origem.getByText("Folha de pagamento janeiro").first().waitFor({ timeout: 5000 });
     await foto?.("dre-origem", { soTela: true });
     await p.keyboard.press("Escape");
+    // 105: Resultado × caixa (alertas e saldos dos bancos) e Classificação (equipe MDC)
+    await abas.getByRole("tab", { name: "Resultado × caixa" }).click();
+    await p.getByText("Saldo dos bancos no fim").waitFor({ timeout: 8000 });
+    await foto?.("resultado-x-caixa");
+    await abas.getByRole("tab", { name: "Classificação" }).click();
+    await p.getByText("Cartão de crédito a pagar").waitFor({ timeout: 8000 });
+    await foto?.("classificacao");
+    await p.getByRole("button", { name: "Classificar", exact: true }).first().click();
+    const classificar = p.getByRole("dialog", { name: "Classificar categoria" });
+    await classificar.getByLabel("Conta do plano").selectOption("9.1.01");
+    await classificar.getByText("Não entra na DRE").waitFor({ timeout: 5000 });
+    await foto?.("classificar", { soTela: true });
+    await p.keyboard.press("Escape");
     await abas.getByRole("tab", { name: "Comparar" }).click();
     await p.getByLabel("Comparar com").selectOption("orcado");
     await p.getByText("realizado × orçado").waitFor({ timeout: 8000 });
