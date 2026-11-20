@@ -20,7 +20,7 @@ mês e no total do período. Os dados vêm do sistema do cliente (Omie) e dos la
 
 | Objeto | Papel |
 | --- | --- |
-| `bi_relatorio(p_relatorio, p_clientes, p_inicio, p_fim, p_eliminar)` | Monta o relatório (uma linha por conta e mês). `security invoker`: as tabelas respondem pela RLS |
+| `bi_relatorio(p_relatorio, p_clientes, p_inicio, p_fim, p_eliminar)` | Monta o relatório (uma linha por conta e mês). Desde a 094, `security definer` com `search_path` fixo: confere `app.bi_pode_ver` em **cada** empresa pedida e recusa organizações misturadas; depois calcula sem a RLS linha a linha (8,8 s → 0,12 s no Grupo Clara) |
 | `app.bi_pode_ver(cliente)` | Quem vê: ferramenta `bi_gestao` (nível ver) na organização ou Portal do Cliente com o BI liberado |
 | `bi_grupos`, `bi_grupo_empresas` | Grupos de empresas e suas empresas |
 | `bi_linhas` | Contas do DRE e do DFC (padrão e por organização), com subtotais em `soma` |
@@ -32,6 +32,10 @@ As regras puras da tela (matriz linha × mês, período, margens) estão em `web
 testes em `relatorio.test.ts`.
 
 ## Pendências conhecidas
+
+- **Classificação das categorias:** em 19/11/2026 o mapa (`bi_mapa_categorias`) tinha 2 regras para 118 categorias do
+  Omie usadas pelo Grupo Clara; quase toda despesa cai em "Não classificado" (R$ 3,24 mi em 2026) e custos/despesas
+  aparecem zerados. A classificação é decisão contábil do Edvaldo.
 
 - As migrações do BI e do Omie foram aplicadas direto em produção e **não estão no repositório** (reauditoria de
   19/11/2026, ALT-02). Também existe um segundo modelo do Omie (`omie_contas`/`gestao_*`) sem uso (NOV-02). A tela usa
