@@ -587,9 +587,14 @@ begin
     execute format('grant execute on function %s to authenticated, service_role', f);
   end loop;
   foreach f in array array[
-    'app.bi_responsavel(uuid)', 'app.bi_liberado(uuid)', 'app.bi_pode_aprovar(uuid)', 'app.bi_org_dos_clientes(uuid[])',
-    'app.bi_registrar_acesso(uuid, uuid[], text, date, date)', 'app.bi_regra(uuid, uuid, text)'] loop
+    'app.bi_responsavel(uuid)', 'app.bi_liberado(uuid)', 'app.bi_pode_aprovar(uuid)'] loop
     execute format('revoke all on function %s from public, anon', f);
     execute format('grant execute on function %s to authenticated, service_role', f);
+  end loop;
+  -- só usadas dentro das funções security definer: ninguém logado chama direto (evita registro de acesso forjado)
+  foreach f in array array[
+    'app.bi_org_dos_clientes(uuid[])', 'app.bi_registrar_acesso(uuid, uuid[], text, date, date)', 'app.bi_regra(uuid, uuid, text)'] loop
+    execute format('revoke all on function %s from public, anon, authenticated', f);
+    execute format('grant execute on function %s to service_role', f);
   end loop;
 end $$;
