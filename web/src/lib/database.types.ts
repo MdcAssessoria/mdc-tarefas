@@ -8,6 +8,63 @@ export type Database = {
   };
   public: {
     Tables: {
+      bi_acessos: {
+        Row: {
+          cliente_id: string;
+          decidido_em: string | null;
+          decidido_por: string | null;
+          id: string;
+          motivo: string;
+          org_id: string;
+          pedido_em: string;
+          resposta: string | null;
+          situacao: string;
+          user_id: string;
+          valido_ate: string | null;
+        };
+        Insert: {
+          cliente_id: string;
+          decidido_em?: string | null;
+          decidido_por?: string | null;
+          id?: string;
+          motivo: string;
+          org_id: string;
+          pedido_em?: string;
+          resposta?: string | null;
+          situacao?: string;
+          user_id: string;
+          valido_ate?: string | null;
+        };
+        Update: {
+          cliente_id?: string;
+          decidido_em?: string | null;
+          decidido_por?: string | null;
+          id?: string;
+          motivo?: string;
+          org_id?: string;
+          pedido_em?: string;
+          resposta?: string | null;
+          situacao?: string;
+          user_id?: string;
+          valido_ate?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "bi_acessos_cliente_id_fkey";
+            columns: ["cliente_id"];
+            isOneToOne: false;
+            referencedRelation: "clientes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "bi_acessos_org_id_fkey";
+            columns: ["org_id"];
+            isOneToOne: false;
+            referencedRelation: "organizacoes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       bi_cfop_regras: {
         Row: {
           cfop: string;
@@ -303,6 +360,57 @@ export type Database = {
           },
           {
             foreignKeyName: "bi_mapa_categorias_org_id_fkey";
+            columns: ["org_id"];
+            isOneToOne: false;
+            referencedRelation: "organizacoes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      bi_orcamento: {
+        Row: {
+          atualizado_em: string;
+          atualizado_por: string | null;
+          cliente_id: string;
+          competencia: string;
+          id: number;
+          linha: string;
+          org_id: string;
+          relatorio: string;
+          valor: number;
+        };
+        Insert: {
+          atualizado_em?: string;
+          atualizado_por?: string | null;
+          cliente_id: string;
+          competencia: string;
+          id?: number;
+          linha: string;
+          org_id: string;
+          relatorio: string;
+          valor: number;
+        };
+        Update: {
+          atualizado_em?: string;
+          atualizado_por?: string | null;
+          cliente_id?: string;
+          competencia?: string;
+          id?: number;
+          linha?: string;
+          org_id?: string;
+          relatorio?: string;
+          valor?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "bi_orcamento_cliente_id_fkey";
+            columns: ["cliente_id"];
+            isOneToOne: false;
+            referencedRelation: "clientes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "bi_orcamento_org_id_fkey";
             columns: ["org_id"];
             isOneToOne: false;
             referencedRelation: "organizacoes";
@@ -5146,6 +5254,101 @@ export type Database = {
           },
         ];
       };
+      lic_contrato_empresa_modulos: {
+        Row: {
+          alterado_em: string;
+          cliente_id: string;
+          contrato_id: string;
+          modulos: string[];
+          org_id: string;
+          por: string | null;
+        };
+        Insert: {
+          alterado_em?: string;
+          cliente_id: string;
+          contrato_id: string;
+          modulos: string[];
+          org_id: string;
+          por?: string | null;
+        };
+        Update: {
+          alterado_em?: string;
+          cliente_id?: string;
+          contrato_id?: string;
+          modulos?: string[];
+          org_id?: string;
+          por?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "lic_contrato_empresa_modulos_cliente_id_fkey";
+            columns: ["cliente_id"];
+            isOneToOne: false;
+            referencedRelation: "clientes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "lic_contrato_empresa_modulos_contrato_id_fkey";
+            columns: ["contrato_id"];
+            isOneToOne: false;
+            referencedRelation: "lic_contratos";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "lic_contrato_empresa_modulos_org_id_fkey";
+            columns: ["org_id"];
+            isOneToOne: false;
+            referencedRelation: "organizacoes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      lic_contrato_empresas: {
+        Row: {
+          cliente_id: string;
+          contrato_id: string;
+          criado_em: string;
+          org_id: string;
+          por: string | null;
+        };
+        Insert: {
+          cliente_id: string;
+          contrato_id: string;
+          criado_em?: string;
+          org_id: string;
+          por?: string | null;
+        };
+        Update: {
+          cliente_id?: string;
+          contrato_id?: string;
+          criado_em?: string;
+          org_id?: string;
+          por?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "lic_contrato_empresas_cliente_id_fkey";
+            columns: ["cliente_id"];
+            isOneToOne: false;
+            referencedRelation: "clientes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "lic_contrato_empresas_contrato_id_fkey";
+            columns: ["contrato_id"];
+            isOneToOne: false;
+            referencedRelation: "lic_contratos";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "lic_contrato_empresas_org_id_fkey";
+            columns: ["org_id"];
+            isOneToOne: false;
+            referencedRelation: "organizacoes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       lic_contrato_modelo: {
         Row: {
           atualizado_em: string;
@@ -5203,79 +5406,6 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "lic_contrato_modelo_versoes_org_id_fkey";
-            columns: ["org_id"];
-            isOneToOne: false;
-            referencedRelation: "organizacoes";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
-      lic_contrato_empresa_modulos: {
-        Row: {
-          alterado_em: string;
-          cliente_id: string;
-          contrato_id: string;
-          modulos: string[];
-          org_id: string;
-          por: string | null;
-        };
-        Insert: {
-          alterado_em?: string;
-          cliente_id: string;
-          contrato_id: string;
-          modulos: string[];
-          org_id: string;
-          por?: string | null;
-        };
-        Update: {
-          alterado_em?: string;
-          cliente_id?: string;
-          contrato_id?: string;
-          modulos?: string[];
-          org_id?: string;
-          por?: string | null;
-        };
-        Relationships: [];
-      };
-      lic_contrato_empresas: {
-        Row: {
-          cliente_id: string;
-          contrato_id: string;
-          criado_em: string;
-          org_id: string;
-          por: string | null;
-        };
-        Insert: {
-          cliente_id: string;
-          contrato_id: string;
-          criado_em?: string;
-          org_id: string;
-          por?: string | null;
-        };
-        Update: {
-          cliente_id?: string;
-          contrato_id?: string;
-          criado_em?: string;
-          org_id?: string;
-          por?: string | null;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "lic_contrato_empresas_cliente_id_fkey";
-            columns: ["cliente_id"];
-            isOneToOne: false;
-            referencedRelation: "clientes";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "lic_contrato_empresas_contrato_id_fkey";
-            columns: ["contrato_id"];
-            isOneToOne: false;
-            referencedRelation: "lic_contratos";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "lic_contrato_empresas_org_id_fkey";
             columns: ["org_id"];
             isOneToOne: false;
             referencedRelation: "organizacoes";
@@ -8781,6 +8911,40 @@ export type Database = {
         Returns: string;
       };
       agente_token_confere: { Args: { p_token: string }; Returns: boolean };
+      bi_acesso_decidir: {
+        Args: {
+          p_aprovar: boolean;
+          p_dias?: number;
+          p_id: string;
+          p_resposta?: string;
+        };
+        Returns: undefined;
+      };
+      bi_acesso_encerrar: {
+        Args: { p_id: string; p_motivo?: string };
+        Returns: undefined;
+      };
+      bi_acesso_pedir: {
+        Args: { p_cliente: string; p_motivo: string };
+        Returns: string;
+      };
+      bi_acessos_listar: {
+        Args: never;
+        Returns: {
+          cliente_id: string;
+          decidido_em: string;
+          empresa: string;
+          eu: boolean;
+          id: string;
+          motivo: string;
+          pedido_em: string;
+          pessoa: string;
+          posso_decidir: boolean;
+          resposta: string;
+          situacao: string;
+          valido_ate: string;
+        }[];
+      };
       bi_complementar_cancelar: {
         Args: { p_id: number; p_motivo: string };
         Returns: undefined;
@@ -8792,6 +8956,64 @@ export type Database = {
       bi_complementar_importar: {
         Args: { p_arquivo: string; p_linhas: Json; p_origem?: string };
         Returns: Json;
+      };
+      bi_empresas: {
+        Args: never;
+        Returns: {
+          cliente_id: string;
+          cnpj: string;
+          codigo_dominio: string;
+          eliminar_intragrupo: boolean;
+          grupo: string;
+          grupo_id: string;
+          liberado: boolean;
+          nome: string;
+          pedido_situacao: string;
+          pode_aprovar: boolean;
+          ultima_sync: string;
+          valido_ate: string;
+        }[];
+      };
+      bi_indicadores: {
+        Args: {
+          p_clientes: string[];
+          p_eliminar?: boolean;
+          p_fim: string;
+          p_inicio: string;
+        };
+        Returns: Json;
+      };
+      bi_orcado: {
+        Args: {
+          p_clientes: string[];
+          p_fim: string;
+          p_inicio: string;
+          p_relatorio: string;
+        };
+        Returns: {
+          codigo: string;
+          competencia: string;
+          natureza: string;
+          nome: string;
+          ordem: number;
+          subtotal: boolean;
+          valor: number;
+        }[];
+      };
+      bi_orcamento_gravar: {
+        Args: { p_arquivo?: string; p_linhas: Json };
+        Returns: Json;
+      };
+      bi_registro_acessos: {
+        Args: { p_dias?: number };
+        Returns: {
+          ate: string;
+          consulta: string;
+          de: string;
+          em: string;
+          empresas: string;
+          pessoa: string;
+        }[];
       };
       bi_relatorio: {
         Args: {
@@ -9430,11 +9652,11 @@ export type Database = {
         Args: { p_clientes: string[]; p_contrato: string };
         Returns: number;
       };
-      lic_contrato_modulos: { Args: { p_contrato: string }; Returns: Json };
       lic_contrato_modelo_salvar: {
         Args: { p_org: string; p_texto: string };
         Returns: number;
       };
+      lic_contrato_modulos: { Args: { p_contrato: string }; Returns: Json };
       lic_definir_parametros: {
         Args: { p_dias_sugerir_bloqueio: number; p_org: string };
         Returns: undefined;
