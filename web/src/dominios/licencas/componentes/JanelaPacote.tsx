@@ -61,7 +61,13 @@ export function JanelaPacote({
   const adicional = valorOuZero(f.adicional);
   const exemplo = f.exemplo.trim() ? Number(f.exemplo) : (usuarios ?? 5) + 2;
   const resumo = resumoPacote(
-    { precosModulos: marcados.map((p) => p.preco), preco, usuarios_incluidos: usuarios, valor_usuario_adicional: adicional, excedente: f.excedente },
+    {
+      precosModulos: marcados.map((p) => p.preco),
+      preco,
+      usuarios_incluidos: usuarios,
+      valor_usuario_adicional: adicional,
+      excedente: f.excedente,
+    },
     Number.isInteger(exemplo) && exemplo > 0 ? exemplo : 1,
   );
   const travaSistema = !!pacote && emUso > 0;
@@ -91,7 +97,11 @@ export function JanelaPacote({
         valor_usuario_adicional: adicional,
         excedente: f.excedente,
       });
-      aoSalvar(pacote ? "Pacote atualizado. As licenças já fechadas continuam como foram combinadas." : "Pacote criado. Ele já aparece ao cadastrar uma licença.");
+      aoSalvar(
+        pacote
+          ? "Pacote atualizado. As licenças já fechadas continuam como foram combinadas."
+          : "Pacote criado. Ele já aparece ao cadastrar uma licença.",
+      );
     } catch (er) {
       setErro(traduzirErro(er));
       setSalvando(false);
@@ -148,13 +158,17 @@ export function JanelaPacote({
               })}
             </div>
             {travaSistema && (
-              <p className="text-xs text-neutral-600">O pacote já está em {emUso} licença(s): o sistema não muda. Para outro sistema, monte outro pacote.</p>
+              <p className="text-xs text-neutral-600">
+                O pacote já está em {emUso} licença(s): o sistema não muda. Para outro sistema, monte outro pacote.
+              </p>
             )}
           </fieldset>
 
           <fieldset className="space-y-2">
             <legend className="flex w-full items-center justify-between text-sm font-medium">
-              <span>Módulos do pacote ({marcados.length} de {modulos.length})</span>
+              <span>
+                Módulos do pacote ({marcados.length} de {modulos.length})
+              </span>
               {modulos.length > 0 && (
                 <button
                   type="button"
@@ -183,7 +197,9 @@ export function JanelaPacote({
                         type="checkbox"
                         className="mt-0.5"
                         checked={sel}
-                        onChange={(e) => mudar({ produtos: e.target.checked ? [...f.produtos, p.id] : f.produtos.filter((x) => x !== p.id) })}
+                        onChange={(e) =>
+                          mudar({ produtos: e.target.checked ? [...f.produtos, p.id] : f.produtos.filter((x) => x !== p.id) })
+                        }
                       />
                       <span className="min-w-0 flex-1">
                         <span className="block font-medium">{p.nome}</span>
@@ -214,14 +230,20 @@ export function JanelaPacote({
                 />
               </label>
               <label className="flex items-center gap-2 self-end pb-2 text-sm">
-                <input type="checkbox" checked={!f.temLimite} onChange={(e) => mudar({ temLimite: !e.target.checked })} /> Sem limite de usuários
+                <input type="checkbox" checked={!f.temLimite} onChange={(e) => mudar({ temLimite: !e.target.checked })} /> Sem limite de
+                usuários
               </label>
             </div>
             {f.temLimite && (
               <>
                 <label className="campo">
                   <span>Valor de cada usuário a mais, por mês (R$)</span>
-                  <input inputMode="decimal" value={f.adicional} onChange={(e) => mudar({ adicional: e.target.value })} placeholder="0,00" />
+                  <input
+                    inputMode="decimal"
+                    value={f.adicional}
+                    onChange={(e) => mudar({ adicional: e.target.value })}
+                    placeholder="0,00"
+                  />
                 </label>
                 <fieldset className="space-y-1">
                   <legend className="text-sm text-neutral-700">Quando passar do limite</legend>
@@ -231,8 +253,17 @@ export function JanelaPacote({
                       ["bloquear", "Bloqueia", "O sistema não deixa ativar a pessoa além do limite."],
                     ] as const
                   ).map(([v, t, d]) => (
-                    <label key={v} className={`cartao flex cursor-pointer items-start gap-2 p-2.5 text-sm ${f.excedente === v ? "ring-2 ring-[var(--marca)]" : ""}`}>
-                      <input type="radio" name="excedente" className="mt-0.5" checked={f.excedente === v} onChange={() => mudar({ excedente: v })} />
+                    <label
+                      key={v}
+                      className={`cartao flex cursor-pointer items-start gap-2 p-2.5 text-sm ${f.excedente === v ? "ring-2 ring-[var(--marca)]" : ""}`}
+                    >
+                      <input
+                        type="radio"
+                        name="excedente"
+                        className="mt-0.5"
+                        checked={f.excedente === v}
+                        onChange={() => mudar({ excedente: v })}
+                      />
                       <span>
                         <span className="block font-medium">{t}</span>
                         <span className="block text-xs text-neutral-500">{d}</span>
@@ -248,7 +279,12 @@ export function JanelaPacote({
             <legend className="px-1 text-sm font-medium">Preço</legend>
             <label className="campo">
               <span>Preço do pacote por mês (R$)</span>
-              <input inputMode="decimal" value={f.preco} onChange={(e) => mudar({ preco: e.target.value })} placeholder={valorParaCampo(resumo.avulsos)} />
+              <input
+                inputMode="decimal"
+                value={f.preco}
+                onChange={(e) => mudar({ preco: e.target.value })}
+                placeholder={valorParaCampo(resumo.avulsos)}
+              />
             </label>
             <dl className="grid grid-cols-2 gap-2 text-sm">
               <div>
@@ -280,11 +316,16 @@ export function JanelaPacote({
               Mensalidade: <strong className="tabular-nums">{brl(resumo.mensalidade)}</strong>
               {resumo.adicionais > 0 && f.excedente === "cobrar" && ` (pacote + ${resumo.adicionais} usuário(s) a mais)`}
             </p>
-            {resumo.bloqueia && <p className="text-amber-800">Com &ldquo;Bloqueia&rdquo;, só {usuarios} pessoa(s) conseguem acesso; as outras ficam barradas.</p>}
+            {resumo.bloqueia && (
+              <p className="text-amber-800">
+                Com &ldquo;Bloqueia&rdquo;, só {usuarios} pessoa(s) conseguem acesso; as outras ficam barradas.
+              </p>
+            )}
           </div>
 
           <label className="flex items-center gap-2 text-sm">
-            <input type="checkbox" checked={f.ativo} onChange={(e) => mudar({ ativo: e.target.checked })} /> À venda (aparece ao cadastrar licença)
+            <input type="checkbox" checked={f.ativo} onChange={(e) => mudar({ ativo: e.target.checked })} /> À venda (aparece ao cadastrar
+            licença)
           </label>
         </div>
       </form>

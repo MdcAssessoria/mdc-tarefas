@@ -1277,6 +1277,11 @@ const INTERACOES = {
     // assistente da licença (088): sistema e módulos, depois valor e usuários
     await p.getByRole("button", { name: "Nova licença" }).click();
     const assist = p.getByRole("dialog", { name: "Nova licença" });
+    // empresa que ainda não é cliente: cadastro rápido pelo CNPJ dentro do passo 1
+    await assist.getByRole("button", { name: "Cadastrar empresa nova" }).click();
+    await assist.getByRole("region", { name: "Cadastrar empresa nova" }).waitFor({ timeout: 3000 });
+    await foto?.("assistente-cadastrar-empresa");
+    await assist.getByRole("button", { name: "Voltar à lista" }).click();
     await assist.getByLabel("Procurar cliente").fill("Greencore");
     await assist.getByRole("button", { name: "Continuar" }).click();
     await assist.getByRole("radio", { name: /EXato/ }).click();

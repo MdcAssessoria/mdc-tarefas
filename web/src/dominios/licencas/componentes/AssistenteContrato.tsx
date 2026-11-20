@@ -20,6 +20,7 @@ import { INDICES } from "../tipos";
 import type { Contrato, Excedente, IndiceReajuste, Plano, Produto, Sistema } from "../tipos";
 import { supabase } from "@/lib/supabase";
 import { useConsulta } from "@/lib/useConsulta";
+import { CadastroRapidoEmpresa } from "./CadastroRapidoEmpresa";
 
 const PASSOS = ["Cliente", "Sistema e módulos", "Valor e usuários", "Reajuste", "Conferir"];
 export const MESES = [
@@ -317,6 +318,7 @@ export function AssistenteContrato({
           ) : (
             <p className="text-sm text-neutral-600">Toque no nome do cliente na lista para escolher.</p>
           )}
+          <CadastroRapidoEmpresa aoCadastrar={(id) => mudar({ cliente: id, busca: "" })} />
         </div>
       )}
 
@@ -373,10 +375,10 @@ export function AssistenteContrato({
               <p>
                 <b>Todos os módulos do {nomeSistema}</b>, inclusive os que forem criados depois.
               </p>
-              <p className="mt-1 text-neutral-700">{todosDoSistema.map((p) => p.nome).join(", ") || `Nenhum módulo do ${nomeSistema} ativo.`}</p>
-              <p className="mt-2 text-xs text-neutral-600">
-                Depois de salvar, gere a chave em Ações › Chave e cole no {nomeSistema}.
+              <p className="mt-1 text-neutral-700">
+                {todosDoSistema.map((p) => p.nome).join(", ") || `Nenhum módulo do ${nomeSistema} ativo.`}
               </p>
+              <p className="mt-2 text-xs text-neutral-600">Depois de salvar, gere a chave em Ações › Chave e cole no {nomeSistema}.</p>
             </div>
           ) : f.modo === "plano" ? (
             planosVisiveis.length ? (
@@ -490,7 +492,12 @@ export function AssistenteContrato({
                 {valores && (
                   <label className="campo">
                     <span>Valor por usuário a mais (R$/mês)</span>
-                    <input inputMode="decimal" value={f.adicional} onChange={(e) => mudar({ adicional: e.target.value })} placeholder="0,00" />
+                    <input
+                      inputMode="decimal"
+                      value={f.adicional}
+                      onChange={(e) => mudar({ adicional: e.target.value })}
+                      placeholder="0,00"
+                    />
                   </label>
                 )}
                 <div className="sm:col-span-2">

@@ -94,7 +94,14 @@ function Escolha({
   inicial: string[];
   modulosIniciais: Record<string, string[]>;
   pacote: ModuloPacote[];
-  clientes: { id: string; razao_social: string; nome_fantasia: string | null; cnpj: string | null; cidade?: string | null; uf?: string | null }[];
+  clientes: {
+    id: string;
+    razao_social: string;
+    nome_fantasia: string | null;
+    cnpj: string | null;
+    cidade?: string | null;
+    uf?: string | null;
+  }[];
   daLicenca?: { razao_social: string; nome_fantasia: string | null; cnpj: string | null };
   aoFechar: () => void;
   aoSalvar: (msg: string) => void;
@@ -117,7 +124,9 @@ function Escolha({
       .filter(
         (c) =>
           !b ||
-          semAcento(`${c.razao_social} ${c.nome_fantasia ?? ""}`).toLowerCase().includes(b) ||
+          semAcento(`${c.razao_social} ${c.nome_fantasia ?? ""}`)
+            .toLowerCase()
+            .includes(b) ||
           (dig.length >= 3 && (c.cnpj ?? "").replace(/\D/g, "").includes(dig)),
       )
       .sort((a, b2) => Number(marcadas.has(b2.id)) - Number(marcadas.has(a.id)) || a.razao_social.localeCompare(b2.razao_social));
@@ -154,8 +163,7 @@ function Escolha({
     }
   }
 
-  const textoMods = (id: string) =>
-    mods[id]?.length ? `${mods[id].length} de ${pacote.length} módulos` : "Todos os módulos";
+  const textoMods = (id: string) => (mods[id]?.length ? `${mods[id].length} de ${pacote.length} módulos` : "Todos os módulos");
   const alternarModulo = (id: string, m: string) =>
     setMods((x) => {
       const atual = new Set(x[id]?.length ? x[id] : pacote.map((p) => p.modulo));
