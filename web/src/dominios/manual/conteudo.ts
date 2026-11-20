@@ -4,7 +4,7 @@
 // (components/shell/navegacao.ts): com ele a tela do manual ganha o botão "Ir para a tela".
 // Mudou uma tela ou regra? Atualize o trecho dela aqui no mesmo commit e acrescente uma linha em "Controle de versões".
 
-export const VERSAO_MANUAL = { numero: "1.7", data: "20/11/2026" };
+export const VERSAO_MANUAL = { numero: "1.8", data: "20/11/2026" };
 
 export const MANUAL_MD = `
 ## Como usar este manual
@@ -367,4 +367,5 @@ Os sistemas que a MDC licencia aos clientes (Ledgra ERP, EXato e os próximos): 
 | 1.5 | 19/11/2026 | **Empresas no sistema** (Sistemas › Licenças › Ações): a MDC marca as empresas do grupo que usam o sistema com aquela licença; o EXato traz do HUB só essas na tela Nova empresa. |
 | 1.6 | 20/11/2026 | **Módulos por empresa** na licença (Empresas no sistema): sem escolha, todo o pacote; o EXato aplica ao receber as empresas. |
 | 1.7 | 20/11/2026 | **BI de Gestão**: abre em cartões das empresas sem números; acesso por pedido aprovado pelo administrador ou responsável (padrão 30 dias) e registro de quem abriu; novas abas Visão geral, Comparar (período anterior, ano passado e orçamento), Empresas, Indicadores (prazos, inadimplência, aberto por atraso, maiores clientes e fornecedores, liquidez) e Lançamentos (complementares e orçamento, com importação por Excel). |
+| 1.8 | 20/11/2026 | Novo módulo do EXato para vender na licença: **Pagamento de diárias por planilha** (precisa do Financeiro). |
 `;

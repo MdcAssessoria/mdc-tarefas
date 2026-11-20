@@ -244,3 +244,6 @@ $P -f "$R/testes/166_empresas_095.sql" 2>&1 | grep -v "^SET$"
 # 096: módulos de cada empresa na licença
 $P -v ON_ERROR_STOP=1 -f "$R/migrations/096_modulos_por_empresa_licenca.sql" 2>&1 | grep -v NOTICE || true
 $P -f "$R/testes/167_modulos_096.sql" 2>&1 | grep -v "^SET$"
+# 098: add-on de pagamento de diárias por planilha no catálogo do EXato
+$P -v ON_ERROR_STOP=1 -f "$R/migrations/098_exato_pagamento_planilha.sql" 2>&1 | grep -v NOTICE || true
+$P -f "$R/testes/169_pagamento_planilha_098.sql" 2>&1 | grep -v "^SET$"

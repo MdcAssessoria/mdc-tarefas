@@ -271,7 +271,9 @@ define qual sistema ele usa e emite a chave; a cobrança vem para a gestão MDC.
   Tela: Sistemas › Sistemas e produtos › aba Sistemas.
 - **Módulos por sistema**: `lic_produtos.sistema` aponta para `lic_sistemas`; o código do módulo começa com o do sistema
   (`exato-rs`) e na chave vai sem o prefixo (`rs`). EXato semeado com 12 módulos (diaristas, operacao, transporte,
-  auditoria, rs, crm, contratos, faturamento, financeiro, compras, estoque, juridico).
+  auditoria, rs, crm, contratos, faturamento, financeiro, compras, estoque, juridico) e, desde a 098, o add-on
+  `exato-pagamento_planilha` (Pagamento de diárias por planilha: carga do Excel, cadastro do PIX, lote nomeado, dobras
+  aprovadas por outra pessoa e remessa CNAB 240; precisa do Financeiro; EXato 083).
 - **Licença**: `lic_contratos.sistema` (um contrato ativo por cliente e sistema; não muda), `usuarios_incluidos` (vazio =
   sem limite), `valor_usuario_adicional` (só com gerir, volta pela `lic_valores`), `excedente` (`cobrar` | `bloquear`) e
   `recorrente_id` (contrato a receber da empresa da gestão que fatura a licença; ao ligar, o contrato ganha o
