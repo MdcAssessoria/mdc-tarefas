@@ -593,7 +593,9 @@ function Orcamento({ c, linhas }: { c: ContextoBi; linhas: LinhaRelatorio[] }) {
     }
   }
 
-  const anos = Array.from({ length: 4 }, (_, i) => Number(c.hoje.slice(0, 4)) - 1 + i);
+  // dois anos para trás (conferência) e cinco para a frente (planejamento); o ano já escolhido sempre aparece
+  const base = Number(c.hoje.slice(0, 4));
+  const anos = [...new Set([...Array.from({ length: 8 }, (_, i) => base - 2 + i), ano])].sort((a, b) => a - b);
   return (
     <div className="space-y-3">
       <div className="flex flex-col gap-3 md:flex-row md:flex-wrap md:items-end">
