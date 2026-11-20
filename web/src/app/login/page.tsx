@@ -25,6 +25,8 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [confirma, setConfirma] = useState("");
+  // senha provisória digitada ao entrar: a nova não pode repetir (o banco também confere, 103)
+  const [provisoria, setProvisoria] = useState("");
   const [msg, setMsg] = useState<{ tipo: "erro" | "ok"; texto: string } | null>(null);
   const [enviando, setEnviando] = useState(false);
   const [semSessao, setSemSessao] = useState(false);
@@ -71,6 +73,10 @@ export default function Login() {
       setMsg({ tipo: "erro", texto: "As duas senhas não conferem." });
       return;
     }
+    if (modo === "trocar" && provisoria && senha === provisoria) {
+      setMsg({ tipo: "erro", texto: "Crie uma senha diferente da provisória." });
+      return;
+    }
     setEnviando(true);
     const sb = supabase();
     try {
@@ -79,6 +85,7 @@ export default function Login() {
         if (error) throw error;
         if (precisaTrocarSenha(data.session)) {
           // senha provisória: cria a própria antes de entrar
+          setProvisoria(senha);
           setSenha("");
           setConfirma("");
           setModo("trocar");

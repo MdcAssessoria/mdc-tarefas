@@ -87,7 +87,10 @@ configurar, então o acesso passou a ser por **senha provisória** (migração 0
    organização ou às empresas do Portal) ou troca a senha de quem já tem conta, e grava `app_metadata.trocar_senha`.
 3. No primeiro acesso, o login vê a marca e abre "Crie sua senha"; o `OrgProvider` e o Portal também mandam para
    `/login?trocar=1` enquanto a marca existir. Ao salvar, `hub_senha_trocada()` tira a marca da própria conta e a sessão é
-   renovada.
+   renovada. **103 (SEG-04):** a Função `convite` guarda o resumo (md5 do `encrypted_password`) da provisória em
+   `app.senha_provisoria` por `hub_senha_provisoria_marcar` (só `service_role`); `hub_senha_trocada()` recusa enquanto o
+   resumo for o mesmo ("Crie a sua senha nova") e, sem resumo, pede uma provisória nova. A tela também recusa a nova igual
+   à provisória digitada no login.
 4. Senha esquecida: "Esqueci a senha" orienta a pedir ao administrador, que usa **Redefinir senha** na linha da pessoa
    (gera outra provisória; a anterior deixa de valer). Na lista, conta com senha provisória aparece como "Aguardando criar
    a senha" (`hub_situacao_contas`).
@@ -257,3 +260,21 @@ em buscadores e não envia o endereço a outros sites (`referrer: no-referrer`).
 a permissão de valores das licenças; a tabela não tem gravação direta (só as funções `lic_documento_*`). O arquivo do
 contrato assinado em papel (086) fica na pasta `licencas-contrato` do Storage: `app.arquivo_pode` só libera essa pasta
 para quem tem `licencas` › gerir, mesmo para ler.
+
+## 5.x Correções da 103 (reauditoria de 19/11/2026: SEG-04 a SEG-07)
+
+- **SEG-04 senha provisória:** ver 5.4, passo 3.
+- **SEG-05 assinatura pelo link:** o IP de prova é o do proxy confiável (`app.ip_da_requisicao`: `cf-connecting-ip`,
+  depois `x-real-ip`, depois o ÚLTIMO valor do `x-forwarded-for`); a cadeia inteira fica em `assinatura.ip_cadeia`.
+  `lic_assinatura_abrir` devolve a assinatura com o CPF mascarado (`***.***.***-NN`) e sem IP nem navegador; o registro
+  completo fica só com a MDC. A validade como assinatura eletrônica simples (Lei 14.063/2020, art. 4º, I; MP 2.200-2/2001,
+  art. 10, §2º) é julgamento jurídico do Dr. Itamar.
+- **SEG-06 uso informado pela chave:** teto `app.lic_uso_teto` = 3× os incluídos, mínimo incluídos + 20 (sem limite = sem
+  teto). Acima dele `lic_usos.usuarios` (a base da cobrança) fica no teto, `usuarios_informados` guarda o maior número e
+  `a_conferir` liga com aviso no sino. A MDC decide em `lic_uso_confirmar(contrato, competência, aceitar, motivo)`
+  (licenças › gerir, motivo de 5+ letras, auditado); `conferido_ate` evita pedir de novo pelo mesmo número.
+- **SEG-07 leads:** `crm_receber_lead` e `crm_raiox_conferir` acham a MDC por `app.org_mdc()` (`slug = 'mdc'`); o
+  Simulador aceita um lead por e-mail ou CNPJ a cada 24 horas (o repetido é ignorado sem erro). Turnstile no Simulador
+  continua pendente (fica no repositório do simulador).
+- Teste: `supabase/testes/172_seguranca_103_producao.sql` (roda na produção numa transação que termina em erro de
+  propósito; ensaio de 20/11/2026 com todos os casos esperados).

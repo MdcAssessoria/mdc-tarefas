@@ -44,6 +44,10 @@ export interface Uso {
   competencia: string;
   usuarios: number;
   informado_em: string;
+  /** Maior número informado, mesmo acima do teto (103). */
+  usuarios_informados: number | null;
+  /** Passou do teto: a cobrança usa `usuarios` até a MDC conferir (103). */
+  a_conferir: boolean;
 }
 
 export interface Plano {

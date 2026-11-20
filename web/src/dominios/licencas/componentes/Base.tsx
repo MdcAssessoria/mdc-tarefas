@@ -77,7 +77,8 @@ export function useDadosLicencas({ baixas = false }: { baixas?: boolean } = {}) 
     // maior número de usuários deste mês por licença (o sistema informa ao conferir a chave)
     const mes = hoje.slice(0, 7) + "-01";
     const usuariosNoMes = new Map((d?.usos ?? []).filter((u) => u.competencia === mes).map((u) => [u.contrato_id, u.usuarios]));
-    return { produtos, planos, bloqueados, sistemas, usuariosNoMes };
+    const usoAConferir = new Map((d?.usos ?? []).filter((u) => u.competencia === mes && u.a_conferir).map((u) => [u.contrato_id, u]));
+    return { produtos, planos, bloqueados, sistemas, usuariosNoMes, usoAConferir };
   }, [d, hoje]);
   const nomeDoCliente = useCallback((id: string) => nomeCliente(clientePorId(id), "Cliente removido"), [clientePorId]);
   return {

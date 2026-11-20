@@ -48,7 +48,8 @@ export interface DocumentoLicenca {
 /** O que o banco grava quando o contrato é assinado. */
 export type RegistroAssinatura =
   | { tipo: "impresso"; data: string; observacao?: string | null; registrado_por?: string | null }
-  | { tipo: "eletronico"; nome: string; cpf: string; ip: string | null; navegador: string | null; em: string };
+  /** No link público (103) o CPF chega mascarado e o IP e o navegador não chegam (ficam só no registro da MDC). */
+  | { tipo: "eletronico"; nome: string; cpf: string; ip?: string | null; navegador?: string | null; em: string };
 
 export const ROTULO_SITUACAO: Record<SituacaoDocumento, { texto: string; tom: Tom }> = {
   emitido: { texto: "Emitido, falta assinar", tom: "ambar" },
@@ -322,10 +323,11 @@ export function textoRegistroAssinatura(doc: Pick<DocumentoLicenca, "numero" | "
   return [
     "## Registro da assinatura eletrônica",
     `- Contrato: ${doc.numero}`,
-    `- Assinado por: ${a.nome}, CPF ${formatarDocumento(soDigitos(a.cpf))}`,
+    `- Assinado por: ${a.nome}, CPF ${a.cpf.includes("*") ? a.cpf : formatarDocumento(soDigitos(a.cpf))}`,
     `- Data e hora (Brasília): ${quando}`,
-    `- Endereço IP: ${a.ip || "não informado"}`,
-    `- Navegador: ${(a.navegador || "não informado").slice(0, 160)}`,
+    ...(a.ip === undefined && a.navegador === undefined
+      ? ["- Endereço IP e navegador: guardados no registro da LICENCIANTE"]
+      : [`- Endereço IP: ${a.ip || "não informado"}`, `- Navegador: ${(a.navegador || "não informado").slice(0, 160)}`]),
     "Código de integridade do texto (SHA-256):",
     doc.hash,
     "Assinatura feita pelo link enviado pela LICENCIANTE, após a leitura do contrato e a marcação de concordância, nos termos da Cláusula 11ª.",

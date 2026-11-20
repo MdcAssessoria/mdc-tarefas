@@ -4,7 +4,7 @@
 // (components/shell/navegacao.ts): com ele a tela do manual ganha o botão "Ir para a tela".
 // Mudou uma tela ou regra? Atualize o trecho dela aqui no mesmo commit e acrescente uma linha em "Controle de versões".
 
-export const VERSAO_MANUAL = { numero: "1.9", data: "20/11/2026" };
+export const VERSAO_MANUAL = { numero: "2.0", data: "20/11/2026" };
 
 export const MANUAL_MD = `
 ## Como usar este manual
@@ -35,6 +35,8 @@ O acesso ao HUB é só pelo administrador: ninguém cria conta sozinho. O admini
 2. Escreva o **e-mail** e a **senha provisória** e toque em **Entrar**.
 3. O HUB pede para você criar a sua senha: de 8 a 72 caracteres, sem espaço no começo nem no fim.
 4. Pronto: a partir daí entre sempre com o e-mail e a sua senha.
+
+**Atenção:** a senha nova precisa ser diferente da provisória; o HUB só libera a entrada depois da troca.
 
 **Esqueci a senha:** peça ao administrador uma senha provisória nova (Pessoas e acessos → **Redefinir senha**). Ela chega pelo WhatsApp e você troca no primeiro login.
 
@@ -302,6 +304,8 @@ Os sistemas que a MDC licencia aos clientes (Ledgra ERP, EXato e os próximos): 
 
 **Dicas:** a coluna **Usuários** mostra quantas pessoas o sistema informou neste mês (ex.: "12 de 10 usuário(s) (2 a mais)"). O filtro **Sistema** mostra só as licenças de um sistema.
 
+**Usuários a conferir:** se o sistema informar muito mais pessoas do que o contratado (mais de 3 vezes os incluídos, com folga mínima de 20), a cobrança fica no limite e a linha mostra "a conferir"; quem cuida de licenças recebe aviso no sino. Toque em **Conferir**, escreva o motivo e escolha **Aceitar** (o número informado entra na cobrança) ou **Manter** (fica o que estava). Isso evita cobrar o cliente por uma chave usada por engano ou por outra pessoa.
+
 ### Sistemas e produtos (Sistemas → Sistemas e produtos)
 
 **Para que serve:** cadastrar os sistemas (aba **Sistemas**: nome, código, prefixo da chave e situação — Vendendo, Em breve ou Fora de venda) e os módulos de cada sistema com o preço de tabela (aba **Produtos**). Os pacotes ficam na tela **Pacotes de licença**.
@@ -368,5 +372,6 @@ Os sistemas que a MDC licencia aos clientes (Ledgra ERP, EXato e os próximos): 
 | 1.6 | 20/11/2026 | **Módulos por empresa** na licença (Empresas no sistema): sem escolha, todo o pacote; o EXato aplica ao receber as empresas. |
 | 1.7 | 20/11/2026 | **BI de Gestão**: abre em cartões das empresas sem números; acesso por pedido aprovado pelo administrador ou responsável (padrão 30 dias) e registro de quem abriu; novas abas Visão geral, Comparar (período anterior, ano passado e orçamento), Empresas, Indicadores (prazos, inadimplência, aberto por atraso, maiores clientes e fornecedores, liquidez) e Lançamentos (complementares e orçamento, com importação por Excel). |
 | 1.8 | 20/11/2026 | Novo módulo do EXato para vender na licença: **Pagamento de diárias por planilha** (precisa do Financeiro). |
+| 2.0 | 20/11/2026 | Segurança: a senha nova precisa ser diferente da provisória; licença com **usuários a conferir** quando o sistema informa muito mais pessoas do que o contratado; o link de assinatura mostra o CPF mascarado depois de assinado. |
 | 1.9 | 20/11/2026 | **BI de Gestão**: gráficos novos, legíveis também no celular: resultado acumulado no gráfico resultado × caixa, cascata da DRE da receita ao resultado, participação de cada empresa na receita e no resultado do grupo (aba Empresas) e balão com os valores do mês. |
 `;

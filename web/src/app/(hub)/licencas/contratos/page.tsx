@@ -20,6 +20,7 @@ import { Cabecalho, EtiquetaBloqueado, useDadosLicencas } from "@/dominios/licen
 import { AssistenteContrato, MESES } from "@/dominios/licencas/componentes/AssistenteContrato";
 import { EncerrarContrato, HistoricoContrato, ReajustarContrato } from "@/dominios/licencas/componentes/JanelasContrato";
 import { JanelaChave } from "@/dominios/licencas/componentes/JanelaChave";
+import { UsoAConferir } from "@/dominios/licencas/componentes/UsoAConferir";
 import { JanelaEmpresasLicenca } from "@/dominios/licencas/componentes/JanelaEmpresasLicenca";
 import { contratoVigente, reajustePendente, textoUsuarios, usuariosAdicionais } from "@/dominios/licencas/regras";
 import { INDICES } from "@/dominios/licencas/tipos";
@@ -61,7 +62,7 @@ export default function PaginaContratos() {
 function Contratos() {
   const { org } = useOrg();
   const dados = useDadosLicencas();
-  const { hoje, nomeDoCliente, rotulo, podeGerir, podeOperar, bloqueados, nomeSistema, usuariosNoMes } = dados;
+  const { hoje, nomeDoCliente, rotulo, podeGerir, podeOperar, bloqueados, nomeSistema, usuariosNoMes, usoAConferir } = dados;
   const { aviso, mostrar } = useAviso();
   const params = useSearchParams();
   // filtro de cliente: o que a pessoa escolheu na tela; antes disso, o que veio no endereço (?cliente=)
@@ -365,6 +366,9 @@ function Contratos() {
                           <span className="block text-xs text-amber-800">
                             {k.excedente === "cobrar" ? "a mais entra na próxima cobrança" : "o sistema bloqueia novos"}
                           </span>
+                        )}
+                        {usoAConferir.get(k.id) && (
+                          <UsoAConferir uso={usoAConferir.get(k.id)!} podeGerir={podeGerir} aoConferir={dados.recarregar} />
                         )}
                       </td>
                       {podeGerir && (

@@ -114,6 +114,18 @@ describe("contrato de licença", () => {
     expect(t).toContain("abc123");
     expect(t).toContain("16/11/2026");
   });
+
+  it("no link público (103) sai o CPF mascarado, sem IP nem navegador", () => {
+    const t = textoRegistroAssinatura({
+      numero: "LIC-2026/0001",
+      hash: "abc123",
+      assinado_em: "2026-11-16T13:00:00Z",
+      assinatura: { tipo: "eletronico", nome: "Maria da Silva", cpf: "***.***.***-25", em: "2026-11-16T13:00:00Z" },
+    });
+    expect(t).toContain("CPF ***.***.***-25");
+    expect(t).toContain("guardados no registro da LICENCIANTE");
+    expect(t).not.toContain("não informado");
+  });
 });
 
 describe("e-mail do link de assinatura", () => {

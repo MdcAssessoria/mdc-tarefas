@@ -2,7 +2,19 @@
 import { supabase } from "@/lib/supabase";
 import { lerTudo } from "@/lib/lerTudo";
 import { exigir } from "@/lib/exigir";
-import type { BaixaLicenca, Bloqueio, Cobranca, Contrato, Parametros, Plano, Produto, Reajuste, Sistema, SituacaoPortal, Uso } from "./tipos";
+import type {
+  BaixaLicenca,
+  Bloqueio,
+  Cobranca,
+  Contrato,
+  Parametros,
+  Plano,
+  Produto,
+  Reajuste,
+  Sistema,
+  SituacaoPortal,
+  Uso,
+} from "./tipos";
 
 const num = <T>(l: T, campos: (keyof T)[]): T => {
   const x = { ...l };
@@ -77,7 +89,12 @@ export async function lerPlanos(org: string): Promise<Plano[]> {
         .range(de, ate),
     ),
   ]);
-  return planos.map((p) => ({ ...p, preco: 0, valor_usuario_adicional: 0, produtos: itens.filter((i) => i.plano_id === p.id).map((i) => i.produto_id) }));
+  return planos.map((p) => ({
+    ...p,
+    preco: 0,
+    valor_usuario_adicional: 0,
+    produtos: itens.filter((i) => i.plano_id === p.id).map((i) => i.produto_id),
+  }));
 }
 
 export async function lerContratos(org: string): Promise<Contrato[]> {
@@ -117,7 +134,7 @@ export const lerUsos = (org: string, desde: string) =>
   lerTudo<Uso>((de, ate) =>
     supabase()
       .from("lic_usos")
-      .select("contrato_id,competencia,usuarios,informado_em")
+      .select("contrato_id,competencia,usuarios,informado_em,usuarios_informados,a_conferir")
       .eq("org_id", org)
       .gte("competencia", desde)
       .order("competencia")
@@ -175,3 +192,9 @@ export async function lerSituacaoPortal(cliente: string): Promise<SituacaoPortal
   const d = exigir(await supabase().rpc("portal_licenca_situacao", { p_cliente: cliente })) as SituacaoPortal | null;
   return { bloqueado: !!d?.bloqueado, modulos: d?.modulos ?? [] };
 }
+
+/** A MDC confere o uso acima do teto (103): aceitar = o número informado entra na cobrança. */
+export const conferirUso = async (contrato: string, competencia: string, aceitar: boolean, motivo: string) =>
+  exigir(
+    await supabase().rpc("lic_uso_confirmar", { p_contrato: contrato, p_competencia: competencia, p_aceitar: aceitar, p_motivo: motivo }),
+  );

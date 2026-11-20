@@ -5,7 +5,8 @@
 // só para quem pode convidar aquela pessoa e só se a conta nunca entrou (hub_pode_ver_link_convite, migração 024).
 // Gerar um link novo invalida o do e-mail anterior (o Supabase guarda um link válido por conta).
 // Senha provisória ({ senha_provisoria: true }, migração 071): cria ou redefine a conta com uma senha aleatória que o
-// administrador manda pelo WhatsApp; a marca trocar_senha obriga a pessoa a criar a própria senha no 1º acesso.
+// administrador manda pelo WhatsApp; a marca trocar_senha obriga a pessoa a criar a própria senha no 1º acesso
+// (103: o banco guarda o resumo da provisória e só tira a marca quando a senha mudou de fato).
 // Com os segredos GRAPH_* o e-mail sai pelo Microsoft Graph (caixa hub@); sem eles, pelo SMTP do Supabase.
 import { createClient } from "@supabase/supabase-js";
 import { enviarPeloGraph, lerGraph } from "../_email/graph.ts";
@@ -76,7 +77,7 @@ Deno.serve(async (req) => {
     const senha = digitada || senhaProvisoria();
     const nomeP = String(corpo.nome ?? "").trim().slice(0, 120) || undefined;
     const { data: id } = await servico.rpc("hub_conta_id", { p_email: email });
-    const { error: eConta } = id
+    const { data: conta, error: eConta } = id
       ? await servico.auth.admin.updateUserById(String(id), { password: senha, email_confirm: true, app_metadata: { trocar_senha: true } })
       : await servico.auth.admin.createUser({
           email,
@@ -87,6 +88,12 @@ Deno.serve(async (req) => {
         });
     if (eConta) {
       console.error("senha provisória falhou:", eConta.status ?? "", eConta.message);
+      return json(500, { erro: "Não foi possível criar a senha provisória agora. Tente de novo em instantes." });
+    }
+    // 103 (SEG-04): guarda o resumo da provisória; a marca trocar_senha só sai quando a senha mudar de fato
+    const { error: eMarca } = await servico.rpc("hub_senha_provisoria_marcar", { p_user: conta?.user?.id ?? id });
+    if (eMarca) {
+      console.error("resumo da senha provisória falhou:", eMarca.message);
       return json(500, { erro: "Não foi possível criar a senha provisória agora. Tente de novo em instantes." });
     }
     return json(200, { enviado: false, senha, endereco: `${origem}${BASE}/login` });

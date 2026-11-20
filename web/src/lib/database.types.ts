@@ -4214,251 +4214,6 @@ export type Database = {
           },
         ];
       };
-      gestao_classificacao: {
-        Row: {
-          alterado_em: string;
-          alterado_por: string | null;
-          categoria: string;
-          chave: string;
-          dfc: string | null;
-          grupo: string;
-          id: string;
-          linha: string | null;
-          org_id: string;
-          sigla: string;
-        };
-        Insert: {
-          alterado_em?: string;
-          alterado_por?: string | null;
-          categoria: string;
-          chave: string;
-          dfc?: string | null;
-          grupo: string;
-          id?: string;
-          linha?: string | null;
-          org_id: string;
-          sigla: string;
-        };
-        Update: {
-          alterado_em?: string;
-          alterado_por?: string | null;
-          categoria?: string;
-          chave?: string;
-          dfc?: string | null;
-          grupo?: string;
-          id?: string;
-          linha?: string | null;
-          org_id?: string;
-          sigla?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "gestao_classificacao_org_id_fkey";
-            columns: ["org_id"];
-            isOneToOne: false;
-            referencedRelation: "organizacoes";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
-      gestao_complementares: {
-        Row: {
-          cliente_id: string;
-          criado_em: string;
-          criado_por: string | null;
-          data_caixa: string | null;
-          data_competencia: string | null;
-          descricao: string;
-          dfc: string | null;
-          documento: string | null;
-          grupo: string;
-          id: string;
-          linha: string;
-          lote: string | null;
-          natureza: string;
-          org_id: string;
-          origem: string;
-          valor: number;
-        };
-        Insert: {
-          cliente_id: string;
-          criado_em?: string;
-          criado_por?: string | null;
-          data_caixa?: string | null;
-          data_competencia?: string | null;
-          descricao: string;
-          dfc?: string | null;
-          documento?: string | null;
-          grupo: string;
-          id?: string;
-          linha: string;
-          lote?: string | null;
-          natureza: string;
-          org_id: string;
-          origem?: string;
-          valor: number;
-        };
-        Update: {
-          cliente_id?: string;
-          criado_em?: string;
-          criado_por?: string | null;
-          data_caixa?: string | null;
-          data_competencia?: string | null;
-          descricao?: string;
-          dfc?: string | null;
-          documento?: string | null;
-          grupo?: string;
-          id?: string;
-          linha?: string;
-          lote?: string | null;
-          natureza?: string;
-          org_id?: string;
-          origem?: string;
-          valor?: number;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "gestao_complementares_cliente_id_fkey";
-            columns: ["cliente_id"];
-            isOneToOne: false;
-            referencedRelation: "clientes";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "gestao_complementares_org_id_fkey";
-            columns: ["org_id"];
-            isOneToOne: false;
-            referencedRelation: "organizacoes";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
-      gestao_fatos: {
-        Row: {
-          categoria: string | null;
-          categoria_chave: string;
-          categoria_codigo: string | null;
-          cliente_id: string;
-          conta_id: string;
-          contraparte: string | null;
-          contraparte_doc: string | null;
-          data_caixa: string | null;
-          data_competencia: string | null;
-          documento: string | null;
-          fonte: string;
-          grupo: string;
-          id: number;
-          intragrupo: boolean;
-          natureza: string;
-          org_id: string;
-          registro: string;
-          sigla: string;
-          valor_caixa: number;
-          valor_competencia: number;
-        };
-        Insert: {
-          categoria?: string | null;
-          categoria_chave?: string;
-          categoria_codigo?: string | null;
-          cliente_id: string;
-          conta_id: string;
-          contraparte?: string | null;
-          contraparte_doc?: string | null;
-          data_caixa?: string | null;
-          data_competencia?: string | null;
-          documento?: string | null;
-          fonte: string;
-          grupo: string;
-          id?: never;
-          intragrupo?: boolean;
-          natureza: string;
-          org_id: string;
-          registro: string;
-          sigla: string;
-          valor_caixa?: number;
-          valor_competencia?: number;
-        };
-        Update: {
-          categoria?: string | null;
-          categoria_chave?: string;
-          categoria_codigo?: string | null;
-          cliente_id?: string;
-          conta_id?: string;
-          contraparte?: string | null;
-          contraparte_doc?: string | null;
-          data_caixa?: string | null;
-          data_competencia?: string | null;
-          documento?: string | null;
-          fonte?: string;
-          grupo?: string;
-          id?: never;
-          intragrupo?: boolean;
-          natureza?: string;
-          org_id?: string;
-          registro?: string;
-          sigla?: string;
-          valor_caixa?: number;
-          valor_competencia?: number;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "gestao_fatos_cliente_id_fkey";
-            columns: ["cliente_id"];
-            isOneToOne: false;
-            referencedRelation: "clientes";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "gestao_fatos_conta_id_fkey";
-            columns: ["conta_id"];
-            isOneToOne: false;
-            referencedRelation: "omie_contas";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "gestao_fatos_org_id_fkey";
-            columns: ["org_id"];
-            isOneToOne: false;
-            referencedRelation: "organizacoes";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
-      gestao_plano: {
-        Row: {
-          codigo: string;
-          grupo: string;
-          nome: string;
-          ordem: number;
-          org_id: string;
-          tipo: string;
-        };
-        Insert: {
-          codigo: string;
-          grupo: string;
-          nome: string;
-          ordem?: number;
-          org_id: string;
-          tipo: string;
-        };
-        Update: {
-          codigo?: string;
-          grupo?: string;
-          nome?: string;
-          ordem?: number;
-          org_id?: string;
-          tipo?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "gestao_plano_org_id_fkey";
-            columns: ["org_id"];
-            isOneToOne: false;
-            referencedRelation: "organizacoes";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
       historico: {
         Row: {
           acao: string;
@@ -5936,34 +5691,52 @@ export type Database = {
       };
       lic_usos: {
         Row: {
+          a_conferir: boolean;
           cliente_id: string;
           competencia: string;
+          conferido_ate: number | null;
+          conferido_em: string | null;
+          conferido_motivo: string | null;
+          conferido_por: string | null;
           contrato_id: string;
           id: number;
           informado_em: string;
           org_id: string;
           sistema: string;
           usuarios: number;
+          usuarios_informados: number | null;
         };
         Insert: {
+          a_conferir?: boolean;
           cliente_id: string;
           competencia: string;
+          conferido_ate?: number | null;
+          conferido_em?: string | null;
+          conferido_motivo?: string | null;
+          conferido_por?: string | null;
           contrato_id: string;
           id?: number;
           informado_em?: string;
           org_id: string;
           sistema: string;
           usuarios: number;
+          usuarios_informados?: number | null;
         };
         Update: {
+          a_conferir?: boolean;
           cliente_id?: string;
           competencia?: string;
+          conferido_ate?: number | null;
+          conferido_em?: string | null;
+          conferido_motivo?: string | null;
+          conferido_por?: string | null;
           contrato_id?: string;
           id?: number;
           informado_em?: string;
           org_id?: string;
           sistema?: string;
           usuarios?: number;
+          usuarios_informados?: number | null;
         };
         Relationships: [
           {
@@ -6704,66 +6477,6 @@ export type Database = {
           },
         ];
       };
-      omie_contas: {
-        Row: {
-          ativo: boolean;
-          chave_final: string;
-          cliente_id: string;
-          criado_em: string;
-          criado_por: string | null;
-          grupo: string;
-          id: string;
-          key_secret: string | null;
-          org_id: string;
-          secret_secret: string | null;
-          sigla: string;
-          ultima_sinc: string | null;
-        };
-        Insert: {
-          ativo?: boolean;
-          chave_final?: string;
-          cliente_id: string;
-          criado_em?: string;
-          criado_por?: string | null;
-          grupo: string;
-          id?: string;
-          key_secret?: string | null;
-          org_id: string;
-          secret_secret?: string | null;
-          sigla: string;
-          ultima_sinc?: string | null;
-        };
-        Update: {
-          ativo?: boolean;
-          chave_final?: string;
-          cliente_id?: string;
-          criado_em?: string;
-          criado_por?: string | null;
-          grupo?: string;
-          id?: string;
-          key_secret?: string | null;
-          org_id?: string;
-          secret_secret?: string | null;
-          sigla?: string;
-          ultima_sinc?: string | null;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "omie_contas_cliente_id_fkey";
-            columns: ["cliente_id"];
-            isOneToOne: true;
-            referencedRelation: "clientes";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "omie_contas_org_id_fkey";
-            columns: ["org_id"];
-            isOneToOne: false;
-            referencedRelation: "organizacoes";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
       omie_empresas: {
         Row: {
           ativo: boolean;
@@ -7062,98 +6775,6 @@ export type Database = {
             columns: ["cliente_id"];
             isOneToOne: false;
             referencedRelation: "clientes";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
-      omie_registros: {
-        Row: {
-          atualizado_em: string;
-          codigo: string;
-          conta_id: string;
-          dados: Json;
-          entidade: string;
-        };
-        Insert: {
-          atualizado_em?: string;
-          codigo: string;
-          conta_id: string;
-          dados: Json;
-          entidade: string;
-        };
-        Update: {
-          atualizado_em?: string;
-          codigo?: string;
-          conta_id?: string;
-          dados?: Json;
-          entidade?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "omie_registros_conta_id_fkey";
-            columns: ["conta_id"];
-            isOneToOne: false;
-            referencedRelation: "omie_contas";
-            referencedColumns: ["id"];
-          },
-        ];
-      };
-      omie_sincronizacoes: {
-        Row: {
-          atualizado_em: string;
-          concluido_em: string | null;
-          conta_id: string;
-          criado_em: string;
-          erro: string | null;
-          id: string;
-          iniciado_em: string | null;
-          org_id: string;
-          origem: string;
-          pedido_por: string | null;
-          progresso: Json;
-          situacao: string;
-        };
-        Insert: {
-          atualizado_em?: string;
-          concluido_em?: string | null;
-          conta_id: string;
-          criado_em?: string;
-          erro?: string | null;
-          id?: string;
-          iniciado_em?: string | null;
-          org_id: string;
-          origem?: string;
-          pedido_por?: string | null;
-          progresso?: Json;
-          situacao?: string;
-        };
-        Update: {
-          atualizado_em?: string;
-          concluido_em?: string | null;
-          conta_id?: string;
-          criado_em?: string;
-          erro?: string | null;
-          id?: string;
-          iniciado_em?: string | null;
-          org_id?: string;
-          origem?: string;
-          pedido_por?: string | null;
-          progresso?: Json;
-          situacao?: string;
-        };
-        Relationships: [
-          {
-            foreignKeyName: "omie_sincronizacoes_conta_id_fkey";
-            columns: ["conta_id"];
-            isOneToOne: false;
-            referencedRelation: "omie_contas";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "omie_sincronizacoes_org_id_fkey";
-            columns: ["org_id"];
-            isOneToOne: false;
-            referencedRelation: "organizacoes";
             referencedColumns: ["id"];
           },
         ];
@@ -9400,75 +9021,6 @@ export type Database = {
         Args: { p_competencia: string; p_org: string };
         Returns: number;
       };
-      gestao_classificar: {
-        Args: { p_dfc?: string; p_id: string; p_linha: string };
-        Returns: undefined;
-      };
-      gestao_complementar_excluir: {
-        Args: { p_id: string; p_motivo: string };
-        Returns: undefined;
-      };
-      gestao_complementar_salvar: { Args: { p: Json }; Returns: string };
-      gestao_complementares_importar: {
-        Args: { p_linhas: Json };
-        Returns: number;
-      };
-      gestao_grupos: {
-        Args: never;
-        Returns: {
-          empresas: Json;
-          grupo: string;
-          org_id: string;
-        }[];
-      };
-      gestao_lancamentos: {
-        Args: {
-          p_ate: string;
-          p_categoria?: string;
-          p_cliente?: string;
-          p_de: string;
-          p_grupo: string;
-          p_linha?: string;
-          p_org: string;
-          p_regime: string;
-        };
-        Returns: {
-          categoria: string;
-          contraparte: string;
-          data: string;
-          documento: string;
-          intragrupo: boolean;
-          linha: string;
-          origem: string;
-          sigla: string;
-          valor: number;
-        }[];
-      };
-      gestao_plano_do_grupo: {
-        Args: { p_grupo: string; p_org: string };
-        Returns: {
-          codigo: string;
-          nome: string;
-          ordem: number;
-          tipo: string;
-        }[];
-      };
-      gestao_relatorio: {
-        Args: { p_ate: string; p_de: string; p_grupo: string; p_org: string };
-        Returns: {
-          categoria: string;
-          cliente_id: string;
-          dfc: string;
-          intragrupo: boolean;
-          linha: string;
-          mes: string;
-          origem: string;
-          qtd: number;
-          regime: string;
-          sigla: string;
-          valor: number;
-        }[];
-      };
       hub_aplicar_perfil: {
         Args: { p_org: string; p_perfil: string; p_user: string };
         Returns: number;
@@ -9555,6 +9107,10 @@ export type Database = {
       hub_receber_arquivo_temp: {
         Args: { p_chave: string; p_dados: string };
         Returns: boolean;
+      };
+      hub_senha_provisoria_marcar: {
+        Args: { p_user: string };
+        Returns: undefined;
       };
       hub_senha_trocada: { Args: never; Returns: undefined };
       hub_situacao_contas: {
@@ -9727,6 +9283,15 @@ export type Database = {
       lic_salvar_plano: { Args: { p: Json }; Returns: string };
       lic_salvar_produto: { Args: { p: Json }; Returns: string };
       lic_sistema_salvar: { Args: { p: Json }; Returns: string };
+      lic_uso_confirmar: {
+        Args: {
+          p_aceitar: boolean;
+          p_competencia: string;
+          p_contrato: string;
+          p_motivo: string;
+        };
+        Returns: Json;
+      };
       lic_uso_informar: {
         Args: {
           p_chave: string;
@@ -9784,46 +9349,9 @@ export type Database = {
         Returns: Json;
       };
       nfse_token_confere: { Args: { p_token: string }; Returns: boolean };
-      omie_conta_excluir: {
-        Args: { p_id: string; p_motivo: string };
-        Returns: undefined;
-      };
-      omie_conta_salvar: { Args: { p: Json }; Returns: string };
-      omie_credenciais: {
-        Args: { p_conta: string };
-        Returns: {
-          app_key: string;
-          app_secret: string;
-        }[];
-      };
       omie_pedir_sincronizacao: {
         Args: { p_cliente: string };
         Returns: undefined;
-      };
-      omie_registros_gravar: {
-        Args: { p_conta: string; p_entidade: string; p_itens: Json };
-        Returns: number;
-      };
-      omie_sinc_progresso: {
-        Args: {
-          p_erro?: string;
-          p_progresso: Json;
-          p_sinc: string;
-          p_situacao?: string;
-        };
-        Returns: undefined;
-      };
-      omie_sinc_proxima: {
-        Args: never;
-        Returns: {
-          conta_id: string;
-          id: string;
-          progresso: Json;
-        }[];
-      };
-      omie_sincronizar_pedir: {
-        Args: { p_conta?: string; p_grupo?: string; p_org?: string };
-        Returns: number;
       };
       omie_token_confere: { Args: { p_token: string }; Returns: boolean };
       org_definir_empresa_gestao: {
