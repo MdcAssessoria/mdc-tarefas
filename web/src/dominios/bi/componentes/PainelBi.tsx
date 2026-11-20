@@ -1,5 +1,6 @@
 // Painel do BI depois de escolher a empresa (ou o grupo): filtros de período, empresas e operações entre elas, e as
-// abas Visão geral, DRE, Fluxo de caixa, Comparar, Empresas, Indicadores e Lançamentos. Cada aba busca só o que mostra.
+// abas Visão geral, DRE, Fluxo de caixa, Resultado × caixa, Comparar, Empresas, Indicadores, Lançamentos e (equipe MDC)
+// Classificação. Cada aba busca só o que mostra.
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
@@ -14,34 +15,46 @@ import { Esqueleto } from "@/components/ui/Esqueleto";
 import { EstadoVazio } from "@/components/ui/EstadoVazio";
 import { FiltroPeriodo } from "@/components/ui/FiltroPeriodo";
 import { Icone } from "@/components/ui/Icone";
-import { lerContas, lerRelatorio } from "../dados";
+import { lerContas, lerRelatorio, lerSaldos } from "../dados";
+import { mesesDoPeriodo, resumirSaldos } from "../saldos";
 import { montarContas } from "../detalhe";
 import type { EmpresaBi } from "../dados";
 import { periodoDoBi, periodoLongo, temMovimento, totalDe } from "../relatorio";
 import type { TipoRelatorio } from "../relatorio";
+import { AbaClassificacao } from "./AbaClassificacao";
 import { AbaComparar } from "./AbaComparar";
+import { AbaConciliacao } from "./AbaConciliacao";
 import { AbaEmpresas } from "./AbaEmpresas";
 import { AbaIndicadores } from "./AbaIndicadores";
 import { AbaLancamentos } from "./AbaLancamentos";
 import { AbaVisaoGeral } from "./AbaVisaoGeral";
+import { CartaoSaldos } from "./CartaoSaldos";
 import { CartoesMargem } from "./CartoesMargem";
 import { JanelaOrigem } from "./JanelaOrigem";
 import type { PedidoOrigem } from "./JanelaOrigem";
 import { TabelaMatriz } from "./TabelaMatriz";
 import type { ContextoBi } from "./contexto";
 
-type AbaBi = "geral" | "dre" | "dfc" | "comparar" | "empresas" | "indicadores" | "lancamentos";
+type AbaBi = "geral" | "dre" | "dfc" | "conciliacao" | "comparar" | "empresas" | "indicadores" | "lancamentos" | "classificacao";
 const PERIODO_PADRAO: Periodo = "ano";
 
-function AbaRelatorio({ rel, c }: { rel: TipoRelatorio; c: ContextoBi }) {
+function AbaRelatorio({ rel, c, aoClassificar }: { rel: TipoRelatorio; c: ContextoBi; aoClassificar: () => void }) {
   const [origem, setOrigem] = useState<PedidoOrigem | null>(null);
   const m = useConsulta(
     useCallback(async () => {
-      const [matriz, contas] = await Promise.all([
+      const [matriz, contas, saldos] = await Promise.all([
         lerRelatorio(rel, c.ids, c.de, c.ate, c.elimina),
         lerContas(rel, c.ids, c.de, c.ate, c.elimina),
+        rel === "dfc" ? lerSaldos(c.ids, c.de, c.ate) : Promise.resolve([]),
       ]);
-      return { matriz, contas: montarContas(contas ?? [], matriz.meses) };
+      return {
+        matriz,
+        contas: montarContas(contas ?? [], matriz.meses),
+        saldos:
+          rel === "dfc"
+            ? resumirSaldos(saldos ?? [], mesesDoPeriodo(c.de, c.ate < c.hoje ? c.ate : c.hoje), totalDe(matriz, "variacao_caixa"))
+            : null,
+      };
     }, [rel, c.ids, c.de, c.ate, c.elimina]),
   );
   if (m.erro)
@@ -61,12 +74,22 @@ function AbaRelatorio({ rel, c }: { rel: TipoRelatorio; c: ContextoBi }) {
   return (
     <div className="space-y-3">
       {nc !== 0 && (
-        <p className="flex items-start gap-2 rounded-md bg-amber-50 p-3 text-sm text-amber-900">
-          <Icone nome="alerta" className="mt-0.5 h-4 w-4 shrink-0" />
-          {Math.abs(nc).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} estão em &quot;Não classificado&quot;: categorias
-          do Omie sem conta do plano ou lançadas no Omie como &quot;Contas a classificar&quot;. Clique no valor da linha para ver quais são
-          e peça à equipe MDC para classificar.
-        </p>
+        <div className="flex flex-col gap-2 rounded-md bg-amber-50 p-3 text-sm text-amber-900 sm:flex-row sm:items-center">
+          <p className="flex flex-1 items-start gap-2">
+            <Icone nome="alerta" className="mt-0.5 h-4 w-4 shrink-0" />
+            <span>
+              {Math.abs(nc).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} estão em &quot;Não classificado&quot;:
+              categorias do Omie sem conta do plano ou lançadas no Omie como &quot;Contas a classificar&quot;. Clique no valor da linha para
+              ver quais são{c.podeClassificar ? " e classifique-as." : " e peça à equipe MDC para classificar."}
+            </span>
+          </p>
+          {c.podeClassificar && (
+            <button type="button" className="btn shrink-0" onClick={aoClassificar}>
+              <Icone nome="etiqueta" className="h-4 w-4" />
+              Classificar agora
+            </button>
+          )}
+        </div>
       )}
       {rel === "dre" && <CartoesMargem m={m.dados.matriz} />}
       <TabelaMatriz
@@ -77,6 +100,12 @@ function AbaRelatorio({ rel, c }: { rel: TipoRelatorio; c: ContextoBi }) {
         contas={m.dados.contas}
         aoAbrir={setOrigem}
       />
+      {rel === "dfc" && (
+        <>
+          <h3 className="text-[15px] font-semibold text-[var(--marca)]">Saldos dos bancos</h3>
+          <CartaoSaldos r={m.dados.saldos} elimina={c.elimina} />
+        </>
+      )}
       {origem && <JanelaOrigem rel={rel} p={origem} c={c} aoFechar={() => setOrigem(null)} />}
     </div>
   );
@@ -91,7 +120,7 @@ export function PainelBi({
   grupo: string;
   escolhidas: EmpresaBi[];
   aoTrocar: () => void;
-  contextoBase: Pick<ContextoBi, "hoje" | "logoUrl" | "podeLancar" | "avisar">;
+  contextoBase: Pick<ContextoBi, "hoje" | "logoUrl" | "podeLancar" | "podeClassificar" | "avisar">;
 }) {
   const [aba, setAba] = useState<AbaBi>("geral");
   const [periodo, setPeriodo] = useState<Periodo>(PERIODO_PADRAO);
@@ -150,10 +179,12 @@ export function PainelBi({
     { id: "geral", nome: "Visão geral" },
     { id: "dre", nome: "DRE" },
     { id: "dfc", nome: "Fluxo de caixa" },
+    { id: "conciliacao", nome: "Resultado × caixa" },
     { id: "comparar", nome: "Comparar" },
     ...(escolhidas.length > 1 ? [{ id: "empresas" as const, nome: "Empresas" }] : []),
     { id: "indicadores", nome: "Indicadores" },
     { id: "lancamentos", nome: "Lançamentos" },
+    ...(c.podeClassificar ? [{ id: "classificacao" as const, nome: "Classificação" }] : []),
   ];
 
   return (
@@ -222,7 +253,11 @@ export function PainelBi({
       ) : aba === "geral" ? (
         <AbaVisaoGeral c={c} />
       ) : aba === "dre" || aba === "dfc" ? (
-        <AbaRelatorio key={aba} rel={aba} c={c} />
+        <AbaRelatorio key={aba} rel={aba} c={c} aoClassificar={() => setAba("classificacao")} />
+      ) : aba === "conciliacao" ? (
+        <AbaConciliacao c={c} />
+      ) : aba === "classificacao" ? (
+        <AbaClassificacao c={c} />
       ) : aba === "comparar" ? (
         <AbaComparar c={c} />
       ) : aba === "empresas" ? (

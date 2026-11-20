@@ -78,7 +78,13 @@ function Tela() {
           grupo={escolha?.grupo ?? ""}
           escolhidas={escolhidas}
           aoTrocar={() => setEscolha(null)}
-          contextoBase={{ hoje, logoUrl: org.logo_url ?? null, podeLancar: pode("bi_gestao", "operar"), avisar: mostrar }}
+          contextoBase={{
+            hoje,
+            logoUrl: org.logo_url ?? null,
+            podeLancar: pode("bi_gestao", "operar"),
+            podeClassificar: pode("bi_gestao", "gerir"),
+            avisar: mostrar,
+          }}
         />
       ) : (
         <>

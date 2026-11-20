@@ -149,9 +149,7 @@ export function JanelaOrigem({ rel, p, c, aoFechar }: { rel: TipoRelatorio; p: P
                     {o.data ? fmtData(o.data) : "—"}
                   </td>
                   <td data-rotulo="Documento">{o.documento || "—"}</td>
-                  <td data-rotulo="Cliente/fornecedor" className="celula-titulo">
-                    {o.pessoa || "—"}
-                  </td>
+                  <td className="celula-titulo">{o.pessoa || "—"}</td>
                   <td data-rotulo="Categoria do Omie">{o.categoria || "—"}</td>
                   <td data-rotulo="Conta" className="num">
                     {o.conta || "—"}

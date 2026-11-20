@@ -4,7 +4,7 @@
 // (components/shell/navegacao.ts): com ele a tela do manual ganha o botão "Ir para a tela".
 // Mudou uma tela ou regra? Atualize o trecho dela aqui no mesmo commit e acrescente uma linha em "Controle de versões".
 
-export const VERSAO_MANUAL = { numero: "2.3", data: "20/11/2026" };
+export const VERSAO_MANUAL = { numero: "2.4", data: "20/11/2026" };
 
 export const MANUAL_MD = `
 ## Como usar este manual
@@ -216,10 +216,24 @@ DRE e fluxo de caixa (DFC) gerenciais de um grupo de empresas, mês a mês, a pa
 4. Em **Comparar**, escolha **Período anterior**, **Mesmo período do ano passado** ou **Orçamento** (realizado × orçado). Diferença verde é melhor para o resultado; vermelha, pior.
 5. Na **DRE**, os cartões de **margem bruta, operacional e líquida** mostram o percentual, a faixa (vermelho = abaixo do esperado, amarelo = atenção, verde = saudável) e o que ela quer dizer em reais ("de cada R$ 100 de receita, sobraram…"). Faixas: bruta 20% e 35%; operacional 5% e 12%; líquida 0% e 8%.
 6. Na DRE e no Fluxo de caixa, clique na **seta** ao lado de uma linha para abri-la nas contas do plano (ou em **Abrir todas as contas**). Clique num **valor sublinhado** para ver as notas, os impostos das notas, as contas a pagar/receber e os pagamentos que formam aquele número, com busca e PDF/Excel.
-7. **Indicadores** mostra prazos médios de recebimento e pagamento, ciclo financeiro, inadimplência, contas em aberto por atraso, maiores clientes e fornecedores e liquidez.
-8. Use **PDF** ou **Excel** para baixar (com as contas que estiverem abertas).
+7. **Resultado × caixa** compara o que a DRE mostra (competência) com o que entrou e saiu do banco, grupo a grupo (vendas, impostos, pessoal, custos, despesas, juros). Diferença de 10% ou mais (acima de R$ 5 mil) aparece em **Atenção**; de 25% ou mais, em **Alerta**, com a causa mais comum. No fim vêm os **saldos dos bancos** do Omie (início, fim e a diferença para o fluxo), que também aparecem na aba Fluxo de caixa.
+8. **Indicadores** mostra prazos médios de recebimento e pagamento, ciclo financeiro, inadimplência, contas em aberto por atraso, maiores clientes e fornecedores e liquidez.
+9. Use **PDF** ou **Excel** para baixar (com as contas que estiverem abertas).
 
 **Atenção:** o aviso **Não classificado** mostra valores de categorias do Omie sem conta do plano ou lançadas no Omie como "Contas a classificar"; clique no valor da linha para ver quais são. A liquidez corrente, seca e geral vem do balancete do Domínio publicado em Demonstrativos; sem ele aparece só uma estimativa pelos títulos do Omie. Fornecedores aparecem pelo CNPJ/CPF.
+
+### Classificar as categorias do Omie (BI de Gestão → aba Classificação)
+
+**Quem usa:** só a equipe MDC (nível gerir na ferramenta BI de Gestão).
+
+**Para que serve:** pôr no plano de contas do BI as categorias do Omie que não têm o código do plano na frente do nome.
+
+1. Abra a aba **Classificação**. Ela abre em **Pendentes**: categorias sem conta, lançadas como "Contas a classificar" e as marcadas **A conferir**. O cartão **Sem conta do plano** mostra quanto está fora dos relatórios no período.
+2. Clique em **Classificar** (ou **Alterar**), escolha a **Conta do plano** e veja onde ela entra na DRE e no fluxo de caixa. Com mais de uma empresa, marque **Aplicar também em…** para gravar nas outras empresas que têm a mesma categoria com o mesmo nome.
+3. Nas categorias **A conferir** (vindas do de-para antigo), confira a conta e clique em **Conferir**.
+4. **Desfazer** tira a classificação da equipe (pede o motivo): a categoria volta a seguir o código do Omie ou fica sem conta.
+
+**Atenção:** a classificação vale para todos os períodos e entra na hora em todos os relatórios. Tudo fica no histórico com o nome de quem fez. No aviso "Não classificado" da DRE, o botão **Classificar agora** leva direto para esta aba.
 
 ### Lançamentos e orçamento (BI de Gestão → aba Lançamentos)
 
@@ -379,4 +393,5 @@ Os sistemas que a MDC licencia aos clientes (Ledgra ERP, EXato e os próximos): 
 | 2.1 | 20/11/2026 | **Licenças → Nova licença**: botão **Cadastrar empresa nova** no passo 1, para cadastrar pelo CNPJ uma empresa que ainda não é cliente (grupo "Só licença") sem sair da janela. |
 | 2.2 | 20/11/2026 | **BI de Gestão**: o orçamento aceita mais anos (dois para trás e cinco para a frente). |
 | 2.3 | 20/11/2026 | **BI de Gestão**: plano de contas gerencial padrão da MDC (classificação pelo código da categoria do Omie); DRE com margens por faixa e explicação, linhas que abrem nas contas do plano e clique no valor mostrando as notas e os títulos. |
+| 2.4 | 20/11/2026 | **BI de Gestão**: aba Classificação (equipe MDC classifica as categorias do Omie, com histórico), aba Resultado × caixa com alertas de variação, saldos dos bancos do Omie no fluxo de caixa e adiantamentos recebidos em "Outros recebimentos". |
 `;

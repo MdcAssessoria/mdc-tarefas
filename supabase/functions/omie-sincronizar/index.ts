@@ -10,6 +10,10 @@
 //   - carga inicial: de omie_empresas.sincronizar_desde em diante, 1 mês por rodada (carga_ate guarda até onde foi);
 //   - depois: notas dos últimos 90 dias + títulos alterados desde a última rodada boa (com 3 dias de folga).
 //
+// Saldos dos bancos (105): depois dos títulos, lê as contas correntes e grava o saldo do começo e do fim do mês em
+// omie_saldos (os 2 últimos meses a cada rodada + até 4 meses que faltam desde sincronizar_desde). Falha ou falta de tempo
+// nesta parte não derruba a rodada: fica anotada na contagem e continua na próxima.
+//
 // Trazida para o repositório em 20/11/2026 (estava só publicada, versão 9); a única mudança foi a leitura da chave de
 // serviço pelo leitor compartilhado (SEG-01: chave nova com volta à antiga).
 
@@ -234,6 +238,54 @@ async function gravarMovimentos(db: SupabaseClient, e: Empresa, brutos: any[]) {
   return unicas.length;
 }
 
+
+// ---------- saldos dos bancos (105) ----------
+/** Lê um campo numérico do retorno da Omie sem depender de maiúsculas/minúsculas (nSaldoAnterior, nsaldoanterior…). */
+// deno-lint-ignore no-explicit-any
+function campoNum(o: any, ...nomes: string[]): number | null {
+  if (!o || typeof o !== "object") return null;
+  const alvo = nomes.map((n) => n.toLowerCase());
+  for (const [k, v] of Object.entries(o)) if (alvo.includes(k.toLowerCase()) && v !== null && v !== "") return num(v);
+  return null;
+}
+const meses = (de: string, ate: string) => {
+  const r: string[] = [];
+  for (let m = de.slice(0, 7) + "-01"; m <= ate; m = somaDias(fimDoMes(m), 1)) r.push(m);
+  return r;
+};
+
+async function sincronizarSaldos(db: SupabaseClient, omie: ClienteOmie, e: Empresa, hoje: string) {
+  const contas = await omie.todas("geral/contacorrente/", "ListarContasCorrentes", { apenas_importado_api: "N" }, "omie", "ListarContasCorrentes");
+  // deno-lint-ignore no-explicit-any
+  const ativas = contas.filter((c: any) => c.nCodCC && c.inativo !== "S");
+  const todos = meses(e.sincronizar_desde, hoje);
+  let gravados = 0;
+  for (const c of ativas) {
+    const cc = String(c.nCodCC);
+    const { data } = await db.from("omie_saldos").select("mes").eq("cliente_id", e.cliente_id).eq("conta_corrente", cc);
+    const tem = new Set((data ?? []).map((r) => String(r.mes).slice(0, 10)));
+    const faltam = todos.filter((m) => !tem.has(m)).slice(0, 4);
+    const pedir = [...new Set([...todos.slice(-2), ...faltam])];
+    const linhas = [];
+    for (const mes of pedir) {
+      const fim = fimDoMes(mes) < hoje ? fimDoMes(mes) : hoje;
+      const r = await omie.chamar("financas/extrato/", "ListarExtrato", { nCodCC: Number(cc), dPeriodoInicial: dataBR(mes), dPeriodoFinal: dataBR(fim) });
+      const anterior = campoNum(r, "nSaldoAnterior", "saldo_anterior");
+      const atual = campoNum(r, "nSaldoAtual", "nSaldoFinal", "saldo_atual");
+      if (anterior === null || atual === null) throw new ErroOmie("ListarExtrato: a Omie não devolveu os saldos (nSaldoAnterior/nSaldoAtual).");
+      linhas.push({
+        cliente_id: e.cliente_id, org_id: e.org_id, conta_corrente: cc, descricao: c.descricao ?? null, mes,
+        saldo_anterior: anterior, saldo_final: atual,
+        dados: { nSaldoAnterior: anterior, nSaldoAtual: atual, nSaldoConciliado: campoNum(r, "nSaldoConciliado"), nSaldoDisponivel: campoNum(r, "nSaldoDisponivel") },
+        atualizado_em: new Date().toISOString(),
+      });
+    }
+    await gravar(db, "omie_saldos", linhas, "cliente_id,conta_corrente,mes");
+    gravados += linhas.length;
+  }
+  return { contas: ativas.length, meses: gravados };
+}
+
 // ---------- uma rodada para uma empresa ----------
 async function sincronizar(db: SupabaseClient, e: Empresa, inicio: number) {
   const key = Deno.env.get(`OMIE_${e.credencial}_KEY`), secret = Deno.env.get(`OMIE_${e.credencial}_SECRET`);
@@ -278,9 +330,21 @@ async function sincronizar(db: SupabaseClient, e: Empresa, inicio: number) {
   const movs = await omie.todas("financas/mf/", "ListarMovimentos", filtroTit, "n", "movimentos");
   contagem.titulos = await gravarMovimentos(db, e, movs);
 
+  // 5) saldos dos bancos: não derruba a rodada (o resto já está gravado)
+  let avisoSaldos = "";
+  try {
+    const s = await sincronizarSaldos(db, omie, e, hoje);
+    contagem.contas_correntes = s.contas;
+    contagem.saldos = s.meses;
+  } catch (err) {
+    avisoSaldos = err instanceof TempoEsgotado ? " Saldos dos bancos continuam na próxima rodada."
+                : err instanceof ErroOmie ? ` Saldos dos bancos: ${err.message}` : " Saldos dos bancos: falha inesperada.";
+    if (!(err instanceof ErroOmie) && !(err instanceof TempoEsgotado)) console.error("omie-sincronizar saldos", e.cliente_id, err);
+  }
+
   // fecha a rodada
   const fim = new Date().toISOString();
-  const resumo = `${cargaInicial ? "Carga" : "Atualização"} ${de} a ${ate}: ${contagem.nfe} NF-e, ${contagem.nfse} NFS-e, ${contagem.titulos} linhas de títulos.`;
+  const resumo = `${cargaInicial ? "Carga" : "Atualização"} ${de} a ${ate}: ${contagem.nfe} NF-e, ${contagem.nfse} NFS-e, ${contagem.titulos} linhas de títulos, ${contagem.saldos ?? 0} saldos de banco.${avisoSaldos}`;
   await db.from("omie_execucoes").update({ fim, situacao: "ok", contagem }).eq("id", exec!.id);
   const upd: Record<string, unknown> = { ultima_sync: fim, ultimo_ok: fim, ultimo_resultado: resumo, pedido_em: null };
   if (cargaInicial) { upd.carga_ate = ate; if (ate >= hoje) upd.carga_completa_feita = true; }

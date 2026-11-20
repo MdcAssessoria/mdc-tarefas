@@ -3302,8 +3302,15 @@ RPCS.fis_nbs_do_servico = ({ p_servico }) => {
   // 104: contas do plano por linha e origem do valor (notas e títulos)
   RPCS.bi_relatorio_contas = ({ p_relatorio, p_inicio }) => {
     const ano = String(p_inicio ?? "2026-01-01").slice(0, 4);
-    if (p_relatorio === "dfc") return [];
+    if (p_relatorio === "dfc")
+      return [
+        ["rec_clientes", "3.1.01", "Venda de Produção do Estabelecimento", 10, [110000, 128000]],
+        ["pag_fornecedores", "5.1.01", "Matéria-Prima", 140, [-70000, -66000]],
+      ].flatMap(([linha, conta, nome, ordem, vs]) =>
+        vs.map((valor, i) => ({ linha, conta, nome, ordem, competencia: `${ano}-0${i + 1}-01`, valor })),
+      );
     const contas = [
+      ["receita_bruta", "3.1.01", "Venda de Produção do Estabelecimento", 10, [120000, 135000]],
       ["despesas_pessoal", "6.1.01", "Salários e Ordenados", 290, [-16000, -16300]],
       ["despesas_pessoal", "6.1.03", "Pró-Labore", 310, [-5000, -5200]],
       ["custos", "5.1.01", "Matéria-Prima", 140, [-62000, -70500]],
@@ -3335,6 +3342,98 @@ RPCS.fis_nbs_do_servico = ({ p_servico }) => {
       categoria: "CFOP 5101",
       conta: p_linha === "receita_bruta" ? "3.1.01" : null,
       valor: 12000,
+    },
+  ];
+  // 105: saldos dos bancos, classificação e plano
+  RPCS.bi_saldos = () => [
+    {
+      empresa: "Greencore",
+      conta_corrente: "1",
+      descricao: "Itaú 1234-5",
+      mes: "2026-01-01",
+      saldo_anterior: 80000,
+      saldo_final: 120000,
+      atualizado_em: "2026-11-20T12:00:00Z",
+    },
+    {
+      empresa: "Greencore",
+      conta_corrente: "1",
+      descricao: "Itaú 1234-5",
+      mes: "2026-02-01",
+      saldo_anterior: 120000,
+      saldo_final: 182000,
+      atualizado_em: "2026-11-20T12:00:00Z",
+    },
+  ];
+  RPCS.bi_classificacao_listar = () => [
+    {
+      cliente_id: C1,
+      empresa: "Greencore",
+      categoria_codigo: "2.04.84",
+      descricao: "Cartão de crédito a pagar",
+      conta: null,
+      conta_nome: null,
+      origem: "sem",
+      excecao_id: null,
+      a_conferir: false,
+      observacao: null,
+      alterado_em: null,
+      valor: -1200,
+      lancamentos: 3,
+    },
+    {
+      cliente_id: C1,
+      empresa: "Greencore",
+      categoria_codigo: "2.04.12",
+      descricao: "Auditorias",
+      conta: "6.2.08",
+      conta_nome: "Outras Despesas Administrativas",
+      origem: "excecao",
+      excecao_id: "e1",
+      a_conferir: true,
+      observacao: "Recuperado do de-para antigo (090d) pelo nome",
+      alterado_em: null,
+      valor: -3000,
+      lancamentos: 1,
+    },
+    {
+      cliente_id: C1,
+      empresa: "Greencore",
+      categoria_codigo: "2.03.01",
+      descricao: "6.1.01 - Salários",
+      conta: "6.1.01",
+      conta_nome: "Salários e Ordenados",
+      origem: "codigo",
+      excecao_id: null,
+      a_conferir: false,
+      observacao: null,
+      alterado_em: null,
+      valor: -32300,
+      lancamentos: 2,
+    },
+  ];
+  RPCS.bi_excecao_salvar = () => 1;
+  TABELAS.bi_plano = [
+    {
+      codigo: "6.2.08",
+      nome: "Outras Despesas Administrativas",
+      tipo: "ADM",
+      ordem: 410,
+      linha_dre: "despesas_administrativas",
+      linha_dfc: "pag_despesas",
+      org_id: null,
+      ativo: true,
+    },
+    {
+      codigo: "9.1.01",
+      nome: "Movimentos operacionais sem resultado (adiantamentos, cartão, duplicidades)",
+      tipo: "FORA",
+      ordem: 2010,
+      linha_dre: null,
+      linha_dfc: "pag_despesas",
+      linha_dfc_entrada: "outros_recebimentos",
+      org_id: null,
+      ativo: true,
     },
   ];
   RPCS.bi_orcado = ({ p_relatorio, p_inicio }) => montar(p_relatorio === "dfc" ? DFC : DRE, String(p_inicio ?? "2026").slice(0, 4), 1.05);
