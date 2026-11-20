@@ -77,8 +77,9 @@ Componentes em `web/src/dominios/bi/componentes/`.
   aparecem zerados. A classificação é decisão contábil do Edvaldo.
 
 - As migrações do BI e do Omie, aplicadas direto em produção, estão no repositório desde 20/11/2026 (`090_bi_gestao_omie`
-  a `090e_omie_restaura_agendamento`; ALT-02, ver `docs/04` §4.5.1). Continua existindo um segundo modelo do Omie
-  (`omie_contas`/`gestao_*`, na `090d`) sem uso (NOV-02). A tela usa o modelo `bi_*`, o único com dados (Grupo Clara).
+  a `090e_omie_restaura_agendamento`; ALT-02, ver `docs/04` §4.5.1). O segundo modelo do Omie
+  (`omie_contas`/`gestao_*`, na `090d`), que nunca teve uso, sai na `101_omie_remove_modelo_b` (NOV-02, decisão do
+  Edvaldo em 20/11/2026: fica o modelo `bi_*`).
 - **Mapa de categorias do Grupo Clara é PROVISÓRIO (20/11/2026):** 254 regras por empresa carregadas a partir da
   sugestão da planilha `Classificacao_categorias_Omie_Grupo_Clara.xlsx` (código do plano gerencial do Omie), autorizadas
   pelo Edvaldo como ponto de partida. Ficaram de fora, em "Não classificado", 5 categorias para ele decidir: "Contas a
