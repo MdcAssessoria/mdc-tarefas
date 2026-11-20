@@ -8137,6 +8137,35 @@ export type Database = {
         Args: { p_cliente: string; p_data: string; p_motivo?: string };
         Returns: Json;
       };
+      integracao_clientes_buscar: {
+        Args: { p_busca: string };
+        Returns: {
+          cidade: string;
+          cliente_desde: string;
+          cnpj: string;
+          codigo_dominio: string;
+          id: string;
+          nome_fantasia: string;
+          razao_social: string;
+          regime: string;
+          segmento: string;
+          uf: string;
+        }[];
+      };
+      integracao_registrar: {
+        Args: {
+          p_acao: string;
+          p_detalhe: string;
+          p_ok: boolean;
+          p_sistema: string;
+        };
+        Returns: undefined;
+      };
+      integracao_token_confere: {
+        Args: { p_sistema: string; p_token: string };
+        Returns: boolean;
+      };
+      integracao_token_girar: { Args: { p_sistema: string }; Returns: boolean };
       lic_assinatura_abrir: { Args: { p_token: string }; Returns: Json };
       lic_assinatura_aceitar: {
         Args: {

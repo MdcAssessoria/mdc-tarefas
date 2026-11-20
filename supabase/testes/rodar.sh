@@ -225,3 +225,8 @@ $P -f "$R/testes/160_sistemas_088.sql" 2>&1 | grep -v "^SET$"
 # 091: pacotes de licença (sistema, usuários incluídos, adicional e excedente no pacote)
 $P -v ON_ERROR_STOP=1 -f "$R/migrations/091_pacotes_licenca.sql" 2>&1 | grep -v NOTICE || true
 $P -f "$R/testes/161_pacotes_091.sql" 2>&1 | grep -v "^SET$"
+# 092: integração entre sistemas sem a chave de serviço do HUB (código por sistema, busca de clientes, registro)
+for f in testes/162_base_092.sql migrations/092_hub_integracao.sql; do
+  $P -v ON_ERROR_STOP=1 -f "$R/$f" 2>&1 | grep -v NOTICE || true
+done
+$P -f "$R/testes/163_integracao_092.sql" 2>&1 | grep -v "^SET$"
