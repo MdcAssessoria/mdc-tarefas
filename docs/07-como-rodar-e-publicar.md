@@ -78,11 +78,27 @@ PIN (5.9) em todas as telas.
 
 ## 7.4 Funções Edge
 
-Cada pasta em `supabase/functions/` é uma função. Para publicar:
+Cada pasta em `supabase/functions/` é uma função; as pastas que começam com `_` são código compartilhado.
+
+**Publicação automática (desde 20/11/2026):** a rotina do GitHub `.github/workflows/funcoes.yml` ("Publicar Funções")
+confere os tipos de todas as Funções e, num push na `main` que mexa em `supabase/functions/` ou `supabase/config.toml`,
+publica **todas** com o `verify_jwt` e o `import_map` do `config.toml`. Também dá para rodar à mão (Actions › Publicar
+Funções › Run workflow). Precisa do segredo `SUPABASE_ACCESS_TOKEN` no GitHub (Settings › Secrets and variables ›
+Actions), cadastrado pelo Edvaldo. Com isso o que está no ar é sempre o que está no repositório: **não publique Função
+fora do repositório** (a `omie-sincronizar` ficou só no ar até 20/11/2026). Toda Função nova precisa da sua entrada no
+`config.toml`. Para publicar uma só, à mão:
 
 ```bash
 npx supabase functions deploy convite --project-ref bulqqdgfrrpqquqvjjfa --import-map supabase/functions/convite/deno.json
 ```
+
+**Chaves do projeto nas Funções (SEG-01, 20/11/2026):** nenhuma Função lê `SUPABASE_SERVICE_ROLE_KEY` ou
+`SUPABASE_ANON_KEY` direto; todas usam `chaveSecreta()` / `chavePublica()` de `supabase/functions/_compartilhado/chaves.ts`,
+que pega a chave nova `default` (`SUPABASE_SECRET_KEYS` / `SUPABASE_PUBLISHABLE_KEYS`, injetadas pelo Supabase) e, se
+ela não existir, a antiga. As chaves antigas (`anon`/`service_role`) deixam de funcionar no fim de 2026; só podem ser
+desativadas (Settings › API Keys › Legacy API Keys) depois que todas as Funções estiverem publicadas com o leitor novo e
+nada mais usar a chave antiga (Ledgra sem `HUB_SUPABASE_SERVICE_ROLE_KEY`). Conferência: nos logs (`edge_logs`), as
+chamadas das Funções ao banco mostram `request.sb.apikey.apikey.prefix` = `sb_secret_…`.
 
 - **Ordem quando a mudança mexe na tela e na função:** publique a **função primeiro** e confira a versão nova no painel;
   só depois faça o push do site. A função nova aceita o site antigo; o site novo com a função antiga entrega PDF errado.
@@ -227,8 +243,9 @@ npx supabase functions deploy convite --project-ref bulqqdgfrrpqquqvjjfa --impor
   3. **Edvaldo:** no SQL Editor, `select decrypted_secret from vault.decrypted_secrets where name = 'integracao_token_ledgra';`
      e colar o valor na Vercel do Ledgra como `HUB_INTEGRACAO_TOKEN` (Production e Preview);
   4. publicar o Ledgra que chama a `hub-integracao` e conferir "Buscar no HUB", "Nova empresa › HUB" e o Raio-X;
-  5. **Edvaldo:** no painel do Supabase do HUB › Project Settings › API Keys, gerar uma nova chave de serviço
-     (secret key) e desativar a antiga; na Vercel do Ledgra, apagar `HUB_SUPABASE_SERVICE_ROLE_KEY`;
+  5. **Edvaldo:** na Vercel do Ledgra, apagar `HUB_SUPABASE_SERVICE_ROLE_KEY`; depois de todas as Funções publicadas com
+     o leitor de chaves novo (seção 7.4), desativar as chaves antigas no painel do Supabase do HUB › Project Settings ›
+     API Keys (a chave secreta nova `default` já existe e está em uso desde 20/11/2026);
   6. código vazado ou troca de rotina: `select integracao_token_girar('ledgra');` no SQL Editor e repetir o passo 3.
 - Segredos das funções (chave de serviço etc.) ficam no painel: Edge Functions › Secrets. Nunca no código.
 - Ledgra Link (043): `LEDGRA_LINK_URL` (endereço do Ledgra Link, ex.: `https://link.ledgra.com.br`), `LEDGRA_LINK_CHAVE`

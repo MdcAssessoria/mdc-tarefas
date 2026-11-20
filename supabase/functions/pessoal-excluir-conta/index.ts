@@ -4,6 +4,7 @@
 // Conta que também é do HUB da MDC ou do Portal do Cliente é barrada no 1º passo. Se o 2º falhar, a pessoa repete:
 // o 1º passo já não tem o que apagar e segue direto.
 import { createClient } from "@supabase/supabase-js";
+import { chaveSecreta, chavePublica } from "../_compartilhado/chaves.ts";
 
 const ORIGENS = ["https://hub.mdcassessoria.com", "https://mdc-tarefas.vercel.app"];
 const cors = (req: Request) => {
@@ -35,7 +36,7 @@ Deno.serve(async (req) => {
   }
 
   const url = Deno.env.get("SUPABASE_URL")!;
-  const usuario = createClient(url, Deno.env.get("SUPABASE_ANON_KEY")!, {
+  const usuario = createClient(url, chavePublica(), {
     global: { headers: { Authorization: auth } },
     auth: { persistSession: false },
   });
@@ -51,7 +52,7 @@ Deno.serve(async (req) => {
     return json(negocio ? 400 : 500, { erro: negocio ? ePrep.message : "Não deu para excluir agora. Tente de novo em alguns minutos." });
   }
 
-  const servico = createClient(url, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, { auth: { persistSession: false } });
+  const servico = createClient(url, chaveSecreta(), { auth: { persistSession: false } });
   const { error: eApagar } = await servico.auth.admin.deleteUser(quem.user.id);
   if (eApagar) {
     console.error("pessoal-excluir-conta: apagar o login falhou", eApagar.status ?? "");

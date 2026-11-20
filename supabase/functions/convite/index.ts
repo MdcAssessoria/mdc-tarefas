@@ -11,6 +11,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { enviarPeloGraph, lerGraph } from "../_email/graph.ts";
 import { ASSUNTO_CONVITE, ASSUNTO_SENHA, htmlConvite, htmlSenha } from "../_email/modelos.ts";
+import { chaveSecreta, chavePublica } from "../_compartilhado/chaves.ts";
 
 // endereços onde o Hub roda; o link do convite só pode voltar para um deles
 const ORIGENS = ["https://mdcassessoria.com", "https://www.mdcassessoria.com", "https://hub.mdcassessoria.com", "https://mdc-tarefas.vercel.app"];
@@ -62,8 +63,8 @@ Deno.serve(async (req) => {
   const redirectTo = `${origem}${BASE}/login?convite=1`;
 
   const url = Deno.env.get("SUPABASE_URL")!;
-  const usuario = createClient(url, Deno.env.get("SUPABASE_ANON_KEY")!, { global: { headers: { Authorization: auth } }, auth: { persistSession: false } });
-  const servico = createClient(url, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, { auth: { persistSession: false } });
+  const usuario = createClient(url, chavePublica(), { global: { headers: { Authorization: auth } }, auth: { persistSession: false } });
+  const servico = createClient(url, chaveSecreta(), { auth: { persistSession: false } });
 
   // senha provisória (071): o administrador recebe uma senha para mandar pelo WhatsApp; no 1º acesso a pessoa troca
   if (corpo.senha_provisoria) {

@@ -11,6 +11,7 @@
 // O código é do Edvaldo Ribeiro de Carvalho (MDC Assessoria Contábil).
 import { createClient } from "@supabase/supabase-js";
 import webpush from "web-push";
+import { chaveSecreta } from "../_compartilhado/chaves.ts";
 
 const ORIGENS = ["https://hub.mdcassessoria.com", "https://mdcassessoria.com", "https://www.mdcassessoria.com", "https://mdc-tarefas.vercel.app"];
 const ASSUNTO = "https://hub.mdcassessoria.com";
@@ -27,7 +28,7 @@ const cors = (req: Request) => {
 };
 
 const servico = () =>
-  createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, { auth: { persistSession: false } });
+  createClient(Deno.env.get("SUPABASE_URL")!, chaveSecreta(), { auth: { persistSession: false } });
 
 type Banco = ReturnType<typeof servico>;
 

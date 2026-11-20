@@ -5,6 +5,7 @@
 // A chave de serviço fica só aqui, no servidor; o site nunca a vê. Desde a 078 a conta nasce com app_metadata.origem =
 // 'pessoal' (nunca vira equipe nem Portal) e o e-mail com convite pendente é recusado (pessoal_email_livre).
 import { createClient } from "@supabase/supabase-js";
+import { chaveSecreta } from "../_compartilhado/chaves.ts";
 
 const ORIGENS = ["https://hub.mdcassessoria.com", "https://mdcassessoria.com", "https://www.mdcassessoria.com", "https://mdc-tarefas.vercel.app"];
 const CORS = {
@@ -49,7 +50,7 @@ Deno.serve(async (req) => {
     return json(400, { erro: "A senha precisa ter de 8 a 72 caracteres, sem espaço no começo ou no fim." });
 
   const url = Deno.env.get("SUPABASE_URL")!;
-  const servico = createClient(url, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, { auth: { persistSession: false } });
+  const servico = createClient(url, chaveSecreta(), { auth: { persistSession: false } });
 
   const ip = (req.headers.get("x-forwarded-for") ?? "").split(",")[0].trim() || req.headers.get("cf-connecting-ip") || "sem-ip";
   const { data: pode, error: eTrava } = await servico.rpc("pessoal_cadastro_tentativa", { p_ip_hash: await resumo(ip) });

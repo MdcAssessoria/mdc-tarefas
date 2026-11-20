@@ -2,6 +2,7 @@
 // O arquivo .pfx e a senha ficam criptografados no Supabase Vault; nunca voltam para o navegador.
 import { createClient } from "@supabase/supabase-js";
 import { lerCertificado } from "./cert.ts";
+import { chaveSecreta, chavePublica } from "../_compartilhado/chaves.ts";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -16,8 +17,8 @@ Deno.serve(async (req) => {
   const auth = req.headers.get("Authorization");
   if (!auth) return json(401, { erro: "Faça login." });
   const url = Deno.env.get("SUPABASE_URL")!;
-  const usuario = createClient(url, Deno.env.get("SUPABASE_ANON_KEY")!, { global: { headers: { Authorization: auth } }, auth: { persistSession: false } });
-  const servico = createClient(url, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, { auth: { persistSession: false } });
+  const usuario = createClient(url, chavePublica(), { global: { headers: { Authorization: auth } }, auth: { persistSession: false } });
+  const servico = createClient(url, chaveSecreta(), { auth: { persistSession: false } });
   const { data: u } = await usuario.auth.getUser();
   if (!u?.user) return json(401, { erro: "Sessão expirada. Entre de novo." });
 

@@ -15,6 +15,7 @@ import { VISOES, listarMeses, mesmoPeriodoAnoAnterior, quantosPeriodos, rotuloEs
 import { situacaoPdf } from "./pdfPeriodo.ts";
 import type { Escolha, RegPeriodo, Visao } from "./selecaoPeriodo.ts";
 import { combinarLinhas } from "./linhasPeriodo.ts";
+import { chaveSecreta, chavePublica } from "../_compartilhado/chaves.ts";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -108,8 +109,8 @@ Deno.serve(async (req) => {
   if (escolha === "invalido") return json(400, { erro: "Período inválido. Escolha o período de novo na tela." });
 
   const url = Deno.env.get("SUPABASE_URL")!;
-  const usuario = createClient(url, Deno.env.get("SUPABASE_ANON_KEY")!, { global: { headers: { Authorization: auth } }, auth: { persistSession: false } });
-  const servico = createClient(url, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, { auth: { persistSession: false } });
+  const usuario = createClient(url, chavePublica(), { global: { headers: { Authorization: auth } }, auth: { persistSession: false } });
+  const servico = createClient(url, chaveSecreta(), { auth: { persistSession: false } });
 
   // 1. o próprio usuário precisa conseguir ler o balancete (equipe com acesso ou cliente com o mês publicado)
   let { data: b } = await usuario.from("portal_balancetes").select("*").eq("id", id).maybeSingle();

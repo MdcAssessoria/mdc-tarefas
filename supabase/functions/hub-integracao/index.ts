@@ -13,6 +13,7 @@
 // Cada sistema só usa as ações liberadas para ele (ACOES). Toda chamada fica em app.integracao_chamadas.
 // Recusa de regra do negócio (mensagem em português do banco) volta com status 422 e { erro }, para o sistema mostrar.
 import { createClient } from "@supabase/supabase-js";
+import { chaveSecreta } from "../_compartilhado/chaves.ts";
 
 const ACOES: Record<string, string[]> = {
   ledgra: ["vincular_cnpj", "buscar_clientes", "raiox_conferir"],
@@ -41,7 +42,7 @@ Deno.serve(async (req) => {
   const token = (req.headers.get("x-hub-integracao") ?? "").trim();
   if (!sistema || !token || !(sistema in ACOES)) return json(401, { erro: "Chamada não autorizada." });
 
-  const servico = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, {
+  const servico = createClient(Deno.env.get("SUPABASE_URL")!, chaveSecreta(), {
     auth: { persistSession: false, autoRefreshToken: false },
   });
   const registrar = (acao: string, ok: boolean, detalhe: string | null) =>

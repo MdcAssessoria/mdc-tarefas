@@ -58,7 +58,7 @@ mês e no total do período. Os dados vêm do sistema do cliente (Omie) e dos la
 | `bi_grupos`, `bi_grupo_empresas` | Grupos de empresas e suas empresas |
 | `bi_linhas` | Contas do DRE e do DFC (padrão e por organização), com subtotais em `soma` |
 | `bi_mapa_categorias`, `bi_cfop_regras` | Categoria do Omie → conta; CFOP → linha da DRE |
-| `omie_notas`, `omie_nota_cfops`, `omie_movimentos` | Dados copiados do Omie pela função `omie-sincronizar` |
+| `omie_notas`, `omie_nota_cfops`, `omie_movimentos` | Dados copiados do Omie pela função `omie-sincronizar` (código em `supabase/functions/omie-sincronizar`, no repositório desde 20/11/2026; agendador a cada 5 min com `x-agente-token`) |
 | `bi_complementares` | Lançamentos complementares (fora do Omie) |
 | `bi_acessos`, `app.bi_acessos_log` (097) | Pedidos de acesso (pedido, aprovado, negado, encerrado; validade) e registro de quem abriu os números |
 | `bi_empresas()`, `bi_acesso_pedir/decidir/encerrar`, `bi_acessos_listar()`, `bi_registro_acessos(dias)` (097) | Cartões, pedidos e aprovação, lista e registro (este só administrador) |

@@ -91,3 +91,9 @@ import_map = "./functions/pessoal-aviso/deno.json"
 [functions.hub-integracao]
 verify_jwt = false
 import_map = "./functions/hub-integracao/deno.json"
+
+# BI de Gestão (Omie): chamada pelo agendador a cada 5 minutos com token próprio (x-agente-token, conferido no banco por
+# omie_token_confere); sem login de usuário, por isso a checagem padrão fica desligada. No repositório desde 20/11/2026.
+[functions.omie-sincronizar]
+verify_jwt = false
+import_map = "./functions/omie-sincronizar/deno.json"
