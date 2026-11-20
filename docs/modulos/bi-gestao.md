@@ -77,8 +77,9 @@ Componentes em `web/src/dominios/bi/componentes/`.
   aparecem zerados. A classificação é decisão contábil do Edvaldo.
 
 - As migrações do BI e do Omie, aplicadas direto em produção, estão no repositório desde 20/11/2026 (`090_bi_gestao_omie`
-  a `090e_omie_restaura_agendamento`; ALT-02, ver `docs/04` §4.5.1). Continua existindo um segundo modelo do Omie
-  (`omie_contas`/`gestao_*`, na `090d`) sem uso (NOV-02). A tela usa o modelo `bi_*`, o único com dados (Grupo Clara).
+  a `090e_omie_restaura_agendamento`; ALT-02, ver `docs/04` §4.5.1). O segundo modelo do Omie
+  (`omie_contas`/`gestao_*`, na `090d`), que nunca teve uso, sai na `101_omie_remove_modelo_b` (NOV-02, decisão do
+  Edvaldo em 20/11/2026: fica o modelo `bi_*`).
 - A MDC ainda não tem tela para manter grupos e o mapa de categorias; hoje isso é feito pela equipe técnica.
   Desde a 099 não há gravação direta nessas tabelas pelo site (NOV-01): a tela futura deve gravar por função
   `security definer` com `hub_pode(org, 'bi_gestao', 'gerir')` e recusar organização pessoal.
