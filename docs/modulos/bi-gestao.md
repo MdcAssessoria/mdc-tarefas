@@ -77,5 +77,7 @@ Componentes em `web/src/dominios/bi/componentes/`.
   19/11/2026, ALT-02). Também existe um segundo modelo do Omie (`omie_contas`/`gestao_*`) sem uso (NOV-02). A tela usa
   o modelo `bi_*`, o único com dados (Grupo Clara).
 - A MDC ainda não tem tela para manter grupos e o mapa de categorias; hoje isso é feito pela equipe técnica.
+  Desde a 099 não há gravação direta nessas tabelas pelo site (NOV-01): a tela futura deve gravar por função
+  `security definer` com `hub_pode(org, 'bi_gestao', 'gerir')` e recusar organização pessoal.
   Lançamentos complementares e orçamento têm tela desde a v2.
 - Nome do fornecedor: incluir na sincronização do Omie (junto com ALT-02).
