@@ -4,7 +4,7 @@
 // (components/shell/navegacao.ts): com ele a tela do manual ganha o botão "Ir para a tela".
 // Mudou uma tela ou regra? Atualize o trecho dela aqui no mesmo commit e acrescente uma linha em "Controle de versões".
 
-export const VERSAO_MANUAL = { numero: "1.8", data: "20/11/2026" };
+export const VERSAO_MANUAL = { numero: "1.9", data: "20/11/2026" };
 
 export const MANUAL_MD = `
 ## Como usar este manual
@@ -210,7 +210,7 @@ DRE e fluxo de caixa (DFC) gerenciais de um grupo de empresas, mês a mês, a pa
 
 1. Escolha o **Período** (padrão: **Este ano**) e as **Empresas** (ao menos uma).
 2. Com mais de uma empresa, **Tirar vendas e pagamentos entre as empresas do grupo** vem marcado.
-3. Use as abas: **Visão geral** (resumo e gráficos), **DRE**, **Fluxo de caixa** (com **% da receita**), **Comparar**, **Empresas** (uma coluna por empresa e o consolidado) e **Indicadores**.
+3. Use as abas: **Visão geral** (resumo, resultado × caixa com o acumulado, cascata da receita ao resultado e receita mês a mês), **DRE**, **Fluxo de caixa** (com **% da receita**), **Comparar**, **Empresas** (quanto cada empresa pesa na receita e no resultado, uma coluna por empresa e o consolidado) e **Indicadores**. Nos gráficos, passe o mouse ou toque num mês para ver os valores.
 4. Em **Comparar**, escolha **Período anterior**, **Mesmo período do ano passado** ou **Orçamento** (realizado × orçado). Diferença verde é melhor para o resultado; vermelha, pior.
 5. **Indicadores** mostra prazos médios de recebimento e pagamento, ciclo financeiro, inadimplência, contas em aberto por atraso, maiores clientes e fornecedores e liquidez.
 6. Use **PDF** ou **Excel** para baixar.
@@ -368,4 +368,5 @@ Os sistemas que a MDC licencia aos clientes (Ledgra ERP, EXato e os próximos): 
 | 1.6 | 20/11/2026 | **Módulos por empresa** na licença (Empresas no sistema): sem escolha, todo o pacote; o EXato aplica ao receber as empresas. |
 | 1.7 | 20/11/2026 | **BI de Gestão**: abre em cartões das empresas sem números; acesso por pedido aprovado pelo administrador ou responsável (padrão 30 dias) e registro de quem abriu; novas abas Visão geral, Comparar (período anterior, ano passado e orçamento), Empresas, Indicadores (prazos, inadimplência, aberto por atraso, maiores clientes e fornecedores, liquidez) e Lançamentos (complementares e orçamento, com importação por Excel). |
 | 1.8 | 20/11/2026 | Novo módulo do EXato para vender na licença: **Pagamento de diárias por planilha** (precisa do Financeiro). |
+| 1.9 | 20/11/2026 | **BI de Gestão**: gráficos novos, legíveis também no celular: resultado acumulado no gráfico resultado × caixa, cascata da DRE da receita ao resultado, participação de cada empresa na receita e no resultado do grupo (aba Empresas) e balão com os valores do mês. |
 `;

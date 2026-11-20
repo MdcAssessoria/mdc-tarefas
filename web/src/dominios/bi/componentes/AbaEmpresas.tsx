@@ -14,6 +14,7 @@ import { matrizPorEmpresas } from "../comparar";
 import type { LinhaEmpresas } from "../comparar";
 import { lerRelatorio } from "../dados";
 import type { TipoRelatorio } from "../relatorio";
+import { GraficoParticipacao } from "./GraficoBarras";
 import { SeletorRelatorio } from "./SeletorRelatorio";
 import type { ContextoBi } from "./contexto";
 
@@ -79,48 +80,66 @@ export function AbaEmpresas({ c }: { c: ContextoBi }) {
       {!dados.dados ? (
         !dados.erro && <Esqueleto />
       ) : (
-        <QuadroTabela rotulo={titulo} cartoes={false}>
-          <thead>
-            <tr>
-              <th className="sticky left-0 z-[1] min-w-[14rem] bg-[var(--fundo)]">Conta</th>
-              {nomes.map((n) => (
-                <th key={n} className="text-right">
-                  {n}
-                </th>
-              ))}
-              <th className="text-right">Soma</th>
-              <th className="text-right" title="O que sai ao tirar as vendas e pagamentos entre as empresas do grupo">
-                Eliminações
-              </th>
-              <th className="text-right">Consolidado</th>
-            </tr>
-          </thead>
-          <tbody>
-            {dados.dados.map((l) => (
-              <tr key={l.codigo} className={l.subtotal ? "bg-[var(--fundo)]" : ""}>
-                <td
-                  className={`celula-titulo sticky left-0 z-[1] ${l.subtotal ? "bg-[var(--fundo)] font-semibold text-[var(--marca)]" : "bg-white !font-normal"}`}
-                >
-                  {l.nome}
-                </td>
-                {l.valores.map((v, i) => (
-                  <td key={nomes[i]} className="text-right">
-                    <Valor v={v} />
-                  </td>
+        <>
+          <div className="grid gap-3 lg:grid-cols-2">
+            {(rel === "dre" ? ["receita_liquida", "resultado_liquido"] : ["fluxo_operacional", "variacao_caixa"]).map((cod) => {
+              const l = dados.dados?.find((x) => x.codigo === cod);
+              if (!l) return null;
+              return (
+                <GraficoParticipacao
+                  key={cod}
+                  titulo={`${l.nome} por empresa`}
+                  itens={[
+                    ...nomes.map((n, i) => ({ nome: n, valor: l.valores[i] })),
+                    ...(Math.abs(l.eliminacoes) > 0.005 ? [{ nome: "Eliminações entre as empresas", valor: l.eliminacoes }] : []),
+                  ]}
+                />
+              );
+            })}
+          </div>
+          <QuadroTabela rotulo={titulo} cartoes={false}>
+            <thead>
+              <tr>
+                <th className="sticky left-0 z-[1] min-w-[14rem] bg-[var(--fundo)]">Conta</th>
+                {nomes.map((n) => (
+                  <th key={n} className="text-right">
+                    {n}
+                  </th>
                 ))}
-                <td className="text-right">
-                  <Valor v={l.soma} />
-                </td>
-                <td className="text-right text-[var(--texto-suave)]">
-                  <Valor v={l.eliminacoes} />
-                </td>
-                <td className="text-right font-semibold">
-                  <Valor v={l.consolidado} />
-                </td>
+                <th className="text-right">Soma</th>
+                <th className="text-right" title="O que sai ao tirar as vendas e pagamentos entre as empresas do grupo">
+                  Eliminações
+                </th>
+                <th className="text-right">Consolidado</th>
               </tr>
-            ))}
-          </tbody>
-        </QuadroTabela>
+            </thead>
+            <tbody>
+              {dados.dados.map((l) => (
+                <tr key={l.codigo} className={l.subtotal ? "bg-[var(--fundo)]" : ""}>
+                  <td
+                    className={`celula-titulo sticky left-0 z-[1] ${l.subtotal ? "bg-[var(--fundo)] font-semibold text-[var(--marca)]" : "bg-white !font-normal"}`}
+                  >
+                    {l.nome}
+                  </td>
+                  {l.valores.map((v, i) => (
+                    <td key={nomes[i]} className="text-right">
+                      <Valor v={v} />
+                    </td>
+                  ))}
+                  <td className="text-right">
+                    <Valor v={l.soma} />
+                  </td>
+                  <td className="text-right text-[var(--texto-suave)]">
+                    <Valor v={l.eliminacoes} />
+                  </td>
+                  <td className="text-right font-semibold">
+                    <Valor v={l.consolidado} />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </QuadroTabela>
+        </>
       )}
       <p className="text-xs text-[var(--texto-suave)]">
         Cada empresa aparece com todas as operações dela. Eliminações = o consolidado menos a soma: são as vendas e pagamentos entre as
