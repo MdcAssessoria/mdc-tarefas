@@ -1,7 +1,7 @@
 # Publicação das Funções Edge do Supabase (projeto bulqqdgfrrpqquqvjjfa), direto do repositório.
 # Roda quando um push na main mexe em supabase/functions/ ou em supabase/config.toml, e também à mão (aba Actions ›
 # "Publicar Funções" › Run workflow). Antes de publicar, confere os tipos de todas as Funções; se falhar, não publica.
-# Cada Função usa o verify_jwt e o import_map definidos em supabase/config.toml.
+# Sem terminal o CLI pede confirmação: por isso o --yes. Cada Função usa o verify_jwt e o import_map definidos em supabase/config.toml.
 #
 # Segredo necessário (cadastrado pelo Edvaldo em GitHub › Settings › Secrets and variables › Actions):
 #   SUPABASE_ACCESS_TOKEN  token pessoal do Supabase (Account › Access Tokens). Nunca no código.
@@ -55,4 +55,4 @@ jobs:
             exit 1
           fi
       - name: Publicar todas as Funções
-        run: supabase functions deploy --project-ref bulqqdgfrrpqquqvjjfa --use-api
+        run: supabase functions deploy --project-ref bulqqdgfrrpqquqvjjfa --use-api --yes
