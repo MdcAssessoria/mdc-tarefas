@@ -100,6 +100,11 @@ desativadas (Settings › API Keys › Legacy API Keys) depois que todas as Fun�
 nada mais usar a chave antiga (Ledgra sem `HUB_SUPABASE_SERVICE_ROLE_KEY`). Conferência: nos logs (`edge_logs`), as
 chamadas das Funções ao banco mostram `request.sb.apikey.apikey.prefix` = `sb_secret_…`.
 
+**Situação em 20/11/2026, 18h:** as 19 Funções publicadas pela rotina do GitHub com o leitor novo (token
+`github-hub-funcoes`, só Edge Functions do projeto, sem vencimento; revogar em Account › Access Tokens se vazar) e as
+**chaves antigas desligadas** (Settings › API Keys › Legacy). Nas 24 h anteriores nenhuma chamada usou chave antiga; as
+rodadas seguintes dos agendamentos voltaram 200. Religar só em emergência, no mesmo painel.
+
 - **Ordem quando a mudança mexe na tela e na função:** publique a **função primeiro** e confira a versão nova no painel;
   só depois faça o push do site. A função nova aceita o site antigo; o site novo com a função antiga entrega PDF errado.
 - **MDC · Pessoal (075/076):** `pessoal-cadastro` (cadastro aberto) e `pessoal-aviso` (resumo no celular) vão
@@ -243,9 +248,8 @@ chamadas das Funções ao banco mostram `request.sb.apikey.apikey.prefix` = `sb_
   3. **Edvaldo:** no SQL Editor, `select decrypted_secret from vault.decrypted_secrets where name = 'integracao_token_ledgra';`
      e colar o valor na Vercel do Ledgra como `HUB_INTEGRACAO_TOKEN` (Production e Preview);
   4. publicar o Ledgra que chama a `hub-integracao` e conferir "Buscar no HUB", "Nova empresa › HUB" e o Raio-X;
-  5. **Edvaldo:** na Vercel do Ledgra, apagar `HUB_SUPABASE_SERVICE_ROLE_KEY`; depois de todas as Funções publicadas com
-     o leitor de chaves novo (seção 7.4), desativar as chaves antigas no painel do Supabase do HUB › Project Settings ›
-     API Keys (a chave secreta nova `default` já existe e está em uso desde 20/11/2026);
+  5. feito em 20/11/2026: `HUB_SUPABASE_SERVICE_ROLE_KEY` já não existia na Vercel do Ledgra e as chaves antigas do
+     HUB foram desligadas (seção 7.4);
   6. código vazado ou troca de rotina: `select integracao_token_girar('ledgra');` no SQL Editor e repetir o passo 3.
 - Segredos das funções (chave de serviço etc.) ficam no painel: Edge Functions › Secrets. Nunca no código.
 - Ledgra Link (043): `LEDGRA_LINK_URL` (endereço do Ledgra Link, ex.: `https://link.ledgra.com.br`), `LEDGRA_LINK_CHAVE`
