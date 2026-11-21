@@ -22,6 +22,12 @@ vira barras deitadas com o nome e o valor escritos em cada linha, e os gráficos
 encavalar; as legendas são HTML e quebram linha. Antes o SVG tinha 720 px fixos e encolhia: a letra chegava a 5 px no
 celular (auditoria de 02/11/2026). As cores continuam as de `componentes/paletas.ts`.
 
+**Tabelas no padrão demonstrativo da MDC (desde 21/11/2026):** Balanço, DRE, DFC (`componentes/Demonstracoes.tsx`) e
+o balancete em árvore (`componentes/ArvoreBalancete.tsx`) usam o mesmo quadro do BI de Gestão
+(`components/ui/QuadroDemonstrativo.tsx` + estilo `.demo` em `globals.css`): cabeçalho verde preso no topo, primeira
+coluna presa ao rolar para o lado, subtotais em verde-claro, resultado com filete dourado e coluna principal destacada.
+O balanço mostra Ativo e Passivo + PL um embaixo do outro até telas muito largas (2xl), para não cortar a variação.
+
 Código: regras em `web/src/dominios/demonstrativos/` (leitura e cálculos em `balancete/`, `calculosDemonstracoes.ts`,
 `periodos.ts`, `selecaoPeriodo.ts`, `importacaoLote.ts`, gravação em `repositorio.ts`, peças de tela em `componentes/`);
 pedaços da tela de importação em `web/src/app/(hub)/demonstrativos/importar/_componentes/`; editor do parecer em

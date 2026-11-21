@@ -2,13 +2,7 @@
 // o quadro com rolagem e cabeçalho preso, a célula de valor compacta e a classe de cada linha (subtotal, resultado).
 import { fmtCelula, RESULTADOS } from "../formatoMatriz";
 
-export function QuadroDemonstrativo({ rotulo, children }: { rotulo: string; children: React.ReactNode }) {
-  return (
-    <div className="demo-quadro" tabIndex={0} role="region" aria-label={rotulo}>
-      <table className="demo">{children}</table>
-    </div>
-  );
-}
+export { QuadroDemonstrativo } from "@/components/ui/QuadroDemonstrativo";
 
 /** Valor sem "R$", com milhar e sinal; negativo em vermelho. `cor` pinta pelo efeito no resultado (verde melhor, vermelho pior). */
 export function TdValor({

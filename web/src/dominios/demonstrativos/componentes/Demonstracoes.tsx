@@ -10,6 +10,7 @@ import { brl } from "@/lib/formato/moeda";
 import { fmtIndice, fmtNumero } from "@/lib/formato/numero";
 import { fmtData } from "@/lib/formato/datas";
 import { Icone } from "@/components/ui/Icone";
+import { QuadroDemonstrativo } from "@/components/ui/QuadroDemonstrativo";
 
 const fmt = (v: number) => (Math.abs(v) < 0.5 ? "—" : (v < 0 ? "(" : "") + fmtNumero(Math.abs(v)) + (v < 0 ? ")" : ""));
 
@@ -82,40 +83,42 @@ function BlocoBalanco({
   fim: string;
 }) {
   return (
-    <div className="cartao overflow-x-auto">
-      <table className="tabela text-[13px]">
-        <thead>
-          <tr>
-            <th>{titulo}</th>
-            <th className="text-right">
-              Saldo inicial
-              <span className="block text-[11px] font-normal">{fmtData(inicio)}*</span>
-            </th>
-            <th className="text-right">
-              Saldo final
-              <span className="block text-[11px] font-normal">{fmtData(fim)}</span>
-            </th>
-            <th className="text-right">Variação</th>
+    <QuadroDemonstrativo rotulo={titulo}>
+      <thead>
+        <tr>
+          <th>{titulo}</th>
+          <th>
+            Saldo inicial
+            <span className="block text-[10.5px] font-normal normal-case tracking-normal opacity-80">{fmtData(inicio)}*</span>
+          </th>
+          <th className="demo-total">
+            Saldo final
+            <span className="block text-[10.5px] font-normal normal-case tracking-normal opacity-80">{fmtData(fim)}</span>
+          </th>
+          <th>Variação</th>
+        </tr>
+      </thead>
+      <tbody>
+        {linhas.map((l, k) => (
+          <tr key={k} className={l.nivel <= 1 ? "demo-subtotal" : l.nivel === 2 ? "font-semibold" : ""}>
+            <td className="demo-conta" style={{ paddingLeft: `${0.6 + (l.nivel - 1) * 0.9}rem` }}>
+              {l.rotulo}
+            </td>
+            <td className={`demo-num text-[var(--texto-suave)] ${l.anterior < -0.5 ? "neg" : ""}`}>{fmt(l.anterior)}</td>
+            <td className={`demo-num demo-total ${l.atual < -0.5 ? "neg" : ""}`}>{fmt(l.atual)}</td>
+            <td className="demo-pct">{fmt(l.atual - l.anterior)}</td>
           </tr>
-        </thead>
-        <tbody>
-          {linhas.map((l, k) => (
-            <tr key={k} className={l.nivel <= 2 ? "bg-[var(--fundo)] font-medium" : ""}>
-              <td style={{ paddingLeft: 10 + (l.nivel - 1) * 14 }}>{l.rotulo}</td>
-              <td className="whitespace-nowrap text-right tabular-nums text-neutral-500">{fmt(l.anterior)}</td>
-              <td className="whitespace-nowrap text-right tabular-nums">{fmt(l.atual)}</td>
-              <td className="whitespace-nowrap text-right tabular-nums text-xs text-neutral-500">{fmt(l.atual - l.anterior)}</td>
-            </tr>
-          ))}
-          <tr className="border-t-2 border-[var(--marca)] font-semibold">
-            <td>Total</td>
-            <td className="text-right tabular-nums">{fmt(total.anterior)}</td>
-            <td className="text-right tabular-nums">{fmt(total.atual)}</td>
-            <td className="text-right tabular-nums text-xs">{fmt(total.atual - total.anterior)}</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
+        ))}
+      </tbody>
+      <tfoot>
+        <tr>
+          <td className="demo-conta">Total</td>
+          <td className="demo-num">{fmt(total.anterior)}</td>
+          <td className="demo-num demo-total">{fmt(total.atual)}</td>
+          <td className="demo-num">{fmt(total.atual - total.anterior)}</td>
+        </tr>
+      </tfoot>
+    </QuadroDemonstrativo>
   );
 }
 
@@ -123,7 +126,7 @@ function TabelaBalanco({ b, inicio, fim }: { b: Balanco; inicio: string; fim: st
   const fecha = Math.abs(b.total_ativo.atual - b.total_passivo.atual) < 1;
   return (
     <div className="space-y-3">
-      <div className="grid gap-4 xl:grid-cols-2">
+      <div className="grid gap-4 2xl:grid-cols-2">
         <BlocoBalanco titulo="Ativo" linhas={b.ativo} total={b.total_ativo} inicio={inicio} fim={fim} />
         <BlocoBalanco titulo="Passivo e patrimônio líquido" linhas={b.passivo} total={b.total_passivo} inicio={inicio} fim={fim} />
       </div>
@@ -141,45 +144,40 @@ function TabelaBalanco({ b, inicio, fim }: { b: Balanco; inicio: string; fim: st
 export function TabelaDre({ colunas }: { colunas: { titulo: string; d: Dre }[] }) {
   const base = colunas.map((c) => linhasDre(c.d));
   return (
-    <div className="cartao overflow-x-auto">
-      <table className="tabela text-[13px]">
-        <thead>
-          <tr>
-            <th>Demonstração do resultado</th>
-            {colunas.map((c) => (
-              <th key={c.titulo} className="text-right">
-                {c.titulo}
-              </th>
+    <QuadroDemonstrativo rotulo="Demonstração do resultado">
+      <thead>
+        <tr>
+          <th>Demonstração do resultado</th>
+          {colunas.map((c, j) => (
+            <th key={c.titulo} className={j === 0 ? "demo-total" : ""}>
+              {c.titulo}
+            </th>
+          ))}
+          {colunas.map((c) => (
+            <th key={c.titulo + "%"}>% receita</th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>
+        {base[0].map((l, k) => (
+          <tr key={k} className={l.total ? (k === base[0].length - 1 ? "demo-resultado" : "demo-subtotal") : ""}>
+            <td className="demo-conta" style={l.total ? undefined : { paddingLeft: "1.5rem" }}>
+              {l.rotulo}
+            </td>
+            {base.map((b, j) => (
+              <td key={j} className={`demo-num ${j === 0 ? "demo-total" : ""} ${b[k].valor < -0.5 && l.total ? "neg" : ""}`}>
+                {fmt(b[k].valor)}
+              </td>
             ))}
-            {colunas.map((c) => (
-              <th key={c.titulo + "%"} className="text-right text-xs">
-                % receita
-              </th>
+            {colunas.map((c, j) => (
+              <td key={"p" + j} className="demo-pct">
+                {c.d.receita_bruta && Math.abs(base[j][k].valor) >= 0.5 ? fmtIndice(base[j][k].valor / c.d.receita_bruta, "%") : "—"}
+              </td>
             ))}
           </tr>
-        </thead>
-        <tbody>
-          {base[0].map((l, k) => (
-            <tr key={k} className={l.total ? "bg-[var(--fundo)] font-semibold" : ""}>
-              <td style={{ paddingLeft: l.total ? 10 : 24 }}>{l.rotulo}</td>
-              {base.map((b, j) => (
-                <td
-                  key={j}
-                  className={`whitespace-nowrap text-right tabular-nums ${b[k].valor < 0 && l.total ? "text-[var(--perigo)]" : ""}`}
-                >
-                  {fmt(b[k].valor)}
-                </td>
-              ))}
-              {colunas.map((c, j) => (
-                <td key={"p" + j} className="whitespace-nowrap text-right text-xs tabular-nums text-neutral-500">
-                  {c.d.receita_bruta ? fmtIndice(base[j][k].valor / c.d.receita_bruta, "%") : "—"}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+        ))}
+      </tbody>
+    </QuadroDemonstrativo>
   );
 }
 
@@ -210,76 +208,83 @@ export function TabelaDfc({ colunas }: { colunas: { titulo: string; f: Dfc }[] }
   const val = (f: Dfc, s: "operacional" | "investimento" | "financiamento", k: string) => f[s].find((x) => x.chave === k)?.valor ?? 0;
   return (
     <div className="space-y-2">
-      <div className="cartao overflow-x-auto">
-        <table className="tabela text-[13px]">
-          <thead>
-            <tr>
-              <th>Demonstração dos fluxos de caixa — método indireto</th>
-              {colunas.map((c) => (
-                <th key={c.titulo} className="text-right">
-                  {c.titulo}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {secoes.map((s) => (
-              <FragmentoSecao key={s.chave}>
-                <tr className="bg-[var(--fundo)]">
-                  <td colSpan={colunas.length + 1} className="font-semibold">
-                    {s.titulo} <span className="text-xs font-normal text-neutral-500">· {s.leigo}</span>
-                  </td>
-                </tr>
-                {chaves(s.chave).map((k) => (
-                  <tr key={k.chave}>
-                    <td style={{ paddingLeft: 24 }}>{k.rotulo}</td>
-                    {colunas.map((c) => (
-                      <td key={c.titulo} className="whitespace-nowrap text-right tabular-nums">
-                        {fmt(val(c.f, s.chave, k.chave))}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-                <tr className="font-semibold">
-                  <td style={{ paddingLeft: 10 }}>Caixa líquido das {s.titulo.toLowerCase()}</td>
-                  {colunas.map((c) => (
-                    <td
-                      key={c.titulo}
-                      className={`whitespace-nowrap text-right tabular-nums ${c.f[s.total] < 0 ? "text-[var(--perigo)]" : ""}`}
-                    >
-                      {fmt(c.f[s.total])}
-                    </td>
-                  ))}
-                </tr>
-              </FragmentoSecao>
+      <QuadroDemonstrativo rotulo="Demonstração dos fluxos de caixa">
+        <thead>
+          <tr>
+            <th>Fluxos de caixa — método indireto</th>
+            {colunas.map((c, j) => (
+              <th key={c.titulo} className={j === 0 ? "demo-total" : ""}>
+                {c.titulo}
+              </th>
             ))}
-            <tr className="border-t-2 border-[var(--marca)] font-semibold">
-              <td>Aumento (redução) do caixa e equivalentes</td>
-              {colunas.map((c) => (
-                <td key={c.titulo} className="text-right tabular-nums">
-                  {fmt(c.f.variacao)}
+          </tr>
+        </thead>
+        <tbody>
+          {secoes.map((s) => (
+            <FragmentoSecao key={s.chave}>
+              <tr className="font-semibold text-[var(--marca)]">
+                <td className="demo-conta">
+                  {s.titulo} <span className="block text-[11px] font-normal text-[var(--texto-suave)]">{s.leigo}</span>
                 </td>
+                {colunas.map((c, j) => (
+                  <td key={c.titulo} className={j === 0 ? "demo-total" : ""} />
+                ))}
+              </tr>
+              {chaves(s.chave).map((k) => (
+                <tr key={k.chave}>
+                  <td className="demo-conta" style={{ paddingLeft: "1.5rem" }}>
+                    {k.rotulo}
+                  </td>
+                  {colunas.map((c, j) => {
+                    const v = val(c.f, s.chave, k.chave);
+                    return (
+                      <td key={c.titulo} className={`demo-num ${j === 0 ? "demo-total" : ""} ${v < -0.5 ? "neg" : ""}`}>
+                        {fmt(v)}
+                      </td>
+                    );
+                  })}
+                </tr>
               ))}
-            </tr>
-            <tr>
-              <td style={{ paddingLeft: 24 }}>Caixa e equivalentes no início</td>
-              {colunas.map((c) => (
-                <td key={c.titulo} className="text-right tabular-nums">
-                  {fmt(c.f.caixa_inicial)}
-                </td>
-              ))}
-            </tr>
-            <tr>
-              <td style={{ paddingLeft: 24 }}>Caixa e equivalentes no fim</td>
-              {colunas.map((c) => (
-                <td key={c.titulo} className="text-right tabular-nums">
-                  {fmt(c.f.caixa_final)}
-                </td>
-              ))}
-            </tr>
-          </tbody>
-        </table>
-      </div>
+              <tr className="demo-subtotal">
+                <td className="demo-conta">Caixa líquido das {s.titulo.toLowerCase()}</td>
+                {colunas.map((c, j) => (
+                  <td key={c.titulo} className={`demo-num ${j === 0 ? "demo-total" : ""} ${c.f[s.total] < -0.5 ? "neg" : ""}`}>
+                    {fmt(c.f[s.total])}
+                  </td>
+                ))}
+              </tr>
+            </FragmentoSecao>
+          ))}
+          <tr className="demo-resultado">
+            <td className="demo-conta">Aumento (redução) do caixa e equivalentes</td>
+            {colunas.map((c, j) => (
+              <td key={c.titulo} className={`demo-num ${j === 0 ? "demo-total" : ""} ${c.f.variacao < -0.5 ? "neg" : ""}`}>
+                {fmt(c.f.variacao)}
+              </td>
+            ))}
+          </tr>
+          <tr>
+            <td className="demo-conta" style={{ paddingLeft: "1.5rem" }}>
+              Caixa e equivalentes no início
+            </td>
+            {colunas.map((c, j) => (
+              <td key={c.titulo} className={`demo-num ${j === 0 ? "demo-total" : ""}`}>
+                {fmt(c.f.caixa_inicial)}
+              </td>
+            ))}
+          </tr>
+          <tr>
+            <td className="demo-conta" style={{ paddingLeft: "1.5rem" }}>
+              Caixa e equivalentes no fim
+            </td>
+            {colunas.map((c, j) => (
+              <td key={c.titulo} className={`demo-num ${j === 0 ? "demo-total" : ""}`}>
+                {fmt(c.f.caixa_final)}
+              </td>
+            ))}
+          </tr>
+        </tbody>
+      </QuadroDemonstrativo>
       <p className={`text-xs ${f0.fechado ? "text-emerald-700" : "text-[var(--perigo)]"}`}>
         <Icone nome={f0.fechado ? "check" : "fechar"} className="mr-1 inline h-3.5 w-3.5 align-[-2px]" />
         {f0.fechado
