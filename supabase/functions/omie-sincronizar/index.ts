@@ -10,7 +10,7 @@
 //   - carga inicial: de omie_empresas.sincronizar_desde em diante, 1 mês por rodada (carga_ate guarda até onde foi);
 //   - depois: notas dos últimos 90 dias + títulos alterados desde a última rodada boa (com 3 dias de folga).
 //
-// Saldos dos bancos (105): depois dos títulos, lê as contas correntes e grava o saldo do começo e do fim do mês em
+// Saldos dos bancos (105) e movimentos do extrato (106, omie_extrato): depois dos títulos, lê as contas correntes e grava o saldo do começo e do fim do mês em
 // omie_saldos (os 2 últimos meses a cada rodada + até 4 meses que faltam desde sincronizar_desde). Falha ou falta de tempo
 // nesta parte não derruba a rodada: fica anotada na contagem e continua na próxima.
 //
@@ -260,6 +260,7 @@ async function sincronizarSaldos(db: SupabaseClient, omie: ClienteOmie, e: Empre
   const ativas = contas.filter((c: any) => c.nCodCC && c.inativo !== "S");
   const todos = meses(e.sincronizar_desde, hoje);
   let gravados = 0;
+  let extrato = 0;
   for (const c of ativas) {
     const cc = String(c.nCodCC);
     const { data } = await db.from("omie_saldos").select("mes").eq("cliente_id", e.cliente_id).eq("conta_corrente", cc);
@@ -273,6 +274,12 @@ async function sincronizarSaldos(db: SupabaseClient, omie: ClienteOmie, e: Empre
       const anterior = campoNum(r, "nSaldoAnterior", "saldo_anterior");
       const atual = campoNum(r, "nSaldoAtual", "nSaldoFinal", "saldo_atual");
       if (anterior === null || atual === null) throw new ErroOmie("ListarExtrato: a Omie não devolveu os saldos (nSaldoAnterior/nSaldoAtual).");
+      // movimentos do mês (106): regrava o mês inteiro desta conta
+      const movs = movimentosDoExtrato(r).map((m, i) => converterExtrato(m, e, cc, mes, i));
+      const apaga = await db.from("omie_extrato").delete().eq("cliente_id", e.cliente_id).eq("conta_corrente", cc).eq("mes", mes);
+      if (apaga.error) throw new Error(`limpar omie_extrato: ${apaga.error.message}`);
+      await gravar(db, "omie_extrato", [...new Map(movs.map((x) => [x.lancamento, x])).values()], "cliente_id,conta_corrente,lancamento");
+      extrato += movs.length;
       linhas.push({
         cliente_id: e.cliente_id, org_id: e.org_id, conta_corrente: cc, descricao: c.descricao ?? null, mes,
         saldo_anterior: anterior, saldo_final: atual,
@@ -283,7 +290,44 @@ async function sincronizarSaldos(db: SupabaseClient, omie: ClienteOmie, e: Empre
     await gravar(db, "omie_saldos", linhas, "cliente_id,conta_corrente,mes");
     gravados += linhas.length;
   }
-  return { contas: ativas.length, meses: gravados };
+  return { contas: ativas.length, meses: gravados, extrato };
+}
+
+
+// ---------- movimentos do extrato (106) ----------
+/** Primeiro campo do objeto, sem depender de maiúsculas/minúsculas. */
+// deno-lint-ignore no-explicit-any
+function campo(o: any, ...nomes: string[]): any {
+  if (!o || typeof o !== "object") return null;
+  const alvo = nomes.map((n) => n.toLowerCase());
+  for (const [k, v] of Object.entries(o)) if (alvo.includes(k.toLowerCase()) && v !== null && v !== "") return v;
+  return null;
+}
+/** Lista de movimentos do retorno do ListarExtrato (listaMovimentos ou o primeiro array de objetos). */
+// deno-lint-ignore no-explicit-any
+function movimentosDoExtrato(r: any): any[] {
+  if (!r || typeof r !== "object") return [];
+  for (const [k, v] of Object.entries(r)) if (/movimento/i.test(k) && Array.isArray(v)) return v;
+  for (const v of Object.values(r)) if (Array.isArray(v) && v.length && typeof v[0] === "object") return v;
+  return [];
+}
+// deno-lint-ignore no-explicit-any
+function converterExtrato(m: any, e: Empresa, cc: string, mes: string, i: number) {
+  const data = dataISO(campo(m, "dDataLancamento", "dDataMovimento", "dData", "dDtLancamento"));
+  const lanc = campo(m, "nCodLancamento", "nCodLanc", "nCodMovCC", "codigo_lancamento");
+  return {
+    cliente_id: e.cliente_id, org_id: e.org_id, conta_corrente: cc,
+    lancamento: lanc !== null ? String(lanc) : `${mes}#${i}`,
+    mes, data,
+    valor: campoNum(m, "nValorDocumento", "nValor", "nValorLancamento"),
+    natureza: campo(m, "cNatureza", "cTipo"),
+    categoria_codigo: campo(m, "cCodCategoria", "cCodCateg"),
+    origem: campo(m, "cOrigem", "cTipoDocumento"),
+    codigo_titulo: (() => { const t = campo(m, "nCodTitulo"); return t && Number(t) > 0 ? String(t) : null; })(),
+    documento: campo(m, "cNumero", "cNumDocumento", "cDocumentoFiscal"),
+    pessoa: campo(m, "cRazCliente", "cDesCliente", "cNomeCliente"),
+    dados: m, atualizado_em: new Date().toISOString(),
+  };
 }
 
 // ---------- uma rodada para uma empresa ----------
@@ -336,6 +380,7 @@ async function sincronizar(db: SupabaseClient, e: Empresa, inicio: number) {
     const s = await sincronizarSaldos(db, omie, e, hoje);
     contagem.contas_correntes = s.contas;
     contagem.saldos = s.meses;
+    contagem.extrato = s.extrato;
   } catch (err) {
     avisoSaldos = err instanceof TempoEsgotado ? " Saldos dos bancos continuam na próxima rodada."
                 : err instanceof ErroOmie ? ` Saldos dos bancos: ${err.message}` : " Saldos dos bancos: falha inesperada.";
