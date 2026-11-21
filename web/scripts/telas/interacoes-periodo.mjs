@@ -45,4 +45,18 @@ export async function trocarPeriodo(p, foto = async () => {}) {
   await botaoVisao(p, "Mês").click();
   await qual.selectOption("3");
   await esperarTexto(p, "Comparando com março de 2025", "a comparação com o mesmo período do ano anterior não apareceu");
+
+  // padrão demonstrativo da MDC (21/11/2026): Balanço, DRE e DFC e o balancete em árvore (só na tela da equipe)
+  const abaDemo = p.getByRole("tab", { name: "Balanço, DRE e DFC" });
+  if (await abaDemo.count()) {
+    await abaDemo.click();
+    await p.getByRole("region", { name: "Ativo" }).waitFor({ timeout: 3000 });
+    await foto("balanco");
+    await p.getByRole("button", { name: "DRE", exact: true }).click();
+    await p.getByRole("region", { name: "Demonstração do resultado" }).waitFor({ timeout: 3000 });
+    await foto("dre");
+    await p.getByRole("tab", { name: "Balancete" }).click();
+    await p.getByRole("region", { name: "Balancete" }).waitFor({ timeout: 3000 });
+    await foto("balancete");
+  }
 }
