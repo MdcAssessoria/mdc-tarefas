@@ -47,7 +47,7 @@
 | `/licencas` | ver (gerar mensalidades: operar) | Painel: receita mensal recorrente, a receber no mês, recebido no mês, em atraso, clientes bloqueados, inadimplência por faixa (1-15, 16-30, 31-60, 61-90, 90+ dias), gráfico faturado × recebido dos últimos 6 meses, reajustes a fazer; PDF e Excel do resumo |
 | `/licencas/cobrancas` | ver (baixa, desfazer, cancelar e gerar: operar) | Mensalidades: filtros por mês, situação e cliente (busca em "Mais filtros"); indicadores que filtram ao clicar; dar baixa (data, forma, juros, desconto), desfazer baixa e cancelar com motivo; PDF e Excel |
 | `/licencas/inadimplentes` | ver (bloquear e regra de dias: gerir) | Clientes com mensalidade vencida, do maior atraso para o menor; "Copiar mensagem de cobrança" (WhatsApp, começa com bom dia/boa tarde/boa noite pela hora da organização); bloquear/desbloquear com motivo; "Sugerido bloquear" a partir de N dias; bloqueados sem atraso; histórico de bloqueios; PDF e Excel |
-| `/licencas/contratos` | ver (cadastrar, editar, reajustar, encerrar: gerir) | Contratos com módulos de cada cliente, valor, vencimento, vigência e reajuste; assistente em 5 passos (no passo 1, "Cadastrar empresa nova": cadastro pelo CNPJ de quem ainda não é cliente, com o grupo "Só licença", só para gestor/administrador, `CadastroRapidoEmpresa`); histórico (reajustes, encerramento, mensalidades); `?cliente=<id>` abre filtrado; PDF e Excel |
+| `/licencas/contratos` | ver (cadastrar, editar, reajustar, encerrar: gerir) | Contratos com módulos de cada cliente, valor, vencimento, vigência e reajuste; assistente em 5 passos (no passo 1, "+ Novo cliente" ou a busca sem resultado, que abre o cadastro sozinho com o CNPJ digitado (21/11/2026): cadastro pelo CNPJ de quem ainda não é cliente, com o grupo "Só licença", só para gestor/administrador, `CadastroRapidoEmpresa`); histórico (reajustes, encerramento, mensalidades); `?cliente=<id>` abre filtrado; PDF e Excel |
 | `/licencas/faturamento` | ver | Faturamento do mês: por cliente, mensalidade do mês em aberto + atrasados de meses anteriores = o que acrescentar ao honorário; PDF (timbrado) e Excel com código do Domínio e CNPJ |
 | `/licencas/produtos` | ver (cadastrar: gerir) | Abas Sistemas e Módulos (código fixo, preço de tabela, à venda); PDF e Excel |
 | `/licencas/pacotes` | ver (montar: gerir) | Pacotes de licença: sistema, módulos, preço, usuários incluídos, usuário a mais e excedente; cartões ou grade; PDF e Excel |
@@ -192,7 +192,8 @@ desconhecida, desfazer, tela sem gravar direto) e `web/src/dominios/licencas/led
 
 ## Licenças Ledgra: cadastro aberto, valores guardados (migração 074, 13/11/2026)
 - O módulo voltou ao menu como **Licenças Ledgra**, só com **Licenças** e **Produtos e planos**. A cobrança mensal fica em
-  Gestão › Contratos (decisão de 05/11); `/licencas` abre direto a lista de licenças.
+  Gestão › Contratos (decisão de 05/11); `/licencas` abre direto a lista de licenças. Desde 21/11/2026 o módulo saiu do
+  grupo Gestão do menu (`MODULOS_GESTAO`) e é item próprio em "Suas ferramentas", com submenu (`COM_SUBMENU`).
 - Níveis da permissão `licencas`: **ver** = licenças sem nenhum valor; **operar** = cadastra/altera a licença e gera ou
   revoga a chave do Ledgra; **gerir** = valores (preços, valor do contrato, reajuste, mensalidades, encerrar).
 - Proteção no banco: as colunas de preço/valor de `lic_produtos`, `lic_planos` e `lic_contratos` não são legíveis pelo

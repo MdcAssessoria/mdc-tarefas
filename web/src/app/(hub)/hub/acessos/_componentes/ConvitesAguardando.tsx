@@ -29,8 +29,8 @@ export function ConvitesAguardando({
           Convites aguardando ({convites.length})
         </h2>
         <p className="text-sm text-neutral-600">
-          Pessoas cadastradas que ainda não têm acesso. Gere a senha provisória e mande pelo WhatsApp: no primeiro acesso o HUB pede
-          para a pessoa criar a própria senha.
+          Pessoas cadastradas que ainda não têm acesso. Gere a senha provisória e mande pelo WhatsApp: no primeiro acesso o HUB pede para a
+          pessoa criar a própria senha.
         </p>
       </div>
       <table className="tabela tabela-acoes-fixas">

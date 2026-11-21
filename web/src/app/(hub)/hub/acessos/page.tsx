@@ -227,7 +227,11 @@ function Acessos() {
             <Icone nome="mais" className="inline h-4 w-4 align-[-3px]" />
             Cadastrar pessoa
           </button>
-          <button className="btn" onClick={() => setLiberar(true)} title="Gera a senha provisória de quem ainda não tem acesso, para mandar pelo WhatsApp">
+          <button
+            className="btn"
+            onClick={() => setLiberar(true)}
+            title="Gera a senha provisória de quem ainda não tem acesso, para mandar pelo WhatsApp"
+          >
             <Icone nome="escudo" className="inline h-4 w-4 align-[-3px]" />
             Liberar acesso de quem falta{pendentesAcesso ? ` (${pendentesAcesso})` : ""}
           </button>
@@ -253,13 +257,7 @@ function Acessos() {
         {aviso && (
           <div className="rounded-md bg-emerald-50 p-3 text-sm text-emerald-900">
             {aviso.texto}
-            {aviso.senha && (
-              <SenhaCopiavel
-                {...aviso.senha}
-                endereco={aviso.senha.endereco || enderecoHub("/login")}
-                nome={aviso.nome}
-              />
-            )}
+            {aviso.senha && <SenhaCopiavel {...aviso.senha} endereco={aviso.senha.endereco || enderecoHub("/login")} nome={aviso.nome} />}
           </div>
         )}
       </div>

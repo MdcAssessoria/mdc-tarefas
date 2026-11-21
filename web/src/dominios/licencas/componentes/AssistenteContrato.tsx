@@ -247,6 +247,9 @@ export function AssistenteContrato({
       return !q || `${c.razao_social} ${c.nome_fantasia ?? ""} ${c.cnpj ?? ""} ${c.codigo_dominio ?? ""}`.toLowerCase().includes(q);
     });
   const listaClientes = filtrarClientes(f.busca);
+  // Busca sem resultado: o cliente ainda não está cadastrado; o cadastro abre sozinho, com o CNPJ se foi o que digitou.
+  const semResultado = f.busca.trim() !== "" && listaClientes.length === 0;
+  const cnpjDaBusca = f.busca.replace(/\D/g, "").length >= 11 ? f.busca.trim() : "";
   // A busca que deixa um cliente só já o escolhe (antes ele aparecia marcado, mas o valor ficava vazio: "Escolha o cliente").
   const buscar = (busca: string) => {
     const achados = filtrarClientes(busca);
@@ -296,29 +299,41 @@ export function AssistenteContrato({
             <span>Procurar cliente</span>
             <input value={f.busca} onChange={(e) => buscar(e.target.value)} placeholder="Nome, CNPJ ou código do Domínio" autoFocus />
           </label>
-          <label className="campo">
-            <span>Cliente</span>
-            <select
-              value={f.cliente}
-              onChange={(e) => mudar({ cliente: e.target.value })}
-              size={Math.min(8, Math.max(3, listaClientes.length))}
-            >
-              {listaClientes.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {nomeCliente(c)}
-                  {c.codigo_dominio ? ` · cód. ${c.codigo_dominio}` : ""}
-                </option>
-              ))}
-            </select>
-          </label>
+          {semResultado ? (
+            <p className="flex items-start gap-1.5 rounded-md bg-amber-50 p-2 text-sm text-amber-900">
+              <Icone nome="alerta" className="mt-0.5 h-4 w-4 shrink-0" />
+              Nenhum cliente cadastrado com &quot;{f.busca.trim()}&quot;. Cadastre abaixo e ele já fica escolhido nesta licença.
+            </p>
+          ) : (
+            <label className="campo">
+              <span>Cliente</span>
+              <select
+                value={f.cliente}
+                onChange={(e) => mudar({ cliente: e.target.value })}
+                size={Math.min(8, Math.max(3, listaClientes.length))}
+              >
+                {listaClientes.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {nomeCliente(c)}
+                    {c.codigo_dominio ? ` · cód. ${c.codigo_dominio}` : ""}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
           {clienteSel ? (
             <p className="text-sm text-[var(--marca)]">
               Escolhido: <b>{nomeCliente(clienteSel)}</b>
             </p>
           ) : (
-            <p className="text-sm text-neutral-600">Toque no nome do cliente na lista para escolher.</p>
+            !semResultado && <p className="text-sm text-neutral-600">Toque no nome do cliente na lista para escolher.</p>
           )}
-          <CadastroRapidoEmpresa aoCadastrar={(id) => mudar({ cliente: id, busca: "" })} />
+          <CadastroRapidoEmpresa
+            key={semResultado ? `novo:${cnpjDaBusca}` : "lista"}
+            abertoInicial={semResultado}
+            cnpjInicial={cnpjDaBusca}
+            aoCadastrar={(id) => mudar({ cliente: id, busca: "" })}
+          />
         </div>
       )}
 

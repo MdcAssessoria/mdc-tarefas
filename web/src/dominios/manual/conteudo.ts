@@ -4,7 +4,7 @@
 // (components/shell/navegacao.ts): com ele a tela do manual ganha o botão "Ir para a tela".
 // Mudou uma tela ou regra? Atualize o trecho dela aqui no mesmo commit e acrescente uma linha em "Controle de versões".
 
-export const VERSAO_MANUAL = { numero: "2.8", data: "21/11/2026" };
+export const VERSAO_MANUAL = { numero: "2.9", data: "21/11/2026" };
 
 export const MANUAL_MD = `
 ## Como usar este manual
@@ -315,14 +315,14 @@ Contratos de prestação de serviço com os clientes, faturas, notas fiscais, re
 
 ## Sistemas
 
-Os sistemas que a MDC licencia aos clientes (Ledgra ERP, EXato e os próximos): quem usa cada um, com quais módulos, quantos usuários, a chave e a receita. Cada cliente tem no máximo uma licença ativa por sistema.
+Os sistemas que a MDC licencia aos clientes (Ledgra ERP, EXato e os próximos): quem usa cada um, com quais módulos, quantos usuários, a chave e a receita. Cada cliente tem no máximo uma licença ativa por sistema. No menu lateral, **Sistemas** é um item próprio (fora do grupo Gestão), com as telas logo abaixo.
 
 ### Licenças (Sistemas → Licenças)
 
 **Para que serve:** cadastrar e acompanhar a licença de cada cliente em cada sistema.
 
 **Como usar:**
-1. Clique em **Nova licença**, escolha o cliente e o **sistema** (só aparecem os que estão à venda). A empresa ainda não está na lista? Toque em **Cadastrar empresa nova**, digite o CNPJ, toque em **Buscar dados** e em **Cadastrar e escolher**: ela entra nos clientes com o grupo "Só licença" e já fica escolhida (só para gestor e administrador).
+1. Clique em **Nova licença**, escolha o cliente e o **sistema** (só aparecem os que estão à venda). A empresa ainda não está na lista? Procure pelo nome ou CNPJ: sem resultado, o cadastro abre sozinho (com o CNPJ que você digitou); ou toque em **+ Novo cliente**. Toque em **Buscar dados** e em **Cadastrar e escolher**: ela entra nos clientes com o grupo "Só licença" e já fica escolhida (só para gestor e administrador).
 2. Escolha um **pacote**, módulos avulsos ou o sistema **full** (todos os módulos, inclusive os que forem criados depois). Ao escolher o pacote, os usuários incluídos, o valor do usuário a mais e o que fazer ao passar do limite já vêm preenchidos; dá para mudar só nesta licença.
 3. Em **Valor e usuários**, informe o valor mensal, quantos **usuários** estão incluídos e o valor por usuário a mais. Em **Quando passar do limite**, escolha **Liberar e cobrar** (o usuário a mais entra na cobrança do mês seguinte) ou **Não deixar passar** (o sistema não cadastra pessoa além do limite).
 4. Em **Como cobrar**, deixe **Mensalidade da licença** (vai junto com o honorário) ou escolha um **contrato a receber** de Contratos: aí a fatura dele leva a licença e o usuário a mais.
@@ -409,4 +409,5 @@ Os sistemas que a MDC licencia aos clientes (Ledgra ERP, EXato e os próximos): 
 | 2.6 | 21/11/2026 | **BI de Gestão**: o fluxo de caixa passa a sair do extrato dos bancos do Omie (inclui tarifas, antecipações e pagamentos lançados direto na conta) e fecha com os saldos dos bancos. |
 | 2.7 | 21/11/2026 | **BI de Gestão**: aba Indicadores com a Saúde do negócio (EBITDA, cobertura de juros, ponto de equilíbrio, fôlego e conversão em caixa) e tabelas no padrão MDC. |
 | 2.8 | 21/11/2026 | **BI de Gestão**: aba Parecer (equipe MDC) monta o parecer gerencial com os números do período, para revisar e salvar em PDF. |
+| 2.9 | 21/11/2026 | **Sistemas** sai do grupo Gestão e vira item próprio do menu, com as telas em submenu. **Nova licença**: cliente não encontrado na busca abre o cadastro na hora, já com o CNPJ digitado. |
 `;

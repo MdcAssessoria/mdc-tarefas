@@ -118,7 +118,11 @@ export function LiberarAcessos({
                     <span className="min-w-0">
                       <span className="block font-medium text-neutral-800">{c.nome}</span>
                       <span className="block truncate text-xs text-neutral-500">{c.email}</span>
-                      <span className={`chip mt-1 inline-block ${c.pendente ? "bg-amber-50 text-amber-900" : "bg-neutral-100 text-neutral-700"}`}>{c.motivo}</span>
+                      <span
+                        className={`chip mt-1 inline-block ${c.pendente ? "bg-amber-50 text-amber-900" : "bg-neutral-100 text-neutral-700"}`}
+                      >
+                        {c.motivo}
+                      </span>
                     </span>
                   </label>
                 </li>

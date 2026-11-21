@@ -1,6 +1,7 @@
 // Passo 1 da "Nova licença": cadastrar uma empresa que ainda não está nos clientes, sem sair da janela.
 // Busca os dados pelo CNPJ (Receita), grava no cadastro de clientes com o grupo "Só licença" (para separar de quem é
 // cliente da contabilidade) e já devolve a empresa escolhida. Só para gestor e administrador (RLS clientes_insert).
+// Quando a busca do assistente não acha ninguém, abre sozinho (abertoInicial) e já traz o CNPJ digitado (21/11/2026).
 "use client";
 
 import { useState } from "react";
@@ -18,10 +19,19 @@ const VAZIO = { cnpj: "", razao_social: "", nome_fantasia: "", regime: "simples"
 
 const digitos = (s: string | null | undefined) => (s ?? "").replace(/\D/g, "");
 
-export function CadastroRapidoEmpresa({ aoCadastrar }: { aoCadastrar: (clienteId: string) => void }) {
+export function CadastroRapidoEmpresa({
+  aoCadastrar,
+  abertoInicial = false,
+  cnpjInicial = "",
+}: {
+  aoCadastrar: (clienteId: string) => void;
+  /** Abre já com o formulário (a busca não achou o cliente). Quem usa passa `key` para recomeçar. */
+  abertoInicial?: boolean;
+  cnpjInicial?: string;
+}) {
   const { org, clientes, papel, recarregar } = useOrg();
-  const [aberto, setAberto] = useState(false);
-  const [d, setD] = useState(VAZIO);
+  const [aberto, setAberto] = useState(abertoInicial);
+  const [d, setD] = useState({ ...VAZIO, cnpj: cnpjInicial });
   const [erro, setErro] = useState<string | null>(null);
   const [gravando, setGravando] = useState(false);
   const pode = papel === "admin" || papel === "gestor";
@@ -29,15 +39,15 @@ export function CadastroRapidoEmpresa({ aoCadastrar }: { aoCadastrar: (clienteId
   if (!pode) {
     return (
       <p className="text-xs text-neutral-600">
-        A empresa não está na lista? Peça a um gestor para cadastrá-la em Configurações → Clientes.
+        A empresa não está na lista? Peça a um gestor ou ao administrador para cadastrá-la (Configurações → Clientes).
       </p>
     );
   }
 
   if (!aberto) {
     return (
-      <button type="button" className="btn" onClick={() => setAberto(true)}>
-        <Icone nome="mais" /> Cadastrar empresa nova
+      <button type="button" className="btn-novo" onClick={() => setAberto(true)}>
+        <Icone nome="mais" /> Novo cliente
       </button>
     );
   }

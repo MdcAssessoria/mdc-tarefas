@@ -33,7 +33,7 @@ export function EscolhaModulos({
   const lista = modulosLiberaveis(apps);
   const grupos: [string, HubApp[]][] = [
     ["Escritório", lista.filter((a) => !ehModuloGestao(a.slug))],
-    ["Gestão (da MDC e Cobrança Ledgra)", lista.filter((a) => ehModuloGestao(a.slug))],
+    ["Gestão da MDC", lista.filter((a) => ehModuloGestao(a.slug))],
   ];
   const marcados = Object.keys(valor).length;
 
