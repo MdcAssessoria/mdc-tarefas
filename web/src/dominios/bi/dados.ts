@@ -270,6 +270,20 @@ export const excluirClassificacao = (clientes: string[], id: string, motivo: str
 export const lerSaldos = (clientes: string[], de: string, ate: string) =>
   rpc<SaldoBanco[]>("bi_saldos", { p_clientes: clientes, p_inicio: de, p_fim: ate });
 
-/** Operações entre as empresas do grupo e possíveis pares lançados sem a empresa (109). Vazio com uma empresa só. */
-export const lerIntragrupo = (clientes: string[], de: string, ate: string) =>
-  rpc<MovIntragrupo[]>("bi_intragrupo", { p_clientes: clientes, p_inicio: de, p_fim: ate });
+/**
+ * Operações entre as empresas do grupo e possíveis pares lançados sem a empresa (109/110). Vazio com uma empresa só.
+ * Lê em páginas de 1.000 (limite da API) sobre a ordem estável da função (data, empresa, ref).
+ */
+export async function lerIntragrupo(clientes: string[], de: string, ate: string): Promise<MovIntragrupo[]> {
+  const PAGINA = 1000;
+  const todas: MovIntragrupo[] = [];
+  for (let inicio = 0; ; inicio += PAGINA) {
+    const { data, error } = await supabase()
+      .rpc("bi_intragrupo", { p_clientes: clientes, p_inicio: de, p_fim: ate })
+      .range(inicio, inicio + PAGINA - 1);
+    if (error) throw new Error(traduzirErro(error));
+    const pagina = (data ?? []) as MovIntragrupo[];
+    todas.push(...pagina);
+    if (pagina.length < PAGINA) return todas;
+  }
+}

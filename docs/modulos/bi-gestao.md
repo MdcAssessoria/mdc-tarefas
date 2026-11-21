@@ -127,9 +127,9 @@ em `app.bi_fatos` e `public.bi_indicadores` sobre a definição em vigor. (1) `p
 devolve os movimentos do extrato entre empresas do grupo (`intra`) e candidatos lançados sem a empresa (`sem_doc`,
 mesmo valor com sinal contrário em até 7 dias); o pareamento 1:1 é em `dominios/bi/intragrupo.ts` (primeiro com a
 contraparte certa, depois com qualquer empresa do grupo) e o quadro em `CartaoIntragrupo` (aba Resultado × caixa, só
-com a eliminação). (2) `public.omie_pessoas` (org, documento, nome; extrato prevalece sobre notas), alimentada por
+com a eliminação). (2) `public.omie_pessoas` (desde a 110, por cliente e documento — um cliente nunca dá nome aos títulos de outro, achado de segurança da revisão da Vercel no PR #36; extrato prevalece sobre notas), alimentada por
 gatilhos de comando em `omie_extrato`/`omie_notas`; `omie_mov_nome` completa o nome do título na gravação e
-`omie_pessoas_titulos` preenche os antigos (98% dos títulos com nome em 21/11/2026). Testes em
+`omie_pessoas_titulos` preenche os antigos; `bi_intragrupo` tem ordem estável (data, empresa, ref) e a tela lê em páginas de 1.000 (110) (96% dos títulos com nome em 21/11/2026, por cliente). Testes em
 `supabase/testes/183_bi_intragrupo_109.sql`.
 
 **Conferência com os bancos (21/11/2026):** 27 de 30 meses do Grupo Clara já com extrato fecham no centavo, por

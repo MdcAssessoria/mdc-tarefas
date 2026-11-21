@@ -7002,26 +7002,34 @@ export type Database = {
       omie_pessoas: {
         Row: {
           atualizado_em: string;
+          cliente_id: string;
           doc: string;
           nome: string;
-          org_id: string;
           origem: string;
         };
         Insert: {
           atualizado_em?: string;
+          cliente_id: string;
           doc: string;
           nome: string;
-          org_id: string;
           origem: string;
         };
         Update: {
           atualizado_em?: string;
+          cliente_id?: string;
           doc?: string;
           nome?: string;
-          org_id?: string;
           origem?: string;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: "omie_pessoas_cliente_id_fkey";
+            columns: ["cliente_id"];
+            isOneToOne: false;
+            referencedRelation: "clientes";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       omie_saldos: {
         Row: {
