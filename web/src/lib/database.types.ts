@@ -425,6 +425,7 @@ export type Database = {
           dre_por_titulo: boolean;
           id: string;
           linha_dfc: string | null;
+          linha_dfc_entrada: string | null;
           linha_dre: string | null;
           nome: string;
           ordem: number;
@@ -437,6 +438,7 @@ export type Database = {
           dre_por_titulo?: boolean;
           id?: string;
           linha_dfc?: string | null;
+          linha_dfc_entrada?: string | null;
           linha_dre?: string | null;
           nome: string;
           ordem: number;
@@ -449,6 +451,7 @@ export type Database = {
           dre_por_titulo?: boolean;
           id?: string;
           linha_dfc?: string | null;
+          linha_dfc_entrada?: string | null;
           linha_dre?: string | null;
           nome?: string;
           ordem?: number;
@@ -512,6 +515,60 @@ export type Database = {
           },
           {
             foreignKeyName: "bi_plano_excecoes_org_id_fkey";
+            columns: ["org_id"];
+            isOneToOne: false;
+            referencedRelation: "organizacoes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      bi_plano_excecoes_hist: {
+        Row: {
+          acao: string;
+          categoria_codigo: string;
+          cliente_id: string | null;
+          em: string;
+          id: number;
+          motivo: string | null;
+          org_id: string;
+          plano_antes: string | null;
+          plano_depois: string | null;
+          por: string | null;
+        };
+        Insert: {
+          acao: string;
+          categoria_codigo: string;
+          cliente_id?: string | null;
+          em?: string;
+          id?: never;
+          motivo?: string | null;
+          org_id: string;
+          plano_antes?: string | null;
+          plano_depois?: string | null;
+          por?: string | null;
+        };
+        Update: {
+          acao?: string;
+          categoria_codigo?: string;
+          cliente_id?: string | null;
+          em?: string;
+          id?: never;
+          motivo?: string | null;
+          org_id?: string;
+          plano_antes?: string | null;
+          plano_depois?: string | null;
+          por?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "bi_plano_excecoes_hist_cliente_id_fkey";
+            columns: ["cliente_id"];
+            isOneToOne: false;
+            referencedRelation: "clientes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "bi_plano_excecoes_hist_org_id_fkey";
             columns: ["org_id"];
             isOneToOne: false;
             referencedRelation: "organizacoes";
@@ -6880,6 +6937,50 @@ export type Database = {
           },
         ];
       };
+      omie_saldos: {
+        Row: {
+          atualizado_em: string;
+          cliente_id: string;
+          conta_corrente: string;
+          dados: Json | null;
+          descricao: string | null;
+          mes: string;
+          org_id: string;
+          saldo_anterior: number;
+          saldo_final: number;
+        };
+        Insert: {
+          atualizado_em?: string;
+          cliente_id: string;
+          conta_corrente: string;
+          dados?: Json | null;
+          descricao?: string | null;
+          mes: string;
+          org_id: string;
+          saldo_anterior: number;
+          saldo_final: number;
+        };
+        Update: {
+          atualizado_em?: string;
+          cliente_id?: string;
+          conta_corrente?: string;
+          dados?: Json | null;
+          descricao?: string | null;
+          mes?: string;
+          org_id?: string;
+          saldo_anterior?: number;
+          saldo_final?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "omie_saldos_cliente_id_fkey";
+            columns: ["cliente_id"];
+            isOneToOne: false;
+            referencedRelation: "clientes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       org_papel_timbrado: {
         Row: {
           atualizado_em: string;
@@ -8667,6 +8768,24 @@ export type Database = {
           valido_ate: string;
         }[];
       };
+      bi_classificacao_listar: {
+        Args: { p_clientes: string[]; p_fim: string; p_inicio: string };
+        Returns: {
+          a_conferir: boolean;
+          alterado_em: string;
+          categoria_codigo: string;
+          cliente_id: string;
+          conta: string;
+          conta_nome: string;
+          descricao: string;
+          empresa: string;
+          excecao_id: string;
+          lancamentos: number;
+          observacao: string;
+          origem: string;
+          valor: number;
+        }[];
+      };
       bi_complementar_cancelar: {
         Args: { p_id: number; p_motivo: string };
         Returns: undefined;
@@ -8695,6 +8814,25 @@ export type Database = {
           ultima_sync: string;
           valido_ate: string;
         }[];
+      };
+      bi_excecao_conferir: {
+        Args: { p_clientes: string[]; p_id: string };
+        Returns: undefined;
+      };
+      bi_excecao_excluir: {
+        Args: { p_clientes: string[]; p_id: string; p_motivo: string };
+        Returns: undefined;
+      };
+      bi_excecao_salvar: {
+        Args: {
+          p_categoria: string;
+          p_cliente: string;
+          p_clientes: string[];
+          p_mesmo_nome?: boolean;
+          p_observacao?: string;
+          p_plano: string;
+        };
+        Returns: number;
       };
       bi_indicadores: {
         Args: {
@@ -8793,6 +8931,18 @@ export type Database = {
           nome: string;
           ordem: number;
           valor: number;
+        }[];
+      };
+      bi_saldos: {
+        Args: { p_clientes: string[]; p_fim: string; p_inicio: string };
+        Returns: {
+          atualizado_em: string;
+          conta_corrente: string;
+          descricao: string;
+          empresa: string;
+          mes: string;
+          saldo_anterior: number;
+          saldo_final: number;
         }[];
       };
       cancelar_convite: {
