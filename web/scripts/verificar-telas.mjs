@@ -1393,6 +1393,7 @@ const INTERACOES = {
     // 105: Resultado × caixa (alertas e saldos dos bancos) e Classificação (equipe MDC)
     await abas.getByRole("tab", { name: "Resultado × caixa" }).click();
     await p.getByText("Saldo dos bancos no fim").waitFor({ timeout: 8000 });
+    await p.getByText("Com uma ponta só").waitFor({ timeout: 8000 });
     await foto?.("resultado-x-caixa");
     // Parecer gerencial (equipe MDC): rascunho montado com os números e a prévia com o cabeçalho da MDC
     await abas.getByRole("tab", { name: "Parecer" }).click();

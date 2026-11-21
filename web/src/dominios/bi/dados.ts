@@ -4,6 +4,7 @@ import { supabase } from "@/lib/supabase";
 import { traduzirErro } from "@/lib/erros";
 import type { ContaBanco, OrigemBanco } from "./detalhe";
 import type { SaldoBanco } from "./saldos";
+import type { MovIntragrupo } from "./intragrupo";
 import { montarMatriz } from "./relatorio";
 import type { LinhaBanco, Matriz, TipoRelatorio } from "./relatorio";
 import type { Indicadores } from "./indicadores";
@@ -268,3 +269,7 @@ export const excluirClassificacao = (clientes: string[], id: string, motivo: str
 
 export const lerSaldos = (clientes: string[], de: string, ate: string) =>
   rpc<SaldoBanco[]>("bi_saldos", { p_clientes: clientes, p_inicio: de, p_fim: ate });
+
+/** Operações entre as empresas do grupo e possíveis pares lançados sem a empresa (109). Vazio com uma empresa só. */
+export const lerIntragrupo = (clientes: string[], de: string, ate: string) =>
+  rpc<MovIntragrupo[]>("bi_intragrupo", { p_clientes: clientes, p_inicio: de, p_fim: ate });

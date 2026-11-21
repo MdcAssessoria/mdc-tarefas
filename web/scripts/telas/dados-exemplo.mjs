@@ -3345,6 +3345,18 @@ RPCS.fis_nbs_do_servico = ({ p_servico }) => {
     },
   ];
   // 105: saldos dos bancos, classificação e plano
+  // 109: operações entre as empresas (uma com as duas pontas, uma com a outra ponta lançada sem a empresa)
+  RPCS.bi_intragrupo = () => {
+    const m = (tipo, empresa_id, empresa, ref, data, valor, origem, categoria, cp_id, cp) => ({
+      tipo, empresa_id, empresa, ref, data, valor, origem, categoria, documento: null, pessoa: cp, contraparte_id: cp_id, contraparte: cp,
+    });
+    return [
+      m("intra", "g", "Greencore", "1:1", "2026-01-10", -20000, "Conta Paga", "Empréstimo à Nexus", "n", "Nexus"),
+      m("intra", "n", "Nexus", "2:1", "2026-01-11", 20000, "Conta Recebida", "Empréstimo da Greencore", "g", "Greencore"),
+      m("intra", "g", "Greencore", "1:2", "2026-02-05", -15000, "Conta Paga", "Empréstimo à Nexus", "n", "Nexus"),
+      m("sem_doc", "n", "Nexus", "2:2", "2026-02-06", 15000, "Crédito em Conta Corrente", "Transferência recebida", null, null),
+    ];
+  };
   RPCS.bi_saldos = () => [
     {
       empresa: "Greencore",
