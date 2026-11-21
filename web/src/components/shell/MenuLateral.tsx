@@ -39,7 +39,7 @@ function Iniciais({ nome, className = "" }: { nome: string; className?: string }
 /** Módulos da Gestão que abrem as telas deles embaixo, no próprio menu (Financeiro 05/11, Contratos e Notas fiscais
  *  10/11/2026). O PN
  *  também abre. */
-const COM_SUBMENU = ["financeiro", "contratos", "entradas"];
+const COM_SUBMENU = ["financeiro", "contratos", "entradas", "licencas"];
 
 /** Cadastros de apoio da Gestão: ficam no fim do grupo, depois de Fornecedores e clientes (060). */
 const CADASTROS_DE_APOIO = ["centros_custo", "plano_contas"];
@@ -55,7 +55,7 @@ export function MenuLateral({ modulo, recolhido, aoRecolher }: { modulo: Modulo;
   const gestaoDiaADia = gestao.filter((a) => !CADASTROS_DE_APOIO.includes(a.slug));
   const gestaoApoio = gestao.filter((a) => CADASTROS_DE_APOIO.includes(a.slug));
   // Fornecedores e clientes só faz sentido com algum módulo de gestão em uso no menu (Cobrança Ledgra não usa)
-  const temCadastros = gestao.some((a) => a.slug !== "licencas") && podeModulo("cadastros", pode);
+  const temCadastros = gestao.length > 0 && podeModulo("cadastros", pode);
   const naGestao = ehModuloGestao(modulo) || modulo === "cadastros";
   // grupo "Gestão": começa aberto; abrir/fechar fica lembrado no navegador (fechado, o título acende na tela dele)
   const [gestaoSalvo, setGestaoSalvo] = useEstadoLembrado<"1" | "0">(CHAVES.menuGestao, "1", (v) => v === "1" || v === "0");
@@ -162,17 +162,22 @@ export function MenuLateral({ modulo, recolhido, aoRecolher }: { modulo: Modulo;
         {item({ href: "/", nome: "Início", icone: "casa", ativo: modulo === "hub" && rota === "/" })}
         {!recolhido && <div className="px-3 pb-1.5 pt-5 text-[12px] text-[var(--nevoa)]/80">Suas ferramentas</div>}
         {recolhido && <div className="mx-3 my-3 h-px bg-white/10" />}
-        {escritorio.map((a) =>
-          item({
-            href: a.rota,
-            // TODO: o nome deveria vir só de hub_apps.nome; mantido fixo para não mudar o menu atual
-            nome: a.slug === "comercial" ? "CRM Comercial" : a.nome,
-            icone: a.icone,
-            ativo: modulo === a.slug,
-            externo: a.externo,
-            nivel: a.papel,
-          }),
-        )}
+        {escritorio.map((a) => (
+          <div key={a.slug}>
+            {item({
+              href: a.rota,
+              // TODO: o nome deveria vir só de hub_apps.nome; mantido fixo para não mudar o menu atual
+              nome: a.slug === "comercial" ? "CRM Comercial" : a.nome,
+              icone: a.icone,
+              ativo: modulo === a.slug,
+              externo: a.externo,
+              nivel: a.papel,
+              // Sistemas (fora da Gestão desde 21/11/2026) abre as telas logo abaixo, como o Financeiro
+              sub: COM_SUBMENU.includes(a.slug) ? { aberto: subAberto(a.slug as Modulo), alternar: () => alternarSub(a.slug) } : undefined,
+            })}
+            {!recolhido && COM_SUBMENU.includes(a.slug) && subAberto(a.slug as Modulo) && subitens(a.slug as Modulo)}
+          </div>
+        ))}
         {(gestao.length > 0 || temCadastros) && (
           <div className="pt-1">
             {recolhido ? (

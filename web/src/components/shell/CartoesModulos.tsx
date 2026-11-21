@@ -42,7 +42,7 @@ export function CartoesModulos() {
     externo: a.externo,
   }));
   // PN - Parceiros de negócio: cadastro comum da Gestão (não é ferramenta do catálogo)
-  if (gestao.some((a) => a.slug !== "licencas") && podeModulo("cadastros", pode)) {
+  if (gestao.length > 0 && podeModulo("cadastros", pode)) {
     const i = cartoes.findLastIndex((c) => ehModuloGestao(c.slug) && !apoio.includes(c.slug));
     cartoes.splice(i + 1, 0, {
       slug: "cadastros",
