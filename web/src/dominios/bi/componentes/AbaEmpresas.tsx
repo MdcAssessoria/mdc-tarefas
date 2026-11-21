@@ -8,12 +8,11 @@ import type { ColunaLista } from "@/lib/arquivos/exportarLista";
 import { BotoesExportar } from "@/components/ui/BotoesExportar";
 import { EstadoVazio } from "@/components/ui/EstadoVazio";
 import { Esqueleto } from "@/components/ui/Esqueleto";
-import { QuadroTabela } from "@/components/ui/QuadroTabela";
-import { Valor } from "@/components/ui/Valor";
 import { matrizPorEmpresas } from "../comparar";
 import type { LinhaEmpresas } from "../comparar";
 import { lerRelatorio } from "../dados";
 import type { TipoRelatorio } from "../relatorio";
+import { classeDaLinha, QuadroDemonstrativo, TdValor } from "./Demonstrativo";
 import { GraficoParticipacao } from "./GraficoBarras";
 import { SeletorRelatorio } from "./SeletorRelatorio";
 import type { ContextoBi } from "./contexto";
@@ -97,48 +96,32 @@ export function AbaEmpresas({ c }: { c: ContextoBi }) {
               );
             })}
           </div>
-          <QuadroTabela rotulo={titulo} cartoes={false}>
+          <QuadroDemonstrativo rotulo={titulo}>
             <thead>
               <tr>
-                <th className="sticky left-0 z-[1] min-w-[14rem] bg-[var(--fundo)]">Conta</th>
+                <th>Conta</th>
                 {nomes.map((n) => (
-                  <th key={n} className="text-right">
-                    {n}
-                  </th>
+                  <th key={n}>{n}</th>
                 ))}
-                <th className="text-right">Soma</th>
-                <th className="text-right" title="O que sai ao tirar as vendas e pagamentos entre as empresas do grupo">
-                  Eliminações
-                </th>
-                <th className="text-right">Consolidado</th>
+                <th>Soma</th>
+                <th title="O que sai ao tirar as vendas e pagamentos entre as empresas do grupo">Eliminações</th>
+                <th className="demo-total">Consolidado</th>
               </tr>
             </thead>
             <tbody>
               {dados.dados.map((l) => (
-                <tr key={l.codigo} className={l.subtotal ? "bg-[var(--fundo)]" : ""}>
-                  <td
-                    className={`celula-titulo sticky left-0 z-[1] ${l.subtotal ? "bg-[var(--fundo)] font-semibold text-[var(--marca)]" : "bg-white !font-normal"}`}
-                  >
-                    {l.nome}
-                  </td>
+                <tr key={l.codigo} className={classeDaLinha(l.codigo, l.subtotal)}>
+                  <td className="demo-conta">{l.nome}</td>
                   {l.valores.map((v, i) => (
-                    <td key={nomes[i]} className="text-right">
-                      <Valor v={v} />
-                    </td>
+                    <TdValor key={nomes[i]} v={v} />
                   ))}
-                  <td className="text-right">
-                    <Valor v={l.soma} />
-                  </td>
-                  <td className="text-right text-[var(--texto-suave)]">
-                    <Valor v={l.eliminacoes} />
-                  </td>
-                  <td className="text-right font-semibold">
-                    <Valor v={l.consolidado} />
-                  </td>
+                  <TdValor v={l.soma} />
+                  <TdValor v={l.eliminacoes} className="!text-[var(--texto-suave)]" />
+                  <TdValor v={l.consolidado} className="demo-total" />
                 </tr>
               ))}
             </tbody>
-          </QuadroTabela>
+          </QuadroDemonstrativo>
         </>
       )}
       <p className="text-xs text-[var(--texto-suave)]">

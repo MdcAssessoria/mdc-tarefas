@@ -20,21 +20,21 @@ export const FAIXAS_MARGEM: FaixaMargem[] = [
     titulo: "Margem bruta",
     baixa: 0.2,
     boa: 0.35,
-    explica: "o que sobra da receita líquida depois do custo do que foi vendido (matéria-prima, mão de obra da produção, terceiros)",
+    explica: "depois do custo do que foi vendido",
   },
   {
     codigo: "resultado_operacional",
     titulo: "Margem operacional",
     baixa: 0.05,
     boa: 0.12,
-    explica: "o que sobra depois também das despesas de pessoal, administrativas e comerciais, antes dos juros e do IR",
+    explica: "depois também das despesas, antes de juros e IR",
   },
   {
     codigo: "resultado_liquido",
     titulo: "Margem líquida",
     baixa: 0,
     boa: 0.08,
-    explica: "o que sobra no fim, depois de juros, tarifas e IRPJ/CSLL",
+    explica: "no fim, depois de juros, tarifas e IR",
   },
 ];
 
@@ -75,11 +75,19 @@ export function calcularMargens(m: Matriz): MargemCalculada[] | null {
       nivel: nivelDaMargem(f, valor),
       frase:
         sobra >= 0
-          ? `De cada R$ 100 de receita líquida, sobraram ${reais(sobra)}: ${f.explica}.`
-          : `De cada R$ 100 de receita líquida, faltaram ${reais(-sobra)}: ${f.explica}.`,
+          ? `Sobram ${reais(sobra)} de cada R$ 100 de receita, ${f.explica}.`
+          : `Faltam ${reais(-sobra)} em cada R$ 100 de receita, ${f.explica}.`,
       regua: `Faixas: abaixo de ${pct(f.baixa)} · ${pct(f.baixa)} a ${pct(f.boa)} · acima de ${pct(f.boa)}`,
     };
   });
 }
 
 export const fmtMargem = pct;
+
+/** Régua da margem (0 a 100%): onde terminam as faixas vermelha e amarela e onde fica o valor. Escala de 0 até o dobro
+ *  do limite "boa" (ou um pouco acima do valor, se maior); valor negativo fica no começo. */
+export function regua(f: FaixaMargem, v: number): { fimBaixa: number; fimMedia: number; marca: number } {
+  const topo = Math.max(f.boa * 2, v * 1.1, 0.01);
+  const pos = (x: number) => Math.min(100, Math.max(0, (x / topo) * 100));
+  return { fimBaixa: pos(f.baixa), fimMedia: pos(f.boa), marca: pos(v) };
+}

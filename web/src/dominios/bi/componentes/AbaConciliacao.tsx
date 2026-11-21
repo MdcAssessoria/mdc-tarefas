@@ -14,14 +14,13 @@ import { Esqueleto } from "@/components/ui/Esqueleto";
 import { EstadoVazio } from "@/components/ui/EstadoVazio";
 import { Icone } from "@/components/ui/Icone";
 import { Indicador } from "@/components/ui/Indicador";
-import { QuadroTabela } from "@/components/ui/QuadroTabela";
 import type { Tom } from "@/components/ui/Tons";
-import { Valor } from "@/components/ui/Valor";
 import { conciliar, fraseDoAlerta, LIMITES } from "../conciliacao";
 import type { LinhaConciliacao, NivelAlerta } from "../conciliacao";
 import { lerContas, lerSaldos } from "../dados";
 import { mesesDoPeriodo, resumirSaldos } from "../saldos";
 import { CartaoSaldos } from "./CartaoSaldos";
+import { QuadroDemonstrativo, TdValor } from "./Demonstrativo";
 import { textoEliminacao } from "./contexto";
 import type { ContextoBi } from "./contexto";
 
@@ -151,55 +150,45 @@ export function AbaConciliacao({ c }: { c: ContextoBi }) {
         </p>
       )}
 
-      <QuadroTabela rotulo="Resultado × caixa por grupo de contas">
+      <QuadroDemonstrativo rotulo="Resultado × caixa por grupo de contas">
         <thead>
           <tr>
             <th>Grupo de contas</th>
-            <th className="text-right">Resultado (competência)</th>
-            <th className="text-right">Caixa (pagamento)</th>
-            <th className="text-right">Diferença</th>
-            <th>Situação</th>
+            <th>Resultado (competência)</th>
+            <th>Caixa (pagamento)</th>
+            <th className="demo-total">Diferença</th>
+            <th>Variação</th>
+            <th className="!text-left">Situação</th>
           </tr>
         </thead>
         <tbody>
           {conc.linhas.map((l) => (
             <tr key={l.id}>
-              <td className="celula-titulo">
-                {l.nome}
-                <span className="block text-xs font-normal text-[var(--texto-suave)]">Causa comum: {l.explica}.</span>
+              <td className="demo-conta">
+                <span className="font-semibold">{l.nome}</span>
+                <span className="block text-[11.5px] text-[var(--texto-suave)]">Causa comum: {l.explica}.</span>
               </td>
-              <td data-rotulo="Resultado" className="text-right">
-                <Valor v={l.competencia} />
-              </td>
-              <td data-rotulo="Caixa" className="text-right">
-                <Valor v={l.caixa} />
-              </td>
-              <td data-rotulo="Diferença" className="text-right">
-                <Valor v={l.diferenca} />
-                <span className="block text-xs text-[var(--texto-suave)]">{pct(l.percentual)}</span>
-              </td>
-              <td data-rotulo="Situação">
+              <TdValor v={l.competencia} />
+              <TdValor v={l.caixa} />
+              <TdValor v={l.diferenca} className="demo-total" />
+              <td className="demo-pct">{pct(l.percentual)}</td>
+              <td>
                 <Chip tom={NIVEL[l.nivel].tom}>{NIVEL[l.nivel].nome}</Chip>
               </td>
             </tr>
           ))}
         </tbody>
         <tfoot>
-          <tr className="font-semibold">
-            <td>Total das operações</td>
-            <td className="text-right">
-              <Valor v={conc.resultado} />
-            </td>
-            <td className="text-right">
-              <Valor v={conc.caixaOperacional} />
-            </td>
-            <td className="text-right">
-              <Valor v={Math.round(somaDif * 100) / 100} />
-            </td>
+          <tr>
+            <td className="demo-conta">Total das operações</td>
+            <TdValor v={conc.resultado} />
+            <TdValor v={conc.caixaOperacional} />
+            <TdValor v={Math.round(somaDif * 100) / 100} className="demo-total" />
+            <td />
             <td />
           </tr>
         </tfoot>
-      </QuadroTabela>
+      </QuadroDemonstrativo>
       <p className="text-xs text-[var(--texto-suave)]">
         Diferença = caixa − resultado. Positiva: entrou mais (ou saiu menos) no banco do que o resultado mostra. Atenção a partir de{" "}
         {pct(LIMITES.atencao)} e alerta a partir de {pct(LIMITES.alerta)} da diferença, só acima de {brl(LIMITES.piso)}. Resultado +
