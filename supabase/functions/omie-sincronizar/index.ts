@@ -256,8 +256,10 @@ const meses = (de: string, ate: string) => {
 
 async function sincronizarSaldos(db: SupabaseClient, omie: ClienteOmie, e: Empresa, hoje: string) {
   const contas = await omie.todas("geral/contacorrente/", "ListarContasCorrentes", { apenas_importado_api: "N" }, "omie", "ListarContasCorrentes");
+  // inclui as contas inativas (21/11/2026): uma conta encerrada depois ainda tem o extrato dos meses em que foi usada
+  // (Claratec, jul–ago/2025: R$ 218 mil recebidos numa conta hoje inativa ficavam fora do saldo e o fluxo não fechava)
   // deno-lint-ignore no-explicit-any
-  const ativas = contas.filter((c: any) => c.nCodCC && c.inativo !== "S");
+  const ativas = contas.filter((c: any) => c.nCodCC);
   const todos = meses(e.sincronizar_desde, hoje);
   let gravados = 0;
   let extrato = 0;

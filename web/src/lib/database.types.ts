@@ -6742,6 +6742,68 @@ export type Database = {
           },
         ];
       };
+      omie_extrato: {
+        Row: {
+          atualizado_em: string;
+          categoria_codigo: string | null;
+          cliente_id: string;
+          codigo_titulo: string | null;
+          conta_corrente: string;
+          dados: Json;
+          data: string | null;
+          documento: string | null;
+          lancamento: string;
+          mes: string;
+          natureza: string | null;
+          org_id: string;
+          origem: string | null;
+          pessoa: string | null;
+          valor: number | null;
+        };
+        Insert: {
+          atualizado_em?: string;
+          categoria_codigo?: string | null;
+          cliente_id: string;
+          codigo_titulo?: string | null;
+          conta_corrente: string;
+          dados: Json;
+          data?: string | null;
+          documento?: string | null;
+          lancamento: string;
+          mes: string;
+          natureza?: string | null;
+          org_id: string;
+          origem?: string | null;
+          pessoa?: string | null;
+          valor?: number | null;
+        };
+        Update: {
+          atualizado_em?: string;
+          categoria_codigo?: string | null;
+          cliente_id?: string;
+          codigo_titulo?: string | null;
+          conta_corrente?: string;
+          dados?: Json;
+          data?: string | null;
+          documento?: string | null;
+          lancamento?: string;
+          mes?: string;
+          natureza?: string | null;
+          org_id?: string;
+          origem?: string | null;
+          pessoa?: string | null;
+          valor?: number | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "omie_extrato_cliente_id_fkey";
+            columns: ["cliente_id"];
+            isOneToOne: false;
+            referencedRelation: "clientes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       omie_movimentos: {
         Row: {
           atualizado_em: string;
@@ -6930,6 +6992,38 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "omie_notas_cliente_id_fkey";
+            columns: ["cliente_id"];
+            isOneToOne: false;
+            referencedRelation: "clientes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      omie_pessoas: {
+        Row: {
+          atualizado_em: string;
+          cliente_id: string;
+          doc: string;
+          nome: string;
+          origem: string;
+        };
+        Insert: {
+          atualizado_em?: string;
+          cliente_id: string;
+          doc: string;
+          nome: string;
+          origem: string;
+        };
+        Update: {
+          atualizado_em?: string;
+          cliente_id?: string;
+          doc?: string;
+          nome?: string;
+          origem?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "omie_pessoas_cliente_id_fkey";
             columns: ["cliente_id"];
             isOneToOne: false;
             referencedRelation: "clientes";
@@ -8842,6 +8936,23 @@ export type Database = {
           p_inicio: string;
         };
         Returns: Json;
+      };
+      bi_intragrupo: {
+        Args: { p_clientes: string[]; p_fim: string; p_inicio: string };
+        Returns: {
+          categoria: string;
+          contraparte: string;
+          contraparte_id: string;
+          data: string;
+          documento: string;
+          empresa: string;
+          empresa_id: string;
+          origem: string;
+          pessoa: string;
+          ref: string;
+          tipo: string;
+          valor: number;
+        }[];
       };
       bi_orcado: {
         Args: {

@@ -1,6 +1,7 @@
 // Aba Resultado × Caixa do BI: compara a DRE (competência) com o fluxo de caixa (pagamento) conta a conta do plano,
 // aponta as variações (atenção a partir de 10%, alerta a partir de 25%, só acima de R$ 5 mil) e faz a ponte do resultado
-// líquido à variação do caixa e aos saldos dos bancos (CPC 03 (R2), item 20A). Regras em ../conciliacao.ts.
+// líquido à variação do caixa e aos saldos dos bancos (CPC 03 (R2), item 20A); com a eliminação ligada, as operações
+// entre as empresas com uma ponta só (CartaoIntragrupo, 109). Regras em ../conciliacao.ts.
 "use client";
 
 import { useCallback } from "react";
@@ -19,6 +20,7 @@ import { conciliar, fraseDoAlerta, LIMITES } from "../conciliacao";
 import type { LinhaConciliacao, NivelAlerta } from "../conciliacao";
 import { lerContas, lerSaldos } from "../dados";
 import { mesesDoPeriodo, resumirSaldos } from "../saldos";
+import { CartaoIntragrupo } from "./CartaoIntragrupo";
 import { CartaoSaldos } from "./CartaoSaldos";
 import { QuadroDemonstrativo, TdValor } from "./Demonstrativo";
 import { textoEliminacao } from "./contexto";
@@ -197,6 +199,13 @@ export function AbaConciliacao({ c }: { c: ContextoBi }) {
 
       <h3 className="text-[15px] font-semibold text-[var(--marca)]">Saldos dos bancos</h3>
       <CartaoSaldos r={saldos} elimina={c.elimina} />
+
+      {c.elimina && (
+        <>
+          <h3 className="text-[15px] font-semibold text-[var(--marca)]">Operações entre as empresas</h3>
+          <CartaoIntragrupo c={c} />
+        </>
+      )}
     </div>
   );
 }

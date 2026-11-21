@@ -120,6 +120,26 @@ Regras puras da tela em `web/src/dominios/bi/`: `relatorio.ts` (matriz, período
 comparação, horizontal, vertical, por empresa), `indicadores.ts` e `lancamentos.ts` (leitura das planilhas), com testes.
 Componentes em `web/src/dominios/bi/componentes/`.
 
+**109 (21/11/2026) — eliminação, operações entre empresas e nomes.** (0) Erro corrigido: o filtro da eliminação era
+`not (v_elim and app.so_digitos(coalesce(doc,'')) = any (v_cnpjs))` e `app.so_digitos('')` é NULL; com a eliminação
+ligada, todo fato sem CNPJ/CPF saía (Grupo Clara out–nov/2026: R$ 123,5 mil a menos no fluxo do grupo). Troca feita
+em `app.bi_fatos` e `public.bi_indicadores` sobre a definição em vigor. (1) `public.bi_intragrupo(clientes, início, fim)`
+devolve os movimentos do extrato entre empresas do grupo (`intra`) e candidatos lançados sem a empresa (`sem_doc`,
+mesmo valor com sinal contrário em até 7 dias); o pareamento 1:1 é em `dominios/bi/intragrupo.ts` (primeiro com a
+contraparte certa, depois com qualquer empresa do grupo) e o quadro em `CartaoIntragrupo` (aba Resultado × caixa, só
+com a eliminação). (2) `public.omie_pessoas` (desde a 110, por cliente e documento — um cliente nunca dá nome aos títulos de outro, achado de segurança da revisão da Vercel no PR #36; extrato prevalece sobre notas), alimentada por
+gatilhos de comando em `omie_extrato`/`omie_notas`; `omie_mov_nome` completa o nome do título na gravação e
+`omie_pessoas_titulos` preenche os antigos; `bi_intragrupo` tem ordem estável (data, empresa, ref) e a tela lê em páginas de 1.000 (110) (96% dos títulos com nome em 21/11/2026, por cliente). Testes em
+`supabase/testes/183_bi_intragrupo_109.sql`.
+
+**Conferência com os bancos (21/11/2026):** 27 de 30 meses do Grupo Clara já com extrato fecham no centavo, por
+empresa. Claratec jul–ago/2025: R$ 218 mil recebidos na conta 3258502695, que não vinha na lista de contas (inativa) —
+a `omie-sincronizar` passa a trazer o extrato também das contas inativas. Clara Company fev/2025: transferência de
+R$ 949 da Sicoob sem a entrada em outra conta da empresa (provavelmente a mesma causa).
+
+**Padrão MDC:** a Visão geral ganhou o quadro "Mês a mês" (receita líquida, lucro bruto, resultado operacional e
+líquido, caixa das operações e variação do caixa) e o Orçamento usa o mesmo quadro (`QuadroDemonstrativo`).
+
 ## Pendências conhecidas
 
 - **Classificação das categorias:** em 19/11/2026 o mapa (`bi_mapa_categorias`) tinha 2 regras para 118 categorias do

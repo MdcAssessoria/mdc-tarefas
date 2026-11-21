@@ -4,7 +4,7 @@
 // (components/shell/navegacao.ts): com ele a tela do manual ganha o botão "Ir para a tela".
 // Mudou uma tela ou regra? Atualize o trecho dela aqui no mesmo commit e acrescente uma linha em "Controle de versões".
 
-export const VERSAO_MANUAL = { numero: "2.9", data: "21/11/2026" };
+export const VERSAO_MANUAL = { numero: "2.10", data: "21/11/2026" };
 
 export const MANUAL_MD = `
 ## Como usar este manual
@@ -216,7 +216,7 @@ DRE e fluxo de caixa (DFC) gerenciais de um grupo de empresas, mês a mês, a pa
 4. Em **Comparar**, escolha **Período anterior**, **Mesmo período do ano passado** ou **Orçamento** (realizado × orçado). Diferença verde é melhor para o resultado; vermelha, pior.
 5. Na **DRE**, os cartões de **margem bruta, operacional e líquida** mostram o percentual, a faixa (vermelho = abaixo do esperado, amarelo = atenção, verde = saudável) e o que ela quer dizer em reais ("de cada R$ 100 de receita, sobraram…"). Faixas: bruta 20% e 35%; operacional 5% e 12%; líquida 0% e 8%.
 6. Na DRE e no Fluxo de caixa, clique na **seta** ao lado de uma linha para abri-la nas contas do plano (ou em **Abrir as contas**) e, na seta de cada conta, para ver os **documentos** (notas e contas a pagar/receber) que formam o saldo, mês a mês. Os valores aparecem sem centavos; marque **Centavos** para ver completos. Clique num **valor** para ver as notas, os impostos das notas, as contas a pagar/receber e os pagamentos que formam aquele número, com busca e PDF/Excel.
-7. **Resultado × caixa** compara o que a DRE mostra (competência) com o que entrou e saiu do banco, grupo a grupo (vendas, impostos, pessoal, custos, despesas, juros). Diferença de 10% ou mais (acima de R$ 5 mil) aparece em **Atenção**; de 25% ou mais, em **Alerta**, com a causa mais comum. No fim vêm os **saldos dos bancos** do Omie (início, fim e a diferença para o fluxo), que também aparecem na aba Fluxo de caixa.
+7. **Resultado × caixa** compara o que a DRE mostra (competência) com o que entrou e saiu do banco, grupo a grupo (vendas, impostos, pessoal, custos, despesas, juros). Diferença de 10% ou mais (acima de R$ 5 mil) aparece em **Atenção**; de 25% ou mais, em **Alerta**, com a causa mais comum. No fim vêm os **saldos dos bancos** do Omie (início, fim e a diferença para o fluxo), que também aparecem na aba Fluxo de caixa. Com mais de uma empresa e "Tirar vendas e pagamentos entre as empresas" marcado, aparece ainda o quadro **Operações entre as empresas**: quantas operações têm as duas pontas lançadas no Omie e quais ficaram com uma ponta só (com a possível outra ponta lançada sem a empresa). É o que falta corrigir no Omie para o fluxo do grupo fechar com os bancos; dá para baixar em PDF ou Excel.
 8. **Indicadores** abre com a **Saúde do negócio**: margem EBITDA, cobertura de juros, folga sobre o ponto de equilíbrio, fôlego de caixa (quantos meses o dinheiro nos bancos paga) e conversão em caixa, cada um com a faixa em cor e uma frase em reais (passe o mouse para ver a conta). Depois, prazos médios de recebimento e pagamento, ciclo financeiro, inadimplência, contas em aberto por atraso, maiores clientes e fornecedores e liquidez.
 9. Use **PDF** ou **Excel** para baixar (com as contas que estiverem abertas).
 
@@ -410,4 +410,5 @@ Os sistemas que a MDC licencia aos clientes (Ledgra ERP, EXato e os próximos): 
 | 2.7 | 21/11/2026 | **BI de Gestão**: aba Indicadores com a Saúde do negócio (EBITDA, cobertura de juros, ponto de equilíbrio, fôlego e conversão em caixa) e tabelas no padrão MDC. |
 | 2.8 | 21/11/2026 | **BI de Gestão**: aba Parecer (equipe MDC) monta o parecer gerencial com os números do período, para revisar e salvar em PDF. |
 | 2.9 | 21/11/2026 | **Sistemas** sai do grupo Gestão e vira item próprio do menu, com as telas em submenu. **Nova licença**: cliente não encontrado na busca abre o cadastro na hora, já com o CNPJ digitado. |
+| 2.10 | 21/11/2026 | **BI de Gestão**: correção do fluxo de caixa do grupo (com "tirar as operações entre as empresas", os movimentos sem CNPJ/CPF, como tarifas e débitos em conta, ficavam de fora); quadro Operações entre as empresas em Resultado × caixa; nome de clientes e fornecedores nos títulos do Omie; quadro mês a mês na Visão geral e Orçamento no padrão MDC; extrato também das contas inativas. |
 `;

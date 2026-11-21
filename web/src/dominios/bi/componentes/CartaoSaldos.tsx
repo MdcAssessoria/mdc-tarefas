@@ -39,7 +39,10 @@ export function CartaoSaldos({ r, elimina }: { r: ResumoSaldos | null; elimina: 
       {r.diferenca !== null && Math.abs(dif) >= 1 && (
         <p className="text-sm text-[var(--texto-suave)]">
           A diferença costuma ser tarifa, juros ou transferência lançados direto na conta corrente do Omie, sem conta a pagar ou receber
-          {elimina ? ", e transferências entre as empresas do grupo (que o fluxo tira e o banco mostra)" : ""}.
+          {elimina
+            ? ", e operações entre as empresas do grupo que só têm uma ponta lançada (veja o quadro Operações entre as empresas)"
+            : ""}
+          .
         </p>
       )}
       {r.incompleto && (

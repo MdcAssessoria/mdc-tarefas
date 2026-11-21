@@ -1,4 +1,5 @@
-// Visão geral: os números principais do período (DRE e caixa) e o resultado × a geração de caixa mês a mês.
+// Visão geral: os números principais do período (DRE e caixa), o quadro mês a mês no padrão MDC (.demo) e os gráficos
+// do resultado × a geração de caixa.
 "use client";
 
 import { useCallback } from "react";
@@ -14,6 +15,18 @@ import { margem, temMovimento, totalDe } from "../relatorio";
 import { GraficoBarras, GraficoCascata } from "./GraficoBarras";
 import { acumulado, cascata } from "../graficos";
 import { textoEliminacao } from "./contexto";
+import { QuadroDemonstrativo, TdValor } from "./Demonstrativo";
+import { rotuloMes } from "@/dominios/financeiro/painel";
+
+/** Linhas do quadro mês a mês: [relatório, código, nome, é resultado (destaque)]. */
+const QUADRO: ["dre" | "dfc", string, string, boolean][] = [
+  ["dre", "receita_liquida", "Receita líquida", false],
+  ["dre", "lucro_bruto", "Lucro bruto", false],
+  ["dre", "resultado_operacional", "Resultado operacional", false],
+  ["dre", "resultado_liquido", "Resultado líquido", true],
+  ["dfc", "fluxo_operacional", "Caixa das operações", false],
+  ["dfc", "variacao_caixa", "Variação do caixa", true],
+];
 import type { ContextoBi } from "./contexto";
 
 const pctReceita = (v: number | null) => (v === null ? undefined : `${fmtVariacao(v).replace("+", "")} da receita líquida`);
@@ -82,6 +95,35 @@ export function AbaVisaoGeral({ c }: { c: ContextoBi }) {
           equipe MDC classificar as categorias.
         </p>
       )}
+
+      <section className="space-y-2">
+        <h3 className="text-[15px] font-semibold text-[var(--marca)]">Mês a mês</h3>
+        <QuadroDemonstrativo rotulo="Números do período mês a mês">
+          <thead>
+            <tr>
+              <th>Em R$</th>
+              {meses.map((m) => (
+                <th key={m}>{rotuloMes(m)}</th>
+              ))}
+              <th className="demo-total">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {QUADRO.map(([rel, codigo, nome, destaque]) => {
+              const m = rel === "dre" ? dre : dfc;
+              return (
+                <tr key={codigo} className={destaque ? "demo-resultado" : ""}>
+                  <td className="demo-conta">{nome}</td>
+                  {serie(m, codigo, meses).map((v, i) => (
+                    <TdValor key={meses[i]} v={v} />
+                  ))}
+                  <TdValor v={totalDe(m, codigo)} className="demo-total" />
+                </tr>
+              );
+            })}
+          </tbody>
+        </QuadroDemonstrativo>
+      </section>
 
       <GraficoBarras
         titulo="Resultado (DRE) × geração de caixa (DFC), mês a mês"

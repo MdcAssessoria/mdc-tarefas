@@ -20,6 +20,7 @@ import { Icone } from "@/components/ui/Icone";
 import { JanelaMotivo } from "@/components/ui/JanelaMotivo";
 import { Modal } from "@/components/ui/Modal";
 import { QuadroTabela } from "@/components/ui/QuadroTabela";
+import { classeDaLinha, QuadroDemonstrativo, TdValor } from "./Demonstrativo";
 import { Valor } from "@/components/ui/Valor";
 import { cancelarComplementar, gravarComplementares, gravarOrcamento, lerComplementares, lerLinhas, lerOrcamento } from "../dados";
 import type { ComplementarLido, ResultadoGravacao } from "../dados";
@@ -662,45 +663,45 @@ function Orcamento({ c, linhas }: { c: ContextoBi; linhas: LinhaRelatorio[] }) {
       {!atual.dados ? (
         !atual.erro && <Esqueleto />
       ) : (
-        <QuadroTabela rotulo={`Orçamento ${rel.toUpperCase()} ${ano}`} cartoes={false}>
+        <QuadroDemonstrativo rotulo={`Orçamento ${rel.toUpperCase()} ${ano}`}>
           <thead>
             <tr>
-              <th className="sticky left-0 z-[1] min-w-[14rem] bg-[var(--fundo)]">Linha</th>
+              <th>Linha</th>
               {meses.map((m) => (
-                <th key={m} className="min-w-[7.5rem] text-right">
+                <th key={m} className="min-w-[7.5rem]">
                   {rotuloMes(m.slice(0, 7))}
                 </th>
               ))}
-              <th className="text-right">Ano</th>
+              <th className="demo-total">Ano</th>
             </tr>
           </thead>
           <tbody>
             {doRel.map((l) => {
               const total = meses.reduce((a, m) => a + numero(chave(l.codigo, m)), 0);
               return (
-                <tr key={l.codigo}>
-                  <td className="celula-titulo sticky left-0 z-[1] bg-white !font-normal">{l.nome}</td>
+                <tr key={l.codigo} className={classeDaLinha(l.codigo, false)}>
+                  <td className="demo-conta">{l.nome}</td>
                   {meses.map((m) => {
                     const k = chave(l.codigo, m);
                     return (
-                      <td key={m} className="p-1">
+                      <td key={m} className="!p-1">
                         <input
                           aria-label={`${l.nome}, ${rotuloMes(m.slice(0, 7))}`}
                           inputMode="decimal"
                           disabled={!c.podeLancar}
                           value={valorCelula(k)}
                           onChange={(e) => setEdicao((x) => ({ ...x, [k]: e.target.value }))}
-                          className={`num w-full rounded border px-2 py-1 text-right text-sm disabled:bg-neutral-50 ${k in edicao ? "border-[var(--destaque-escuro)] bg-amber-50" : "border-[var(--borda)] bg-white"}`}
+                          className={`num w-full rounded border px-2 py-1 text-right text-sm disabled:border-transparent disabled:bg-transparent ${k in edicao ? "border-[var(--destaque-escuro)] bg-amber-50" : "border-[var(--borda)] bg-white"}`}
                         />
                       </td>
                     );
                   })}
-                  <td className="num text-right font-semibold">{brl(total)}</td>
+                  <TdValor v={total} className="demo-total" />
                 </tr>
               );
             })}
           </tbody>
-        </QuadroTabela>
+        </QuadroDemonstrativo>
       )}
       {importar && (
         <ImportarPlanilha
