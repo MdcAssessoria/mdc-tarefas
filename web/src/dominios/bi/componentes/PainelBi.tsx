@@ -1,6 +1,6 @@
 // Painel do BI depois de escolher a empresa (ou o grupo): filtros de período, empresas e operações entre elas, e as
 // abas Visão geral, DRE, Fluxo de caixa, Resultado × caixa, Comparar, Empresas, Indicadores, Lançamentos e (equipe MDC)
-// Classificação. Cada aba busca só o que mostra.
+// Parecer e Classificação. Cada aba busca só o que mostra.
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
@@ -27,6 +27,7 @@ import { AbaConciliacao } from "./AbaConciliacao";
 import { AbaEmpresas } from "./AbaEmpresas";
 import { AbaIndicadores } from "./AbaIndicadores";
 import { AbaLancamentos } from "./AbaLancamentos";
+import { AbaParecer } from "./AbaParecer";
 import { AbaVisaoGeral } from "./AbaVisaoGeral";
 import { CartaoSaldos } from "./CartaoSaldos";
 import { CartoesMargem } from "./CartoesMargem";
@@ -35,7 +36,17 @@ import type { PedidoOrigem } from "./JanelaOrigem";
 import { TabelaMatriz } from "./TabelaMatriz";
 import type { ContextoBi } from "./contexto";
 
-type AbaBi = "geral" | "dre" | "dfc" | "conciliacao" | "comparar" | "empresas" | "indicadores" | "lancamentos" | "classificacao";
+type AbaBi =
+  | "geral"
+  | "dre"
+  | "dfc"
+  | "conciliacao"
+  | "comparar"
+  | "empresas"
+  | "indicadores"
+  | "lancamentos"
+  | "classificacao"
+  | "parecer";
 const PERIODO_PADRAO: Periodo = "ano";
 
 function AbaRelatorio({ rel, c, aoClassificar }: { rel: TipoRelatorio; c: ContextoBi; aoClassificar: () => void }) {
@@ -184,12 +195,17 @@ export function PainelBi({
     ...(escolhidas.length > 1 ? [{ id: "empresas" as const, nome: "Empresas" }] : []),
     { id: "indicadores", nome: "Indicadores" },
     { id: "lancamentos", nome: "Lançamentos" },
-    ...(c.podeClassificar ? [{ id: "classificacao" as const, nome: "Classificação" }] : []),
+    ...(c.podeClassificar
+      ? [
+          { id: "parecer" as const, nome: "Parecer" },
+          { id: "classificacao" as const, nome: "Classificação" },
+        ]
+      : []),
   ];
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center print:hidden">
         <h2 className="flex-1 text-[18px] font-semibold text-[var(--marca)]">{escolhidas.length > 1 ? grupo : escolhidas[0]?.nome}</h2>
         <button type="button" className="btn" onClick={aoTrocar}>
           <Icone nome="voltar" className="h-4 w-4" />
@@ -197,54 +213,56 @@ export function PainelBi({
         </button>
       </div>
 
-      <CartaoFiltros
-        ativos={filtrosAtivos}
-        aoLimpar={() => {
-          setPeriodo(PERIODO_PADRAO);
-          setMarcadas(escolhidas.map((e) => e.cliente_id));
-        }}
-      >
-        <FiltroPeriodo
-          periodo={periodo}
-          de={de}
-          ate={ate}
-          aoMudar={(v) => {
-            if (v.periodo) setPeriodo(v.periodo);
-            if (v.de !== undefined) setDe(v.de);
-            if (v.ate !== undefined) setAte(v.ate);
+      <div className="space-y-4 print:hidden">
+        <CartaoFiltros
+          ativos={filtrosAtivos}
+          aoLimpar={() => {
+            setPeriodo(PERIODO_PADRAO);
+            setMarcadas(escolhidas.map((e) => e.cliente_id));
           }}
-        />
-        {escolhidas.length > 1 && (
-          <fieldset className="campo min-w-0">
-            <legend className="mb-1 text-[13px] font-medium">Empresas</legend>
-            <div className="flex flex-wrap gap-2">
-              {escolhidas.map((e) => {
-                const on = marcadas.includes(e.cliente_id);
-                return (
-                  <button
-                    key={e.cliente_id}
-                    type="button"
-                    aria-pressed={on}
-                    onClick={() => alternar(e.cliente_id)}
-                    className={`chip flex items-center gap-1.5 border ${on ? "border-[var(--marca)] bg-[var(--marca)] text-white" : "border-[var(--borda)] bg-white text-[var(--texto)]"}`}
-                  >
-                    <Icone nome={on ? "check" : "mais"} className="h-3.5 w-3.5" />
-                    {e.nome}
-                  </button>
-                );
-              })}
-            </div>
-          </fieldset>
-        )}
-        {ids.length > 1 && (
-          <label className="flex items-center gap-2 self-end pb-2 text-sm">
-            <input type="checkbox" checked={eliminar} onChange={(e) => setEliminar(e.target.checked)} />
-            Tirar vendas e pagamentos entre as empresas do grupo
-          </label>
-        )}
-      </CartaoFiltros>
+        >
+          <FiltroPeriodo
+            periodo={periodo}
+            de={de}
+            ate={ate}
+            aoMudar={(v) => {
+              if (v.periodo) setPeriodo(v.periodo);
+              if (v.de !== undefined) setDe(v.de);
+              if (v.ate !== undefined) setAte(v.ate);
+            }}
+          />
+          {escolhidas.length > 1 && (
+            <fieldset className="campo min-w-0">
+              <legend className="mb-1 text-[13px] font-medium">Empresas</legend>
+              <div className="flex flex-wrap gap-2">
+                {escolhidas.map((e) => {
+                  const on = marcadas.includes(e.cliente_id);
+                  return (
+                    <button
+                      key={e.cliente_id}
+                      type="button"
+                      aria-pressed={on}
+                      onClick={() => alternar(e.cliente_id)}
+                      className={`chip flex items-center gap-1.5 border ${on ? "border-[var(--marca)] bg-[var(--marca)] text-white" : "border-[var(--borda)] bg-white text-[var(--texto)]"}`}
+                    >
+                      <Icone nome={on ? "check" : "mais"} className="h-3.5 w-3.5" />
+                      {e.nome}
+                    </button>
+                  );
+                })}
+              </div>
+            </fieldset>
+          )}
+          {ids.length > 1 && (
+            <label className="flex items-center gap-2 self-end pb-2 text-sm">
+              <input type="checkbox" checked={eliminar} onChange={(e) => setEliminar(e.target.checked)} />
+              Tirar vendas e pagamentos entre as empresas do grupo
+            </label>
+          )}
+        </CartaoFiltros>
 
-      <Abas rotulo="Partes do BI" itens={abas} valor={aba} aoMudar={setAba} />
+        <Abas rotulo="Partes do BI" itens={abas} valor={aba} aoMudar={setAba} />
+      </div>
 
       {longo ? (
         <p role="alert" className="rounded-md bg-amber-50 p-3 text-sm text-amber-900">
@@ -256,6 +274,8 @@ export function PainelBi({
         <AbaRelatorio key={aba} rel={aba} c={c} aoClassificar={() => setAba("classificacao")} />
       ) : aba === "conciliacao" ? (
         <AbaConciliacao c={c} />
+      ) : aba === "parecer" ? (
+        <AbaParecer c={c} />
       ) : aba === "classificacao" ? (
         <AbaClassificacao c={c} />
       ) : aba === "comparar" ? (

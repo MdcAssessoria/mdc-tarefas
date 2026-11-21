@@ -60,10 +60,12 @@ function Tela() {
 
   return (
     <div className="space-y-4">
-      <CabecalhoPagina
-        titulo="BI de Gestão"
-        descricao="DRE, fluxo de caixa, comparações, indicadores e orçamento dos grupos de empresas ligados ao sistema do cliente (Omie)."
-      />
+      <div className="print:hidden">
+        <CabecalhoPagina
+          titulo="BI de Gestão"
+          descricao="DRE, fluxo de caixa, comparações, indicadores e orçamento dos grupos de empresas ligados ao sistema do cliente (Omie)."
+        />
+      </div>
       {aviso}
       {empresas.erro && (
         <p role="alert" className="rounded-md bg-red-50 p-3 text-sm text-red-800">

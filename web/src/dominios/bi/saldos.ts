@@ -90,3 +90,10 @@ export function mesesDoPeriodo(de: string, ate: string): string[] {
   }
   return r;
 }
+
+/** Meses do período em que alguma conta ainda não tem o saldo do banco (o extrato não chegou): neles o fluxo não fecha com o banco. */
+export function mesesIncompletos(linhas: SaldoBanco[], meses: string[]): number {
+  const contas = new Set(linhas.map((l) => `${l.empresa}|${l.conta_corrente}`));
+  if (!contas.size) return meses.length;
+  return meses.filter((m) => linhas.filter((l) => l.mes.slice(0, 7) === m).length < contas.size).length;
+}

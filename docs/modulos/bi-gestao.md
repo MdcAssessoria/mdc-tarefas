@@ -103,8 +103,20 @@ fôlego de caixa (saldo dos bancos no fim ÷ média mensal de pagamentos da oper
 (caixa das operações ÷ resultado operacional; 50%/90%). Cartões com régua (`CartaoFaixa`), premissas em letra pequena e
 a conta de origem na dica e no PDF. Faixas propostas pelo Claude, a validar pelo Edvaldo.
 
+**Parecer gerencial** (aba Parecer, só `bi_gestao` › gerir, 21/11/2026, `parecer.ts` + `AbaParecer.tsx`): mesmo formato do
+parecer do balancete (`dominios/demonstrativos/parecer.ts`): seções técnicas com fundamento (NBC TG 00, Lei 6.404/1976
+art. 177, NBC TG 03 para a conciliação do método direto, Resolução CVM 156/2022 para o EBITDA como medida não contábil;
+alcance: não é auditoria NBC TA nem revisão NBC TR 2400) e um quadro "Em linguagem simples" por seção. Usa só o que o BI
+já calcula: DRE e DFC (`bi_relatorio`), DRE do período anterior, contas da DRE (maiores gastos), `conciliar`, saldos
+(`resumirSaldos`, `mesesIncompletos` = meses sem o saldo de todas as contas), indicadores dos títulos e
+`indicadoresGestao`. Pontos de atenção automáticos: cobertura de juros e fôlego baixos, receita abaixo do equilíbrio,
+inadimplência > 10%, "Não classificado" e alertas do resultado × caixa. Trechos `[Revisar…]` pedem o julgamento do
+contador (contexto, meses sem extrato, assinatura). Sem gravação no banco: o texto editado fica no `localStorage` do
+navegador por empresas + período + eliminação; impressão com `VisaoParecer` (cabeçalho/rodapé MDC), o resto da tela
+com `print:hidden`. Publicar no Portal do Cliente fica para uma próxima etapa (precisa de tabela e assinatura).
+
 Regras puras da tela em `web/src/dominios/bi/`: `relatorio.ts` (matriz, período, margens), `classificacao.ts`,
-`conciliacao.ts`, `saldos.ts`, `detalhe.ts`, `margens.ts`, `comparar.ts` (períodos de
+`conciliacao.ts`, `saldos.ts`, `detalhe.ts`, `margens.ts`, `parecer.ts`, `comparar.ts` (períodos de
 comparação, horizontal, vertical, por empresa), `indicadores.ts` e `lancamentos.ts` (leitura das planilhas), com testes.
 Componentes em `web/src/dominios/bi/componentes/`.
 
