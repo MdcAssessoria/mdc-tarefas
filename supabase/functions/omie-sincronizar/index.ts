@@ -263,8 +263,9 @@ async function sincronizarSaldos(db: SupabaseClient, omie: ClienteOmie, e: Empre
   let extrato = 0;
   for (const c of ativas) {
     const cc = String(c.nCodCC);
-    const { data } = await db.from("omie_saldos").select("mes").eq("cliente_id", e.cliente_id).eq("conta_corrente", cc);
-    const tem = new Set((data ?? []).map((r) => String(r.mes).slice(0, 10)));
+    // mês "pronto" = saldo gravado E extrato gravado (106); os meses com saldo da 105 voltam uma vez para trazer o extrato
+    const { data } = await db.from("omie_saldos").select("mes, dados").eq("cliente_id", e.cliente_id).eq("conta_corrente", cc);
+    const tem = new Set((data ?? []).filter((r) => r.dados?.extrato === true).map((r) => String(r.mes).slice(0, 10)));
     const faltam = todos.filter((m) => !tem.has(m)).slice(0, 4);
     const pedir = [...new Set([...todos.slice(-2), ...faltam])];
     const linhas = [];
@@ -283,7 +284,7 @@ async function sincronizarSaldos(db: SupabaseClient, omie: ClienteOmie, e: Empre
       linhas.push({
         cliente_id: e.cliente_id, org_id: e.org_id, conta_corrente: cc, descricao: c.descricao ?? null, mes,
         saldo_anterior: anterior, saldo_final: atual,
-        dados: { nSaldoAnterior: anterior, nSaldoAtual: atual, nSaldoConciliado: campoNum(r, "nSaldoConciliado"), nSaldoDisponivel: campoNum(r, "nSaldoDisponivel") },
+        dados: { extrato: true, nSaldoAnterior: anterior, nSaldoAtual: atual, nSaldoConciliado: campoNum(r, "nSaldoConciliado"), nSaldoDisponivel: campoNum(r, "nSaldoDisponivel") },
         atualizado_em: new Date().toISOString(),
       });
     }
