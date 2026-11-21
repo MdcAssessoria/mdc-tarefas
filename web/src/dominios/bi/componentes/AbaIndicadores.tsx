@@ -73,7 +73,7 @@ export function AbaIndicadores({ c }: { c: ContextoBi }) {
       ]);
       const meses = mesesDoPeriodo(c.de, c.ate < c.hoje ? c.ate : c.hoje);
       const banco = resumirSaldos(saldos ?? [], meses, null);
-      return { atual, anterior, gestao: indicadoresGestao(dre, dfc, banco ? banco.final : null, meses.length) };
+      return { atual, anterior, gestao: indicadoresGestao(dre, dfc, banco ? banco.finalUltimoMes : null, meses.length) };
     }, [c.ids, c.de, c.ate, c.elimina, c.hoje, antes.de, antes.ate]),
   );
   if (dados.erro)
