@@ -8,13 +8,12 @@ import { useConsulta } from "@/lib/useConsulta";
 import { nomeArquivo } from "@/lib/arquivos/exportarLista";
 import { BotoesExportar } from "@/components/ui/BotoesExportar";
 import { Esqueleto } from "@/components/ui/Esqueleto";
-import { QuadroTabela } from "@/components/ui/QuadroTabela";
-import { Valor } from "@/components/ui/Valor";
 import { MODOS_COMPARAR, compararMatrizes, fmtVariacao, periodoComparado, serie } from "../comparar";
 import type { LinhaComparada, ModoComparar } from "../comparar";
 import { lerOrcado, lerRelatorio } from "../dados";
 import { temMovimento } from "../relatorio";
 import type { TipoRelatorio } from "../relatorio";
+import { classeDaLinha, QuadroDemonstrativo, TdValor } from "./Demonstrativo";
 import { GraficoBarras } from "./GraficoBarras";
 import { SeletorRelatorio } from "./SeletorRelatorio";
 import { textoEliminacao } from "./contexto";
@@ -112,40 +111,35 @@ export function AbaComparar({ c }: { c: ContextoBi }) {
               },
             ]}
           />
-          <QuadroTabela rotulo={titulo} cartoes={false}>
+          <QuadroDemonstrativo rotulo={titulo}>
             <thead>
               <tr>
-                <th className="sticky left-0 z-[1] min-w-[14rem] bg-[var(--fundo)]">Conta</th>
-                <th className="text-right">{modo === "orcado" ? "Realizado" : c.rotuloPeriodo}</th>
-                <th className="text-right">{rotuloBase}</th>
-                <th className="text-right">Diferença</th>
-                <th className="text-right">Variação</th>
+                <th>Conta</th>
+                <th>{modo === "orcado" ? "Realizado" : c.rotuloPeriodo}</th>
+                <th>{rotuloBase}</th>
+                <th className="demo-total">Diferença</th>
+                <th>Variação</th>
               </tr>
             </thead>
             <tbody>
-              {d.linhas.map((l) => (
-                <tr key={l.codigo} className={l.subtotal ? "bg-[var(--fundo)]" : ""}>
-                  <td
-                    className={`celula-titulo sticky left-0 z-[1] ${l.subtotal ? "bg-[var(--fundo)] font-semibold text-[var(--marca)]" : "bg-white !font-normal"}`}
-                  >
-                    {l.nome}
-                  </td>
-                  <td className="text-right">
-                    <Valor v={l.atual} />
-                  </td>
-                  <td className="text-right">
-                    <Valor v={l.base} />
-                  </td>
-                  <td className="text-right">
-                    <Valor v={l.diferenca} sinal />
-                  </td>
-                  <td className={`num text-right ${l.diferenca > 0 ? "text-emerald-800" : l.diferenca < 0 ? "text-[var(--perigo)]" : ""}`}>
-                    {fmtVariacao(l.variacao)}
-                  </td>
-                </tr>
-              ))}
+              {d.linhas.map((l) => {
+                const cor = l.diferenca > 0 ? "melhor" : l.diferenca < 0 ? "pior" : null;
+                return (
+                  <tr key={l.codigo} className={classeDaLinha(l.codigo, l.subtotal)}>
+                    <td className="demo-conta">{l.nome}</td>
+                    <TdValor v={l.atual} />
+                    <TdValor v={l.base} />
+                    <TdValor v={l.diferenca} cor={cor} className="demo-total" />
+                    <td
+                      className={`demo-pct ${cor === "melhor" ? "!text-[var(--sucesso)]" : cor === "pior" ? "!text-[var(--perigo)]" : ""}`}
+                    >
+                      {fmtVariacao(l.variacao)}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
-          </QuadroTabela>
+          </QuadroDemonstrativo>
           <p className="text-xs text-[var(--texto-suave)]">
             Diferença verde = melhor para o resultado (mais receita ou menos despesa); vermelha = pior. Variação sobre o valor comparado.
           </p>

@@ -1,6 +1,6 @@
 // Testes das margens por faixa da DRE (margens.ts).
 import { describe, expect, it } from "vitest";
-import { calcularMargens, FAIXAS_MARGEM, nivelDaMargem } from "./margens";
+import { calcularMargens, FAIXAS_MARGEM, nivelDaMargem, regua } from "./margens";
 import { montarMatriz } from "./relatorio";
 import type { LinhaBanco } from "./relatorio";
 
@@ -42,11 +42,19 @@ describe("calcularMargens", () => {
     const r = calcularMargens(m)!;
     expect(r.map((x) => x.valor)).toEqual([0.4, 0.08, -0.02]);
     expect(r.map((x) => x.nivel)).toEqual(["boa", "media", "baixa"]);
-    expect(r[0].frase.replace(/\s/g, " ")).toContain("sobraram R$ 40");
-    expect(r[2].frase.replace(/\s/g, " ")).toContain("faltaram R$ 2");
+    expect(r[0].frase.replace(/\s/g, " ")).toContain("Sobram R$ 40");
+    expect(r[2].frase.replace(/\s/g, " ")).toContain("Faltam R$ 2");
     expect(r[0].regua).toBe("Faixas: abaixo de 20,0% · 20,0% a 35,0% · acima de 35,0%");
   });
   it("sem receita líquida não há margem", () => {
     expect(calcularMargens(montarMatriz([l("lucro_bruto", 10)]))).toBeNull();
+  });
+});
+
+describe("regua", () => {
+  it("escala até o dobro do limite bom e prende o valor nas pontas", () => {
+    expect(regua(bruta, 0.35)).toEqual({ fimBaixa: (0.2 / 0.7) * 100, fimMedia: 50, marca: 50 });
+    expect(regua(liquida, -0.05).marca).toBe(0);
+    expect(regua(liquida, 0.4).marca).toBe(100 / 1.1);
   });
 });

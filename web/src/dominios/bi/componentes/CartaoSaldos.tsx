@@ -4,9 +4,8 @@
 
 import { brl } from "@/lib/formato/moeda";
 import { Indicador } from "@/components/ui/Indicador";
-import { QuadroTabela } from "@/components/ui/QuadroTabela";
-import { Valor } from "@/components/ui/Valor";
 import type { ResumoSaldos } from "../saldos";
+import { QuadroDemonstrativo, TdValor } from "./Demonstrativo";
 
 export function CartaoSaldos({ r, elimina }: { r: ResumoSaldos | null; elimina: boolean }) {
   if (!r)
@@ -48,34 +47,40 @@ export function CartaoSaldos({ r, elimina }: { r: ResumoSaldos | null; elimina: 
           Algumas contas ainda não têm todos os meses do período; a sincronização completa nas próximas horas.
         </p>
       )}
-      <QuadroTabela rotulo="Saldos por conta" cartoes={false}>
+      <QuadroDemonstrativo rotulo="Saldos por conta">
         <thead>
           <tr>
             <th>Conta corrente</th>
-            <th className="text-right">Início</th>
-            <th className="text-right">Fim</th>
+            <th>Início</th>
+            <th className="demo-total">Fim</th>
+            <th>Variação</th>
           </tr>
         </thead>
         <tbody>
           {r.contas.map((x) => (
             <tr key={`${x.empresa}-${x.conta}`}>
-              <td className="celula-titulo !font-normal">
+              <td className="demo-conta">
                 {x.conta}
-                <span className="block text-xs text-[var(--texto-suave)]">
+                <span className="block text-[11.5px] text-[var(--texto-suave)]">
                   {x.empresa}
                   {x.incompleta ? " · meses faltando" : ""}
                 </span>
               </td>
-              <td className="text-right">
-                <Valor v={x.inicial} />
-              </td>
-              <td className="text-right">
-                <Valor v={x.final} />
-              </td>
+              <TdValor v={x.inicial} />
+              <TdValor v={x.final} className="demo-total" />
+              <TdValor v={x.final - x.inicial} />
             </tr>
           ))}
         </tbody>
-      </QuadroTabela>
+        <tfoot>
+          <tr>
+            <td className="demo-conta">Total dos bancos</td>
+            <TdValor v={r.inicial} />
+            <TdValor v={r.final} className="demo-total" />
+            <TdValor v={r.variacaoBanco} />
+          </tr>
+        </tfoot>
+      </QuadroDemonstrativo>
     </section>
   );
 }

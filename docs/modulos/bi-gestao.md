@@ -88,6 +88,13 @@ adiantamentos, investimentos, sócios) = variação do caixa (CPC 03 (R2), item 
 (`saldos.ts`): início, fim e a diferença para a variação do fluxo (o que passou pelo banco sem conta a pagar/receber). Os
 saldos aparecem também na aba Fluxo de caixa.
 
+**Padrão de demonstrativo da MDC (21/11/2026, pedido do Edvaldo):** toda tabela de valores do BI (DRE, fluxo, comparar,
+empresas, resultado × caixa, saldos) usa o estilo `.demo` de `globals.css` e as peças de `componentes/Demonstrativo.tsx`
+(`QuadroDemonstrativo`, `TdValor`, `classeDaLinha`): cabeçalho verde MDC preso, 1ª coluna presa, números sem "R$" e sem
+centavos (opção "Centavos"), negativos em vermelho, subtotais em cinza-verde e resultados com filete dourado. Na DRE e no
+fluxo, três níveis: linha → conta do plano → documentos (os 30 maiores, via `bi_origem`; "ver todos" abre a janela).
+Formato e documentos por mês em `formatoMatriz.ts`; régua das margens em `margens.ts` (`regua`).
+
 Regras puras da tela em `web/src/dominios/bi/`: `relatorio.ts` (matriz, período, margens), `classificacao.ts`,
 `conciliacao.ts`, `saldos.ts`, `detalhe.ts`, `margens.ts`, `comparar.ts` (períodos de
 comparação, horizontal, vertical, por empresa), `indicadores.ts` e `lancamentos.ts` (leitura das planilhas), com testes.
