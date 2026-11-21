@@ -96,6 +96,13 @@ centavos (opção "Centavos"), negativos em vermelho, subtotais em cinza-verde e
 fluxo, três níveis: linha → conta do plano → documentos (os 30 maiores, via `bi_origem`; "ver todos" abre a janela).
 Formato e documentos por mês em `formatoMatriz.ts`; régua das margens em `margens.ts` (`regua`).
 
+**Saúde do negócio** (aba Indicadores, 21/11/2026, `indicadoresGestao.ts`): margem EBITDA (= resultado operacional, o
+plano gerencial não tem depreciação; faixas 5%/12%), cobertura de juros (resultado operacional ÷ despesas financeiras;
+1,5×/3×), folga sobre o ponto de equilíbrio (equilíbrio = pessoal + administrativas ÷ margem de contribuição; 0%/20%),
+fôlego de caixa (saldo dos bancos no fim ÷ média mensal de pagamentos da operação; 1/3 meses) e conversão em caixa
+(caixa das operações ÷ resultado operacional; 50%/90%). Cartões com régua (`CartaoFaixa`), premissas em letra pequena e
+a conta de origem na dica e no PDF. Faixas propostas pelo Claude, a validar pelo Edvaldo.
+
 Regras puras da tela em `web/src/dominios/bi/`: `relatorio.ts` (matriz, período, margens), `classificacao.ts`,
 `conciliacao.ts`, `saldos.ts`, `detalhe.ts`, `margens.ts`, `comparar.ts` (períodos de
 comparação, horizontal, vertical, por empresa), `indicadores.ts` e `lancamentos.ts` (leitura das planilhas), com testes.

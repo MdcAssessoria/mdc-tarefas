@@ -1,4 +1,5 @@
-// Indicadores dos títulos do Omie: prazos médios, inadimplência por faixa, a receber/a pagar em aberto, os 10 maiores
+// Indicadores do BI: saúde do negócio (margem EBITDA, cobertura de juros, folga sobre o ponto de equilíbrio, fôlego de
+// caixa e conversão em caixa, de ../indicadoresGestao.ts) e os indicadores dos títulos do Omie: prazos médios, inadimplência por faixa, a receber/a pagar em aberto, os 10 maiores
 // clientes e fornecedores e a liquidez (do balancete do Domínio quando existir; senão, a cobertura estimada).
 "use client";
 
@@ -11,10 +12,12 @@ import { BotoesExportar } from "@/components/ui/BotoesExportar";
 import { Esqueleto } from "@/components/ui/Esqueleto";
 import { Icone } from "@/components/ui/Icone";
 import { Indicador } from "@/components/ui/Indicador";
-import { QuadroTabela } from "@/components/ui/QuadroTabela";
-import { Valor } from "@/components/ui/Valor";
 import { fmtVariacao, periodoComparado } from "../comparar";
-import { lerIndicadores } from "../dados";
+import { lerIndicadores, lerRelatorio, lerSaldos } from "../dados";
+import { fmtIndicador, indicadoresGestao, reguaIndicador } from "../indicadoresGestao";
+import { mesesDoPeriodo, resumirSaldos } from "../saldos";
+import { CartaoFaixa } from "./CartaoFaixa";
+import { QuadroDemonstrativo, TdValor } from "./Demonstrativo";
 import { FAIXAS, cicloFinanceiro, cobertura, fmtDias, fmtIndice, inadimplencia, nomeItem, participacao } from "../indicadores";
 import type { Indicadores, ItemTop } from "../indicadores";
 import type { ContextoBi } from "./contexto";
@@ -34,26 +37,24 @@ function TabelaTop({ titulo, itens, total, rotulo }: { titulo: string; itens: It
       {itens.length === 0 ? (
         <p className="text-sm text-[var(--texto-suave)]">Nada no período.</p>
       ) : (
-        <QuadroTabela rotulo={titulo} cartoes={false}>
+        <QuadroDemonstrativo rotulo={titulo}>
           <thead>
             <tr>
               <th>{rotulo}</th>
-              <th className="text-right">Valor</th>
-              <th className="text-right">% do total</th>
+              <th className="demo-total">Valor</th>
+              <th>% do total</th>
             </tr>
           </thead>
           <tbody>
             {itens.map((i, k) => (
               <tr key={`${i.doc}-${k}`}>
-                <td className="celula-titulo !font-normal">{nomeItem(i)}</td>
-                <td className="text-right">
-                  <Valor v={Number(i.valor)} />
-                </td>
-                <td className="num text-right">{pct(participacao(Number(i.valor), total))}</td>
+                <td className="demo-conta">{nomeItem(i)}</td>
+                <TdValor v={Number(i.valor)} className="demo-total" />
+                <td className="demo-pct">{pct(participacao(Number(i.valor), total))}</td>
               </tr>
             ))}
           </tbody>
-        </QuadroTabela>
+        </QuadroDemonstrativo>
       )}
     </div>
   );
@@ -63,12 +64,17 @@ export function AbaIndicadores({ c }: { c: ContextoBi }) {
   const antes = periodoComparado(c.de, c.ate, "anterior");
   const dados = useConsulta(
     useCallback(async () => {
-      const [atual, anterior] = await Promise.all([
+      const [atual, anterior, dre, dfc, saldos] = await Promise.all([
         lerIndicadores(c.ids, c.de, c.ate, c.elimina),
         lerIndicadores(c.ids, antes.de, antes.ate, c.elimina),
+        lerRelatorio("dre", c.ids, c.de, c.ate, c.elimina),
+        lerRelatorio("dfc", c.ids, c.de, c.ate, c.elimina),
+        lerSaldos(c.ids, c.de, c.ate),
       ]);
-      return { atual, anterior };
-    }, [c.ids, c.de, c.ate, c.elimina, antes.de, antes.ate]),
+      const meses = mesesDoPeriodo(c.de, c.ate < c.hoje ? c.ate : c.hoje);
+      const banco = resumirSaldos(saldos ?? [], meses, null);
+      return { atual, anterior, gestao: indicadoresGestao(dre, dfc, banco ? banco.final : null, meses.length) };
+    }, [c.ids, c.de, c.ate, c.elimina, c.hoje, antes.de, antes.ate]),
   );
   if (dados.erro)
     return (
@@ -79,6 +85,7 @@ export function AbaIndicadores({ c }: { c: ContextoBi }) {
   if (!dados.dados) return <Esqueleto />;
   const i: Indicadores = dados.dados.atual;
   const a: Indicadores = dados.dados.anterior;
+  const g = dados.dados.gestao;
   const inad = inadimplencia(i);
   const cob = cobertura(i);
   const resumo = [
@@ -108,6 +115,7 @@ export function AbaIndicadores({ c }: { c: ContextoBi }) {
             arquivo: nomeArquivo("BI-indicadores", c.quem, c.hoje),
             logoUrl: c.logoUrl,
             linhas: [
+              ...g.map((x) => ({ nome: `${x.titulo} (${x.conta})`, valor: fmtIndicador(x) })),
               ...resumo,
               ...i.clientes.map((x) => ({ nome: `Cliente: ${nomeItem(x)}`, valor: brl(Number(x.valor)) })),
               ...i.fornecedores.map((x) => ({ nome: `Fornecedor: ${nomeItem(x)}`, valor: brl(Number(x.valor)) })),
@@ -120,6 +128,25 @@ export function AbaIndicadores({ c }: { c: ContextoBi }) {
         />
       </div>
 
+      <section aria-label="Saúde do negócio" className="space-y-2">
+        <h3 className="text-[15px] font-semibold text-[var(--marca)]">Saúde do negócio</h3>
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          {g.map((x) => (
+            <CartaoFaixa
+              key={x.id}
+              titulo={x.titulo}
+              valor={fmtIndicador(x)}
+              nivel={x.nivel}
+              regua={reguaIndicador(x)}
+              frase={x.frase}
+              dica={x.conta}
+              nota={x.premissa}
+            />
+          ))}
+        </div>
+      </section>
+
+      <h3 className="text-[15px] font-semibold text-[var(--marca)]">Prazos e contas em aberto</h3>
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <Indicador titulo="Prazo médio de recebimento" icone="relogio" valor={fmtDias(i.pmr)} detalhe={dif(i.pmr, a.pmr)} />
         <Indicador titulo="Prazo médio de pagamento" icone="calendario" valor={fmtDias(i.pmp)} detalhe={dif(i.pmp, a.pmp)} />
@@ -147,35 +174,29 @@ export function AbaIndicadores({ c }: { c: ContextoBi }) {
               <h3 className="text-[15px] font-semibold text-[var(--marca)]">
                 {lado === "receber" ? "A receber em aberto" : "A pagar em aberto"} · {brl(Number(p.aberto ?? 0))}
               </h3>
-              <QuadroTabela rotulo={`Atraso ${lado}`} cartoes={false}>
+              <QuadroDemonstrativo rotulo={`Atraso ${lado}`}>
                 <thead>
                   <tr>
                     <th>Situação</th>
-                    <th className="text-right">Valor</th>
-                    <th className="text-right">% do aberto</th>
+                    <th className="demo-total">Valor</th>
+                    <th>% do aberto</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr>
-                    <td className="celula-titulo !font-normal">A vencer</td>
-                    <td className="text-right">
-                      <Valor v={Number(p.aberto ?? 0) - Number(p.vencido ?? 0)} />
-                    </td>
-                    <td className="num text-right">
-                      {pct(participacao(Number(p.aberto ?? 0) - Number(p.vencido ?? 0), Number(p.aberto ?? 0)))}
-                    </td>
+                    <td className="demo-conta">A vencer</td>
+                    <TdValor v={Number(p.aberto ?? 0) - Number(p.vencido ?? 0)} className="demo-total" />
+                    <td className="demo-pct">{pct(participacao(Number(p.aberto ?? 0) - Number(p.vencido ?? 0), Number(p.aberto ?? 0)))}</td>
                   </tr>
                   {FAIXAS.map((f) => (
                     <tr key={f.chave}>
-                      <td className="celula-titulo !font-normal">Vencido há {f.nome.toLowerCase()}</td>
-                      <td className="text-right">
-                        <Valor v={Number(p[f.chave] ?? 0)} />
-                      </td>
-                      <td className="num text-right">{pct(participacao(Number(p[f.chave] ?? 0), Number(p.aberto ?? 0)))}</td>
+                      <td className="demo-conta">Vencido há {f.nome.toLowerCase()}</td>
+                      <TdValor v={Number(p[f.chave] ?? 0)} className="demo-total" />
+                      <td className="demo-pct">{pct(participacao(Number(p[f.chave] ?? 0), Number(p.aberto ?? 0)))}</td>
                     </tr>
                   ))}
                 </tbody>
-              </QuadroTabela>
+              </QuadroDemonstrativo>
             </div>
           );
         })}
@@ -184,30 +205,30 @@ export function AbaIndicadores({ c }: { c: ContextoBi }) {
       <div className="space-y-2">
         <h3 className="text-[15px] font-semibold text-[var(--marca)]">Liquidez</h3>
         {i.liquidez.length ? (
-          <QuadroTabela rotulo="Índices de liquidez" cartoes={false}>
+          <QuadroDemonstrativo rotulo="Índices de liquidez">
             <thead>
               <tr>
                 <th>Empresa</th>
                 <th>Balancete</th>
-                <th className="text-right">Corrente</th>
-                <th className="text-right">Seca</th>
-                <th className="text-right">Imediata</th>
-                <th className="text-right">Geral</th>
+                <th>Corrente</th>
+                <th>Seca</th>
+                <th>Imediata</th>
+                <th>Geral</th>
               </tr>
             </thead>
             <tbody>
               {i.liquidez.map((l) => (
                 <tr key={l.empresa}>
-                  <td className="celula-titulo !font-normal">{l.empresa}</td>
-                  <td>{fmtCompetencia(l.competencia)}</td>
-                  <td className="num text-right">{fmtIndice(l.corrente)}</td>
-                  <td className="num text-right">{fmtIndice(l.seca)}</td>
-                  <td className="num text-right">{fmtIndice(l.imediata)}</td>
-                  <td className="num text-right">{fmtIndice(l.geral)}</td>
+                  <td className="demo-conta">{l.empresa}</td>
+                  <td className="demo-pct">{fmtCompetencia(l.competencia)}</td>
+                  <td className="demo-num">{fmtIndice(l.corrente)}</td>
+                  <td className="demo-num">{fmtIndice(l.seca)}</td>
+                  <td className="demo-num">{fmtIndice(l.imediata)}</td>
+                  <td className="demo-num">{fmtIndice(l.geral)}</td>
                 </tr>
               ))}
             </tbody>
-          </QuadroTabela>
+          </QuadroDemonstrativo>
         ) : (
           <p className="flex items-start gap-2 rounded-md bg-amber-50 p-3 text-sm text-amber-900">
             <Icone nome="info" className="mt-0.5 h-4 w-4 shrink-0" />
