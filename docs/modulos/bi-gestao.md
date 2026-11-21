@@ -140,6 +140,12 @@ R$ 949 da Sicoob sem a entrada em outra conta da empresa (provavelmente a mesma 
 **Padrão MDC:** a Visão geral ganhou o quadro "Mês a mês" (receita líquida, lucro bruto, resultado operacional e
 líquido, caixa das operações e variação do caixa) e o Orçamento usa o mesmo quadro (`QuadroDemonstrativo`).
 
+**111 (21/11/2026) — Indicadores rápidos (A-01 do parecer de 21/11).** `public.bi_indicadores` levava 13,3 s no Grupo
+Clara (ano corrente) e o papel `authenticated` corta em 8 s: Indicadores e Parecer não abriam. A classe sai uma vez por
+(empresa, categoria) e as baixas são somadas por título de uma vez; mesmo resultado (comparado em produção), 0,2 s.
+Texto completo da função na 111 (para esta função, resolve também o M-07). Teste com limite de tempo em
+`supabase/testes/184_bi_indicadores_111.sql`.
+
 ## Pendências conhecidas
 
 - **Classificação das categorias:** em 19/11/2026 o mapa (`bi_mapa_categorias`) tinha 2 regras para 118 categorias do
