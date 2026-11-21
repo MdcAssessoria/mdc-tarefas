@@ -36,6 +36,7 @@ function guardar(k: string, v: string | null) {
 }
 
 export function AbaParecer({ c }: { c: ContextoBi }) {
+  const k = chave(c);
   const antes = periodoComparado(c.de, c.ate, "anterior");
   const d = useConsulta(
     useCallback(async () => {
@@ -51,8 +52,8 @@ export function AbaParecer({ c }: { c: ContextoBi }) {
       const meses = mesesDoPeriodo(c.de, c.ate < c.hoje ? c.ate : c.hoje);
       const conc = conciliar(contasDre ?? [], contasDfc ?? []);
       const banco = resumirSaldos(saldos ?? [], meses, conc.variacaoCaixa);
-      if (!temMovimento(dre) && !temMovimento(dfc)) return null;
-      return rascunhoParecerBi({
+      if (!temMovimento(dre) && !temMovimento(dfc)) return { k, texto: null };
+      const texto = rascunhoParecerBi({
         quem: c.quem,
         periodo: c.rotuloPeriodo,
         elimina: c.elimina,
@@ -68,7 +69,8 @@ export function AbaParecer({ c }: { c: ContextoBi }) {
         contador: "",
         crc: "",
       });
-    }, [c.ids, c.de, c.ate, c.elimina, c.hoje, c.quem, c.rotuloPeriodo, antes.de, antes.ate]),
+      return { k, texto };
+    }, [k, c.ids, c.de, c.ate, c.elimina, c.hoje, c.quem, c.rotuloPeriodo, antes.de, antes.ate]),
   );
   if (d.erro)
     return (
@@ -76,14 +78,15 @@ export function AbaParecer({ c }: { c: ContextoBi }) {
         {d.erro}
       </p>
     );
-  if (d.dados === undefined) return <Esqueleto />;
-  if (d.dados === null)
+  // Enquanto recarrega, o useConsulta ainda devolve o texto do contexto anterior: só mostra o que foi montado para este.
+  if (!d.dados || d.dados.k !== k) return <Esqueleto />;
+  if (d.dados.texto === null)
     return (
       <EstadoVazio icone="documento" titulo="Nada lançado neste período">
         Não há notas nem contas das empresas escolhidas entre {c.rotuloPeriodo}. Troque o período para montar o parecer.
       </EstadoVazio>
     );
-  return <EditorParecerBi key={chave(c)} chaveGuardada={chave(c)} gerado={d.dados} c={c} />;
+  return <EditorParecerBi key={k} chaveGuardada={k} gerado={d.dados.texto} c={c} />;
 }
 
 function EditorParecerBi({ chaveGuardada, gerado, c }: { chaveGuardada: string; gerado: string; c: ContextoBi }) {
