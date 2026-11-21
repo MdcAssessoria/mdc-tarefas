@@ -4,7 +4,7 @@
 // (components/shell/navegacao.ts): com ele a tela do manual ganha o botão "Ir para a tela".
 // Mudou uma tela ou regra? Atualize o trecho dela aqui no mesmo commit e acrescente uma linha em "Controle de versões".
 
-export const VERSAO_MANUAL = { numero: "2.5", data: "21/11/2026" };
+export const VERSAO_MANUAL = { numero: "2.6", data: "21/11/2026" };
 
 export const MANUAL_MD = `
 ## Como usar este manual
@@ -395,4 +395,5 @@ Os sistemas que a MDC licencia aos clientes (Ledgra ERP, EXato e os próximos): 
 | 2.3 | 20/11/2026 | **BI de Gestão**: plano de contas gerencial padrão da MDC (classificação pelo código da categoria do Omie); DRE com margens por faixa e explicação, linhas que abrem nas contas do plano e clique no valor mostrando as notas e os títulos. |
 | 2.4 | 20/11/2026 | **BI de Gestão**: aba Classificação (equipe MDC classifica as categorias do Omie, com histórico), aba Resultado × caixa com alertas de variação, saldos dos bancos do Omie no fluxo de caixa e adiantamentos recebidos em "Outros recebimentos". |
 | 2.5 | 21/11/2026 | **BI de Gestão**: demonstrativos no novo padrão da MDC (tabela compacta com os 12 meses, subtotais e resultados destacados), documentos de cada conta dentro da DRE e do fluxo de caixa, e margens com régua de faixas. |
+| 2.6 | 21/11/2026 | **BI de Gestão**: o fluxo de caixa passa a sair do extrato dos bancos do Omie (inclui tarifas, antecipações e pagamentos lançados direto na conta) e fecha com os saldos dos bancos. |
 `;
