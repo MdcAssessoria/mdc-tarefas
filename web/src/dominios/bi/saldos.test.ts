@@ -20,13 +20,17 @@ describe("resumirSaldos", () => {
       ["2026-01", "2026-02"],
       45,
     )!;
-    expect(r).toMatchObject({ inicial: 150, final: 200, variacaoBanco: 50, diferenca: 5, incompleto: false });
+    expect(r).toMatchObject({ inicial: 150, final: 200, variacaoBanco: 50, diferenca: 5, incompleto: false, finalUltimoMes: 200 });
   });
   it("conta sem todos os meses fica marcada como incompleta", () => {
     const r = resumirSaldos([s("1", "2026-02", 10, 20)], ["2026-01", "2026-02"], null)!;
     expect(r.incompleto).toBe(true);
     expect(r.diferenca).toBeNull();
     expect(r.inicial).toBe(10);
+  });
+  it("sem o último mês de alguma conta, não há saldo final confiável", () => {
+    const r = resumirSaldos([s("1", "2026-01", 10, 20), s("2", "2026-01", 5, 5), s("2", "2026-02", 5, 9)], ["2026-01", "2026-02"], null)!;
+    expect(r.finalUltimoMes).toBeNull();
   });
   it("sem saldos não há resumo", () => expect(resumirSaldos([], ["2026-01"], 0)).toBeNull());
 });

@@ -30,6 +30,8 @@ export interface ResumoSaldos {
   /** variação dos bancos − variação do DFC (null sem o DFC). */
   diferenca: number | null;
   incompleto: boolean;
+  /** Soma do fim do último mês só quando TODAS as contas têm esse mês; senão null (não usar saldo antigo). */
+  finalUltimoMes: number | null;
 }
 
 const centavos = (v: number) => Math.round(v * 100) / 100;
@@ -61,7 +63,9 @@ export function resumirSaldos(linhas: SaldoBanco[], meses: string[], variacaoDfc
   const inicial = centavos(contas.reduce((a, c) => a + c.inicial, 0));
   const final = centavos(contas.reduce((a, c) => a + c.final, 0));
   const variacaoBanco = centavos(final - inicial);
+  const todasNoUltimo = [...porConta.values()].every((ls) => ls.some((l) => l.mes.slice(0, 7) === ultimo));
   return {
+    finalUltimoMes: todasNoUltimo ? final : null,
     contas,
     inicial,
     final,

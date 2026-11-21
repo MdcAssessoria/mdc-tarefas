@@ -116,7 +116,7 @@ export function indicadoresGestao(dre: Matriz, dfc: Matriz, saldoFinal: number |
       boa: 3,
       frase:
         folego === null
-          ? "Sem os saldos dos bancos para o período."
+          ? "Os saldos dos bancos do último mês ainda não chegaram do Omie."
           : `Com ${reais(saldoFinal ?? 0)} nos bancos, paga ${um(Math.max(folego, 0))} meses das saídas da operação (${reais(saidasMes)}/mês).`,
       conta: "Saldo dos bancos no fim ÷ média mensal de pagamentos da operação",
     }),
