@@ -22,7 +22,7 @@ export interface ContaMatriz extends LinhaMatriz {
 /** Uma linha devolvida por bi_origem. */
 export interface OrigemBanco {
   empresa: string;
-  origem: "nota" | "imposto" | "titulo" | "baixa" | "complementar";
+  origem: "nota" | "imposto" | "titulo" | "baixa" | "extrato" | "complementar";
   data: string | null;
   documento: string | null;
   pessoa: string | null;
@@ -37,6 +37,7 @@ export const NOME_ORIGEM: Record<OrigemBanco["origem"], string> = {
   imposto: "Imposto da nota",
   titulo: "Conta a pagar/receber",
   baixa: "Pagamento/recebimento",
+  extrato: "Movimento do banco",
   complementar: "Lançamento complementar",
 };
 
