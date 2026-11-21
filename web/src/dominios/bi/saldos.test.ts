@@ -1,6 +1,6 @@
 // Testes dos saldos dos bancos (saldos.ts).
 import { describe, expect, it } from "vitest";
-import { mesesDoPeriodo, resumirSaldos } from "./saldos";
+import { mesesDoPeriodo, mesesIncompletos, resumirSaldos } from "./saldos";
 import type { SaldoBanco } from "./saldos";
 
 const s = (conta: string, mes: string, ant: number, fim: number, empresa = "A"): SaldoBanco => ({
@@ -38,4 +38,22 @@ describe("resumirSaldos", () => {
 describe("mesesDoPeriodo", () => {
   it("atravessa a virada do ano", () =>
     expect(mesesDoPeriodo("2025-11-15", "2026-02-28")).toEqual(["2025-11", "2025-12", "2026-01", "2026-02"]));
+});
+
+describe("mesesIncompletos", () => {
+  const s = (conta: string, mes: string) => ({
+    empresa: "A",
+    conta_corrente: conta,
+    descricao: null,
+    mes,
+    saldo_anterior: 0,
+    saldo_final: 0,
+    atualizado_em: "",
+  });
+  it("conta o mês em que falta alguma conta", () => {
+    expect(mesesIncompletos([s("1", "2026-01-01"), s("2", "2026-01-01"), s("1", "2026-02-01")], ["2026-01", "2026-02", "2026-03"])).toBe(2);
+  });
+  it("sem saldo nenhum, todos os meses", () => {
+    expect(mesesIncompletos([], ["2026-01", "2026-02"])).toBe(2);
+  });
 });

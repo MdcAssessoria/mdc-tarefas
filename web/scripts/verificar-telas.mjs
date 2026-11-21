@@ -1392,6 +1392,10 @@ const INTERACOES = {
     await abas.getByRole("tab", { name: "Resultado × caixa" }).click();
     await p.getByText("Saldo dos bancos no fim").waitFor({ timeout: 8000 });
     await foto?.("resultado-x-caixa");
+    // Parecer gerencial (equipe MDC): rascunho montado com os números e a prévia com o cabeçalho da MDC
+    await abas.getByRole("tab", { name: "Parecer" }).click();
+    await p.getByText("Em linguagem simples").first().waitFor({ timeout: 8000 });
+    await foto?.("parecer");
     await abas.getByRole("tab", { name: "Classificação" }).click();
     await p.getByText("Cartão de crédito a pagar").waitFor({ timeout: 8000 });
     await foto?.("classificacao");

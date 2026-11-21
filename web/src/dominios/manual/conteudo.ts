@@ -4,7 +4,7 @@
 // (components/shell/navegacao.ts): com ele a tela do manual ganha o botão "Ir para a tela".
 // Mudou uma tela ou regra? Atualize o trecho dela aqui no mesmo commit e acrescente uma linha em "Controle de versões".
 
-export const VERSAO_MANUAL = { numero: "2.7", data: "21/11/2026" };
+export const VERSAO_MANUAL = { numero: "2.8", data: "21/11/2026" };
 
 export const MANUAL_MD = `
 ## Como usar este manual
@@ -222,6 +222,17 @@ DRE e fluxo de caixa (DFC) gerenciais de um grupo de empresas, mês a mês, a pa
 
 **Atenção:** o aviso **Não classificado** mostra valores de categorias do Omie sem conta do plano ou lançadas no Omie como "Contas a classificar"; clique no valor da linha para ver quais são. A liquidez corrente, seca e geral vem do balancete do Domínio publicado em Demonstrativos; sem ele aparece só uma estimativa pelos títulos do Omie. Fornecedores aparecem pelo CNPJ/CPF.
 
+### Parecer gerencial do BI (BI de Gestão → aba Parecer)
+
+Só para a equipe MDC. O HUB monta o rascunho do parecer com os números do período escolhido: síntese, DRE, caixa e confronto com o resultado (NBC TG 03), prazos e inadimplência, pontos de atenção e premissas, cada parte com um quadro **Em linguagem simples**.
+
+1. Escolha o grupo ou a empresa e o período e abra a aba **Parecer**.
+2. Revise o texto à esquerda; à direita aparece como o cliente vai ver, com o cabeçalho da MDC.
+3. Complete os trechos **[Revisar…]** (contexto da empresa, meses ainda sem extrato do banco, nome e CRC de quem assina).
+4. Clique em **Imprimir / salvar PDF**. Na impressão saem só o parecer e a assinatura.
+
+**Atenção:** o texto que você mudar fica guardado neste computador para a mesma empresa e o mesmo período. Mudou algum lançamento no Omie? Clique em **Montar de novo com os números**. O parecer é gerencial: não é auditoria nem substitui as demonstrações contábeis.
+
 ### Classificar as categorias do Omie (BI de Gestão → aba Classificação)
 
 **Quem usa:** só a equipe MDC (nível gerir na ferramenta BI de Gestão).
@@ -397,4 +408,5 @@ Os sistemas que a MDC licencia aos clientes (Ledgra ERP, EXato e os próximos): 
 | 2.5 | 21/11/2026 | **BI de Gestão**: demonstrativos no novo padrão da MDC (tabela compacta com os 12 meses, subtotais e resultados destacados), documentos de cada conta dentro da DRE e do fluxo de caixa, e margens com régua de faixas. |
 | 2.6 | 21/11/2026 | **BI de Gestão**: o fluxo de caixa passa a sair do extrato dos bancos do Omie (inclui tarifas, antecipações e pagamentos lançados direto na conta) e fecha com os saldos dos bancos. |
 | 2.7 | 21/11/2026 | **BI de Gestão**: aba Indicadores com a Saúde do negócio (EBITDA, cobertura de juros, ponto de equilíbrio, fôlego e conversão em caixa) e tabelas no padrão MDC. |
+| 2.8 | 21/11/2026 | **BI de Gestão**: aba Parecer (equipe MDC) monta o parecer gerencial com os números do período, para revisar e salvar em PDF. |
 `;
