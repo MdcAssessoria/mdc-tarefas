@@ -152,6 +152,16 @@ Os indicadores da lista (fase atrasada, previsão vencida, com exigência, parad
 - **Concluir:** `soc_concluir_processo` cria o cliente com razão social, fantasia, cidade, UF e regime da ficha (os anexos
   continuam no processo: o cliente do arquivo não muda depois do envio — gatilho `hub_arquivos_imutavel`).
 
+## 6.3.3 Societário: editar e excluir processo (113)
+
+- **Editar dados** (`JanelaEditarProcesso`, `soc_processo_editar`, operar, só em andamento): nome da empresa (enquanto
+  não há cliente ligado), CNPJ (14 números), UF, observações, responsável (membro ativo) e previsão (não antes da
+  abertura). Na abertura, nome e UF seguem para a ficha. Evento na linha do tempo com o antes e o depois.
+- **Excluir processo** (`soc_processo_excluir`, gerir, motivo ≥ 5 letras): não exclui concluído nem processo com
+  anexo ativo (arquivo é imutável: retirar antes). Apaga fases, protocolos, taxas, exigências, eventos e ficha
+  (cascata); cancela as tarefas das fases (tarefa nunca se apaga); retrato completo em `hub_auditoria`
+  (`excluir_processo`). Documento do acervo e conversa do portal ficam, sem o processo.
+
 ## 6.4 Mapa de automações (o que acontece sem ninguém clicar)
 
 | Gatilho ou agenda | Quando | O que faz |

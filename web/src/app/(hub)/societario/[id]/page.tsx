@@ -6,7 +6,7 @@
 "use client";
 
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
 import { useOrg } from "@/dominios/organizacao/OrgProvider";
 import { nomeCliente } from "@/dominios/clientes/nome";
@@ -34,6 +34,8 @@ import { situacaoProcesso } from "@/dominios/societario/processos";
 import type { SocFase, StatusFase } from "@/dominios/societario/processos";
 import { LigarCliente } from "@/dominios/societario/componentes/LigarCliente";
 import { CartaoAbertura } from "@/dominios/societario/componentes/CartaoAbertura";
+import { JanelaEditarProcesso } from "@/dominios/societario/componentes/JanelaEditarProcesso";
+import { formatarDocumento } from "@/lib/documento";
 import { FasesProcesso } from "@/dominios/societario/componentes/FasesProcesso";
 import { Documentos, Exigencias, LinhaDoTempo, Protocolos, Taxas } from "@/dominios/societario/componentes/SecoesProcesso";
 
@@ -57,6 +59,9 @@ function Ficha() {
   const { aviso, mostrar } = useAviso();
   const [janelaConfirmar, confirmar] = useConfirmar();
   const [cancelando, setCancelando] = useState(false);
+  const [editando, setEditando] = useState(false);
+  const [excluindo, setExcluindo] = useState(false);
+  const router = useRouter();
   /** Erro que fica na tela até a próxima ação (ex.: registro salvo sem a linha do histórico). */
   const [erro, setErro] = useState<string | null>(null);
   const podeOperar = pode("societario", "operar");
@@ -205,7 +210,7 @@ function Ficha() {
     },
     { r: "Responsável", v: nomeMembro(p.responsavel_id) },
     { r: "UF", v: p.uf ?? "—" },
-    { r: "CNPJ", v: p.cnpj ?? "—" },
+    { r: "CNPJ", v: p.cnpj ? formatarDocumento(p.cnpj) : "—" },
   ];
 
   return (
@@ -237,11 +242,25 @@ function Ficha() {
                 Cancelar processo
               </button>
             )}
+            {p.status !== "concluido" && podeGerir && (
+              <button className="btn text-[var(--perigo)]" onClick={() => setExcluindo(true)}>
+                <Icone nome="lixeira" className="h-4 w-4" />
+                Excluir processo
+              </button>
+            )}
           </>
         }
       />
 
       <section className="cartao p-4" aria-label="Dados do processo">
+        {aberto && podeOperar && (
+          <div className="mb-3 flex justify-end">
+            <button className="btn" onClick={() => setEditando(true)}>
+              <Icone nome="editar" className="h-4 w-4" />
+              Editar dados
+            </button>
+          </div>
+        )}
         <dl className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-3 lg:grid-cols-6">
           {dados.map((x) => (
             <div key={x.r} className="min-w-0">
@@ -400,6 +419,32 @@ function Ficha() {
             setGuardar(null);
             mostrar(m);
             recarregar();
+          }}
+        />
+      )}
+      {editando && (
+        <JanelaEditarProcesso
+          processo={p}
+          abertura={d.tipo?.codigo === "abertura"}
+          aoFechar={() => setEditando(false)}
+          aoSalvar={() => {
+            setEditando(false);
+            mostrar("Dados do processo salvos.");
+            recarregar();
+          }}
+        />
+      )}
+      {excluindo && (
+        <JanelaMotivo
+          titulo="Excluir o processo de vez"
+          descricao={`#${p.numero} · ${nome}. Fases, protocolos, taxas, exigências, histórico e ficha de abertura são apagados; as tarefas das fases ficam canceladas e um retrato do processo fica na auditoria. Não dá para desfazer. Processo com anexo: retire os anexos no cartão Documentos antes.`}
+          botao="Excluir processo"
+          aoFechar={() => setExcluindo(false)}
+          aoConfirmar={async (motivo) => {
+            exigir(await supabase().rpc("soc_processo_excluir", { p_proc: p.id, p_motivo: motivo }));
+            setExcluindo(false);
+            mostrar("Processo excluído.");
+            router.push("/societario");
           }}
         />
       )}
