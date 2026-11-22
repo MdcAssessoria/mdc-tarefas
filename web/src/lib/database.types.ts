@@ -707,6 +707,30 @@ export type Database = {
           },
         ];
       };
+      cnae_restricoes: {
+        Row: {
+          codigo: string;
+          descricao: string;
+          fundamento: string;
+          nivel: string;
+          regime: string;
+        };
+        Insert: {
+          codigo: string;
+          descricao: string;
+          fundamento: string;
+          nivel: string;
+          regime: string;
+        };
+        Update: {
+          codigo?: string;
+          descricao?: string;
+          fundamento?: string;
+          nivel?: string;
+          regime?: string;
+        };
+        Relationships: [];
+      };
       comentarios: {
         Row: {
           autor_id: string;
@@ -7964,6 +7988,305 @@ export type Database = {
           },
         ];
       };
+      soc_abertura_documentos: {
+        Row: {
+          arquivo_id: string;
+          org_id: string;
+          processo_id: string;
+          socio_id: string | null;
+          tipado_em: string;
+          tipado_por: string | null;
+          tipo: string;
+        };
+        Insert: {
+          arquivo_id: string;
+          org_id: string;
+          processo_id: string;
+          socio_id?: string | null;
+          tipado_em?: string;
+          tipado_por?: string | null;
+          tipo: string;
+        };
+        Update: {
+          arquivo_id?: string;
+          org_id?: string;
+          processo_id?: string;
+          socio_id?: string | null;
+          tipado_em?: string;
+          tipado_por?: string | null;
+          tipo?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "soc_abertura_documentos_arquivo_id_fkey";
+            columns: ["arquivo_id"];
+            isOneToOne: true;
+            referencedRelation: "hub_arquivos";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "soc_abertura_documentos_org_id_fkey";
+            columns: ["org_id"];
+            isOneToOne: false;
+            referencedRelation: "organizacoes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "soc_abertura_documentos_processo_id_fkey";
+            columns: ["processo_id"];
+            isOneToOne: false;
+            referencedRelation: "soc_processos";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "soc_abertura_documentos_socio_id_fkey";
+            columns: ["socio_id"];
+            isOneToOne: false;
+            referencedRelation: "soc_abertura_socios";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      soc_abertura_socios: {
+        Row: {
+          administrador: boolean;
+          atualizado_em: string;
+          bairro: string | null;
+          celular: string | null;
+          cep: string | null;
+          complemento: string | null;
+          criado_em: string;
+          data_nascimento: string | null;
+          documento: string | null;
+          domiciliado_exterior: boolean;
+          email: string | null;
+          estado_civil: string | null;
+          id: string;
+          logradouro: string | null;
+          municipio: string | null;
+          nacionalidade: string | null;
+          nome: string;
+          numero: string | null;
+          ordem: number;
+          org_id: string;
+          outras_empresas: string | null;
+          percentual: number;
+          processo_id: string;
+          profissao: string | null;
+          regime_bens: string | null;
+          rg: string | null;
+          rg_orgao: string | null;
+          tipo: string;
+          uf: string | null;
+        };
+        Insert: {
+          administrador?: boolean;
+          atualizado_em?: string;
+          bairro?: string | null;
+          celular?: string | null;
+          cep?: string | null;
+          complemento?: string | null;
+          criado_em?: string;
+          data_nascimento?: string | null;
+          documento?: string | null;
+          domiciliado_exterior?: boolean;
+          email?: string | null;
+          estado_civil?: string | null;
+          id?: string;
+          logradouro?: string | null;
+          municipio?: string | null;
+          nacionalidade?: string | null;
+          nome: string;
+          numero?: string | null;
+          ordem?: number;
+          org_id: string;
+          outras_empresas?: string | null;
+          percentual?: number;
+          processo_id: string;
+          profissao?: string | null;
+          regime_bens?: string | null;
+          rg?: string | null;
+          rg_orgao?: string | null;
+          tipo?: string;
+          uf?: string | null;
+        };
+        Update: {
+          administrador?: boolean;
+          atualizado_em?: string;
+          bairro?: string | null;
+          celular?: string | null;
+          cep?: string | null;
+          complemento?: string | null;
+          criado_em?: string;
+          data_nascimento?: string | null;
+          documento?: string | null;
+          domiciliado_exterior?: boolean;
+          email?: string | null;
+          estado_civil?: string | null;
+          id?: string;
+          logradouro?: string | null;
+          municipio?: string | null;
+          nacionalidade?: string | null;
+          nome?: string;
+          numero?: string | null;
+          ordem?: number;
+          org_id?: string;
+          outras_empresas?: string | null;
+          percentual?: number;
+          processo_id?: string;
+          profissao?: string | null;
+          regime_bens?: string | null;
+          rg?: string | null;
+          rg_orgao?: string | null;
+          tipo?: string;
+          uf?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "soc_abertura_socios_org_id_fkey";
+            columns: ["org_id"];
+            isOneToOne: false;
+            referencedRelation: "organizacoes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "soc_abertura_socios_processo_id_fkey";
+            columns: ["processo_id"];
+            isOneToOne: false;
+            referencedRelation: "soc_processos";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      soc_aberturas: {
+        Row: {
+          area_m2: number | null;
+          atualizado_em: string;
+          atualizado_por: string | null;
+          bairro: string | null;
+          capital_social: number | null;
+          cep: string | null;
+          cnae_principal: string | null;
+          cnae_principal_descricao: string | null;
+          cnaes_secundarios: Json;
+          complemento: string | null;
+          contador_crc: string | null;
+          contador_nome: string | null;
+          email: string | null;
+          imovel_situacao: string | null;
+          inscricao_imobiliaria: string | null;
+          integralizacao: string | null;
+          integralizacao_forma: string | null;
+          integralizacao_prazo: string | null;
+          logradouro: string | null;
+          municipio: string | null;
+          municipio_ibge: string | null;
+          natureza: string | null;
+          nome_fantasia: string | null;
+          numero: string | null;
+          objeto_social: string | null;
+          observacoes: string | null;
+          org_id: string;
+          porte: string | null;
+          processo_id: string;
+          razao_social: string | null;
+          regime: string | null;
+          telefone: string | null;
+          uf: string | null;
+          uso_endereco: string | null;
+          valor_quota: number | null;
+        };
+        Insert: {
+          area_m2?: number | null;
+          atualizado_em?: string;
+          atualizado_por?: string | null;
+          bairro?: string | null;
+          capital_social?: number | null;
+          cep?: string | null;
+          cnae_principal?: string | null;
+          cnae_principal_descricao?: string | null;
+          cnaes_secundarios?: Json;
+          complemento?: string | null;
+          contador_crc?: string | null;
+          contador_nome?: string | null;
+          email?: string | null;
+          imovel_situacao?: string | null;
+          inscricao_imobiliaria?: string | null;
+          integralizacao?: string | null;
+          integralizacao_forma?: string | null;
+          integralizacao_prazo?: string | null;
+          logradouro?: string | null;
+          municipio?: string | null;
+          municipio_ibge?: string | null;
+          natureza?: string | null;
+          nome_fantasia?: string | null;
+          numero?: string | null;
+          objeto_social?: string | null;
+          observacoes?: string | null;
+          org_id: string;
+          porte?: string | null;
+          processo_id: string;
+          razao_social?: string | null;
+          regime?: string | null;
+          telefone?: string | null;
+          uf?: string | null;
+          uso_endereco?: string | null;
+          valor_quota?: number | null;
+        };
+        Update: {
+          area_m2?: number | null;
+          atualizado_em?: string;
+          atualizado_por?: string | null;
+          bairro?: string | null;
+          capital_social?: number | null;
+          cep?: string | null;
+          cnae_principal?: string | null;
+          cnae_principal_descricao?: string | null;
+          cnaes_secundarios?: Json;
+          complemento?: string | null;
+          contador_crc?: string | null;
+          contador_nome?: string | null;
+          email?: string | null;
+          imovel_situacao?: string | null;
+          inscricao_imobiliaria?: string | null;
+          integralizacao?: string | null;
+          integralizacao_forma?: string | null;
+          integralizacao_prazo?: string | null;
+          logradouro?: string | null;
+          municipio?: string | null;
+          municipio_ibge?: string | null;
+          natureza?: string | null;
+          nome_fantasia?: string | null;
+          numero?: string | null;
+          objeto_social?: string | null;
+          observacoes?: string | null;
+          org_id?: string;
+          porte?: string | null;
+          processo_id?: string;
+          razao_social?: string | null;
+          regime?: string | null;
+          telefone?: string | null;
+          uf?: string | null;
+          uso_endereco?: string | null;
+          valor_quota?: number | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "soc_aberturas_org_id_fkey";
+            columns: ["org_id"];
+            isOneToOne: false;
+            referencedRelation: "organizacoes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "soc_aberturas_processo_id_fkey";
+            columns: ["processo_id"];
+            isOneToOne: true;
+            referencedRelation: "soc_processos";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       soc_documentos: {
         Row: {
           arquivo_id: string;
@@ -9975,6 +10298,22 @@ export type Database = {
         Returns: number;
       };
       reativar_cliente: { Args: { p_cliente: string }; Returns: Json };
+      soc_abertura_documento_tipar: {
+        Args: { p_arquivo: string; p_socio?: string; p_tipo: string };
+        Returns: undefined;
+      };
+      soc_abertura_salvar: {
+        Args: { p: Json; p_proc: string };
+        Returns: undefined;
+      };
+      soc_abertura_socio_excluir: {
+        Args: { p_socio: string };
+        Returns: undefined;
+      };
+      soc_abertura_socio_salvar: {
+        Args: { p: Json; p_proc: string; p_socio: string };
+        Returns: string;
+      };
       soc_abrir_processo: {
         Args: {
           p_cliente: string;
