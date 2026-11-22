@@ -160,7 +160,7 @@ Alterações contratuais, aberturas e baixas de empresas, fase a fase, com exig�
 
 **Corrigir ou apagar um processo:** com o processo em andamento, **Editar dados** (no quadro de dados) muda o nome da empresa (enquanto ainda não é cliente), CNPJ, UF, observações, responsável e previsão; o antes e o depois ficam na linha do tempo. **Excluir processo** (só quem gere o Societário, com motivo) apaga de vez um processo aberto por engano: não vale para processo concluído, e os anexos precisam ser retirados antes. As tarefas das fases ficam canceladas. Para encerrar sem apagar, use **Cancelar processo**.
 
-**Abertura de empresa (ficha de abertura):** no processo de abertura aparece o cartão **Ficha de abertura**. Clique em **Preencher ficha** e informe, aos poucos (o que foi salvo fica guardado):
+**Abertura de empresa (ficha de abertura):** no processo de abertura, o cartão **Ficha de abertura** (com o quadro societário) fica logo abaixo dos dados do processo, e ao criar a abertura a ficha já abre para preencher. Depois, use **Editar ficha** e informe, aos poucos (o que foi salvo fica guardado):
 
 - **Regime em que a empresa nasce** (Simples Nacional, Lucro Presumido ou Lucro Real), natureza jurídica, porte, razão social e nome fantasia.
 - **CNAE principal e secundários**: digite o código ou uma palavra ("padaria", "contabilidade") e escolha na lista oficial. Pelo regime escolhido, o CNAE que não é permitido aparece como **Não permitido** e não pode ser escolhido (Simples: Anexo VI da Resolução CGSN 140/2018; Presumido: atividades obrigadas ao Lucro Real, Lei 9.718/1998, art. 14). O que aparece como **Analisar** (Anexo VII) pode ser escolhido, mas o contador confirma o que a empresa fará.

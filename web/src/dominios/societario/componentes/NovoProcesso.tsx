@@ -14,6 +14,7 @@ import { CampoCnpj, ResumoCnpj } from "@/components/ui/CampoCnpj";
 import { resumoCnpj } from "@/lib/consultaCnpj";
 import type { DadosCnpj } from "@/lib/consultaCnpj";
 import type { SocTipo } from "../processos";
+import { CHAVE_ABRIR_FICHA } from "./CartaoAbertura";
 
 /** Valor do seletor de cliente para "empresa ainda não cadastrada" (não é um id). */
 export const FORA_DO_CADASTRO = "__fora_do_cadastro__";
@@ -67,6 +68,14 @@ export function NovoProcesso({ tipos, aoFechar, aoCriar }: { tipos: SocTipo[]; a
     });
     setEnviando(false);
     if (error) return setErro(traduzirErro(error));
+    // abertura: a tela do processo já abre a ficha (regime, CNAE, sócios) para começar o preenchimento
+    if (abertura) {
+      try {
+        sessionStorage.setItem(`${CHAVE_ABRIR_FICHA}${data as string}`, "1");
+      } catch {
+        /* sem armazenamento: a pessoa abre a ficha pelo botão */
+      }
+    }
     aoCriar(data as string);
   }
 

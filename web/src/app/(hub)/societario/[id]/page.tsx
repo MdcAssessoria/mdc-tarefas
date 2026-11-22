@@ -293,6 +293,21 @@ function Ficha() {
         )}
       </section>
 
+      {d.tipo?.codigo === "abertura" && (
+        <CartaoAbertura
+          key={versaoFicha}
+          processoId={p.id}
+          numero={p.numero}
+          padrao={{ razao: p.futuro_cliente ?? "", uf: p.uf ?? "" }}
+          arquivos={d.arquivos}
+          podeOperar={podeOperar}
+          aberto={aberto}
+          logoUrl={org.logo_url}
+          mostrar={mostrar}
+          aoMudar={recarregarFicha}
+        />
+      )}
+
       {!p.cliente_id && p.status !== "cancelado" && (
         <LigarCliente
           abertura={d.tipo?.codigo === "abertura"}
@@ -320,21 +335,6 @@ function Ficha() {
         aoAtualizar={atualizarFase}
         aoAnexar={anexar}
       />
-
-      {d.tipo?.codigo === "abertura" && (
-        <CartaoAbertura
-          key={versaoFicha}
-          processoId={p.id}
-          numero={p.numero}
-          padrao={{ razao: p.futuro_cliente ?? "", uf: p.uf ?? "" }}
-          arquivos={d.arquivos}
-          podeOperar={podeOperar}
-          aberto={aberto}
-          logoUrl={org.logo_url}
-          mostrar={mostrar}
-          aoMudar={recarregarFicha}
-        />
-      )}
 
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
         <div className="min-w-0 space-y-5">
