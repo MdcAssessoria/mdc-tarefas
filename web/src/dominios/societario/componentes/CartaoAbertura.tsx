@@ -8,6 +8,7 @@ import { supabase } from "@/lib/supabase";
 import { traduzirErro } from "@/lib/erros";
 import { formatarDocumento } from "@/lib/documento";
 import { useConsulta } from "@/lib/useConsulta";
+import { enviarArquivo } from "@/lib/arquivos/armazenamento";
 import type { Arquivo } from "@/lib/arquivos/armazenamento";
 import { BotoesExportar } from "@/components/ui/BotoesExportar";
 import { Chip } from "@/components/ui/Chip";
@@ -34,6 +35,8 @@ const pct = (n: number) => `${String(Number(n)).replace(".", ",")}%`;
 
 export function CartaoAbertura({
   processoId,
+  orgId,
+  clienteId,
   numero,
   padrao,
   arquivos,
@@ -44,6 +47,8 @@ export function CartaoAbertura({
   aoMudar,
 }: {
   processoId: string;
+  orgId: string;
+  clienteId: string | null;
   numero: number;
   padrao: { razao: string; uf: string };
   arquivos: Arquivo[];
@@ -66,6 +71,7 @@ export function CartaoAbertura({
   const [socio, setSocio] = useState<{ s: SocioAbertura | null } | null>(null);
   const [janelaConfirmar, confirmar] = useConfirmar();
   const recarregar = consulta.recarregar;
+  const [enviando, setEnviando] = useState<string | null>(null);
   const editar = podeOperar && aberto;
 
   if (!consulta.dados)
@@ -90,6 +96,36 @@ export function CartaoAbertura({
     });
     if (error) return mostrar(traduzirErro(error), "erro");
     recarregar();
+  }
+
+  /** Envia o arquivo para o processo, registra na linha do tempo e já marca o tipo (e o sócio). */
+  async function anexarDoTipo(arqs: FileList | null, tipo: TipoDocAbertura, socioId: string | null, rotulo: string) {
+    if (!arqs?.length) return;
+    const chave = `${tipo}|${socioId ?? ""}`;
+    setEnviando(chave);
+    let enviados = 0;
+    try {
+      for (const f of Array.from(arqs)) {
+        const a = await enviarArquivo(f, { org: orgId, app: "societario", ref: processoId, cliente: clienteId, visivelCliente: false });
+        enviados++;
+        const tipado = await supabase().rpc("soc_abertura_documento_tipar", { p_arquivo: a.id, p_tipo: tipo, p_socio: socioId });
+        if (tipado.error) throw tipado.error;
+        const evento = await supabase().from("soc_eventos").insert({
+          org_id: orgId,
+          processo_id: processoId,
+          tipo: "documento",
+          texto: `Documento anexado (${rotulo}): ${f.name}`,
+        });
+        if (evento.error) throw evento.error;
+      }
+      mostrar(enviados === 1 ? "Documento anexado." : `${enviados} documentos anexados.`);
+    } catch (e) {
+      mostrar(enviados ? `${enviados} documento(s) anexado(s), mas houve um problema: ${traduzirErro(e)}` : traduzirErro(e), "erro");
+    } finally {
+      setEnviando(null);
+      recarregar();
+      aoMudar();
+    }
   }
 
   async function excluirSocio(s: SocioAbertura) {
@@ -254,17 +290,33 @@ export function CartaoAbertura({
       {esperados.length > 0 && (
         <div>
           <h3 className="mb-2 text-sm font-semibold">Documentos da abertura</h3>
-          <ul className="grid gap-1 text-sm sm:grid-cols-2">
+          <ul className="grid gap-x-8 gap-y-1 text-sm sm:grid-cols-2">
             {esperados.map((d) => (
-              <li key={`${d.tipo}|${d.socio_id ?? ""}`} className="flex items-center gap-2">
+              <li key={`${d.tipo}|${d.socio_id ?? ""}`} className="flex min-h-9 items-center gap-2">
                 <Icone nome={d.ok ? "check" : "relogio"} className={`h-4 w-4 shrink-0 ${d.ok ? "text-emerald-700" : "text-[var(--texto-suave)]"}`} />
-                <span className={d.ok ? "" : "text-[var(--texto-suave)]"}>{d.rotulo}</span>
+                <span className={`min-w-0 flex-1 ${d.ok ? "" : "text-[var(--texto-suave)]"}`}>{d.rotulo}</span>
+                {editar && (
+                  <label className={`btn !min-h-8 shrink-0 cursor-pointer !px-2.5 ${enviando ? "pointer-events-none opacity-60" : ""}`}>
+                    <Icone nome="clipe" className="h-4 w-4" />
+                    {enviando === `${d.tipo}|${d.socio_id ?? ""}` ? "Enviando…" : d.ok ? "Mais um" : "Anexar"}
+                    <input
+                      type="file"
+                      multiple
+                      className="sr-only"
+                      aria-label={`Anexar ${d.rotulo}`}
+                      onChange={(e) => {
+                        void anexarDoTipo(e.target.files, d.tipo, d.socio_id, d.rotulo);
+                        e.target.value = "";
+                      }}
+                    />
+                  </label>
+                )}
               </li>
             ))}
           </ul>
           {arquivos.length > 0 ? (
             <div className="mt-3 space-y-2">
-              <p className="text-xs text-[var(--texto-suave)]">Diga o que é cada anexo do processo (o envio continua no cartão Documentos):</p>
+              <p className="text-xs text-[var(--texto-suave)]">Anexos do processo e o que é cada um (o que foi enviado pelo cartão Documentos também aparece aqui):</p>
               {arquivos.map((a) => {
                 const t = tipoDoArquivo.get(a.id);
                 return (
@@ -299,7 +351,7 @@ export function CartaoAbertura({
               })}
             </div>
           ) : (
-            <p className="mt-2 text-xs text-[var(--texto-suave)]">Anexe os documentos no cartão Documentos e depois marque o tipo aqui.</p>
+            <p className="mt-2 text-xs text-[var(--texto-suave)]">Use Anexar em cada documento: o arquivo entra no processo já com o tipo marcado.</p>
           )}
         </div>
       )}

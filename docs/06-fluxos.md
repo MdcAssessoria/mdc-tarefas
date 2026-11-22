@@ -146,7 +146,7 @@ Os indicadores da lista (fase atrasada, previsão vencida, com exigência, parad
   Anexos VI e VII. Alteração posterior entra por migração nova.
 - **Faltas e avisos (só tela):** percentuais ≠ 100%, sem administrador, CPF inválido, regime de bens, quotas que não
   fecham, sócio com outras empresas no Simples (LC 123, art. 3º, § 4º, III e IV), receita até R$ 78 mi no Presumido.
-- **Documentos:** cada anexo do processo recebe um tipo (e o sócio) por `soc_abertura_documento_tipar`; a lista de
+- **Documentos:** cada item esperado tem "Anexar" (envia para o processo e já chama `soc_abertura_documento_tipar`); tipo `contrato_social_previo` desde a 114. Cada anexo do processo recebe um tipo (e o sócio) por `soc_abertura_documento_tipar`; a lista de
   esperados vem de `documentosEsperados` (RG/CNH e comprovante por sócio, certidão de casamento, IPTU, locação,
   matrícula ou autorização conforme o imóvel).
 - **Concluir:** `soc_concluir_processo` cria o cliente com razão social, fantasia, cidade, UF e regime da ficha (os anexos
