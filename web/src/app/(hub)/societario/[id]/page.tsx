@@ -297,6 +297,8 @@ function Ficha() {
         <CartaoAbertura
           key={versaoFicha}
           processoId={p.id}
+          orgId={org.id}
+          clienteId={p.cliente_id}
           numero={p.numero}
           padrao={{ razao: p.futuro_cliente ?? "", uf: p.uf ?? "" }}
           arquivos={d.arquivos}

@@ -89,6 +89,7 @@ export type TipoDocAbertura =
   | "contrato_locacao"
   | "matricula_imovel"
   | "autorizacao_imovel"
+  | "contrato_social_previo"
   | "procuracao"
   | "outro";
 
@@ -140,12 +141,13 @@ export const REGIMES_BENS = [
 export const TIPOS_DOC: { id: TipoDocAbertura; nome: string; doSocio: boolean }[] = [
   { id: "rg_cnh", nome: "RG ou CNH", doSocio: true },
   { id: "cpf", nome: "CPF", doSocio: true },
-  { id: "comprovante_residencia", nome: "Comprovante de residência", doSocio: true },
+  { id: "comprovante_residencia", nome: "Comprovante de endereço", doSocio: true },
   { id: "certidao_casamento", nome: "Certidão de casamento", doSocio: true },
   { id: "iptu", nome: "IPTU (inscrição imobiliária)", doSocio: false },
   { id: "contrato_locacao", nome: "Contrato de locação", doSocio: false },
   { id: "matricula_imovel", nome: "Matrícula do imóvel", doSocio: false },
   { id: "autorizacao_imovel", nome: "Autorização do proprietário", doSocio: false },
+  { id: "contrato_social_previo", nome: "Contrato social prévio (minuta)", doSocio: false },
   { id: "procuracao", nome: "Procuração", doSocio: false },
   { id: "outro", nome: "Outro", doSocio: false },
 ];
@@ -262,10 +264,11 @@ export function documentosEsperados(f: FichaAbertura | null, socios: SocioAbertu
   const lista: DocEsperado[] = [];
   for (const s of socios.filter((x) => x.tipo === "pf")) {
     lista.push({ tipo: "rg_cnh", socio_id: s.id, rotulo: `RG ou CNH · ${s.nome}`, ok: tem("rg_cnh", s.id) });
-    lista.push({ tipo: "comprovante_residencia", socio_id: s.id, rotulo: `Comprovante de residência · ${s.nome}`, ok: tem("comprovante_residencia", s.id) });
+    lista.push({ tipo: "comprovante_residencia", socio_id: s.id, rotulo: `Comprovante de endereço · ${s.nome}`, ok: tem("comprovante_residencia", s.id) });
     if (s.estado_civil === "casado")
       lista.push({ tipo: "certidao_casamento", socio_id: s.id, rotulo: `Certidão de casamento · ${s.nome}`, ok: tem("certidao_casamento", s.id) });
   }
+  lista.push({ tipo: "contrato_social_previo", socio_id: null, rotulo: "Contrato social prévio (minuta)", ok: tem("contrato_social_previo", null) });
   if (f) {
     lista.push({ tipo: "iptu", socio_id: null, rotulo: "IPTU do imóvel (inscrição imobiliária)", ok: tem("iptu", null) });
     if (f.imovel_situacao === "alugado")

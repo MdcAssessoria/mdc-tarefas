@@ -92,6 +92,7 @@ describe("documentosEsperados", () => {
       ["rg_cnh", true],
       ["comprovante_residencia", false],
       ["certidao_casamento", false],
+      ["contrato_social_previo", false],
       ["iptu", false],
       ["contrato_locacao", false],
     ]);
