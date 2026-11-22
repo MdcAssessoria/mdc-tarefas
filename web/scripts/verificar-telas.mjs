@@ -1482,6 +1482,10 @@ const INTERACOES = {
     await janela.getByText("Não permitido").waitFor({ timeout: 5000 });
     await foto("abertura-janela-cnae", { soTela: true });
     await p.keyboard.press("Escape");
+    await p.getByRole("button", { name: "Editar dados" }).click();
+    await p.getByRole("dialog", { name: "Editar dados do processo" }).waitFor({ timeout: 3000 });
+    await foto("editar-dados-processo", { soTela: true });
+    await p.keyboard.press("Escape");
   },
   // Cadastrar pessoa: o administrador escolhe os módulos um a um (ou um perfil pronto)
   "/hub/acessos": async (p, foto) => {

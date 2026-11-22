@@ -4,7 +4,7 @@
 // (components/shell/navegacao.ts): com ele a tela do manual ganha o botão "Ir para a tela".
 // Mudou uma tela ou regra? Atualize o trecho dela aqui no mesmo commit e acrescente uma linha em "Controle de versões".
 
-export const VERSAO_MANUAL = { numero: "2.12", data: "22/11/2026" };
+export const VERSAO_MANUAL = { numero: "2.13", data: "22/11/2026" };
 
 export const MANUAL_MD = `
 ## Como usar este manual
@@ -157,6 +157,8 @@ Alterações contratuais, aberturas e baixas de empresas, fase a fase, com exig�
 ### Processos (Societário → Processos)
 
 **Para que serve:** acompanhar cada processo societário. Concluir a tarefa de uma fase faz o processo andar para a próxima.
+
+**Corrigir ou apagar um processo:** com o processo em andamento, **Editar dados** (no quadro de dados) muda o nome da empresa (enquanto ainda não é cliente), CNPJ, UF, observações, responsável e previsão; o antes e o depois ficam na linha do tempo. **Excluir processo** (só quem gere o Societário, com motivo) apaga de vez um processo aberto por engano: não vale para processo concluído, e os anexos precisam ser retirados antes. As tarefas das fases ficam canceladas. Para encerrar sem apagar, use **Cancelar processo**.
 
 **Abertura de empresa (ficha de abertura):** no processo de abertura aparece o cartão **Ficha de abertura**. Clique em **Preencher ficha** e informe, aos poucos (o que foi salvo fica guardado):
 
@@ -419,6 +421,7 @@ Os sistemas que a MDC licencia aos clientes (Ledgra ERP, EXato e os próximos): 
 | 2.8 | 21/11/2026 | **BI de Gestão**: aba Parecer (equipe MDC) monta o parecer gerencial com os números do período, para revisar e salvar em PDF. |
 | 2.9 | 21/11/2026 | **Sistemas** sai do grupo Gestão e vira item próprio do menu, com as telas em submenu. **Nova licença**: cliente não encontrado na busca abre o cadastro na hora, já com o CNPJ digitado. |
 | 2.10 | 21/11/2026 | **BI de Gestão**: correção do fluxo de caixa do grupo (com "tirar as operações entre as empresas", os movimentos sem CNPJ/CPF, como tarifas e débitos em conta, ficavam de fora); quadro Operações entre as empresas em Resultado × caixa; nome de clientes e fornecedores nos títulos do Omie; quadro mês a mês na Visão geral e Orçamento no padrão MDC; extrato também das contas inativas. |
+| 2.13 | 22/11/2026 | **Societário**: Editar dados do processo (nome, CNPJ, UF, observações, responsável, previsão; registrado na linha do tempo) e Excluir processo (quem gere, com motivo; não vale para concluído nem com anexo). |
 | 2.12 | 22/11/2026 | **Societário**: ficha de abertura no processo de abertura — regime (Simples, Presumido, Real) que confere os CNAE pela lista oficial, CNAE principal e secundários, quadro societário com percentuais e administrador, capital e quotas, endereço com busca de CEP e IBGE, imóvel, contato, contador e documentos por tipo; o cliente nasce com os dados da ficha. |
 | 2.11 | 21/11/2026 | **Demonstrativos**: Balanço, DRE, DFC e Balancete no mesmo padrão de tabela do BI (cabeçalho verde preso no topo, primeira coluna presa ao rolar, subtotais e resultado em destaque); também no Portal do Cliente. |
 `;
