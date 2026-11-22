@@ -4,7 +4,7 @@
 // (components/shell/navegacao.ts): com ele a tela do manual ganha o botão "Ir para a tela".
 // Mudou uma tela ou regra? Atualize o trecho dela aqui no mesmo commit e acrescente uma linha em "Controle de versões".
 
-export const VERSAO_MANUAL = { numero: "2.11", data: "21/11/2026" };
+export const VERSAO_MANUAL = { numero: "2.12", data: "22/11/2026" };
 
 export const MANUAL_MD = `
 ## Como usar este manual
@@ -157,6 +157,14 @@ Alterações contratuais, aberturas e baixas de empresas, fase a fase, com exig�
 ### Processos (Societário → Processos)
 
 **Para que serve:** acompanhar cada processo societário. Concluir a tarefa de uma fase faz o processo andar para a próxima.
+
+**Abertura de empresa (ficha de abertura):** no processo de abertura aparece o cartão **Ficha de abertura**. Clique em **Preencher ficha** e informe, aos poucos (o que foi salvo fica guardado):
+
+- **Regime em que a empresa nasce** (Simples Nacional, Lucro Presumido ou Lucro Real), natureza jurídica, porte, razão social e nome fantasia.
+- **CNAE principal e secundários**: digite o código ou uma palavra ("padaria", "contabilidade") e escolha na lista oficial. Pelo regime escolhido, o CNAE que não é permitido aparece como **Não permitido** e não pode ser escolhido (Simples: Anexo VI da Resolução CGSN 140/2018; Presumido: atividades obrigadas ao Lucro Real, Lei 9.718/1998, art. 14). O que aparece como **Analisar** (Anexo VII) pode ser escolhido, mas o contador confirma o que a empresa fará.
+- **Objeto social, capital** (valor da quota e quantidade de quotas), integralização, **endereço** (o **Buscar CEP** preenche rua, bairro, município, UF e o código IBGE), imóvel (próprio, alugado, IPTU, área), contato e contador.
+
+Depois, em **Quadro societário**, use **Novo sócio** para cada sócio: CPF (ou CNPJ), participação em %, quem é **sócio administrador**, estado civil e regime de bens, RG, contato e endereço. A soma tem de dar 100%. No Simples, sócio empresa ou que mora fora do Brasil não é aceito. Os documentos (RG/CNH, comprovante de residência, certidão de casamento, IPTU, contrato de locação…) são anexados no cartão **Documentos** e, na ficha, você diz o que é cada anexo: a lista **Documentos da abertura** mostra o que ainda falta. **PDF** e **Excel** baixam a ficha completa. Ao **Concluir processo**, a empresa entra em Clientes com a razão social, fantasia, cidade, UF e regime da ficha.
 
 ### Painel (Societário → Painel)
 
@@ -411,5 +419,6 @@ Os sistemas que a MDC licencia aos clientes (Ledgra ERP, EXato e os próximos): 
 | 2.8 | 21/11/2026 | **BI de Gestão**: aba Parecer (equipe MDC) monta o parecer gerencial com os números do período, para revisar e salvar em PDF. |
 | 2.9 | 21/11/2026 | **Sistemas** sai do grupo Gestão e vira item próprio do menu, com as telas em submenu. **Nova licença**: cliente não encontrado na busca abre o cadastro na hora, já com o CNPJ digitado. |
 | 2.10 | 21/11/2026 | **BI de Gestão**: correção do fluxo de caixa do grupo (com "tirar as operações entre as empresas", os movimentos sem CNPJ/CPF, como tarifas e débitos em conta, ficavam de fora); quadro Operações entre as empresas em Resultado × caixa; nome de clientes e fornecedores nos títulos do Omie; quadro mês a mês na Visão geral e Orçamento no padrão MDC; extrato também das contas inativas. |
+| 2.12 | 22/11/2026 | **Societário**: ficha de abertura no processo de abertura — regime (Simples, Presumido, Real) que confere os CNAE pela lista oficial, CNAE principal e secundários, quadro societário com percentuais e administrador, capital e quotas, endereço com busca de CEP e IBGE, imóvel, contato, contador e documentos por tipo; o cliente nasce com os dados da ficha. |
 | 2.11 | 21/11/2026 | **Demonstrativos**: Balanço, DRE, DFC e Balancete no mesmo padrão de tabela do BI (cabeçalho verde preso no topo, primeira coluna presa ao rolar, subtotais e resultado em destaque); também no Portal do Cliente. |
 `;

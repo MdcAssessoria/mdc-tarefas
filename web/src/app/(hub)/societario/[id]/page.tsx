@@ -1,7 +1,8 @@
 // Societário › Ficha do processo: dados do processo, fases (situação, responsável, prazo), protocolos, exigências,
 // taxas, documentos e a linha do tempo. Concluir pede confirmação; cancelar pede o motivo (vai para o histórico).
 // "Documentos do cliente" mostra o acervo vigente do cliente como base da alteração; cada anexo do processo pode ir
-// para o acervo ("Guardar no acervo"), substituindo o documento anterior (073).
+// para o acervo ("Guardar no acervo"), substituindo o documento anterior (073). Na abertura, o cartão "Ficha de
+// abertura" (112) guarda regime, CNAE, sócios, endereço e o tipo de cada anexo.
 "use client";
 
 import Link from "next/link";
@@ -32,6 +33,7 @@ import { JanelaGuardarAcervo } from "@/dominios/societario/componentes/JanelasAc
 import { situacaoProcesso } from "@/dominios/societario/processos";
 import type { SocFase, StatusFase } from "@/dominios/societario/processos";
 import { LigarCliente } from "@/dominios/societario/componentes/LigarCliente";
+import { CartaoAbertura } from "@/dominios/societario/componentes/CartaoAbertura";
 import { FasesProcesso } from "@/dominios/societario/componentes/FasesProcesso";
 import { Documentos, Exigencias, LinhaDoTempo, Protocolos, Taxas } from "@/dominios/societario/componentes/SecoesProcesso";
 
@@ -297,6 +299,20 @@ function Ficha() {
         aoAtualizar={atualizarFase}
         aoAnexar={anexar}
       />
+
+      {d.tipo?.codigo === "abertura" && (
+        <CartaoAbertura
+          processoId={p.id}
+          numero={p.numero}
+          padrao={{ razao: p.futuro_cliente ?? "", uf: p.uf ?? "" }}
+          arquivos={d.arquivos}
+          podeOperar={podeOperar}
+          aberto={aberto}
+          logoUrl={org.logo_url}
+          mostrar={mostrar}
+          aoMudar={recarregarFicha}
+        />
+      )}
 
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
         <div className="min-w-0 space-y-5">

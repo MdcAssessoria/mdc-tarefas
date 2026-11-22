@@ -8,6 +8,7 @@ import type { Arquivo } from "@/lib/arquivos/armazenamento";
 import { ordenarAcervo } from "./acervo";
 import type { DocumentoAcervo } from "./acervo";
 import { passosParaAvancar } from "./processos";
+import type { DocAbertura, FichaAbertura, RestricaoCnae, SocioAbertura } from "./abertura";
 import type { SocFase, SocProcesso, SocTipo } from "./processos";
 
 export interface DadosProcessos {
@@ -142,4 +143,29 @@ export async function lerAcervo(orgId: string, clienteId?: string | null): Promi
   if (clienteId) q = q.eq("cliente_id", clienteId);
   const r = exigir(await q.order("criado_em", { ascending: false }).range(0, 4999));
   return ordenarAcervo((r ?? []) as unknown as DocumentoAcervo[]);
+}
+
+/** Ficha de abertura do processo (112): ficha, sócios, tipos dos anexos e as restrições de CNAE por regime. */
+export async function lerAbertura(processoId: string): Promise<DadosAbertura> {
+  const sb = supabase();
+  const [f, s, d, r] = await Promise.all([
+    sb.from("soc_aberturas").select("*").eq("processo_id", processoId).maybeSingle(),
+    sb.from("soc_abertura_socios").select("*").eq("processo_id", processoId).order("ordem").order("id"),
+    sb.from("soc_abertura_documentos").select("arquivo_id, tipo, socio_id").eq("processo_id", processoId),
+    sb.from("cnae_restricoes").select("*").order("codigo").order("regime").range(0, 999),
+  ]);
+  const ficha = exigir(f) as FichaAbertura | null;
+  return {
+    ficha: ficha && { ...ficha, cnaes_secundarios: ficha.cnaes_secundarios ?? [] },
+    socios: (exigir(s) as SocioAbertura[] | null) ?? [],
+    docs: (exigir(d) as DocAbertura[] | null) ?? [],
+    restricoes: (exigir(r) as RestricaoCnae[] | null) ?? [],
+  };
+}
+
+export interface DadosAbertura {
+  ficha: FichaAbertura | null;
+  socios: SocioAbertura[];
+  docs: DocAbertura[];
+  restricoes: RestricaoCnae[];
 }

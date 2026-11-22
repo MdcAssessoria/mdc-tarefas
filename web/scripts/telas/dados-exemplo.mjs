@@ -2046,6 +2046,35 @@ export const RPCS = {
       });
     });
   }
+  // ficha de abertura (112) da padaria: Simples, CNAE com aviso do Anexo VII, um sócio com 60% (falta 40%)
+  TABELAS.soc_aberturas = [
+    {
+      processo_id: SOC(1), org_id: ORG, regime: "simples", natureza: "ltda", porte: "me",
+      razao_social: "PADARIA PÃO QUENTE LTDA", nome_fantasia: "Pão Quente", cnae_principal: "1091102",
+      cnae_principal_descricao: "Fabricação de produtos de padaria e confeitaria com predominância de produção própria",
+      cnaes_secundarios: [{ codigo: "8299799", descricao: "Outras atividades de serviços prestados principalmente às empresas não especificadas anteriormente" }],
+      objeto_social: "Fabricação e comércio de pães, bolos e doces.", capital_social: 50000, valor_quota: 1,
+      integralizacao: "no_ato", integralizacao_prazo: null, integralizacao_forma: "moeda", cep: "12900000",
+      logradouro: "Rua Coronel Teófilo Leme", numero: "500", complemento: null, bairro: "Centro",
+      municipio: "Bragança Paulista", municipio_ibge: "3507605", uf: "SP", uso_endereco: "estabelecimento",
+      imovel_situacao: "alugado", inscricao_imobiliaria: null, area_m2: 80, email: "contato@paoquente.com.br",
+      telefone: "11999990000", contador_nome: null, contador_crc: null, observacoes: null, atualizado_em: momento(-1),
+    },
+  ];
+  TABELAS.soc_abertura_socios = [
+    {
+      id: "soc-s1", processo_id: SOC(1), org_id: ORG, ordem: 1, tipo: "pf", nome: "Maria Aparecida da Silva",
+      documento: "52998224725", domiciliado_exterior: false, nacionalidade: "Brasileira", data_nascimento: "1980-05-10",
+      estado_civil: "casado", regime_bens: "comunhao_parcial", profissao: "Empresária", rg: "12.345.678-9", rg_orgao: "SSP/SP",
+      email: null, celular: "11988887777", cep: "12900000", logradouro: "Rua A", numero: "10", complemento: null,
+      bairro: "Centro", municipio: "Bragança Paulista", uf: "SP", percentual: 60, administrador: true, outras_empresas: null,
+    },
+  ];
+  TABELAS.soc_abertura_documentos = [];
+  TABELAS.cnae_restricoes = [
+    { codigo: "8299799", regime: "simples", nivel: "ambiguo", descricao: "Outras atividades de serviços prestados principalmente às empresas", fundamento: "Res. CGSN 140/2018, Anexo VII (art. 8º, § 2º)" },
+    { codigo: "6810202", regime: "simples", nivel: "impeditivo", descricao: "Aluguel de imóveis próprios", fundamento: "Res. CGSN 140/2018, Anexo VI (LC 123/2006, art. 17)" },
+  ];
   const P4 = SOC(4);
   TABELAS.soc_protocolos.push({
     id: "sp1",
