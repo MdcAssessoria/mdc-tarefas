@@ -516,7 +516,6 @@ begin
             coalesce(f.uf, p.uf), f.regime, true, date_trunc('month', v_hoje)::date)
     returning id into v_cli;
     update soc_processos set cliente_id = v_cli where id = p_proc;
-    update hub_arquivos set cliente_id = v_cli where app = 'societario' and ref_id = p_proc and cliente_id is null;
     perform app.soc_evento(p_proc, 'status', 'Cliente cadastrado no Hub: ' || coalesce(f.razao_social, p.futuro_cliente), false);
   elsif t.codigo = 'baixa' and p.cliente_id is not null then
     update clientes set ativo = false, inativo_em = v_hoje,

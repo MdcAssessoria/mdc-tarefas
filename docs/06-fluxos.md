@@ -148,8 +148,8 @@ Os indicadores da lista (fase atrasada, previsão vencida, com exigência, parad
 - **Documentos:** cada anexo do processo recebe um tipo (e o sócio) por `soc_abertura_documento_tipar`; a lista de
   esperados vem de `documentosEsperados` (RG/CNH e comprovante por sócio, certidão de casamento, IPTU, locação,
   matrícula ou autorização conforme o imóvel).
-- **Concluir:** `soc_concluir_processo` cria o cliente com razão social, fantasia, cidade, UF e regime da ficha e liga
-  ao cliente os anexos do processo.
+- **Concluir:** `soc_concluir_processo` cria o cliente com razão social, fantasia, cidade, UF e regime da ficha (os anexos
+  continuam no processo: o cliente do arquivo não muda depois do envio — gatilho `hub_arquivos_imutavel`).
 
 ## 6.4 Mapa de automações (o que acontece sem ninguém clicar)
 
