@@ -1459,6 +1459,30 @@ const INTERACOES = {
     await foto("novo-processo-cnpj", { soTela: true });
     await p.keyboard.press("Escape");
   },
+  // Processo de abertura (112): ficha com conferência do regime, quadro societário e a janela da ficha com busca de CNAE
+  "/societario/77777777-7777-4777-8777-777777777771": async (p, foto) => {
+    await p.route("**/servicodados.ibge.gov.br/api/v2/cnae/**", (r) =>
+      r.fulfill({
+        json: [
+          { id: "6810202", descricao: "ALUGUEL DE IMÓVEIS PRÓPRIOS", atividades: ["ALUGUEL DE IMÓVEIS"] },
+          { id: "4721102", descricao: "PADARIA E CONFEITARIA COM PREDOMINÂNCIA DE REVENDA", atividades: ["PADARIA"] },
+        ],
+      }),
+    );
+    await p.route("**/servicodados.ibge.gov.br/api/v1/localidades/**", (r) => r.fulfill({ json: [{ id: 3507605, nome: "Bragança Paulista" }] }));
+    await p.goto(p.url().replace("77777777-7777-4777-8777-777777777771", "77777777-7777-4777-8777-777777777801"));
+    const cartao = p.getByRole("region", { name: "Ficha de abertura" });
+    await cartao.getByRole("cell", { name: "Maria Aparecida da Silva" }).waitFor({ timeout: 8000 });
+    await cartao.getByText(/somam 60%/).waitFor({ timeout: 3000 });
+    await foto("abertura-ficha");
+    await cartao.getByRole("button", { name: "Editar ficha" }).click();
+    const janela = p.getByRole("dialog", { name: "Ficha de abertura" });
+    await janela.waitFor({ timeout: 3000 });
+    await janela.getByLabel(/CNAE secundários/).fill("aluguel");
+    await janela.getByText("Não permitido").waitFor({ timeout: 5000 });
+    await foto("abertura-janela-cnae", { soTela: true });
+    await p.keyboard.press("Escape");
+  },
   // Cadastrar pessoa: o administrador escolhe os módulos um a um (ou um perfil pronto)
   "/hub/acessos": async (p, foto) => {
     await p.getByRole("button", { name: /Cadastrar pessoa/ }).click();

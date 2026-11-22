@@ -131,6 +131,26 @@ Os indicadores da lista (fase atrasada, previsão vencida, com exigência, parad
   atalho para o acervo completo filtrado pelo cliente.
 - **Retirar:** só quem gerencia o Societário, com motivo; a ficha e o arquivo ficam no histórico e na auditoria.
 
+## 6.3.2 Societário: ficha de abertura (112)
+
+- **Onde:** cartão "Ficha de abertura" da tela do processo, só no tipo abertura (`CartaoAbertura`, janelas
+  `JanelaFichaAbertura` e `JanelaSocio`). Grava aos poucos; o processo concluído ou cancelado não muda mais.
+- **Consultas públicas (navegador, sem chave):** CNAE-Subclasses do IBGE (`servicodados.ibge.gov.br/api/v2/cnae/subclasses`,
+  baixada uma vez por sessão e filtrada por código ou palavra), CEP pelo ViaCEP (traz o IBGE; reserva BrasilAPI) e
+  municípios da UF pelo IBGE (`dominios/societario/consultasAbertura.ts`).
+- **Regime × CNAE:** `cnae_restricoes` (Simples: Anexo VI = impeditivo, Anexo VII = analisar; Presumido: art. 14, II,
+  VI e VII da Lei 9.718/1998). O banco recusa a combinação impeditiva ao salvar a ficha ou um sócio
+  (`app.soc_abertura_conferir`), com a mesma frase da tela (`conferirAbertura` em `dominios/societario/abertura.ts`).
+  **Premissa a validar pelo contador:** listas na redação da Res. CGSN 140/2018 com as CGSN 143/2018, 150/2019 e
+  156/2020; alteração posterior entra por migração nova.
+- **Faltas e avisos (só tela):** percentuais ≠ 100%, sem administrador, CPF inválido, regime de bens, quotas que não
+  fecham, sócio com outras empresas no Simples (LC 123, art. 3º, § 4º, III e IV), receita até R$ 78 mi no Presumido.
+- **Documentos:** cada anexo do processo recebe um tipo (e o sócio) por `soc_abertura_documento_tipar`; a lista de
+  esperados vem de `documentosEsperados` (RG/CNH e comprovante por sócio, certidão de casamento, IPTU, locação,
+  matrícula ou autorização conforme o imóvel).
+- **Concluir:** `soc_concluir_processo` cria o cliente com razão social, fantasia, cidade, UF e regime da ficha e liga
+  ao cliente os anexos do processo.
+
 ## 6.4 Mapa de automações (o que acontece sem ninguém clicar)
 
 | Gatilho ou agenda | Quando | O que faz |
