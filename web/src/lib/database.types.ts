@@ -10365,6 +10365,14 @@ export type Database = {
         Args: { p_fase: string; p_status: string };
         Returns: undefined;
       };
+      soc_processo_editar: {
+        Args: { p: Json; p_proc: string };
+        Returns: undefined;
+      };
+      soc_processo_excluir: {
+        Args: { p_motivo: string; p_proc: string };
+        Returns: undefined;
+      };
       soc_registrar_exigencia: {
         Args: { p_orgao: string; p_proc: string; p_texto: string };
         Returns: undefined;
