@@ -3,7 +3,7 @@
 // tipo de cada anexo do processo (RG/CNH, comprovante, IPTU…). Ficha e sócios abrem nas janelas próprias.
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { traduzirErro } from "@/lib/erros";
 import { formatarDocumento } from "@/lib/documento";
@@ -18,6 +18,17 @@ import type { SocioAbertura, TipoDocAbertura } from "../abertura";
 import { lerAbertura } from "../leituras";
 import { JanelaFichaAbertura } from "./JanelaFichaAbertura";
 import { JanelaSocio } from "./JanelaSocio";
+
+/** Marca (sessionStorage) deixada pelo "Novo processo" de abertura: a ficha já abre para preencher. */
+export const CHAVE_ABRIR_FICHA = "soc-abrir-ficha:";
+
+function pediuAbrirFicha(processoId: string) {
+  try {
+    return sessionStorage.getItem(`${CHAVE_ABRIR_FICHA}${processoId}`) === "1";
+  } catch {
+    return false;
+  }
+}
 
 const pct = (n: number) => `${String(Number(n)).replace(".", ",")}%`;
 
@@ -44,7 +55,14 @@ export function CartaoAbertura({
   aoMudar: () => void;
 }) {
   const consulta = useConsulta(useCallback(() => lerAbertura(processoId), [processoId]));
-  const [ficha, setFicha] = useState(false);
+  const [ficha, setFicha] = useState(() => pediuAbrirFicha(processoId));
+  useEffect(() => {
+    try {
+      sessionStorage.removeItem(`${CHAVE_ABRIR_FICHA}${processoId}`);
+    } catch {
+      /* nada a limpar */
+    }
+  }, [processoId]);
   const [socio, setSocio] = useState<{ s: SocioAbertura | null } | null>(null);
   const [janelaConfirmar, confirmar] = useConfirmar();
   const recarregar = consulta.recarregar;
@@ -287,7 +305,7 @@ export function CartaoAbertura({
       )}
 
       {janelaConfirmar}
-      {ficha && (
+      {ficha && editar && (
         <JanelaFichaAbertura
           processoId={processoId}
           ficha={f}
