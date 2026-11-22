@@ -108,14 +108,15 @@ export function CartaoAbertura({
       for (const f of Array.from(arqs)) {
         const a = await enviarArquivo(f, { org: orgId, app: "societario", ref: processoId, cliente: clienteId, visivelCliente: false });
         enviados++;
-        await supabase().from("soc_eventos").insert({
+        const tipado = await supabase().rpc("soc_abertura_documento_tipar", { p_arquivo: a.id, p_tipo: tipo, p_socio: socioId });
+        if (tipado.error) throw tipado.error;
+        const evento = await supabase().from("soc_eventos").insert({
           org_id: orgId,
           processo_id: processoId,
           tipo: "documento",
           texto: `Documento anexado (${rotulo}): ${f.name}`,
         });
-        const { error } = await supabase().rpc("soc_abertura_documento_tipar", { p_arquivo: a.id, p_tipo: tipo, p_socio: socioId });
-        if (error) throw error;
+        if (evento.error) throw evento.error;
       }
       mostrar(enviados === 1 ? "Documento anexado." : `${enviados} documentos anexados.`);
     } catch (e) {
