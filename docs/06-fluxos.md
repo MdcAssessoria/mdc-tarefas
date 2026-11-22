@@ -141,8 +141,9 @@ Os indicadores da lista (fase atrasada, previsão vencida, com exigência, parad
 - **Regime × CNAE:** `cnae_restricoes` (Simples: Anexo VI = impeditivo, Anexo VII = analisar; Presumido: art. 14, II,
   VI e VII da Lei 9.718/1998). O banco recusa a combinação impeditiva ao salvar a ficha ou um sócio
   (`app.soc_abertura_conferir`), com a mesma frase da tela (`conferirAbertura` em `dominios/societario/abertura.ts`).
-  **Premissa a validar pelo contador:** listas na redação da Res. CGSN 140/2018 com as CGSN 143/2018, 150/2019 e
-  156/2020; alteração posterior entra por migração nova.
+  Listas na redação da Res. CGSN 140/2018 com as CGSN 143/2018, 150/2019 e 156/2020. Conferido em 22/11/2026: a
+  CGSN 190/2026 (DOU 10/08/2026, efeitos em 01/01/2027) altera os Anexos I a V e insere o XIII, sem mexer nos
+  Anexos VI e VII. Alteração posterior entra por migração nova.
 - **Faltas e avisos (só tela):** percentuais ≠ 100%, sem administrador, CPF inválido, regime de bens, quotas que não
   fecham, sócio com outras empresas no Simples (LC 123, art. 3º, § 4º, III e IV), receita até R$ 78 mi no Presumido.
 - **Documentos:** cada anexo do processo recebe um tipo (e o sócio) por `soc_abertura_documento_tipar`; a lista de
