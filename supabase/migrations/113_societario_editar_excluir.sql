@@ -3,7 +3,8 @@
 --
 --  • soc_processo_editar (societario › operar, processo em andamento): nome da empresa (só quando ainda não está
 --    ligada a um cliente), CNPJ, UF, o que muda/observações, responsável (membro ativo) e previsão. Na abertura,
---    nome e UF seguem para a ficha. Cada mudança vai para a linha do tempo com o antes e o depois.
+--    nome e UF seguem para a ficha. Cada mudança vai para a linha do tempo com o antes e o depois
+--    (observações cortadas em 300 letras) e o registro completo para a auditoria do HUB.
 --  • soc_processo_excluir (societario › gerir, motivo de 5 letras ou mais): apaga de vez o processo aberto por
 --    engano — fases, protocolos, taxas, exigências, histórico e ficha de abertura vão junto. Não exclui processo
 --    concluído (já produziu efeito, como o cadastro do cliente) nem processo com anexo ativo (o arquivo é imutável:
@@ -51,7 +52,10 @@ begin
   if v_futuro is distinct from a.futuro_cliente then v_mud := v_mud || ('nome: ' || coalesce(a.futuro_cliente, '—') || ' → ' || v_futuro); end if;
   if v_cnpj is distinct from a.cnpj then v_mud := v_mud || ('CNPJ: ' || coalesce(a.cnpj, '—') || ' → ' || coalesce(v_cnpj, '—')); end if;
   if v_uf is distinct from a.uf then v_mud := v_mud || ('UF: ' || coalesce(a.uf, '—') || ' → ' || coalesce(v_uf, '—')); end if;
-  if v_desc is distinct from a.descricao then v_mud := v_mud || 'observações'::text; end if;
+  if v_desc is distinct from a.descricao then
+    v_mud := v_mud || ('observações: "' || coalesce(left(a.descricao, 300) || case when length(a.descricao) > 300 then '…' else '' end, '—')
+                      || '" → "' || coalesce(left(v_desc, 300) || case when length(v_desc) > 300 then '…' else '' end, '—') || '"');
+  end if;
   if v_resp is distinct from a.responsavel_id then
     v_mud := v_mud || ('responsável: ' || coalesce((select nome from public.membros where org_id = a.org_id and user_id = a.responsavel_id), '—')
                       || ' → ' || (select nome from public.membros where org_id = a.org_id and user_id = v_resp));
@@ -72,6 +76,12 @@ begin
      where processo_id = p_proc;
   end if;
   perform app.soc_evento(p_proc, 'comentario', 'Dados do processo alterados — ' || array_to_string(v_mud, '; '), false);
+  -- texto completo (observações longas) fica na auditoria do HUB
+  perform app.registrar(a.org_id, 'societario', 'editar_processo', a.id::text,
+    jsonb_build_object('futuro_cliente', a.futuro_cliente, 'cnpj', a.cnpj, 'uf', a.uf, 'descricao', a.descricao,
+                       'responsavel_id', a.responsavel_id, 'previsao_em', a.previsao_em),
+    jsonb_build_object('futuro_cliente', v_futuro, 'cnpj', v_cnpj, 'uf', v_uf, 'descricao', v_desc,
+                       'responsavel_id', v_resp, 'previsao_em', v_prev));
 exception when invalid_text_representation or invalid_datetime_format or datetime_field_overflow then
   raise exception 'Algum valor está em formato inválido (data ou responsável). Confira e salve de novo.';
 end $$;

@@ -60,6 +60,8 @@ function Ficha() {
   const [janelaConfirmar, confirmar] = useConfirmar();
   const [cancelando, setCancelando] = useState(false);
   const [editando, setEditando] = useState(false);
+  /** Muda quando "Editar dados" grava: a ficha de abertura relê nome e UF. */
+  const [versaoFicha, setVersaoFicha] = useState(0);
   const [excluindo, setExcluindo] = useState(false);
   const router = useRouter();
   /** Erro que fica na tela até a próxima ação (ex.: registro salvo sem a linha do histórico). */
@@ -321,6 +323,7 @@ function Ficha() {
 
       {d.tipo?.codigo === "abertura" && (
         <CartaoAbertura
+          key={versaoFicha}
           processoId={p.id}
           numero={p.numero}
           padrao={{ razao: p.futuro_cliente ?? "", uf: p.uf ?? "" }}
@@ -429,6 +432,7 @@ function Ficha() {
           aoFechar={() => setEditando(false)}
           aoSalvar={() => {
             setEditando(false);
+            setVersaoFicha((v) => v + 1);
             mostrar("Dados do processo salvos.");
             recarregar();
           }}
