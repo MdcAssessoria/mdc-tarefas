@@ -128,6 +128,9 @@ describe("numeroDigitado", () => {
   it("aceita vírgula e milhar, vazio vira null e texto vira NaN", () => {
     expect(numeroDigitado("10.000,50")).toBe(10000.5);
     expect(numeroDigitado("33,3333")).toBe(33.3333);
+    expect(numeroDigitado("10.000")).toBe(10000);
+    expect(numeroDigitado("1.500.000")).toBe(1500000);
+    expect(numeroDigitado("33.5")).toBe(33.5);
     expect(numeroDigitado("")).toBeNull();
     expect(numeroDigitado("abc")).toBeNaN();
     expect(numeroParaCampo(33.5)).toBe("33,5");

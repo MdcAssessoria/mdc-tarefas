@@ -282,7 +282,9 @@ export function documentosEsperados(f: FichaAbertura | null, socios: SocioAbertu
 export function numeroDigitado(t: string): number | null {
   const s = t.replace(/[R$\s%]/g, "");
   if (!s) return null;
-  const n = Number(s.includes(",") ? s.replace(/\./g, "").replace(",", ".") : s);
+  // vírgula = decimal; sem vírgula, "10.000" ou "1.500.000" é milhar (padrão brasileiro) e "33.5" é decimal
+  const milhar = /^-?\d{1,3}(\.\d{3})+$/.test(s);
+  const n = Number(s.includes(",") ? s.replace(/\./g, "").replace(",", ".") : milhar ? s.replace(/\./g, "") : s);
   return Number.isFinite(n) ? n : NaN;
 }
 /** Número → texto do campo (vírgula decimal, sem milhar). */
