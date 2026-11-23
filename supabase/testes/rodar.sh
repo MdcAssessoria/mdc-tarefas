@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Sobe um Postgres 16 temporário, aplica a base simulada + migrações 026/028/029/030/031/032/033/034 (e, no fim, 035 a 046) e roda os testes do Financeiro,
+# Sobe um Postgres 16 temporário, aplica a base simulada + migrações 026/028/029/030/031/032/033/034 (e, no fim, 035 a 111, com a cadeia do BI/Omie 090–111) e roda os testes do Financeiro,
 # Licenças, Notas fiscais, Estoque/pedidos e Transferências; depois 035 (módulos) e 036 (auditoria de 02/11/2026).
 # Cada linha "(deve falhar)" precisa terminar em ERROR com a mensagem em português; as demais, sem erro.
 set -euo pipefail
@@ -252,3 +252,16 @@ $P -f "$R/testes/169_pagamento_planilha_098.sql" 2>&1 | grep -v "^SET$"
 $P -v ON_ERROR_STOP=1 -f "$R/migrations/102_hub_team_a_venda.sql" 2>&1 | grep -v NOTICE || true
 $P -f "$R/testes/171_hub_team_102.sql" 2>&1 | grep -v "^SET$"
 # 103: segurança SEG-04 a SEG-07 — teste roda na produção numa transação desfeita: testes/172_seguranca_103_producao.sql
+# 090 a 111: BI de Gestão e Omie no Postgres temporário (achados ARQ-01 e TST-03 de 21/11/2026). A base 187 traz só o
+# que estas migrações usam e o rodar.sh ainda não tinha; os testes *_producao.sql (099, 103, 104, 105, 107, 111)
+# continuam rodando na produção, mas a aplicação das migrações e a 106 (omie_extrato) passam a ser provadas aqui.
+for f in testes/187_base_omie_bi.sql migrations/090_bi_gestao_omie.sql migrations/090b_bi_relatorio_digitos.sql \
+         migrations/090c_omie_agendamento.sql migrations/090d_omie_gestao.sql migrations/090e_omie_restaura_agendamento.sql \
+         migrations/094_bi_relatorio_rapido.sql migrations/097_bi_gestao_acesso_indicadores_orcamento.sql \
+         migrations/099_omie_bi_sem_gravacao_direta.sql migrations/101_omie_remove_modelo_b.sql \
+         migrations/103_seguranca_seg04_07.sql migrations/104_bi_plano_padrao.sql migrations/105_bi_classificacao_saldos.sql \
+         migrations/106_omie_extrato.sql migrations/107_bi_dfc_extrato.sql migrations/108_bi_dfc_extrato_sem_dobra.sql \
+         migrations/109_bi_intragrupo_nomes.sql migrations/110_bi_nomes_por_cliente.sql migrations/111_bi_indicadores_rapido.sql; do
+  $P -v ON_ERROR_STOP=1 -f "$R/$f" 2>&1 | grep -v NOTICE || true
+done
+$P -f "$R/testes/188_omie_extrato_106.sql" 2>&1 | grep -v "^SET$"
