@@ -299,6 +299,8 @@ Funil de vendas da MDC, leads e contratos com o cliente novo.
 
 **Para que serve:** acompanhar cada oportunidade por etapa até virar cliente.
 
+**Propostas que saem assinadas:** na ficha da oportunidade, aba **Proposta e contrato**, o quadro **Propostas em PDF** recebe o PDF da proposta (arraste ou clique para escolher). O botão **Baixar assinada** entrega o PDF com a assinatura digital do certificado da MDC (ICP-Brasil) e um rodapé dizendo quem assinou e onde conferir (validar.iti.gov.br), igual ao PDF dos demonstrativos. O arquivo anexado não muda; cada download fica no histórico como "Proposta assinada". Sem certificado válido em Configurações, a proposta não sai. Só o administrador pode **Retirar** uma proposta (com motivo).
+
 ### Leads (CRM Comercial → Leads)
 
 **Para que serve:** contatos que chegaram (inclusive pelas ferramentas abertas, como o Simulador de Regime).
@@ -423,5 +425,6 @@ Os sistemas que a MDC licencia aos clientes (Ledgra ERP, EXato e os próximos): 
 | 2.10 | 21/11/2026 | **BI de Gestão**: correção do fluxo de caixa do grupo (com "tirar as operações entre as empresas", os movimentos sem CNPJ/CPF, como tarifas e débitos em conta, ficavam de fora); quadro Operações entre as empresas em Resultado × caixa; nome de clientes e fornecedores nos títulos do Omie; quadro mês a mês na Visão geral e Orçamento no padrão MDC; extrato também das contas inativas. |
 | 2.13 | 22/11/2026 | **Societário**: Editar dados do processo (nome, CNPJ, UF, observações, responsável, previsão; registrado na linha do tempo) e Excluir processo (quem gere, com motivo; não vale para concluído nem com anexo). |
 | 2.12 | 22/11/2026 | **Societário**: ficha de abertura no processo de abertura — regime (Simples, Presumido, Real) que confere os CNAE pela lista oficial, CNAE principal e secundários, quadro societário com percentuais e administrador, capital e quotas, endereço com busca de CEP e IBGE, imóvel, contato, contador e documentos por tipo; o cliente nasce com os dados da ficha. |
+| 2.14 | 23/11/2026 | **CRM Comercial**: propostas em PDF anexadas na ficha saem **assinadas digitalmente** pela MDC ao baixar (botão Baixar assinada), com registro no histórico. |
 | 2.11 | 21/11/2026 | **Demonstrativos**: Balanço, DRE, DFC e Balancete no mesmo padrão de tabela do BI (cabeçalho verde preso no topo, primeira coluna presa ao rolar, subtotais e resultado em destaque); também no Portal do Cliente. |
 `;

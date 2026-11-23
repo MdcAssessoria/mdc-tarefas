@@ -20,11 +20,13 @@ const ICONE: Record<string, NomeIcone> = {
   reuniao: "pessoas",
   tarefa: "calendario",
   contrato: "documento",
+  proposta: "escudo",
   etapa: "funil",
 };
 const nomeTipo = (t: string) =>
-  TIPOS_ATIVIDADE.find((x) => x.id === t)?.nome ?? (t === "etapa" ? "Etapa" : t === "contrato" ? "Contrato" : t);
-/** Só os registros feitos à mão podem ter o texto corrigido; os automáticos (contrato, etapa) ficam como estão. */
+  TIPOS_ATIVIDADE.find((x) => x.id === t)?.nome ??
+  (t === "etapa" ? "Etapa" : t === "contrato" ? "Contrato" : t === "proposta" ? "Proposta assinada" : t);
+/** Só os registros feitos à mão podem ter o texto corrigido; os automáticos (contrato, etapa, proposta) ficam como estão. */
 const editavel = (a: Atividade) => TIPOS_ATIVIDADE.some((t) => t.id === a.tipo);
 
 export function HistoricoOportunidade({

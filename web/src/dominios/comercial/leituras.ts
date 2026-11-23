@@ -4,6 +4,7 @@ import { supabase } from "@/lib/supabase";
 import { exigir } from "@/lib/exigir";
 import { lerTudo } from "@/lib/lerTudo";
 import type { Atividade, Contrato, Modelo, Oportunidade } from "./crm";
+import type { Arquivo } from "@/lib/arquivos/armazenamento";
 
 /** Todas as oportunidades da organização (no funil e arquivadas), da mais mexida para a menos. */
 export function lerOportunidades(orgId: string) {
@@ -52,21 +53,32 @@ export interface Ficha {
   atividades: Atividade[];
   contratos: Contrato[];
   modelo: Modelo | null;
+  /** Propostas em PDF anexadas na ficha (hub_arquivos do Comercial, sem as retiradas), a mais nova primeiro (115). */
+  propostas: Arquivo[];
 }
 
-/** Tudo da ficha de uma oportunidade: dados, histórico, contratos (o mais novo primeiro) e o modelo em uso. */
+/** Tudo da ficha de uma oportunidade: dados, histórico, contratos (o mais novo primeiro), o modelo em uso e as propostas em PDF. */
 export async function lerFicha(id: string, orgId: string): Promise<Ficha> {
   const sb = supabase();
-  const [o, atividades, contratos, modelo] = await Promise.all([
+  const [o, atividades, contratos, modelo, propostas] = await Promise.all([
     sb.from("crm_oportunidades").select("*").eq("id", id).single(),
     sb.from("crm_atividades").select("*").eq("oportunidade_id", id).order("criado_em", { ascending: false }),
     sb.from("crm_contratos").select("*").eq("oportunidade_id", id).order("criado_em", { ascending: false }),
     lerModeloAtivo(orgId),
+    sb
+      .from("hub_arquivos")
+      .select("*")
+      .eq("org_id", orgId)
+      .eq("app", "comercial")
+      .eq("ref_id", id)
+      .is("retirado_em", null)
+      .order("enviado_em", { ascending: false }),
   ]);
   return {
     o: exigir(o) as Oportunidade,
     atividades: (exigir(atividades) as Atividade[] | null) ?? [],
     contratos: (exigir(contratos) as Contrato[] | null) ?? [],
     modelo,
+    propostas: (exigir(propostas) as Arquivo[] | null) ?? [],
   };
 }
