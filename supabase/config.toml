@@ -15,6 +15,10 @@ import_map = "./functions/convite/deno.json"
 verify_jwt = true
 import_map = "./functions/demonstrativo-pdf/deno.json"
 
+[functions.proposta-pdf]
+verify_jwt = true
+import_map = "./functions/proposta-pdf/deno.json"
+
 [functions.certificado]
 verify_jwt = true
 import_map = "./functions/certificado/deno.json"

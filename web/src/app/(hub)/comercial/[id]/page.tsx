@@ -21,6 +21,7 @@ import { useAcoesOportunidade } from "@/dominios/comercial/componentes/useAcoesO
 import { DadosOportunidade } from "@/dominios/comercial/componentes/ficha/DadosOportunidade";
 import { HistoricoOportunidade } from "@/dominios/comercial/componentes/ficha/HistoricoOportunidade";
 import { SecaoContrato } from "@/dominios/comercial/componentes/ficha/SecaoContrato";
+import { SecaoPropostas } from "@/dominios/comercial/componentes/ficha/SecaoPropostas";
 import { hojeISO } from "@/lib/datas";
 
 export default function PaginaOportunidade() {
@@ -58,7 +59,7 @@ function Ficha() {
       <Esqueleto indicadores={0} linhas={8} />
     );
 
-  const { o, atividades, contratos, modelo } = consulta.dados;
+  const { o, atividades, contratos, modelo, propostas } = consulta.dados;
   const zap = linkWhatsapp(o.whatsapp);
   const etapaIdx = ETAPAS.findIndex((e) => e.id === o.etapa);
   const ultimo = contratos[0];
@@ -224,16 +225,19 @@ function Ficha() {
           </div>
         </div>
       ) : (
-        <SecaoContrato
-          key={ultimo ? `${ultimo.id}:${ultimo.status}` : "novo"}
-          o={o}
-          modelo={modelo}
-          contratos={contratos}
-          podeOperar={podeOperar}
-          podeGerir={podeGerir}
-          aoMudar={consulta.recarregar}
-          avisar={mostrar}
-        />
+        <div className="space-y-4">
+          <SecaoPropostas o={o} propostas={propostas} podeOperar={podeOperar} aoMudar={consulta.recarregar} avisar={mostrar} />
+          <SecaoContrato
+            key={ultimo ? `${ultimo.id}:${ultimo.status}` : "novo"}
+            o={o}
+            modelo={modelo}
+            contratos={contratos}
+            podeOperar={podeOperar}
+            podeGerir={podeGerir}
+            aoMudar={consulta.recarregar}
+            avisar={mostrar}
+          />
+        </div>
       )}
     </div>
   );
