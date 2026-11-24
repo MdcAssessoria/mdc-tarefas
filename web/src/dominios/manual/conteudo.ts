@@ -249,7 +249,7 @@ DRE e fluxo de caixa (DFC) gerenciais de um grupo de empresas, mês a mês, a pa
 2. **Previsão de entrega:** a carteira separada em atrasados, próximos 7 dias, até o fim do mês, mês que vem, depois e sem previsão, e o gráfico por mês. Toque numa faixa para ver os pedidos.
 3. **Volume por cliente:** pedidos e valor do período, quanto foi atendido, o que está em carteira, atrasado e a próxima entrega de cada cliente. Toque no nome para ver os pedidos dele.
 4. **Pedidos:** pesquise por número, pedido do cliente, cliente, CNPJ ou etapa e filtre por situação (Em carteira, Atrasado, Atendido). PDF e Excel em todas as visões.
-5. "Atendido" é o pedido faturado no Omie (o pedido inteiro). A previsão é a data de previsão do pedido no Omie.
+5. "Atendido" é o pedido faturado no Omie (o pedido inteiro). A previsão é a data de previsão do pedido no Omie. Orçamentos (etapa "Orçamento" do Omie), pedidos cancelados e pedidos encerrados sem faturar não entram.
 
 ### Parecer gerencial do BI (BI de Gestão → aba Parecer)
 
