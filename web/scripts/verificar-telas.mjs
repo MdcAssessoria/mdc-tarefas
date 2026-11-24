@@ -1422,6 +1422,10 @@ const INTERACOES = {
     await p.getByRole("tab", { name: "Orçamento" }).click();
     await p.getByLabel(/Receita bruta de vendas e serviços, jan/).waitFor({ timeout: 8000 });
     await foto?.("orcamento");
+    // 116: projeção dos anos seguintes a partir do realizado do ano-base, com o estudo gravado aberto
+    await p.getByRole("tab", { name: /Projeção/ }).click();
+    await p.getByRole("region", { name: /Projeção da DRE 2025 a 2028/ }).waitFor({ timeout: 8000 });
+    await foto?.("projecao");
   },
   "/demonstrativos/importar": importarEmLote,
   // Novo processo de empresa fora do cadastro: "Buscar dados" do CNPJ (Receita simulada) preenche razão social e UF

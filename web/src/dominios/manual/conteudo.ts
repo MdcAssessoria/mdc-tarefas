@@ -4,7 +4,7 @@
 // (components/shell/navegacao.ts): com ele a tela do manual ganha o botão "Ir para a tela".
 // Mudou uma tela ou regra? Atualize o trecho dela aqui no mesmo commit e acrescente uma linha em "Controle de versões".
 
-export const VERSAO_MANUAL = { numero: "2.13", data: "22/11/2026" };
+export const VERSAO_MANUAL = { numero: "2.15", data: "23/11/2026" };
 
 export const MANUAL_MD = `
 ## Como usar este manual
@@ -258,12 +258,15 @@ Só para a equipe MDC. O HUB monta o rascunho do parecer com os números do per�
 
 ### Lançamentos e orçamento (BI de Gestão → aba Lançamentos)
 
-**Para que serve:** completar o que não está no Omie e gravar a meta mensal para comparar realizado × orçado.
+**Para que serve:** completar o que não está no Omie, gravar a meta mensal para comparar realizado × orçado e projetar os anos seguintes.
 
 1. **Lançamentos complementares:** toque em **Novo lançamento**, escolha empresa, mês, linha da DRE e/ou do DFC, valor positivo e histórico, e grave. Para vários de uma vez, **Baixar modelo**, preencha e **Importar Excel**.
 2. Para desfazer um lançamento, toque em **Cancelar** e escreva o motivo.
 3. **Orçamento:** escolha empresa, ano (de dois anos atrás até cinco à frente) e **DRE** ou **Fluxo de caixa**, digite a meta de cada mês (valor positivo; despesa e pagamento saem negativos no relatório) e toque em **Gravar**. Célula em branco = sem meta.
 4. Para o ano todo de uma vez, **Baixar planilha**, preencha e **Importar Excel**. A importação grava tudo ou nada.
+5. **Projeção (anos seguintes):** escolha empresa, **ano-base** (o realizado que serve de ponto de partida) e de 1 a 5 **anos à frente**. Ajuste as **premissas gerais** (crescimento da receita e inflação de cada ano) e, linha a linha, como ela projeta: **Crescimento/Reajuste %** sobre o ano anterior ou **% da receita**. Pode digitar o valor do ano direto (fica em amarelo; apague para voltar ao cálculo). Os subtotais e o resultado são calculados.
+6. Toque em **Gravar estudo** (guarde vários cenários com nomes diferentes). Para trabalhar no Excel, **Baixar modelo**, preencha e **Importar Excel**: o HUB mostra o que leu e aplica ao estudo para você conferir e gravar.
+7. **Provisionar no Orçamento** grava os anos projetados no Orçamento da DRE, mês a mês pela sazonalidade do ano-base, substituindo o que havia nesses anos. Depois compare em **Comparar → Orçamento**.
 
 ## Atendimento
 
@@ -426,5 +429,6 @@ Os sistemas que a MDC licencia aos clientes (Ledgra ERP, EXato e os próximos): 
 | 2.13 | 22/11/2026 | **Societário**: Editar dados do processo (nome, CNPJ, UF, observações, responsável, previsão; registrado na linha do tempo) e Excluir processo (quem gere, com motivo; não vale para concluído nem com anexo). |
 | 2.12 | 22/11/2026 | **Societário**: ficha de abertura no processo de abertura — regime (Simples, Presumido, Real) que confere os CNAE pela lista oficial, CNAE principal e secundários, quadro societário com percentuais e administrador, capital e quotas, endereço com busca de CEP e IBGE, imóvel, contato, contador e documentos por tipo; o cliente nasce com os dados da ficha. |
 | 2.14 | 23/11/2026 | **CRM Comercial**: propostas em PDF anexadas na ficha saem **assinadas digitalmente** pela MDC ao baixar (botão Baixar assinada), com registro no histórico. |
+| 2.15 | 23/11/2026 | **BI de Gestão**: Projeção da DRE para até 5 anos a partir do realizado (premissas de crescimento e inflação, % por linha editável ano a ano, valor digitado por cima), estudos gravados por empresa, planilha-modelo em Excel para baixar e subir, e "Provisionar no Orçamento". |
 | 2.11 | 21/11/2026 | **Demonstrativos**: Balanço, DRE, DFC e Balancete no mesmo padrão de tabela do BI (cabeçalho verde preso no topo, primeira coluna presa ao rolar, subtotais e resultado em destaque); também no Portal do Cliente. |
 `;

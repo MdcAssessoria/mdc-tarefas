@@ -40,6 +40,16 @@ mês e no total do período. Os dados vêm do sistema do cliente (Omie) e dos la
     clientes (notas autorizadas) e fornecedores (títulos), e liquidez.
   - **Lançamentos:** lançamentos complementares (fora do Omie: novo, importar Excel, modelo, cancelar com motivo) e
     **Orçamento** (grade linha × 12 meses por empresa e ano, gravar, desfazer, importar e baixar planilha).
+    e **Projeção (anos seguintes)** (116, `componentes/AbaProjecao.tsx`, regras em `projecao.ts` com teste): parte
+    do realizado da DRE do ano-base (`bi_relatorio`, sem eliminação) e projeta 1 a 5 anos. Premissas gerais
+    (crescimento da receita e inflação por ano); cada linha analítica projeta por **crescimento/reajuste %** sobre o
+    ano anterior (padrão: crescimento da receita nas receitas, inflação nas despesas) ou **% da receita bruta**
+    (padrão em deduções, devoluções, custos e IRPJ/CSLL; taxa sugerida = participação no ano-base); valor digitado
+    vence o cálculo; subtotais pela árvore `bi_linhas.soma`; "Não classificado" fica fora (aviso com o valor).
+    Estudos em `bi_projecoes` (vários por empresa, nome único); planilha-modelo com abas Projeção e Premissas
+    (import marca como digitado só o que difere do calculado). **Provisionar** grava os anos projetados no Orçamento
+    da DRE por `bi_projecao_provisionar` (chama `bi_orcamento_gravar` numa transação; mês a mês pela sazonalidade do
+    ano-base, fechando no centavo) e marca o estudo como provisionado.
 - **Aviso "Não classificado":** categorias do Omie sem conta do plano (código na descrição ou exceção) nem regra antiga.
 - **Orçamento:** anos de 2 para trás até 5 para a frente (o ano escolhido sempre aparece).
 - **Gráficos** (`componentes/GraficoBarras.tsx`, contas em `graficos.ts`): SVG desenhado na largura real da tela (texto
@@ -80,6 +90,7 @@ mês e no total do período. Os dados vêm do sistema do cliente (Omie) e dos la
 | `app.bi_liberado`, `app.bi_responsavel`, `app.bi_pode_aprovar`, `app.bi_org_dos_clientes` (097) | Regras: liberado = admin, responsável ou pedido aprovado válido; todas as empresas pedidas conferidas, no máximo 50, mesma organização |
 | `bi_indicadores(clientes, inicio, fim, eliminar)` (097) | PMR, PMP, aberto por faixa, maiores clientes e fornecedores, liquidez do balancete |
 | `bi_orcamento`, `bi_orcamento_gravar(jsonb, arquivo)`, `bi_orcado(...)` (097) | Orçamento por empresa, linha e mês (valor positivo; branco apaga; tudo ou nada); `bi_orcado` devolve no formato do relatório com o sinal pela natureza da linha |
+| `bi_projecoes`, `bi_projecao_salvar`, `bi_projecao_excluir`, `bi_projecao_provisionar(id, linhas)` (116) | Estudos de projeção por empresa (premissas em JSON, até 5 anos); leitura por `app.bi_pode_ver`, gravação só pelas funções com `app.bi_pode_lancar`; provisionar aceita só linhas da DRE da empresa do estudo nos anos ano-base+1 a +5 |
 
 Aba **Resultado × caixa** (105, `conciliacao.ts`): a DRE (competência) e o fluxo (pagamento) somados por grupo de contas do
 plano (vendas, outras receitas, impostos, pessoal com a mão de obra da produção, custos, despesas, financeiras, sem conta),

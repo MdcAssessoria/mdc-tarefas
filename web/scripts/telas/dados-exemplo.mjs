@@ -3603,4 +3603,26 @@ RPCS.fis_nbs_do_servico = ({ p_servico }) => {
     },
   ];
   TABELAS.bi_orcamento = [{ cliente_id: C1, relatorio: "dre", linha: "receita_bruta", competencia: "2026-01-01", valor: 125000 }];
+  // 116: subtotais da DRE com a árvore (a projeção calcula por eles) e um estudo gravado
+  const SOMAS = {
+    receita_liquida: ["receita_bruta", "deducoes"],
+    lucro_bruto: ["receita_liquida", "custos"],
+    resultado_operacional: ["lucro_bruto", "despesas_pessoal", "nao_classificado"],
+    resultado_liquido: ["resultado_operacional"],
+  };
+  for (const [codigo, nome, ordem, subtotal] of DRE)
+    if (subtotal) TABELAS.bi_linhas.push({ relatorio: "dre", codigo, nome, ordem, natureza: null, soma: SOMAS[codigo], org_id: null, ativo: true });
+  TABELAS.bi_projecoes = [
+    {
+      id: "proj-1",
+      org_id: ORG,
+      cliente_id: C1,
+      nome: "Cenário base 2026–2028",
+      ano_base: 2025,
+      premissas: { anos: 3, crescimentoReceita: [8, 7, 6, 5, 5], inflacao: [4.5, 4, 4, 4, 4], linhas: {}, valores: { despesas_pessoal: [16000, null, null, null, null] }, base: {} },
+      provisionado_em: null,
+      provisionado_anos: null,
+      atualizado_em: "2026-11-20T10:00:00Z",
+    },
+  ];
 })();
