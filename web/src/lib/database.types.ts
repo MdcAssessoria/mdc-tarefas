@@ -7138,6 +7138,7 @@ export type Database = {
           codigo_cliente: string | null;
           codigo_pedido: string;
           dados: Json;
+          encerrado: boolean;
           etapa: string | null;
           etapa_nome: string | null;
           faturado: boolean;
@@ -7158,6 +7159,7 @@ export type Database = {
           codigo_cliente?: string | null;
           codigo_pedido: string;
           dados?: Json;
+          encerrado?: boolean;
           etapa?: string | null;
           etapa_nome?: string | null;
           faturado?: boolean;
@@ -7178,6 +7180,7 @@ export type Database = {
           codigo_cliente?: string | null;
           codigo_pedido?: string;
           dados?: Json;
+          encerrado?: boolean;
           etapa?: string | null;
           etapa_nome?: string | null;
           faturado?: boolean;
