@@ -6722,6 +6722,47 @@ export type Database = {
           },
         ];
       };
+      omie_departamentos: {
+        Row: {
+          atualizado_em: string;
+          cliente_id: string;
+          codigo: string;
+          dados: Json;
+          descricao: string | null;
+          estrutura: string | null;
+          inativo: boolean;
+          org_id: string;
+        };
+        Insert: {
+          atualizado_em?: string;
+          cliente_id: string;
+          codigo: string;
+          dados?: Json;
+          descricao?: string | null;
+          estrutura?: string | null;
+          inativo?: boolean;
+          org_id: string;
+        };
+        Update: {
+          atualizado_em?: string;
+          cliente_id?: string;
+          codigo?: string;
+          dados?: Json;
+          descricao?: string | null;
+          estrutura?: string | null;
+          inativo?: boolean;
+          org_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "omie_departamentos_cliente_id_fkey";
+            columns: ["cliente_id"];
+            isOneToOne: false;
+            referencedRelation: "clientes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       omie_empresas: {
         Row: {
           ativo: boolean;
@@ -6901,6 +6942,7 @@ export type Database = {
           codigo_titulo: string;
           conta_corrente: string | null;
           dados: Json;
+          departamentos: Json;
           documento: string | null;
           emissao: string | null;
           natureza: string;
@@ -6922,6 +6964,7 @@ export type Database = {
           codigo_titulo: string;
           conta_corrente?: string | null;
           dados?: Json;
+          departamentos?: Json;
           documento?: string | null;
           emissao?: string | null;
           natureza: string;
@@ -6943,6 +6986,7 @@ export type Database = {
           codigo_titulo?: string;
           conta_corrente?: string | null;
           dados?: Json;
+          departamentos?: Json;
           documento?: string | null;
           emissao?: string | null;
           natureza?: string;
@@ -7079,6 +7123,77 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "omie_notas_cliente_id_fkey";
+            columns: ["cliente_id"];
+            isOneToOne: false;
+            referencedRelation: "clientes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      omie_pedidos: {
+        Row: {
+          atualizado_em: string;
+          cancelado: boolean;
+          cliente_id: string;
+          codigo_cliente: string | null;
+          codigo_pedido: string;
+          dados: Json;
+          etapa: string | null;
+          etapa_nome: string | null;
+          faturado: boolean;
+          faturamento: string | null;
+          inclusao: string | null;
+          itens: number;
+          numero: string | null;
+          numero_cliente: string | null;
+          org_id: string;
+          previsao: string | null;
+          quantidade: number;
+          valor: number;
+        };
+        Insert: {
+          atualizado_em?: string;
+          cancelado?: boolean;
+          cliente_id: string;
+          codigo_cliente?: string | null;
+          codigo_pedido: string;
+          dados?: Json;
+          etapa?: string | null;
+          etapa_nome?: string | null;
+          faturado?: boolean;
+          faturamento?: string | null;
+          inclusao?: string | null;
+          itens?: number;
+          numero?: string | null;
+          numero_cliente?: string | null;
+          org_id: string;
+          previsao?: string | null;
+          quantidade?: number;
+          valor?: number;
+        };
+        Update: {
+          atualizado_em?: string;
+          cancelado?: boolean;
+          cliente_id?: string;
+          codigo_cliente?: string | null;
+          codigo_pedido?: string;
+          dados?: Json;
+          etapa?: string | null;
+          etapa_nome?: string | null;
+          faturado?: boolean;
+          faturamento?: string | null;
+          inclusao?: string | null;
+          itens?: number;
+          numero?: string | null;
+          numero_cliente?: string | null;
+          org_id?: string;
+          previsao?: string | null;
+          quantidade?: number;
+          valor?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "omie_pedidos_cliente_id_fkey";
             columns: ["cliente_id"];
             isOneToOne: false;
             referencedRelation: "clientes";
@@ -9246,6 +9361,43 @@ export type Database = {
           resposta: string;
           situacao: string;
           valido_ate: string;
+        }[];
+      };
+      bi_carteira: {
+        Args: { p_clientes: string[]; p_fim: string; p_inicio: string };
+        Returns: {
+          cliente_doc: string;
+          cliente_id: string;
+          cliente_nome: string;
+          codigo_pedido: string;
+          empresa: string;
+          etapa: string;
+          etapa_nome: string;
+          faturado: boolean;
+          faturamento: string;
+          inclusao: string;
+          itens: number;
+          numero: string;
+          numero_cliente: string;
+          previsao: string;
+          quantidade: number;
+          valor: number;
+        }[];
+      };
+      bi_centro_custo: {
+        Args: {
+          p_clientes: string[];
+          p_eliminar?: boolean;
+          p_fim: string;
+          p_inicio: string;
+          p_relatorio: string;
+        };
+        Returns: {
+          centro: string;
+          centro_nome: string;
+          competencia: string;
+          linha: string;
+          valor: number;
         }[];
       };
       bi_classificacao_listar: {
