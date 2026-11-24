@@ -495,14 +495,20 @@ async function sincronizar(db: SupabaseClient, e: Empresa, inicio: number) {
 /** pedidos de venda (117): na carga, os incluídos na janela; depois, os alterados desde a última rodada boa */
 async function sincronizarPedidos(db: SupabaseClient, omie: ClienteOmie, e: Empresa, carga: boolean, de: string, ate: string, hoje: string,
                                   contagem: Record<string, number | string>) {
+  // etapas do kanban de faturamento (produtos/etapafat, ListarEtapasFaturamento): os códigos são fixos e o nome de cada
+  // coluna é o da conta; vale o da operação de venda de produto (cCodOperacao 11), senão o primeiro encontrado
   const etapas = new Map<string, string>();
   try {
-    const cad = await omie.todas("produtos/pedidoetapas/", "ListarEtapasPedido", {}, "n", "cadastros");
-    for (const c of cad) for (const et of c.etapas ?? []) {
-      const nome = String(et.cDescricao || et.cDescrPadrao || "").trim();
-      if (et.cCodigo != null && nome && !etapas.has(String(et.cCodigo))) etapas.set(String(et.cCodigo), nome);
+    const r = await omie.chamar("produtos/etapafat/", "ListarEtapasFaturamento", { pagina: 1, registros_por_pagina: 100 });
+    // deno-lint-ignore no-explicit-any
+    const ops: any[] = Array.isArray(r?.cadastros) ? r.cadastros : [];
+    const ordenadas = [...ops].sort((a, b) => Number(String(b?.cCodOperacao) === "11") - Number(String(a?.cCodOperacao) === "11"));
+    for (const op of ordenadas) for (const et of op?.etapas ?? []) {
+      const cod = et?.cCodigo != null ? String(et.cCodigo) : "";
+      const nome = String(et?.cDescricao || et?.cDescrPadrao || "").trim();
+      if (cod && nome && !etapas.has(cod)) etapas.set(cod, nome);
     }
-    if (!etapas.size) contagem.etapas_aviso = `ListarEtapasPedido sem etapas (${cad.length} cadastro(s))`;
+    if (!etapas.size) contagem.etapas_aviso = `ListarEtapasFaturamento sem etapas (chaves: ${Object.keys(r ?? {}).join(",")})`.slice(0, 200);
   } catch (err) {
     if (err instanceof TempoEsgotado) throw err; // sem nomes de etapa a tela mostra o código
     contagem.etapas_aviso = String((err as Error).message ?? err).slice(0, 200);
@@ -514,6 +520,12 @@ async function sincronizarPedidos(db: SupabaseClient, omie: ClienteOmie, e: Empr
   const pedidos = await omie.todas("produtos/pedido/", "ListarPedidos", filtro, "omie", "pedido_venda_produto");
   const linhas = pedidos.filter((p) => p?.cabecalho?.codigo_pedido != null).map((p) => converterPedido(p, e, etapas));
   await gravar(db, "omie_pedidos", [...new Map(linhas.map((l) => [l.codigo_pedido, l])).values()], "cliente_id,codigo_pedido");
+  // pedidos gravados antes (sem o nome da etapa ou com o nome antigo) ganham o nome atual de cada coluna
+  for (const [cod, nome] of etapas) {
+    const u = await db.from("omie_pedidos").update({ etapa_nome: nome })
+      .eq("cliente_id", e.cliente_id).eq("etapa", cod).or(`etapa_nome.is.null,etapa_nome.neq.${JSON.stringify(nome)}`);
+    if (u.error) throw new Error(`nome da etapa: ${u.error.message}`);
+  }
   return linhas.length;
 }
 
