@@ -240,6 +240,8 @@ function converterPedido(p: any, e: Empresa, etapas: Map<string, string>) {
     inclusao: dataISO(info.dInc), previsao: dataISO(cab.data_previsao),
     faturado: sim(info.faturado), faturamento: dataISO(info.dFat),
     cancelado: sim(info.cancelado) || sim(cab.cancelado),
+    // 119: encerrado na Omie sem faturar não é mais carteira
+    encerrado: sim(cab.encerrado),
     valor: num(tot.valor_total_pedido) || num(somaItens),
     quantidade: Math.round(quantidade * 1000) / 1000,
     itens: Number(cab.quantidade_itens) || det.length,
@@ -413,7 +415,7 @@ async function sincronizar(db: SupabaseClient, e: Empresa, inicio: number) {
 
   const { data: exec } = await db.from("omie_execucoes")
     .insert({ org_id: e.org_id, cliente_id: e.cliente_id, janela_de: de, janela_ate: ate }).select("id").single();
-  const contagem: Record<string, number> = {};
+  const contagem: Record<string, number | string> = {};
 
   // 1) categorias (sempre: são poucas)
   const cats = await omie.todas("geral/categorias/", "ListarCategorias", {}, "omie", "categoria_cadastro");
@@ -460,7 +462,7 @@ async function sincronizar(db: SupabaseClient, e: Empresa, inicio: number) {
     if (!(err instanceof ErroOmie)) console.error("omie-sincronizar departamentos", e.cliente_id, err);
   }
   try {
-    contagem.pedidos = await sincronizarPedidos(db, omie, e, cargaInicial, de, ate, hoje);
+    contagem.pedidos = await sincronizarPedidos(db, omie, e, cargaInicial, de, ate, hoje, contagem);
   } catch (err) {
     if (err instanceof TempoEsgotado) throw err;
     avisoPedidos += err instanceof ErroOmie ? ` Pedidos: ${err.message}` : " Pedidos: falha inesperada.";
@@ -491,7 +493,8 @@ async function sincronizar(db: SupabaseClient, e: Empresa, inicio: number) {
 }
 
 /** pedidos de venda (117): na carga, os incluídos na janela; depois, os alterados desde a última rodada boa */
-async function sincronizarPedidos(db: SupabaseClient, omie: ClienteOmie, e: Empresa, carga: boolean, de: string, ate: string, hoje: string) {
+async function sincronizarPedidos(db: SupabaseClient, omie: ClienteOmie, e: Empresa, carga: boolean, de: string, ate: string, hoje: string,
+                                  contagem: Record<string, number | string>) {
   const etapas = new Map<string, string>();
   try {
     const cad = await omie.todas("produtos/pedidoetapas/", "ListarEtapasPedido", {}, "n", "cadastros");
@@ -499,8 +502,10 @@ async function sincronizarPedidos(db: SupabaseClient, omie: ClienteOmie, e: Empr
       const nome = String(et.cDescricao || et.cDescrPadrao || "").trim();
       if (et.cCodigo != null && nome && !etapas.has(String(et.cCodigo))) etapas.set(String(et.cCodigo), nome);
     }
+    if (!etapas.size) contagem.etapas_aviso = `ListarEtapasPedido sem etapas (${cad.length} cadastro(s))`;
   } catch (err) {
     if (err instanceof TempoEsgotado) throw err; // sem nomes de etapa a tela mostra o código
+    contagem.etapas_aviso = String((err as Error).message ?? err).slice(0, 200);
   }
   const filtro = carga
     ? { filtrar_por_data_de: dataBR(de), filtrar_por_data_ate: dataBR(ate), filtrar_apenas_inclusao: "S", apenas_importado_api: "N" }
