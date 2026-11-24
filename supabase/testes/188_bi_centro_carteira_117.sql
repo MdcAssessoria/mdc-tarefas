@@ -20,7 +20,8 @@ select id, org_id, x.cod, x.num, x.et, x.inc::date, x.prev::date, x.fat, x.dfat:
   from public.clientes, (values ('T117-1', '9001', '10', '2026-10-01', '2026-11-10', false, null, false, 1500.00),
                                 ('T117-2', '9002', '60', '2026-10-05', '2026-10-20', true, '2026-10-18', false, 800.00),
                                 ('T117-3', '9003', '10', '2026-10-06', '2026-11-30', false, null, true, 999.00),
-                                ('T117-4', '9004', '50', '2026-10-07', '2026-10-15', false, null, false, 700.00)) x(cod, num, et, inc, prev, fat, dfat, canc, v)
+                                ('T117-4', '9004', '50', '2026-10-07', '2026-10-15', false, null, false, 700.00),
+                                ('T117-5', '9005', '00', '2026-10-08', '2026-11-20', false, null, false, 450.00)) x(cod, num, et, inc, prev, fat, dfat, canc, v)
  where id = '128cce4c-cb86-414c-8096-c786c320cff0';
 -- 119: o T117-4 foi encerrado na Omie sem faturar: fica fora da carteira
 update public.omie_pedidos set encerrado = true where codigo_pedido = 'T117-4';
@@ -40,7 +41,7 @@ begin
   select sum(valor) into v_tot_cc from public.bi_centro_custo('dre', array[v_cli], '2026-03-01', '2026-03-31', false);
   select sum(valor) into v_tot_rel from public.bi_relatorio('dre', array[v_cli], '2026-03-01', '2026-03-31', false) where not subtotal;
   insert into _r values ('ok_fecha_com_dre', (abs(v_tot_cc - v_tot_rel) <= 0.05)::text);
-  -- carteira: o em carteira e o faturado no período aparecem; o cancelado e o encerrado (119) não; esperado 9001:false,9002:true
+  -- carteira: o em carteira e o faturado no período aparecem; o cancelado, o encerrado (119) e o orçamento (120) não; esperado 9001:false,9002:true
   insert into _r select 'ok_carteira', string_agg(numero || ':' || faturado::text, ',' order by numero)
     from public.bi_carteira(array[v_cli], '2026-10-01', '2026-10-31') where codigo_pedido like 'T117-%';
   begin perform public.bi_centro_custo('xyz', array[v_cli], '2026-03-01', '2026-03-31');
