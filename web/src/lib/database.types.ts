@@ -576,6 +576,69 @@ export type Database = {
           },
         ];
       };
+      bi_projecoes: {
+        Row: {
+          ano_base: number;
+          atualizado_em: string;
+          atualizado_por: string | null;
+          cliente_id: string;
+          criado_em: string;
+          criado_por: string | null;
+          id: string;
+          nome: string;
+          org_id: string;
+          premissas: Json;
+          provisionado_anos: number[] | null;
+          provisionado_em: string | null;
+          provisionado_por: string | null;
+        };
+        Insert: {
+          ano_base: number;
+          atualizado_em?: string;
+          atualizado_por?: string | null;
+          cliente_id: string;
+          criado_em?: string;
+          criado_por?: string | null;
+          id?: string;
+          nome: string;
+          org_id: string;
+          premissas: Json;
+          provisionado_anos?: number[] | null;
+          provisionado_em?: string | null;
+          provisionado_por?: string | null;
+        };
+        Update: {
+          ano_base?: number;
+          atualizado_em?: string;
+          atualizado_por?: string | null;
+          cliente_id?: string;
+          criado_em?: string;
+          criado_por?: string | null;
+          id?: string;
+          nome?: string;
+          org_id?: string;
+          premissas?: Json;
+          provisionado_anos?: number[] | null;
+          provisionado_em?: string | null;
+          provisionado_por?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "bi_projecoes_cliente_id_fkey";
+            columns: ["cliente_id"];
+            isOneToOne: false;
+            referencedRelation: "clientes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "bi_projecoes_org_id_fkey";
+            columns: ["org_id"];
+            isOneToOne: false;
+            referencedRelation: "organizacoes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       cliente_responsaveis: {
         Row: {
           cliente_id: string;
@@ -9320,6 +9383,21 @@ export type Database = {
           pessoa: string;
           valor: number;
         }[];
+      };
+      bi_projecao_excluir: { Args: { p_id: string }; Returns: undefined };
+      bi_projecao_provisionar: {
+        Args: { p_id: string; p_linhas: Json };
+        Returns: Json;
+      };
+      bi_projecao_salvar: {
+        Args: {
+          p_ano_base: number;
+          p_cliente: string;
+          p_id: string;
+          p_nome: string;
+          p_premissas: Json;
+        };
+        Returns: string;
       };
       bi_registro_acessos: {
         Args: { p_dias?: number };
