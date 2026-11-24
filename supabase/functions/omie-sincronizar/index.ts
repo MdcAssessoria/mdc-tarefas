@@ -14,6 +14,10 @@
 // omie_saldos (os 2 últimos meses a cada rodada + até 4 meses que faltam desde sincronizar_desde). Falha ou falta de tempo
 // nesta parte não derruba a rodada: fica anotada na contagem e continua na próxima.
 //
+// Centro de custo e pedidos (117, 24/11/2026): os títulos vêm com o rateio por departamento (cExibirDepartamentos; se a
+// Omie recusar o parâmetro, segue sem ele e anota na contagem), os departamentos são lidos a cada rodada e os pedidos de
+// venda entram em omie_pedidos (carga pela inclusão, depois pelos alterados). Falha nos pedidos não derruba a rodada.
+//
 // Trazida para o repositório em 20/11/2026 (estava só publicada, versão 9); a única mudança foi a leitura da chave de
 // serviço pelo leitor compartilhado (SEG-01: chave nova com volta à antiga).
 
@@ -172,6 +176,7 @@ function converterMovimento(m: any, e: Empresa) {
     .map((c: any) => ({ cod: String(c.cCodCateg), pct: num(c.nDistrPercentual) }));
   if (!cats.length) cats.push({ cod: d.cCodCateg ?? "", pct: 100 });
   const somaPct = cats.reduce((s, c) => s + c.pct, 0) || 100;
+  const deps = rateioDepartamentos(m);
   return cats.map((c) => ({
     cliente_id: e.cliente_id, org_id: e.org_id,
     chave: [d.nCodTitulo, d.nCodBaixa ?? 0, d.nCodMovCC ?? 0, c.cod].join("|"),
@@ -182,8 +187,64 @@ function converterMovimento(m: any, e: Empresa) {
     pagamento: dataISO(d.dDtPagamento),
     valor_documento: num(num(d.nValorTitulo) * c.pct / somaPct),
     valor_pago: dataISO(d.dDtPagamento) ? num(pagoTotal * c.pct / somaPct) : 0,
+    departamentos: deps,
     dados: { ...m, _tem_mov_cc: movCC }, atualizado_em: new Date().toISOString(),
   }));
+}
+
+/** rateio do título por departamento (centro de custo): [{codigo, pct}] somando 100; vazio = sem centro */
+// deno-lint-ignore no-explicit-any
+function rateioDepartamentos(m: any): { codigo: string; pct: number }[] {
+  // deno-lint-ignore no-explicit-any
+  const brutos = (Array.isArray(m.departamentos) ? m.departamentos : []).map((d: any) => ({
+    codigo: String(d.cCodDepartamento ?? d.cCodDep ?? d.codigo ?? "").trim(),
+    pct: num(d.nDistrPercentual ?? d.nPerDep ?? d.percentual),
+    valor: num(d.nDistrValor ?? d.nValDep ?? d.valor),
+  })).filter((d: { codigo: string }) => d.codigo);
+  if (!brutos.length) return [];
+  let soma = brutos.reduce((s: number, d: { pct: number }) => s + d.pct, 0);
+  // sem percentual, reparte pelo valor; sem nada, em partes iguais
+  if (!soma) {
+    const somaV = brutos.reduce((s: number, d: { valor: number }) => s + d.valor, 0);
+    brutos.forEach((d: { pct: number; valor: number }) => (d.pct = somaV ? (d.valor * 100) / somaV : 100 / brutos.length));
+    soma = 100;
+  }
+  return brutos.map((d: { codigo: string; pct: number }) => ({ codigo: d.codigo, pct: Math.round((d.pct * 100 * 10000) / soma) / 10000 }));
+}
+
+// deno-lint-ignore no-explicit-any
+function converterDepartamento(d: any, e: Empresa) {
+  return {
+    cliente_id: e.cliente_id, org_id: e.org_id, codigo: String(d.codigo ?? d.cCodigo ?? "").trim(),
+    descricao: d.descricao ?? d.cDescricao ?? null, estrutura: d.estrutura ?? d.cEstrutura ?? null,
+    inativo: String(d.inativo ?? d.cInativo ?? "N").toUpperCase() === "S",
+    dados: d, atualizado_em: new Date().toISOString(),
+  };
+}
+
+// deno-lint-ignore no-explicit-any
+function converterPedido(p: any, e: Empresa, etapas: Map<string, string>) {
+  const cab = p.cabecalho ?? {}, info = p.infoCadastro ?? {}, tot = p.total_pedido ?? {}, adic = p.informacoes_adicionais ?? {};
+  // deno-lint-ignore no-explicit-any
+  const det: any[] = Array.isArray(p.det) ? p.det : [];
+  const somaItens = det.reduce((s, d) => s + num(d.produto?.valor_total), 0);
+  const quantidade = det.reduce((s, d) => s + (Number(String(d.produto?.quantidade ?? 0).replace(",", ".")) || 0), 0);
+  const etapa = cab.etapa != null ? String(cab.etapa) : null;
+  const sim = (v: unknown) => String(v ?? "").toUpperCase() === "S";
+  return {
+    cliente_id: e.cliente_id, org_id: e.org_id, codigo_pedido: String(cab.codigo_pedido),
+    numero: cab.numero_pedido != null ? String(cab.numero_pedido) : null,
+    numero_cliente: adic.numero_pedido_cliente || null,
+    codigo_cliente: cab.codigo_cliente != null ? String(cab.codigo_cliente) : null,
+    etapa, etapa_nome: etapa ? (etapas.get(etapa) ?? null) : null,
+    inclusao: dataISO(info.dInc), previsao: dataISO(cab.data_previsao),
+    faturado: sim(info.faturado), faturamento: dataISO(info.dFat),
+    cancelado: sim(info.cancelado) || sim(cab.cancelado),
+    valor: num(tot.valor_total_pedido) || num(somaItens),
+    quantidade: Math.round(quantidade * 1000) / 1000,
+    itens: Number(cab.quantidade_itens) || det.length,
+    dados: p, atualizado_em: new Date().toISOString(),
+  };
 }
 
 // ---------- gravação ----------
@@ -374,8 +435,37 @@ async function sincronizar(db: SupabaseClient, e: Empresa, inicio: number) {
   const filtroTit = cargaInicial
     ? { dDtEmisDe: dataBR(de), dDtEmisAte: dataBR(ate) }
     : { dDtAltDe: dataBR(somaDias((e.ultimo_ok ?? hoje).slice(0, 10), -3)), dDtAltAte: dataBR(hoje) };
-  const movs = await omie.todas("financas/mf/", "ListarMovimentos", filtroTit, "n", "movimentos");
+  // 117: pede o rateio por departamento; se a Omie não aceitar o parâmetro, segue sem ele
+  // deno-lint-ignore no-explicit-any
+  let movs: any[];
+  try {
+    movs = await omie.todas("financas/mf/", "ListarMovimentos", { ...filtroTit, cExibirDepartamentos: "S" }, "n", "movimentos");
+  } catch (err) {
+    if (!(err instanceof ErroOmie) || !/cexibirdepartamentos|tag|estrutura/i.test(err.message)) throw err;
+    movs = await omie.todas("financas/mf/", "ListarMovimentos", filtroTit, "n", "movimentos");
+    contagem.sem_departamentos = 1;
+  }
   contagem.titulos = await gravarMovimentos(db, e, movs);
+
+  // 117) centros de custo e pedidos de venda: não derrubam a rodada
+  let avisoPedidos = "";
+  try {
+    const deps = await omie.todas("geral/departamentos/", "ListarDepartamentos", {}, "omie", "departamentos");
+    const linhasDep = deps.map((d) => converterDepartamento(d, e)).filter((d) => d.codigo);
+    await gravar(db, "omie_departamentos", [...new Map(linhasDep.map((d) => [d.codigo, d])).values()], "cliente_id,codigo");
+    contagem.departamentos = linhasDep.length;
+  } catch (err) {
+    if (err instanceof TempoEsgotado) throw err;
+    avisoPedidos += err instanceof ErroOmie ? ` Centros de custo: ${err.message}` : " Centros de custo: falha inesperada.";
+    if (!(err instanceof ErroOmie)) console.error("omie-sincronizar departamentos", e.cliente_id, err);
+  }
+  try {
+    contagem.pedidos = await sincronizarPedidos(db, omie, e, cargaInicial, de, ate, hoje);
+  } catch (err) {
+    if (err instanceof TempoEsgotado) throw err;
+    avisoPedidos += err instanceof ErroOmie ? ` Pedidos: ${err.message}` : " Pedidos: falha inesperada.";
+    if (!(err instanceof ErroOmie)) console.error("omie-sincronizar pedidos", e.cliente_id, err);
+  }
 
   // 5) saldos dos bancos: não derruba a rodada (o resto já está gravado)
   let avisoSaldos = "";
@@ -392,12 +482,34 @@ async function sincronizar(db: SupabaseClient, e: Empresa, inicio: number) {
 
   // fecha a rodada
   const fim = new Date().toISOString();
-  const resumo = `${cargaInicial ? "Carga" : "Atualização"} ${de} a ${ate}: ${contagem.nfe} NF-e, ${contagem.nfse} NFS-e, ${contagem.titulos} linhas de títulos, ${contagem.saldos ?? 0} saldos de banco.${avisoSaldos}`;
+  const resumo = `${cargaInicial ? "Carga" : "Atualização"} ${de} a ${ate}: ${contagem.nfe} NF-e, ${contagem.nfse} NFS-e, ${contagem.titulos} linhas de títulos, ${contagem.saldos ?? 0} saldos de banco, ${contagem.pedidos ?? 0} pedidos.${avisoPedidos}${avisoSaldos}`;
   await db.from("omie_execucoes").update({ fim, situacao: "ok", contagem }).eq("id", exec!.id);
   const upd: Record<string, unknown> = { ultima_sync: fim, ultimo_ok: fim, ultimo_resultado: resumo, pedido_em: null };
   if (cargaInicial) { upd.carga_ate = ate; if (ate >= hoje) upd.carga_completa_feita = true; }
   await db.from("omie_empresas").update(upd).eq("cliente_id", e.cliente_id);
   return resumo;
+}
+
+/** pedidos de venda (117): na carga, os incluídos na janela; depois, os alterados desde a última rodada boa */
+async function sincronizarPedidos(db: SupabaseClient, omie: ClienteOmie, e: Empresa, carga: boolean, de: string, ate: string, hoje: string) {
+  const etapas = new Map<string, string>();
+  try {
+    const cad = await omie.todas("produtos/pedidoetapas/", "ListarEtapasPedido", {}, "n", "cadastros");
+    for (const c of cad) for (const et of c.etapas ?? []) {
+      const nome = String(et.cDescricao || et.cDescrPadrao || "").trim();
+      if (et.cCodigo != null && nome && !etapas.has(String(et.cCodigo))) etapas.set(String(et.cCodigo), nome);
+    }
+  } catch (err) {
+    if (err instanceof TempoEsgotado) throw err; // sem nomes de etapa a tela mostra o código
+  }
+  const filtro = carga
+    ? { filtrar_por_data_de: dataBR(de), filtrar_por_data_ate: dataBR(ate), filtrar_apenas_inclusao: "S", apenas_importado_api: "N" }
+    : { filtrar_por_data_de: dataBR(somaDias((e.ultimo_ok ?? hoje).slice(0, 10), -3)), filtrar_por_data_ate: dataBR(hoje),
+        filtrar_apenas_alteracao: "S", apenas_importado_api: "N" };
+  const pedidos = await omie.todas("produtos/pedido/", "ListarPedidos", filtro, "omie", "pedido_venda_produto");
+  const linhas = pedidos.filter((p) => p?.cabecalho?.codigo_pedido != null).map((p) => converterPedido(p, e, etapas));
+  await gravar(db, "omie_pedidos", [...new Map(linhas.map((l) => [l.codigo_pedido, l])).values()], "cliente_id,codigo_pedido");
+  return linhas.length;
 }
 
 /** escolhe a empresa da vez: pedido pela tela > carga inicial pendente > a mais antiga vencida */

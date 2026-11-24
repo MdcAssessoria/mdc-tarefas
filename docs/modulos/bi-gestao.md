@@ -91,6 +91,8 @@ mês e no total do período. Os dados vêm do sistema do cliente (Omie) e dos la
 | `app.bi_liberado`, `app.bi_responsavel`, `app.bi_pode_aprovar`, `app.bi_org_dos_clientes` (097) | Regras: liberado = admin, responsável ou pedido aprovado válido; todas as empresas pedidas conferidas, no máximo 50, mesma organização |
 | `bi_indicadores(clientes, inicio, fim, eliminar)` (097) | PMR, PMP, aberto por faixa, maiores clientes e fornecedores, liquidez do balancete |
 | `bi_orcamento`, `bi_orcamento_gravar(jsonb, arquivo)`, `bi_orcado(...)` (097) | Orçamento por empresa, linha e mês (valor positivo; branco apaga; tudo ou nada); `bi_orcado` devolve no formato do relatório com o sinal pela natureza da linha |
+| `omie_departamentos`, `omie_movimentos.departamentos`, `bi_centro_custo(rel, clientes, de, até, eliminar)` (117) | Centro de custo: rateio por departamento de cada título (lido com `cExibirDepartamentos`); a função reparte os fatos de `app.bi_fatos` (títulos e baixas) pelo rateio e deixa o resto em "Sem centro de custo"; acesso por `app.bi_org_dos_clientes` |
+| `omie_pedidos`, `bi_carteira(clientes, de, até)` (117) | Pedidos de venda (ListarPedidos: carga pela inclusão, depois pelos alterados; etapas por ListarEtapasPedido); a função devolve os não cancelados em carteira ou que entraram/foram faturados no período, com o cliente pelo nCodCliente dos títulos e o nome de `omie_pessoas`/notas |
 | `bi_projecoes`, `bi_projecao_salvar`, `bi_projecao_excluir`, `bi_projecao_provisionar(id, linhas)` (116) | Estudos de projeção por empresa (premissas em JSON, até 5 anos); leitura por `app.bi_pode_ver`, gravação só pelas funções com `app.bi_pode_lancar`; provisionar aceita só linhas da DRE da empresa do estudo nos anos ano-base+1 a +5 |
 
 Aba **Resultado × caixa** (105, `conciliacao.ts`): a DRE (competência) e o fluxo (pagamento) somados por grupo de contas do
@@ -180,3 +182,16 @@ Texto completo da função na 111 (para esta função, resolve também o M-07). 
   conferidos na primeira rodada em produção; se o Omie mudar, o resumo da rodada mostra "Saldos dos bancos: …".
   Lançamentos complementares e orçamento têm tela desde a v2.
 - Nome do fornecedor: incluir na sincronização do Omie.
+
+## Centro de custo e carteira de pedidos (117/118, 24/11/2026)
+
+- **Aba Centro de custo** (`componentes/AbaCentroCusto.tsx`, regras em `centros.ts` com teste): cartões por centro com
+  pesquisa, escolha de um ou mais centros e matriz conta × mês com pesquisa de conta (subtotais pela árvore
+  `bi_linhas.soma`). Notas, impostos das notas, extrato e complementares não têm departamento no Omie: "Sem centro".
+- **Aba Pedidos em carteira** (`componentes/AbaCarteira.tsx`, regras em `carteira.ts` com teste): cartões (entraram no
+  período, % atendido, em carteira, atrasados), faixas de previsão de entrega, volume por cliente e lista com filtro.
+  Atendido = pedido faturado (`infoCadastro.faturado`); não há faturamento parcial por item nesta leitura.
+- **Sincronização**: `omie-sincronizar` pede `cExibirDepartamentos: "S"` em ListarMovimentos (se a Omie recusar, segue
+  sem e anota `sem_departamentos` na contagem), lê ListarDepartamentos e ListarPedidos a cada rodada (falha não derruba
+  a rodada). A 118 volta as empresas à carga mês a mês para trazer o rateio dos títulos antigos e os pedidos.
+

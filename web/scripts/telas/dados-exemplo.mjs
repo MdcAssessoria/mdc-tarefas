@@ -3329,6 +3329,27 @@ RPCS.fis_nbs_do_servico = ({ p_servico }) => {
     return montar(p_relatorio === "dfc" ? DFC : DRE, ano, fator);
   };
   // 104: contas do plano por linha e origem do valor (notas e títulos)
+  // 117: centro de custo (rateio dos títulos) e carteira de pedidos
+  RPCS.bi_centro_custo = ({ p_relatorio, p_inicio }) => {
+    const ano = String(p_inicio).slice(0, 4);
+    const m = (n) => `${ano}-${String(n).padStart(2, "0")}-01`;
+    const dre = p_relatorio === "dre";
+    return [
+      { centro: "", centro_nome: "Sem centro de custo", linha: dre ? "receita_bruta" : "rec_clientes", competencia: m(1), valor: 182000 },
+      { centro: "", centro_nome: "Sem centro de custo", linha: dre ? "receita_bruta" : "rec_clientes", competencia: m(2), valor: 175500 },
+      { centro: "USI", centro_nome: "Usinagem", linha: dre ? "custos" : "pag_fornecedores", competencia: m(1), valor: -61200.4 },
+      { centro: "USI", centro_nome: "Usinagem", linha: dre ? "custos" : "pag_fornecedores", competencia: m(2), valor: -58010 },
+      { centro: "USI", centro_nome: "Usinagem", linha: dre ? "despesas_pessoal" : "pag_pessoal", competencia: m(1), valor: -22500 },
+      { centro: "CAL", centro_nome: "Caldeiraria", linha: dre ? "custos" : "pag_fornecedores", competencia: m(1), valor: -31800 },
+      { centro: "ADM", centro_nome: "Administrativo", linha: dre ? "despesas_administrativas" : "pag_despesas", competencia: m(2), valor: -14350.9 },
+    ];
+  };
+  RPCS.bi_carteira = () => [
+    { cliente_id: C1, empresa: "Greencore", codigo_pedido: "P1", numero: "1284", numero_cliente: "OC-5521", cliente_doc: "11222333000181", cliente_nome: "Metalúrgica Alfa Ltda", etapa: "20", etapa_nome: "Separar estoque", inclusao: "2026-10-02", previsao: "2026-10-20", faturado: false, faturamento: null, valor: 48200, quantidade: 120, itens: 3 },
+    { cliente_id: C1, empresa: "Greencore", codigo_pedido: "P2", numero: "1290", numero_cliente: null, cliente_doc: "11222333000181", cliente_nome: "Metalúrgica Alfa Ltda", etapa: "60", etapa_nome: "Faturado", inclusao: "2026-10-05", previsao: "2026-10-25", faturado: true, faturamento: "2026-10-24", valor: 36500, quantidade: 80, itens: 2 },
+    { cliente_id: C1, empresa: "Greencore", codigo_pedido: "P3", numero: "1302", numero_cliente: "PC 889", cliente_doc: "99888777000166", cliente_nome: "Beta Equipamentos S.A.", etapa: "10", etapa_nome: "Pedido de venda", inclusao: "2026-11-03", previsao: "2026-12-10", faturado: false, faturamento: null, valor: 91300, quantidade: 40, itens: 5 },
+    { cliente_id: C1, empresa: "Greencore", codigo_pedido: "P4", numero: "1307", numero_cliente: null, cliente_doc: "55666777000199", cliente_nome: "Gama Usinados", etapa: "50", etapa_nome: "Faturar", inclusao: "2026-11-10", previsao: "2027-01-15", faturado: false, faturamento: null, valor: 12750, quantidade: 15, itens: 1 },
+  ];
   RPCS.bi_relatorio_contas = ({ p_relatorio, p_inicio }) => {
     const ano = String(p_inicio ?? "2026-01-01").slice(0, 4);
     if (p_relatorio === "dfc")

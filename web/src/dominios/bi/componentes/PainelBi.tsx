@@ -1,5 +1,6 @@
 // Painel do BI depois de escolher a empresa (ou o grupo): filtros de período, empresas e operações entre elas, e as
-// abas Visão geral, DRE, Fluxo de caixa, Resultado × caixa, Comparar, Empresas, Indicadores, Lançamentos e (equipe MDC)
+// abas Visão geral, DRE, Fluxo de caixa, Centro de custo, Resultado × caixa, Comparar, Empresas, Indicadores, Pedidos em
+// carteira, Lançamentos e (equipe MDC)
 // Parecer e Classificação. Cada aba busca só o que mostra.
 "use client";
 
@@ -21,6 +22,8 @@ import { montarContas } from "../detalhe";
 import type { EmpresaBi } from "../dados";
 import { periodoDoBi, periodoLongo, temMovimento, totalDe } from "../relatorio";
 import type { TipoRelatorio } from "../relatorio";
+import { AbaCarteira } from "./AbaCarteira";
+import { AbaCentroCusto } from "./AbaCentroCusto";
 import { AbaClassificacao } from "./AbaClassificacao";
 import { AbaComparar } from "./AbaComparar";
 import { AbaConciliacao } from "./AbaConciliacao";
@@ -40,6 +43,8 @@ type AbaBi =
   | "geral"
   | "dre"
   | "dfc"
+  | "centros"
+  | "carteira"
   | "conciliacao"
   | "comparar"
   | "empresas"
@@ -190,10 +195,12 @@ export function PainelBi({
     { id: "geral", nome: "Visão geral" },
     { id: "dre", nome: "DRE" },
     { id: "dfc", nome: "Fluxo de caixa" },
+    { id: "centros", nome: "Centro de custo" },
     { id: "conciliacao", nome: "Resultado × caixa" },
     { id: "comparar", nome: "Comparar" },
     ...(escolhidas.length > 1 ? [{ id: "empresas" as const, nome: "Empresas" }] : []),
     { id: "indicadores", nome: "Indicadores" },
+    { id: "carteira", nome: "Pedidos em carteira" },
     { id: "lancamentos", nome: "Lançamentos" },
     ...(c.podeClassificar
       ? [
@@ -272,6 +279,10 @@ export function PainelBi({
         <AbaVisaoGeral c={c} />
       ) : aba === "dre" || aba === "dfc" ? (
         <AbaRelatorio key={aba} rel={aba} c={c} aoClassificar={() => setAba("classificacao")} />
+      ) : aba === "centros" ? (
+        <AbaCentroCusto c={c} />
+      ) : aba === "carteira" ? (
+        <AbaCarteira c={c} />
       ) : aba === "conciliacao" ? (
         <AbaConciliacao c={c} />
       ) : aba === "parecer" ? (
