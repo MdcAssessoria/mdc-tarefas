@@ -9,6 +9,7 @@ import { montarMatriz } from "./relatorio";
 import type { LinhaBanco, Matriz, TipoRelatorio } from "./relatorio";
 import type { Indicadores } from "./indicadores";
 import type { ComplementarBanco, LinhaRelatorio, OrcamentoBanco } from "./lancamentos";
+import type { LinhaDre, Premissas } from "./projecao";
 
 export interface EmpresaBi {
   grupo_id: string;
@@ -287,3 +288,50 @@ export async function lerIntragrupo(clientes: string[], de: string, ate: string)
     if (pagina.length < PAGINA) return todas;
   }
 }
+
+// ---------------------------------------------------------------- 116: projeção da DRE
+
+/** Todas as linhas da DRE (analíticas e subtotais, com a árvore `soma`), a da organização no lugar da padrão. */
+export async function lerLinhasDre(): Promise<LinhaDre[]> {
+  const { data, error } = await supabase()
+    .from("bi_linhas")
+    .select("codigo, nome, ordem, natureza, soma, org_id")
+    .eq("relatorio", "dre")
+    .eq("ativo", true)
+    .order("ordem");
+  if (error) throw new Error(traduzirErro(error));
+  const vistos = new Set<string>();
+  return ((data ?? []) as (LinhaDre & { org_id: string | null })[])
+    .sort((a, b) => Number(a.org_id === null) - Number(b.org_id === null))
+    .filter((l) => (vistos.has(l.codigo) ? false : (vistos.add(l.codigo), true)))
+    .map(({ codigo, nome, ordem, natureza, soma }) => ({ codigo, nome, ordem, natureza, soma }))
+    .sort((a, b) => a.ordem - b.ordem);
+}
+
+export interface EstudoProjecao {
+  id: string;
+  cliente_id: string;
+  nome: string;
+  ano_base: number;
+  premissas: Premissas;
+  provisionado_em: string | null;
+  provisionado_anos: number[] | null;
+  atualizado_em: string;
+}
+
+export async function lerProjecoes(cliente: string): Promise<EstudoProjecao[]> {
+  const { data, error } = await supabase()
+    .from("bi_projecoes")
+    .select("id, cliente_id, nome, ano_base, premissas, provisionado_em, provisionado_anos, atualizado_em")
+    .eq("cliente_id", cliente)
+    .order("atualizado_em", { ascending: false })
+    .order("id");
+  if (error) throw new Error(traduzirErro(error));
+  return (data ?? []) as EstudoProjecao[];
+}
+
+export const salvarProjecao = (id: string | null, cliente: string, nome: string, anoBase: number, premissas: Premissas) =>
+  rpc<string>("bi_projecao_salvar", { p_id: id, p_cliente: cliente, p_nome: nome, p_ano_base: anoBase, p_premissas: premissas });
+export const excluirProjecao = (id: string) => rpc<void>("bi_projecao_excluir", { p_id: id });
+export const provisionarProjecao = (id: string, linhas: OrcamentoBanco[]) =>
+  rpc<ResultadoGravacao>("bi_projecao_provisionar", { p_id: id, p_linhas: linhas });

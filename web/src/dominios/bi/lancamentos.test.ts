@@ -111,3 +111,19 @@ describe("indicadores", () => {
     expect(nomeItem({ doc: "1", nome: " ACME ", valor: 1 })).toBe("ACME");
   });
 });
+
+describe("modelo baixado do HUB", () => {
+  it("acha o cabeçalho depois do título e do subtítulo", () => {
+    const m = [
+      ["MDC Assessoria · Orçamento"],
+      ["Ano 2027"],
+      [],
+      ["CNPJ", "Relatório", "Linha", "Mês", "Valor"],
+      ["11.222.333/0001-81", "DRE", "receita_bruta", "01/2027", "1.000,00"],
+    ];
+    const r = lerPlanilhaOrcamento(m, [{ relatorio: "dre", codigo: "receita_bruta", nome: "Receita bruta", natureza: "R" }]);
+    expect(r.erros).toEqual([]);
+    expect(r.linhas[0]).toMatchObject({ linha: "receita_bruta", competencia: "2027-01-01", valor: 1000 });
+  });
+});
+

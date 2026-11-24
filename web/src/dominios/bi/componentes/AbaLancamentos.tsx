@@ -1,6 +1,6 @@
-// Lançamentos do BI: o que não está no Omie (lançamentos complementares, que entram na DRE e/ou no DFC) e o orçamento
-// (meta por linha e mês, para o orçado × realizado). Um a um na tela ou em lote pela planilha-modelo. Quem não tem o
-// nível operar no BI só vê.
+// Lançamentos do BI: o que não está no Omie (lançamentos complementares, que entram na DRE e/ou no DFC), o orçamento
+// (meta por linha e mês, para o orçado × realizado) e a projeção dos anos seguintes (AbaProjecao, 116). Um a um na
+// tela ou em lote pela planilha-modelo. Quem não tem o nível operar no BI só vê.
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
@@ -35,9 +35,10 @@ import {
 import type { ComplementarBanco, LinhaRelatorio, OrcamentoBanco } from "../lancamentos";
 import type { TipoRelatorio } from "../relatorio";
 import { SeletorRelatorio } from "./SeletorRelatorio";
+import { AbaProjecao } from "./AbaProjecao";
 import type { ContextoBi } from "./contexto";
 
-type Sub = "complementares" | "orcamento";
+type Sub = "complementares" | "orcamento" | "projecao";
 
 function mensagemGravacao(r: ResultadoGravacao): string {
   if (r.ok) return "";
@@ -57,6 +58,7 @@ export function AbaLancamentos({ c }: { c: ContextoBi }) {
         itens={[
           { id: "complementares", nome: "Lançamentos complementares" },
           { id: "orcamento", nome: "Orçamento" },
+          { id: "projecao", nome: "Projeção (anos seguintes)" },
         ]}
       />
       {!c.podeLancar && (
@@ -74,6 +76,8 @@ export function AbaLancamentos({ c }: { c: ContextoBi }) {
         !linhas.erro && <Esqueleto />
       ) : sub === "complementares" ? (
         <Complementares c={c} linhas={linhas.dados} />
+      ) : sub === "projecao" ? (
+        <AbaProjecao c={c} />
       ) : (
         <Orcamento c={c} linhas={linhas.dados} />
       )}

@@ -69,7 +69,12 @@ function converter<T>(
   colunas: readonly string[],
   ler: (c: (nome: string) => unknown) => T | string,
 ): { linhas: T[]; erros: string[] } {
-  const [cab, ...dados] = matriz;
+  // a planilha baixada do HUB tem título e subtítulo antes do cabeçalho: começa na linha que tem a 1ª coluna do modelo
+  const ini = Math.max(
+    0,
+    matriz.slice(0, 12).findIndex((r) => (r ?? []).some((c) => semAcento(so(c)) === semAcento(colunas[0]))),
+  );
+  const [cab, ...dados] = matriz.slice(ini);
   const idx = new Map((cab ?? []).map((c, i) => [semAcento(so(c)), i]));
   const faltam = colunas.filter((c) => !idx.has(semAcento(c)));
   if (faltam.length) return { linhas: [], erros: [`Faltam colunas no cabeçalho: ${faltam.join(", ")}. Use o modelo.`] };
@@ -78,7 +83,7 @@ function converter<T>(
   dados.forEach((r, i) => {
     if (!r || r.every((v) => so(v) === "")) return;
     const res = ler((nome) => r[idx.get(semAcento(nome)) ?? -1]);
-    if (typeof res === "string") erros.push(`Linha ${i + 2}: ${res}`);
+    if (typeof res === "string") erros.push(`Linha ${ini + i + 2}: ${res}`);
     else linhas.push(res);
   });
   if (!linhas.length && !erros.length) erros.push("A planilha não tem linhas preenchidas.");
