@@ -1408,6 +1408,22 @@ const INTERACOES = {
     await classificar.getByText("Não entra na DRE").waitFor({ timeout: 5000 });
     await foto?.("classificar", { soTela: true });
     await p.keyboard.press("Escape");
+    // 117: centro de custo (pesquisa e escolha de um centro) e pedidos em carteira
+    await abas.getByRole("tab", { name: "Centro de custo" }).click();
+    await p.getByRole("button", { name: /Usinagem/ }).waitFor({ timeout: 8000 });
+    await p.getByLabel("Pesquisar centro de custo").fill("usin");
+    await p.getByRole("button", { name: /Usinagem/ }).click();
+    await p.getByRole("heading", { name: /Usinagem/ }).waitFor({ timeout: 5000 });
+    await foto?.("centro-de-custo");
+    await abas.getByRole("tab", { name: "Pedidos em carteira" }).click();
+    await p.getByText("Em carteira hoje").waitFor({ timeout: 8000 });
+    await foto?.("carteira");
+    await p.getByRole("tab", { name: "Volume por cliente" }).click();
+    await p.getByRole("button", { name: "Metalúrgica Alfa Ltda" }).waitFor({ timeout: 5000 });
+    await foto?.("carteira-clientes");
+    await p.getByRole("tab", { name: "Pedidos", exact: true }).click();
+    await p.getByText("OC-5521", { exact: false }).waitFor({ timeout: 5000 });
+    await foto?.("carteira-pedidos");
     await abas.getByRole("tab", { name: "Comparar" }).click();
     await p.getByLabel("Comparar com").selectOption("orcado");
     await p.getByText("realizado × orçado").waitFor({ timeout: 8000 });

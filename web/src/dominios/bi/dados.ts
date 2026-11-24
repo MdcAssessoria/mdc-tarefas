@@ -10,6 +10,8 @@ import { montarMatriz } from "./relatorio";
 import type { LinhaBanco, Matriz, TipoRelatorio } from "./relatorio";
 import type { Indicadores } from "./indicadores";
 import type { ComplementarBanco, LinhaRelatorio, OrcamentoBanco } from "./lancamentos";
+import type { LinhaCentroBanco } from "./centros";
+import type { PedidoCarteira } from "./carteira";
 import type { LinhaDre, Premissas } from "./projecao";
 
 export interface EmpresaBi {
@@ -297,11 +299,14 @@ export async function lerIntragrupo(clientes: string[], de: string, ate: string)
 // ---------------------------------------------------------------- 116: projeção da DRE
 
 /** Todas as linhas da DRE (analíticas e subtotais, com a árvore `soma`), a da organização no lugar da padrão. */
-export async function lerLinhasDre(): Promise<LinhaDre[]> {
+export const lerLinhasDre = (): Promise<LinhaDre[]> => lerEstrutura("dre");
+
+/** Linhas de um relatório com a árvore dos subtotais (soma); a da organização vence a do padrão. */
+export async function lerEstrutura(rel: TipoRelatorio): Promise<LinhaDre[]> {
   const { data, error } = await supabase()
     .from("bi_linhas")
     .select("codigo, nome, ordem, natureza, soma, org_id")
-    .eq("relatorio", "dre")
+    .eq("relatorio", rel)
     .eq("ativo", true)
     .order("ordem");
   if (error) throw new Error(traduzirErro(error));
@@ -340,3 +345,11 @@ export const salvarProjecao = (id: string | null, cliente: string, nome: string,
 export const excluirProjecao = (id: string) => rpc<void>("bi_projecao_excluir", { p_id: id });
 export const provisionarProjecao = (id: string, linhas: OrcamentoBanco[]) =>
   rpc<ResultadoGravacao>("bi_projecao_provisionar", { p_id: id, p_linhas: linhas });
+
+/** DRE ou fluxo por centro de custo (bi_centro_custo, 117): linha × mês × centro; "" = sem centro de custo. */
+export const lerCentroCusto = (rel: TipoRelatorio, clientes: string[], de: string, ate: string, eliminar: boolean) =>
+  rpc<LinhaCentroBanco[]>("bi_centro_custo", { p_relatorio: rel, p_clientes: clientes, p_inicio: de, p_fim: ate, p_eliminar: eliminar });
+
+/** Pedidos de venda em carteira e os que entraram ou foram faturados no período (bi_carteira, 117). */
+export const lerCarteira = (clientes: string[], de: string, ate: string) =>
+  rpc<PedidoCarteira[]>("bi_carteira", { p_clientes: clientes, p_inicio: de, p_fim: ate });

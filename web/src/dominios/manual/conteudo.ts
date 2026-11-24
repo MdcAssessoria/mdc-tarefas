@@ -4,7 +4,7 @@
 // (components/shell/navegacao.ts): com ele a tela do manual ganha o botão "Ir para a tela".
 // Mudou uma tela ou regra? Atualize o trecho dela aqui no mesmo commit e acrescente uma linha em "Controle de versões".
 
-export const VERSAO_MANUAL = { numero: "2.16", data: "24/11/2026" };
+export const VERSAO_MANUAL = { numero: "2.17", data: "24/11/2026" };
 
 export const MANUAL_MD = `
 ## Como usar este manual
@@ -232,6 +232,25 @@ DRE e fluxo de caixa (DFC) gerenciais de um grupo de empresas, mês a mês, a pa
 
 **Atenção:** o aviso **Não classificado** mostra valores de categorias do Omie sem conta do plano ou lançadas no Omie como "Contas a classificar"; clique no valor da linha para ver quais são. A liquidez corrente, seca e geral vem do balancete do Domínio publicado em Demonstrativos; sem ele aparece só uma estimativa pelos títulos do Omie. Fornecedores aparecem pelo CNPJ/CPF.
 
+### Centro de custo (BI de Gestão → aba Centro de custo)
+
+**Para que serve:** ver a DRE ou o fluxo de caixa de cada centro de custo (no Omie, "departamento").
+
+1. Escolha **DRE** ou **Fluxo de caixa**. Cada cartão mostra um centro com receitas (ou entradas), gastos (ou saídas) e o resultado do período.
+2. Em **Pesquisar centro de custo**, digite parte do nome ou do código para achar o centro. Toque no cartão para ver só ele; toque em outros para juntar. **Ver todos os centros** volta ao conjunto.
+3. Na tabela de baixo, **Pesquisar conta** mostra só as contas com o texto digitado (ex.: energia). PDF e Excel levam o que está na tela.
+4. O valor de cada conta a pagar e a receber é repartido pelo rateio de departamentos do Omie. Notas fiscais, extrato do banco e lançamentos do BI não têm centro no Omie e ficam em **Sem centro de custo**; o aviso azul mostra quanto do movimento tem centro.
+
+### Pedidos em carteira (BI de Gestão → aba Pedidos em carteira)
+
+**Para que serve:** acompanhar os pedidos de venda do Omie: quanto entrou, quanto já foi atendido (faturado), o que falta entregar e para quando.
+
+1. Os cartões mostram os **pedidos que entraram no período**, o **% já atendido** desses pedidos, o que está **em carteira hoje** (sem faturar, de qualquer data) e os **atrasados** (previsão de entrega vencida).
+2. **Previsão de entrega:** a carteira separada em atrasados, próximos 7 dias, até o fim do mês, mês que vem, depois e sem previsão, e o gráfico por mês. Toque numa faixa para ver os pedidos.
+3. **Volume por cliente:** pedidos e valor do período, quanto foi atendido, o que está em carteira, atrasado e a próxima entrega de cada cliente. Toque no nome para ver os pedidos dele.
+4. **Pedidos:** pesquise por número, pedido do cliente, cliente, CNPJ ou etapa e filtre por situação (Em carteira, Atrasado, Atendido). PDF e Excel em todas as visões.
+5. "Atendido" é o pedido faturado no Omie (o pedido inteiro). A previsão é a data de previsão do pedido no Omie.
+
 ### Parecer gerencial do BI (BI de Gestão → aba Parecer)
 
 Só para a equipe MDC. O HUB monta o rascunho do parecer com os números do período escolhido: síntese, DRE, caixa e confronto com o resultado (NBC TG 03), prazos e inadimplência, pontos de atenção e premissas, cada parte com um quadro **Em linguagem simples**.
@@ -431,5 +450,6 @@ Os sistemas que a MDC licencia aos clientes (Ledgra ERP, EXato e os próximos): 
 | 2.14 | 23/11/2026 | **CRM Comercial**: propostas em PDF anexadas na ficha saem **assinadas digitalmente** pela MDC ao baixar (botão Baixar assinada), com registro no histórico. |
 | 2.15 | 23/11/2026 | **BI de Gestão**: Projeção da DRE para até 5 anos a partir do realizado (premissas de crescimento e inflação, % por linha editável ano a ano, valor digitado por cima), estudos gravados por empresa, planilha-modelo em Excel para baixar e subir, e "Provisionar no Orçamento". |
 | 2.16 | 24/11/2026 | **BI de Gestão**: Orçamento com a opção "Todas as empresas (soma)" e a linha de resultado do mês. |
+| 2.17 | 24/11/2026 | **BI de Gestão**: abas **Centro de custo** (DRE e fluxo por departamento do Omie, com pesquisa de centro e de conta) e **Pedidos em carteira** (atendido, carteira, atrasados, previsão de entrega e volume por cliente). |
 | 2.11 | 21/11/2026 | **Demonstrativos**: Balanço, DRE, DFC e Balancete no mesmo padrão de tabela do BI (cabeçalho verde preso no topo, primeira coluna presa ao rolar, subtotais e resultado em destaque); também no Portal do Cliente. |
 `;
