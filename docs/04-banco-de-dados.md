@@ -312,6 +312,22 @@ Regras para migração nova:
 3. Tabela nova: `org_id` + RLS ligado + políticas por `app.hub_pode` (equipe) ou `app.portal_pode` (cliente).
 4. Função `security definer`: sempre `set search_path = public, app` e checagem de permissão na primeira linha.
 5. Depois de aplicar, rode os avisos de segurança do Supabase (Advisors) e corrija o que aparecer.
+6. Função Edge que usa tabela ou coluna nova só vai para a `main` **depois** de a migração estar aplicada em produção.
+   Desde 23/11/2026 a publicação automática confere isso sozinha e para (ver §4.5.2).
+
+### 4.5.2 Trava "migração antes da Função" (23/11/2026, ARQ-01 e ARQ-04)
+
+Em 21/11/2026 a `omie-sincronizar` foi publicada gravando em `omie_extrato` antes da `106_omie_extrato` ser aplicada; a
+rodada terminava "ok" e os saldos dos bancos paravam (a 106 foi aplicada no mesmo dia; em 23/11 as rodadas gravam
+saldos e extrato). Agora o passo **Conferir migrações aplicadas** de `.github/workflows/funcoes.yml` lê, pela API de
+gestão do Supabase (só um SELECT em `supabase_migrations.schema_migrations`), os nomes aplicados em produção e para a
+publicação se: (1) algum arquivo de `supabase/migrations/` tiver número maior que a maior migração numerada de
+produção; ou (2) da 092 em diante, algum arquivo não estiver em produção com o mesmo nome. Antes da 092 há nomes que
+mudaram ao trazer para o repositório (tabela da §4.5.1), por isso ficam fora da regra 2. Parou? Aplique a migração
+(depois dos testes) e rode a publicação de novo à mão.
+
+A 106 (e a cadeia do BI/Omie de 090 a 111) também passou a rodar no Postgres temporário do `rodar.sh`, com a base
+mínima `supabase/testes/187_base_omie_bi.sql` e o teste `188_omie_extrato_106.sql` (ver `docs/07`, Testes SQL).
 
 ### 4.5.1 Produção × repositório (conferido em 20/11/2026)
 

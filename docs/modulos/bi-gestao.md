@@ -157,6 +157,14 @@ Clara (ano corrente) e o papel `authenticated` corta em 8 s: Indicadores e Parec
 Texto completo da função na 111 (para esta função, resolve também o M-07). Teste com limite de tempo em
 `supabase/testes/184_bi_indicadores_111.sql`.
 
+**Testes locais da 106 e da cadeia 090–111 (23/11/2026, ARQ-01 da auditoria de 21/11).** O `rodar.sh` passou a aplicar
+as migrações do BI e do Omie no Postgres temporário (base mínima `supabase/testes/187_base_omie_bi.sql`) e roda
+`188_omie_extrato_106.sql`: `omie_extrato` só é gravada pela Função (o papel `authenticated` não insere, não muda e não
+apaga) e a leitura segue `app.bi_pode_ver` (organização, responsável, BI liberado); `bi_indicadores` roda sobre a base
+simulada. A publicação das Funções agora para se houver migração do repositório ainda não aplicada em produção
+(`docs/04` §4.5.2). Em 23/11/2026 a 106 e a 111 estão aplicadas, as rodadas do Omie gravam `saldos` e `extrato` em
+`omie_execucoes.contagem`, e `bi_indicadores` do Grupo Clara no ano corrente levou 0,2 s em produção (antes 13,3 s).
+
 ## Pendências conhecidas
 
 - **Classificação das categorias:** em 19/11/2026 o mapa (`bi_mapa_categorias`) tinha 2 regras para 118 categorias do

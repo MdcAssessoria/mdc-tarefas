@@ -86,7 +86,16 @@ publica **todas** com o `verify_jwt` e o `import_map` do `config.toml`. Também 
 Funções › Run workflow). Precisa do segredo `SUPABASE_ACCESS_TOKEN` no GitHub (Settings › Secrets and variables ›
 Actions), cadastrado pelo Edvaldo. Com isso o que está no ar é sempre o que está no repositório: **não publique Função
 fora do repositório** (a `omie-sincronizar` ficou só no ar até 20/11/2026). Toda Função nova precisa da sua entrada no
-`config.toml`. Para publicar uma só, à mão:
+`config.toml`.
+
+**Trava da ordem migração → Função (23/11/2026, ARQ-01/ARQ-04):** antes de publicar, o passo "Conferir migrações
+aplicadas" compara `supabase/migrations/` com as migrações de produção (pela API de gestão do Supabase, com o mesmo
+`SUPABASE_ACCESS_TOKEN`, só leitura) e para a publicação se faltar alguma em produção (regras em `docs/04` §4.5.2). A
+saída é aplicar a migração e rodar o workflow de novo à mão. O CLI do Supabase fica fixo na **3.2.0** (a versão que
+publicou em 21/11/2026), não mais em `latest`; para subir, troque o número no workflow e acompanhe a primeira
+publicação. A trava só roda na publicação (push na `main` ou à mão): o pull request continua só conferindo os tipos.
+
+Para publicar uma só, à mão:
 
 ```bash
 npx supabase functions deploy convite --project-ref bulqqdgfrrpqquqvjjfa --import-map supabase/functions/convite/deno.json
@@ -386,3 +395,11 @@ simula tarefas, feriados, perfis, CRM, convites do Portal e contas do Auth) e ro
 por módulo (Entradas lança nota, Estoque movimenta, Relatórios só lê, Portal com contrato do Financeiro opera, cliente
 bloqueado não envia certificado), a corrida de dois contratos ao mesmo tempo (`dblink`) e o "nada se apaga" (DELETE
 direto falha; cancelar/encerrar/inativar com motivo funciona). Nenhum bloco sem a marca "(deve falhar)" pode ter ERROR.
+
+**BI de Gestão e Omie no Postgres temporário (23/11/2026, ARQ-01/TST-03):** por último, o `rodar.sh` aplica a base
+mínima `187_base_omie_bi.sql` (`app.so_digitos`, `cliente_responsaveis` e `portal_balancetes` só com o que o BI usa) e as
+migrações 090 a 111 do BI e do Omie, e roda `188_omie_extrato_106.sql`: ninguém logado grava, muda ou apaga em
+`omie_extrato` (nem o administrador), `anon` não lê, o administrador lê só as empresas da organização dele, o analista
+responsável só a empresa dele e quem não tem o BI liberado nada; no fim, `bi_indicadores` (111) roda sobre a base
+simulada e recusa quem não tem acesso. Os testes `*_producao.sql` (099, 103, 104, 105, 107, 111) continuam rodando em
+produção dentro de `begin…rollback` (TST-03 segue aberto para eles).

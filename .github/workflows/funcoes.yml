@@ -3,6 +3,14 @@
 # "Publicar Funções" › Run workflow). Antes de publicar, confere os tipos de todas as Funções; se falhar, não publica.
 # Sem terminal o CLI pede confirmação: por isso o --yes. Cada Função usa o verify_jwt e o import_map definidos em supabase/config.toml.
 #
+# Ordem migração → código (achados ARQ-01 e ARQ-04 da auditoria de 21/11/2026): antes de publicar, o passo
+# "Conferir migrações aplicadas" lê pela API de gestão do Supabase os nomes gravados em supabase_migrations de produção
+# (só um SELECT) e PARA a publicação se o repositório tiver migração que a produção ainda não tem. Foi assim que a
+# Função omie-sincronizar foi ao ar gravando em omie_extrato antes da 106. Se parar: aplique a migração em produção
+# (depois dos testes) e rode de novo à mão (Actions › "Publicar Funções" › Run workflow).
+# O CLI do Supabase fica numa versão fixa (a 3.2.0 foi a que publicou em 21/11/2026); para subir, troque o número
+# aqui e acompanhe a primeira publicação.
+#
 # Segredo necessário (cadastrado pelo Edvaldo em GitHub › Settings › Secrets and variables › Actions):
 #   SUPABASE_ACCESS_TOKEN  token pessoal do Supabase (Account › Access Tokens). Nunca no código.
 name: Publicar Funções
@@ -47,12 +55,48 @@ jobs:
       - uses: actions/checkout@v4
       - uses: supabase/setup-cli@v1
         with:
-          version: latest
+          version: 3.2.0
       - name: Conferir o segredo
         run: |
           if [ -z "$SUPABASE_ACCESS_TOKEN" ]; then
             echo "::error::Falta o segredo SUPABASE_ACCESS_TOKEN no GitHub (Settings › Secrets and variables › Actions)."
             exit 1
           fi
+      - name: Conferir migrações aplicadas
+        # Duas regras, pelos nomes (a versão em produção é a data em que foi aplicada, não o número do arquivo):
+        # 1) nenhum arquivo de supabase/migrations pode ter número maior que a maior migração numerada de produção;
+        # 2) da 092 em diante (quando repositório e produção passaram a ter os mesmos nomes, ALT-02 de 20/11/2026),
+        #    todo arquivo precisa estar em produção com o mesmo nome — pega também a migração esquecida no meio.
+        #    Antes da 092 há nomes que mudaram ao trazer para o repositório (036 em partes, 090d/090e), por isso fica fora.
+        env:
+          PROJETO: bulqqdgfrrpqquqvjjfa
+        run: |
+          set -euo pipefail
+          resposta=$(curl -sS --fail-with-body -X POST "https://api.supabase.com/v1/projects/$PROJETO/database/query" \
+            -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" -H "Content-Type: application/json" \
+            -d '{"query":"select name from supabase_migrations.schema_migrations where name is not null"}') || {
+            echo "::error::Não consegui ler as migrações de produção pela API do Supabase; a publicação parou por segurança."
+            exit 1
+          }
+          echo "$resposta" | jq -r '.[].name' | sort -u > producao.txt
+          ls supabase/migrations/*.sql | xargs -n1 basename | sed 's/\.sql$//' | sort -u > repositorio.txt
+          maior=$(grep -oE '^[0-9]{3}' producao.txt | sort -n | tail -1)
+          if [ -z "$maior" ]; then echo "::error::A lista de migrações de produção veio vazia."; exit 1; fi
+          echo "Maior migração numerada em produção: $maior"
+          faltam=""
+          while read -r nome; do
+            num=$(echo "$nome" | grep -oE '^[0-9]{3}' || true)
+            [ -n "$num" ] || continue
+            if [ "$((10#$num))" -gt "$((10#$maior))" ]; then
+              faltam="$faltam $nome"
+            elif [ "$((10#$num))" -ge 92 ] && ! grep -qxF "$nome" producao.txt; then
+              faltam="$faltam $nome"
+            fi
+          done < repositorio.txt
+          if [ -n "$faltam" ]; then
+            echo "::error::Migração do repositório ainda não aplicada em produção:$faltam. Aplique (depois dos testes) e rode a publicação de novo."
+            exit 1
+          fi
+          echo "Todas as migrações do repositório estão em produção."
       - name: Publicar todas as Funções
         run: supabase functions deploy --project-ref bulqqdgfrrpqquqvjjfa --use-api --yes
