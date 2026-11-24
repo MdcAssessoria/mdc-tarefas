@@ -190,8 +190,9 @@ Texto completo da função na 111 (para esta função, resolve também o M-07). 
   `bi_linhas.soma`). Notas, impostos das notas, extrato e complementares não têm departamento no Omie: "Sem centro".
 - **Aba Pedidos em carteira** (`componentes/AbaCarteira.tsx`, regras em `carteira.ts` com teste): cartões (entraram no
   período, % atendido, em carteira, atrasados), faixas de previsão de entrega, volume por cliente e lista com filtro.
-  Atendido = pedido faturado (`infoCadastro.faturado`); não há faturamento parcial por item nesta leitura.
+  Atendido = pedido faturado (`infoCadastro.faturado`); não há faturamento parcial por item nesta leitura. Pedido
+  encerrado na Omie sem faturar (`cabecalho.encerrado = S`, coluna `encerrado`, 119) sai da carteira; cancelado também.
 - **Sincronização**: `omie-sincronizar` pede `cExibirDepartamentos: "S"` em ListarMovimentos (se a Omie recusar, segue
   sem e anota `sem_departamentos` na contagem), lê ListarDepartamentos e ListarPedidos a cada rodada (falha não derruba
-  a rodada). A 118 volta as empresas à carga mês a mês para trazer o rateio dos títulos antigos e os pedidos.
+  a rodada; falha ao ler as etapas fica em `contagem.etapas_aviso` e a tela mostra "Etapa NN"). A 118 volta as empresas à carga mês a mês para trazer o rateio dos títulos antigos e os pedidos.
 
