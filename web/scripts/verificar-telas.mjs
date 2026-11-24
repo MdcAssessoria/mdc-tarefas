@@ -1422,6 +1422,10 @@ const INTERACOES = {
     await p.getByRole("tab", { name: "Orçamento" }).click();
     await p.getByLabel(/Receita bruta de vendas e serviços, jan/).waitFor({ timeout: 8000 });
     await foto?.("orcamento");
+    // soma das empresas: só consulta, com o resultado do mês (125.000 + 75.000 − 40.000)
+    await p.getByRole("combobox", { name: "Empresa", exact: true }).last().selectOption({ label: "Todas as empresas (soma)" });
+    await foto?.("orcamento-todas");
+    await p.getByText(/Só para consulta/).waitFor({ timeout: 8000 });
     // 116: projeção dos anos seguintes a partir do realizado do ano-base, com o estudo gravado aberto
     await p.getByRole("tab", { name: /Projeção/ }).click();
     await p.getByRole("region", { name: /Projeção da DRE 2025 a 2028/ }).waitFor({ timeout: 8000 });

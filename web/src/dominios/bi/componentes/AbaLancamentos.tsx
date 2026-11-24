@@ -31,6 +31,7 @@ import {
   lerPlanilhaOrcamento,
   lerValor,
   mesesDoAno,
+  somarOrcamento,
 } from "../lancamentos";
 import type { ComplementarBanco, LinhaRelatorio, OrcamentoBanco } from "../lancamentos";
 import type { TipoRelatorio } from "../relatorio";
@@ -512,6 +513,8 @@ function ImportarPlanilha({
 }
 
 // ---------------------------------------------------------------- orçamento
+const TODAS = "__todas__";
+
 function Orcamento({ c, linhas }: { c: ContextoBi; linhas: LinhaRelatorio[] }) {
   const [empresa, setEmpresa] = useState(c.empresas[0]?.cliente_id ?? "");
   const [rel, setRel] = useState<TipoRelatorio>("dre");
@@ -522,10 +525,16 @@ function Orcamento({ c, linhas }: { c: ContextoBi; linhas: LinhaRelatorio[] }) {
   const [importar, setImportar] = useState(false);
   const meses = mesesDoAno(ano);
   const doRel = linhas.filter((l) => l.relatorio === rel);
-  const emp = c.empresas.find((e) => e.cliente_id === empresa);
+  // "Todas as empresas" soma o orçamento de todas as empresas da lista; só consulta (grava-se empresa a empresa)
+  const todas = empresa === TODAS;
+  const emp = todas ? undefined : c.empresas.find((e) => e.cliente_id === empresa);
+  const ids = useMemo(() => c.empresas.map((e) => e.cliente_id), [c.empresas]);
+  const podeEditar = c.podeLancar && !todas;
 
-  const atual = useConsulta(useCallback(() => (empresa ? lerOrcamento(empresa, rel, ano) : Promise.resolve([])), [empresa, rel, ano]));
-  const gravado = useMemo(() => new Map((atual.dados ?? []).map((o) => [`${o.linha}|${o.competencia}`, Number(o.valor)])), [atual.dados]);
+  const atual = useConsulta(
+    useCallback(() => (empresa ? lerOrcamento(todas ? ids : empresa, rel, ano) : Promise.resolve([])), [empresa, todas, ids, rel, ano]),
+  );
+  const gravado = useMemo(() => somarOrcamento(atual.dados ?? []), [atual.dados]);
   const chave = (linha: string, mes: string) => `${linha}|${mes}`;
   const valorCelula = (k: string) => (k in edicao ? edicao[k] : gravado.has(k) ? String(gravado.get(k)).replace(".", ",") : "");
   const numero = (k: string) => {
@@ -571,8 +580,33 @@ function Orcamento({ c, linhas }: { c: ContextoBi; linhas: LinhaRelatorio[] }) {
     }
   }
   async function baixarModelo() {
-    if (!emp) return;
+    if (!emp && !todas) return;
     try {
+      if (todas) {
+        // visão da soma: linha × mês, com o total do ano (não é planilha de importação)
+        await exportarExcel(
+          `Orcamento-${rel.toUpperCase()}-todas-as-empresas-${ano}`,
+          `Orçamento ${rel.toUpperCase()} · Todas as empresas (soma)`,
+          `Ano ${ano} · ${c.empresas.map((e) => e.nome).join(", ")}`,
+          [
+            {
+              nome: "Orçamento",
+              colunas: [
+                { titulo: "Linha", chave: "linha", largura: 44 },
+                ...meses.map((m) => ({ titulo: rotuloMes(m.slice(0, 7)), chave: m, largura: 14 })),
+                { titulo: "Ano", chave: "ano", largura: 16 },
+              ],
+              linhas: doRel.map((l) => ({
+                linha: l.nome,
+                ...Object.fromEntries(meses.map((m) => [m, gravado.get(chave(l.codigo, m)) ?? ""])),
+                ano: meses.reduce((a, m) => a + (gravado.get(chave(l.codigo, m)) ?? 0), 0),
+              })),
+            },
+          ],
+        );
+        return;
+      }
+      if (!emp) return;
       await exportarExcel(
         `Orcamento-${rel.toUpperCase()}-${emp.nome}-${ano}`,
         `Orçamento ${rel.toUpperCase()} · ${emp.nome}`,
@@ -612,6 +646,7 @@ function Orcamento({ c, linhas }: { c: ContextoBi; linhas: LinhaRelatorio[] }) {
                 {e.nome}
               </option>
             ))}
+            {c.empresas.length > 1 && <option value={TODAS}>Todas as empresas (soma)</option>}
           </select>
         </label>
         <label className="campo md:w-32">
@@ -626,19 +661,19 @@ function Orcamento({ c, linhas }: { c: ContextoBi; linhas: LinhaRelatorio[] }) {
         </label>
         <SeletorRelatorio valor={rel} aoMudar={(r) => trocar(() => setRel(r))} />
         <div className="flex basis-full flex-wrap gap-2">
-          {c.podeLancar && (
+          {podeEditar && (
             <button type="button" className="btn-primario" disabled={!alteradas.length || ocupado} onClick={salvar}>
               <Icone nome="check" className="h-4 w-4" />
               {ocupado ? "Gravando…" : `Gravar${alteradas.length ? ` (${alteradas.length})` : ""}`}
             </button>
           )}
-          {c.podeLancar && alteradas.length > 0 && (
+          {podeEditar && alteradas.length > 0 && (
             <button type="button" className="btn" onClick={() => setEdicao({})}>
               <Icone nome="voltar" className="h-4 w-4" />
               Desfazer
             </button>
           )}
-          {c.podeLancar && (
+          {podeEditar && (
             <button type="button" className="btn" onClick={() => setImportar(true)}>
               <Icone nome="importar" className="h-4 w-4" />
               Importar Excel
@@ -646,10 +681,16 @@ function Orcamento({ c, linhas }: { c: ContextoBi; linhas: LinhaRelatorio[] }) {
           )}
           <button type="button" className="btn" onClick={baixarModelo}>
             <Icone nome="baixar" className="h-4 w-4" />
-            {c.podeLancar ? "Baixar planilha" : "Excel"}
+            {podeEditar ? "Baixar planilha" : "Excel"}
           </button>
         </div>
       </div>
+      {todas && (
+        <p className="flex items-start gap-2 rounded-md bg-sky-50 p-3 text-sm text-sky-900">
+          <Icone nome="info" className="mt-0.5 h-4 w-4 shrink-0" />
+          Soma do orçamento de {c.empresas.map((e) => e.nome).join(", ")}. Só para consulta: para alterar, escolha a empresa.
+        </p>
+      )}
       <p className="text-sm text-[var(--texto-suave)]">
         Meta mensal por linha, em valor positivo (despesa e pagamento saem negativos no relatório). Célula em branco = sem meta. A
         comparação fica em Comparar → Orçamento.
@@ -687,12 +728,13 @@ function Orcamento({ c, linhas }: { c: ContextoBi; linhas: LinhaRelatorio[] }) {
                   <td className="demo-conta">{l.nome}</td>
                   {meses.map((m) => {
                     const k = chave(l.codigo, m);
+                    // só consulta (soma das empresas ou sem nível operar): valor formatado, sem caixa de digitar
+                    if (!podeEditar) return gravado.has(k) ? <TdValor key={m} v={numero(k)} /> : <td key={m} />;
                     return (
                       <td key={m} className="!p-1">
                         <input
                           aria-label={`${l.nome}, ${rotuloMes(m.slice(0, 7))}`}
                           inputMode="decimal"
-                          disabled={!c.podeLancar}
                           value={valorCelula(k)}
                           onChange={(e) => setEdicao((x) => ({ ...x, [k]: e.target.value }))}
                           className={`num w-full rounded border px-2 py-1 text-right text-sm disabled:border-transparent disabled:bg-transparent ${k in edicao ? "border-[var(--destaque-escuro)] bg-amber-50" : "border-[var(--borda)] bg-white"}`}
@@ -704,6 +746,15 @@ function Orcamento({ c, linhas }: { c: ContextoBi; linhas: LinhaRelatorio[] }) {
                 </tr>
               );
             })}
+            <tr className={classeDaLinha("resultado_liquido", true)}>
+              <td className="demo-conta">{rel === "dre" ? "Resultado (receitas − despesas)" : "Saldo do mês (entradas − saídas)"}</td>
+              {[...meses, "ano"].map((m) => {
+                const doMes = (mes: string) =>
+                  doRel.reduce((a, l) => a + (l.natureza === "R" ? 1 : l.natureza === "P" ? -1 : 0) * numero(chave(l.codigo, mes)), 0);
+                const v = m === "ano" ? meses.reduce((a, mes) => a + doMes(mes), 0) : doMes(m);
+                return <TdValor key={m} v={v} className={m === "ano" ? "demo-total" : undefined} />;
+              })}
+            </tr>
           </tbody>
         </QuadroDemonstrativo>
       )}

@@ -3602,7 +3602,11 @@ RPCS.fis_nbs_do_servico = ({ p_servico }) => {
       motivo_cancelamento: null,
     },
   ];
-  TABELAS.bi_orcamento = [{ cliente_id: C1, relatorio: "dre", linha: "receita_bruta", competencia: "2026-01-01", valor: 125000 }];
+  TABELAS.bi_orcamento = [
+    { id: 1, cliente_id: C1, relatorio: "dre", linha: "receita_bruta", competencia: "2026-01-01", valor: 125000 },
+    { id: 2, cliente_id: C2, relatorio: "dre", linha: "receita_bruta", competencia: "2026-01-01", valor: 75000 },
+    { id: 3, cliente_id: C2, relatorio: "dre", linha: "custos", competencia: "2026-01-01", valor: 40000 },
+  ];
   // 116: subtotais da DRE com a árvore (a projeção calcula por eles) e um estudo gravado
   const SOMAS = {
     receita_liquida: ["receita_bruta", "deducoes"],

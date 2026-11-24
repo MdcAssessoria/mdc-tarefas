@@ -1,5 +1,6 @@
 // BI de Gestão: leitura e gravação no banco (funções bi_* das migrações 097, 104 e 105). A permissão é conferida no banco em cada
 // chamada (app.bi_pode_ver / app.bi_pode_lancar); a tela só mostra o que o banco devolve.
+import { lerTudo } from "@/lib/lerTudo";
 import { supabase } from "@/lib/supabase";
 import { traduzirErro } from "@/lib/erros";
 import type { ContaBanco, OrigemBanco } from "./detalhe";
@@ -180,16 +181,20 @@ export const gravarComplementares = (linhas: ComplementarBanco[], arquivo: strin
   rpc<ResultadoGravacao>("bi_complementar_importar", { p_arquivo: arquivo, p_linhas: linhas, p_origem: origem });
 export const cancelarComplementar = (id: number, motivo: string) => rpc<void>("bi_complementar_cancelar", { p_id: id, p_motivo: motivo });
 
-export async function lerOrcamento(cliente: string, rel: TipoRelatorio, ano: number): Promise<OrcamentoLido[]> {
-  const { data, error } = await supabase()
-    .from("bi_orcamento")
-    .select("cliente_id, relatorio, linha, competencia, valor")
-    .eq("cliente_id", cliente)
-    .eq("relatorio", rel)
-    .gte("competencia", `${ano}-01-01`)
-    .lte("competencia", `${ano}-12-01`);
-  if (error) throw new Error(traduzirErro(error));
-  return (data ?? []) as OrcamentoLido[];
+/** Orçamento de uma ou mais empresas no ano (várias = a visão "Todas as empresas", que a tela soma). */
+export async function lerOrcamento(clientes: string | string[], rel: TipoRelatorio, ano: number): Promise<OrcamentoLido[]> {
+  const ids = Array.isArray(clientes) ? clientes : [clientes];
+  return lerTudo<OrcamentoLido>((de, ate) =>
+    supabase()
+      .from("bi_orcamento")
+      .select("cliente_id, relatorio, linha, competencia, valor")
+      .in("cliente_id", ids)
+      .eq("relatorio", rel)
+      .gte("competencia", `${ano}-01-01`)
+      .lte("competencia", `${ano}-12-01`)
+      .order("id")
+      .range(de, ate),
+  );
 }
 
 export const gravarOrcamento = (linhas: OrcamentoBanco[], arquivo: string | null) =>
