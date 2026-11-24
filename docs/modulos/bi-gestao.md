@@ -39,7 +39,8 @@ mês e no total do período. Os dados vêm do sistema do cliente (Omie) e dos la
     inadimplência, contas a receber e a pagar por faixa de atraso (a vencer, 1–30, 31–60, 61–90, +90), 10 maiores
     clientes (notas autorizadas) e fornecedores (títulos), e liquidez.
   - **Lançamentos:** lançamentos complementares (fora do Omie: novo, importar Excel, modelo, cancelar com motivo) e
-    **Orçamento** (grade linha × 12 meses por empresa e ano, gravar, desfazer, importar e baixar planilha).
+    **Orçamento** (grade linha × 12 meses por empresa e ano, gravar, desfazer, importar e baixar planilha; opção
+    "Todas as empresas (soma)" só de consulta, somada por `somarOrcamento`, e linha de resultado do mês)
     e **Projeção (anos seguintes)** (116, `componentes/AbaProjecao.tsx`, regras em `projecao.ts` com teste): parte
     do realizado da DRE do ano-base (`bi_relatorio`, sem eliminação) e projeta 1 a 5 anos. Premissas gerais
     (crescimento da receita e inflação por ano); cada linha analítica projeta por **crescimento/reajuste %** sobre o

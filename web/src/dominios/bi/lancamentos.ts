@@ -151,3 +151,13 @@ export function lerPlanilhaOrcamento(matriz: unknown[][], linhas: LinhaRelatorio
 
 /** Meses "aaaa-mm-01" de um ano. */
 export const mesesDoAno = (ano: number) => Array.from({ length: 12 }, (_, i) => `${ano}-${String(i + 1).padStart(2, "0")}-01`);
+
+/** Soma o orçamento por linha e mês ("linha|aaaa-mm-01" → valor), juntando as empresas (visão "Todas as empresas"). */
+export function somarOrcamento(lidos: { linha: string; competencia: string; valor: number | string }[]): Map<string, number> {
+  const m = new Map<string, number>();
+  for (const o of lidos) {
+    const k = `${o.linha}|${o.competencia.slice(0, 10)}`;
+    m.set(k, Math.round(((m.get(k) ?? 0) + Number(o.valor)) * 100) / 100);
+  }
+  return m;
+}

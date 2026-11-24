@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { acharLinha, lerData, lerPlanilhaComplementares, lerPlanilhaOrcamento, lerValor, mesesDoAno } from "./lancamentos";
+import { acharLinha, lerData, lerPlanilhaComplementares, lerPlanilhaOrcamento, lerValor, mesesDoAno, somarOrcamento } from "./lancamentos";
 import type { LinhaRelatorio } from "./lancamentos";
 import { cicloFinanceiro, cobertura, fmtDoc, inadimplencia, nomeItem } from "./indicadores";
 import type { Indicadores } from "./indicadores";
@@ -127,3 +127,18 @@ describe("modelo baixado do HUB", () => {
   });
 });
 
+
+describe("somarOrcamento", () => {
+  it("soma as empresas por linha e mês, no centavo", () => {
+    const m = somarOrcamento([
+      { linha: "receita_bruta", competencia: "2027-01-01", valor: "220581.90" },
+      { linha: "receita_bruta", competencia: "2027-01-01", valor: 300582.7 },
+      { linha: "receita_bruta", competencia: "2027-01-01", valor: "28835.40" },
+      { linha: "custos", competencia: "2027-02-01", valor: 0.1 },
+      { linha: "custos", competencia: "2027-02-01", valor: 0.2 },
+    ]);
+    expect(m.get("receita_bruta|2027-01-01")).toBe(550000);
+    expect(m.get("custos|2027-02-01")).toBe(0.3);
+    expect(m.has("custos|2027-01-01")).toBe(false);
+  });
+});
