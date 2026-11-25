@@ -520,6 +520,7 @@ async function sincronizarPedidos(db: SupabaseClient, omie: ClienteOmie, e: Empr
   const pedidos = await omie.todas("produtos/pedido/", "ListarPedidos", filtro, "omie", "pedido_venda_produto");
   const linhas = pedidos.filter((p) => p?.cabecalho?.codigo_pedido != null).map((p) => converterPedido(p, e, etapas));
   await gravar(db, "omie_pedidos", [...new Map(linhas.map((l) => [l.codigo_pedido, l])).values()], "cliente_id,codigo_pedido");
+  await completarClientesDosPedidos(db, omie, e, contagem);
   // pedidos gravados antes (sem o nome da etapa ou com o nome antigo) ganham o nome atual de cada coluna
   for (const [cod, nome] of etapas) {
     const u = await db.from("omie_pedidos").update({ etapa_nome: nome })
@@ -527,6 +528,35 @@ async function sincronizarPedidos(db: SupabaseClient, omie: ClienteOmie, e: Empr
     if (u.error) throw new Error(`nome da etapa: ${u.error.message}`);
   }
   return linhas.length;
+}
+
+/**
+ * 121: pedidos cujo cliente não aparece nos títulos ficam sem nome; consulta o cadastro do cliente na Omie
+ * (geral/clientes › ConsultarCliente) e grava nome e CNPJ no pedido. No máximo 30 clientes por rodada.
+ */
+async function completarClientesDosPedidos(db: SupabaseClient, omie: ClienteOmie, e: Empresa, contagem: Record<string, number | string>) {
+  const { data, error } = await db.from("omie_pedidos").select("codigo_cliente")
+    .eq("cliente_id", e.cliente_id).is("cliente_nome", null).not("codigo_cliente", "is", null).limit(1000);
+  if (error) throw new Error(`clientes dos pedidos: ${error.message}`);
+  const codigos = [...new Set((data ?? []).map((r) => String(r.codigo_cliente)))].slice(0, 30);
+  let feitos = 0;
+  for (const cod of codigos) {
+    let nome = "", doc = "";
+    try {
+      const c = await omie.chamar("geral/clientes/", "ConsultarCliente", { codigo_cliente_omie: Number(cod) });
+      nome = String(c?.razao_social || c?.nome_fantasia || "").trim();
+      doc = String(c?.cnpj_cpf ?? "").replace(/\D/g, "");
+    } catch (err) {
+      if (err instanceof TempoEsgotado) throw err;
+      if (!(err instanceof ErroOmie)) throw err;
+      nome = "Cliente não encontrado no Omie"; // não tenta de novo a cada rodada
+    }
+    const u = await db.from("omie_pedidos").update({ cliente_nome: nome || "Cliente sem nome no Omie", cliente_doc: doc || null })
+      .eq("cliente_id", e.cliente_id).eq("codigo_cliente", cod);
+    if (u.error) throw new Error(`clientes dos pedidos: ${u.error.message}`);
+    feitos++;
+  }
+  if (feitos) contagem.clientes_pedidos = feitos;
 }
 
 /** escolhe a empresa da vez: pedido pela tela > carga inicial pendente > a mais antiga vencida */
