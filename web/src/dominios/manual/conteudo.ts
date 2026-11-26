@@ -198,6 +198,18 @@ Balancetes do Domínio transformados em Balanço, DRE, DFC, índices, fragilidad
 
 **Para que serve:** clientes com sinais de fragilidade nos números, para a equipe agir antes.
 
+### Auditoria fiscal do SAP (Demonstrativos → Auditoria fiscal (SAP))
+
+**Para que serve:** conferir o relatório fiscal de entradas e saídas que sai do SAP Business One, antes de fechar a apuração. Quem confere é o **Ledgra Auditor**: CFOP, CST de ICMS, PIS/COFINS e IPI, NCM, valores, a utilização de cada nota × CFOP × regra de imposto e, quando o XML está guardado no Ledgra XML, o CFOP do fornecedor × o CFOP de entrada.
+
+1. No SAP: **Ferramentas › Consultas › 01 - FISCAL › MDC - Relatorio Fiscal Entradas e Saidas (SPED)**, informe o período e exporte para Excel (o SAP grava um arquivo **.txt**; pode enviar assim mesmo).
+2. Em **Nova auditoria**, escolha a **Empresa**. O **CNPJ da filial** e o **Regime de PIS/COFINS** vêm do cadastro; troque se o relatório for de outra filial.
+3. Escolha o **Arquivo do SAP** e toque em **Auditar no Ledgra**. Leva alguns segundos.
+4. O resultado abre logo abaixo: erros, pontos de atenção e imposto a recolher. Toque numa regra para ver só os achados dela, ou use a **Situação** e a busca. **PDF** e **Excel** levam o que está filtrado.
+5. **Abrir no Ledgra** mostra a conferência completa, com o fundamento de cada regra.
+
+**Para enviar:** ferramenta Demonstrativos no nível **operar** e o Ledgra Auditor liberado para a empresa, com o **mesmo e-mail** do HUB. A empresa precisa estar cadastrada no Ledgra com o CNPJ da filial.
+
 ## BI de Gestão
 
 DRE e fluxo de caixa (DFC) gerenciais de um grupo de empresas, mês a mês, a partir do sistema do cliente (Omie) e dos lançamentos complementares da MDC, com comparações, indicadores e orçamento.
@@ -452,4 +464,5 @@ Os sistemas que a MDC licencia aos clientes (Ledgra ERP, EXato e os próximos): 
 | 2.16 | 24/11/2026 | **BI de Gestão**: Orçamento com a opção "Todas as empresas (soma)" e a linha de resultado do mês. |
 | 2.17 | 24/11/2026 | **BI de Gestão**: abas **Centro de custo** (DRE e fluxo por departamento do Omie, com pesquisa de centro e de conta) e **Pedidos em carteira** (atendido, carteira, atrasados, previsão de entrega e volume por cliente). |
 | 2.11 | 21/11/2026 | **Demonstrativos**: Balanço, DRE, DFC e Balancete no mesmo padrão de tabela do BI (cabeçalho verde preso no topo, primeira coluna presa ao rolar, subtotais e resultado em destaque); também no Portal do Cliente. |
+| 2.18 | 26/11/2026 | **Demonstrativos → Auditoria fiscal (SAP)**: envie o relatório fiscal do SAP e o Ledgra Auditor confere CFOP, CST, NCM, impostos, utilização × CFOP e o XML do fornecedor; resultado com filtros, PDF, Excel e link para o Ledgra. |
 `;

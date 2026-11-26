@@ -236,6 +236,10 @@ rodadas seguintes dos agendamentos voltaram 200. Religar só em emergência, no 
   - `demonstrativo-pdf` (republicar: lê telefone, site, e-mail, Instagram e responsável técnico de `org_papel_timbrado`).
   Sem segredo novo no painel. Testes: `cd supabase/functions/_fiscal && deno test --allow-read --config deno.json automatica_test.ts`.
   O agendador `nfse-automatica` (06h45) já nasce com a 052, mas só chama a função se algum parâmetro estiver em automático.
+- **Auditoria fiscal do SAP (122): `ledgra-auditoria`.** Com login (`verify_jwt = true`). Publicar:
+  `npx supabase functions deploy ledgra-auditoria --project-ref bulqqdgfrrpqquqvjjfa --import-map supabase/functions/ledgra-auditoria/deno.json`.
+  Precisa do Ledgra com a rota `/api/public/hub/auditoria-erp` publicada e da migração 20261699 do Ledgra aplicada.
+  Segredo opcional `LEDGRA_URL` (padrão `https://ledgra.com.br`).
 - **Integração com outros sistemas (092, auditoria 19/11/2026 SEG-01): `hub-integracao`.** Porta única do Ledgra
   (e, depois, do EXato) para o HUB, no lugar da chave de serviço do HUB guardada na Vercel deles. **Sem checagem de
   login** (`verify_jwt = false`): o servidor do sistema manda `x-hub-sistema` e `x-hub-integracao` (código gerado pelo
