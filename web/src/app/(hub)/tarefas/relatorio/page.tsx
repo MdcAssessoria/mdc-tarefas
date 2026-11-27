@@ -1,7 +1,7 @@
 // Relatório de tarefas concluídas (molde 8.3.1): período em um clique, pessoas e setores; indicadores, barras por pessoa,
 // resumo por pessoa e a lista de concluídas, com PDF e Excel iguais à tela. Os cálculos ficam em
 // dominios/tarefas/relatorio.ts (testados) e a exportação em dominios/tarefas/exportarRelatorio.ts.
-// O analista vê só o próprio relatório; gestor e administrador veem a equipe.
+// O analista vê só o próprio relatório; gestor, administrador e quem tem Tarefas › Gerir (123) veem a equipe.
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
@@ -54,10 +54,10 @@ const MOSTRAR = 500;
 const ABERTAS = ["a_fazer", "em_andamento", "aguardando"];
 
 function Relatorio() {
-  const { org, eu, membros, setores, clientePorId, setorPorId, podeEditarCadastros } = useOrg();
+  const { org, eu, membros, setores, clientePorId, setorPorId, gereTarefas } = useOrg();
   const { aviso, mostrar } = useAviso();
   const hoje = hojeISO(org.fuso);
-  const soEu = !podeEditarCadastros; // analista vê só o próprio relatório
+  const soEu = !gereTarefas; // analista sem Tarefas › Gerir vê só o próprio relatório
   const [periodo, setPeriodo] = useState<Periodo>("mes");
   const [de, setDe] = useState("");
   const [ate, setAte] = useState("");

@@ -280,3 +280,13 @@ para quem tem `licencas` › gerir, mesmo para ler.
   continua pendente (fica no repositório do simulador).
 - Teste: `supabase/testes/172_seguranca_103_producao.sql` (roda na produção numa transação que termina em erro de
   propósito; ensaio de 20/11/2026 com todos os casos esperados).
+
+## Tarefas › Gerir: empresas e relatório da equipe (123, 27/11/2026)
+
+`app.gere_tarefas(org)` = `app.eh_gestor(org)` ou `app.hub_pode(org, 'tarefas', 'gerir')` (fora da organização
+pessoal). Vale nas políticas de escrita de `clientes` (insert/update) e `cliente_responsaveis`, em `inativar_cliente` e
+`reativar_cliente` e na leitura de `tarefas` (relatório da equipe). A edição de tarefas e as demais abas de
+Configurações (obrigações, setores, feriados, equipe, organização) seguem com gestor/administrador; a importação de
+clientes (`/clientes/importar`) também. Na tela: `gereTarefas` no `OrgProvider`; aba Configurações com `gestor` +
+`minimo: "gerir"` (basta um dos dois).
+

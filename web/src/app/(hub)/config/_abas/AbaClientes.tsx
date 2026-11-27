@@ -28,7 +28,7 @@ interface Resp {
 }
 
 export function AbaClientes() {
-  const { org, clientes, setores, membros, recarregar } = useOrg();
+  const { org, clientes, setores, membros, recarregar, podeEditarCadastros } = useOrg();
   const [busca, setBusca] = useState("");
   const [resps, setResps] = useState<Resp[]>([]);
   const [aberto, setAberto] = useState<string | null>(null);
@@ -247,9 +247,11 @@ export function AbaClientes() {
             </option>
           ))}
         </select>
-        <Link className="btn-primario" href="/clientes/importar">
-          Importar do Domínio / planilha
-        </Link>
+        {podeEditarCadastros && (
+          <Link className="btn-primario" href="/clientes/importar">
+            Importar do Domínio / planilha
+          </Link>
+        )}
         <button className="btn" onClick={() => setCsv(csv === null ? "" : null)}>
           Colar lista
         </button>

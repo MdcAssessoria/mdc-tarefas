@@ -27,6 +27,7 @@ export type Modulo =
 
 /**
  * Aba de um módulo. `minimo` exige um nível na ferramenta; `gestor` exige poder editar cadastros (admin ou gestor).
+ * Com `gestor` e `minimo` juntos basta um dos dois (ex.: Configurações = gestor ou Tarefas › Gerir, 123).
  * `grupo` junta abas num menu suspenso da barra superior (ex.: Financeiro › Dinheiro › A pagar); sem grupo é aba solta.
  */
 export interface LinkModulo {
@@ -54,7 +55,7 @@ export const NAV: Record<Modulo, { titulo: string; links: LinkModulo[]; grupos?:
       { href: "/tarefas", nome: "Tarefas", icone: "check" },
       { href: "/tarefas/relatorio", nome: "Relatórios", icone: "grafico" },
       { href: "/tv", nome: "Painel TV", icone: "tv" },
-      { href: "/config", nome: "Configurações", icone: "engrenagem", gestor: true },
+      { href: "/config", nome: "Configurações", icone: "engrenagem", gestor: true, minimo: "gerir" },
     ],
   },
   societario: {
@@ -294,7 +295,11 @@ export function filtrarLinks(
   permissoes: { pode: (app: string, minimo?: PapelApp) => boolean; podeEditarCadastros: boolean },
 ): LinkModulo[] {
   return (navDe(modulo)?.links ?? []).filter((l) =>
-    l.gestor ? permissoes.podeEditarCadastros : l.minimo ? podeModulo(modulo, permissoes.pode, l.minimo) : true,
+    l.gestor
+      ? permissoes.podeEditarCadastros || (!!l.minimo && podeModulo(modulo, permissoes.pode, l.minimo))
+      : l.minimo
+        ? podeModulo(modulo, permissoes.pode, l.minimo)
+        : true,
   );
 }
 
@@ -343,7 +348,7 @@ export function podeAbrirRota(
   const e = exigenciaDaRota(rota, modulo);
   if (!e) return true;
   if (e.admin && !permissoes.admin) return false;
-  if (e.gestor && !permissoes.podeEditarCadastros) return false;
+  if (e.gestor) return permissoes.podeEditarCadastros || (!!e.minimo && podeModulo(modulo, permissoes.pode, e.minimo));
   if (e.minimo && !podeModulo(modulo, permissoes.pode, e.minimo)) return false;
   return true;
 }

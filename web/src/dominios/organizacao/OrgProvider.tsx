@@ -27,6 +27,8 @@ interface OrgCtx {
   pessoal: boolean;
   recarregar: () => Promise<void>;
   podeEditarCadastros: boolean;
+  /** Gestor/administrador ou quem tem Tarefas › Gerir: configura as empresas (Clientes) e vê o relatório da equipe (123). */
+  gereTarefas: boolean;
   nomeMembro: (id: string | null) => string;
   setorPorId: (id: string | null) => Setor | undefined;
   clientePorId: (id: string | null) => Cliente | undefined;
@@ -219,6 +221,8 @@ export function OrgProvider({ children }: { children: React.ReactNode }) {
       clientes,
       membros,
       podeEditarCadastros: eu.papel === "admin" || eu.papel === "gestor",
+      gereTarefas:
+        eu.papel === "admin" || eu.papel === "gestor" || (org.tipo !== "pessoal" && podeNoApp(eu.papel, apps, "tarefas", "gerir")),
       pessoal: org.tipo === "pessoal",
       trocarOrg: (id) => {
         gravarOrgDaAba(id);
