@@ -4,7 +4,7 @@
 // (components/shell/navegacao.ts): com ele a tela do manual ganha o botão "Ir para a tela".
 // Mudou uma tela ou regra? Atualize o trecho dela aqui no mesmo commit e acrescente uma linha em "Controle de versões".
 
-export const VERSAO_MANUAL = { numero: "2.17", data: "24/11/2026" };
+export const VERSAO_MANUAL = { numero: "2.18", data: "27/11/2026" };
 
 export const MANUAL_MD = `
 ## Como usar este manual
@@ -134,13 +134,15 @@ Para reunião, ligação marcada ou tarefa com hora certa, o HUB avisa o respons
 
 **Para que serve:** ver as tarefas concluídas por pessoa e por período, no prazo e com atraso, com Excel e PDF.
 
+**Quem vê a equipe:** gestores, administradores e quem tem o nível **Gerir** na ferramenta Tarefas (dado pelo administrador em Pessoas e acessos). Os demais veem só o próprio relatório.
+
 ### Painel TV (Tarefas → Painel TV)
 
 **Para que serve:** painel para a TV do escritório, com o andamento das tarefas da equipe em tempo real. A TV usa um acesso próprio, só de leitura.
 
 ### Configurações (Tarefas → Configurações)
 
-**Quem usa:** gestores e administradores.
+**Quem usa:** gestores e administradores. Quem tem o nível **Gerir** na ferramenta Tarefas (Pessoas e acessos) também entra, só na aba **Clientes**: cadastra e altera as empresas, define o responsável de cada uma em cada setor e inativa/reativa. A importação do Domínio continua só com gestor.
 
 - **Obrigações recorrentes:** as rotinas que viram tarefas sozinhas todo mês (título, setor, regimes, meses, dia de vencimento e ajuste para dia útil). As tarefas do mês são geradas todo dia de manhã sem duplicar; **Gerar tarefas** faz na hora.
 - **Clientes:** carteira de clientes, grupos e o **responsável de cada cliente em cada setor** (é ele que entra quando a tarefa é criada para vários clientes ou pela recorrência).
@@ -462,6 +464,7 @@ Os sistemas que a MDC licencia aos clientes (Ledgra ERP, EXato e os próximos): 
 | 2.14 | 23/11/2026 | **CRM Comercial**: propostas em PDF anexadas na ficha saem **assinadas digitalmente** pela MDC ao baixar (botão Baixar assinada), com registro no histórico. |
 | 2.15 | 23/11/2026 | **BI de Gestão**: Projeção da DRE para até 5 anos a partir do realizado (premissas de crescimento e inflação, % por linha editável ano a ano, valor digitado por cima), estudos gravados por empresa, planilha-modelo em Excel para baixar e subir, e "Provisionar no Orçamento". |
 | 2.16 | 24/11/2026 | **BI de Gestão**: Orçamento com a opção "Todas as empresas (soma)" e a linha de resultado do mês. |
+| 2.18 | 27/11/2026 | **Tarefas**: o nível **Gerir** em Tarefas libera a aba **Configurações › Clientes** (empresas e responsáveis por setor) e o **relatório da equipe**, sem precisar ser gestor. |
 | 2.17 | 24/11/2026 | **BI de Gestão**: abas **Centro de custo** (DRE e fluxo por departamento do Omie, com pesquisa de centro e de conta) e **Pedidos em carteira** (atendido, carteira, atrasados, previsão de entrega e volume por cliente). |
 | 2.11 | 21/11/2026 | **Demonstrativos**: Balanço, DRE, DFC e Balancete no mesmo padrão de tabela do BI (cabeçalho verde preso no topo, primeira coluna presa ao rolar, subtotais e resultado em destaque); também no Portal do Cliente. |
 | 2.18 | 26/11/2026 | **Demonstrativos → Auditoria fiscal (SAP)**: envie o relatório fiscal do SAP e o Ledgra Auditor confere CFOP, CST, NCM, impostos, utilização × CFOP e o XML do fornecedor; resultado com filtros, PDF, Excel e link para o Ledgra. |

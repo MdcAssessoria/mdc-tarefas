@@ -56,8 +56,11 @@ describe("filtrarLinks", () => {
   });
 
   it("esconde abas de gestor e as que exigem nível maior", () => {
-    const semGestao = filtrarLinks("tarefas", { pode: () => true, podeEditarCadastros: false });
+    const semGestao = filtrarLinks("tarefas", { pode: (_app, minimo = "ver") => minimo !== "gerir", podeEditarCadastros: false });
     expect(semGestao.map((l) => l.href)).not.toContain("/config");
+    // 123: Configurações aparece para gestor ou para quem tem Tarefas › Gerir
+    const gere = filtrarLinks("tarefas", { pode: () => true, podeEditarCadastros: false });
+    expect(gere.map((l) => l.href)).toContain("/config");
     const soVer = filtrarLinks("demonstrativos", { pode: (_app, minimo = "ver") => minimo === "ver", podeEditarCadastros: true });
     expect(soVer.map((l) => l.href)).toEqual([
       "/demonstrativos",
@@ -171,7 +174,7 @@ describe("Guarda: exigência da rota", () => {
     expect(exigenciaDaRota("/demonstrativos/importar", "demonstrativos")).toEqual({ minimo: "operar", gestor: undefined });
     expect(exigenciaDaRota("/demonstrativos", "demonstrativos")).toBeNull();
     expect(exigenciaDaRota("/demonstrativos/abc-123", "demonstrativos")).toBeNull();
-    expect(exigenciaDaRota("/config", "tarefas")).toEqual({ minimo: undefined, gestor: true });
+    expect(exigenciaDaRota("/config", "tarefas")).toEqual({ minimo: "gerir", gestor: true });
     expect(exigenciaDaRota("/atendimento/portal", "atendimento")).toEqual({ minimo: "gerir", gestor: undefined });
     expect(exigenciaDaRota("/entradas/lancar", "entradas")).toEqual({ minimo: "operar", gestor: undefined });
   });
@@ -201,8 +204,10 @@ describe("Guarda: podeAbrirRota", () => {
     expect(podeAbrirRota("/demonstrativos/importar", "demonstrativos", p)).toBe(false);
     expect(podeAbrirRota("/demonstrativos/importar", "demonstrativos", com({ demonstrativos: "operar" }))).toBe(true);
   });
-  it("Configurações e importar clientes exigem gestor; certificado exige administrador", () => {
-    expect(podeAbrirRota("/config", "tarefas", com({ tarefas: "gerir" }))).toBe(false);
+  it("Configurações: gestor ou Tarefas › Gerir (123); importar clientes exige gestor; certificado exige administrador", () => {
+    expect(podeAbrirRota("/config", "tarefas", com({ tarefas: "gerir" }))).toBe(true);
+    expect(podeAbrirRota("/config", "tarefas", com({ tarefas: "operar" }))).toBe(false);
+    expect(podeAbrirRota("/clientes/importar", "tarefas", com({ tarefas: "gerir" }))).toBe(false);
     expect(podeAbrirRota("/config", "tarefas", com({ tarefas: "ver" }, { gestor: true }))).toBe(true);
     expect(podeAbrirRota("/clientes/importar", "tarefas", com({ tarefas: "operar" }))).toBe(false);
     expect(podeAbrirRota("/demonstrativos/certificado", "demonstrativos", com({ demonstrativos: "gerir" }, { gestor: true }))).toBe(false);
