@@ -15,7 +15,7 @@ const LIMITE = 40 * 1024 * 1024;
 const EXTENSOES = /\.(txt|tsv|csv|xlsx|xls)$/i;
 const REGIMES = ["", "NAO CUMULATIVO", "CUMULATIVO", "SIMPLES"];
 
-async function gzipBase64(bytes: Uint8Array): Promise<string> {
+async function gzipBase64(bytes: Uint8Array<ArrayBuffer>): Promise<string> {
   const fluxo = new Blob([bytes]).stream().pipeThrough(new CompressionStream("gzip"));
   const comp = new Uint8Array(await new Response(fluxo).arrayBuffer());
   let s = "";
