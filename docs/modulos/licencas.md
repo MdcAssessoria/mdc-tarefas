@@ -181,6 +181,10 @@ desconhecida, desfazer, tela sem gravar direto) e `web/src/dominios/licencas/led
   sozinho, sem o Departamento Pessoal do Ledgra; o contrato full já o recebe. Desde a 084 o **Ledgra DP** (`ledgra-dp`)
   libera o Departamento Pessoal operado pela própria empresa (sem a MDC). Desde a 087 o **Ledgra Jurídico**
   (`ledgra-juridico`: processos, prazos, valores e provisões pelo CPC 25) é um adicional próprio; o contrato full já o recebe.
+  Desde a 124 (27/11/2026) o **Ledgra Raio-X** (`ledgra-raiox`: diagnóstico tributário pelo Integra Contador), o
+  **Ledgra Entrega** (`ledgra-entrega`: agenda, transmissão, recibos e guias) e o **Ledgra Integrações**
+  (`ledgra-integracoes`: Domínio e SAP Business One) também são vendidos sozinhos, cada um com endereço próprio
+  (raiox., entrega. e integracoes.ledgra.com.br); o contrato full já os recebe. Par no Ledgra: migração 20261732.
 - **Modalidade do contrato** (`lic_contratos.modalidade`): **gratuita** (valor zero, a MDC escolhe os módulos),
   **pacote** (plano ou módulos com valor) e **full** ("Ledgra full" no assistente: todos os módulos ativos do Ledgra,
   inclusive os criados depois).
