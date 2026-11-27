@@ -81,7 +81,11 @@ export const NAV: Record<Modulo, { titulo: string; links: LinkModulo[]; grupos?:
   // Auditoria fiscal do relatório do SAP pelo Ledgra Auditor (122); módulo próprio, fora de Demonstrativos (125, 27/11/2026)
   auditoria_fiscal: {
     titulo: "Auditoria fiscal",
-    links: [{ href: "/auditoria-fiscal", nome: "Auditorias do SAP", icone: "escudo" }],
+    links: [
+      { href: "/auditoria-fiscal", nome: "Auditorias do SAP", icone: "escudo" },
+      // Regras próprias e utilizações do ERP, as mesmas do Ledgra (Função ledgra-regras)
+      { href: "/auditoria-fiscal/regras", nome: "Regras de validação", icone: "lista" },
+    ],
   },
   atendimento: {
     titulo: "Atendimento",

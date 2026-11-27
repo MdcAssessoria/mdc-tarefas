@@ -168,6 +168,12 @@ sequenceDiagram
   NCM, valores, ICMS destacado, nota cancelada, emitente). Detalhes no `docs/frentes/auditor.md` do Ledgra.
 - **Arquivo:** o `.txt` que o SAP grava ao exportar (UTF-16 com tabulação) ou `.xlsx/.xls/.csv`; até 40 MB. Vai em gzip
   porque o servidor do Ledgra aceita até 4,5 MB por pedido.
+- **Regras de validação** (`/auditoria-fiscal/regras`, 125): regras próprias e utilizações do ERP, a MESMA biblioteca do
+  Ledgra (`auditor.erp_regras`, `auditor.erp_utilizacoes`). Função `ledgra-regras` (verify_jwt; `auditoria_regras_pode`:
+  ver para listar, operar para gravar) → Ledgra `POST /api/public/hub/auditoria-erp-regras` (Ledgra 20261665, porta
+  `auditor_erp_hub` como o usuário com o mesmo e-mail; gravar = equipe MDC; "todas as empresas" = Administrador MDC).
+  A empresa vai pelo CNPJ; o Ledgra descarta qualquer `empresa_id` vindo do navegador. Regras puras em
+  `web/src/dominios/auditoriaFiscal/regras.ts` (com teste).
 - Código: tela `web/src/app/(hub)/auditoria-fiscal/page.tsx`, regras puras em
   `web/src/dominios/auditoriaFiscal/auditoriaFiscal.ts` (com teste), Função `supabase/functions/ledgra-auditoria/`.
 

@@ -21,3 +21,16 @@ returns boolean language sql stable security definer set search_path = '' as $$
 $$;
 comment on function public.auditoria_erp_pode(uuid) is
   'A Função ledgra-auditoria confere se quem chamou pode enviar o relatório do SAP (Auditoria fiscal › operar, 125).';
+
+-- Regras de validação (27/11/2026): a tela Auditoria fiscal › Regras de validação lê e grava as regras próprias e as
+-- utilizações do ERP que ficam no Ledgra (uma biblioteca só), pela Função ledgra-regras. Ver = Auditoria fiscal › ver;
+-- gravar = Auditoria fiscal › operar (no Ledgra vale também a permissão de lá: equipe MDC).
+create or replace function public.auditoria_regras_pode(p_org uuid, p_gravar boolean)
+returns boolean language sql stable security definer set search_path = '' as $$
+  select auth.uid() is not null
+     and app.hub_pode(p_org, 'auditoria_fiscal', case when p_gravar then 'operar' else 'ver' end)
+$$;
+revoke all on function public.auditoria_regras_pode(uuid, boolean) from public, anon;
+grant execute on function public.auditoria_regras_pode(uuid, boolean) to authenticated;
+comment on function public.auditoria_regras_pode(uuid, boolean) is
+  'A Função ledgra-regras confere se quem chamou pode ver (ver) ou gravar (operar) as regras de validação (125).';

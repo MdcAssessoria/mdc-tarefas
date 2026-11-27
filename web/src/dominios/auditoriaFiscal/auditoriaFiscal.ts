@@ -100,11 +100,7 @@ export interface FiltroAchados {
 
 /** Achados que passam no filtro (busca no documento, descrição, NCM, CFOP e mensagem, sem acento). */
 export function filtrarAchados(achados: AchadoAuditoria[], f: FiltroAchados): AchadoAuditoria[] {
-  const limpo = (t: string) =>
-    t
-      .normalize("NFD")
-      .replace(/[̀-ͯ]/g, "")
-      .toLowerCase();
+  const limpo = (t: string) => t.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
   const q = limpo(f.busca.trim());
   return achados.filter(
     (a) =>

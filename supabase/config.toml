@@ -37,6 +37,10 @@ import_map = "./functions/fiscal-certificado/deno.json"
 verify_jwt = true
 import_map = "./functions/ledgra-auditoria/deno.json"
 
+[functions.ledgra-regras]
+verify_jwt = true
+import_map = "./functions/ledgra-regras/deno.json"
+
 [functions.fiscal-manifestar]
 verify_jwt = true
 import_map = "./functions/fiscal-manifestar/deno.json"

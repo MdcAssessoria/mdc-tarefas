@@ -70,6 +70,7 @@ describe("filtrarLinks", () => {
     // 125: a Auditoria fiscal é módulo próprio, com a ferramenta auditoria_fiscal
     expect(filtrarLinks("auditoria_fiscal", { pode: (app) => app === "auditoria_fiscal", podeEditarCadastros: false }).map((l) => l.href)).toEqual([
       "/auditoria-fiscal",
+      "/auditoria-fiscal/regras",
     ]);
   });
 
