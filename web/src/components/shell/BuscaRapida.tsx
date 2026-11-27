@@ -23,7 +23,7 @@ interface ItemBusca {
 
 /** Busca rápida (Ctrl/⌘ K): ferramentas, páginas e clientes. */
 export function BuscaRapida({ aoFechar }: { aoFechar: () => void }) {
-  const { apps, pode, podeEditarCadastros, papel, clientes, pessoal } = useOrg();
+  const { apps, pode, podeEditarCadastros, gereTarefas, papel, clientes, pessoal } = useOrg();
   const router = useRouter();
   const [q, setQ] = useState("");
   const [i, setI] = useState(0);
@@ -68,7 +68,7 @@ export function BuscaRapida({ aoFechar }: { aoFechar: () => void }) {
     itens.push({ id: "manual", grupo: "Ajuda", nome: "Manual do HUB", icone: "documento", href: "/manual" });
     if (papel === "admin")
       itens.push({ id: "acessos", grupo: "Administração", nome: "Pessoas e acessos", icone: "pessoas", href: "/hub/acessos" });
-    if (podeEditarCadastros)
+    if (gereTarefas)
       itens.push({ id: "config", grupo: "Administração", nome: "Configurações e clientes", icone: "engrenagem", href: "/config" });
     if (pode("tarefas"))
       for (const c of clientes.filter((c) => c.ativo))
@@ -96,7 +96,7 @@ export function BuscaRapida({ aoFechar }: { aoFechar: () => void }) {
       ];
     }
     return itens;
-  }, [apps, pode, podeEditarCadastros, papel, clientes, pessoal]);
+  }, [apps, pode, podeEditarCadastros, gereTarefas, papel, clientes, pessoal]);
 
   const resultado = useMemo(() => {
     const t = semAcento(q.trim().toLowerCase());
