@@ -9,7 +9,34 @@
 //
 // Código de integração: o do Ledgra no Vault do HUB (092), lido por public.integracao_token_ler (só a chave de
 // serviço). Endereço do Ledgra: segredo opcional LEDGRA_URL; sem ele, https://ledgra.com.br. Nada é digitado.
-import { bancoServico, bancoUsuario, cabecalhos, resposta } from "../_fiscal/http.ts";
+import { createClient } from "@supabase/supabase-js";
+import { chavePublica, chaveSecreta } from "../_compartilhado/chaves.ts";
+
+// Peças da Função (iguais às de _fiscal/http.ts, aqui para a Função não depender do pacote fiscal).
+const ORIGENS = [
+  "https://mdcassessoria.com",
+  "https://www.mdcassessoria.com",
+  "https://hub.mdcassessoria.com",
+  "https://mdc-tarefas.vercel.app",
+];
+const cabecalhos = (req: Request) => {
+  const origem = req.headers.get("origin") ?? "";
+  return {
+    "Access-Control-Allow-Origin": ORIGENS.includes(origem) ? origem : ORIGENS[0],
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    Vary: "Origin",
+  };
+};
+const resposta = (h: Record<string, string>) => (status: number, corpo: unknown) =>
+  new Response(JSON.stringify(corpo), { status, headers: { ...h, "Content-Type": "application/json" } });
+const bancoServico = () =>
+  createClient(Deno.env.get("SUPABASE_URL")!, chaveSecreta(), { auth: { persistSession: false } });
+const bancoUsuario = (auth: string) =>
+  createClient(Deno.env.get("SUPABASE_URL")!, chavePublica(), {
+    global: { headers: { Authorization: auth } },
+    auth: { persistSession: false },
+  });
 
 const LIMITE = 40 * 1024 * 1024;
 const EXTENSOES = /\.(txt|tsv|csv|xlsx|xls)$/i;
