@@ -1061,6 +1061,34 @@ export const TABELAS = {
       criado_em: momento(-1),
     },
   ],
+  // 122: auditoria fiscal do SAP feita pelo Ledgra Auditor (Demonstrativos › Auditoria fiscal (SAP))
+  auditorias_erp: [
+    {
+      id: "a1220000-0000-4000-8000-000000000001",
+      org_id: ORG,
+      cliente_id: null,
+      cnpj: "12345678000190",
+      empresa: "ENGEX Manutenção Industrial",
+      arquivo_nome: "COUTINHO_FISCAL_2026_10.txt",
+      regime: "NAO CUMULATIVO",
+      ledgra_id: "c0000000-0000-4000-8000-000000000001",
+      link: "https://ledgra.com.br/app/auditor/conferencia/c0000000-0000-4000-8000-000000000001",
+      linhas: 412,
+      fora: 1301,
+      resumo: { itens: 412, conferidos: 412, achados: 3, erros: 1, avisos: 2, oportunidades: 0, aRecolher: 337.87, economia: 0 },
+      por_regra: [
+        { regra: "R22", titulo: "CFOP incompatível com a utilização", gravidade: "aviso", quantidade: 2, valor: 0 },
+        { regra: "R29", titulo: "CFOP de entrada × CFOP do fornecedor no XML", gravidade: "erro", quantidade: 1, valor: 337.87 },
+      ],
+      achados: [
+        { regra: "R29", titulo: "CFOP de entrada × CFOP do fornecedor no XML", gravidade: "erro", documento: "NF 4521 série 1", data: "2026-10-03", item: "1", descricao: "Energia elétrica", ncm: "27160000", cfop: "1102", mensagem: "O fornecedor emitiu com CFOP 5253 (venda de energia); a entrada deveria ser 1253.", esperado: "1253", informado: "1102", diferenca: 337.87 },
+        { regra: "R22", titulo: "CFOP incompatível com a utilização", gravidade: "aviso", documento: "NF 88 série 1", data: "2026-10-08", item: "1", descricao: "Serviço de manutenção", ncm: null, cfop: "1949", mensagem: "Utilização “Compra para serviço” pede 1.128/2.128 ou 1.933/2.933.", esperado: "1128, 1933", informado: "1949", diferenca: 0 },
+        { regra: "R22", titulo: "CFOP incompatível com a utilização", gravidade: "aviso", documento: "NF 91 série 1", data: "2026-10-12", item: "2", descricao: "Peças de reposição", ncm: "84839000", cfop: "2949", mensagem: "Utilização “Uso e consumo” pede 2.556.", esperado: "2556", informado: "2949", diferenca: 0 },
+      ],
+      solicitado_por: "u0000000-0000-4000-8000-000000000001",
+      criado_em: "2026-11-26T14:20:00Z",
+    },
+  ],
   portal_balancetes: [
     ...historicoBalancetes,
     balanceteReg("66666666-6666-4666-8666-666666666660", "2026-08-01", "rascunho", 1.1),

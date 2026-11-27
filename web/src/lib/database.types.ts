@@ -8,6 +8,78 @@ export type Database = {
   };
   public: {
     Tables: {
+      auditorias_erp: {
+        Row: {
+          achados: Json;
+          arquivo_nome: string;
+          cliente_id: string | null;
+          cnpj: string;
+          criado_em: string;
+          empresa: string | null;
+          fora: number;
+          id: string;
+          ledgra_id: string;
+          linhas: number;
+          link: string;
+          org_id: string;
+          por_regra: Json;
+          regime: string;
+          resumo: Json;
+          solicitado_por: string;
+        };
+        Insert: {
+          achados?: Json;
+          arquivo_nome: string;
+          cliente_id?: string | null;
+          cnpj: string;
+          criado_em?: string;
+          empresa?: string | null;
+          fora?: number;
+          id?: string;
+          ledgra_id: string;
+          linhas?: number;
+          link: string;
+          org_id: string;
+          por_regra?: Json;
+          regime?: string;
+          resumo?: Json;
+          solicitado_por: string;
+        };
+        Update: {
+          achados?: Json;
+          arquivo_nome?: string;
+          cliente_id?: string | null;
+          cnpj?: string;
+          criado_em?: string;
+          empresa?: string | null;
+          fora?: number;
+          id?: string;
+          ledgra_id?: string;
+          linhas?: number;
+          link?: string;
+          org_id?: string;
+          por_regra?: Json;
+          regime?: string;
+          resumo?: Json;
+          solicitado_por?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "auditorias_erp_cliente_id_fkey";
+            columns: ["cliente_id"];
+            isOneToOne: false;
+            referencedRelation: "clientes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "auditorias_erp_org_id_fkey";
+            columns: ["org_id"];
+            isOneToOne: false;
+            referencedRelation: "organizacoes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       bi_acessos: {
         Row: {
           cliente_id: string;
@@ -7134,7 +7206,9 @@ export type Database = {
         Row: {
           atualizado_em: string;
           cancelado: boolean;
+          cliente_doc: string | null;
           cliente_id: string;
+          cliente_nome: string | null;
           codigo_cliente: string | null;
           codigo_pedido: string;
           dados: Json;
@@ -7155,7 +7229,9 @@ export type Database = {
         Insert: {
           atualizado_em?: string;
           cancelado?: boolean;
+          cliente_doc?: string | null;
           cliente_id: string;
+          cliente_nome?: string | null;
           codigo_cliente?: string | null;
           codigo_pedido: string;
           dados?: Json;
@@ -7176,7 +7252,9 @@ export type Database = {
         Update: {
           atualizado_em?: string;
           cancelado?: boolean;
+          cliente_doc?: string | null;
           cliente_id?: string;
+          cliente_nome?: string | null;
           codigo_cliente?: string | null;
           codigo_pedido?: string;
           dados?: Json;
@@ -9332,6 +9410,7 @@ export type Database = {
         Returns: string;
       };
       agente_token_confere: { Args: { p_token: string }; Returns: boolean };
+      auditoria_erp_pode: { Args: { p_org: string }; Returns: boolean };
       bi_acesso_decidir: {
         Args: {
           p_aprovar: boolean;
@@ -10125,6 +10204,7 @@ export type Database = {
         Returns: boolean;
       };
       integracao_token_girar: { Args: { p_sistema: string }; Returns: boolean };
+      integracao_token_ler: { Args: { p_sistema: string }; Returns: string };
       lic_assinatura_abrir: { Args: { p_token: string }; Returns: Json };
       lic_assinatura_aceitar: {
         Args: {

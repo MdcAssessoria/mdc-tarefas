@@ -72,6 +72,8 @@ export const NAV: Record<Modulo, { titulo: string; links: LinkModulo[]; grupos?:
       { href: "/demonstrativos/importar", nome: "Importar", icone: "importar", minimo: "operar" },
       { href: "/demonstrativos/importacoes", nome: "Histórico de importações", icone: "relogio" },
       { href: "/demonstrativos/riscos", nome: "Riscos da carteira", icone: "alerta" },
+      // Auditoria fiscal do relatório do SAP pelo Ledgra Auditor (122, 26/11/2026)
+      { href: "/demonstrativos/auditoria-fiscal", nome: "Auditoria fiscal", icone: "escudo" },
     ],
   },
   // BI de Gestão (19/11/2026): DRE e DFC gerenciais do grupo de empresas a partir do Omie (bi_relatorio)

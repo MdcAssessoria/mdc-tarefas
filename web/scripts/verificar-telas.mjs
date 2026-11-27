@@ -1448,6 +1448,14 @@ const INTERACOES = {
     await foto?.("projecao");
   },
   "/demonstrativos/importar": importarEmLote,
+  // 122: abre o resultado da auditoria do SAP e filtra por uma regra
+  "/demonstrativos/auditoria-fiscal": async (p, foto) => {
+    await p.getByRole("button", { name: /Ver resultado/ }).first().click();
+    await p.getByRole("region", { name: /Resultado da auditoria/ }).waitFor({ timeout: 8000 });
+    await p.getByRole("button", { name: /R29/ }).click();
+    await p.getByText(/CFOP 5253/).waitFor({ timeout: 8000 });
+    await foto?.("resultado");
+  },
   // Novo processo de empresa fora do cadastro: "Buscar dados" do CNPJ (Receita simulada) preenche razão social e UF
   "/societario": async (p, foto) => {
     await p.route("**/brasilapi.com.br/**", (r) =>

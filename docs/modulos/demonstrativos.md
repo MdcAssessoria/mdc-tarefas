@@ -13,6 +13,7 @@
 | `/demonstrativos/[id]` | Equipe | Análise do cliente: Painel, Balanço/DRE/DFC, Balancete, Índices, Fragilidades, Parecer; publicar (pede confirmação se há conferência pendente) e despublicar (confirma). Ajuste de grupo ou de linha da DFC abre a janela "Só para esta empresa" / "Para todas as empresas" (`JanelaEscolha`) |
 | `/demonstrativos/importacoes` | Equipe | Histórico de importações: indicadores por resultado, período em um clique, PDF/Excel |
 | `/demonstrativos/riscos` | Equipe | Riscos da carteira (último balancete de cada cliente), indicadores que filtram, PDF/Excel |
+| `/demonstrativos/auditoria-fiscal` | Equipe (enviar: operar) | Auditoria fiscal do relatório do SAP pelo Ledgra Auditor (122): envio (empresa, CNPJ da filial, regime de PIS/COFINS, arquivo .txt/.xlsx/.csv), histórico com período e busca, resultado com indicadores que filtram, contagem por regra (clique filtra), achados com PDF/Excel e link **Abrir no Ledgra**. Ver seção 3c |
 | `/demonstrativos/certificado` | Administrador | Certificado A1 usado para assinar o PDF |
 | `/portal` (abas Resumo, Balanço/DRE/DFC, Balancete, Índices, Parecer) | Cliente | Só os balancetes publicados (`dominios/portal/componentes/PortalDemonstrativos`) |
 
@@ -136,6 +137,36 @@ A chamada do agendador usa um token gerado pelo próprio banco e guardado no Vau
 **Histórico de importações** (`/demonstrativos/importacoes`): tudo o que chegou (um arquivo, lote ou pasta), com filtros
 de período, porta e resultado, e exportação em PDF e Excel.
 
+## 3c. Auditoria fiscal do SAP pelo Ledgra (122, 26/11/2026)
+
+```mermaid
+sequenceDiagram
+    participant Tela as Tela (HUB)
+    participant F as Função ledgra-auditoria
+    participant L as Ledgra (/api/public/hub/auditoria-erp)
+    Tela->>F: arquivo do SAP + empresa + CNPJ + regime (login da pessoa)
+    F->>F: auditoria_erp_pode (Demonstrativos, operar)
+    F->>L: gzip+base64, x-hub-integracao (código do Ledgra no Vault, integracao_token_ler)
+    L->>L: confere como o usuário do Ledgra com o mesmo e-mail (Auditor da empresa)
+    L-->>F: id, link, contagem por regra, até 1.000 achados
+    F->>F: grava auditorias_erp (chave de serviço)
+    F-->>Tela: id → abre o resultado
+```
+
+- **Quem pode:** enviar exige Demonstrativos **operar** (`auditoria_erp_pode`, com o login de quem chamou); ver o
+  histórico exige Demonstrativos **ver** (RLS de `auditorias_erp`). No Ledgra, a pessoa precisa ter o Ledgra Auditor
+  liberado para a empresa **com o mesmo e-mail** do HUB, e a empresa precisa estar cadastrada lá com o CNPJ da filial.
+- **Código de integração:** o mesmo do Ledgra (092, Vault `integracao_token_ledgra`); a Função lê por
+  `integracao_token_ler` (só `service_role`). Endereço do Ledgra: segredo opcional `LEDGRA_URL` da Função (padrão
+  `https://ledgra.com.br`). Ninguém digita código.
+- **O que o Ledgra confere:** regras R01–R36 do relatório do ERP, regras próprias, utilizações × CFOP × CST/crédito de
+  ICMS × PIS/COFINS por regime e o XML do fornecedor guardado no Ledgra XML (CFOP do fornecedor × CFOP de entrada,
+  NCM, valores, ICMS destacado, nota cancelada, emitente). Detalhes no `docs/frentes/auditor.md` do Ledgra.
+- **Arquivo:** o `.txt` que o SAP grava ao exportar (UTF-16 com tabulação) ou `.xlsx/.xls/.csv`; até 40 MB. Vai em gzip
+  porque o servidor do Ledgra aceita até 4,5 MB por pedido.
+- Código: tela `web/src/app/(hub)/demonstrativos/auditoria-fiscal/page.tsx`, regras puras em
+  `web/src/dominios/demonstrativos/auditoriaFiscal.ts` (com teste), Função `supabase/functions/ledgra-auditoria/`.
+
 ## 4. Tabelas usadas
 
 | Tabela | Uso no módulo |
@@ -147,6 +178,7 @@ de período, porta e resultado, e exportação em PDF e Excel.
 | `portal_pareceres` | Parecer técnico por balancete, com versões |
 | `hub_integracoes` | Configuração da pasta do SharePoint (só administrador) |
 | `hub_importacoes` | Histórico de importações (arquivo, lote, pasta) |
+| `auditorias_erp` | Auditoria fiscal do SAP (122): CNPJ, arquivo, regime, link e id da conferência no Ledgra, linhas, resumo, contagem por regra e até 1.000 achados. Lê quem tem Demonstrativos; grava só a Função `ledgra-auditoria` |
 | `org_papel_timbrado` | Telefone, site, e-mail, Instagram e responsável técnico (nome e CRC) que saem no rodapé e na responsabilidade técnica do PDF (052, D-11). Editado em Configurações › Organização e painel › "Papel timbrado dos documentos", só pelo administrador (`org_papel_timbrado_salvar`, auditado); a função `demonstrativo-pdf` lê daqui e, campo vazio, usa o padrão da MDC. Razão social, CNPJ e cidade continuam vindo do cadastro da empresa da Gestão |
 
 Detalhes de colunas e travas no [capítulo 4](../04-banco-de-dados.md); o fluxo até o Portal na [seção 6.1](../06-fluxos.md#61-balancete-do-excel-do-domínio-ao-portal-do-cliente).
