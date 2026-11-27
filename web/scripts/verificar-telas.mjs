@@ -35,6 +35,42 @@ import { importarEmLote } from "./telas/interacoes-importacao.mjs";
 import { trocarPeriodo } from "./telas/interacoes-periodo.mjs";
 import { interacoesPortal } from "./telas/interacoes-portal.mjs";
 
+// Auditoria fiscal › Regras de validação (125): resposta de exemplo da Função ledgra-regras
+const LEDGRA_REGRAS = {
+  empresa: "ENGEX Manutenção Industrial",
+  pode: { gravar: true, todas: true },
+  colunas: [
+    { coluna: "CFOP", nome: "CFOP" },
+    { coluna: "UTILIZACAO", nome: "Utilização" },
+    { coluna: "VL_ICMS", nome: "Valor do ICMS" },
+  ],
+  operadores: [
+    { operador: "igual", nome: "é igual a", sem_valor: false, dica: null },
+    { operador: "na_lista", nome: "está na lista", sem_valor: false, dica: "separe por vírgula: 5102, 5405" },
+    { operador: "maior", nome: "é maior que", sem_valor: false, dica: null },
+    { operador: "vazio", nome: "está vazio", sem_valor: true, dica: null },
+  ],
+  regras: [
+    {
+      id: "11111111-1111-4111-8111-111111111111", codigo: "P001", empresa_id: "e1", nome: "Uso e consumo com crédito de ICMS",
+      condicoes: [{ coluna: "CFOP", operador: "na_lista", valor: "1556, 2556" }, { coluna: "VL_ICMS", operador: "maior", valor: "0" }],
+      gravidade: "ALTA", ajuste: "Estornar o crédito de ICMS no SAP", fundamento: "LC 87/96, art. 33, I", ativo: true, pode_gravar: true,
+    },
+    {
+      id: "22222222-2222-4222-8222-222222222222", codigo: "P002", empresa_id: null, nome: "Remessa sem utilização",
+      condicoes: [{ coluna: "UTILIZACAO", operador: "vazio", valor: "" }],
+      gravidade: "MEDIA", ajuste: "Informar a utilização no documento", fundamento: null, ativo: true, pode_gravar: true,
+    },
+  ],
+  utilizacoes: [
+    {
+      id: "33333333-3333-4333-8333-333333333333", empresa_id: "e1", utilizacao: "Uso e consumo", sentido: "E", natureza: "fiscal",
+      cfops: ["1556", "2556"], cst_icms: ["90"], credito_icms: false, cst_ipi: ["49"], cst_pis_real: ["98"], cst_pis_presumido: ["98"],
+      observacao: null, fundamento: "LC 87/96, art. 33, I", ativo: true, pode_gravar: true,
+    },
+  ],
+};
+
 const LEDGRA_LINK_CADASTROS = {
   titulares: [
     {
@@ -297,6 +333,8 @@ function criarRespostaSupabase(avisos) {
       // Acessos (071): senha provisória gerada para mandar pelo WhatsApp
       if (p.endsWith("/convite") && req.postDataJSON?.()?.senha_provisoria)
         return json(200, { enviado: false, senha: "Mdc-KQXP-4821", endereco: "https://hub.mdcassessoria.com/hub-mdc/login" });
+      // Auditoria fiscal › Regras de validação (125): o que o Ledgra devolve para uma empresa
+      if (p.endsWith("/ledgra-regras")) return json(200, LEDGRA_REGRAS);
       // lançar falando (082): nas fotos a IA fica desligada (o app entende sozinho)
       if (p.endsWith("/pessoal-voz")) return json(200, { indisponivel: true, lancamentos: [] });
       return json(200, {});
@@ -1448,8 +1486,21 @@ const INTERACOES = {
     await foto?.("projecao");
   },
   "/demonstrativos/importar": importarEmLote,
-  // 122: abre o resultado da auditoria do SAP e filtra por uma regra
-  "/demonstrativos/auditoria-fiscal": async (p, foto) => {
+  // 122/125: abre o resultado da auditoria do SAP e filtra por uma regra
+  // 125: escolhe a empresa, mostra as regras, abre "Editar" e a aba das utilizações
+  "/auditoria-fiscal/regras": async (p, foto) => {
+    await p.getByRole("combobox", { name: "Empresa", exact: true }).selectOption({ index: 1 });
+    await p.getByText(/P001/).waitFor({ timeout: 8000 });
+    await foto?.("lista");
+    await p.getByRole("button", { name: "Editar" }).first().click();
+    await p.getByRole("dialog").waitFor({ timeout: 8000 });
+    await foto?.("editar");
+    await p.getByRole("button", { name: "Voltar" }).click();
+    await p.getByRole("tab", { name: /Utilizações/ }).click();
+    await p.getByText(/Uso e consumo/).first().waitFor({ timeout: 8000 });
+    await foto?.("utilizacoes");
+  },
+  "/auditoria-fiscal": async (p, foto) => {
     await p.getByRole("button", { name: /Ver resultado/ }).first().click();
     await p.getByRole("region", { name: /Resultado da auditoria/ }).waitFor({ timeout: 8000 });
     await p.getByRole("button", { name: /R29/ }).click();

@@ -3299,6 +3299,19 @@ RPCS.fis_nbs_do_servico = ({ p_servico }) => {
   return { ...base, item: d.length >= 4 ? `${d.slice(0, 2)}.${d.slice(2, 4)}` : null, item_descricao: null, nbs: [] };
 };
 
+// ---------------------------------------------------------------- Auditoria fiscal (/auditoria-fiscal, 125)
+APPS.push({
+  slug: "auditoria_fiscal",
+  nome: "Auditoria fiscal",
+  descricao: "Relatório fiscal do SAP conferido pelo Ledgra Auditor",
+  icone: "escudo",
+  rota: "/auditoria-fiscal",
+  status: "ativo",
+  externo: false,
+  ordem: 32,
+  papel: "operar",
+});
+
 // ---------------------------------------------------------------- BI de Gestão (/bi-gestao, 19/11/2026)
 // Um grupo com duas empresas e um DRE/DFC curto de dois meses, com "Não classificado" para o aviso aparecer.
 (() => {

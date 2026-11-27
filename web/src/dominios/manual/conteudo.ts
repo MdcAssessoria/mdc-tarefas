@@ -4,7 +4,7 @@
 // (components/shell/navegacao.ts): com ele a tela do manual ganha o botão "Ir para a tela".
 // Mudou uma tela ou regra? Atualize o trecho dela aqui no mesmo commit e acrescente uma linha em "Controle de versões".
 
-export const VERSAO_MANUAL = { numero: "2.18", data: "27/11/2026" };
+export const VERSAO_MANUAL = { numero: "2.19", data: "27/11/2026" };
 
 export const MANUAL_MD = `
 ## Como usar este manual
@@ -200,7 +200,13 @@ Balancetes do Domínio transformados em Balanço, DRE, DFC, índices, fragilidad
 
 **Para que serve:** clientes com sinais de fragilidade nos números, para a equipe agir antes.
 
-### Auditoria fiscal do SAP (Demonstrativos → Auditoria fiscal (SAP))
+## Auditoria fiscal
+
+Conferência do relatório fiscal de entradas e saídas do SAP pelo Ledgra Auditor. É um módulo próprio, separado de Demonstrativos (balancetes): quem faz a auditoria não precisa ter acesso aos balancetes, e quem vê balancetes não vê a auditoria.
+
+**Quem usa:** equipe com a ferramenta **Auditoria fiscal** liberada em Pessoas e acessos (**ver** = histórico e resultados; **operar** = enviar o relatório).
+
+### Auditoria fiscal do SAP (Auditoria fiscal → Auditorias do SAP)
 
 **Para que serve:** conferir o relatório fiscal de entradas e saídas que sai do SAP Business One, antes de fechar a apuração. Quem confere é o **Ledgra Auditor**: CFOP, CST de ICMS, PIS/COFINS e IPI, NCM, valores, a utilização de cada nota × CFOP × regra de imposto e, quando o XML está guardado no Ledgra XML, o CFOP do fornecedor × o CFOP de entrada.
 
@@ -210,7 +216,18 @@ Balancetes do Domínio transformados em Balanço, DRE, DFC, índices, fragilidad
 4. O resultado abre logo abaixo: erros, pontos de atenção e imposto a recolher. Toque numa regra para ver só os achados dela, ou use a **Situação** e a busca. **PDF** e **Excel** levam o que está filtrado.
 5. **Abrir no Ledgra** mostra a conferência completa, com o fundamento de cada regra.
 
-**Para enviar:** ferramenta Demonstrativos no nível **operar** e o Ledgra Auditor liberado para a empresa, com o **mesmo e-mail** do HUB. A empresa precisa estar cadastrada no Ledgra com o CNPJ da filial.
+**Para enviar:** ferramenta Auditoria fiscal no nível **operar** e o Ledgra Auditor liberado para a empresa, com o **mesmo e-mail** do HUB. A empresa precisa estar cadastrada no Ledgra com o CNPJ da filial.
+
+### Regras de validação (Auditoria fiscal → Regras de validação)
+
+**Para que serve:** cadastrar as regras próprias e as utilizações do SAP que o Ledgra Auditor usa ao conferir o relatório. A lista é a **mesma do Ledgra**: o que você cria ou muda aqui vale lá, e o que mudam lá aparece aqui.
+
+1. Escolha a **Empresa**. Aparecem as regras dela e as que valem para todas as empresas.
+2. **Regras próprias:** em **Nova regra**, dê um nome e monte até 6 condições (coluna do relatório × comparação × valor; a regra aponta quando todas valem na mesma linha). Diga a gravidade, o ajuste sugerido e o fundamento.
+3. **Utilizações do SAP:** em **Nova utilização**, informe a utilização como está no SAP, se é entrada ou saída e os CFOPs e CSTs aceitos (ICMS, IPI e PIS/COFINS no Real e no Presumido) e se dá crédito de ICMS. Campo vazio = não confere.
+4. **Inativar** pede o motivo; a regra deixa de valer nas próximas auditorias. **Reativar** volta a valer.
+
+**Para alterar:** ferramenta Auditoria fiscal no nível **operar** e ser da equipe MDC no Ledgra (para "todas as empresas", só o Administrador MDC). Com **ver**, você só consulta. A planilha aprovada inteira de utilizações se importa pelo Ledgra (Utilizações do ERP).
 
 ## BI de Gestão
 
@@ -464,6 +481,8 @@ Os sistemas que a MDC licencia aos clientes (Ledgra ERP, EXato e os próximos): 
 | 2.14 | 23/11/2026 | **CRM Comercial**: propostas em PDF anexadas na ficha saem **assinadas digitalmente** pela MDC ao baixar (botão Baixar assinada), com registro no histórico. |
 | 2.15 | 23/11/2026 | **BI de Gestão**: Projeção da DRE para até 5 anos a partir do realizado (premissas de crescimento e inflação, % por linha editável ano a ano, valor digitado por cima), estudos gravados por empresa, planilha-modelo em Excel para baixar e subir, e "Provisionar no Orçamento". |
 | 2.16 | 24/11/2026 | **BI de Gestão**: Orçamento com a opção "Todas as empresas (soma)" e a linha de resultado do mês. |
+| 2.19 | 27/11/2026 | **Auditoria fiscal → Regras de validação**: regras próprias e utilizações do SAP cadastradas no HUB e no Ledgra ao mesmo tempo (a mesma lista). |
+| 2.19 | 27/11/2026 | **Auditoria fiscal** virou módulo próprio no menu (antes ficava em Demonstrativos), com a ferramenta **Auditoria fiscal** em Pessoas e acessos: ver = histórico e resultados; operar = enviar o relatório do SAP. O endereço antigo redireciona. |
 | 2.18 | 27/11/2026 | **Tarefas**: o nível **Gerir** em Tarefas libera a aba **Configurações › Clientes** (empresas e responsáveis por setor) e o **relatório da equipe**, sem precisar ser gestor. |
 | 2.17 | 24/11/2026 | **BI de Gestão**: abas **Centro de custo** (DRE e fluxo por departamento do Omie, com pesquisa de centro e de conta) e **Pedidos em carteira** (atendido, carteira, atrasados, previsão de entrega e volume por cliente). |
 | 2.11 | 21/11/2026 | **Demonstrativos**: Balanço, DRE, DFC e Balancete no mesmo padrão de tabela do BI (cabeçalho verde preso no topo, primeira coluna presa ao rolar, subtotais e resultado em destaque); também no Portal do Cliente. |

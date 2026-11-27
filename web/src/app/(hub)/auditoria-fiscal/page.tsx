@@ -1,4 +1,4 @@
-// Demonstrativos › Auditoria fiscal (SAP) (migração 122): a equipe envia o relatório fiscal de entradas e saídas
+// Auditoria fiscal (SAP) (migração 122; módulo próprio desde a 125): a equipe envia o relatório fiscal de entradas e saídas
 // exportado do SAP; o Ledgra Auditor confere (CFOP, CST, NCM, utilização × CFOP × impostos, XML do fornecedor) e o
 // resultado volta para cá, com o link da conferência completa no Ledgra. Função Edge: ledgra-auditoria.
 "use client";
@@ -29,7 +29,7 @@ import {
   type AuditoriaErp,
   type Gravidade,
   type RegimeAuditoria,
-} from "@/dominios/demonstrativos/auditoriaFiscal";
+} from "@/dominios/auditoriaFiscal/auditoriaFiscal";
 import { useAviso } from "@/components/ui/Aviso";
 import { BotoesExportar } from "@/components/ui/BotoesExportar";
 import { CabecalhoPagina } from "@/components/ui/CabecalhoPagina";
@@ -52,7 +52,7 @@ type Resumida = Omit<AuditoriaErp, "achados">;
 function AuditoriaFiscal() {
   const { org, clientes, clientePorId, pode } = useOrg();
   const { aviso, mostrar } = useAviso();
-  const podeAuditar = pode("demonstrativos", "operar");
+  const podeAuditar = pode("auditoria_fiscal", "operar");
 
   // histórico
   const [periodo, setPeriodo] = useState<Periodo>("90");

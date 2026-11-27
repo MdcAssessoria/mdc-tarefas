@@ -32,6 +32,8 @@ const nextConfig: NextConfig = {
       },
       // Financeiro v2 (01/11/2026): plano, categorias, centros de custo e fornecedores/clientes viraram módulos próprios
       { source: "/financeiro/plano", destination: "/plano-contas", permanent: false },
+      // 125: a Auditoria fiscal saiu de Demonstrativos e virou módulo próprio
+      { source: "/demonstrativos/auditoria-fiscal", destination: "/auditoria-fiscal", permanent: false },
       { source: "/financeiro/cadastros", destination: "/cadastros/pessoas", permanent: false },
     ];
   },
