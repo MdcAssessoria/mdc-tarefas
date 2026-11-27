@@ -13,7 +13,7 @@
 | `/demonstrativos/[id]` | Equipe | Análise do cliente: Painel, Balanço/DRE/DFC, Balancete, Índices, Fragilidades, Parecer; publicar (pede confirmação se há conferência pendente) e despublicar (confirma). Ajuste de grupo ou de linha da DFC abre a janela "Só para esta empresa" / "Para todas as empresas" (`JanelaEscolha`) |
 | `/demonstrativos/importacoes` | Equipe | Histórico de importações: indicadores por resultado, período em um clique, PDF/Excel |
 | `/demonstrativos/riscos` | Equipe | Riscos da carteira (último balancete de cada cliente), indicadores que filtram, PDF/Excel |
-| `/demonstrativos/auditoria-fiscal` | Equipe (enviar: operar) | Auditoria fiscal do relatório do SAP pelo Ledgra Auditor (122): envio (empresa, CNPJ da filial, regime de PIS/COFINS, arquivo .txt/.xlsx/.csv), histórico com período e busca, resultado com indicadores que filtram, contagem por regra (clique filtra), achados com PDF/Excel e link **Abrir no Ledgra**. Ver seção 3c |
+| `/auditoria-fiscal` (módulo próprio desde a 125) | Ferramenta Auditoria fiscal (enviar: operar) | Auditoria fiscal do relatório do SAP pelo Ledgra Auditor (122): envio (empresa, CNPJ da filial, regime de PIS/COFINS, arquivo .txt/.xlsx/.csv), histórico com período e busca, resultado com indicadores que filtram, contagem por regra (clique filtra), achados com PDF/Excel e link **Abrir no Ledgra**. Ver seção 3c |
 | `/demonstrativos/certificado` | Administrador | Certificado A1 usado para assinar o PDF |
 | `/portal` (abas Resumo, Balanço/DRE/DFC, Balancete, Índices, Parecer) | Cliente | Só os balancetes publicados (`dominios/portal/componentes/PortalDemonstrativos`) |
 
@@ -137,7 +137,11 @@ A chamada do agendador usa um token gerado pelo próprio banco e guardado no Vau
 **Histórico de importações** (`/demonstrativos/importacoes`): tudo o que chegou (um arquivo, lote ou pasta), com filtros
 de período, porta e resultado, e exportação em PDF e Excel.
 
-## 3c. Auditoria fiscal do SAP pelo Ledgra (122, 26/11/2026)
+## 3c. Auditoria fiscal do SAP pelo Ledgra (122, 26/11/2026; módulo próprio desde a 125)
+
+> **27/11/2026 (125):** a tela saiu de Demonstrativos e virou o módulo **Auditoria fiscal** (`/auditoria-fiscal`,
+> ferramenta `auditoria_fiscal`; o endereço antigo redireciona). A permissão deixou de ser a de Demonstrativos: ver =
+> histórico (RLS de `auditorias_erp`), operar = enviar (`auditoria_erp_pode`). Ninguém herdou o acesso.
 
 ```mermaid
 sequenceDiagram
@@ -145,7 +149,7 @@ sequenceDiagram
     participant F as Função ledgra-auditoria
     participant L as Ledgra (/api/public/hub/auditoria-erp)
     Tela->>F: arquivo do SAP + empresa + CNPJ + regime (login da pessoa)
-    F->>F: auditoria_erp_pode (Demonstrativos, operar)
+    F->>F: auditoria_erp_pode (Auditoria fiscal, operar)
     F->>L: gzip+base64, x-hub-integracao (código do Ledgra no Vault, integracao_token_ler)
     L->>L: confere como o usuário do Ledgra com o mesmo e-mail (Auditor da empresa)
     L-->>F: id, link, contagem por regra, até 1.000 achados
@@ -153,8 +157,8 @@ sequenceDiagram
     F-->>Tela: id → abre o resultado
 ```
 
-- **Quem pode:** enviar exige Demonstrativos **operar** (`auditoria_erp_pode`, com o login de quem chamou); ver o
-  histórico exige Demonstrativos **ver** (RLS de `auditorias_erp`). No Ledgra, a pessoa precisa ter o Ledgra Auditor
+- **Quem pode:** enviar exige Auditoria fiscal **operar** (`auditoria_erp_pode`, com o login de quem chamou); ver o
+  histórico exige Auditoria fiscal **ver** (RLS de `auditorias_erp`). No Ledgra, a pessoa precisa ter o Ledgra Auditor
   liberado para a empresa **com o mesmo e-mail** do HUB, e a empresa precisa estar cadastrada lá com o CNPJ da filial.
 - **Código de integração:** o mesmo do Ledgra (092, Vault `integracao_token_ledgra`); a Função lê por
   `integracao_token_ler` (só `service_role`). Endereço do Ledgra: segredo opcional `LEDGRA_URL` da Função (padrão
@@ -164,8 +168,8 @@ sequenceDiagram
   NCM, valores, ICMS destacado, nota cancelada, emitente). Detalhes no `docs/frentes/auditor.md` do Ledgra.
 - **Arquivo:** o `.txt` que o SAP grava ao exportar (UTF-16 com tabulação) ou `.xlsx/.xls/.csv`; até 40 MB. Vai em gzip
   porque o servidor do Ledgra aceita até 4,5 MB por pedido.
-- Código: tela `web/src/app/(hub)/demonstrativos/auditoria-fiscal/page.tsx`, regras puras em
-  `web/src/dominios/demonstrativos/auditoriaFiscal.ts` (com teste), Função `supabase/functions/ledgra-auditoria/`.
+- Código: tela `web/src/app/(hub)/auditoria-fiscal/page.tsx`, regras puras em
+  `web/src/dominios/auditoriaFiscal/auditoriaFiscal.ts` (com teste), Função `supabase/functions/ledgra-auditoria/`.
 
 ## 4. Tabelas usadas
 

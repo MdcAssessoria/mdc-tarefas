@@ -1,4 +1,4 @@
-// Demonstrativos › Auditoria fiscal (SAP) (migração 122): tipos do resultado que o Ledgra Auditor devolve e as regras
+// Auditoria fiscal (SAP) (migração 122; módulo próprio desde a 125): tipos do resultado que o Ledgra Auditor devolve e as regras
 // puras da tela (nomes, cores, filtros). A conferência em si roda no Ledgra (Função Edge ledgra-auditoria).
 import type { Tom } from "@/components/ui/Tons";
 

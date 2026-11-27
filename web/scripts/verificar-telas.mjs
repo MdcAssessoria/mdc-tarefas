@@ -1448,8 +1448,8 @@ const INTERACOES = {
     await foto?.("projecao");
   },
   "/demonstrativos/importar": importarEmLote,
-  // 122: abre o resultado da auditoria do SAP e filtra por uma regra
-  "/demonstrativos/auditoria-fiscal": async (p, foto) => {
+  // 122/125: abre o resultado da auditoria do SAP e filtra por uma regra
+  "/auditoria-fiscal": async (p, foto) => {
     await p.getByRole("button", { name: /Ver resultado/ }).first().click();
     await p.getByRole("region", { name: /Resultado da auditoria/ }).waitFor({ timeout: 8000 });
     await p.getByRole("button", { name: /R29/ }).click();

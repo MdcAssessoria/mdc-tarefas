@@ -10,6 +10,7 @@ export type Modulo =
   | "societario"
   | "demonstrativos"
   | "bi_gestao"
+  | "auditoria_fiscal"
   | "atendimento"
   | "vencimentos"
   | "comercial"
@@ -73,12 +74,15 @@ export const NAV: Record<Modulo, { titulo: string; links: LinkModulo[]; grupos?:
       { href: "/demonstrativos/importar", nome: "Importar", icone: "importar", minimo: "operar" },
       { href: "/demonstrativos/importacoes", nome: "Histórico de importações", icone: "relogio" },
       { href: "/demonstrativos/riscos", nome: "Riscos da carteira", icone: "alerta" },
-      // Auditoria fiscal do relatório do SAP pelo Ledgra Auditor (122, 26/11/2026)
-      { href: "/demonstrativos/auditoria-fiscal", nome: "Auditoria fiscal", icone: "escudo" },
     ],
   },
   // BI de Gestão (19/11/2026): DRE e DFC gerenciais do grupo de empresas a partir do Omie (bi_relatorio)
   bi_gestao: { titulo: "BI de Gestão", links: [{ href: "/bi-gestao", nome: "DRE e fluxo de caixa", icone: "grafico" }] },
+  // Auditoria fiscal do relatório do SAP pelo Ledgra Auditor (122); módulo próprio, fora de Demonstrativos (125, 27/11/2026)
+  auditoria_fiscal: {
+    titulo: "Auditoria fiscal",
+    links: [{ href: "/auditoria-fiscal", nome: "Auditorias do SAP", icone: "escudo" }],
+  },
   atendimento: {
     titulo: "Atendimento",
     links: [
@@ -225,6 +229,7 @@ export const MODULO_POR_PREFIXO: Record<string, Modulo> = {
   societario: "societario",
   demonstrativos: "demonstrativos",
   "bi-gestao": "bi_gestao",
+  "auditoria-fiscal": "auditoria_fiscal",
   atendimento: "atendimento",
   vencimentos: "vencimentos",
   comercial: "comercial",
