@@ -10,13 +10,15 @@
 //   vincular_cnpj   { cnpj }  → lic_ledgra_vincular_cnpj        → { chave }
 //   buscar_clientes { busca } → integracao_clientes_buscar      → { clientes: [...] }
 //   raiox_conferir  { p }     → crm_raiox_conferir              → { conferencia }
+//   clientes_carteira {}      → integracao_clientes_carteira    → { clientes: [...] } (126: carteira inteira da MDC,
+//                                 ativos e inativos, para a conta da MDC no Ledgra)
 // Cada sistema só usa as ações liberadas para ele (ACOES). Toda chamada fica em app.integracao_chamadas.
 // Recusa de regra do negócio (mensagem em português do banco) volta com status 422 e { erro }, para o sistema mostrar.
 import { createClient } from "@supabase/supabase-js";
 import { chaveSecreta } from "../_compartilhado/chaves.ts";
 
 const ACOES: Record<string, string[]> = {
-  ledgra: ["vincular_cnpj", "buscar_clientes", "raiox_conferir"],
+  ledgra: ["vincular_cnpj", "buscar_clientes", "raiox_conferir", "clientes_carteira"],
 };
 
 type Erro = { message?: string; code?: string } | null;
@@ -74,6 +76,8 @@ Deno.serve(async (req) => {
     r = await servico.rpc("lic_ledgra_vincular_cnpj", { p_cnpj: cnpj });
   } else if (acao === "buscar_clientes") {
     r = await servico.rpc("integracao_clientes_buscar", { p_busca: String(corpo.busca ?? "").slice(0, 120) });
+  } else if (acao === "clientes_carteira") {
+    r = await servico.rpc("integracao_clientes_carteira");
   } else {
     const p = corpo.p;
     if (!p || typeof p !== "object" || Array.isArray(p)) return json(422, { erro: "Dados do Raio-X inválidos." });
@@ -93,6 +97,6 @@ Deno.serve(async (req) => {
     const chave = (r.data as { chave?: string } | null)?.chave;
     return chave ? json(200, { chave }) : json(500, { erro: "O HUB MDC não devolveu a licença." });
   }
-  if (acao === "buscar_clientes") return json(200, { clientes: r.data ?? [] });
+  if (acao === "buscar_clientes" || acao === "clientes_carteira") return json(200, { clientes: r.data ?? [] });
   return json(200, { conferencia: r.data });
 });

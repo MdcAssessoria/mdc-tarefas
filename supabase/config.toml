@@ -41,6 +41,11 @@ import_map = "./functions/ledgra-auditoria/deno.json"
 verify_jwt = true
 import_map = "./functions/ledgra-regras/deno.json"
 
+# Módulos do Ledgra (126): a tela chama com o login; a função confere ledgra_entrada_pode e pede a entrada ao Ledgra.
+[functions.ledgra-entrar]
+verify_jwt = true
+import_map = "./functions/ledgra-entrar/deno.json"
+
 [functions.fiscal-manifestar]
 verify_jwt = true
 import_map = "./functions/fiscal-manifestar/deno.json"
