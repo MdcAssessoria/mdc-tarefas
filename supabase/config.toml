@@ -46,6 +46,10 @@ import_map = "./functions/ledgra-regras/deno.json"
 verify_jwt = true
 import_map = "./functions/ledgra-entrar/deno.json"
 
+[functions.ledgra-conta]
+verify_jwt = true
+import_map = "./functions/ledgra-conta/deno.json"
+
 [functions.fiscal-manifestar]
 verify_jwt = true
 import_map = "./functions/fiscal-manifestar/deno.json"

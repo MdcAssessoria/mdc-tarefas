@@ -2,7 +2,7 @@
 // é feita pela Função ledgra-entrar; quem decide o que a pessoa vê lá dentro é o Ledgra (licença e acesso do e-mail).
 import type { NomeIcone } from "@/components/ui/Icone";
 
-export type ModuloLedgra = "xml" | "auditor" | "legislacao" | "varredura";
+export type ModuloLedgra = "xml" | "auditor" | "legislacao" | "varredura" | "raiox" | "entrega" | "integracoes" | "cofre";
 
 export const MODULOS_LEDGRA: { chave: ModuloLedgra; nome: string; descricao: string; icone: NomeIcone }[] = [
   {
@@ -28,6 +28,31 @@ export const MODULOS_LEDGRA: { chave: ModuloLedgra; nome: string; descricao: str
     nome: "Ledgra Varredura",
     descricao: "Confere na Receita o que cada cliente entregou e pagou e avisa o que falta.",
     icone: "busca",
+  },
+  // 127 (28/11/2026): os demais módulos avulsos também entram direto
+  {
+    chave: "raiox",
+    nome: "Ledgra Raio-X",
+    descricao: "Diagnóstico tributário com os dados oficiais da Receita: o que a empresa paga hoje e com a reforma.",
+    icone: "grafico",
+  },
+  {
+    chave: "entrega",
+    nome: "Ledgra Entrega",
+    descricao: "Agenda das obrigações, recibos, guias e arquivos entregues de cada empresa.",
+    icone: "calendario",
+  },
+  {
+    chave: "integracoes",
+    nome: "Ledgra Integrações",
+    descricao: "Traz os dados de outros sistemas (Domínio, SAP Business One) para o Ledgra.",
+    icone: "transferir",
+  },
+  {
+    chave: "cofre",
+    nome: "Ledgra Cofre",
+    descricao: "Senhas de portais, procurações e certificados digitais dos clientes, com registro de cada acesso.",
+    icone: "caixa",
   },
 ];
 

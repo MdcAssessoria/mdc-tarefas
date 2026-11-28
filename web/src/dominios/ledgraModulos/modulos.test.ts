@@ -3,7 +3,16 @@ import { enderecoValido, MODULOS_LEDGRA } from "./modulos";
 
 describe("Módulos do Ledgra", () => {
   it("tem os quatro módulos", () => {
-    expect(MODULOS_LEDGRA.map((m) => m.chave)).toEqual(["xml", "auditor", "legislacao", "varredura"]);
+    expect(MODULOS_LEDGRA.map((m) => m.chave)).toEqual([
+      "xml",
+      "auditor",
+      "legislacao",
+      "varredura",
+      "raiox",
+      "entrega",
+      "integracoes",
+      "cofre",
+    ]);
   });
   it("só abre a página de entrada do Ledgra", () => {
     expect(enderecoValido("https://ledgra.com.br/entrar-hub#access_token=a.b.c")).toBe(true);

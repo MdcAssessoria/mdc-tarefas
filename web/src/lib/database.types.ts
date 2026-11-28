@@ -10304,6 +10304,7 @@ export type Database = {
         Returns: number;
       };
       lic_ledgra_chave_gerar: { Args: { p_cliente: string }; Returns: string };
+      lic_ledgra_conta_preparar: { Args: { p_contrato: string }; Returns: Json };
       lic_ledgra_chave_revogar: {
         Args: { p_id: string; p_motivo: string };
         Returns: undefined;
