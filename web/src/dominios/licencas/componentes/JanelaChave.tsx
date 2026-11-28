@@ -12,6 +12,8 @@ import { Carregando } from "@/components/ui/Carregando";
 import { Icone } from "@/components/ui/Icone";
 import { gerarChave, revogarChave } from "../repositorio";
 import { ondeColarChave } from "../regras";
+import { mostraAcessoDireto } from "../acessoLedgra";
+import { AcessoDiretoLedgra } from "./AcessoDiretoLedgra";
 import type { Contrato } from "../tipos";
 
 interface ChaveAtual {
@@ -201,6 +203,9 @@ export function JanelaChave({
               A chave atual ({atual?.prefixo}…) deixa de valer na hora. Cole a nova no {nomeSistema} logo em seguida para não fechar os
               módulos do cliente na próxima conferência.
             </p>
+          )}
+          {!revogando && !confirmarNova && mostraAcessoDireto(contrato) && (
+            <AcessoDiretoLedgra contrato={contrato.id} aoCriar={() => q.recarregar()} />
           )}
           {revogando && (
             <label className="campo">

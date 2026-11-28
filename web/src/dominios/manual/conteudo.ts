@@ -231,7 +231,7 @@ Conferência do relatório fiscal de entradas e saídas do SAP pelo Ledgra Audit
 
 ## Módulos do Ledgra
 
-Entrada direta, pelo HUB, nos módulos do Ledgra que a MDC usa no dia a dia: **Ledgra XML**, **Ledgra Auditor**, **Ledgra Legislação** e **Ledgra Varredura**.
+Entrada direta, pelo HUB, nos módulos do Ledgra que a MDC usa no dia a dia: **Ledgra XML**, **Ledgra Auditor**, **Ledgra Legislação**, **Ledgra Varredura**, **Ledgra Raio-X**, **Ledgra Entrega**, **Ledgra Integrações** e **Ledgra Cofre**.
 
 **Quem usa:** equipe com a ferramenta **Módulos do Ledgra** liberada em Pessoas e acessos (nível **ver**).
 
@@ -239,7 +239,7 @@ Entrada direta, pelo HUB, nos módulos do Ledgra que a MDC usa no dia a dia: **L
 
 **Para que serve:** abrir o módulo do Ledgra numa aba nova, já entrando, sem digitar a senha de novo.
 
-1. Toque em **Abrir o Ledgra XML** (ou Auditor, Legislação, Varredura). A aba nova abre o módulo com o menu só dele.
+1. Toque em **Abrir o Ledgra XML** (ou outro módulo). A aba nova abre o módulo com o menu só dele.
 2. O Ledgra confere o seu **e-mail**: é preciso ter usuário no Ledgra com o mesmo e-mail do HUB e o módulo liberado lá. Se faltar, o HUB mostra o motivo (por exemplo, "não tem este módulo liberado no Ledgra").
 3. Cada entrada fica registrada no Ledgra.
 
@@ -408,7 +408,8 @@ Os sistemas que a MDC licencia aos clientes (Ledgra ERP, EXato e os próximos): 
 3. Em **Valor e usuários**, informe o valor mensal, quantos **usuários** estão incluídos e o valor por usuário a mais. Em **Quando passar do limite**, escolha **Liberar e cobrar** (o usuário a mais entra na cobrança do mês seguinte) ou **Não deixar passar** (o sistema não cadastra pessoa além do limite).
 4. Em **Como cobrar**, deixe **Mensalidade da licença** (vai junto com o honorário) ou escolha um **contrato a receber** de Contratos: aí a fatura dele leva a licença e o usuário a mais.
 5. Depois de salvar, em **Ações › Chave do sistema**, gere a chave e cole no sistema do cliente. A chave começa com o prefixo do sistema (LDG-… no Ledgra, EXA-… no EXato).
-6. Se o grupo do cliente tem várias empresas usando o mesmo sistema (ex.: no EXato, EXRH, TEAM Leasing e ACB), abra **Ações › Empresas no sistema** e marque as empresas do grupo (há o atalho "Marcar as filiais do mesmo CNPJ"). Em cada empresa marcada (e no próprio cliente da licença) dá para escolher os **módulos**: sem escolha, a empresa usa todo o pacote. No sistema, essas empresas chegam sozinhas como "A concluir" para o administrador terminar o cadastro — nunca aparece a carteira da MDC.
+6. **Cliente que comprou só módulos avulsos do Ledgra** (XML, Cofre, Auditor, Legislação, Raio-X, Entrega, Integrações, Varredura), sem o Ledgra ERP: em **Ações › Chave do sistema**, toque em **Criar acesso no Ledgra**, informe nome e e-mail do responsável no cliente e confirme. O HUB cria a conta dele no Ledgra, liga a chave e mostra **uma vez** o endereço de entrada, o e-mail e a **senha provisória** (copie e envie ao cliente; no primeiro acesso ele cria a senha dele). Se o e-mail já tinha conta no Ledgra, ele entra com a senha que já usa. Com mais de um módulo, o cliente escolhe o módulo na tela **Meus módulos** do Ledgra. A chave anterior do cliente deixa de valer. Licença full ou com módulo do ERP (Financeiro, Vendas…) não usa esta opção: a chave vai no Ledgra completo.
+7. Se o grupo do cliente tem várias empresas usando o mesmo sistema (ex.: no EXato, EXRH, TEAM Leasing e ACB), abra **Ações › Empresas no sistema** e marque as empresas do grupo (há o atalho "Marcar as filiais do mesmo CNPJ"). Em cada empresa marcada (e no próprio cliente da licença) dá para escolher os **módulos**: sem escolha, a empresa usa todo o pacote. No sistema, essas empresas chegam sozinhas como "A concluir" para o administrador terminar o cadastro — nunca aparece a carteira da MDC.
 
 **Dicas:** a coluna **Usuários** mostra quantas pessoas o sistema informou neste mês (ex.: "12 de 10 usuário(s) (2 a mais)"). O filtro **Sistema** mostra só as licenças de um sistema.
 
@@ -497,6 +498,7 @@ Os sistemas que a MDC licencia aos clientes (Ledgra ERP, EXato e os próximos): 
 | 2.14 | 23/11/2026 | **CRM Comercial**: propostas em PDF anexadas na ficha saem **assinadas digitalmente** pela MDC ao baixar (botão Baixar assinada), com registro no histórico. |
 | 2.15 | 23/11/2026 | **BI de Gestão**: Projeção da DRE para até 5 anos a partir do realizado (premissas de crescimento e inflação, % por linha editável ano a ano, valor digitado por cima), estudos gravados por empresa, planilha-modelo em Excel para baixar e subir, e "Provisionar no Orçamento". |
 | 2.16 | 24/11/2026 | **BI de Gestão**: Orçamento com a opção "Todas as empresas (soma)" e a linha de resultado do mês. |
+| 2.21 | 28/11/2026 | **Licenças → Chave do sistema**: **Criar acesso no Ledgra** para o cliente que comprou só módulos avulsos (ex.: XML + Cofre): o HUB cria a conta dele no Ledgra, sem o Ledgra ERP, e mostra uma vez a senha provisória do responsável. Produto **Ledgra · Cofre** em Produtos e planos. **Módulos do Ledgra** abre também Raio-X, Entrega, Integrações e Cofre. |
 | 2.20 | 27/11/2026 | **Módulos do Ledgra**: botões que abrem o Ledgra XML, Auditor, Legislação e Varredura numa aba nova já logado (ferramenta própria em Pessoas e acessos). Produto **Ledgra · Varredura** em Produtos e planos. Os clientes do HUB chegam à conta da MDC no Ledgra pelo botão **Trazer clientes do HUB** de lá. |
 | 2.19 | 27/11/2026 | **Auditoria fiscal → Regras de validação**: regras próprias e utilizações do SAP cadastradas no HUB e no Ledgra ao mesmo tempo (a mesma lista). |
 | 2.19 | 27/11/2026 | **Auditoria fiscal** virou módulo próprio no menu (antes ficava em Demonstrativos), com a ferramenta **Auditoria fiscal** em Pessoas e acessos: ver = histórico e resultados; operar = enviar o relatório do SAP. O endereço antigo redireciona. |

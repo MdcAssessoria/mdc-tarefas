@@ -240,6 +240,10 @@ rodadas seguintes dos agendamentos voltaram 200. Religar só em emergência, no 
   `npx supabase functions deploy ledgra-auditoria --project-ref bulqqdgfrrpqquqvjjfa --import-map supabase/functions/ledgra-auditoria/deno.json`.
 - **Módulos do Ledgra (126): `ledgra-entrar`.** Com login (`verify_jwt = true`). Publicar:
   `npx supabase functions deploy ledgra-entrar --project-ref bulqqdgfrrpqquqvjjfa --import-map supabase/functions/ledgra-entrar/deno.json`.
+- **Acesso direto aos módulos do Ledgra (127): `ledgra-conta`.** Com login (`verify_jwt = true`). Publicar:
+  `npx supabase functions deploy ledgra-conta --project-ref bulqqdgfrrpqquqvjjfa --import-map supabase/functions/ledgra-conta/deno.json`.
+  Depende da rota `/api/public/hub/conta` do Ledgra (PR #244 do ledgra-mdc, migração 20261737) já publicada. A
+  `ledgra-entrar` precisa ser publicada de novo (módulos raiox, entrega, integracoes e cofre).
   A `hub-integracao` ganhou a ação `clientes_carteira` (publicar de novo junto).
   Precisa do Ledgra com a rota `/api/public/hub/auditoria-erp` publicada e da migração 20261699 do Ledgra aplicada.
   Segredo opcional `LEDGRA_URL` (padrão `https://ledgra.com.br`).

@@ -1,6 +1,6 @@
 // Edge Function ledgra-entrar (HUB-MDC · Módulos do Ledgra, migração 126).
 //
-//   POST { org, modulo }  modulo = xml | auditor | legislacao | varredura  →  { url }
+//   POST { org, modulo }  modulo = xml | auditor | legislacao | varredura | raiox | entrega | integracoes | cofre  →  { url }
 //
 // Quem pode: equipe com Módulos do Ledgra (ver), conferido no banco por public.ledgra_entrada_pode com o login de quem
 // chamou. No Ledgra, a entrada só abre se o MESMO e-mail tiver usuário ativo com o módulo liberado (o Ledgra confere e
@@ -17,7 +17,8 @@ const ORIGENS = [
   "https://hub.mdcassessoria.com",
   "https://mdc-tarefas.vercel.app",
 ];
-const MODULOS = ["xml", "auditor", "legislacao", "varredura"];
+// 127: também Raio-X, Entrega, Integrações e Cofre (par no Ledgra: 20261737)
+const MODULOS = ["xml", "auditor", "legislacao", "varredura", "raiox", "entrega", "integracoes", "cofre"];
 const cabecalhos = (req: Request) => {
   const origem = req.headers.get("origin") ?? "";
   return {
