@@ -238,6 +238,9 @@ rodadas seguintes dos agendamentos voltaram 200. Religar só em emergência, no 
   O agendador `nfse-automatica` (06h45) já nasce com a 052, mas só chama a função se algum parâmetro estiver em automático.
 - **Auditoria fiscal do SAP (122): `ledgra-auditoria`.** Com login (`verify_jwt = true`). Publicar:
   `npx supabase functions deploy ledgra-auditoria --project-ref bulqqdgfrrpqquqvjjfa --import-map supabase/functions/ledgra-auditoria/deno.json`.
+- **Módulos do Ledgra (126): `ledgra-entrar`.** Com login (`verify_jwt = true`). Publicar:
+  `npx supabase functions deploy ledgra-entrar --project-ref bulqqdgfrrpqquqvjjfa --import-map supabase/functions/ledgra-entrar/deno.json`.
+  A `hub-integracao` ganhou a ação `clientes_carteira` (publicar de novo junto).
   Precisa do Ledgra com a rota `/api/public/hub/auditoria-erp` publicada e da migração 20261699 do Ledgra aplicada.
   Segredo opcional `LEDGRA_URL` (padrão `https://ledgra.com.br`).
 - **Integração com outros sistemas (092, auditoria 19/11/2026 SEG-01): `hub-integracao`.** Porta única do Ledgra

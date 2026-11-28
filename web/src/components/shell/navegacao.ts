@@ -11,6 +11,7 @@ export type Modulo =
   | "demonstrativos"
   | "bi_gestao"
   | "auditoria_fiscal"
+  | "ledgra_modulos"
   | "atendimento"
   | "vencimentos"
   | "comercial"
@@ -86,6 +87,11 @@ export const NAV: Record<Modulo, { titulo: string; links: LinkModulo[]; grupos?:
       // Regras próprias e utilizações do ERP, as mesmas do Ledgra (Função ledgra-regras)
       { href: "/auditoria-fiscal/regras", nome: "Regras de validação", icone: "lista" },
     ],
+  },
+  // Módulos do Ledgra (126, 27/11/2026): entrada direta no XML, Auditor, Legislação e Varredura (Função ledgra-entrar)
+  ledgra_modulos: {
+    titulo: "Módulos do Ledgra",
+    links: [{ href: "/ledgra-modulos", nome: "Abrir os módulos", icone: "externo" }],
   },
   atendimento: {
     titulo: "Atendimento",
@@ -234,6 +240,7 @@ export const MODULO_POR_PREFIXO: Record<string, Modulo> = {
   demonstrativos: "demonstrativos",
   "bi-gestao": "bi_gestao",
   "auditoria-fiscal": "auditoria_fiscal",
+  "ledgra-modulos": "ledgra_modulos",
   atendimento: "atendimento",
   vencimentos: "vencimentos",
   comercial: "comercial",
